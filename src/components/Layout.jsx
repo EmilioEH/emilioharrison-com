@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Grid, Settings2 } from 'lucide-react';
 import BrutalButton from './ui/BrutalButton';
+import NewsletterSignup from './NewsletterSignup';
 
 const Layout = ({ children, theme, setThemeId }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -58,12 +59,7 @@ const Layout = ({ children, theme, setThemeId }) => {
                 {children}
             </main>
 
-            <div className={`${theme.colors.dark} text-white p-8 md:p-12 border-t-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} relative z-10`}>
-                <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div className="md:w-1/2"><h3 className={`text-2xl font-black mb-2 ${theme.id === 'blueprint' ? 'text-[#ffd700]' : 'text-[#e9c46a]'}`}>JOIN THE MAILING LIST</h3><p className="text-gray-200">Get weekly thoughts on UX research, code, and creative experiments.</p></div>
-                    <div className="md:w-1/2 w-full flex gap-4"><input type="email" placeholder="Enter your email" className={`flex-grow p-3 border-2 ${theme.id === 'blueprint' ? 'border-blue-200 bg-blue-900 text-white' : 'border-black text-black'} font-medium focus:outline-none`} /><BrutalButton theme={theme} color={theme.colors.secondary} className="text-white">Join</BrutalButton></div>
-                </div>
-            </div>
+            <NewsletterSignup theme={theme} />
             <footer className="bg-black text-white py-12 px-4 text-center relative z-10"><div className="font-bold text-2xl tracking-tighter mb-4">EMILIOHARRISON.COM</div><p className="text-gray-500 text-sm">© {new Date().getFullYear()} Emilio Harrison. Built with React & Tailwind.</p></footer>
         </div>
     );

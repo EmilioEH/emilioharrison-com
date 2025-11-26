@@ -33,7 +33,7 @@ const Contact = ({ theme }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    access_key: 'YOUR_WEB3FORMS_ACCESS_KEY', // TODO: Replace with actual key
+                    access_key: '3e8f45b6-e931-4476-b671-e25163ebd962',
                     name: formData.name,
                     email: formData.email,
                     subject: formData.subject,
@@ -80,8 +80,8 @@ const Contact = ({ theme }) => {
     ];
 
     const inputClasses = `w-full px-4 py-3 font-medium ${theme.border} ${theme.id === 'blueprint'
-            ? 'bg-blue-950 border-blue-200 text-blue-100 placeholder-blue-400'
-            : 'bg-white border-black text-gray-900 placeholder-gray-400'
+        ? 'bg-blue-950 border-blue-200 text-blue-100 placeholder-blue-400'
+        : 'bg-white border-black text-gray-900 placeholder-gray-400'
         } focus:outline-none focus:ring-4 ${theme.id === 'blueprint' ? 'focus:ring-blue-400' : 'focus:ring-yellow-200'
         }`;
 
@@ -166,8 +166,8 @@ const Contact = ({ theme }) => {
 
                             {status.message && (
                                 <div className={`p-4 ${theme.border} flex items-start gap-3 ${status.type === 'success'
-                                        ? theme.id === 'blueprint' ? 'bg-green-950 border-green-400 text-green-100' : 'bg-green-100 border-green-600 text-green-800'
-                                        : theme.id === 'blueprint' ? 'bg-red-950 border-red-400 text-red-100' : 'bg-red-100 border-red-600 text-red-800'
+                                    ? theme.id === 'blueprint' ? 'bg-green-950 border-green-400 text-green-100' : 'bg-green-100 border-green-600 text-green-800'
+                                    : theme.id === 'blueprint' ? 'bg-red-950 border-red-400 text-red-100' : 'bg-red-100 border-red-600 text-red-800'
                                     }`}>
                                     {status.type === 'success' ? (
                                         <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
@@ -233,8 +233,8 @@ const Contact = ({ theme }) => {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className={`flex items-center gap-3 p-3 ${theme.border} ${theme.id === 'blueprint'
-                                                ? 'bg-blue-950 border-blue-300 hover:bg-blue-900'
-                                                : 'bg-gray-50 border-black hover:bg-yellow-100'
+                                            ? 'bg-blue-950 border-blue-300 hover:bg-blue-900'
+                                            : 'bg-gray-50 border-black hover:bg-yellow-100'
                                             } transition-colors group`}
                                     >
                                         <Icon size={24} className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'} />
