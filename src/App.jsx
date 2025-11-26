@@ -792,7 +792,7 @@ export default function App() {
   const theme = THEMES[themeId];
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Layout theme={theme} setThemeId={setThemeId}>
         <ErrorBoundary>
           <Routes>
@@ -806,7 +806,7 @@ export default function App() {
           </Routes>
         </ErrorBoundary>
       </Layout>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
