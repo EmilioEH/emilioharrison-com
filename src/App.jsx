@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Menu, X, ArrowRight, Code, User, Mail, ShoppingBag, Send, Smartphone, MousePointer2, Maximize, Minimize, RotateCcw, Play, Pause, Settings2, Activity, FileText, Zap, Grid, Hexagon, Triangle, Circle, Square, Target, BarChart2, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -404,7 +404,9 @@ const LifeSim = ({ theme }) => {
   };
 
   useEffect(() => {
-    const cvs = canvasRef.current; const ctx = cvs.getContext('2d');
+    const cvs = canvasRef.current;
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
     if (!s.current.orgs.length) init();
 
     let af;
@@ -672,7 +674,7 @@ const Experiments = ({ theme }) => (
           </div>
           <div className={`hidden md:flex gap-2 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-400'}`}><MousePointer2 size={16} /> Ergonomics</div>
         </div>
-        <BrutalCard theme={theme} className="p-4"><FittsLaw theme={theme} /></BrutalCard>
+        {/* <BrutalCard theme={theme} className="p-4"><FittsLaw theme={theme} /></BrutalCard> */}
       </div>
 
       <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center">
