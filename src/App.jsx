@@ -43,73 +43,28 @@ const THEMES = {
   }
 };
 
+import ReactMarkdown from 'react-markdown';
+import matter from 'gray-matter';
+import { Buffer } from 'buffer';
+
+// Polyfill Buffer for gray-matter in browser
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
+
 // --- REAL CONTENT DATA ---
-const BLOG_POSTS = [
-  {
-    id: 1,
-    title: "Context is King",
-    date: "Oct 13, 2025",
-    category: "Engineering",
-    excerpt: "Why prompt engineering is dead and context engineering is the future of AI tools.",
-    content: `The MS Teams notification lit up my screen at 3:30 PM. I was deep in the work of building a survey for a project that wasn’t interesting at all...
-    
-    The message preview: "Hey, you around for a quick call? Need your AI brain."
-    
-    Honestly? I was relieved. An excuse to do something actually interesting. My coworker was stuck documenting a complex UI component sheet. Tedious, mind-numbing work. Could I "vibe code something" [[1]] with AI to fix it?
-    
-    I hesitated before responding. Not because of the task. Because I knew my limits. I’m great at the quick wins, the standalone AI hacks. But deep system integration? Building something that integrates with Figma? I had doubts.`,
-    footnotes: {
-      1: "Vibe Coding: My term for writing code focused on user intent and 'feel' rather than pure algorithmic efficiency. See my 'Lab' for examples."
-    },
-    takeaways: [
-      { title: "The Core Shift", text: "Stop trying to find the perfect prompt. Instead, focus on 'Context Engineering': providing the model with the exact map it needs to navigate the problem." },
-      { title: "The Technique", text: "Don't describe the code you want. Copy the official API documentation into the prompt context window first. Then, ask for what you need in plain English." },
-      { title: "Why It Works", text: "Models have limited attention. If you force them to guess the API structure, they hallucinate. If you provide the 'Cookbook' (docs), they become expert builders immediately." },
-      { title: "Actionable Step", text: "Next time you are stuck: Open two tabs. 1) The official Developer Docs. 2) The LLM. Copy/Paste the relevant docs section. Then ask your question." }
-    ]
-  },
-  {
-    id: 2,
-    title: "Who's in the Driver's Seat?",
-    date: "Oct 13, 2025",
-    category: "Strategy",
-    excerpt: "You can't blame the AI when you click submit. A framework for testing LLM outputs.",
-    content: `My finger hovered over the "Copy" button. I was staring at Claude’s output on my second monitor. The heuristic evaluation looked clean. Professional formatting, proper severity ratings...
-    
-    But I couldn’t shake this question: What if someone actually uses this? [[1]]
-    
-    I’d built something that looked professional, sounded authoritative, and might be completely unreliable. Just click copy. It’s fine. It looks good. But that voice saying “it’s fine” was me being lazy.`,
-    footnotes: {
-      1: "This is the 'Black Box' problem. If you can't trace the logic, can you trust the result? Spoiler: No."
-    },
-    takeaways: [
-      { title: "The Risk", text: "LLMs produce professional-looking but potentially hallucinatory outputs. When you ship that output, you—not the AI—are accountable for the $400k mistake." },
-      { title: "The 5x5 Testing Protocol", text: "Run the same prompt 5 times on the same input to check for consistency. Then run the prompt on 5 different inputs to check for accuracy/overfitting." },
-      { title: "When to Test", text: "If the tool will be used by others or reused multiple times (Scalability), rigorous testing is mandatory. One-offs for personal use can be looser." },
-      { title: "The Mindset", text: "You are the Driver, not the Passenger. You must be able to defend the output as if you wrote it yourself." }
-    ]
-  },
-  {
-    id: 3,
-    title: "The AI Hype Trap",
-    date: "Oct 12, 2025",
-    category: "Process",
-    excerpt: "When your technical breakthrough doesn't actually save anyone time.",
-    content: `I closed MS Teams and logged off. Mid-afternoon on a Tuesday. Just shut it down and walked away from my desk.
-    
-    A few hours earlier, I demoed a Figma plugin I built for the team. People seemed excited. Then I pinged my coworker to see if it saved time. [[1]]
-    
-    He responded: "Not really saving much time because this is already a quick process. It’s actually pretty easy."`,
-    footnotes: {
-      1: "Always ask: 'What job is this hiring for?' If the job isn't painful, the solution is decoration."
-    },
-    takeaways: [
-      { title: "The Trap", text: "Getting so obsessed with 'Can I build this with AI?' that you forget to ask 'Should I build this?'" },
-      { title: "Jobs To Be Done", text: "AI is just a tool to do a Job. If the Job isn't painful (like the documentation task I solved), the AI solution is worthless decoration." },
-      { title: "Decision Framework", text: "Use these criteria to decide when to build: Stakes (Low? Experiment. High? Slow down.), Scope (Team tool? Do discovery. Personal? Just build.), Role (Learning? Follow curiosity. Delivery? Follow process)." }
-    ]
-  }
-];
+// Load markdown files
+const modules = import.meta.glob('./content/posts/*.md', { as: 'raw', eager: true });
+
+const BLOG_POSTS = Object.keys(modules).map((path, index) => {
+  const { data, content } = matter(modules[path]);
+  return {
+    id: index + 1,
+    ...data,
+    content,
+    slug: path.split('/').pop().replace('.md', '')
+  };
+}).sort((a, b) => new Date(b.date) - new Date(a.date));
 
 // --- UI COMPONENTS ---
 const BrutalButton = ({ children, onClick, color, className = "", type = "button", active = false, theme }) => {
@@ -189,6 +144,7 @@ const Marginalia = ({ id, text, theme }) => {
 };
 
 // --- PARSING HELPER ---
+// (Kept for backward compatibility if needed, but mostly replaced by ReactMarkdown)
 const parseContent = (content, footnotes, theme) => {
   if (!footnotes) return content;
 
@@ -305,8 +261,27 @@ const BlogPost = ({ post, onBack, theme }) => {
         {readMode === 'deep' ? (
           <div className={`prose prose-lg prose-headings:font-black ${theme.id === 'blueprint' ? 'prose-invert prose-p:text-blue-100 prose-headings:text-blue-50' : 'prose-p:text-gray-800'} animate-in fade-in duration-500`}>
             <p className="lead text-xl font-medium mb-6 italic">{post.excerpt}</p>
-            <div className="whitespace-pre-wrap font-serif text-lg leading-loose">
-              {parseContent(post.content, post.footnotes, theme)}
+            <div>
+              <ReactMarkdown
+                components={{
+                  img: ({ node, ...props }) => <img {...props} className="rounded-lg border-2 border-black shadow-lg my-8" />,
+                  code: ({ node, inline, className, children, ...props }) => {
+                    return !inline ? (
+                      <pre className={`bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-6 border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>
+                        <code {...props} className={className}>
+                          {children}
+                        </code>
+                      </pre>
+                    ) : (
+                      <code {...props} className={`bg-gray-200 text-red-600 px-1 py-0.5 rounded font-mono text-sm`}>
+                        {children}
+                      </code>
+                    )
+                  }
+                }}
+              >
+                {post.content}
+              </ReactMarkdown>
             </div>
             <div className={`my-8 p-6 border-l-4 ${theme.id === 'blueprint' ? 'bg-blue-900 border-blue-200' : 'bg-gray-100 border-black'}`}>
               <p className="font-bold text-sm">End of Preview</p>
