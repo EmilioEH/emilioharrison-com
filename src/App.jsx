@@ -283,9 +283,6 @@ const BlogPost = ({ post, onBack, theme }) => {
                 {post.content}
               </ReactMarkdown>
             </div>
-            <div className={`my-8 p-6 border-l-4 ${theme.id === 'blueprint' ? 'bg-blue-900 border-blue-200' : 'bg-gray-100 border-black'}`}>
-              <p className="font-bold text-sm">End of Preview</p>
-            </div>
           </div>
         ) : (
           <div className="animate-in slide-in-from-right-4 duration-300">
