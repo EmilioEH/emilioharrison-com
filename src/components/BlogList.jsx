@@ -12,7 +12,12 @@ const BlogList = ({ theme }) => {
             <SectionTitle theme={theme}>Field Notes</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {BLOG_POSTS.map(post => (
-                    <BrutalCard key={post.id} theme={theme} className="flex flex-col h-full group cursor-pointer hover:opacity-90 transition-opacity">
+                    <BrutalCard
+                        key={post.id}
+                        theme={theme}
+                        className="flex flex-col h-full group"
+                        onClick={() => navigate(`/fieldnotes/${post.slug}`)}
+                    >
                         <div className="flex justify-between items-start mb-4">
                             <span className={`text-xs font-bold border-2 ${theme.id === 'blueprint' ? 'border-blue-200 bg-blue-900 text-blue-100' : 'border-black bg-yellow-200 text-black'} px-2 py-0.5`}>
                                 {post.category}
@@ -26,7 +31,6 @@ const BlogList = ({ theme }) => {
                             {post.excerpt}
                         </p>
                         <button
-                            onClick={() => navigate(`/fieldnotes/${post.slug}`)}
                             className={`flex items-center gap-2 font-bold mt-auto border-b-2 border-transparent w-fit pb-0.5 ${theme.id === 'blueprint' ? 'hover:border-blue-200' : 'hover:border-black'}`}
                         >
                             Read Article <ArrowRight size={16} />
