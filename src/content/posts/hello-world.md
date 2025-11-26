@@ -3,6 +3,11 @@ title: "Hello World"
 date: "Nov 26, 2025"
 category: "General"
 excerpt: "This is a sample post written in Markdown."
+takeaways:
+  - title: "Markdown is Easy"
+    text: "You can write complex posts using simple text syntax."
+  - title: "Dual Modes"
+    text: "Readers can switch between deep reading and quick skimming."
 ---
 
 # Welcome to the Blog
