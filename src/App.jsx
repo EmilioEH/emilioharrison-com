@@ -274,7 +274,413 @@ const BlogPost = ({ theme }) => {
 };
 
 // --- PLACEHOLDER PAGES ---
-const Experiments = ({ theme }) => <div className="text-center py-20"><SectionTitle theme={theme}>The Lab</SectionTitle><p>Experiments coming soon...</p></div>;
+// --- EXPERIMENTS (MazeGame, LifeSim, FittsLaw) ---
+const MazeGame = ({ theme }) => {
+  const canvasRef = useRef(null); const containerRef = useRef(null);
+  const [started, setStarted] = useState(false); const [status, setStatus] = useState("Start to play");
+  const [permission, setPermission] = useState(false); const [fullScreen, setFullScreen] = useState(false);
+  const [sensorsActive, setSensorsActive] = useState(false);
+  const gameState = useRef({ ball: { x: 50, y: 50, vx: 0, vy: 0 }, tilt: { x: 0, y: 0 }, walls: [], goal: {}, won: false, grid: [], r: 11, c: 15 });
+
+  const generateMazeGrid = (w, h) => {
+    const maze = Array(h).fill().map(() => Array(w).fill(1));
+    let stack = [[1, 1]], dx = [0, 0, -2, 2], dy = [-2, 2, 0, 0]; maze[1][1] = 0;
+    while (stack.length) {
+      let [cx, cy] = stack[stack.length - 1], dirs = [];
+      for (let i = 0; i < 4; i++) { let nx = cx + dx[i], ny = cy + dy[i]; if (nx > 0 && nx < w - 1 && ny > 0 && ny < h - 1 && maze[ny][nx] === 1) dirs.push(i); }
+      if (dirs.length) { let d = dirs[Math.floor(Math.random() * dirs.length)], nx = cx + dx[d], ny = cy + dy[d]; maze[ny][nx] = 0; maze[cy + dy[d] / 2][cx + dx[d] / 2] = 0; stack.push([nx, ny]); } else stack.pop();
+    }
+    maze[1][1] = 2; maze[h - 2][w - 2] = 3; return maze;
+  };
+  const init = () => gameState.current.grid = generateMazeGrid(gameState.current.c, gameState.current.r);
+  const layout = (w, h) => {
+    const { grid, r, c } = gameState.current; if (!grid.length) return;
+    const cw = w / c, ch = h / r; gameState.current.walls = [];
+    for (let y = 0; y < r; y++)for (let x = 0; x < c; x++) {
+      if (grid[y][x] === 1) gameState.current.walls.push({ x: x * cw, y: y * ch, w: cw, h: ch });
+      else if (grid[y][x] === 2) { gameState.current.ball.x = x * cw + cw / 2; gameState.current.ball.y = y * ch + ch / 2; }
+      else if (grid[y][x] === 3) gameState.current.goal = { x: x * cw, y: y * ch, w: cw, h: ch };
+    }
+  };
+  const handleRestart = () => { init(); if (canvasRef.current) layout(canvasRef.current.width, canvasRef.current.height); gameState.current.won = false; gameState.current.tilt = { x: 0, y: 0 }; };
+  const start = async () => {
+    init();
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try { const p = await DeviceOrientationEvent.requestPermission(); if (p === 'granted') { setPermission(true); setStatus("Tilt to play"); } } catch (e) { setStatus("Swipe to play"); }
+    } else { setPermission(true); setStatus("Tilt/Swipe/Mouse"); }
+    setStarted(true);
+  };
+
+  useEffect(() => {
+    if (!started || !containerRef.current) return;
+    const obs = new ResizeObserver(e => { const { width, height } = e[0].contentRect; if (canvasRef.current) { canvasRef.current.width = width; canvasRef.current.height = height; layout(width, height); } });
+    obs.observe(containerRef.current);
+    const fs = () => setFullScreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', fs);
+    return () => { obs.disconnect(); document.removeEventListener('fullscreenchange', fs); };
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+    const cvs = canvasRef.current, ctx = cvs.getContext('2d');
+    const ori = (e) => { if ((e.gamma && Math.abs(e.gamma) > 1) || (e.beta && Math.abs(e.beta) > 1)) setSensorsActive(true); gameState.current.tilt = { x: (e.gamma || 0) / 45, y: (e.beta || 0) / 45 } };
+    const move = (e) => { if (!permission) { const r = cvs.getBoundingClientRect(); gameState.current.tilt = { x: (e.clientX - r.left - r.width / 2) / (r.width / 4), y: (e.clientY - r.top - r.height / 2) / (r.height / 4) } } };
+    const touch = (e) => { e.preventDefault(); const r = cvs.getBoundingClientRect(); const t = e.touches[0]; gameState.current.tilt = { x: Math.max(-1, Math.min(1, (t.clientX - r.left - r.width / 2) / (r.width / 4))), y: Math.max(-1, Math.min(1, (t.clientY - r.top - r.height / 2) / (r.height / 4))) } };
+
+    window.addEventListener('deviceorientation', ori); cvs.addEventListener('mousemove', move); cvs.addEventListener('touchmove', touch, { passive: false }); cvs.addEventListener('touchstart', touch, { passive: false }); cvs.addEventListener('touchend', () => { gameState.current.tilt = { x: 0, y: 0 } });
+
+    let af;
+    const loop = () => {
+      const s = gameState.current;
+      if (s.won) {
+        ctx.fillStyle = theme.colors.bg; ctx.fillRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = theme.id === 'blueprint' ? '#4db8ff' : '#e9c46a';
+        ctx.font = 'bold 30px monospace'; ctx.textAlign = 'center'; ctx.fillText("NICE VIBES!", cvs.width / 2, cvs.height / 2);
+        ctx.font = '16px monospace'; ctx.fillText("Tap restart", cvs.width / 2, cvs.height / 2 + 30);
+        af = requestAnimationFrame(loop); return;
+      }
+      if (!fullScreen && containerRef.current) containerRef.current.style.transform = `perspective(1000px) rotateX(${-s.tilt.y * 10}deg) rotateY(${s.tilt.x * 10}deg) scale(0.98)`;
+      else if (containerRef.current) containerRef.current.style.transform = 'none';
+
+      s.ball.vx += Math.max(-1, Math.min(1, s.tilt.x)) * 0.5; s.ball.vy += Math.max(-1, Math.min(1, s.tilt.y)) * 0.5;
+      s.ball.vx *= 0.9; s.ball.vy *= 0.9;
+      let nx = s.ball.x + s.ball.vx, ny = s.ball.y + s.ball.vy;
+      for (let w of s.walls) { if (nx + 8 > w.x && nx - 8 < w.x + w.w && s.ball.y + 8 > w.y && s.ball.y - 8 < w.y + w.h) { s.ball.vx *= -0.5; nx = s.ball.x; } } s.ball.x = nx;
+      for (let w of s.walls) { if (s.ball.x + 8 > w.x && s.ball.x - 8 < w.x + w.w && ny + 8 > w.y && ny - 8 < w.y + w.h) { s.ball.vy *= -0.5; ny = s.ball.y; } } s.ball.y = ny;
+      if (s.ball.x > s.goal.x && s.ball.x < s.goal.x + s.goal.w && s.ball.y > s.goal.y && s.ball.y < s.goal.y + s.goal.h) s.won = true;
+
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      ctx.fillStyle = theme.id === 'blueprint' ? '#004e92' : '#264653'; for (let w of s.walls) ctx.fillRect(w.x, w.y, w.w, w.h);
+      ctx.fillStyle = theme.id === 'blueprint' ? '#ffd700' : '#e9c46a'; ctx.fillRect(s.goal.x, s.goal.y, s.goal.w, s.goal.h);
+      ctx.fillStyle = theme.id === 'blueprint' ? '#ff4d4d' : '#e76f51'; ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, 8, 0, Math.PI * 2); ctx.fill();
+      af = requestAnimationFrame(loop);
+    };
+    af = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(af);
+  }, [started, fullScreen, permission, theme]);
+
+  if (!started) return (
+    <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+      <Smartphone size={48} className={`mb-4 ${theme.colors.text}`} />
+      <h3 className="text-2xl font-black mb-2">Gravity Maze</h3>
+      <p className="mb-6 max-w-xs">Tilt your phone or use your mouse to guide the ball to the goal.</p>
+      <BrutalButton theme={theme} onClick={start} color={theme.colors.primary} className="text-white">Start Experiment</BrutalButton>
+    </div>
+  );
+
+  return (
+    <div className="relative w-full h-96 bg-gray-900 overflow-hidden select-none touch-none">
+      <div ref={containerRef} className="w-full h-full transition-transform duration-100 ease-out origin-center will-change-transform">
+        <canvas ref={canvasRef} onClick={() => gameState.current.won && handleRestart()} className="w-full h-full block" />
+        <div className="absolute top-4 right-4 flex gap-2">
+          <button onClick={() => { if (!document.fullscreenElement) containerRef.current.requestFullscreen(); else document.exitFullscreen(); }} className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm">
+            {fullScreen ? <Minimize size={20} /> : <Maximize size={20} />}
+          </button>
+          <button onClick={handleRestart} className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm"><RotateCcw size={20} /></button>
+        </div>
+        <div className={`absolute bottom-2 left-2 ${theme.colors.card} ${theme.border} px-2 py-1 text-xs font-bold ${theme.colors.text} flex items-center gap-2`}>
+          <Activity size={14} className={sensorsActive ? "text-green-500 animate-pulse" : "text-gray-400"} /> {status}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LifeSim = ({ theme }) => {
+  const canvasRef = useRef(null);
+  const [run, setRun] = useState(false);
+  const [stats, setStats] = useState({ day: 0, a: 2, b: 2 });
+  const [strat, setStrat] = useState({ a: 'share', b: 'steal' });
+  const s = useRef({ orgs: [], food: [], w: 0, h: 0, f: 0 });
+
+  const init = () => {
+    const w = 600, h = 300; s.current.w = w; s.current.h = h;
+    s.current.orgs = [
+      { t: 'a', x: w * Math.random(), y: h * Math.random(), vx: 1, vy: 1, r: 0 }, { t: 'a', x: w * Math.random(), y: h * Math.random(), vx: -1, vy: 1, r: 0 },
+      { t: 'b', x: w * Math.random(), y: h * Math.random(), vx: 1, vy: -1, r: 0 }, { t: 'b', x: w * Math.random(), y: h * Math.random(), vx: -1, vy: -1, r: 0 }
+    ];
+    s.current.food = Array(15).fill(0).map(() => ({ x: w * Math.random(), y: h * Math.random() }));
+    setStats({ day: 1, a: 2, b: 2 });
+  };
+
+  useEffect(() => {
+    const cvs = canvasRef.current; const ctx = cvs.getContext('2d');
+    if (!s.current.orgs.length) init();
+
+    let af;
+    const loop = () => {
+      if (!run) return;
+      const st = s.current;
+      st.orgs.forEach(o => {
+        o.x += o.vx; o.y += o.vy;
+        if (o.x < 0 || o.x > st.w) o.vx *= -1; if (o.y < 0 || o.y > st.h) o.vy *= -1;
+        for (let i = st.food.length - 1; i >= 0; i--) {
+          const f = st.food[i];
+          if (Math.hypot(o.x - f.x, o.y - f.y) < 15) { o.r++; st.food.splice(i, 1); }
+        }
+      });
+      ctx.fillStyle = theme.id === 'blueprint' ? '#002147' : '#fdfbf7'; ctx.fillRect(0, 0, st.w, st.h);
+      ctx.fillStyle = theme.id === 'blueprint' ? '#ffd700' : '#e9c46a'; st.food.forEach(f => { ctx.beginPath(); ctx.arc(f.x, f.y, 4, 0, 7); ctx.fill(); });
+      st.orgs.forEach(o => {
+        ctx.fillStyle = o.t === 'a' ? (theme.id === 'blueprint' ? '#4db8ff' : '#2a9d8f') : (theme.id === 'blueprint' ? '#ff4d4d' : '#e76f51');
+        ctx.beginPath(); ctx.arc(o.x, o.y, 8, 0, 7); ctx.fill(); ctx.stroke();
+      });
+      st.f++;
+      if (st.f > 600) {
+        st.f = 0; st.food = Array(15).fill(0).map(() => ({ x: st.w * Math.random(), y: st.h * Math.random() }));
+        st.orgs = st.orgs.filter(o => o.r >= 1).flatMap(o => {
+          o.r--;
+          if (o.r >= 1) { o.r--; return [o, { ...o, x: o.x + 10, r: 0 }]; }
+          return [o];
+        });
+        setStats(p => ({ day: p.day + 1, a: st.orgs.filter(o => o.t === 'a').length, b: st.orgs.filter(o => o.t === 'b').length }));
+      }
+      af = requestAnimationFrame(loop);
+    };
+    if (run) loop();
+    return () => cancelAnimationFrame(af);
+  }, [run, theme]);
+
+  return (
+    <div className="space-y-4">
+      <div className={`flex justify-between font-bold text-sm ${theme.colors.card} p-2 ${theme.border} ${theme.colors.text}`}>
+        <span className={theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-300'}>Type A: {stats.a} ({strat.a})</span>
+        <span>Day: {stats.day}</span>
+        <span className={theme.id === 'blueprint' ? 'text-red-300' : 'text-[#e76f51]'}>Type B: {stats.b} ({strat.b})</span>
+      </div>
+      <canvas ref={canvasRef} width={600} height={300} className={`w-full h-64 ${theme.colors.bg} ${theme.border}`} />
+      <div className="flex justify-between">
+        <div className="flex gap-2">
+          <button onClick={() => setStrat(s => ({ ...s, a: s.a === 'share' ? 'steal' : 'share' }))} className={`text-xs border ${theme.id === 'blueprint' ? 'border-blue-200 bg-blue-800 text-white' : 'border-black bg-[#2a9d8f] text-white'} px-2 py-1`}>Toggle A</button>
+          <button onClick={() => setStrat(s => ({ ...s, b: s.b === 'share' ? 'steal' : 'share' }))} className={`text-xs border ${theme.id === 'blueprint' ? 'border-blue-200 bg-red-900 text-white' : 'border-black bg-[#e76f51] text-white'} px-2 py-1`}>Toggle B</button>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => { init(); setRun(false); }} className={`p-2 ${theme.border} ${theme.colors.card} ${theme.colors.text}`}><RotateCcw size={16} /></button>
+          <button onClick={() => setRun(r => !r)} className={`px-4 py-2 ${theme.colors.accent} ${theme.border} font-bold flex gap-2 text-black`}>{run ? <Pause size={16} /> : <Play size={16} />} {run ? 'Pause' : 'Run'}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FittsLaw = ({ theme }) => {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [state, setState] = useState({ running: false, round: 0, score: 0, history: [] });
+  const [target, setTarget] = useState({ x: 0, y: 0, r: 0, active: false });
+  const lastClick = useRef({ x: 0, y: 0, time: 0 });
+
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return;
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+      }
+    });
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const start = () => {
+    if (!canvasRef.current) return;
+    setState({ running: true, round: 0, score: 0, history: [] });
+    // Start relative to current center
+    lastClick.current = { x: canvasRef.current.width / 2, y: canvasRef.current.height / 2, time: Date.now() };
+    nextTarget();
+  };
+
+  const nextTarget = () => {
+    if (!canvasRef.current) return;
+    const w = canvasRef.current.width;
+    const h = canvasRef.current.height;
+    const r = Math.random() * 30 + 10; // Radius 10-40px
+    const margin = r + 10;
+    const x = Math.max(margin, Math.min(w - margin, Math.random() * w));
+    const y = Math.max(margin, Math.min(h - margin, Math.random() * h));
+    setTarget({ x, y, r, active: true });
+  };
+
+  const handleClick = (e) => {
+    if (!state.running || !target.active) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    // Correct coordinate mapping
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const dist = Math.hypot(x - target.x, y - target.y);
+
+    if (dist < target.r) {
+      const now = Date.now();
+      const time = now - lastClick.current.time;
+      const travelDist = Math.hypot(target.x - lastClick.current.x, target.y - lastClick.current.y);
+      // ID calculation: log2(Distance / Width + 1), width = 2*r
+      const id = Math.log2(travelDist / (target.r * 2) + 1);
+
+      const newHistory = [...state.history, { time, id }];
+      setState(prev => ({ ...prev, round: prev.round + 1, score: prev.score + 1, history: newHistory }));
+
+      lastClick.current = { x, y, time: now };
+
+      if (state.round >= 9) {
+        setTarget({ ...target, active: false });
+        setState(prev => ({ ...prev, running: false }));
+      } else {
+        nextTarget();
+      }
+    }
+  };
+
+  // Animation Loop
+  useEffect(() => {
+    const cvs = canvasRef.current;
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+
+    const draw = () => {
+      // Clear with theme bg
+      ctx.fillStyle = theme.id === 'blueprint' ? '#002147' : '#fdfbf7';
+      ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+      if (state.running && target.active) {
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
+        ctx.fillStyle = theme.colors.secondary; // Target color
+        ctx.fill();
+        ctx.strokeStyle = theme.id === 'blueprint' ? 'white' : 'black';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Draw chart if finished
+      if (!state.running && state.history.length > 0) {
+        drawChart(ctx, cvs.width, cvs.height);
+      }
+
+      requestAnimationFrame(draw);
+    };
+    const anim = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(anim);
+  }, [target, state.running, state.history, theme]);
+
+  const drawChart = (ctx, width, height) => {
+    const margin = 40;
+    const chartW = width - margin * 2;
+    const chartH = height - margin * 2;
+
+    // Normalize
+    const maxTime = Math.max(...state.history.map(h => h.time), 1000) || 1000;
+    const maxID = Math.max(...state.history.map(h => h.id), 5) || 5;
+
+    // Axes
+    ctx.beginPath();
+    ctx.moveTo(margin, height - margin);
+    ctx.lineTo(width - margin, height - margin); // X
+    ctx.moveTo(margin, height - margin);
+    ctx.lineTo(margin, margin); // Y
+    ctx.strokeStyle = theme.id === 'blueprint' ? 'white' : 'black';
+    ctx.stroke();
+
+    // Points
+    state.history.forEach(point => {
+      const x = margin + (point.id / maxID) * chartW;
+      const y = (height - margin) - (point.time / maxTime) * chartH;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = theme.colors.accent;
+      ctx.fill();
+    });
+
+    // Labels
+    ctx.fillStyle = theme.id === 'blueprint' ? 'white' : 'black';
+    ctx.font = '12px monospace';
+    ctx.fillText("Difficulty (ID)", width / 2 - 40, height - 10);
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Time (ms)", 0, 0);
+    ctx.restore();
+
+    // No Data Fallback
+    if (state.history.length === 0) {
+      ctx.fillText("No Data", width / 2 - 20, height / 2);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className={`flex justify-between font-bold text-sm ${theme.colors.card} p-2 ${theme.border} ${theme.colors.text}`}>
+        <span>Score: {state.score}/10</span>
+        <span>{state.running ? "Tap targets fast!" : "Results Ready"}</span>
+      </div>
+      <div ref={containerRef} className={`w-full h-64 ${theme.colors.bg} ${theme.border}`}>
+        <canvas
+          ref={canvasRef}
+          onClick={handleClick}
+          className="w-full h-full cursor-crosshair block"
+          style={{ touchAction: 'none' }}
+        />
+      </div>
+      <div className="flex justify-center">
+        <BrutalButton theme={theme} onClick={start} color={theme.colors.accent} className="text-black">
+          {state.history.length > 0 ? <RotateCcw size={16} /> : <Play size={16} />}
+          {state.history.length > 0 ? "Restart Test" : "Start Fitts Test"}
+        </BrutalButton>
+      </div>
+    </div>
+  );
+};
+
+const Experiments = ({ theme }) => (
+  <div className="animate-in zoom-in-95 duration-500">
+    <SectionTitle theme={theme}>The Lab</SectionTitle>
+    <p className={`text-xl mb-8 max-w-2xl ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-600'}`}>
+      A collection of interactive UI experiments, intention-driven code tests, and usability playgrounds.
+    </p>
+
+    <div className="flex flex-col gap-12">
+      {/* Gyro Maze */}
+      <div className="w-full">
+        <div className={`flex justify-between items-end mb-4 border-b-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} pb-2`}>
+          <div>
+            <span className={`${theme.colors.primary} ${theme.border} px-2 py-0.5 text-xs font-bold mb-2 inline-block text-white`}>EXPERIMENT 01</span>
+            <h3 className="text-3xl font-black">Gravity Maze</h3>
+          </div>
+          <div className={`hidden md:flex gap-2 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-400'}`}><Smartphone size={16} /> Gyro</div>
+        </div>
+        <BrutalCard theme={theme} className="p-0 overflow-hidden"><MazeGame theme={theme} /></BrutalCard>
+      </div>
+
+      {/* Life Sim */}
+      <div className="w-full">
+        <div className={`flex justify-between items-end mb-4 border-b-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} pb-2`}>
+          <div>
+            <span className={`${theme.colors.primary} ${theme.border} px-2 py-0.5 text-xs font-bold mb-2 inline-block text-white`}>EXPERIMENT 02</span>
+            <h3 className="text-3xl font-black">Hawk vs Dove</h3>
+          </div>
+          <div className={`hidden md:flex gap-2 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-400'}`}><Activity size={16} /> Sim</div>
+        </div>
+        <BrutalCard theme={theme} className="p-0 overflow-hidden"><LifeSim theme={theme} /></BrutalCard>
+      </div>
+
+      {/* Fitts Law */}
+      <div className="w-full">
+        <div className={`flex justify-between items-end mb-4 border-b-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} pb-2`}>
+          <div>
+            <span className={`${theme.colors.primary} ${theme.border} px-2 py-0.5 text-xs font-bold mb-2 inline-block text-white`}>EXPERIMENT 03</span>
+            <h3 className="text-3xl font-black">Fitts's Law</h3>
+          </div>
+          <div className={`hidden md:flex gap-2 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-400'}`}><MousePointer2 size={16} /> Ergonomics</div>
+        </div>
+        <BrutalCard theme={theme} className="p-4"><FittsLaw theme={theme} /></BrutalCard>
+      </div>
+
+      <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center">
+        <p className={`text-xl max-w-md mx-auto ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-600'} mb-8`}>Digital products, high-fidelity prompts, and masterclasses are currently in the workshop.</p>
+      </div>
+    </div>
+  </div>
+);
 const Shop = ({ theme }) => <div className="text-center py-20"><SectionTitle theme={theme}>Shop</SectionTitle><p>Shop coming soon...</p></div>;
 const Contact = ({ theme }) => <div className="text-center py-20"><SectionTitle theme={theme}>Contact</SectionTitle><p>Get in touch...</p></div>;
 const About = ({ theme }) => <div className="text-center py-20"><SectionTitle theme={theme}>About</SectionTitle><p>UX Researcher & Creative Technologist.</p></div>;
