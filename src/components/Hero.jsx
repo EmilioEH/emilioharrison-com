@@ -17,7 +17,7 @@ const Hero = ({ theme }) => {
                     EMILIO<br />HARRISON
                 </h1>
                 <p className={`text-xl md:text-2xl max-w-lg leading-relaxed border-l-4 pl-6 ${theme.id === 'blueprint' ? 'border-blue-200 text-blue-200' : 'border-black text-gray-700'}`}>
-                    Building utility-focused digital tools and exploring "vibe coding"—the intersection of intentionality and system design.
+                    Trying to figure out where AI actually helps people—not replaces them or makes more internet garbage. Just... useful stuff that matters.
                 </p>
                 <div className="flex flex-wrap gap-4 pt-4">
                     <BrutalButton theme={theme} color={theme.colors.primary} onClick={() => navigate('/lab')}>
