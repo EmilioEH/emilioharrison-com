@@ -13,9 +13,13 @@
     "sync": "git add . && git commit -m \"Auto-sync: $(date)\" && git push"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.12",
+    "@astrojs/markdoc": "^0.15.9",
     "@astrojs/react": "^4.4.2",
     "@astrojs/sitemap": "^3.6.0",
     "@astrojs/tailwind": "^6.0.2",
+    "@keystatic/astro": "^5.0.6",
+    "@keystatic/core": "^0.5.48",
     "@nanostores/react": "^1.0.0",
     "astro": "^5.16.1",
     "lucide-react": "^0.554.0",
