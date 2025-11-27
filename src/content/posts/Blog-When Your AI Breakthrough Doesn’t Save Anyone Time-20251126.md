@@ -92,7 +92,7 @@ Not quite as dramatic as creating terrorizing dinosaurs, but the principle still
 
 ## When is that excitement the right response?
 
-![*Solving the Puzzle*](/src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7236.jpeg)
+![*Solving the Puzzle*](/IMG_7236.jpeg)
 
 Sometimes that absorption in the technical puzzle IS the right move.
 
