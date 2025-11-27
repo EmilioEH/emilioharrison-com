@@ -17,6 +17,44 @@ npm run preview  # Preview production build locally
 npm test         # Run unit tests
 ```
 
+## Adding New Field Notes
+
+Field notes are managed through Astro Content Collections:
+
+1. Create a new `.md` file in `src/content/posts/`
+2. Add required frontmatter:
+```yaml
+---
+title: "Your Post Title"
+date: "2025-11-27"
+category: "Research | Design | Development"
+excerpt: "Brief summary of the post"
+---
+```
+
+3. Write your content in Markdown
+4. Run `npm run dev` to preview locally
+
+## Environment Variables
+
+Currently, no environment variables are required for local development. 
+
+For production deployment on Cloudflare Pages:
+- All environment variables are managed through the Cloudflare Pages dashboard
+- No secrets are committed to the repository
+
+## Testing
+
+Run tests with:
+```bash
+npm test        # Run all unit tests with Vitest
+npm run lint    # Check code quality with ESLint
+```
+
+Current test coverage:
+- UI Components: BrutalButton, BrutalCard
+- More tests coming soon!
+
 ## Deployment Workflow
 This project is deployed to **emilioharrison.com** via GitHub → Cloudflare Pages:
 

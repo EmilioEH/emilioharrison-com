@@ -3,6 +3,8 @@ import { Briefcase, BookOpen, Sparkles, Award } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import BrutalCard from '../../ui/BrutalCard';
 import BrutalButton from '../../ui/BrutalButton';
+import QuoteBlock from '../../ui/QuoteBlock';
+import SkillCategory from '../../ui/SkillCategory';
 import { useTheme } from '../../../hooks/useTheme';
 import { skills, certifications, expertise } from '../../../data/about';
 
@@ -70,21 +72,19 @@ const AboutContent = () => {
                     <h2 className="text-3xl font-black">Philosophy</h2>
                 </div>
                 <div className="space-y-4">
-                    <div className={`border-l-4 pl-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-gray-300'}`}>
-                        <p className={`italic text-lg mb-2 ${theme.id === 'blueprint' ? 'text-blue-100' : 'text-gray-700'}`}>
-                            "Context engineering over prompt engineering. You don't need to memorize the recipe—you just need to know where the cookbook is."
-                        </p>
-                        <p className={`text-sm ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-500'}`}>— From "Context is King"</p>
-                    </div>
+                    <QuoteBlock
+                        quote="Context engineering over prompt engineering. You don't need to memorize the recipe—you just need to know where the cookbook is."
+                        attribution="— From 'Context is King'"
+                        theme={theme}
+                    />
                     <p className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}>
                         I focus on building tools that scale beyond demos. That means rigorous testing frameworks, like my <strong>5×5 protocol</strong> (5 runs for consistency, 5 scenarios for accuracy) to validate AI outputs before shipping.
                     </p>
-                    <div className={`border-l-4 pl-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-gray-300'}`}>
-                        <p className={`italic text-lg mb-2 ${theme.id === 'blueprint' ? 'text-blue-100' : 'text-gray-700'}`}>
-                            "The big shift is from wanting to 'be right' to wanting to 'get it right.'"
-                        </p>
-                        <p className={`text-sm ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-500'}`}>— Brené Brown, quoted in "The AI Expert in the Room"</p>
-                    </div>
+                    <QuoteBlock
+                        quote="The big shift is from wanting to 'be right' to wanting to 'get it right.'"
+                        attribution="— Brené Brown, quoted in 'The AI Expert in the Room'"
+                        theme={theme}
+                    />
                     <p className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}>
                         I believe in learning publicly, admitting what I don't know, and building real capability instead of performing expertise. The work speaks louder than the posturing.
                     </p>
@@ -95,54 +95,15 @@ const AboutContent = () => {
             <div className="mb-12">
                 <h2 className={`text-3xl font-black mb-6 border-b-4 pb-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>Skills & Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <BrutalCard theme={theme} className="p-6">
-                        <h3 className="text-xl font-black mb-3">Research Methods</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {skills.research.map((skill, index) => (
-                                <span key={index} className={`${theme.border} ${theme.colors.card} px-3 py-1 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </BrutalCard>
-
-                    <BrutalCard theme={theme} className="p-6">
-                        <h3 className="text-xl font-black mb-3">Artificial Intelligence</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {skills.ai.map((skill, index) => (
-                                <span key={index} className={`${theme.border} ${theme.colors.card} px-3 py-1 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </BrutalCard>
-
-                    <BrutalCard theme={theme} className="p-6">
-                        <h3 className="text-xl font-black mb-3">Research Tools</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {skills.tools.map((skill, index) => (
-                                <span key={index} className={`${theme.border} ${theme.colors.card} px-3 py-1 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </BrutalCard>
-
-                    <BrutalCard theme={theme} className="p-6">
-                        <h3 className="text-xl font-black mb-3">Technical</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {skills.technical.map((skill, index) => (
-                                <span key={index} className={`${theme.border} ${theme.colors.card} px-3 py-1 text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </BrutalCard>
+                    <SkillCategory title="Research Methods" skills={skills.research} theme={theme} />
+                    <SkillCategory title="Artificial Intelligence" skills={skills.ai} theme={theme} />
+                    <SkillCategory title="Research Tools" skills={skills.tools} theme={theme} />
+                    <SkillCategory title="Technical" skills={skills.technical} theme={theme} />
                 </div>
-            </div>
+            </div >
 
             {/* Education & Certifications */}
-            <div className="mb-12">
+            < div className="mb-12" >
                 <h2 className={`text-3xl font-black mb-6 border-b-4 pb-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>Education & Certifications</h2>
                 <BrutalCard theme={theme} className="p-6">
                     <div className="space-y-4">
@@ -158,10 +119,10 @@ const AboutContent = () => {
                         ))}
                     </div>
                 </BrutalCard>
-            </div>
+            </div >
 
             {/* Previous Experience Highlight */}
-            <BrutalCard theme={theme} className="mb-12 p-6">
+            < BrutalCard theme={theme} className="mb-12 p-6" >
                 <h3 className="text-xl font-black mb-3">Previous Experience</h3>
                 <div className={`space-y-3 ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
                     <div>
@@ -175,18 +136,18 @@ const AboutContent = () => {
                         <p className="mt-2">Managed customer experience initiatives and fostered knowledge transfer across the organization.</p>
                     </div>
                 </div>
-            </BrutalCard>
+            </BrutalCard >
 
             {/* Call to Action */}
-            <div className="flex flex-wrap gap-4 justify-center">
+            < div className="flex flex-wrap gap-4 justify-center" >
                 <BrutalButton theme={theme} color={theme.colors.primary} href="/lab">
                     <Sparkles size={20} /> View Experiments
                 </BrutalButton>
                 <BrutalButton theme={theme} href="/fieldnotes">
                     <BookOpen size={20} /> Read Field Notes
                 </BrutalButton>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

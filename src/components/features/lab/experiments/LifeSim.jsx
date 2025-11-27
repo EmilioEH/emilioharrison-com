@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RotateCcw, Play, Pause } from 'lucide-react';
 
-const LifeSim = ({ theme }) => {
+const LifeSim = () => {
     const canvasRef = useRef(null);
     const [run, setRun] = useState(false);
     const [stats, setStats] = useState({ day: 0, a: 2, b: 2 });
@@ -18,11 +18,17 @@ const LifeSim = ({ theme }) => {
         setStats({ day: 1, a: 2, b: 2 });
     };
 
+    // Initialize on mount
+    useEffect(() => {
+        if (!s.current.orgs.length) {
+            init();
+        }
+    }, []);
+
     useEffect(() => {
         const cvs = canvasRef.current;
         if (!cvs) return;
         const ctx = cvs.getContext('2d');
-        if (!s.current.orgs.length) init();
 
         let af;
         const loop = () => {
@@ -36,10 +42,10 @@ const LifeSim = ({ theme }) => {
                     if (Math.hypot(o.x - f.x, o.y - f.y) < 15) { o.r++; st.food.splice(i, 1); }
                 }
             });
-            ctx.fillStyle = theme.id === 'blueprint' ? '#002147' : '#fdfbf7'; ctx.fillRect(0, 0, st.w, st.h);
-            ctx.fillStyle = theme.id === 'blueprint' ? '#ffd700' : '#e9c46a'; st.food.forEach(f => { ctx.beginPath(); ctx.arc(f.x, f.y, 4, 0, 7); ctx.fill(); });
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, st.w, st.h);
+            ctx.fillStyle = '#e9c46a'; st.food.forEach(f => { ctx.beginPath(); ctx.arc(f.x, f.y, 4, 0, 7); ctx.fill(); });
             st.orgs.forEach(o => {
-                ctx.fillStyle = o.t === 'a' ? (theme.id === 'blueprint' ? '#4db8ff' : '#2a9d8f') : (theme.id === 'blueprint' ? '#ff4d4d' : '#e76f51');
+                ctx.fillStyle = o.t === 'a' ? '#2a9d8f' : '#e76f51';
                 ctx.beginPath(); ctx.arc(o.x, o.y, 8, 0, 7); ctx.fill(); ctx.stroke();
             });
             st.f++;
@@ -56,24 +62,24 @@ const LifeSim = ({ theme }) => {
         };
         if (run) loop();
         return () => cancelAnimationFrame(af);
-    }, [run, theme]);
+    }, [run]);
 
     return (
         <div className="space-y-4">
-            <div className={`flex justify-between font-bold text-sm ${theme.colors.card} p-2 ${theme.border} ${theme.colors.text}`}>
-                <span className={theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-300'}>Type A: {stats.a} ({strat.a})</span>
+            <div className="flex justify-between font-bold text-sm bg-white p-2 border-2 border-black text-ink">
+                <span className="text-teal">Type A: {stats.a} ({strat.a})</span>
                 <span>Day: {stats.day}</span>
-                <span className={theme.id === 'blueprint' ? 'text-red-300' : 'text-[#e76f51]'}>Type B: {stats.b} ({strat.b})</span>
+                <span className="text-coral">Type B: {stats.b} ({strat.b})</span>
             </div>
-            <canvas ref={canvasRef} width={600} height={300} className={`w-full h-64 ${theme.colors.bg} ${theme.border}`} />
+            <canvas ref={canvasRef} width={600} height={300} className="w-full h-64 bg-white border-2 border-black" />
             <div className="flex justify-between">
                 <div className="flex gap-2">
-                    <button onClick={() => setStrat(s => ({ ...s, a: s.a === 'share' ? 'steal' : 'share' }))} className={`text-xs border ${theme.id === 'blueprint' ? 'border-blue-200 bg-blue-800 text-white' : 'border-black bg-[#2a9d8f] text-white'} px-2 py-1`}>Toggle A</button>
-                    <button onClick={() => setStrat(s => ({ ...s, b: s.b === 'share' ? 'steal' : 'share' }))} className={`text-xs border ${theme.id === 'blueprint' ? 'border-blue-200 bg-red-900 text-white' : 'border-black bg-[#e76f51] text-white'} px-2 py-1`}>Toggle B</button>
+                    <button onClick={() => setStrat(s => ({ ...s, a: s.a === 'share' ? 'steal' : 'share' }))} className="text-xs border-2 border-black bg-white hover:bg-gray-100 px-2 py-1 uppercase font-bold">Toggle A</button>
+                    <button onClick={() => setStrat(s => ({ ...s, b: s.b === 'share' ? 'steal' : 'share' }))} className="text-xs border-2 border-black bg-white hover:bg-gray-100 px-2 py-1 uppercase font-bold">Toggle B</button>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => { init(); setRun(false); }} className={`p-2 ${theme.border} ${theme.colors.card} ${theme.colors.text}`}><RotateCcw size={16} /></button>
-                    <button onClick={() => setRun(r => !r)} className={`px-4 py-2 ${theme.colors.accent} ${theme.border} font-bold flex gap-2 text-black`}>{run ? <Pause size={16} /> : <Play size={16} />} {run ? 'Pause' : 'Run'}</button>
+                    <button onClick={() => { init(); setRun(false); }} className="p-2 border-2 border-black bg-white hover:bg-gray-100"><RotateCcw size={16} /></button>
+                    <button onClick={() => setRun(r => !r)} className="px-4 py-2 bg-teal border-2 border-black font-bold flex gap-2 text-white hover:opacity-90">{run ? <Pause size={16} /> : <Play size={16} />} {run ? 'Pause' : 'Run'}</button>
                 </div>
             </div>
         </div>

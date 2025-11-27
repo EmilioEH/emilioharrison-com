@@ -10,6 +10,6 @@ const posts = (await getCollection('posts')).sort(
 ---
 
 <Layout title="Emilio Harrison | UX Researcher & Creative Technologist">
-    <Hero client:load />
+    <Hero client:visible />
     <BlogList client:visible posts={posts} />
 </Layout>

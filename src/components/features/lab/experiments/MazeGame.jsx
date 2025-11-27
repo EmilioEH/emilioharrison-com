@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Smartphone, Maximize, Minimize, RotateCcw, Activity } from 'lucide-react';
-import BrutalButton from '../../../ui/BrutalButton';
+import TapeButton from '../../../ui/TapeButton';
 
-const MazeGame = ({ theme }) => {
+const MazeGame = () => {
     const canvasRef = useRef(null); const containerRef = useRef(null);
     const [started, setStarted] = useState(false); const [status, setStatus] = useState("Start to play");
     const [permission, setPermission] = useState(false); const [fullScreen, setFullScreen] = useState(false);
@@ -33,7 +33,7 @@ const MazeGame = ({ theme }) => {
     const start = async () => {
         init();
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            try { const p = await DeviceOrientationEvent.requestPermission(); if (p === 'granted') { setPermission(true); setStatus("Tilt to play"); } } catch (e) { setStatus("Swipe to play"); }
+            try { const p = await DeviceOrientationEvent.requestPermission(); if (p === 'granted') { setPermission(true); setStatus("Tilt to play"); } } catch { setStatus("Swipe to play"); }
         } else { setPermission(true); setStatus("Tilt/Swipe/Mouse"); }
         setStarted(true);
     };
@@ -60,8 +60,8 @@ const MazeGame = ({ theme }) => {
         const loop = () => {
             const s = gameState.current;
             if (s.won) {
-                ctx.fillStyle = theme.colors.bg; ctx.fillRect(0, 0, cvs.width, cvs.height);
-                ctx.fillStyle = theme.id === 'blueprint' ? '#4db8ff' : '#e9c46a';
+                ctx.fillStyle = '#e9c46a'; ctx.fillRect(0, 0, cvs.width, cvs.height);
+                ctx.fillStyle = 'black';
                 ctx.font = 'bold 30px monospace'; ctx.textAlign = 'center'; ctx.fillText("NICE VIBES!", cvs.width / 2, cvs.height / 2);
                 ctx.font = '16px monospace'; ctx.fillText("Tap restart", cvs.width / 2, cvs.height / 2 + 30);
                 af = requestAnimationFrame(loop); return;
@@ -77,35 +77,35 @@ const MazeGame = ({ theme }) => {
             if (s.ball.x > s.goal.x && s.ball.x < s.goal.x + s.goal.w && s.ball.y > s.goal.y && s.ball.y < s.goal.y + s.goal.h) s.won = true;
 
             ctx.clearRect(0, 0, cvs.width, cvs.height);
-            ctx.fillStyle = theme.id === 'blueprint' ? '#004e92' : '#264653'; for (let w of s.walls) ctx.fillRect(w.x, w.y, w.w, w.h);
-            ctx.fillStyle = theme.id === 'blueprint' ? '#ffd700' : '#e9c46a'; ctx.fillRect(s.goal.x, s.goal.y, s.goal.w, s.goal.h);
-            ctx.fillStyle = theme.id === 'blueprint' ? '#ff4d4d' : '#e76f51'; ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, 8, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#264653'; for (let w of s.walls) ctx.fillRect(w.x, w.y, w.w, w.h);
+            ctx.fillStyle = '#e9c46a'; ctx.fillRect(s.goal.x, s.goal.y, s.goal.w, s.goal.h);
+            ctx.fillStyle = '#e76f51'; ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, 8, 0, Math.PI * 2); ctx.fill();
             af = requestAnimationFrame(loop);
         };
         af = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(af);
-    }, [started, fullScreen, permission, theme]);
+    }, [started, fullScreen, permission]);
 
     if (!started) return (
-        <div className="flex flex-col items-center justify-center h-64 text-center p-6">
-            <Smartphone size={48} className={`mb-4 ${theme.colors.text}`} />
-            <h3 className="text-2xl font-black mb-2">Gravity Maze</h3>
-            <p className="mb-6 max-w-xs">Tilt your phone or use your mouse to guide the ball to the goal.</p>
-            <BrutalButton theme={theme} onClick={start} color={theme.colors.primary} className="text-white">Start Experiment</BrutalButton>
+        <div className="flex flex-col items-center justify-center h-64 text-center p-6 bg-white border-2 border-black">
+            <Smartphone size={48} className="mb-4 text-gray-400" />
+            <h3 className="text-2xl font-black mb-2 text-ink">Gravity Maze</h3>
+            <p className="mb-6 max-w-xs text-gray-600">Tilt your phone or use your mouse to guide the ball to the goal.</p>
+            <TapeButton onClick={start} color="bg-mustard" className="text-black">Start Experiment</TapeButton>
         </div>
     );
 
     return (
-        <div className="relative w-full h-96 bg-gray-900 overflow-hidden select-none touch-none">
-            <div ref={containerRef} className="w-full h-full transition-transform duration-100 ease-out origin-center will-change-transform">
+        <div className="relative w-full h-96 bg-gray-900 overflow-hidden select-none touch-none border-2 border-black">
+            <div ref={containerRef} className="w-full h-full transition-transform duration-100 ease-out origin-center will-change-transform bg-white">
                 <canvas ref={canvasRef} onClick={() => gameState.current.won && handleRestart()} className="w-full h-full block" />
                 <div className="absolute top-4 right-4 flex gap-2">
-                    <button onClick={() => { if (!document.fullscreenElement) containerRef.current.requestFullscreen(); else document.exitFullscreen(); }} className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm">
+                    <button onClick={() => { if (!document.fullscreenElement) containerRef.current.requestFullscreen(); else document.exitFullscreen(); }} className="bg-white border-2 border-black p-2 text-black hover:bg-gray-100">
                         {fullScreen ? <Minimize size={20} /> : <Maximize size={20} />}
                     </button>
-                    <button onClick={handleRestart} className="bg-white/20 p-2 rounded-full text-white backdrop-blur-sm"><RotateCcw size={20} /></button>
+                    <button onClick={handleRestart} className="bg-white border-2 border-black p-2 text-black hover:bg-gray-100"><RotateCcw size={20} /></button>
                 </div>
-                <div className={`absolute bottom-2 left-2 ${theme.colors.card} ${theme.border} px-2 py-1 text-xs font-bold ${theme.colors.text} flex items-center gap-2`}>
+                <div className="absolute bottom-2 left-2 bg-white border-2 border-black px-2 py-1 text-xs font-bold text-black flex items-center gap-2">
                     <Activity size={14} className={sensorsActive ? "text-green-500 animate-pulse" : "text-gray-400"} /> {status}
                 </div>
             </div>

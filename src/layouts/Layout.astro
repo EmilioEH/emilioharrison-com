@@ -1,69 +1,83 @@
 ---
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
+import PatternDefs from '../components/ui/PatternDefs';
+import ReactiveBackground from '../components/ui/ReactiveBackground';
 
-import { THEMES } from '../lib/themes';
+export interface Props {
+	title: string;
+    description?: string;
+}
 
-// We can't easily access the store state on the server for initial render without some work,
-// but for now we'll default to 'default' and let the client hydrate.
-// To avoid flash of wrong theme, we might need a script.
-// For this migration, we'll start with a basic setup.
-
-const { title = "Emilio Harrison" } = Astro.props;
+const { title, description } = Astro.props;
+const defaultDescription = "UX Researcher & Creative Technologist building utility-focused AI tools";
 ---
 
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="description" content="Astro description">
+		<meta name="description" content="Emilio Harrison - UX Researcher & Creative Technologist" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
+        
+        <!-- SEO Meta Tags -->
+        <meta name="description" content={description || defaultDescription} />
+
+        <!-- Open Graph -->
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description || defaultDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={Astro.url} />
+        <meta property="og:site_name" content="Emilio Harrison" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description || defaultDescription} />
+
+        <!-- JSON-LD Schema -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": "Emilio Harrison",
+          "jobTitle": "UX Research Strategist",
+          "url": "https://emilioharrison.com",
+          "alumniOf": "University of Texas at Austin",
+          "workLocation": "Austin, TX"
+        }
+        </script>
+
 		<title>{title}</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS&display=swap" rel="stylesheet">
 	</head>
-	<body>
-        <!-- Theme wrapper script to avoid FOUC could go here, but relying on client hydration for now -->
-        <div id="theme-wrapper" class="min-h-screen transition-colors duration-500 overflow-hidden relative">
+	<body class="bg-paper text-ink font-sans antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-mustard selection:text-black">
+        <PatternDefs />
+        <ReactiveBackground client:idle rippleTrigger={false} />
+        
+        <div class="relative z-10 flex flex-col min-h-screen">
+        <!-- Skip to content link for accessibility -->
+        <a 
+          href="#main-content" 
+          class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-mustard focus:text-black focus:font-bold focus:border-4 focus:border-black focus:shadow-hard"
+        >
+          Skip to main content
+        </a>
+
             <Navbar client:load />
-            
-            <main class="max-w-6xl mx-auto px-4 md:px-8 py-12 min-h-[60vh] relative z-10">
+            <main id="main-content" class="flex-grow container mx-auto px-4 py-8 md:py-12 max-w-6xl">
                 <slot />
             </main>
-
-            <!-- NewsletterSignup needs to be updated to use store or passed theme -->
-            <!-- For now, we'll comment it out or need to refactor it to use the store too -->
-            <!-- <NewsletterSignup client:visible /> -->
-            
-            <footer class="bg-black text-white py-12 px-4 text-center relative z-10">
-                <div class="font-bold text-2xl tracking-tighter mb-4">EMILIOHARRISON.COM</div>
-                <p class="text-gray-500 text-sm">© {new Date().getFullYear()} Emilio Harrison. Built with Astro, React & Tailwind.</p>
-            </footer>
+            <Footer client:idle />
         </div>
 
         <script>
-            import { themeId } from '../lib/store';
-            import { THEMES } from '../lib/themes';
-
-            const wrapper = document.getElementById('theme-wrapper');
-            const bgLayer = document.createElement('div');
-            bgLayer.className = "fixed inset-0 pointer-events-none opacity-10 z-0";
-            bgLayer.style.backgroundImage = 'linear-gradient(#4db8ff 1px, transparent 1px), linear-gradient(90deg, #4db8ff 1px, transparent 1px)';
-            bgLayer.style.backgroundSize = '40px 40px';
-            
-            // Subscribe to theme changes to update the wrapper class
-            themeId.subscribe(id => {
-                const theme = THEMES[id];
-                if (wrapper) {
-                    wrapper.className = `min-h-screen ${theme.colors.bg} ${theme.colors.text} ${theme.font} transition-colors duration-500 overflow-hidden relative`;
-                    
-                    // Handle blueprint background
-                    if (id === 'blueprint') {
-                        if (!wrapper.contains(bgLayer)) wrapper.appendChild(bgLayer);
-                    } else {
-                        if (wrapper.contains(bgLayer)) wrapper.removeChild(bgLayer);
-                    }
-                }
-            });
+            import { initTheme } from '../lib/themeInit';
         </script>
 	</body>
 </html>

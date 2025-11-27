@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { Mail, Linkedin, Music, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
-import BrutalCard from '../../ui/BrutalCard';
-import BrutalButton from '../../ui/BrutalButton';
-import { useStore } from '@nanostores/react';
-import { themeId } from '../../../lib/store';
-import { THEMES } from '../../../lib/themes';
+import StickyNote from '../../ui/StickyNote';
+import TapeButton from '../../ui/TapeButton';
 
 const ContactContent = () => {
-    const currentThemeId = useStore(themeId);
-    const theme = THEMES[currentThemeId];
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -59,7 +54,7 @@ const ContactContent = () => {
             } else {
                 throw new Error('Form submission failed');
             }
-        } catch (error) {
+        } catch {
             setStatus({
                 type: 'error',
                 message: 'Something went wrong. Please try emailing me directly at contact@emilioharrison.com'
@@ -84,29 +79,25 @@ const ContactContent = () => {
         }
     ];
 
-    const inputClasses = `w-full px-4 py-3 font-medium ${theme.border} ${theme.id === 'blueprint'
-        ? 'bg-blue-950 border-blue-200 text-blue-100 placeholder-blue-400'
-        : 'bg-white border-black text-gray-900 placeholder-gray-400'
-        } focus:outline-none focus:ring-4 ${theme.id === 'blueprint' ? 'focus:ring-blue-400' : 'focus:ring-yellow-200'
-        }`;
+    const inputClasses = "w-full px-4 py-3 font-medium bg-white border-2 border-black text-ink placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-mustard shadow-hard-sm transition-shadow";
 
     return (
-        <div className="animate-in fade-in duration-700">
-            <SectionTitle theme={theme}>Get in Touch</SectionTitle>
+        <div className="animate-in fade-in duration-700 relative z-10">
+            <SectionTitle>Get in Touch</SectionTitle>
 
-            <p className={`text-xl mb-12 max-w-2xl ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-600'}`}>
+            <p className="text-xl mb-12 max-w-2xl text-gray-600 pl-4 border-l-4 border-black">
                 Have a question about UX research, AI tools, or just want to connect? I'd love to hear from you.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Contact Form */}
                 <div className="md:col-span-7">
-                    <BrutalCard theme={theme} className="p-8">
-                        <h2 className="text-2xl font-black mb-6">Send a Message</h2>
+                    <StickyNote color="bg-white" className="p-8" rotate={-1}>
+                        <h2 className="text-2xl font-black mb-6 text-ink">Send a Message</h2>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label htmlFor="name" className="block font-bold mb-2">
+                                <label htmlFor="name" className="block font-bold mb-2 text-ink">
                                     Name *
                                 </label>
                                 <input
@@ -122,7 +113,7 @@ const ContactContent = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="email" className="block font-bold mb-2">
+                                <label htmlFor="email" className="block font-bold mb-2 text-ink">
                                     Email *
                                 </label>
                                 <input
@@ -138,7 +129,7 @@ const ContactContent = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="subject" className="block font-bold mb-2">
+                                <label htmlFor="subject" className="block font-bold mb-2 text-ink">
                                     Subject *
                                 </label>
                                 <input
@@ -154,7 +145,7 @@ const ContactContent = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="message" className="block font-bold mb-2">
+                                <label htmlFor="message" className="block font-bold mb-2 text-ink">
                                     Message *
                                 </label>
                                 <textarea
@@ -170,9 +161,9 @@ const ContactContent = () => {
                             </div>
 
                             {status.message && (
-                                <div className={`p-4 ${theme.border} flex items-start gap-3 ${status.type === 'success'
-                                    ? theme.id === 'blueprint' ? 'bg-green-950 border-green-400 text-green-100' : 'bg-green-100 border-green-600 text-green-800'
-                                    : theme.id === 'blueprint' ? 'bg-red-950 border-red-400 text-red-100' : 'bg-red-100 border-red-600 text-red-800'
+                                <div className={`p-4 border-2 border-black flex items-start gap-3 ${status.type === 'success'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
                                     }`}>
                                     {status.type === 'success' ? (
                                         <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
@@ -183,11 +174,9 @@ const ContactContent = () => {
                                 </div>
                             )}
 
-                            <BrutalButton
-                                theme={theme}
-                                color={theme.colors.primary}
+                            <TapeButton
+                                color="bg-coral"
                                 type="submit"
-                                disabled={isSubmitting}
                                 className="w-full"
                             >
                                 {isSubmitting ? (
@@ -198,36 +187,35 @@ const ContactContent = () => {
                                         Send Message
                                     </>
                                 )}
-                            </BrutalButton>
+                            </TapeButton>
                         </form>
-                    </BrutalCard>
+                    </StickyNote>
                 </div>
 
                 {/* Contact Info & Social Links */}
-                <div className="md:col-span-5 space-y-6">
+                <div className="md:col-span-5 space-y-8">
                     {/* Direct Contact */}
-                    <BrutalCard theme={theme} className="p-6">
+                    <StickyNote color="bg-teal" className="p-6 text-white" rotate={2}>
                         <div className="flex items-start gap-4 mb-4">
-                            <Mail className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'} size={28} />
+                            <Mail className="text-white" size={28} />
                             <div>
                                 <h3 className="text-xl font-black mb-2">Direct Email</h3>
                                 <a
                                     href="mailto:contact@emilioharrison.com"
-                                    className={`font-bold hover:underline ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-700'
-                                        }`}
+                                    className="font-bold hover:underline text-white"
                                 >
                                     contact@emilioharrison.com
                                 </a>
-                                <p className={`text-sm mt-2 ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-500'}`}>
+                                <p className="text-sm mt-2 text-white/80">
                                     I typically respond within 24-48 hours.
                                 </p>
                             </div>
                         </div>
-                    </BrutalCard>
+                    </StickyNote>
 
                     {/* Social Links */}
-                    <BrutalCard theme={theme} className="p-6">
-                        <h3 className="text-xl font-black mb-4">Connect Elsewhere</h3>
+                    <StickyNote color="bg-mustard" className="p-6" rotate={-1}>
+                        <h3 className="text-xl font-black mb-4 text-black">Connect Elsewhere</h3>
                         <div className="space-y-3">
                             {socialLinks.map((link) => {
                                 const Icon = link.icon;
@@ -237,15 +225,12 @@ const ContactContent = () => {
                                         href={link.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className={`flex items-center gap-3 p-3 ${theme.border} ${theme.id === 'blueprint'
-                                            ? 'bg-blue-950 border-blue-300 hover:bg-blue-900'
-                                            : 'bg-gray-50 border-black hover:bg-yellow-100'
-                                            } transition-colors group`}
+                                        className="flex items-center gap-3 p-3 bg-white border-2 border-black hover:bg-gray-50 transition-colors group shadow-hard-sm"
                                     >
-                                        <Icon size={24} className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'} />
+                                        <Icon size={24} className="text-black" />
                                         <div className="flex-grow">
-                                            <p className="font-bold group-hover:underline">{link.name}</p>
-                                            <p className={`text-sm ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-500'}`}>
+                                            <p className="font-bold group-hover:underline text-black">{link.name}</p>
+                                            <p className="text-sm text-gray-600">
                                                 {link.description}
                                             </p>
                                         </div>
@@ -253,11 +238,11 @@ const ContactContent = () => {
                                 );
                             })}
                         </div>
-                    </BrutalCard>
+                    </StickyNote>
 
                     {/* Quick Note */}
-                    <div className={`p-4 border-l-4 ${theme.id === 'blueprint' ? 'border-blue-200 bg-blue-950/30' : 'border-black bg-gray-100'}`}>
-                        <p className={`text-sm italic ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
+                    <div className="p-4 border-l-4 border-black bg-gray-100">
+                        <p className="text-sm italic text-gray-700">
                             Whether you're interested in collaborating, have questions about my work, or just want to chat about UX research and AI—don't hesitate to reach out.
                         </p>
                     </div>

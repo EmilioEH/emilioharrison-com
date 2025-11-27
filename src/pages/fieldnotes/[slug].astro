@@ -16,7 +16,7 @@ const { Content } = await post.render();
 ---
 
 <Layout title={`${post.data.title} | Field Notes`}>
-    <BlogPostContent client:load post={post}>
+    <BlogPostContent client:visible post={post}>
         <Content />
     </BlogPostContent>
 </Layout>
