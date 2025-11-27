@@ -14,7 +14,7 @@ takeaways:
 
 # When Your AI Breakthrough Doesn’t Save Anyone Time
 
-![*Title*](/src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7229.jpeg)
+![*Title*](/images/blog/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7229.jpeg)
 
 ## What job was it being hired for?
 
@@ -32,7 +32,7 @@ That’s when I closed Teams.
 
 -----
 
-![*Telescope*](/src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7233.jpeg)
+![*Telescope*](/images/blog/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7233.jpeg)
 
 A month later I realized the problem with the plugin was that I never asked “what job was my plugin being hired to do?”
 
@@ -48,7 +48,7 @@ I’d built a solution to a problem that didn’t exist.
 
 -----
 
-![*Map vs Building*](/src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7234.jpeg)
+![*Map vs Building*](/images/blog/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7234.jpeg)
 
 Over that month, I was working on a different project that *was* using Jobs to be Done. More formal process: watching users, documenting observations, creating JTBD maps based on what we saw.
 
@@ -70,7 +70,7 @@ The point is I built something nobody needed because I never asked if they neede
 
 ## What was I actually excited about?
 
-![*AI House of Cards*](/src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7235.jpeg)
+![*AI House of Cards*](/images/blog/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7235.jpeg)
 
 *Why did I jump straight to building?*
 
@@ -112,7 +112,7 @@ I’ll probably still just start building.
 
 ## Where’s the line?
 
-![*Balancing Act*](/src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7239.jpeg)
+![*Balancing Act*](/images/blog/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/IMG_7239.jpeg)
 
 I haven’t actually applied Jobs to be Done to an AI project yet.
 
