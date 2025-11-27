@@ -1,8 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import BlogList from '../../components/BlogList';
+import BlogList from '../../components/features/blog/BlogList';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts')).sort(
+	(a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf()
+);
 ---
 
 <Layout title="Field Notes | Emilio Harrison">
-    <BlogList client:load />
+    <BlogList client:visible posts={posts} />
 </Layout>
