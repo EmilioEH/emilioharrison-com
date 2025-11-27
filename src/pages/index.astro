@@ -2,9 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero';
 import BlogList from '../components/BlogList';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts')).sort(
+	(a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf()
+);
 ---
 
 <Layout title="Emilio Harrison | UX Researcher & Creative Technologist">
     <Hero client:load />
-    <BlogList client:load />
+    <BlogList client:load posts={posts} />
 </Layout>
