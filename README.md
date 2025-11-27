@@ -1,16 +1,45 @@
-# React + Vite
+# emilioharrison.com
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal website built with Astro, React, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Astro**: Static site generator with React islands for interactivity
+- **React**: Component library for interactive elements
+- **Tailwind CSS**: Utility-first CSS framework
+- **Nano Stores**: State management for theme switching across React islands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Development
+```bash
+npm install
+npm run dev      # Start dev server at http://localhost:4321
+npm run build    # Build for production
+npm run preview  # Preview production build locally
+npm test         # Run unit tests
+```
 
-## React Compiler
+## Deployment Workflow
+This project is deployed to **emilioharrison.com** via GitHub → Cloudflare Pages:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Push to GitHub**: Commit and push changes to the main branch
+   ```bash
+   git add .
+   git commit -m "Your message"
+   git push
+   ```
 
-## Expanding the ESLint configuration
+2. **Cloudflare Pages**: Automatically detects the push and triggers a build
+   - Build command: `npm run build`
+   - Build output directory: `dist`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. **Live Site**: Changes are deployed to https://emilioharrison.com within a few minutes
+
+## Project Structure
+```
+src/
+├── pages/           # Astro pages (file-based routing)
+├── layouts/         # Global layouts
+├── components/      # React components (hydrated as islands)
+├── experiments/     # Interactive lab experiments
+├── content/         # Markdown blog posts
+└── lib/            # Utilities and stores
+```
