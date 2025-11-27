@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, FileText, Zap } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import BrutalButton from '../components/ui/BrutalButton';
-import BrutalCard from '../components/ui/BrutalCard';
-import { BLOG_POSTS } from '../lib/content';
+import BrutalButton from '../ui/BrutalButton';
+import BrutalCard from '../ui/BrutalCard';
+import { useStore } from '@nanostores/react';
+import { themeId } from '../../lib/store';
+import { THEMES } from '../../lib/themes';
 
-const BlogPost = ({ theme }) => {
-    const { slug } = useParams();
-    const navigate = useNavigate();
+const BlogPostContent = ({ post }) => {
+    const currentThemeId = useStore(themeId);
+    const theme = THEMES[currentThemeId];
     const [readMode, setReadMode] = useState('deep');
-
-    const post = BLOG_POSTS.find(p => p.slug === slug);
 
     if (!post) return <div className="text-center py-20">Post not found</div>;
 
     return (
         <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
-            <button onClick={() => navigate('/fieldnotes')} className="mb-8 font-bold flex items-center gap-2 hover:underline">
+            <a href="/fieldnotes" className="mb-8 font-bold flex items-center gap-2 hover:underline no-underline text-inherit">
                 <ArrowRight className="rotate-180" size={16} /> Back to Field Notes
-            </button>
+            </a>
 
             <div className={`sticky top-24 z-40 mb-8 p-2 ${theme.colors.card} ${theme.border} ${theme.shadow} flex justify-between items-center transition-all duration-300`}>
                 <span className="font-bold text-sm uppercase tracking-widest pl-2 hidden md:block">Reading Mode:</span>
@@ -101,4 +100,4 @@ const BlogPost = ({ theme }) => {
     );
 };
 
-export default BlogPost;
+export default BlogPostContent;

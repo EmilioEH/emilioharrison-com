@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { Mail, Linkedin, Music, Send, CheckCircle, AlertCircle } from 'lucide-react';
-import SectionTitle from '../components/ui/SectionTitle';
-import BrutalCard from '../components/ui/BrutalCard';
-import BrutalButton from '../components/ui/BrutalButton';
+import SectionTitle from '../ui/SectionTitle';
+import BrutalCard from '../ui/BrutalCard';
+import BrutalButton from '../ui/BrutalButton';
+import { useStore } from '@nanostores/react';
+import { themeId } from '../../lib/store';
+import { THEMES } from '../../lib/themes';
 
-const Contact = ({ theme }) => {
+const ContactContent = () => {
+    const currentThemeId = useStore(themeId);
+    const theme = THEMES[currentThemeId];
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -262,4 +267,4 @@ const Contact = ({ theme }) => {
     );
 };
 
-export default Contact;
+export default ContactContent;

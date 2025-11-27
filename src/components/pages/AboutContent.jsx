@@ -1,12 +1,15 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Briefcase, BookOpen, Sparkles, Award, Code, Users } from 'lucide-react';
-import SectionTitle from '../components/ui/SectionTitle';
-import BrutalCard from '../components/ui/BrutalCard';
-import BrutalButton from '../components/ui/BrutalButton';
+import SectionTitle from '../ui/SectionTitle';
+import BrutalCard from '../ui/BrutalCard';
+import BrutalButton from '../ui/BrutalButton';
+import { useStore } from '@nanostores/react';
+import { themeId } from '../../lib/store';
+import { THEMES } from '../../lib/themes';
 
-const About = ({ theme }) => {
-    const navigate = useNavigate();
+const AboutContent = () => {
+    const currentThemeId = useStore(themeId);
+    const theme = THEMES[currentThemeId];
 
     const skills = {
         research: ['Generative Research', 'Usability Testing', 'Card Sorting', 'Guerrilla Research', 'Heuristic Evaluation', 'Thematic Analysis', 'Surveys', 'Contextual Inquiry'],
@@ -216,10 +219,10 @@ const About = ({ theme }) => {
 
             {/* Call to Action */}
             <div className="flex flex-wrap gap-4 justify-center">
-                <BrutalButton theme={theme} color={theme.colors.primary} onClick={() => navigate('/lab')}>
+                <BrutalButton theme={theme} color={theme.colors.primary} href="/lab">
                     <Sparkles size={20} /> View Experiments
                 </BrutalButton>
-                <BrutalButton theme={theme} onClick={() => navigate('/fieldnotes')}>
+                <BrutalButton theme={theme} href="/fieldnotes">
                     <BookOpen size={20} /> Read Field Notes
                 </BrutalButton>
             </div>
@@ -227,4 +230,4 @@ const About = ({ theme }) => {
     );
 };
 
-export default About;
+export default AboutContent;

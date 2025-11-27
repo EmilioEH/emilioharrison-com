@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import BrutalButton from './ui/BrutalButton';
 
-const NewsletterSignup = ({ theme }) => {
+import { useStore } from '@nanostores/react';
+import { themeId } from '../lib/store';
+import { THEMES } from '../lib/themes';
+
+const NewsletterSignup = () => {
+    const currentThemeId = useStore(themeId);
+    const theme = THEMES[currentThemeId];
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
     const [message, setMessage] = useState('');

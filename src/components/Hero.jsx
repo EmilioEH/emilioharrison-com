@@ -1,12 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import BrutalButton from './ui/BrutalButton';
+import { useStore } from '@nanostores/react';
+import { themeId } from '../lib/store';
+import { THEMES } from '../lib/themes';
 
 function BeakerIcon(props) { return <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 3h15" /><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3" /><path d="M6 14h12" /></svg>; }
 
-const Hero = ({ theme }) => {
-    const navigate = useNavigate();
+const Hero = () => {
+    const currentThemeId = useStore(themeId);
+    const theme = THEMES[currentThemeId];
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-24 items-center animate-in fade-in duration-700">
             <div className="md:col-span-7 space-y-6">
@@ -20,10 +24,10 @@ const Hero = ({ theme }) => {
                     Trying to figure out where AI actually helps people—not replaces them or makes more internet garbage. Just... useful stuff that matters.
                 </p>
                 <div className="flex flex-wrap gap-4 pt-4">
-                    <BrutalButton theme={theme} color={theme.colors.primary} onClick={() => navigate('/lab')}>
+                    <BrutalButton theme={theme} color={theme.colors.primary} href="/lab">
                         <BeakerIcon size={20} /> View Experiments
                     </BrutalButton>
-                    <BrutalButton theme={theme} onClick={() => navigate('/contact')}>
+                    <BrutalButton theme={theme} href="/contact">
                         <Mail size={20} /> Get in Touch
                     </BrutalButton>
                 </div>
