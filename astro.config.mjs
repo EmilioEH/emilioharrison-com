@@ -9,6 +9,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
+    output: 'server',
     site: 'https://emilioharrison.com',
     adapter: cloudflare(),
     integrations: [
