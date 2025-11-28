@@ -1,17 +1,14 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import BlogPostContent from '../../components/features/blog/BlogPostContent';
-import { getCollection } from 'astro:content';
+import { getEntry } from 'astro:content';
 
-export async function getStaticPaths() {
-  const posts = await getCollection('posts');
-  return posts.map(post => ({
-    params: { slug: post.slug },
-    props: { post },
-  }));
-}
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/404');
 
-const { post } = Astro.props;
+const post = await getEntry('posts', slug);
+if (!post) return Astro.redirect('/404');
+
 const { Content } = await post.render();
 ---
 
