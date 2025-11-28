@@ -17,8 +17,21 @@ export default config({
             format: { contentField: 'content' },
             schema: {
                 title: fields.slug({ name: { label: 'Title' } }),
+                status: fields.select({
+                    label: 'Status',
+                    options: [
+                        { label: 'Draft', value: 'draft' },
+                        { label: 'Scheduled', value: 'scheduled' },
+                        { label: 'Published', value: 'published' },
+                    ],
+                    defaultValue: 'draft',
+                }),
+                publishedDate: fields.datetime({
+                    label: 'Published Date',
+                    description: 'For scheduled posts, set this to the future date you want it to go live.',
+                }),
                 date: fields.text({
-                    label: 'Date',
+                    label: 'Display Date',
                     description: 'Format: MMM DD, YYYY (e.g. Nov 27, 2025)'
                 }),
                 category: fields.text({ label: 'Category' }),

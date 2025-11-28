@@ -9,6 +9,15 @@ if (!slug) return Astro.redirect('/404');
 const post = await getEntry('posts', slug);
 if (!post) return Astro.redirect('/404');
 
+// In production, prevent access to drafts and future scheduled posts
+if (import.meta.env.PROD) {
+    if (post.data.status === 'draft') return Astro.redirect('/404');
+    if (post.data.status === 'scheduled') {
+        const publishDate = post.data.publishedDate || new Date(post.data.date);
+        if (publishDate > new Date()) return Astro.redirect('/404');
+    }
+}
+
 const { Content } = await post.render();
 ---
 

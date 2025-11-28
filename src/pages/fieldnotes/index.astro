@@ -3,9 +3,29 @@ import Layout from '../../layouts/Layout.astro';
 import BlogList from '../../components/features/blog/BlogList';
 import { getCollection } from 'astro:content';
 
-const posts = (await getCollection('posts')).sort(
-	(a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf()
-);
+const allPosts = await getCollection('posts');
+
+const posts = allPosts
+    .filter(post => {
+        // In development, show all posts
+        if (!import.meta.env.PROD) return true;
+
+        // In production, filter out drafts
+        if (post.data.status === 'draft') return false;
+
+        // In production, filter out scheduled posts that are in the future
+        if (post.data.status === 'scheduled') {
+            const publishDate = post.data.publishedDate || new Date(post.data.date);
+            return publishDate <= new Date();
+        }
+
+        return true;
+    })
+    .sort((a, b) => {
+        const dateA = a.data.publishedDate || new Date(a.data.date);
+        const dateB = b.data.publishedDate || new Date(b.data.date);
+        return dateB.valueOf() - dateA.valueOf();
+    });
 ---
 
 <Layout title="Field Notes | Emilio Harrison">
