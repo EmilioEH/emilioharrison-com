@@ -30,6 +30,16 @@ const BlogPostContent = ({ post, children }) => {
             </div>
 
             <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
+                {post.data.cover && (
+                    <div className="mb-8 border-b-4 border-black pb-6">
+                        <img
+                            src={post.data.cover.src}
+                            alt={post.data.coverAlt || post.data.title}
+                            className={`w-full h-64 md:h-96 object-cover border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} ${theme.shadow}`}
+                        />
+                    </div>
+                )}
+
                 <div className={`mb-8 border-b-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} pb-6`}>
                     <span className={`inline-block ${theme.colors.accent} border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} px-3 py-1 font-bold text-sm mb-4 text-black`}>
                         {post.data.category}
