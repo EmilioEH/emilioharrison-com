@@ -18,5 +18,12 @@ export default defineConfig({
         sitemap(),
         keystatic(),
         markdoc()
-    ]
+    ],
+    vite: {
+        resolve: {
+            alias: {
+                'react-dom/server': 'react-dom/server.edge',
+            },
+        },
+    },
 });
