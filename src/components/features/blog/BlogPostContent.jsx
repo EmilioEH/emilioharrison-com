@@ -30,23 +30,26 @@ const BlogPostContent = ({ post, children }) => {
             </div>
 
             <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
-                {post.data.cover && (
-                    <div className="mb-8 border-b-4 border-black pb-6">
-                        <img
-                            src={post.data.cover.src}
-                            alt={post.data.coverAlt || post.data.title}
-                            className={`w-full h-64 md:h-96 object-cover border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} ${theme.shadow}`}
-                        />
-                    </div>
-                )}
-
-                <div className={`mb-8 border-b-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} pb-6`}>
+                <div className="mb-8">
                     <span className={`inline-block ${theme.colors.accent} border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} px-3 py-1 font-bold text-sm mb-4 text-black`}>
                         {post.data.category}
                     </span>
-                    <h1 className="text-4xl md:text-6xl font-black mb-4 leading-tight">{post.data.title}</h1>
-                    <p className={`${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-500'} font-medium`}>Published on {post.data.date} • By Emilio Harrison</p>
+                    <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
+                    <p className={`text-xl font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-800'} mb-1`}>By: Emilio Harrison</p>
+                    <p className={`text-sm font-mono ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-500'}`}>Published: {post.data.date}</p>
                 </div>
+
+                <hr className={`border-t-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} mb-8`} />
+
+                {post.data.cover && (
+                    <div className="mb-8">
+                        <img
+                            src={post.data.cover.src}
+                            alt={post.data.coverAlt || post.data.title}
+                            className={`w-full h-auto object-cover border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} ${theme.shadow}`}
+                        />
+                    </div>
+                )}
 
                 {readMode === 'deep' ? (
                     <div className={`prose prose-lg prose-headings:font-black ${theme.id === 'blueprint' ? 'prose-invert prose-p:text-blue-100 prose-headings:text-blue-50' : 'prose-p:text-gray-800'} animate-in fade-in duration-500`}>
