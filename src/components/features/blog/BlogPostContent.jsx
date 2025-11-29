@@ -36,21 +36,23 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
 
             <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
                 <div className="mb-8">
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {post.data.category && (
+                    {post.data.category && (
+                        <div className="mb-4">
                             <a href={`/fieldnotes?category=${encodeURIComponent(post.data.category)}`} className="no-underline">
                                 <CategoryBadge category={categoryLabel || post.data.category} className="hover:bg-black hover:text-white" />
                             </a>
-                        )}
+                        </div>
+                    )}
+                    <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
+                    <p className={`text-xl font-bold text-gray-800 mb-1`}>By: Emilio Harrison</p>
+                    <p className={`text-sm font-mono text-gray-500 mb-4`}>Published: {post.data.date}</p>
+                    <div className="flex flex-wrap gap-2">
                         {displayTags.map(tagObj => (
                             <a key={tagObj.slug} href={`/fieldnotes?tags=${encodeURIComponent(tagObj.slug)}`} className="no-underline">
                                 <Tag tag={tagObj.label} className="hover:bg-black hover:text-white" />
                             </a>
                         ))}
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
-                    <p className={`text-xl font-bold text-gray-800 mb-1`}>By: Emilio Harrison</p>
-                    <p className={`text-sm font-mono text-gray-500`}>Published: {post.data.date}</p>
                 </div>
 
                 <hr className={`border-t-4 border-black mb-8`} />
@@ -67,7 +69,7 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
 
                 {readMode === 'deep' ? (
                     <div className={`prose prose-lg prose-headings:font-black prose-p:text-gray-800 animate-in fade-in duration-500`}>
-                        <p className="lead text-xl font-medium mb-6 italic">{post.data.excerpt}</p>
+
                         <div>
                             {/* Content is now passed as children from Astro */}
                             {children}
