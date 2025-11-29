@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { Menu, X, Grid } from 'lucide-react';
-import { useStore } from '@nanostores/react';
-import { themeId } from '../../lib/store';
-import { THEMES } from '../../lib/themes';
+import { useTheme } from '../../hooks/useTheme';
 
 const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const currentThemeId = useStore(themeId);
-    const theme = THEMES[currentThemeId];
+    const theme = useTheme();
 
     const navItems = [
         { path: '/', label: 'Home' },
