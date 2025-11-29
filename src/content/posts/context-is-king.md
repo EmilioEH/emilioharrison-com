@@ -1,5 +1,6 @@
 ---
 title: "Context is King"
+status: published
 date: "Nov 26, 2025"
 category: "AI & UX"
 excerpt: "Learn why 'context engineering,' feeding LLMs documentation, outperforms complex prompting. Turn one-off solutions into scalable tools."

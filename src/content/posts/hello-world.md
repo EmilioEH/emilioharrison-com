@@ -1,5 +1,6 @@
 ---
 title: "Hello World"
+status: published
 date: "Nov 26, 2025"
 category: "General"
 excerpt: "This is a sample post written in Markdown."

@@ -1,5 +1,6 @@
 ---
 title: “When Your AI Breakthrough Doesn’t Save Anyone Time”
+status: published
 date: “Nov 26, 2025”
 category: “AI & UX”
 excerpt: “Learn why asking “what job needs doing?” before building with AI can save you from creating solutions nobody needs.​​​​​​​​​​​​​​​​”

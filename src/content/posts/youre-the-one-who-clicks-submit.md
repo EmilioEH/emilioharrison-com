@@ -1,5 +1,6 @@
 ---
 title: "You're the One Who Clicks Submit"
+status: published
 date: "Nov 26, 2025"
 category: "AI & UX"
 excerpt: "When you use an LLM, you're the driver. Learn why 'good enough' is a trap and how to use a simple testing framework to verify AI outputs before shipping."

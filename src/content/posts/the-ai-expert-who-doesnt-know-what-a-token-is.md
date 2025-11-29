@@ -1,5 +1,6 @@
 ---
 title: "The AI Expert in the Room (Who Doesn't Know What a Token Is)"
+status: published
 date: "Nov 26, 2025"
 category: "AI & UX"
 excerpt: "We're all faking expertise in AI. Learn why admitting 'I don't know' is more valuable than performing confidence you don't have."
