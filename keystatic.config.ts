@@ -85,6 +85,7 @@ export default config({
             label: 'Tags',
             slugField: 'name',
             path: 'src/content/tags/*',
+            format: 'json',
             schema: {
                 name: fields.slug({ name: { label: 'Name' } }),
             },
@@ -93,6 +94,7 @@ export default config({
             label: 'Categories',
             slugField: 'name',
             path: 'src/content/categories/*',
+            format: 'json',
             schema: {
                 name: fields.slug({ name: { label: 'Name' } }),
             },
