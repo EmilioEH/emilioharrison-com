@@ -36,8 +36,24 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
         setFilteredPosts(results);
     }, [searchQuery, selectedTags, selectedCategories, sortOrder, posts]);
 
+    // Check for 'from' parameter to show back link
+    const [backLink, setBackLink] = useState(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const fromSlug = params.get('from');
+        if (fromSlug) {
+            setBackLink(`/fieldnotes/${fromSlug}`);
+        }
+    }, []);
+
     return (
         <div className="space-y-12 animate-in fade-in duration-500 relative z-10">
+            {backLink && (
+                <a href={backLink} className="inline-flex items-center gap-2 font-bold hover:underline mb-[-2rem]">
+                    <ArrowRight className="rotate-180" size={20} /> Back to Note
+                </a>
+            )}
             <SectionTitle>Field Notes</SectionTitle>
 
             <SearchFilterBar

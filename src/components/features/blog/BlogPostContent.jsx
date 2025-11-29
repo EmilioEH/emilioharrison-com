@@ -37,8 +37,9 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
             <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
                 <div className="mb-8">
                     {post.data.category && (
-                        <div className="mb-4">
-                            <a href={`/fieldnotes?category=${encodeURIComponent(post.data.category)}`} className="no-underline">
+                        <div className="mb-4 flex items-center gap-2">
+                            <span className="font-mono text-sm text-gray-500 uppercase">Category:</span>
+                            <a href={`/fieldnotes?category=${encodeURIComponent(post.data.category)}&from=${post.slug}`} className="no-underline">
                                 <CategoryBadge category={categoryLabel || post.data.category} className="hover:bg-black hover:text-white" />
                             </a>
                         </div>
@@ -46,9 +47,10 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
                     <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
                     <p className={`text-xl font-bold text-gray-800 mb-1`}>By: Emilio Harrison</p>
                     <p className={`text-sm font-mono text-gray-500 mb-4`}>Published: {post.data.date}</p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-sm text-gray-500 uppercase">Tags:</span>
                         {displayTags.map(tagObj => (
-                            <a key={tagObj.slug} href={`/fieldnotes?tags=${encodeURIComponent(tagObj.slug)}`} className="no-underline">
+                            <a key={tagObj.slug} href={`/fieldnotes?tags=${encodeURIComponent(tagObj.slug)}&from=${post.slug}`} className="no-underline">
                                 <Tag tag={tagObj.label} className="hover:bg-black hover:text-white" />
                             </a>
                         ))}
