@@ -6,7 +6,7 @@ const Footer = () => {
         <footer className="bg-black text-white py-16 px-4 text-center relative z-10 mt-16">
             <div className="max-w-2xl mx-auto mb-16">
                 <h3 className="font-black text-3xl mb-2">Join the email list</h3>
-                <p className="text-gray-400 mb-6">Get updates from the lab</p>
+                <p className="text-gray-400 mb-6">Get updates</p>
                 <form className="flex gap-2 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
                     <input
                         type="email"

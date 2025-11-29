@@ -184,9 +184,7 @@ const AboutContent = () => {
                             <Button href="/fieldnotes" intent="secondary">
                                 <BookOpen size={20} /> Read Field Notes
                             </Button>
-                            <Button href="/lab" intent="secondary">
-                                <Sparkles size={20} /> Explore the Lab
-                            </Button>
+
                         </div>
                     </div>
 
