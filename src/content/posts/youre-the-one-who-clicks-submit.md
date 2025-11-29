@@ -1,23 +1,55 @@
 ---
-title: "You're the One Who Clicks Submit"
+title: You're the One Who Clicks Submit
 status: published
-date: "Nov 26, 2025"
-category: "Lessons Learned"
-tags: ["llm", "ai-testing", "accountability", "ux-research", "hallucinations", "human-in-the-loop"]
-excerpt: "When you use an LLM, you're the driver. Learn why 'good enough' is a trap and how to use a simple testing framework to verify AI outputs before shipping."
+date: 'Nov 26, 2025'
+category: lessons-learned
+tags:
+  - llm
+  - ai-testing
+  - accountability
+  - ux-research
+  - hallucinations
+  - human-in-the-loop
+excerpt: >-
+  When you use an LLM, you're the driver. Learn why 'good enough' is a trap and
+  how to use a simple testing framework to verify AI outputs before shipping.
 takeaways:
-- title: "The Temptation to Ship Without Testing"
-  text: "Building an LLM-powered heuristic evaluation tool that looked professional and sounded authoritative, but realizing there was no verification it actually worked beyond one test case. The output looked 'good enough' but that wasn't the same as being reliable."
-- title: "The Deloitte Wake-Up Call"
-  text: "Deloitte had to refund $400,000 after an AI tool hallucinated in a government report. This highlighted the nightmare scenario: impressive outputs with someone's credibility attached, only to discover later it was wrong."
-- title: "The 5x5 Testing Protocol"
-  text: "Developed a simple testing methodology: run the same input 5 times to check consistency, then test on 5 different scenarios to verify it generalizes. Not statistically rigorous, but enough to move from 'I hope this works' to 'I've tested it.'"
-- title: "When to Test (and When Not To)"
-  text: "Use rigorous testing when prompts will be reused by others and scalability matters. Skip it for one-off analyses or personal decision-making. Always maintain human-in-the-loop for verification and choose low-risk, reversible use cases."
-- title: "You Own the Output"
-  text: "When you click submit on LLM-generated work, you're accountable—not the AI. You can't blame the tool when something goes wrong. Before shipping outputs others will trust, you need to verify accuracy and consistency, not just that it 'looks good.'"
-- title: "The Unsolved Challenges"
-  text: "Still uncertain if 5x5 is sufficient for high-stakes scenarios. Difficult to convince fast-moving teams to test when nothing's gone wrong yet. Testing adds friction in a culture that values AI for speed, making it feel like resisting progress rather than professionalism."
+  - title: The Temptation to Ship Without Testing
+    text: >-
+      Building an LLM-powered heuristic evaluation tool that looked professional
+      and sounded authoritative, but realizing there was no verification it
+      actually worked beyond one test case. The output looked 'good enough' but
+      that wasn't the same as being reliable.
+  - title: The Deloitte Wake-Up Call
+    text: >-
+      Deloitte had to refund $400,000 after an AI tool hallucinated in a
+      government report. This highlighted the nightmare scenario: impressive
+      outputs with someone's credibility attached, only to discover later it was
+      wrong.
+  - title: The 5x5 Testing Protocol
+    text: >-
+      Developed a simple testing methodology: run the same input 5 times to
+      check consistency, then test on 5 different scenarios to verify it
+      generalizes. Not statistically rigorous, but enough to move from 'I hope
+      this works' to 'I've tested it.'
+  - title: When to Test (and When Not To)
+    text: >-
+      Use rigorous testing when prompts will be reused by others and scalability
+      matters. Skip it for one-off analyses or personal decision-making. Always
+      maintain human-in-the-loop for verification and choose low-risk,
+      reversible use cases.
+  - title: You Own the Output
+    text: >-
+      When you click submit on LLM-generated work, you're accountable—not the
+      AI. You can't blame the tool when something goes wrong. Before shipping
+      outputs others will trust, you need to verify accuracy and consistency,
+      not just that it 'looks good.'
+  - title: The Unsolved Challenges
+    text: >-
+      Still uncertain if 5x5 is sufficient for high-stakes scenarios. Difficult
+      to convince fast-moving teams to test when nothing's gone wrong yet.
+      Testing adds friction in a culture that values AI for speed, making it
+      feel like resisting progress rather than professionalism.
 ---
 
 # You're the One Who Clicks Submit

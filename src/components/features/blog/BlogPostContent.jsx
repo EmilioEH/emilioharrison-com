@@ -8,11 +8,13 @@ import { useTheme } from '../../../hooks/useTheme';
 import Tag from '../../ui/Tag';
 import CategoryBadge from '../../ui/CategoryBadge';
 
-const BlogPostContent = ({ post, children }) => {
+const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
     const theme = useTheme();
     const [readMode, setReadMode] = useState('deep');
 
     if (!post) return <div className="text-center py-20">Post not found</div>;
+
+    const displayTags = tagsWithLabels || (post.data.tags || []).map(tag => ({ slug: tag, label: tag }));
 
     return (
         <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
@@ -37,12 +39,12 @@ const BlogPostContent = ({ post, children }) => {
                     <div className="flex flex-wrap gap-2 mb-4">
                         {post.data.category && (
                             <a href={`/fieldnotes?category=${encodeURIComponent(post.data.category)}`} className="no-underline">
-                                <CategoryBadge category={post.data.category} className="hover:bg-black hover:text-white" />
+                                <CategoryBadge category={categoryLabel || post.data.category} className="hover:bg-black hover:text-white" />
                             </a>
                         )}
-                        {post.data.tags && post.data.tags.map(tag => (
-                            <a key={tag} href={`/fieldnotes?tags=${encodeURIComponent(tag)}`} className="no-underline">
-                                <Tag tag={tag} className="hover:bg-black hover:text-white" />
+                        {displayTags.map(tagObj => (
+                            <a key={tagObj.slug} href={`/fieldnotes?tags=${encodeURIComponent(tagObj.slug)}`} className="no-underline">
+                                <Tag tag={tagObj.label} className="hover:bg-black hover:text-white" />
                             </a>
                         ))}
                     </div>

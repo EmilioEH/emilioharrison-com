@@ -162,13 +162,29 @@ declare module 'astro:content' {
 	};
 
 	type DataEntryMap = {
-		"posts": Record<string, {
+		"categories": Record<string, {
+  id: string;
+  body?: string;
+  collection: "categories";
+  data: InferEntrySchema<"categories">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
+"posts": Record<string, {
   id: string;
   render(): Render[".md"];
   slug: string;
   body: string;
   collection: "posts";
   data: InferEntrySchema<"posts">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
+"tags": Record<string, {
+  id: string;
+  body?: string;
+  collection: "tags";
+  data: InferEntrySchema<"tags">;
   rendered?: RenderedContent;
   filePath?: string;
 }>;

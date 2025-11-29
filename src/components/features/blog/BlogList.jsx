@@ -5,7 +5,7 @@ import StickyNote from '../../ui/StickyNote';
 import SearchFilterBar from './SearchFilterBar';
 import { applyAllFilters } from '../../../lib/filterPosts';
 
-const BlogList = ({ posts, allTags, allCategories, initialFilters = {} }) => {
+const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap = {}, initialFilters = {} }) => {
     // State for filters
     const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
     const [selectedTags, setSelectedTags] = useState(initialFilters.tags ? initialFilters.tags.split(',').filter(Boolean) : []);
@@ -51,6 +51,8 @@ const BlogList = ({ posts, allTags, allCategories, initialFilters = {} }) => {
                 setSortOrder={setSortOrder}
                 allTags={allTags}
                 allCategories={allCategories}
+                tagsMap={tagsMap}
+                categoriesMap={categoriesMap}
                 resultCount={filteredPosts.length}
             />
 
@@ -82,7 +84,7 @@ const BlogList = ({ posts, allTags, allCategories, initialFilters = {} }) => {
                                 <StickyNote color={color} rotate={rotate} className="h-full flex flex-col group-hover:bg-white transition-colors">
                                     <div className="flex justify-between items-start mb-4 border-b-4 border-black pb-2">
                                         <span className="text-xs font-bold uppercase tracking-wider text-white px-2 py-1 bg-ink border-2 border-black">
-                                            {post.data.category || 'Uncategorized'}
+                                            {categoriesMap[post.data.category] || post.data.category || 'Uncategorized'}
                                         </span>
                                         <span className="text-sm font-bold text-gray-700">{new Date(post.data.date).toLocaleDateString()}</span>
                                     </div>

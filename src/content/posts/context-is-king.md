@@ -1,25 +1,54 @@
 ---
-title: "Context is King"
+title: Context is King
 status: published
-date: "Nov 26, 2025"
-category: "AI & Automation"
-tags: ["llm", "context-engineering", "figma-plugins", "documentation", "teaching", "reusable-solutions"]
-excerpt: "Learn why 'context engineering,' feeding LLMs documentation, outperforms complex prompting. Turn one-off solutions into scalable tools."
+date: 'Nov 26, 2025'
+category: ai-automation
+tags:
+  - llm
+  - context-engineering
+  - figma-plugins
+  - documentation
+  - teaching
+  - reusable-solutions
+excerpt: >-
+  Learn why 'context engineering,' feeding LLMs documentation, outperforms
+  complex prompting. Turn one-off solutions into scalable tools.
 takeaways:
-- title: "Context Over Prompts"
-  text: "Stop trying to perfect your prompt wording. Instead, provide AI with the right documentation and information. It's like sending someone a map instead of trying to describe directions perfectly."
-- title: "Context Engineering vs Prompt Engineering"
-  text: "Building with AI is less about finding perfect phrases and more about determining what context (documentation, examples, specifications) will generate the desired behavior."
-- title: "The Documentation Solution"
-  text: "The author solved a Figma plugin challenge by feeding Claude the official Figma API documentation, not by refining prompts. The AI generated working code by having the right reference material."
-- title: "Build the Builder"
-  text: "Create reusable templates with documentation that others can use. One solution becomes scalable when you teach others how to inject the right context for their own problems."
-- title: "Human-Driven RAG"
-  text: "Your role is to be a curator of information, not a prompt expert. Find the right source material (official docs, guides, specifications) and provide it to the AI."
-- title: "Limitations"
-  text: "Context engineering only works when good source material exists. It excels at technical integration and established systems with documentation, but won't solve problems requiring subjective creative judgment."
-- title: "Practical Approach"
-  text: "Open two tabs: one with official documentation for your system, one with your LLM. Copy relevant sections into the LLM, describe your problem in plain language, and see what it builds."
+  - title: Context Over Prompts
+    text: >-
+      Stop trying to perfect your prompt wording. Instead, provide AI with the
+      right documentation and information. It's like sending someone a map
+      instead of trying to describe directions perfectly.
+  - title: Context Engineering vs Prompt Engineering
+    text: >-
+      Building with AI is less about finding perfect phrases and more about
+      determining what context (documentation, examples, specifications) will
+      generate the desired behavior.
+  - title: The Documentation Solution
+    text: >-
+      The author solved a Figma plugin challenge by feeding Claude the official
+      Figma API documentation, not by refining prompts. The AI generated working
+      code by having the right reference material.
+  - title: Build the Builder
+    text: >-
+      Create reusable templates with documentation that others can use. One
+      solution becomes scalable when you teach others how to inject the right
+      context for their own problems.
+  - title: Human-Driven RAG
+    text: >-
+      Your role is to be a curator of information, not a prompt expert. Find the
+      right source material (official docs, guides, specifications) and provide
+      it to the AI.
+  - title: Limitations
+    text: >-
+      Context engineering only works when good source material exists. It excels
+      at technical integration and established systems with documentation, but
+      won't solve problems requiring subjective creative judgment.
+  - title: Practical Approach
+    text: >-
+      Open two tabs: one with official documentation for your system, one with
+      your LLM. Copy relevant sections into the LLM, describe your problem in
+      plain language, and see what it builds.
 ---
 
 # Context is King

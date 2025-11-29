@@ -16,6 +16,8 @@ const SearchFilterBar = ({
     setSortOrder,
     allTags,
     allCategories,
+    tagsMap = {},
+    categoriesMap = {},
     resultCount
 }) => {
     const theme = useTheme();
@@ -115,7 +117,7 @@ const SearchFilterBar = ({
                                 {allCategories.map(category => (
                                     <CategoryBadge
                                         key={category}
-                                        category={category}
+                                        category={categoriesMap[category] || category}
                                         isActive={selectedCategories.includes(category)}
                                         onClick={() => toggleCategory(category)}
                                     />
@@ -130,7 +132,7 @@ const SearchFilterBar = ({
                                 {allTags.map(tag => (
                                     <Tag
                                         key={tag}
-                                        tag={tag}
+                                        tag={tagsMap[tag] || tag}
                                         isActive={selectedTags.includes(tag)}
                                         onClick={() => toggleTag(tag)}
                                     />
@@ -157,10 +159,10 @@ const SearchFilterBar = ({
                 <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-xs font-bold uppercase text-gray-400 mr-2">Active:</span>
                     {selectedCategories.map(cat => (
-                        <CategoryBadge key={cat} category={cat} isActive={true} onClick={() => toggleCategory(cat)} className="scale-90" />
+                        <CategoryBadge key={cat} category={categoriesMap[cat] || cat} isActive={true} onClick={() => toggleCategory(cat)} className="scale-90" />
                     ))}
                     {selectedTags.map(tag => (
-                        <Tag key={tag} tag={tag} isActive={true} onClick={() => toggleTag(tag)} className="scale-90" />
+                        <Tag key={tag} tag={tagsMap[tag] || tag} isActive={true} onClick={() => toggleTag(tag)} className="scale-90" />
                     ))}
                     <button onClick={clearAll} className="ml-2 text-xs font-bold text-red-500 hover:underline">Clear</button>
                 </div>

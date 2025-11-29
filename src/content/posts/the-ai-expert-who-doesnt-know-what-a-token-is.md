@@ -1,25 +1,60 @@
 ---
-title: "The AI Expert in the Room (Who Doesn't Know What a Token Is)"
+title: The AI Expert in the Room (Who Doesn't Know What a Token Is)
 status: published
-date: "Nov 26, 2025"
-category: "Professional Growth"
-tags: ["llm", "tokens", "imposter-syndrome", "learning-in-public", "honesty", "expertise"]
-excerpt: "We're all faking expertise in AI. Learn why admitting 'I don't know' is more valuable than performing confidence you don't have."
+date: 'Nov 26, 2025'
+category: professional-growth
+tags:
+  - llm
+  - tokens
+  - imposter-syndrome
+  - learning-in-public
+  - honesty
+  - expertise
+excerpt: >-
+  We're all faking expertise in AI. Learn why admitting 'I don't know' is more
+  valuable than performing confidence you don't have.
 takeaways:
-- title: "The Performative Expert Phenomenon"
-  text: "Many professionals are pretending to be AI experts while lacking fundamental understanding of concepts like tokens, context windows, and the difference between training and inference. This is happening across workplaces in meetings, Slack channels, and casual conversations."
-- title: "Fear, Not Arrogance"
-  text: "The posturing comes from terror about job security and obsolescence. AI feels like an extinction-level event for knowledge work, and the constant messaging that you must be an expert or become irrelevant drives people to fake expertise as a survival strategy."
-- title: "The Author's Own Struggle"
-  text: "As a UX Research expert, the author experienced their own mastery feeling 'quaint' when AI emerged. They caught themselves dropping buzzwords, deflecting follow-up questions, and performing confidence they didn't have rather than admitting gaps in knowledge."
-- title: "The Brené Brown Insight"
-  text: "A quote shifted everything: 'The big shift here is from wanting to be right to wanting to get it right.' The focus on appearing valuable was preventing actual learning and keeping conversations shallow instead of deep."
-- title: "The Cost of Performance"
-  text: "Pretending to know prevents real learning, keeps you in superficial conversations, and wastes energy managing an image instead of building genuine capability. The performance protects ego but blocks growth."
-- title: "The Solution: Public Vulnerability"
-  text: "The author started saying 'I don't know' out loud in meetings and conversations. The result wasn't judgment but relief—others felt permission to also admit confusion, leading to collaborative learning and deeper understanding."
-- title: "The Invitation"
-  text: "Notice the gap between what you're saying and what you actually understand. When you catch yourself or others performing expertise, offer an out: 'I'm still learning this too, want to figure it out together?' Honesty about where you are beats pretending to be the expert."
+  - title: The Performative Expert Phenomenon
+    text: >-
+      Many professionals are pretending to be AI experts while lacking
+      fundamental understanding of concepts like tokens, context windows, and
+      the difference between training and inference. This is happening across
+      workplaces in meetings, Slack channels, and casual conversations.
+  - title: 'Fear, Not Arrogance'
+    text: >-
+      The posturing comes from terror about job security and obsolescence. AI
+      feels like an extinction-level event for knowledge work, and the constant
+      messaging that you must be an expert or become irrelevant drives people to
+      fake expertise as a survival strategy.
+  - title: The Author's Own Struggle
+    text: >-
+      As a UX Research expert, the author experienced their own mastery feeling
+      'quaint' when AI emerged. They caught themselves dropping buzzwords,
+      deflecting follow-up questions, and performing confidence they didn't have
+      rather than admitting gaps in knowledge.
+  - title: The Brené Brown Insight
+    text: >-
+      A quote shifted everything: 'The big shift here is from wanting to be
+      right to wanting to get it right.' The focus on appearing valuable was
+      preventing actual learning and keeping conversations shallow instead of
+      deep.
+  - title: The Cost of Performance
+    text: >-
+      Pretending to know prevents real learning, keeps you in superficial
+      conversations, and wastes energy managing an image instead of building
+      genuine capability. The performance protects ego but blocks growth.
+  - title: 'The Solution: Public Vulnerability'
+    text: >-
+      The author started saying 'I don't know' out loud in meetings and
+      conversations. The result wasn't judgment but relief—others felt
+      permission to also admit confusion, leading to collaborative learning and
+      deeper understanding.
+  - title: The Invitation
+    text: >-
+      Notice the gap between what you're saying and what you actually
+      understand. When you catch yourself or others performing expertise, offer
+      an out: 'I'm still learning this too, want to figure it out together?'
+      Honesty about where you are beats pretending to be the expert.
 ---
 
 # The AI Expert in the Room (Who Doesn't Know What a Token Is)

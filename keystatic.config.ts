@@ -34,9 +34,15 @@ export default config({
                     label: 'Display Date',
                     description: 'Format: MMM DD, YYYY (e.g. Nov 27, 2025)'
                 }),
-                category: fields.text({ label: 'Category' }),
+                category: fields.relationship({
+                    label: 'Category',
+                    collection: 'categories',
+                }),
                 tags: fields.array(
-                    fields.text({ label: 'Tag' }),
+                    fields.relationship({
+                        label: 'Tag',
+                        collection: 'tags',
+                    }),
                     {
                         label: 'Tags',
                         itemLabel: props => props.value || 'Tag',
@@ -69,6 +75,22 @@ export default config({
                         publicPath: '../../assets/blogIMG/',
                     },
                 }),
+            },
+        }),
+        tags: collection({
+            label: 'Tags',
+            slugField: 'name',
+            path: 'src/content/tags/*',
+            schema: {
+                name: fields.slug({ name: { label: 'Name' } }),
+            },
+        }),
+        categories: collection({
+            label: 'Categories',
+            slugField: 'name',
+            path: 'src/content/categories/*',
+            schema: {
+                name: fields.slug({ name: { label: 'Name' } }),
             },
         }),
     },

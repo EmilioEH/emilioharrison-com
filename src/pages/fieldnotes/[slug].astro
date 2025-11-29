@@ -19,10 +19,26 @@ if (import.meta.env.PROD) {
 }
 
 const { Content } = await post.render();
+
+const categoryEntry = post.data.category ? await getEntry('categories', post.data.category) : null;
+const categoryLabel = categoryEntry?.data.name || post.data.category;
+
+const tagsWithLabels = post.data.tags ? await Promise.all(post.data.tags.map(async (tag) => {
+    const entry = await getEntry('tags', tag);
+    return {
+        slug: tag,
+        label: entry?.data.name || tag
+    };
+})) : [];
 ---
 
 <Layout title={`${post.data.title} | Field Notes`}>
-    <BlogPostContent client:visible post={post}>
+    <BlogPostContent 
+        client:visible 
+        post={post} 
+        categoryLabel={categoryLabel}
+        tagsWithLabels={tagsWithLabels}
+    >
         <Content />
     </BlogPostContent>
 </Layout>

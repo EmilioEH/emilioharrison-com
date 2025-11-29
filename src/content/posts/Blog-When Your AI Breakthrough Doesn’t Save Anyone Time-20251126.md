@@ -1,17 +1,38 @@
 ---
-title: "When Your AI Breakthrough Doesn't Save Anyone Time"
+title: When Your AI Breakthrough Doesn't Save Anyone Time
 status: published
-date: "Nov 26, 2025"
-category: "Lessons Learned"
-tags: ["llm", "ai-testing", "ai-validation", "testing-methodology", "5x5-testing", "ux-research", "heuristic-evaluation"]
-excerpt: "Learn why asking 'what job needs doing?' before building with AI can save you from creating solutions nobody needs."
+date: 'Nov 26, 2025'
+category: lessons-learned
+tags:
+  - llm
+  - ai-testing
+  - ai-validation
+  - testing-methodology
+  - 5x5-testing
+  - ux-research
+  - heuristic-evaluation
+excerpt: >-
+  Learn why asking 'what job needs doing?' before building with AI can save you
+  from creating solutions nobody needs.
 takeaways:
-- title: “Ask ‘What job is this solving?’ before building”
-  text: “Before jumping into development, validate that there’s actually a painful problem to solve. Ask what people currently use, why it’s insufficient, and whether a new solution is genuinely needed—not just technically possible.”
-- title: “Technical curiosity can blind you to user needs”
-  text: “Getting excited about whether you *can* build something with AI often means skipping the question of whether you *should*. That fascination with solving the technical puzzle needs to be balanced with understanding actual user pain points.”
-- title: “Match your approach to the stakes”
-  text: “Low-stakes personal experiments? Follow your curiosity. High-stakes team tools? Do proper discovery first. The challenge is recognizing which situation you’re in before you’ve already built the wrong thing.“​​​​​​​​​​​​​​​​
+  - title: “Ask ‘What job is this solving?’ before building”
+    text: >-
+      “Before jumping into development, validate that there’s actually a painful
+      problem to solve. Ask what people currently use, why it’s insufficient,
+      and whether a new solution is genuinely needed—not just technically
+      possible.”
+  - title: “Technical curiosity can blind you to user needs”
+    text: >-
+      “Getting excited about whether you *can* build something with AI often
+      means skipping the question of whether you *should*. That fascination with
+      solving the technical puzzle needs to be balanced with understanding
+      actual user pain points.”
+  - title: “Match your approach to the stakes”
+    text: >-
+      “Low-stakes personal experiments? Follow your curiosity. High-stakes team
+      tools? Do proper discovery first. The challenge is recognizing which
+      situation you’re in before you’ve already built the wrong
+      thing.“​​​​​​​​​​​​​​​​
 ---
 
 # When Your AI Breakthrough Doesn’t Save Anyone Time
