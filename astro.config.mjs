@@ -3,9 +3,7 @@ import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import keystatic from '@keystatic/astro';
 import cloudflare from '@astrojs/cloudflare';
-import markdoc from '@astrojs/markdoc';
 
-import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,9 +13,7 @@ export default defineConfig({
     integrations: [
         react(),
         tailwind(),
-        sitemap(),
-        keystatic(),
-        markdoc()
+        keystatic()
     ],
     vite: {
         resolve: {

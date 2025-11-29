@@ -47,24 +47,24 @@ const BlogPostContent = ({ post, children }) => {
                         ))}
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
-                    <p className={`text-xl font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-800'} mb-1`}>By: Emilio Harrison</p>
-                    <p className={`text-sm font-mono ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-500'}`}>Published: {post.data.date}</p>
+                    <p className={`text-xl font-bold text-gray-800 mb-1`}>By: Emilio Harrison</p>
+                    <p className={`text-sm font-mono text-gray-500`}>Published: {post.data.date}</p>
                 </div>
 
-                <hr className={`border-t-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} mb-8`} />
+                <hr className={`border-t-4 border-black mb-8`} />
 
                 {post.data.cover && (
                     <div className="mb-8">
                         <img
                             src={post.data.cover.src}
                             alt={post.data.coverAlt || post.data.title}
-                            className={`w-full h-auto object-cover border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} ${theme.shadow}`}
+                            className={`w-full h-auto object-cover border-2 border-black ${theme.shadow}`}
                         />
                     </div>
                 )}
 
                 {readMode === 'deep' ? (
-                    <div className={`prose prose-lg prose-headings:font-black ${theme.id === 'blueprint' ? 'prose-invert prose-p:text-blue-100 prose-headings:text-blue-50' : 'prose-p:text-gray-800'} animate-in fade-in duration-500`}>
+                    <div className={`prose prose-lg prose-headings:font-black prose-p:text-gray-800 animate-in fade-in duration-500`}>
                         <p className="lead text-xl font-medium mb-6 italic">{post.data.excerpt}</p>
                         <div>
                             {/* Content is now passed as children from Astro */}
@@ -73,17 +73,17 @@ const BlogPostContent = ({ post, children }) => {
                     </div>
                 ) : (
                     <div className="animate-in slide-in-from-right-4 duration-300">
-                        <div className={`${theme.colors.accent} p-4 border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} font-black text-xl mb-8 flex items-center gap-2 ${theme.shadow} text-black`}>
+                        <div className={`${theme.colors.accent} p-4 border-2 border-black font-black text-xl mb-8 flex items-center gap-2 ${theme.shadow} text-black`}>
                             <Zap /> TL;DR — THE UTILITY
                         </div>
                         <div className="grid gap-6">
                             {post.data.takeaways ? post.data.takeaways.map((takeaway, idx) => (
                                 <div key={idx} className="group">
                                     <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
-                                        <span className={`${theme.id === 'blueprint' ? 'bg-blue-200 text-blue-900' : 'bg-black text-white'} w-8 h-8 flex items-center justify-center text-sm rounded-full`}>{idx + 1}</span>
+                                        <span className={`bg-black text-white w-8 h-8 flex items-center justify-center text-sm rounded-full`}>{idx + 1}</span>
                                         {takeaway.title}
                                     </h3>
-                                    <p className={`text-xl leading-relaxed border-l-4 pl-6 py-2 transition-colors ${theme.id === 'blueprint' ? 'border-blue-800 text-blue-100 group-hover:border-blue-400' : 'border-gray-200 text-gray-800 group-hover:border-[#2a9d8f]'}`}>
+                                    <p className={`text-xl leading-relaxed border-l-4 pl-6 py-2 transition-colors border-gray-200 text-gray-800 group-hover:border-teal`}>
                                         {takeaway.text}
                                     </p>
                                 </div>
@@ -91,8 +91,8 @@ const BlogPostContent = ({ post, children }) => {
                                 <p>No summary available for this post.</p>
                             )}
                         </div>
-                        <div className={`mt-12 p-6 border-2 border-dashed text-center ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>
-                            <p className={`font-bold mb-4 ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-500'}`}>Interested in the context behind these insights?</p>
+                        <div className={`mt-12 p-6 border-2 border-dashed text-center border-black`}>
+                            <p className={`font-bold mb-4 text-gray-500`}>Interested in the context behind these insights?</p>
                             <button onClick={() => setReadMode('deep')} className={`underline font-black text-lg hover:${theme.colors.highlight}`}>
                                 Switch to Deep Dive
                             </button>

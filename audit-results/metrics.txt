@@ -1,0 +1,48 @@
+Total files:
+      59
+
+Lines of code:
+      22 src/content/config.ts
+      26 src/components/ui/CategoryBadge.jsx
+      34 src/components/ui/BrutalButton.test.jsx
+      22 src/components/ui/SkillCategory.jsx
+      81 src/components/ui/ReactiveBackground.jsx
+      34 src/components/ui/BrutalCard.test.jsx
+      19 src/components/ui/SectionTitle.jsx
+      19 src/components/ui/BrutalCard.jsx
+      19 src/components/ui/PatternDefs.jsx
+      38 src/components/ui/StickyNote.jsx
+      26 src/components/ui/Tag.jsx
+      16 src/components/ui/QuoteBlock.jsx
+      45 src/components/ui/Marginalia.jsx
+      45 src/components/ui/TapeButton.jsx
+      33 src/components/ui/BrutalButton.jsx
+      12 src/components/layout/Footer.jsx
+      61 src/components/layout/Navbar.jsx
+      44 src/components/features/home/Hero.jsx
+     255 src/components/features/contact/ContactContent.jsx
+      19 src/components/features/shop/ShopContent.jsx
+     112 src/components/features/lab/experiments/FittsLaw.jsx
+     116 src/components/features/lab/experiments/MazeGame.jsx
+      89 src/components/features/lab/experiments/LifeSim.jsx
+      65 src/components/features/lab/LabContent.jsx
+     155 src/components/features/about/AboutContent.jsx
+     172 src/components/features/blog/SearchFilterBar.jsx
+     107 src/components/features/blog/BlogPostContent.jsx
+     108 src/components/features/blog/BlogList.jsx
+      83 src/layouts/Layout.astro
+      29 src/pages/404.astro
+       8 src/pages/lab.astro
+       8 src/pages/about.astro
+      15 src/pages/index.astro
+      51 src/pages/fieldnotes/index.astro
+      28 src/pages/fieldnotes/[slug].astro
+       8 src/pages/contact.astro
+       8 src/pages/shop.astro
+    2032 total
+
+Bundle size:
+ 11M	dist/
+
+Dependencies:
+      40

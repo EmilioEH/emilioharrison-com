@@ -28,26 +28,26 @@ Colors are defined as constant values and should be referenced consistently thro
 
 | Name | Hex | Tailwind Class | Usage |
 |------|-----|----------------|-------|
-| **Paper** | `#fdfbf7` | `bg-[#fdfbf7]` | Main page background, warm off-white paper texture |
-| **Ink** | `#264653` | `text-[#264653]` | Primary text color, dark navy for high readability |
-| **Teal** | `#2a9d8f` | `bg-[#2a9d8f]` | Primary brand color, CTAs and key highlights |
-| **Coral** | `#e76f51` | `bg-[#e76f51]` | Secondary accent, energetic and warm |
-| **Mustard** | `#e9c46a` | `bg-[#e9c46a]` | Tertiary accent, playful and friendly |
+| **Paper** | `#fdfbf7` | `bg-paper` | Main page background, warm off-white paper texture |
+| **Ink** | `#264653` | `text-ink` | Primary text color, dark navy for high readability |
+| **Teal** | `#2a9d8f` | `bg-teal` | Primary brand color, CTAs and key highlights |
+| **Coral** | `#e76f51` | `bg-coral` | Secondary accent, energetic and warm |
+| **Mustard** | `#e9c46a` | `bg-mustard` | Tertiary accent, playful and friendly |
 
 ### THEME Configuration
 
 ```javascript
 const THEME = {
   colors: {
-    bg: "bg-[#fdfbf7]",        // Paper background
-    text: "text-[#264653]",     // Ink text
-    primary: "bg-[#2a9d8f]",    // Teal - Primary actions
-    secondary: "bg-[#e76f51]",  // Coral - Secondary actions
-    accent: "bg-[#e9c46a]",     // Mustard - Highlights
-    dark: "bg-[#264653]",       // Dark navy for structure
-    stickyYellow: "bg-[#e9c46a]",
-    stickyBlue: "bg-[#2a9d8f]",
-    stickyPink: "bg-[#e76f51]",
+    bg: "bg-paper",        // Paper background
+    text: "text-ink",     // Ink text
+    primary: "bg-teal",    // Teal - Primary actions
+    secondary: "bg-coral",  // Coral - Secondary actions
+    accent: "bg-mustard",     // Mustard - Highlights
+    dark: "bg-ink",       // Dark navy for structure
+    stickyYellow: "bg-mustard",
+    stickyBlue: "bg-teal",
+    stickyPink: "bg-coral",
     stickyWhite: "bg-white",
   },
   shadow: "shadow-[6px_6px_0px_0px_#000000]",
@@ -59,10 +59,10 @@ const THEME = {
 
 ```jsx
 // Background
-<div className="bg-[#fdfbf7]">
+<div className="bg-paper">
 
 // Text
-<h1 className="text-[#264653]">
+<h1 className="text-ink">
 
 // Accent colors for sticky notes
 <StickyNote color="stickyYellow">

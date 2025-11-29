@@ -1,0 +1,8 @@
+src/components/ui/StickyNote.jsx: * @param {string} [props.className]
+src/components/ui/Marginalia.jsx:                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[2px] w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-black"></div>
+src/components/ui/TapeButton.jsx: * @param {string} [props.className]
+src/components/features/home/Hero.jsx:                <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter text-ink">
+src/components/features/home/Hero.jsx:            <div className="md:col-span-5 relative min-h-[400px] hidden md:flex items-center justify-center pointer-events-none">
+src/components/features/blog/BlogPostContent.jsx:            <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
+src/components/features/blog/BlogPostContent.jsx:                                    <p className={`text-xl leading-relaxed border-l-4 pl-6 py-2 transition-colors ${theme.id === 'blueprint' ? 'border-blue-800 text-blue-100 group-hover:border-blue-400' : 'border-gray-200 text-gray-800 group-hover:border-[#2a9d8f]'}`}>
+src/pages/404.astro:    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center">

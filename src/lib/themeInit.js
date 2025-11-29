@@ -15,12 +15,7 @@ export function initTheme() {
         if (wrapper) {
             wrapper.className = `min-h-screen ${theme.colors.bg} ${theme.colors.text} ${theme.font} transition-colors duration-500 overflow-hidden relative`;
 
-            // Handle blueprint background
-            if (id === 'blueprint') {
-                if (!wrapper.contains(bgLayer)) wrapper.appendChild(bgLayer);
-            } else {
-                if (wrapper.contains(bgLayer)) wrapper.removeChild(bgLayer);
-            }
+
         }
     });
 }

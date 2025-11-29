@@ -1,0 +1,9 @@
+Unused devDependencies
+* @size-limit/file
+* depcheck
+* eslint-plugin-unused-imports
+* jscpd
+* knip
+* rollup-plugin-visualizer
+* size-limit
+* wrangler
