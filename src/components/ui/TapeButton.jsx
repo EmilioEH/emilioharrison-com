@@ -19,7 +19,7 @@ const TapeButton = ({
     className = "",
     type = "button",
     active = false,
-    color = "bg-coral"
+    color = "bg-btn-primary"
 }) => {
     return (
         <button

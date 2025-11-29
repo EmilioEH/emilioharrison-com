@@ -19,12 +19,12 @@ const Hero = () => {
                 </div>
                 <div className="flex flex-wrap gap-4 pt-4">
                     <a href="/fieldnotes" className="no-underline">
-                        <TapeButton color="bg-teal">
+                        <TapeButton color="bg-btn-primary">
                             <BookOpen size={20} /> Read Field Notes
                         </TapeButton>
                     </a>
                     <a href="/contact" className="no-underline">
-                        <TapeButton color="bg-coral">
+                        <TapeButton color="bg-btn-accent">
                             <Mail size={20} /> Contact
                         </TapeButton>
                     </a>
