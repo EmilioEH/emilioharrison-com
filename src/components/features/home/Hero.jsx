@@ -8,7 +8,7 @@ const Hero = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-24 items-center animate-in fade-in duration-700 relative z-10">
             <div className="md:col-span-7 space-y-8">
                 <div className="inline-block transform -rotate-2">
-                    <ContentBlock color="bg-mustard" padding="px-4 py-1" className="font-black tracking-widest uppercase text-sm text-black">
+                    <ContentBlock color="bg-white" padding="px-4 py-1" className="font-black tracking-widest uppercase text-sm text-black" pin>
                         UX RESEARCHER & CREATIVE TECHNOLOGIST
                     </ContentBlock>
                 </div>
@@ -16,6 +16,8 @@ const Hero = () => {
                 <ContentBlock
                     className="max-w-lg transform rotate-1"
                     padding="p-6"
+                    color="bg-white"
+                    pin
                 >
                     <p className="text-xl md:text-2xl text-black font-bold leading-relaxed">
                         Building AI tools for real problems, not hype. Puzzle-obsessed. I write about what I'm learning, what I'm stuck on, and what's worth building in the first place.

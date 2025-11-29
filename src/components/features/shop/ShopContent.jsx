@@ -16,17 +16,20 @@ const ShopContent = () => {
             <SectionTitle theme={theme}>Shop</SectionTitle>
 
             <div className="max-w-3xl">
-                <p className="text-xl md:text-2xl font-medium leading-relaxed mb-8">
-                    I'm building tools for UX practitioners—masterclasses, LLM prompts, and a custom AI assistant for UX research and design work.
-                </p>
-                <p className="text-xl md:text-2xl font-bold mb-12">
-                    Not ready yet, but getting close.
-                </p>
+                <ContentBlock color="bg-white" pin rotate={1} padding="p-8" className="mb-12">
+                    <p className="text-xl font-bold mb-6">
+                        I'm building a suite of AI tools designed specifically for UX researchers.
+                    </p>
+                    <p className="text-lg">
+                        Not ready yet, but getting close.
+                    </p>
+                </ContentBlock>
 
                 <ContentBlock
-                    color="bg-mustard"
+                    color="bg-white"
                     padding="p-8"
                     className="mb-12 transform -rotate-1"
+                    pin
                 >
                     <h3 className="text-2xl font-black mb-4">Want to know when it launches?</h3>
                     <p className="text-lg font-bold">Join the email list below.</p>

@@ -80,13 +80,12 @@ const ContactContent = () => {
         <div className="animate-in fade-in duration-700 relative z-10">
             <SectionTitle>Get in Touch</SectionTitle>
 
-            <div className="mb-12 max-w-3xl pl-4 border-l-4 border-black space-y-4">
-                <p className="text-xl text-gray-600">
-                    I'm always interested in talking with people who are building things worth building—whether that's a collaboration, a consulting project, a speaking opportunity, or just a conversation about AI tools and UX research.
-                </p>
-                <p className="text-xl text-gray-600">
-                    If you're working on something interesting, or you're curious about testing frameworks, context engineering, or how to avoid shipping AI slop, I'd love to hear from you.
-                </p>
+            <div className="max-w-3xl mb-12">
+                <ContentBlock color="bg-white" pin rotate={-1} padding="p-8">
+                    <p className="text-xl md:text-2xl font-medium leading-relaxed">
+                        I'm always interested in talking shop, whether that's about UX research, AI, or just building cool things on the internet.
+                    </p>
+                </ContentBlock>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -194,18 +193,18 @@ const ContactContent = () => {
                 {/* Contact Info & Social Links */}
                 <div className="md:col-span-5 space-y-8">
                     {/* Direct Contact */}
-                    <ContentBlock color="bg-teal" padding="p-6" rotate={2} pin>
+                    <ContentBlock color="bg-white" padding="p-6" rotate={2} pin>
                         <div className="flex items-start gap-4 mb-4">
-                            <Mail className="text-white" size={28} />
+                            <Mail className="text-black" size={28} />
                             <div>
-                                <h3 className="text-xl font-black mb-2 text-white">Send an email</h3>
+                                <h3 className="text-xl font-black mb-2 text-black">Send an email</h3>
                                 <a
                                     href="mailto:contact@emilioharrison.com"
-                                    className="font-bold hover:underline text-white"
+                                    className="font-bold hover:underline text-black"
                                 >
                                     contact@emilioharrison.com
                                 </a>
-                                <p className="text-sm mt-2 text-white/80">
+                                <p className="text-sm mt-2 text-gray-700">
                                     I usually respond within a day or two. If it takes longer, I'm probably stuck on a puzzle.
                                 </p>
                             </div>
@@ -213,7 +212,7 @@ const ContactContent = () => {
                     </ContentBlock>
 
                     {/* Social Links */}
-                    <ContentBlock color="bg-mustard" padding="p-6" rotate={-1} pin>
+                    <ContentBlock color="bg-white" padding="p-6" rotate={-1} pin>
                         <h3 className="text-xl font-black mb-4 text-black">Connect Elsewhere</h3>
                         <div className="space-y-3">
                             {socialLinks.map((link) => {
@@ -240,11 +239,11 @@ const ContactContent = () => {
                     </ContentBlock>
 
                     {/* Quick Note */}
-                    <div className="p-4 border-l-4 border-black bg-gray-100">
+                    <ContentBlock color="bg-white" pin rotate={1} padding="p-6">
                         <p className="text-sm italic text-gray-700">
-                            Whether you're interested in collaborating, have questions about my work, or just want to chat about UX research and AI—don't hesitate to reach out.
+                            Whether you're interested in collaborating, have a question about my work, or just want to swap book recommendations, I'm all ears.
                         </p>
-                    </div>
+                    </ContentBlock>
                 </div>
             </div>
         </div>

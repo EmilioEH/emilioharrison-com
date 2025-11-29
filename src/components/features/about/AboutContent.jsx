@@ -15,9 +15,11 @@ const AboutContent = () => {
 
             {/* Main Content - Story */}
             <div className="max-w-3xl">
-                <p className="text-xl md:text-2xl font-medium leading-relaxed mb-8">
-                    I got into UX research because I wanted to understand why people do confusing things with technology. Turns out, the technology is usually the confusing part.
-                </p>
+                <ContentBlock color="bg-white" pin rotate={-1} padding="p-8" className="mb-8">
+                    <p className="text-xl md:text-2xl font-medium leading-relaxed">
+                        I got into UX research because I wanted to understand why people do confusing things with technology. Turns out, the technology is usually the confusing part.
+                    </p>
+                </ContentBlock>
                 <div className="space-y-6 text-lg leading-relaxed text-gray-800">
                     <p>
                         For years, that meant running usability tests, conducting interviews, and translating what people actually need into what product teams could build. Standard UX research work. Good work.
@@ -46,7 +48,7 @@ const AboutContent = () => {
             {/* What I Do */}
             <div>
                 <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">What I Do</h2>
-                <BrutalCard theme={theme} className="p-8">
+                <ContentBlock color="bg-white" pin rotate={1} padding="p-8">
                     <div className="flex items-start gap-4 mb-6">
                         <Briefcase className="text-black mt-1" size={32} />
                         <div>
@@ -66,14 +68,14 @@ const AboutContent = () => {
                             I also led design system validation research—stakeholder interviews and 30+ hours of user testing that resulted in 50% faster task completion and measurably improved user confidence.
                         </p>
                     </div>
-                </BrutalCard>
+                </ContentBlock>
             </div>
 
             {/* How I Work */}
             <div>
                 <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">How I Work</h2>
                 <div className="grid grid-cols-1 gap-8">
-                    <ContentBlock color="bg-mustard" padding="p-8">
+                    <ContentBlock color="bg-white" pin rotate={-1} padding="p-8">
                         <p className="text-xl font-bold mb-6">
                             I'm not interested in building AI tools that look impressive. I'm interested in building tools that actually solve problems.
                         </p>
@@ -82,17 +84,17 @@ const AboutContent = () => {
                         </p>
 
                         <div className="space-y-6">
-                            <ContentBlock padding="p-6">
+                            <ContentBlock padding="p-6" color="bg-white" pin rotate={1}>
                                 <h3 className="text-xl font-black mb-2">Context engineering over prompt engineering.</h3>
                                 <p>You don't need the perfect prompt. You need the right information. I'd rather spend 10 minutes finding good documentation than an hour trying to word a request perfectly.</p>
                             </ContentBlock>
 
-                            <ContentBlock padding="p-6">
+                            <ContentBlock padding="p-6" color="bg-white" pin rotate={-1}>
                                 <h3 className="text-xl font-black mb-2">Test everything, trust nothing (at first).</h3>
                                 <p>The 5×5 framework exists because I refuse to ship things based on hope. 5 runs to check consistency. 5 scenarios to verify accuracy. Simple, repeatable, effective.</p>
                             </ContentBlock>
 
-                            <ContentBlock padding="p-6">
+                            <ContentBlock padding="p-6" color="bg-white" pin rotate={1}>
                                 <h3 className="text-xl font-black mb-2">Learn publicly, build openly.</h3>
                                 <p>I write about what I'm stuck on, not just what I've figured out. The shift from "wanting to be right" to "wanting to get it right" changed how I work. I'd rather admit I don't know something than perform expertise I don't have.</p>
                             </ContentBlock>
@@ -109,26 +111,26 @@ const AboutContent = () => {
             <div>
                 <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">Before This</h2>
                 <div className="space-y-6">
-                    <BrutalCard theme={theme} className="p-6">
+                    <ContentBlock color="bg-white" pin rotate={1} padding="p-6">
                         <h3 className="text-xl font-black mb-1">Charles Schwab</h3>
                         <p className="font-bold text-gray-700">Lead UX Researcher</p>
                         <p className="text-sm text-gray-500 mb-4 font-bold uppercase">2020-2022 | Austin, TX</p>
                         <p>Led usability evaluations and content research that improved user understanding and accelerated content-first design. Identified friction points in client verification that resulted in a +90% fraud prevention rate and $26M quarterly cost avoidance.</p>
-                    </BrutalCard>
+                    </ContentBlock>
 
-                    <BrutalCard theme={theme} className="p-6">
+                    <ContentBlock color="bg-white" pin rotate={-1} padding="p-6">
                         <h3 className="text-xl font-black mb-1">HEB</h3>
                         <p className="font-bold text-gray-700">Customer Experience Manager</p>
                         <p className="text-sm text-gray-500 mb-4 font-bold uppercase">2017-2020 | Austin, TX</p>
                         <p>Managed customer experience initiatives and knowledge transfer across the organization.</p>
-                    </BrutalCard>
+                    </ContentBlock>
                 </div>
             </div>
 
             {/* Education & Certifications */}
             <div>
                 <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">Education & Certifications</h2>
-                <BrutalCard theme={theme} className="p-8">
+                <ContentBlock color="bg-white" pin rotate={2} padding="p-8">
                     <ul className="space-y-4">
                         {[
                             "AI Fluency: Framework & Foundations — Anthropic",
@@ -143,13 +145,13 @@ const AboutContent = () => {
                             </li>
                         ))}
                     </ul>
-                </BrutalCard>
+                </ContentBlock>
             </div>
 
             {/* Outside of Work */}
             <div>
                 <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">Outside of Work</h2>
-                <BrutalCard theme={theme} className="p-8 bg-black text-white">
+                <ContentBlock color="bg-white" pin rotate={-2} padding="p-8">
                     <div className="flex flex-col md:flex-row gap-8 items-center">
                         <div className="flex-1">
                             <p className="text-xl font-bold mb-6">
@@ -165,7 +167,7 @@ const AboutContent = () => {
                             </Button>
                         </div>
                     </div>
-                </BrutalCard>
+                </ContentBlock>
             </div>
 
             {/* What's Next */}
