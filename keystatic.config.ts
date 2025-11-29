@@ -26,6 +26,10 @@ export default config({
                     ],
                     defaultValue: 'draft',
                 }),
+                featured: fields.checkbox({
+                    label: 'Featured',
+                    description: 'Check to feature this post on the homepage',
+                }),
                 publishedDate: fields.datetime({
                     label: 'Published Date',
                     description: 'For scheduled posts, set this to the future date you want it to go live.',

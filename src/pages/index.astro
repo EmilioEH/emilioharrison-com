@@ -1,23 +1,33 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/features/home/Hero';
-import BlogList from '../components/features/blog/BlogList';
+import FieldNotesSection from '../components/features/home/FieldNotesSection';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('posts')).sort(
 	(a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf()
 );
-// Extract unique tags and categories
-const allTags = [...new Set(posts.flatMap(post => post.data.tags || []))].sort();
-const allCategories = [...new Set(posts.map(post => post.data.category).filter(Boolean))].sort();
+
+// Logic: Latest post + 2 Featured posts (excluding the latest one)
+const latestPost = posts[0];
+const featuredPosts = posts.slice(1).filter(post => post.data.featured).slice(0, 2);
+
+// If we don't have enough featured posts, fill with next latest posts
+let displayPosts = [latestPost];
+if (featuredPosts.length < 2) {
+    const remainingNeeded = 2 - featuredPosts.length;
+    const usedSlugs = new Set([latestPost.slug, ...featuredPosts.map(p => p.slug)]);
+    const fillers = posts.filter(p => !usedSlugs.has(p.slug)).slice(0, remainingNeeded);
+    displayPosts = [...displayPosts, ...featuredPosts, ...fillers];
+} else {
+    displayPosts = [...displayPosts, ...featuredPosts];
+}
 ---
 
 <Layout title="Emilio Harrison | UX Researcher & Creative Technologist">
     <Hero client:visible />
-    <BlogList 
+    <FieldNotesSection 
         client:visible 
-        posts={posts} 
-        allTags={allTags} 
-        allCategories={allCategories}
+        posts={displayPosts} 
     />
 </Layout>
