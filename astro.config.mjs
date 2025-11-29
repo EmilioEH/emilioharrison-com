@@ -10,7 +10,11 @@ import markdoc from '@astrojs/markdoc';
 export default defineConfig({
     output: 'server',
     site: 'https://emilioharrison.com',
-    adapter: cloudflare(),
+    adapter: cloudflare({
+        platformProxy: {
+            enabled: true
+        }
+    }),
     integrations: [
         react(),
         tailwind(),
@@ -20,7 +24,7 @@ export default defineConfig({
     vite: {
         resolve: {
             alias: {
-                "react-dom/server": "react-dom/server.edge"
+                // "react-dom/server": "react-dom/server.edge"
             }
         }
     }
