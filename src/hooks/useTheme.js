@@ -4,5 +4,5 @@ import { THEMES } from '../lib/themes';
 
 export const useTheme = () => {
     const currentThemeId = useStore(themeId);
-    return THEMES[currentThemeId];
+    return THEMES[currentThemeId] || THEMES.default;
 };
