@@ -60,6 +60,9 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                 </a>
             )}
             <SectionTitle>Field Notes</SectionTitle>
+            <p className="text-xl md:text-2xl font-medium leading-relaxed mb-12 max-w-3xl text-gray-800">
+                Writing about what I'm stuck on, what I'm learning, and what's worth building.
+            </p>
 
             <SearchFilterBar
                 searchQuery={searchQuery}

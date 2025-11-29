@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Linkedin, Music, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, Linkedin, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
 import TapeButton from '../../ui/TapeButton';
@@ -70,12 +70,6 @@ const ContactContent = () => {
             url: 'https://www.linkedin.com/in/emilio-harrison/',
             icon: Linkedin,
             description: 'Professional network'
-        },
-        {
-            name: 'Music',
-            url: 'https://youtu.be/Sg3xcHx-RRI?si=WaVnEWyDgUySVlug',
-            icon: Music,
-            description: 'Personal creative work'
         }
     ];
 
@@ -85,9 +79,14 @@ const ContactContent = () => {
         <div className="animate-in fade-in duration-700 relative z-10">
             <SectionTitle>Get in Touch</SectionTitle>
 
-            <p className="text-xl mb-12 max-w-2xl text-gray-600 pl-4 border-l-4 border-black">
-                Have a question about UX research, AI tools, or just want to connect? I'd love to hear from you.
-            </p>
+            <div className="mb-12 max-w-3xl pl-4 border-l-4 border-black space-y-4">
+                <p className="text-xl text-gray-600">
+                    I'm always interested in talking with people who are building things worth building—whether that's a collaboration, a consulting project, a speaking opportunity, or just a conversation about AI tools and UX research.
+                </p>
+                <p className="text-xl text-gray-600">
+                    If you're working on something interesting, or you're curious about testing frameworks, context engineering, or how to avoid shipping AI slop, I'd love to hear from you.
+                </p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Contact Form */}
@@ -199,7 +198,7 @@ const ContactContent = () => {
                         <div className="flex items-start gap-4 mb-4">
                             <Mail className="text-white" size={28} />
                             <div>
-                                <h3 className="text-xl font-black mb-2">Direct Email</h3>
+                                <h3 className="text-xl font-black mb-2">Send an email</h3>
                                 <a
                                     href="mailto:contact@emilioharrison.com"
                                     className="font-bold hover:underline text-white"
@@ -207,7 +206,7 @@ const ContactContent = () => {
                                     contact@emilioharrison.com
                                 </a>
                                 <p className="text-sm mt-2 text-white/80">
-                                    I typically respond within 24-48 hours.
+                                    I usually respond within a day or two. If it takes longer, I'm probably stuck on a puzzle.
                                 </p>
                             </div>
                         </div>

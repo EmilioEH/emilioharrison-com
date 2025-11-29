@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, FlaskConical } from 'lucide-react';
+import { Mail, BookOpen } from 'lucide-react';
 import TapeButton from '../../ui/TapeButton';
 
 const Hero = () => {
@@ -8,21 +8,19 @@ const Hero = () => {
             <div className="md:col-span-7 space-y-8">
                 <div className="inline-block transform -rotate-2">
                     <div className="bg-mustard border-2 border-black px-4 py-1 font-black tracking-widest uppercase text-sm shadow-hard-sm text-black">
-                        UX Researcher & Creative Technologist
+                        UX RESEARCHER & CREATIVE TECHNOLOGIST
                     </div>
                 </div>
-                <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter text-ink">
-                    EMILIO<br />HARRISON
-                </h1>
+
                 <div className="relative p-6 bg-white border-4 border-black shadow-hard transform rotate-1 max-w-lg">
                     <p className="text-xl md:text-2xl text-black font-bold leading-relaxed">
-                        Building utility-focused digital tools and exploring <span className="bg-coral text-white px-1">"vibe coding"</span>—the intersection of intentionality and system design.
+                        Building AI tools for real problems, not hype. Puzzle-obsessed. I write about what I'm learning, what I'm stuck on, and what's worth building in the first place.
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-4 pt-4">
-                    <a href="/lab" className="no-underline">
+                    <a href="/fieldnotes" className="no-underline">
                         <TapeButton color="bg-teal">
-                            <FlaskConical size={20} /> View Lab
+                            <BookOpen size={20} /> Read Field Notes
                         </TapeButton>
                     </a>
                     <a href="/contact" className="no-underline">

@@ -1,153 +1,201 @@
 import React from 'react';
-import { Briefcase, BookOpen, Sparkles, Award } from 'lucide-react';
+import { Briefcase, BookOpen, Sparkles, Award, Music, ArrowRight, Mail } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import BrutalCard from '../../ui/BrutalCard';
 import BrutalButton from '../../ui/BrutalButton';
-import QuoteBlock from '../../ui/QuoteBlock';
-import SkillCategory from '../../ui/SkillCategory';
 import { useTheme } from '../../../hooks/useTheme';
-import { skills, certifications, expertise } from '../../../data/about';
 
 const AboutContent = () => {
     const theme = useTheme();
 
     return (
-        <div className="animate-in fade-in duration-700">
+        <div className="animate-in fade-in duration-700 space-y-16">
             <SectionTitle theme={theme}>About</SectionTitle>
 
-            {/* Hero Section */}
-            <div className="mb-16">
-                <div className={`inline-block ${theme.border} ${theme.colors.accent} px-3 py-1 font-bold text-sm mb-4 transform -rotate-1 text-black`}>
-                    UX RESEARCHER × AI BUILDER × CREATIVE TECHNOLOGIST
+            {/* Main Content - Story */}
+            <div className="max-w-3xl">
+                <p className="text-xl md:text-2xl font-medium leading-relaxed mb-8">
+                    I got into UX research because I wanted to understand why people do confusing things with technology. Turns out, the technology is usually the confusing part.
+                </p>
+                <div className="space-y-6 text-lg leading-relaxed text-gray-800">
+                    <p>
+                        For years, that meant running usability tests, conducting interviews, and translating what people actually need into what product teams could build. Standard UX research work. Good work.
+                    </p>
+                    <p>
+                        Then LLMs showed up and everyone started calling them "game-changers" while simultaneously having no idea how to use them responsibly. I watched people ship AI features that looked impressive in demos and failed immediately in real use. I watched companies panic-adopt AI without asking if it solved actual problems.
+                    </p>
+                    <p>
+                        I also felt that panic myself. The "what if I'm obsolete" dread that comes with every new technology wave.
+                    </p>
+                    <p>
+                        So I did what I always do with confusing things: I started taking them apart to see how they work.
+                    </p>
+                    <p>
+                        I built my first LLM tool for heuristic evaluation at JP Morgan Chase. Then a thematic analysis assistant. Both got rolled out company-wide to UX professionals. Not because they were clever AI demos, but because I tested them until I knew they actually worked.
+                    </p>
+                    <p>
+                        That's when I realized: the skill isn't using AI. The skill is knowing when something's ready to ship and when you're just hoping it works.
+                    </p>
+                    <p className="font-bold">
+                        Now I build AI tools for real problems, write about what I'm learning, and try to start conversations about what's actually worth building. I'm puzzle-obsessed, testing-obsessed, and probably more fun at dinner parties than this bio makes me sound.
+                    </p>
                 </div>
-                <p className={`text-2xl md:text-3xl font-bold leading-relaxed mb-6 ${theme.id === 'blueprint' ? 'text-blue-100' : 'text-gray-900'}`}>
-                    I'm <span className={theme.colors.highlight}>Emilio Harrison</span>, a UX Researcher specializing in bridging human-centered design with AI innovation.
-                </p>
-                <p className={`text-lg md:text-xl leading-relaxed border-l-4 pl-6 mb-4 ${theme.id === 'blueprint' ? 'border-blue-200 text-blue-200' : 'border-black text-gray-700'}`}>
-                    I believe in building <strong>utility-focused tools</strong> that solve real problems, testing rigorously instead of shipping "good enough," and learning authentically rather than performing expertise.
-                </p>
             </div>
 
-            {/* Current Work */}
-            <BrutalCard theme={theme} className="mb-12 p-8">
-                <div className="flex items-start gap-4 mb-4">
-                    <Briefcase className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'} size={32} />
-                    <div>
-                        <h3 className="text-2xl font-black mb-1">JP Morgan Chase</h3>
-                        <p className={`font-bold ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-600'}`}>UX Research Strategist Operations Team</p>
-                        <p className={`text-sm ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-500'}`}>January 2023 - Present | Austin, TX</p>
+            {/* What I Do */}
+            <div>
+                <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">What I Do</h2>
+                <BrutalCard theme={theme} className="p-8">
+                    <div className="flex items-start gap-4 mb-6">
+                        <Briefcase className="text-black mt-1" size={32} />
+                        <div>
+                            <h3 className="text-2xl font-black mb-1">JP Morgan Chase</h3>
+                            <p className="font-bold text-lg text-gray-700">UX Research Strategist, Operations Team</p>
+                            <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">January 2023 - Present | Austin, TX</p>
+                        </div>
                     </div>
-                </div>
-                <div className={`border-l-4 pl-4 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-gray-300'}`}>
-                    <p className={`mb-3 ${theme.id === 'blueprint' ? 'text-blue-100' : 'text-gray-700'}`}>
-                        <strong>Pioneered the firm's AI adoption strategy for UX.</strong> Developed specialized LLM task models for Thematic Analysis, Heuristic Evaluation, and Fraud Detection, deployed to UX professionals across the organization.
-                    </p>
-                    <p className={`mb-3 ${theme.id === 'blueprint' ? 'text-blue-100' : 'text-gray-700'}`}>
-                        Led a 3-sprint mixed-method study with 32 participants across 4 studies to assess cognitive load and contextual consistency. Created research strategies working directly with product owners, managers, and designers across cross-functional UX areas.
-                    </p>
-                    <p className={`${theme.id === 'blueprint' ? 'text-blue-100' : 'text-gray-700'}`}>
-                        Spearheaded design system strategy and validation research, leading stakeholder interviews and 30-hour user testing with participants to measure component effectiveness, resulting in <strong>50% faster task completion</strong> and improved user confidence.
-                    </p>
-                </div>
-            </BrutalCard>
-
-            {/* Expertise Areas */}
-            <div className="mb-12">
-                <h2 className={`text-3xl font-black mb-6 border-b-4 pb-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>Expertise</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {expertise.map((item, index) => (
-                        <BrutalCard key={index} theme={theme} className="p-6">
-                            <item.icon className={`mb-3 ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`} size={28} />
-                            <h3 className="text-xl font-black mb-2">{item.title}</h3>
-                            <p className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}>{item.description}</p>
-                        </BrutalCard>
-                    ))}
-                </div>
-            </div>
-
-            {/* Philosophy */}
-            <BrutalCard theme={theme} className="mb-12 p-8">
-                <div className="flex items-start gap-4 mb-4">
-                    <BookOpen className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'} size={32} />
-                    <h2 className="text-3xl font-black">Philosophy</h2>
-                </div>
-                <div className="space-y-4">
-                    <QuoteBlock
-                        quote="Context engineering over prompt engineering. You don't need to memorize the recipe—you just need to know where the cookbook is."
-                        attribution="— From 'Context is King'"
-                        theme={theme}
-                    />
-                    <p className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}>
-                        I focus on building tools that scale beyond demos. That means rigorous testing frameworks, like my <strong>5×5 protocol</strong> (5 runs for consistency, 5 scenarios for accuracy) to validate AI outputs before shipping.
-                    </p>
-                    <QuoteBlock
-                        quote="The big shift is from wanting to 'be right' to wanting to 'get it right.'"
-                        attribution="— Brené Brown, quoted in 'The AI Expert in the Room'"
-                        theme={theme}
-                    />
-                    <p className={theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}>
-                        I believe in learning publicly, admitting what I don't know, and building real capability instead of performing expertise. The work speaks louder than the posturing.
-                    </p>
-                </div>
-            </BrutalCard>
-
-            {/* Skills */}
-            <div className="mb-12">
-                <h2 className={`text-3xl font-black mb-6 border-b-4 pb-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>Skills & Tools</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <SkillCategory title="Research Methods" skills={skills.research} theme={theme} />
-                    <SkillCategory title="Artificial Intelligence" skills={skills.ai} theme={theme} />
-                    <SkillCategory title="Research Tools" skills={skills.tools} theme={theme} />
-                    <SkillCategory title="Technical" skills={skills.technical} theme={theme} />
-                </div>
-            </div >
-
-            {/* Education & Certifications */}
-            < div className="mb-12" >
-                <h2 className={`text-3xl font-black mb-6 border-b-4 pb-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'}`}>Education & Certifications</h2>
-                <BrutalCard theme={theme} className="p-6">
-                    <div className="space-y-4">
-                        {certifications.map((cert, index) => (
-                            <div key={index} className={`flex items-start gap-4 pb-4 ${index !== certifications.length - 1 ? 'border-b-2' : ''} ${theme.id === 'blueprint' ? 'border-blue-800' : 'border-gray-200'}`}>
-                                <Award className={`mt-1 flex-shrink-0 ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`} size={24} />
-                                <div className="flex-grow">
-                                    <h3 className="font-black text-lg">{cert.name}</h3>
-                                    <p className={`font-bold ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-600'}`}>{cert.org}</p>
-                                </div>
-                                <span className={`text-sm font-bold ${theme.id === 'blueprint' ? 'text-blue-400' : 'text-gray-500'}`}>{cert.year}</span>
-                            </div>
-                        ))}
+                    <div className="space-y-4 text-lg border-l-4 border-black pl-6">
+                        <p>
+                            I pioneered the firm's AI adoption strategy for UX research. That meant building specialized LLM tools for Thematic Analysis, Heuristic Evaluation, and Fraud Detection, then deploying them to UX professionals across the organization.
+                        </p>
+                        <p>
+                            The work isn't just building tools. It's proving they actually work before anyone uses them. I developed the 5×5 testing framework: 5 runs for consistency, 5 scenarios for accuracy. It's simple, but it's the difference between "this looks good" and "I know this works."
+                        </p>
+                        <p>
+                            I also led design system validation research—stakeholder interviews and 30+ hours of user testing that resulted in 50% faster task completion and measurably improved user confidence.
+                        </p>
                     </div>
                 </BrutalCard>
-            </div >
+            </div>
 
-            {/* Previous Experience Highlight */}
-            < BrutalCard theme={theme} className="mb-12 p-6" >
-                <h3 className="text-xl font-black mb-3">Previous Experience</h3>
-                <div className={`space-y-3 ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-700'}`}>
-                    <div>
-                        <p className="font-bold">Lead UX Researcher, Charles Schwab</p>
-                        <p className="text-sm">2020-2022 | Austin, TX</p>
-                        <p className="mt-2">Led comprehensive usability evaluations on key account types. Utilized content evaluation methods that improved user understanding and accelerated content-first design by 10%. Identified user guides and pain points for enhanced client verification, resulting in +90% fraud prevention rate and $26M quarterly cost avoidance.</p>
+            {/* How I Work */}
+            <div>
+                <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">How I Work</h2>
+                <div className="grid grid-cols-1 gap-8">
+                    <BrutalCard theme={theme} className="p-8 bg-mustard">
+                        <p className="text-xl font-bold mb-6">
+                            I'm not interested in building AI tools that look impressive. I'm interested in building tools that actually solve problems.
+                        </p>
+                        <p className="mb-6">
+                            That means asking "what job needs doing?" before writing any code. It means testing obsessively before shipping. It means admitting when something doesn't work instead of convincing myself it's "good enough."
+                        </p>
+
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 border-2 border-black shadow-hard-sm">
+                                <h3 className="text-xl font-black mb-2">Context engineering over prompt engineering.</h3>
+                                <p>You don't need the perfect prompt. You need the right information. I'd rather spend 10 minutes finding good documentation than an hour trying to word a request perfectly.</p>
+                            </div>
+
+                            <div className="bg-white p-6 border-2 border-black shadow-hard-sm">
+                                <h3 className="text-xl font-black mb-2">Test everything, trust nothing (at first).</h3>
+                                <p>The 5×5 framework exists because I refuse to ship things based on hope. 5 runs to check consistency. 5 scenarios to verify accuracy. Simple, repeatable, effective.</p>
+                            </div>
+
+                            <div className="bg-white p-6 border-2 border-black shadow-hard-sm">
+                                <h3 className="text-xl font-black mb-2">Learn publicly, build openly.</h3>
+                                <p>I write about what I'm stuck on, not just what I've figured out. The shift from "wanting to be right" to "wanting to get it right" changed how I work. I'd rather admit I don't know something than perform expertise I don't have.</p>
+                            </div>
+                        </div>
+
+                        <p className="mt-6 font-bold text-lg border-t-2 border-black pt-4">
+                            The puzzle is the point. Solving it obsessively is just how I work.
+                        </p>
+                    </BrutalCard>
+                </div>
+            </div>
+
+            {/* Before This */}
+            <div>
+                <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">Before This</h2>
+                <div className="space-y-6">
+                    <BrutalCard theme={theme} className="p-6">
+                        <h3 className="text-xl font-black mb-1">Charles Schwab</h3>
+                        <p className="font-bold text-gray-700">Lead UX Researcher</p>
+                        <p className="text-sm text-gray-500 mb-4 font-bold uppercase">2020-2022 | Austin, TX</p>
+                        <p>Led usability evaluations and content research that improved user understanding and accelerated content-first design. Identified friction points in client verification that resulted in a +90% fraud prevention rate and $26M quarterly cost avoidance.</p>
+                    </BrutalCard>
+
+                    <BrutalCard theme={theme} className="p-6">
+                        <h3 className="text-xl font-black mb-1">HEB</h3>
+                        <p className="font-bold text-gray-700">Customer Experience Manager</p>
+                        <p className="text-sm text-gray-500 mb-4 font-bold uppercase">2017-2020 | Austin, TX</p>
+                        <p>Managed customer experience initiatives and knowledge transfer across the organization.</p>
+                    </BrutalCard>
+                </div>
+            </div>
+
+            {/* Education & Certifications */}
+            <div>
+                <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">Education & Certifications</h2>
+                <BrutalCard theme={theme} className="p-8">
+                    <ul className="space-y-4">
+                        {[
+                            "AI Fluency: Framework & Foundations — Anthropic",
+                            "Certificate of Persuasive Communication — eCornell",
+                            "Certificate of Statistics — eCornell",
+                            "Enterprise Design Thinking Co-Creator — IBM",
+                            "AAS in UX Design — Austin Community College"
+                        ].map((item, i) => (
+                            <li key={i} className="flex items-start gap-3 font-bold text-lg">
+                                <Award className="flex-shrink-0 mt-1 text-gray-500" size={20} />
+                                <span>{item}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </BrutalCard>
+            </div>
+
+            {/* Outside of Work */}
+            <div>
+                <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">Outside of Work</h2>
+                <BrutalCard theme={theme} className="p-8 bg-black text-white">
+                    <div className="flex flex-col md:flex-row gap-8 items-center">
+                        <div className="flex-1">
+                            <p className="text-xl font-bold mb-6">
+                                When I'm not building AI tools or writing about UX research, I make music.
+                            </p>
+                            <a
+                                href="https://youtu.be/Sg3xcHx-RRI?si=WaVnEWyDgUySVlug"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 font-black uppercase tracking-wider hover:bg-gray-200 transition-colors"
+                            >
+                                <Music size={20} /> Listen here <ArrowRight size={20} />
+                            </a>
+                        </div>
                     </div>
+                </BrutalCard>
+            </div>
+
+            {/* What's Next */}
+            <div className="py-12 border-t-4 border-black">
+                <h2 className="text-3xl font-black mb-6">What's Next</h2>
+                <p className="text-xl mb-8 max-w-2xl">
+                    I'm building tools for UX practitioners, writing about what actually works, and figuring out how to teach this stuff without adding to the AI hype noise.
+                </p>
+
+                <div className="space-y-6">
                     <div>
-                        <p className="font-bold">Customer Experience Manager, HEB</p>
-                        <p className="text-sm">2017-2020 | Austin, TX</p>
-                        <p className="mt-2">Managed customer experience initiatives and fostered knowledge transfer across the organization.</p>
+                        <p className="font-bold mb-3 uppercase tracking-wider text-sm text-gray-500">Want to see what I'm working on?</p>
+                        <div className="flex flex-wrap gap-4">
+                            <BrutalButton theme={theme} href="/fieldnotes">
+                                <BookOpen size={20} /> Read Field Notes
+                            </BrutalButton>
+                            <BrutalButton theme={theme} href="/lab" color={theme.colors.secondary}>
+                                <Sparkles size={20} /> Explore the Lab
+                            </BrutalButton>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="font-bold mb-3 uppercase tracking-wider text-sm text-gray-500">Looking to collaborate?</p>
+                        <BrutalButton theme={theme} href="/contact" color={theme.colors.accent}>
+                            <Mail size={20} /> Get in touch
+                        </BrutalButton>
                     </div>
                 </div>
-            </BrutalCard >
-
-            {/* Call to Action */}
-            < div className="flex flex-wrap gap-4 justify-center" >
-                <BrutalButton theme={theme} color={theme.colors.primary} href="/lab">
-                    <Sparkles size={20} /> View Experiments
-                </BrutalButton>
-                <BrutalButton theme={theme} href="/fieldnotes">
-                    <BookOpen size={20} /> Read Field Notes
-                </BrutalButton>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

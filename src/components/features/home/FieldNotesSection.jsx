@@ -9,7 +9,7 @@ const FieldNotesSection = ({ posts }) => {
             <div className="flex justify-between items-end">
                 <SectionTitle>Field Notes</SectionTitle>
                 <a href="/fieldnotes" className="text-xl font-bold uppercase tracking-wider border-b-4 border-black hover:text-gray-600 transition-colors mb-4">
-                    View All
+                    View All →
                 </a>
             </div>
 
