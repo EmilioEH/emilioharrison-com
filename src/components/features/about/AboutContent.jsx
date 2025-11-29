@@ -2,6 +2,7 @@ import React from 'react';
 import { Briefcase, BookOpen, Sparkles, Award, Music, ArrowRight, Mail } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import BrutalCard from '../../ui/BrutalCard';
+import ContentBlock from '../../ui/ContentBlock';
 import Button from '../../ui/Button';
 import { useTheme } from '../../../hooks/useTheme';
 
@@ -72,7 +73,7 @@ const AboutContent = () => {
             <div>
                 <h2 className="text-3xl font-black mb-8 border-b-4 border-black pb-2 inline-block">How I Work</h2>
                 <div className="grid grid-cols-1 gap-8">
-                    <BrutalCard theme={theme} className="p-8 bg-mustard">
+                    <ContentBlock color="bg-mustard" padding="p-8">
                         <p className="text-xl font-bold mb-6">
                             I'm not interested in building AI tools that look impressive. I'm interested in building tools that actually solve problems.
                         </p>
@@ -81,26 +82,26 @@ const AboutContent = () => {
                         </p>
 
                         <div className="space-y-6">
-                            <div className="bg-white p-6 border-2 border-black shadow-hard-sm">
+                            <ContentBlock padding="p-6">
                                 <h3 className="text-xl font-black mb-2">Context engineering over prompt engineering.</h3>
                                 <p>You don't need the perfect prompt. You need the right information. I'd rather spend 10 minutes finding good documentation than an hour trying to word a request perfectly.</p>
-                            </div>
+                            </ContentBlock>
 
-                            <div className="bg-white p-6 border-2 border-black shadow-hard-sm">
+                            <ContentBlock padding="p-6">
                                 <h3 className="text-xl font-black mb-2">Test everything, trust nothing (at first).</h3>
                                 <p>The 5×5 framework exists because I refuse to ship things based on hope. 5 runs to check consistency. 5 scenarios to verify accuracy. Simple, repeatable, effective.</p>
-                            </div>
+                            </ContentBlock>
 
-                            <div className="bg-white p-6 border-2 border-black shadow-hard-sm">
+                            <ContentBlock padding="p-6">
                                 <h3 className="text-xl font-black mb-2">Learn publicly, build openly.</h3>
                                 <p>I write about what I'm stuck on, not just what I've figured out. The shift from "wanting to be right" to "wanting to get it right" changed how I work. I'd rather admit I don't know something than perform expertise I don't have.</p>
-                            </div>
+                            </ContentBlock>
                         </div>
 
                         <p className="mt-6 font-bold text-lg border-t-2 border-black pt-4">
                             The puzzle is the point. Solving it obsessively is just how I work.
                         </p>
-                    </BrutalCard>
+                    </ContentBlock>
                 </div>
             </div>
 

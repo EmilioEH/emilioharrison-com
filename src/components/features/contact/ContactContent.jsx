@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Linkedin, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
+import ContentBlock from '../../ui/ContentBlock';
 import Button from '../../ui/Button';
 
 const ContactContent = () => {
@@ -91,7 +92,7 @@ const ContactContent = () => {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Contact Form */}
                 <div className="md:col-span-7">
-                    <StickyNote color="bg-white" className="p-8" rotate={-1}>
+                    <ContentBlock color="bg-white" padding="p-8" rotate={-1} pin>
                         <h2 className="text-2xl font-black mb-6 text-ink">Send a Message</h2>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -187,17 +188,17 @@ const ContactContent = () => {
                                 )}
                             </Button>
                         </form>
-                    </StickyNote>
+                    </ContentBlock>
                 </div>
 
                 {/* Contact Info & Social Links */}
                 <div className="md:col-span-5 space-y-8">
                     {/* Direct Contact */}
-                    <StickyNote color="bg-teal" className="p-6 text-white" rotate={2}>
+                    <ContentBlock color="bg-teal" padding="p-6" rotate={2} pin>
                         <div className="flex items-start gap-4 mb-4">
                             <Mail className="text-white" size={28} />
                             <div>
-                                <h3 className="text-xl font-black mb-2">Send an email</h3>
+                                <h3 className="text-xl font-black mb-2 text-white">Send an email</h3>
                                 <a
                                     href="mailto:contact@emilioharrison.com"
                                     className="font-bold hover:underline text-white"
@@ -209,10 +210,10 @@ const ContactContent = () => {
                                 </p>
                             </div>
                         </div>
-                    </StickyNote>
+                    </ContentBlock>
 
                     {/* Social Links */}
-                    <StickyNote color="bg-mustard" className="p-6" rotate={-1}>
+                    <ContentBlock color="bg-mustard" padding="p-6" rotate={-1} pin>
                         <h3 className="text-xl font-black mb-4 text-black">Connect Elsewhere</h3>
                         <div className="space-y-3">
                             {socialLinks.map((link) => {
@@ -236,7 +237,7 @@ const ContactContent = () => {
                                 );
                             })}
                         </div>
-                    </StickyNote>
+                    </ContentBlock>
 
                     {/* Quick Note */}
                     <div className="p-4 border-l-4 border-black bg-gray-100">

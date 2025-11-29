@@ -1,6 +1,7 @@
 import React from 'react';
 import SectionTitle from '../../ui/SectionTitle';
 import Button from '../../ui/Button';
+import ContentBlock from '../../ui/ContentBlock';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { useStore } from '@nanostores/react';
 import { themeId } from '../../../lib/store';
@@ -22,10 +23,14 @@ const ShopContent = () => {
                     Not ready yet, but getting close.
                 </p>
 
-                <div className="bg-mustard p-8 border-4 border-black shadow-hard mb-12 transform -rotate-1">
+                <ContentBlock
+                    color="bg-mustard"
+                    padding="p-8"
+                    className="mb-12 transform -rotate-1"
+                >
                     <h3 className="text-2xl font-black mb-4">Want to know when it launches?</h3>
                     <p className="text-lg font-bold">Join the email list below.</p>
-                </div>
+                </ContentBlock>
 
                 <div>
                     <h3 className="text-xl font-black mb-6 uppercase tracking-wider">In the meantime:</h3>
