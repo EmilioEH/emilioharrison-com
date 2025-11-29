@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
+import BrutalButton from '../../ui/BrutalButton';
 import SearchFilterBar from './SearchFilterBar';
 import { applyAllFilters } from '../../../lib/filterPosts';
 
@@ -132,8 +133,10 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                                                 <p className="text-black mb-6 flex-grow leading-relaxed font-medium border-l-4 border-black pl-4 opacity-80 line-clamp-3">
                                                     {post.data.excerpt}
                                                 </p>
-                                                <div className="mt-auto pt-4 flex items-center gap-2 font-black text-sm uppercase tracking-wider text-ink">
-                                                    Read <ArrowRight size={18} strokeWidth={3} />
+                                                <div className="mt-auto pt-4">
+                                                    <BrutalButton variant="tertiary" className="p-0 hover:bg-transparent hover:text-black">
+                                                        Read <ArrowRight size={18} strokeWidth={3} />
+                                                    </BrutalButton>
                                                 </div>
                                             </div>
                                             <div className="w-full md:w-2/5 h-48 md:h-auto relative border-b-4 md:border-b-0 md:border-l-4 border-black">
@@ -158,8 +161,10 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                                             <p className="text-black mb-6 flex-grow leading-relaxed font-medium border-l-4 border-black pl-4 opacity-80 line-clamp-3">
                                                 {post.data.excerpt}
                                             </p>
-                                            <div className="mt-auto pt-4 flex items-center gap-2 font-black text-sm uppercase tracking-wider text-ink">
-                                                Read <ArrowRight size={18} strokeWidth={3} />
+                                            <div className="mt-auto pt-4">
+                                                <BrutalButton variant="tertiary" className="p-0 hover:bg-transparent hover:text-black">
+                                                    Read <ArrowRight size={18} strokeWidth={3} />
+                                                </BrutalButton>
                                             </div>
                                         </>
                                     )}

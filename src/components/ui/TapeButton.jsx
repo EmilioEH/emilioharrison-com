@@ -29,9 +29,9 @@ const TapeButton = ({
             className={`
             relative group ${color} text-white px-6 py-3 
             font-bold text-sm uppercase tracking-wider 
-            border-4 border-black shadow-hard 
+            border-4 border-black shadow-hard-sm 
             transform transition-all duration-200 ease-out 
-            hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg 
+            hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard 
             active:translate-x-0.5 active:translate-y-0.5 active:shadow-none 
             ${active ? 'translate-x-0.5 translate-y-0.5 shadow-none opacity-90' : ''} 
             ${className}

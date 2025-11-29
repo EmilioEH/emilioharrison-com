@@ -240,7 +240,64 @@ md:col-span-5  // Sidebar
 
 ## 7. Core Components
 
-### 7.1 TapeButton
+### 7.1 Button Usage & Hierarchy
+To ensure visual consistency, use the following hierarchy for all interactive elements:
+
+#### 1. Primary Button
+**Usage:**
+- The main Call-to-Action (CTA) on a page.
+- Use for actions like "Submit", "Subscribe", "Buy", or primary navigation drivers (e.g., "Read Field Notes" on Homepage).
+- Limit to 1-2 per view to maintain focus.
+
+**Visual Style:**
+- **Background:** Brand Color (e.g., `bg-blue-600`, `bg-zinc-900`) or High-Viz Color (e.g., `bg-yellow-400` for emphasis).
+- **Text:** White (on dark bg) or Black (on light bg). Bold, Uppercase preferred for "Tape" style.
+- **Border:** `4px solid black`.
+- **Shadow:** Hard shadow (`box-shadow: 4px 4px 0px 0px #000`).
+- **Padding:** `px-6 py-3` (approx. 12px 24px).
+- **Font Size:** `14px` (text-sm) or `16px` (text-base).
+
+#### 2. Secondary Button
+**Usage:**
+- Alternative actions that are important but not the primary focus.
+- Examples: "Read More" on a card, "Back" buttons, "Cancel".
+
+**Visual Style:**
+- **Background:** White (`bg-white`) or Light Gray.
+- **Text:** Black (`text-black`).
+- **Border:** `2px solid black`.
+- **Shadow:** None or Minimal (`2px` hard shadow on hover).
+- **Padding:** `px-6 py-3`.
+- **Font Size:** `16px` (text-base).
+
+#### 3. Tertiary Button / Text Link
+**Usage:**
+- Low emphasis actions, utility triggers, or inline navigation.
+- Examples: "Filter", "Sort", "Edit", Footer links.
+
+**Visual Style:**
+- **Background:** Transparent.
+- **Text:** Dark Gray (`text-zinc-800`) or Brand Color.
+- **Border:** None (or bottom border for links).
+- **Padding:** `0` or `px-4 py-2` for utility toggles.
+- **Font Size:** `14px` (text-sm).
+
+#### 4. Categories & Tags
+**Usage:**
+- Labeling content metadata.
+- Interactive elements that filter content.
+
+**Visual Style:**
+- **Background:** White (`bg-white`).
+- **Text:** Black (`text-black`).
+- **Border:** `2px solid black`.
+- **Padding:** `px-3 py-1` (approx. 4px 12px).
+- **Font Size:** `12px` (text-xs).
+- **Hover:** Invert colors (Black bg, White text) or slight lift.
+
+---
+
+### 7.2 TapeButton
 
 **Purpose**: Primary interactive button styled like tape with hard shadow
 
@@ -279,7 +336,7 @@ md:col-span-5  // Sidebar
 
 ---
 
-### 7.2 StickyNote
+### 7.3 StickyNote
 
 **Purpose**: Content container styled as a physical sticky note with pin
 
@@ -315,7 +372,7 @@ md:col-span-5  // Sidebar
 
 ---
 
-### 7.3 SectionTitle
+### 7.4 SectionTitle
 
 **Purpose**: Major section heading with decorative bullet
 
@@ -333,7 +390,7 @@ md:col-span-5  // Sidebar
 
 ---
 
-### 7.4 Marginalia (Footnote System)
+### 7.5 Marginalia (Footnote System)
 
 **Purpose**: Inline footnote references with hover tooltips
 
@@ -366,7 +423,7 @@ md:col-span-5  // Sidebar
 
 ---
 
-### 7.5 ExperimentCard
+### 7.6 ExperimentCard
 
 **Purpose**: Container for interactive experiments/demos
 
