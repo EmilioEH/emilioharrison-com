@@ -17,5 +17,11 @@ export default defineConfig({
         keystatic(),
         markdoc()
     ],
-
+    vite: {
+        resolve: {
+            alias: {
+                "react-dom/server": "react-dom/server.edge"
+            }
+        }
+    }
 });
