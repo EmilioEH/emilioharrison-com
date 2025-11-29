@@ -13,15 +13,29 @@ import React from 'react';
 const StickyNote = ({
     children,
     className = "",
-    color = "bg-mustard",
-    rotate = 0
+    color = "bg-sticky-yellow",
+    rotate = 0,
+    size = "square", // square, rectangle
+    variant = "action" // action, static
 }) => {
+    const sizeClasses = {
+        square: "aspect-square",
+        rectangle: "aspect-video md:aspect-[2/1]",
+    };
+
+    // Force high contrast text color (black) for sticky notes as they are pastel
+    const textColor = "text-black";
+
+    // Static variant uses neutral background if no specific color provided (or could override)
+    // But for now we'll stick to the passed color or default, just ensuring text contrast.
+
     return (
         <div
             className={`
-            ${color} border-4 border-black shadow-hard 
+            ${color} ${textColor} border-4 border-black shadow-hard 
             p-6 md:p-8 relative transition-transform duration-300 ease-in-out 
-            hover:scale-[1.01] hover:z-10 hover:shadow-hard-lg 
+            ${variant === 'action' ? 'hover:scale-[1.01] hover:z-10 hover:shadow-hard-lg cursor-pointer' : ''}
+            ${sizeClasses[size] || sizeClasses.square}
             ${className}
         `}
             style={{ transform: `rotate(${rotate}deg)` }}

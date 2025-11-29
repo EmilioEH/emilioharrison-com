@@ -99,13 +99,33 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-2">
                     {filteredPosts.map((post, idx) => {
                         // Alternate colors/rotations based on index
-                        const colors = ['bg-mustard', 'bg-teal', 'bg-coral'];
+                        const colors = [
+                            'bg-sticky-yellow',
+                            'bg-sticky-green',
+                            'bg-sticky-pink',
+                            'bg-sticky-blue',
+                            'bg-sticky-purple',
+                            'bg-sticky-orange'
+                        ];
                         const color = colors[idx % colors.length];
                         const rotate = idx % 2 === 0 ? -1 : 1;
 
+                        const hasCover = !!post.data.cover;
+                        const size = hasCover ? 'rectangle' : 'square';
+                        const colSpan = hasCover ? 'md:col-span-2' : '';
+
                         return (
-                            <a key={post.slug} href={`/fieldnotes/${post.slug}`} className="no-underline block h-full group">
-                                <StickyNote color={color} rotate={rotate} className="h-full flex flex-col group-hover:bg-white transition-colors">
+                            <a key={post.slug} href={`/fieldnotes/${post.slug}`} className={`no-underline block h-full group ${colSpan}`}>
+                                <StickyNote color={color} rotate={rotate} size={size} variant="action" className="h-full flex flex-col group-hover:bg-white transition-colors">
+                                    {hasCover && (
+                                        <div className="mb-4 -mx-2 -mt-2">
+                                            <img
+                                                src={post.data.cover.src}
+                                                alt={post.data.coverAlt || post.data.title}
+                                                className="w-full h-48 object-cover border-4 border-black shadow-sm"
+                                            />
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-start mb-4 border-b-4 border-black pb-2">
                                         <span className="text-xs font-bold uppercase tracking-wider text-white px-2 py-1 bg-ink border-2 border-black">
                                             {categoriesMap[post.data.category] || post.data.category || 'Uncategorized'}

@@ -14,20 +14,32 @@ export default {
                 teal: "#2a9d8f",
                 coral: "#e76f51",
                 mustard: "#e9c46a",
+                sticky: {
+                    yellow: "#FEF08A",
+                    green: "#BBF7D0",
+                    pink: "#FBCFE8",
+                    blue: "#BAE6FD",
+                    purple: "#E9D5FF",
+                    orange: "#FED7AA",
+                },
+                btn: {
+                    primary: "#18181B",
+                    secondary: "#F4F4F5",
+                    accent: "#3B82F6",
+                },
+                boxShadow: {
+                    'hard': '6px 6px 0px 0px #000000',
+                    'hard-sm': '4px 4px 0px 0px #000000',
+                    'hard-lg': '8px 8px 0px 0px #000000',
+                    'hard-xl': '12px 12px 0px 0px #000000',
+                },
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'], // Ensure we have a nice sans, though default is usually fine.
+                    // The prototype used system fonts mostly, but let's stick to defaults or add if needed.
+                }
             },
-            boxShadow: {
-                'hard': '6px 6px 0px 0px #000000',
-                'hard-sm': '4px 4px 0px 0px #000000',
-                'hard-lg': '8px 8px 0px 0px #000000',
-                'hard-xl': '12px 12px 0px 0px #000000',
-            },
-            fontFamily: {
-                sans: ['Inter', 'sans-serif'], // Ensure we have a nice sans, though default is usually fine.
-                // The prototype used system fonts mostly, but let's stick to defaults or add if needed.
-            }
         },
-    },
-    plugins: [
-        typography,
-    ],
-}
+        plugins: [
+            typography,
+        ],
+    }

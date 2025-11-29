@@ -1,8 +1,8 @@
 import React from 'react';
 
 const BrutalButton = ({ children, onClick = () => { }, color = null, className = "", type = "button", active = false, theme, href }) => {
-    const bg = color || (theme.id === 'blueprint' ? theme.colors.card : 'bg-white');
-    const text = theme.id === 'blueprint' ? 'text-blue-100' : 'text-black';
+    const bg = color || (theme.id === 'blueprint' ? theme.colors.card : 'bg-btn-primary');
+    const text = theme.id === 'blueprint' ? 'text-blue-100' : 'text-white';
 
     const commonClasses = `
           ${theme.border} ${theme.shadow}
