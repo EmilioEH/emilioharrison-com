@@ -5,6 +5,9 @@ import BrutalButton from '../../ui/BrutalButton';
 import BrutalCard from '../../ui/BrutalCard';
 import { useTheme } from '../../../hooks/useTheme';
 
+import Tag from '../../ui/Tag';
+import CategoryBadge from '../../ui/CategoryBadge';
+
 const BlogPostContent = ({ post, children }) => {
     const theme = useTheme();
     const [readMode, setReadMode] = useState('deep');
@@ -31,9 +34,18 @@ const BlogPostContent = ({ post, children }) => {
 
             <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
                 <div className="mb-8">
-                    <span className={`inline-block ${theme.colors.accent} border-2 ${theme.id === 'blueprint' ? 'border-blue-200' : 'border-black'} px-3 py-1 font-bold text-sm mb-4 text-black`}>
-                        {post.data.category}
-                    </span>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {post.data.category && (
+                            <a href={`/fieldnotes?category=${encodeURIComponent(post.data.category)}`} className="no-underline">
+                                <CategoryBadge category={post.data.category} className="hover:bg-black hover:text-white" />
+                            </a>
+                        )}
+                        {post.data.tags && post.data.tags.map(tag => (
+                            <a key={tag} href={`/fieldnotes?tags=${encodeURIComponent(tag)}`} className="no-underline">
+                                <Tag tag={tag} className="hover:bg-black hover:text-white" />
+                            </a>
+                        ))}
+                    </div>
                     <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
                     <p className={`text-xl font-bold ${theme.id === 'blueprint' ? 'text-blue-200' : 'text-gray-800'} mb-1`}>By: Emilio Harrison</p>
                     <p className={`text-sm font-mono ${theme.id === 'blueprint' ? 'text-blue-300' : 'text-gray-500'}`}>Published: {post.data.date}</p>

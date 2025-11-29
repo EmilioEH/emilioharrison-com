@@ -7,7 +7,8 @@ const posts = defineCollection({
         status: z.enum(['draft', 'scheduled', 'published']).default('draft'),
         publishedDate: z.date().optional(),
         date: z.string(),
-        category: z.string(),
+        category: z.string().optional(),
+        tags: z.array(z.string()).optional(),
         excerpt: z.string(),
         takeaways: z.array(z.object({
             title: z.string(),

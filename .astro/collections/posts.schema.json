@@ -7,11 +7,42 @@
         "title": {
           "type": "string"
         },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "scheduled",
+            "published"
+          ],
+          "default": "draft"
+        },
+        "publishedDate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "integer",
+              "format": "unix-time"
+            }
+          ]
+        },
         "date": {
           "type": "string"
         },
         "category": {
           "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "excerpt": {
           "type": "string"
@@ -48,7 +79,6 @@
       "required": [
         "title",
         "date",
-        "category",
         "excerpt"
       ],
       "additionalProperties": false

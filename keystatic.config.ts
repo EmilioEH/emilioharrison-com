@@ -35,6 +35,13 @@ export default config({
                     description: 'Format: MMM DD, YYYY (e.g. Nov 27, 2025)'
                 }),
                 category: fields.text({ label: 'Category' }),
+                tags: fields.array(
+                    fields.text({ label: 'Tag' }),
+                    {
+                        label: 'Tags',
+                        itemLabel: props => props.value || 'Tag',
+                    }
+                ),
                 excerpt: fields.text({ label: 'Excerpt', multiline: true }),
                 takeaways: fields.array(
                     fields.object({

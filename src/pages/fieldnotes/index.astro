@@ -26,8 +26,26 @@ const posts = allPosts
         const dateB = b.data.publishedDate || new Date(b.data.date);
         return dateB.valueOf() - dateA.valueOf();
     });
+
+// Extract unique tags and categories
+const allTags = [...new Set(posts.flatMap(post => post.data.tags || []))].sort();
+const allCategories = [...new Set(posts.map(post => post.data.category).filter(Boolean))].sort();
+
+// Get initial filters from URL (server-side for SEO/initial render if needed, but mainly client-side handled)
+const initialFilters = {
+    search: Astro.url.searchParams.get('search') || '',
+    tags: Astro.url.searchParams.get('tags') || '',
+    category: Astro.url.searchParams.get('category') || '',
+    sort: Astro.url.searchParams.get('sort') || 'newest'
+};
 ---
 
 <Layout title="Field Notes | Emilio Harrison">
-    <BlogList client:visible posts={posts} />
+    <BlogList 
+        client:visible 
+        posts={posts} 
+        allTags={allTags} 
+        allCategories={allCategories}
+        initialFilters={initialFilters}
+    />
 </Layout>
