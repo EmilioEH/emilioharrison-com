@@ -15,6 +15,16 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
     // Filtered posts state
     const [filteredPosts, setFilteredPosts] = useState(posts);
 
+    // Check for 'from' parameter to show back link
+    const [backLink, setBackLink] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const fromSlug = params.get('from');
+            return fromSlug ? `/fieldnotes/${fromSlug}` : null;
+        }
+        return null;
+    });
+
     // Update URL when filters change
     useEffect(() => {
         const params = new URLSearchParams();
@@ -22,6 +32,12 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
         if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
         if (selectedCategories.length > 0) params.set('category', selectedCategories.join(','));
         if (sortOrder !== 'newest') params.set('sort', sortOrder);
+
+        // Preserve 'from' parameter if it exists in state
+        if (backLink) {
+            const fromSlug = backLink.split('/').pop();
+            if (fromSlug) params.set('from', fromSlug);
+        }
 
         const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
         window.history.replaceState({}, '', newUrl);
@@ -34,23 +50,12 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
             sort: sortOrder
         });
         setFilteredPosts(results);
-    }, [searchQuery, selectedTags, selectedCategories, sortOrder, posts]);
-
-    // Check for 'from' parameter to show back link
-    const [backLink, setBackLink] = useState(null);
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const fromSlug = params.get('from');
-        if (fromSlug) {
-            setBackLink(`/fieldnotes/${fromSlug}`);
-        }
-    }, []);
+    }, [searchQuery, selectedTags, selectedCategories, sortOrder, posts, backLink]);
 
     return (
         <div className="space-y-12 animate-in fade-in duration-500 relative z-10">
             {backLink && (
-                <a href={backLink} className="inline-flex items-center gap-2 font-bold hover:underline mb-[-2rem]">
+                <a href={backLink} className="inline-flex items-center gap-2 font-bold hover:underline mb-4 text-gray-600 hover:text-black transition-colors">
                     <ArrowRight className="rotate-180" size={20} /> Back to Note
                 </a>
             )}
