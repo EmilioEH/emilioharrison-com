@@ -16,7 +16,8 @@ const StickyNote = ({
     color = "bg-sticky-yellow",
     rotate = 0,
     size = "square", // square, rectangle
-    variant = "action" // action, static
+    variant = "action", // action, static
+    padding = true
 }) => {
     const sizeClasses = {
         square: "aspect-square",
@@ -33,7 +34,7 @@ const StickyNote = ({
         <div
             className={`
             ${color} ${textColor} border-4 border-black shadow-hard 
-            p-6 md:p-8 relative transition-transform duration-300 ease-in-out 
+            ${padding ? 'p-6 md:p-8' : ''} relative transition-transform duration-300 ease-in-out 
             ${variant === 'action' ? 'hover:scale-[1.01] hover:z-10 hover:shadow-hard-lg cursor-pointer' : ''}
             ${sizeClasses[size] || sizeClasses.square}
             ${className}
