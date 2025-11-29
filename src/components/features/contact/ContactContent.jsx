@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Linkedin, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
-import TapeButton from '../../ui/TapeButton';
+import Button from '../../ui/Button';
 
 const ContactContent = () => {
     const [formData, setFormData] = useState({
@@ -173,10 +173,9 @@ const ContactContent = () => {
                                 </div>
                             )}
 
-                            <TapeButton
-                                color="bg-coral"
+                            <Button
                                 type="submit"
-                                className="w-full"
+                                fullWidth
                             >
                                 {isSubmitting ? (
                                     <>Sending...</>
@@ -186,7 +185,7 @@ const ContactContent = () => {
                                         Send Message
                                     </>
                                 )}
-                            </TapeButton>
+                            </Button>
                         </form>
                     </StickyNote>
                 </div>

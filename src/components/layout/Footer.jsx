@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from '../ui/Button';
 
 const Footer = () => {
     return (
@@ -12,12 +13,12 @@ const Footer = () => {
                         placeholder="email address"
                         className="flex-1 bg-white text-black px-4 py-3 font-bold border-2 border-transparent focus:border-mustard focus:outline-none"
                     />
-                    <button
+                    <Button
                         type="submit"
-                        className="bg-mustard text-black px-6 py-3 font-black uppercase tracking-wider hover:bg-white transition-colors"
+                        intent="secondary"
                     >
                         Submit
-                    </button>
+                    </Button>
                 </form>
             </div>
 

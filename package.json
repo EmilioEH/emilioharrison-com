@@ -21,11 +21,14 @@
     "@keystatic/core": "^0.5.48",
     "@nanostores/react": "^1.0.0",
     "astro": "^5.16.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.554.0",
     "nanostores": "^1.1.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.6",

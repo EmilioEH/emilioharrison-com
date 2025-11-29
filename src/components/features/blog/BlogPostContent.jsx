@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, FileText, Zap } from 'lucide-react';
 
-import BrutalButton from '../../ui/BrutalButton';
+import Button from '../../ui/Button';
 import BrutalCard from '../../ui/BrutalCard';
 import { useTheme } from '../../../hooks/useTheme';
 
@@ -25,12 +25,12 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
             <div className={`sticky top-24 z-40 mb-8 p-2 ${theme.colors.card} ${theme.border} ${theme.shadow} flex justify-between items-center transition-all duration-300`}>
                 <span className="font-bold text-sm uppercase tracking-widest pl-2 hidden md:block">Reading Mode:</span>
                 <div className="flex gap-2 w-full md:w-auto">
-                    <BrutalButton onClick={() => setReadMode('deep')} active={readMode === 'deep'} variant={readMode === 'deep' ? 'primary' : 'secondary'}>
+                    <Button onClick={() => setReadMode('deep')} intent={readMode === 'deep' ? 'primary' : 'secondary'}>
                         <FileText size={16} /> Deep Dive
-                    </BrutalButton>
-                    <BrutalButton onClick={() => setReadMode('skim')} active={readMode === 'skim'} variant={readMode === 'skim' ? 'primary' : 'secondary'}>
+                    </Button>
+                    <Button onClick={() => setReadMode('skim')} intent={readMode === 'skim' ? 'primary' : 'secondary'}>
                         <Zap size={16} /> Skim
-                    </BrutalButton>
+                    </Button>
                 </div>
             </div>
 

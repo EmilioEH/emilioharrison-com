@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import Tag from '../../ui/Tag';
 import CategoryBadge from '../../ui/CategoryBadge';
-import BrutalButton from '../../ui/BrutalButton';
+
 import { useTheme } from '../../../hooks/useTheme';
 
 const SearchFilterBar = ({

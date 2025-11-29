@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
-import BrutalButton from '../../ui/BrutalButton';
+import Button from '../../ui/Button';
 import SearchFilterBar from './SearchFilterBar';
 import { applyAllFilters } from '../../../lib/filterPosts';
 
@@ -134,9 +134,9 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                                                     {post.data.excerpt}
                                                 </p>
                                                 <div className="mt-auto pt-4">
-                                                    <BrutalButton variant="tertiary" className="p-0 hover:bg-transparent hover:text-black">
+                                                    <Button intent="tertiary" className="p-0 hover:bg-transparent hover:text-black">
                                                         Read <ArrowRight size={18} strokeWidth={3} />
-                                                    </BrutalButton>
+                                                    </Button>
                                                 </div>
                                             </div>
                                             <div className="w-full md:w-2/5 h-48 md:h-auto relative border-b-4 md:border-b-0 md:border-l-4 border-black">
@@ -162,9 +162,9 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                                                 {post.data.excerpt}
                                             </p>
                                             <div className="mt-auto pt-4">
-                                                <BrutalButton variant="tertiary" className="p-0 hover:bg-transparent hover:text-black">
+                                                <Button intent="tertiary" className="p-0 hover:bg-transparent hover:text-black">
                                                     Read <ArrowRight size={18} strokeWidth={3} />
-                                                </BrutalButton>
+                                                </Button>
                                             </div>
                                         </>
                                     )}

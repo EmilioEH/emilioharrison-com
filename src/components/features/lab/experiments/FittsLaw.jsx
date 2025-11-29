@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
-import TapeButton from '../../../ui/TapeButton';
+import Button from '../../../ui/Button';
 
 const FittsLaw = () => {
     const canvasRef = useRef(null);
@@ -101,9 +101,9 @@ const FittsLaw = () => {
                 />
             </div>
             <div className="flex justify-center">
-                <TapeButton onClick={start} color="bg-mustard" className="text-black">
+                <Button onClick={start} className="text-white">
                     {state.history.length > 0 ? <RotateCcw size={16} /> : <Play size={16} />} {state.history.length > 0 ? "Restart" : "Start Test"}
-                </TapeButton>
+                </Button>
             </div>
         </div>
     );

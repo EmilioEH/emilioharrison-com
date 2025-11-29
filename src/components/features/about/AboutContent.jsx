@@ -2,7 +2,7 @@ import React from 'react';
 import { Briefcase, BookOpen, Sparkles, Award, Music, ArrowRight, Mail } from 'lucide-react';
 import SectionTitle from '../../ui/SectionTitle';
 import BrutalCard from '../../ui/BrutalCard';
-import BrutalButton from '../../ui/BrutalButton';
+import Button from '../../ui/Button';
 import { useTheme } from '../../../hooks/useTheme';
 
 const AboutContent = () => {
@@ -154,14 +154,14 @@ const AboutContent = () => {
                             <p className="text-xl font-bold mb-6">
                                 When I'm not building AI tools or writing about UX research, I make music.
                             </p>
-                            <a
+                            <Button
                                 href="https://youtu.be/Sg3xcHx-RRI?si=WaVnEWyDgUySVlug"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 font-black uppercase tracking-wider hover:bg-gray-200 transition-colors"
+                                intent="secondary"
                             >
                                 <Music size={20} /> Listen here <ArrowRight size={20} />
-                            </a>
+                            </Button>
                         </div>
                     </div>
                 </BrutalCard>
@@ -178,20 +178,20 @@ const AboutContent = () => {
                     <div>
                         <p className="font-bold mb-3 uppercase tracking-wider text-sm text-gray-500">Want to see what I'm working on?</p>
                         <div className="flex flex-wrap gap-4">
-                            <BrutalButton theme={theme} href="/fieldnotes">
+                            <Button href="/fieldnotes" intent="secondary">
                                 <BookOpen size={20} /> Read Field Notes
-                            </BrutalButton>
-                            <BrutalButton theme={theme} href="/lab" color={theme.colors.secondary}>
+                            </Button>
+                            <Button href="/lab" intent="secondary">
                                 <Sparkles size={20} /> Explore the Lab
-                            </BrutalButton>
+                            </Button>
                         </div>
                     </div>
 
                     <div>
                         <p className="font-bold mb-3 uppercase tracking-wider text-sm text-gray-500">Looking to collaborate?</p>
-                        <BrutalButton theme={theme} href="/contact" color={theme.colors.accent}>
+                        <Button href="/contact" intent="secondary">
                             <Mail size={20} /> Get in touch
-                        </BrutalButton>
+                        </Button>
                     </div>
                 </div>
             </div>

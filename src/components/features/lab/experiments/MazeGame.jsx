@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Smartphone, Maximize, Minimize, RotateCcw, Activity } from 'lucide-react';
-import TapeButton from '../../../ui/TapeButton';
+import Button from '../../../ui/Button';
 
 const MazeGame = () => {
     const canvasRef = useRef(null); const containerRef = useRef(null);
@@ -91,7 +91,7 @@ const MazeGame = () => {
             <Smartphone size={48} className="mb-4 text-gray-400" />
             <h3 className="text-2xl font-black mb-2 text-ink">Gravity Maze</h3>
             <p className="mb-6 max-w-xs text-gray-600">Tilt your phone or use your mouse to guide the ball to the goal.</p>
-            <TapeButton onClick={start} color="bg-mustard" className="text-black">Start Experiment</TapeButton>
+            <Button onClick={start} className="text-white">Start Experiment</Button>
         </div>
     );
 

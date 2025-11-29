@@ -1,6 +1,6 @@
 import React from 'react';
 import SectionTitle from '../../ui/SectionTitle';
-import BrutalButton from '../../ui/BrutalButton';
+import Button from '../../ui/Button';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { useStore } from '@nanostores/react';
 import { themeId } from '../../../lib/store';
@@ -30,12 +30,12 @@ const ShopContent = () => {
                 <div>
                     <h3 className="text-xl font-black mb-6 uppercase tracking-wider">In the meantime:</h3>
                     <div className="flex flex-wrap gap-4">
-                        <BrutalButton theme={theme} href="/fieldnotes">
+                        <Button href="/fieldnotes" intent="secondary">
                             <BookOpen size={20} /> Read Field Notes
-                        </BrutalButton>
-                        <BrutalButton theme={theme} href="/lab" color={theme.colors.secondary}>
+                        </Button>
+                        <Button href="/lab" intent="secondary">
                             <Sparkles size={20} /> Explore the Lab
-                        </BrutalButton>
+                        </Button>
                     </div>
                 </div>
             </div>

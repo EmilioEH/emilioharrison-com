@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import BrutalButton from '../components/ui/BrutalButton';
+import Button from '../components/ui/Button';
 import { THEMES } from '../lib/themes';
 ---
 
@@ -15,15 +15,15 @@ import { THEMES } from '../lib/themes';
         </div>
         
         <div class="flex flex-wrap gap-4 justify-center">
-            <BrutalButton href="/" theme={THEMES.default}>
+            <Button href="/" intent="secondary">
                 ← Back to Home
-            </BrutalButton>
-            <BrutalButton href="/fieldnotes" theme={THEMES.default}>
+            </Button>
+            <Button href="/fieldnotes" intent="secondary">
                 Read Field Notes
-            </BrutalButton>
-            <BrutalButton href="/lab" theme={THEMES.default}>
+            </Button>
+            <Button href="/lab" intent="secondary">
                 Explore Lab
-            </BrutalButton>
+            </Button>
         </div>
     </div>
 </Layout>
