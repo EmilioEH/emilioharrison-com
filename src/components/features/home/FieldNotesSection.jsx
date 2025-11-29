@@ -32,7 +32,6 @@ const FieldNotesSection = ({ posts }) => {
                     const colSpan = hasCover ? 'md:col-span-2' : '';
 
                     return (
-                    return (
                         <a key={post.slug} href={`/fieldnotes/${post.slug}`} className={`no-underline block h-full group ${colSpan}`}>
                             <StickyNote color={color} rotate={rotate} size={size} variant="action" padding={!hasCover} className="h-full flex flex-col group-hover:bg-white transition-colors">
                                 {hasCover ? (
