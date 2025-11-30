@@ -4,6 +4,7 @@ import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
 import Button from '../../ui/Button';
 import SearchFilterBar from './SearchFilterBar';
+import { Heading, Text, Label } from '../../ui/Typography';
 import { applyAllFilters } from '../../../lib/filterPosts';
 
 const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap = {}, initialFilters = {} }) => {
@@ -61,9 +62,9 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                 </a>
             )}
             <SectionTitle>Field Notes</SectionTitle>
-            <p className="text-xl md:text-2xl font-medium leading-relaxed mb-12 max-w-3xl text-gray-800">
+            <Text variant="body-xl" className="font-medium leading-relaxed mb-12 max-w-3xl text-gray-800">
                 Writing about what I'm stuck on, what I'm learning, and what's worth building.
-            </p>
+            </Text>
 
             <SearchFilterBar
                 searchQuery={searchQuery}
@@ -122,17 +123,17 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                                         <div className="flex flex-col-reverse md:flex-row h-full">
                                             <div className="flex-1 p-6 md:p-8 flex flex-col">
                                                 <div className="flex justify-between items-start mb-4 border-b-4 border-black pb-2">
-                                                    <span className="text-xs font-bold uppercase tracking-wider text-white px-2 py-1 bg-ink border-2 border-black">
+                                                    <Label variant="tag" className="text-white px-2 py-1 bg-ink border-2 border-black">
                                                         {categoriesMap[post.data.category] || post.data.category || 'Uncategorized'}
-                                                    </span>
-                                                    <span className="text-sm font-bold text-gray-700">{new Date(post.data.date).toLocaleDateString()}</span>
+                                                    </Label>
+                                                    <Text variant="fine" className="font-bold text-gray-700">{new Date(post.data.date).toLocaleDateString()}</Text>
                                                 </div>
-                                                <h3 className="text-2xl font-black mb-3 leading-tight group-hover:underline decoration-4 underline-offset-4 decoration-black text-ink">
+                                                <Heading variant="heading-m" className="mb-3 leading-tight group-hover:underline decoration-4 underline-offset-4 decoration-black text-ink">
                                                     {post.data.title}
-                                                </h3>
-                                                <p className="text-black mb-6 flex-grow leading-relaxed font-medium border-l-4 border-black pl-4 opacity-80 line-clamp-3">
+                                                </Heading>
+                                                <Text variant="body-base" className="text-black mb-6 flex-grow leading-relaxed font-medium border-l-4 border-black pl-4 opacity-80 line-clamp-3">
                                                     {post.data.excerpt}
-                                                </p>
+                                                </Text>
                                                 <div className="mt-auto pt-4">
                                                     <Button intent="tertiary" className="p-0 hover:bg-transparent hover:text-black">
                                                         Read <ArrowRight size={18} strokeWidth={3} />
@@ -150,17 +151,17 @@ const BlogList = ({ posts, allTags, allCategories, tagsMap = {}, categoriesMap =
                                     ) : (
                                         <>
                                             <div className="flex justify-between items-start mb-4 border-b-4 border-black pb-2">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-white px-2 py-1 bg-ink border-2 border-black">
+                                                <Label variant="tag" className="text-white px-2 py-1 bg-ink border-2 border-black">
                                                     {categoriesMap[post.data.category] || post.data.category || 'Uncategorized'}
-                                                </span>
-                                                <span className="text-sm font-bold text-gray-700">{new Date(post.data.date).toLocaleDateString()}</span>
+                                                </Label>
+                                                <Text variant="fine" className="font-bold text-gray-700">{new Date(post.data.date).toLocaleDateString()}</Text>
                                             </div>
-                                            <h3 className="text-2xl font-black mb-3 leading-tight group-hover:underline decoration-4 underline-offset-4 decoration-black text-ink">
+                                            <Heading variant="heading-m" className="mb-3 leading-tight group-hover:underline decoration-4 underline-offset-4 decoration-black text-ink">
                                                 {post.data.title}
-                                            </h3>
-                                            <p className="text-black mb-6 flex-grow leading-relaxed font-medium border-l-4 border-black pl-4 opacity-80 line-clamp-3">
+                                            </Heading>
+                                            <Text variant="body-base" className="text-black mb-6 flex-grow leading-relaxed font-medium border-l-4 border-black pl-4 opacity-80 line-clamp-3">
                                                 {post.data.excerpt}
-                                            </p>
+                                            </Text>
                                             <div className="mt-auto pt-4">
                                                 <Button intent="tertiary" className="p-0 hover:bg-transparent hover:text-black">
                                                     Read <ArrowRight size={18} strokeWidth={3} />
