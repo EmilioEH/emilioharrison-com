@@ -4,6 +4,7 @@ import SectionTitle from '../../ui/SectionTitle';
 import StickyNote from '../../ui/StickyNote';
 import ContentBlock from '../../ui/ContentBlock';
 import Button from '../../ui/Button';
+import { Heading, Text, Label } from '../../ui/Typography';
 
 const ContactContent = () => {
     const [formData, setFormData] = useState({
@@ -74,7 +75,7 @@ const ContactContent = () => {
         }
     ];
 
-    const inputClasses = "w-full px-4 py-3 font-medium bg-white border-2 border-black text-ink placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-mustard shadow-hard-sm transition-shadow";
+    const inputClasses = "w-full px-4 py-3 font-body font-medium bg-white border-2 border-black text-ink placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-mustard shadow-hard-sm transition-shadow";
 
     return (
         <div className="animate-in fade-in duration-700 relative z-10">
@@ -82,9 +83,9 @@ const ContactContent = () => {
 
             <div className="max-w-3xl mb-12">
                 <ContentBlock color="bg-white" pin rotate={-1} padding="p-8">
-                    <p className="text-xl md:text-2xl font-medium leading-relaxed">
+                    <Text variant="body-xl" className="font-medium leading-relaxed">
                         I'm always interested in talking shop, whether that's about UX research, AI, or just building cool things on the internet.
-                    </p>
+                    </Text>
                 </ContentBlock>
             </div>
 
@@ -92,11 +93,11 @@ const ContactContent = () => {
                 {/* Contact Form */}
                 <div className="md:col-span-7">
                     <ContentBlock color="bg-white" padding="p-8" rotate={-1} pin>
-                        <h2 className="text-2xl font-black mb-6 text-ink">Send a Message</h2>
+                        <Heading variant="heading-l" className="mb-6 text-ink">Send a Message</Heading>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label htmlFor="name" className="block font-bold mb-2 text-ink">
+                                <label htmlFor="name" className="block font-bold mb-2 text-ink font-accent">
                                     Name *
                                 </label>
                                 <input
@@ -112,7 +113,7 @@ const ContactContent = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="email" className="block font-bold mb-2 text-ink">
+                                <label htmlFor="email" className="block font-bold mb-2 text-ink font-accent">
                                     Email *
                                 </label>
                                 <input
@@ -128,7 +129,7 @@ const ContactContent = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="subject" className="block font-bold mb-2 text-ink">
+                                <label htmlFor="subject" className="block font-bold mb-2 text-ink font-accent">
                                     Subject *
                                 </label>
                                 <input
@@ -144,7 +145,7 @@ const ContactContent = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="message" className="block font-bold mb-2 text-ink">
+                                <label htmlFor="message" className="block font-bold mb-2 text-ink font-accent">
                                     Message *
                                 </label>
                                 <textarea
@@ -169,7 +170,7 @@ const ContactContent = () => {
                                     ) : (
                                         <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
                                     )}
-                                    <p className="font-medium">{status.message}</p>
+                                    <Text variant="body-s" className="font-medium">{status.message}</Text>
                                 </div>
                             )}
 
@@ -197,23 +198,23 @@ const ContactContent = () => {
                         <div className="flex items-start gap-4 mb-4">
                             <Mail className="text-black" size={28} />
                             <div>
-                                <h3 className="text-xl font-black mb-2 text-black">Send an email</h3>
+                                <Heading variant="heading-m" className="mb-2 text-black">Send an email</Heading>
                                 <a
                                     href="mailto:contact@emilioharrison.com"
-                                    className="font-bold hover:underline text-black"
+                                    className="font-bold hover:underline text-black font-body"
                                 >
                                     contact@emilioharrison.com
                                 </a>
-                                <p className="text-sm mt-2 text-gray-700">
+                                <Text variant="body-s" className="mt-2 text-gray-700">
                                     I usually respond within a day or two. If it takes longer, I'm probably stuck on a puzzle.
-                                </p>
+                                </Text>
                             </div>
                         </div>
                     </ContentBlock>
 
                     {/* Social Links */}
                     <ContentBlock color="bg-white" padding="p-6" rotate={-1} pin>
-                        <h3 className="text-xl font-black mb-4 text-black">Connect Elsewhere</h3>
+                        <Heading variant="heading-m" className="mb-4 text-black">Connect Elsewhere</Heading>
                         <div className="space-y-3">
                             {socialLinks.map((link) => {
                                 const Icon = link.icon;
@@ -227,10 +228,10 @@ const ContactContent = () => {
                                     >
                                         <Icon size={24} className="text-black" />
                                         <div className="flex-grow">
-                                            <p className="font-bold group-hover:underline text-black">{link.name}</p>
-                                            <p className="text-sm text-gray-600">
+                                            <Text variant="body-base" className="font-bold group-hover:underline text-black">{link.name}</Text>
+                                            <Text variant="body-s" className="text-gray-600">
                                                 {link.description}
-                                            </p>
+                                            </Text>
                                         </div>
                                     </a>
                                 );
@@ -240,9 +241,9 @@ const ContactContent = () => {
 
                     {/* Quick Note */}
                     <ContentBlock color="bg-white" pin rotate={1} padding="p-6">
-                        <p className="text-sm italic text-gray-700">
+                        <Text variant="body-s" className="italic text-gray-700">
                             Whether you're interested in collaborating, have a question about my work, or just want to swap book recommendations, I'm all ears.
-                        </p>
+                        </Text>
                     </ContentBlock>
                 </div>
             </div>

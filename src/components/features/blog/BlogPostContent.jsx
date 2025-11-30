@@ -7,6 +7,7 @@ import { useTheme } from '../../../hooks/useTheme';
 
 import Tag from '../../ui/Tag';
 import CategoryBadge from '../../ui/CategoryBadge';
+import { Heading, Text, Label } from '../../ui/Typography';
 
 const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
     const theme = useTheme();
@@ -38,17 +39,17 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
                 <div className="mb-8">
                     {post.data.category && (
                         <div className="mb-4 flex items-center gap-2">
-                            <span className="font-mono text-sm text-gray-500 uppercase">Category:</span>
+                            <Label variant="eyebrow" className="text-gray-500">Category:</Label>
                             <a href={`/fieldnotes?category=${encodeURIComponent(post.data.category)}&from=${post.slug}`} className="no-underline">
                                 <CategoryBadge category={categoryLabel || post.data.category} className="hover:bg-black hover:text-white" />
                             </a>
                         </div>
                     )}
-                    <h1 className="text-4xl md:text-6xl font-black mb-2 leading-tight">{post.data.title}</h1>
-                    <p className={`text-xl font-bold text-gray-800 mb-1`}>By: Emilio Harrison</p>
-                    <p className={`text-sm font-mono text-gray-500 mb-4`}>Published: {post.data.date}</p>
+                    <Heading variant="display-l" className="mb-2 leading-tight">{post.data.title}</Heading>
+                    <Text variant="body-l" className="font-bold text-gray-800 mb-1">By: Emilio Harrison</Text>
+                    <Text variant="fine" className="font-mono text-gray-500 mb-4">Published: {post.data.date}</Text>
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm text-gray-500 uppercase">Tags:</span>
+                        <Label variant="eyebrow" className="text-gray-500">Tags:</Label>
                         {displayTags.map(tagObj => (
                             <a key={tagObj.slug} href={`/fieldnotes?tags=${encodeURIComponent(tagObj.slug)}&from=${post.slug}`} className="no-underline">
                                 <Tag tag={tagObj.label} className="hover:bg-black hover:text-white" />
@@ -79,26 +80,26 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
                     </div>
                 ) : (
                     <div className="animate-in slide-in-from-right-4 duration-300">
-                        <div className={`${theme.colors.accent} p-4 border-2 border-black font-black text-xl mb-8 flex items-center gap-2 ${theme.shadow} text-black`}>
-                            <Zap /> TL;DR — THE UTILITY
+                        <div className={`${theme.colors.accent} p-4 border-2 border-black mb-8 flex items-center gap-2 ${theme.shadow} text-black`}>
+                            <Zap /> <Heading variant="heading-m">TL;DR — THE UTILITY</Heading>
                         </div>
                         <div className="grid gap-6">
                             {post.data.takeaways ? post.data.takeaways.map((takeaway, idx) => (
                                 <div key={idx} className="group">
-                                    <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
+                                    <Heading variant="heading-s" className="mb-2 flex items-center gap-3">
                                         <span className={`bg-black text-white w-8 h-8 flex items-center justify-center text-sm rounded-full`}>{idx + 1}</span>
                                         {takeaway.title}
-                                    </h3>
-                                    <p className={`text-xl leading-relaxed border-l-4 pl-6 py-2 transition-colors border-gray-200 text-gray-800 group-hover:border-teal`}>
+                                    </Heading>
+                                    <Text variant="body-l" className={`leading-relaxed border-l-4 pl-6 py-2 transition-colors border-gray-200 text-gray-800 group-hover:border-teal`}>
                                         {takeaway.text}
-                                    </p>
+                                    </Text>
                                 </div>
                             )) : (
-                                <p>No summary available for this post.</p>
+                                <Text>No summary available for this post.</Text>
                             )}
                         </div>
                         <div className={`mt-12 p-6 border-2 border-dashed text-center border-black`}>
-                            <p className={`font-bold mb-4 text-gray-500`}>Interested in the context behind these insights?</p>
+                            <Text variant="body-base" className={`font-bold mb-4 text-gray-500`}>Interested in the context behind these insights?</Text>
                             <button onClick={() => setReadMode('deep')} className={`underline font-black text-lg hover:${theme.colors.highlight}`}>
                                 Switch to Deep Dive
                             </button>

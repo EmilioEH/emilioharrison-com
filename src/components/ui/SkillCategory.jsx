@@ -1,10 +1,11 @@
 import React from 'react';
 import BrutalCard from './BrutalCard';
+import { Heading } from './Typography';
 
 const SkillCategory = ({ title, skills, theme }) => {
     return (
         <BrutalCard theme={theme} className="p-6">
-            <h3 className="text-xl font-black mb-3">{title}</h3>
+            <Heading variant="heading-m" className="mb-3">{title}</Heading>
             <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
                     <span

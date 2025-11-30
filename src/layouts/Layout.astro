@@ -11,6 +11,16 @@ export interface Props {
 
 const { title, description } = Astro.props;
 const defaultDescription = "UX Researcher & Creative Technologist building utility-focused AI tools";
+
+import '@fontsource/archivo-black';
+import '@fontsource/dm-sans/400.css';
+import '@fontsource/dm-sans/500.css';
+import '@fontsource/dm-sans/700.css';
+import '@fontsource/space-grotesk/300.css';
+import '@fontsource/space-grotesk/400.css';
+import '@fontsource/space-grotesk/500.css';
+import '@fontsource/space-grotesk/600.css';
+import '@fontsource/space-grotesk/700.css';
 ---
 
 <!DOCTYPE html>
@@ -51,10 +61,9 @@ const defaultDescription = "UX Researcher & Creative Technologist building utili
         </script>
 
 		<title>{title}</title>
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS&display=swap" rel="stylesheet">
+        <style is:global>
+            @import "../styles/global.css";
+        </style>
 	</head>
 	<body class="bg-paper text-ink font-sans antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-mustard selection:text-black">
         <PatternDefs />

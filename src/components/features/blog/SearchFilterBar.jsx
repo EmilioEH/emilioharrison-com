@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import Tag from '../../ui/Tag';
 import CategoryBadge from '../../ui/CategoryBadge';
+import { Heading, Text, Label } from '../../ui/Typography';
 
 import { useTheme } from '../../../hooks/useTheme';
 
@@ -66,7 +67,7 @@ const SearchFilterBar = ({
                     className={`
                         w-full pl-14 pr-4 py-4 text-xl font-bold border-4 border-black bg-white
                         focus:outline-none focus:ring-4 focus:ring-black/20 transition-all
-                        placeholder:text-gray-300
+                        placeholder:text-gray-300 font-body
                     `}
                 />
                 {searchQuery && (
@@ -86,19 +87,19 @@ const SearchFilterBar = ({
                     className="flex items-center gap-2 font-bold uppercase tracking-wider text-sm hover:underline"
                 >
                     <Filter size={16} strokeWidth={3} />
-                    {isFiltersOpen ? 'Hide Filters' : 'Show Filters'}
+                    <Label variant="eyebrow">{isFiltersOpen ? 'Hide Filters' : 'Show Filters'}</Label>
                     {isFiltersOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
                 <div className="flex items-center gap-4">
-                    <span className="font-mono text-sm text-gray-500 font-bold">
+                    <Text variant="fine" className="text-gray-500 font-bold">
                         {resultCount} {resultCount === 1 ? 'Result' : 'Results'}
-                    </span>
+                    </Text>
 
                     <select
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value)}
-                        className="font-bold border-2 border-black px-2 py-1 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                        className="font-bold border-2 border-black px-2 py-1 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-black font-body"
                     >
                         <option value="newest">Newest First</option>
                         <option value="oldest">Oldest First</option>
@@ -112,7 +113,7 @@ const SearchFilterBar = ({
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Categories */}
                         <div>
-                            <h3 className="font-black uppercase tracking-widest text-sm mb-4 text-gray-500">Categories</h3>
+                            <Label variant="eyebrow" className="mb-4 text-gray-500">Categories</Label>
                             <div className="flex flex-wrap gap-2">
                                 {allCategories.map(category => (
                                     <CategoryBadge
@@ -127,7 +128,7 @@ const SearchFilterBar = ({
 
                         {/* Tags */}
                         <div>
-                            <h3 className="font-black uppercase tracking-widest text-sm mb-4 text-gray-500">Tags</h3>
+                            <Label variant="eyebrow" className="mb-4 text-gray-500">Tags</Label>
                             <div className="flex flex-wrap gap-2">
                                 {allTags.map(tag => (
                                     <Tag
@@ -145,9 +146,9 @@ const SearchFilterBar = ({
                         <div className="mt-8 pt-6 border-t-2 border-gray-200 flex justify-end">
                             <button
                                 onClick={clearAll}
-                                className="text-red-500 font-bold hover:underline flex items-center gap-1 text-sm uppercase tracking-wider"
+                                className="text-red-500 font-bold hover:underline flex items-center gap-1 uppercase tracking-wider"
                             >
-                                <X size={16} /> Clear All Filters
+                                <Label variant="eyebrow" className="flex items-center gap-1"><X size={16} /> Clear All Filters</Label>
                             </button>
                         </div>
                     )}
@@ -157,7 +158,7 @@ const SearchFilterBar = ({
             {/* Active Filters Summary (when panel is closed) */}
             {!isFiltersOpen && hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-xs font-bold uppercase text-gray-400 mr-2">Active:</span>
+                    <Label variant="eyebrow" className="text-gray-400 mr-2">Active:</Label>
                     {selectedCategories.map(cat => (
                         <CategoryBadge key={cat} category={categoriesMap[cat] || cat} isActive={true} onClick={() => toggleCategory(cat)} className="scale-90" />
                     ))}
