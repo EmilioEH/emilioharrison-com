@@ -2,6 +2,7 @@ import React from 'react';
 import SectionTitle from '../../ui/SectionTitle';
 import Button from '../../ui/Button';
 import ContentBlock from '../../ui/ContentBlock';
+import { Heading, Text, Label } from '../../ui/Typography';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { useStore } from '@nanostores/react';
 import { themeId } from '../../../lib/store';
@@ -17,12 +18,12 @@ const ShopContent = () => {
 
             <div className="max-w-3xl">
                 <ContentBlock color="bg-white" pin rotate={1} padding="p-8" className="mb-12">
-                    <p className="text-xl font-bold mb-6">
+                    <Text variant="body-xl" className="font-bold mb-6">
                         I'm building a suite of AI tools designed specifically for UX researchers.
-                    </p>
-                    <p className="text-lg">
+                    </Text>
+                    <Text variant="body-l">
                         Not ready yet, but getting close.
-                    </p>
+                    </Text>
                 </ContentBlock>
 
                 <ContentBlock
@@ -31,12 +32,12 @@ const ShopContent = () => {
                     className="mb-12 transform -rotate-1"
                     pin
                 >
-                    <h3 className="text-2xl font-black mb-4">Want to know when it launches?</h3>
-                    <p className="text-lg font-bold">Join the email list below.</p>
+                    <Heading variant="heading-l" className="mb-4">Want to know when it launches?</Heading>
+                    <Text variant="body-l" className="font-bold">Join the email list below.</Text>
                 </ContentBlock>
 
                 <div>
-                    <h3 className="text-xl font-black mb-6 uppercase tracking-wider">In the meantime:</h3>
+                    <Heading variant="heading-m" className="mb-6 uppercase tracking-wider">In the meantime:</Heading>
                     <div className="flex flex-wrap gap-4">
                         <Button href="/fieldnotes" intent="secondary">
                             <BookOpen size={20} /> Read Field Notes

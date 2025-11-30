@@ -33,7 +33,7 @@ const StickyNote = ({
     return (
         <div
             className={`
-            ${color} ${textColor} border-4 border-black shadow-hard 
+            ${color} ${textColor} font-body border-4 border-black shadow-hard 
             ${padding ? 'p-6 md:p-8' : ''} relative transition-transform duration-300 ease-in-out 
             ${variant === 'action' ? 'hover:scale-[1.01] hover:z-10 hover:shadow-hard-lg cursor-pointer' : ''}
             ${sizeClasses[size] || sizeClasses.square}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Text, Label } from './Typography';
 
 /**
  * Marginalia Component
@@ -26,15 +27,15 @@ const Marginalia = ({ id, text }) => {
             <div
                 className={`
                     absolute left-1/2 bottom-full mb-4 -translate-x-1/2 w-64 p-4 
-                    text-sm font-medium leading-relaxed z-50 
+                    z-50 
                     bg-white border-4 border-black shadow-hard 
                     transition-all duration-200 ease-out origin-bottom 
                     ${isOpen ? 'opacity-100 scale-100 rotate-1' : 'opacity-0 scale-95 pointer-events-none'}
                 `}
                 role="tooltip"
             >
-                <div className="font-black mb-2 text-xs uppercase tracking-wider text-gray-500 font-sans">Note {id}</div>
-                <div className="text-black font-bold italic" style={{ fontFamily: '"Comic Sans MS", cursive, sans-serif' }}>{text}</div>
+                <Label variant="eyebrow" className="mb-2 text-gray-500 font-sans">Note {id}</Label>
+                <Text variant="body-base" className="text-black font-bold italic" style={{ fontFamily: '"Comic Sans MS", cursive, sans-serif' }}>{text}</Text>
                 {/* Arrow */}
                 <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[2px] w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-black"></div>
             </div>
