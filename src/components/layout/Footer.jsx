@@ -26,7 +26,7 @@ const Footer = () => {
             <div className="mb-12">
                 <Text variant="body-s" className="text-gray-500 max-w-lg mx-auto leading-relaxed">
                     Built with AI assistance. Writing, code, and design refined through testing and iteration.
-                    <a href="#" className="block mt-2 text-gray-400 hover:text-white underline decoration-gray-700 underline-offset-4 hover:decoration-white transition-all">
+                    <a href="https://emilioharrison.com/fieldnotes/my-writing-process-explained" className="block mt-2 text-gray-400 hover:text-white underline decoration-gray-700 underline-offset-4 hover:decoration-white transition-all">
                         Curious about my process? →
                     </a>
                 </Text>
