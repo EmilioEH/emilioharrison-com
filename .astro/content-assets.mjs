@@ -1,5 +1,5 @@
 
-import __ASTRO_IMAGE_IMPORT_Z15Ji9L from "../../assets/blogIMG/context-is-king/cover.png?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fcontext-is-king.mdoc";
 import __ASTRO_IMAGE_IMPORT_Zy0UqQ from "../../assets/blogIMG/when-your-ai-breakthrough-doesnt-save-anyone-time/cover.jpeg?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fwhen-your-ai-breakthrough-doesnt-save-anyone-time.mdoc";
-export default new Map([["../../assets/blogIMG/context-is-king/cover.png?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fcontext-is-king.mdoc", __ASTRO_IMAGE_IMPORT_Z15Ji9L], ["../../assets/blogIMG/when-your-ai-breakthrough-doesnt-save-anyone-time/cover.jpeg?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fwhen-your-ai-breakthrough-doesnt-save-anyone-time.mdoc", __ASTRO_IMAGE_IMPORT_Zy0UqQ]]);
+import __ASTRO_IMAGE_IMPORT_Z15Ji9L from "../../assets/blogIMG/context-is-king/cover.png?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fcontext-is-king.mdoc";
+export default new Map([["../../assets/blogIMG/when-your-ai-breakthrough-doesnt-save-anyone-time/cover.jpeg?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fwhen-your-ai-breakthrough-doesnt-save-anyone-time.mdoc", __ASTRO_IMAGE_IMPORT_Zy0UqQ], ["../../assets/blogIMG/context-is-king/cover.png?astroContentImageFlag=&importer=src%2Fcontent%2Fposts%2Fcontext-is-king.mdoc", __ASTRO_IMAGE_IMPORT_Z15Ji9L]]);
 		
