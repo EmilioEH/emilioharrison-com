@@ -21,7 +21,7 @@ const StickyNote = ({
 }) => {
     const sizeClasses = {
         square: "aspect-square",
-        rectangle: "aspect-video md:aspect-[2/1]",
+        rectangle: "w-full md:aspect-[2/1]",
     };
 
     // Force high contrast text color (black) for sticky notes as they are pastel
