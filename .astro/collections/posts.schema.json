@@ -47,25 +47,6 @@
         "excerpt": {
           "type": "string"
         },
-        "takeaways": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "title": {
-                "type": "string"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "title",
-              "text"
-            ],
-            "additionalProperties": false
-          }
-        },
         "cover": {
           "type": "string"
         },

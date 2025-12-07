@@ -1,8 +1,8 @@
 import React from 'react';
 
-const BrutalCard = ({ children, className = "", color, theme, onClick, ...props }) => {
+const BrutalCard = ({ children, className = "", color, theme, onClick, disableHover = false, ...props }) => {
     const bg = color || theme.colors.card;
-    const hoverStyles = theme.shadowHover || "";
+    const hoverStyles = disableHover ? "" : (theme.shadowHover || "");
     const cursorStyles = onClick ? "cursor-pointer" : "";
 
     return (
