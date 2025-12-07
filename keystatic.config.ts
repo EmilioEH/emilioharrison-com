@@ -53,16 +53,6 @@ export default config({
                     }
                 ),
                 excerpt: fields.text({ label: 'Excerpt', multiline: true }),
-                takeaways: fields.array(
-                    fields.object({
-                        title: fields.text({ label: 'Takeaway Title' }),
-                        text: fields.text({ label: 'Takeaway Text', multiline: true }),
-                    }),
-                    {
-                        label: 'Takeaways',
-                        itemLabel: props => props.fields.title.value || 'Takeaway',
-                    }
-                ),
                 cover: fields.image({
                     label: 'Cover Image',
                     directory: 'src/assets/blogIMG',

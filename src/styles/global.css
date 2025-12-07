@@ -1,9 +1,10 @@
 :root {
   /* Typography Scale */
-  --text-display-xl: 5.33rem;
-  --text-display-l: 4rem;
-  --text-heading-xl: 3rem;
-  --text-heading-l: 2.25rem;
+  /* Typography Scale */
+  --text-display-xl: clamp(3.5rem, 10vw, 5.33rem);
+  --text-display-l: clamp(2.5rem, 8vw, 4rem);
+  --text-heading-xl: clamp(2rem, 6vw, 3rem);
+  --text-heading-l: clamp(1.75rem, 5vw, 2.25rem);
   --text-heading-m: 1.69rem;
   --text-heading-s: 1.27rem;
   --text-body-xl: 1.5rem;
