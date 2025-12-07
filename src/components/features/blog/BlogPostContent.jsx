@@ -35,7 +35,7 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
                 </div>
             </div>
 
-            <BrutalCard theme={theme} className="p-8 md:p-12 min-h-[60vh] transition-all duration-500">
+            <BrutalCard theme={theme} className="p-4 md:p-12 min-h-[60vh] transition-all duration-500">
                 <div className="mb-8">
                     {post.data.category && (
                         <div className="mb-4 flex items-center gap-2">
@@ -71,7 +71,7 @@ const BlogPostContent = ({ post, categoryLabel, tagsWithLabels, children }) => {
                 )}
 
                 {readMode === 'deep' ? (
-                    <div className={`prose prose-lg prose-headings:font-black prose-p:text-gray-800 animate-in fade-in duration-500`}>
+                    <div className={`prose md:prose-lg prose-headings:font-black prose-p:text-gray-800 animate-in fade-in duration-500`}>
 
                         <div>
                             {/* Content is now passed as children from Astro */}
