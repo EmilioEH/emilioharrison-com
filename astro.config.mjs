@@ -15,6 +15,26 @@ export default defineConfig({
             enabled: true
         }
     }),
+    vite: {
+        plugins: [
+            {
+                name: "polyfill-message-channel",
+                enforce: "pre",
+                transform(code, id) {
+                    if (id.includes("entry.mjs") || id.includes("entry.js")) {
+                        return {
+                            code: `import { MessageChannel } from 'node:worker_threads';
+if (!globalThis.MessageChannel) {
+    globalThis.MessageChannel = MessageChannel;
+}
+${code}`,
+                            map: null,
+                        };
+                    }
+                },
+            },
+        ]
+    },
     integrations: [
         react(),
         tailwind(),
