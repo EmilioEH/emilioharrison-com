@@ -23,11 +23,7 @@ export default defineConfig({
                 transform(code, id) {
                     if (id.includes("entry.mjs") || id.includes("entry.js")) {
                         return {
-                            code: `import { MessageChannel } from 'node:worker_threads';
-if (!globalThis.MessageChannel) {
-    globalThis.MessageChannel = MessageChannel;
-}
-${code}`,
+                            code: `import '/src/shim.js';\n${code}`,
                             map: null,
                         };
                     }
