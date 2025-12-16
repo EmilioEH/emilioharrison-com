@@ -18,7 +18,17 @@ export default defineConfig({
     vite: {
         plugins: [
 
-        ]
+        ],
+        build: {
+            rollupOptions: {
+                output: {
+                    banner: `import { MessageChannel } from 'node:worker_threads';
+if (!globalThis.MessageChannel) {
+    globalThis.MessageChannel = MessageChannel;
+}`,
+                },
+            },
+        },
     },
     integrations: [
         react(),
