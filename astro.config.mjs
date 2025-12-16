@@ -17,18 +17,7 @@ export default defineConfig({
     }),
     vite: {
         plugins: [
-            {
-                name: "polyfill-message-channel",
-                enforce: "pre",
-                transform(code, id) {
-                    if (id.includes("entry.mjs") || id.includes("entry.js")) {
-                        return {
-                            code: `import '/src/shim.js';\n${code}`,
-                            map: null,
-                        };
-                    }
-                },
-            },
+
         ]
     },
     integrations: [
