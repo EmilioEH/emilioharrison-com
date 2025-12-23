@@ -19,9 +19,31 @@ export default defineConfig({
     build: {
       rollupOptions: {
         output: {
-          banner: `import { MessageChannel } from 'node:worker_threads';
+          banner: `
 if (!globalThis.MessageChannel) {
-    globalThis.MessageChannel = MessageChannel;
+  class MessagePort {
+    constructor(otherPort) {
+      this.otherPort = otherPort;
+      this.onmessage = null;
+    }
+    postMessage(message) {
+      if (this.otherPort && this.otherPort.onmessage) {
+        setTimeout(() => {
+           this.otherPort.onmessage({ data: message });
+        }, 0);
+      }
+    }
+  }
+  
+  class MessageChannel {
+    constructor() {
+      this.port1 = new MessagePort();
+      this.port2 = new MessagePort();
+      this.port1.otherPort = this.port2;
+      this.port2.otherPort = this.port1;
+    }
+  }
+  globalThis.MessageChannel = MessageChannel;
 }`,
         },
       },
