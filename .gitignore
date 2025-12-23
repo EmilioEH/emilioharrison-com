@@ -37,3 +37,10 @@ dist-ssr
 
 # Coverage
 coverage/
+
+# Secrets
+.dev.vars
+
+# Build Artifacts
+audit-results/
+lint_output.txt
