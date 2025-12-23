@@ -1,20 +1,26 @@
-import React from 'react';
-import { Heading } from './Typography';
+import React from 'react'
+import { Heading } from './Typography'
 
 /**
  * SectionTitle Component
  * Standardized section title with a decorative icon.
- * 
+ *
  * @param {Object} props
  * @param {React.ReactNode} props.children
  */
 const SectionTitle = ({ children }) => (
-    <Heading variant="heading-l" className="mb-8 uppercase tracking-tight flex items-center gap-3 text-ink">
-        <span className="w-8 h-8 bg-coral border-4 border-black rounded-full flex items-center justify-center" aria-hidden="true">
-            <div className="w-2 h-2 bg-black rounded-full"></div>
-        </span>
-        {children}
-    </Heading>
-);
+  <Heading
+    variant="heading-l"
+    className="mb-8 flex items-center gap-3 uppercase tracking-tight text-ink"
+  >
+    <span
+      className="flex h-8 w-8 items-center justify-center rounded-full border-4 border-black bg-coral"
+      aria-hidden="true"
+    >
+      <div className="h-2 w-2 rounded-full bg-black"></div>
+    </span>
+    {children}
+  </Heading>
+)
 
-export default SectionTitle;
+export default SectionTitle

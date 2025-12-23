@@ -9,6 +9,7 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 ### AI & LLM Technologies
 
 #### Core AI Concepts
+
 - `llm` - Large Language Models in general
 - `chatgpt` - Specific to ChatGPT
 - `claude` - Specific to Anthropic's Claude
@@ -23,6 +24,7 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 - `inference` - Model inference and runtime behavior
 
 #### AI Implementation
+
 - `ai-testing` - Testing AI/LLM outputs
 - `ai-validation` - Validation methodologies for AI tools
 - `human-in-the-loop` - Human oversight and validation
@@ -47,6 +49,7 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 ### Development & Technical
 
 #### General Development
+
 - `api` - API integration and usage
 - `documentation` - Technical documentation
 - `developer-tools` - Tools for developers
@@ -54,6 +57,7 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 - `plugin-development` - Building plugins and extensions
 
 #### Methodologies
+
 - `testing-methodology` - Testing approaches and frameworks
 - `5x5-testing` - The 5x5 testing framework (consistency + accuracy)
 - `consistency-testing` - Testing for consistent outputs
@@ -65,6 +69,7 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 ### Professional Skills
 
 #### Learning & Growth
+
 - `learning-in-public` - Sharing learning journeys publicly
 - `imposter-syndrome` - Dealing with imposter syndrome
 - `expertise` - Building and demonstrating expertise
@@ -73,6 +78,7 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 - `career-growth` - Career development and progression
 
 #### Work Practices
+
 - `accountability` - Ownership and responsibility
 - `decision-making` - Making informed decisions
 - `quality-assurance` - Ensuring quality in outputs
@@ -130,15 +136,19 @@ A comprehensive tagging system for blog posts. Tags are more granular than categ
 ## Current Post Tag Assignments
 
 ### "Context is King"
+
 **Tags:** `llm`, `claude`, `context-engineering`, `prompt-engineering`, `figma`, `figma-plugins`, `api`, `documentation`, `context-injection`, `teaching`, `knowledge-sharing`, `reusable-solutions`, `template-building`, `meta-tools`
 
 ### "When Your AI Breakthrough Doesn't Save Anyone Time"
+
 **Tags:** `llm`, `ai-testing`, `ai-validation`, `testing-methodology`, `5x5-testing`, `consistency-testing`, `accuracy-validation`, `ux-research`, `heuristic-evaluation`, `human-in-the-loop`, `hallucinations`, `quality-assurance`, `accountability`, `scalability`, `lessons-learned`
 
 ### "The AI Expert Who Doesn't Know What a Token Is"
+
 **Tags:** `llm`, `tokens`, `context-window`, `fine-tuning`, `inference`, `imposter-syndrome`, `vulnerability`, `learning-in-public`, `honesty`, `ego-management`, `be-right-vs-get-it-right`, `expertise`, `professional-development`, `growth-mindset`, `workplace`
 
 ### "You're the One Who Clicks Submit"
+
 **Tags:** `llm`, `ai-testing`, `ai-validation`, `accountability`, `ux-research`, `heuristic-evaluation`, `hallucinations`, `human-in-the-loop`, `quality-assurance`, `risk-management`, `testing-methodology`, `5x5-testing`, `decision-making`, `lessons-learned`
 
 ---
@@ -172,6 +182,7 @@ AI & Automation → llm → claude (increasingly specific)
 ### Creating New Tags
 
 When creating new tags:
+
 1. Use lowercase with hyphens (kebab-case)
 2. Keep them concise (1-3 words)
 3. Make them searchable and intuitive
@@ -186,11 +197,11 @@ When creating new tags:
 
 ```yaml
 ---
-title: "Context is King"
-date: "2025-11-26"
-primaryCategory: "AI & Automation"
-secondaryCategories: ["Methodologies & Frameworks", "Team Collaboration"]
-tags: 
+title: 'Context is King'
+date: '2025-11-26'
+primaryCategory: 'AI & Automation'
+secondaryCategories: ['Methodologies & Frameworks', 'Team Collaboration']
+tags:
   - llm
   - context-engineering
   - figma-plugins
@@ -202,10 +213,13 @@ tags:
 ```
 
 ### Tag Cloud Display
+
 Consider displaying tags by frequency or grouping by tag category for better UX.
 
 ### Related Posts
+
 Use tags to generate "Related Posts" sections:
+
 - Posts sharing 3+ tags = highly related
 - Posts sharing 1-2 tags = somewhat related
 
@@ -214,12 +228,15 @@ Use tags to generate "Related Posts" sections:
 ## Tag Maintenance
 
 ### Quarterly Review
+
 - Identify underused tags (< 2 posts) and consider removing
 - Merge synonymous tags
 - Add new tags for emerging themes
 
 ### Tag Analytics
+
 Track which tags:
+
 - Drive the most engagement
 - Help users find content
 - Need better definitions
@@ -229,6 +246,7 @@ Track which tags:
 ## Reserved Tag Patterns
 
 ### Avoid These Patterns
+
 - ❌ `ai-ml-llm` - Too broad, use specific tags
 - ❌ `stuff` - Not descriptive
 - ❌ `misc` - Defeats the purpose of tagging
@@ -236,6 +254,7 @@ Track which tags:
 - ❌ `prompt_engineering` - Use hyphens: `prompt-engineering`
 
 ### Good Tag Examples
+
 - ✅ `context-engineering` - Specific, searchable, descriptive
 - ✅ `5x5-testing` - Specific methodology
 - ✅ `learning-in-public` - Clear concept
@@ -246,19 +265,25 @@ Track which tags:
 ## Search & Discovery Features
 
 ### Tag Combinations
+
 Enable filtering by multiple tags:
+
 - `llm` + `testing-methodology` = AI testing posts
 - `ux-research` + `ai-tools` = UX research automation posts
 - `learning-in-public` + `imposter-syndrome` = Professional growth posts
 
 ### Tag Pages
+
 Create dedicated pages for each tag showing:
+
 - All posts with that tag
 - Tag description
 - Related tags
 
 ### Tag Autocomplete
+
 Implement autocomplete when creating new posts to:
+
 - Ensure consistent tag usage
 - Prevent typos
 - Suggest related tags

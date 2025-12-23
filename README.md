@@ -3,12 +3,14 @@
 Personal website built with Astro, React, and Tailwind CSS.
 
 ## Tech Stack
+
 - **Astro**: Static site generator with React islands for interactivity
 - **React**: Component library for interactive elements
 - **Tailwind CSS**: Utility-first CSS framework
 - **Nano Stores**: State management for theme switching across React islands
 
 ## Development
+
 ```bash
 npm install
 npm run dev      # Start dev server at http://localhost:4321
@@ -23,12 +25,13 @@ Field notes are managed through Astro Content Collections:
 
 1. Create a new `.md` file in `src/content/posts/`
 2. Add required frontmatter:
+
 ```yaml
 ---
-title: "Your Post Title"
-date: "2025-11-27"
-category: "Research | Design | Development"
-excerpt: "Brief summary of the post"
+title: 'Your Post Title'
+date: '2025-11-27'
+category: 'Research | Design | Development'
+excerpt: 'Brief summary of the post'
 ---
 ```
 
@@ -37,28 +40,33 @@ excerpt: "Brief summary of the post"
 
 ## Environment Variables
 
-Currently, no environment variables are required for local development. 
+Currently, no environment variables are required for local development.
 
 For production deployment on Cloudflare Pages:
+
 - All environment variables are managed through the Cloudflare Pages dashboard
 - No secrets are committed to the repository
 
 ## Testing
 
 Run tests with:
+
 ```bash
 npm test        # Run all unit tests with Vitest
 npm run lint    # Check code quality with ESLint
 ```
 
 Current test coverage:
+
 - UI Components: BrutalButton, BrutalCard
 - More tests coming soon!
 
 ## Deployment Workflow
+
 This project is deployed to **emilioharrison.com** via GitHub → Cloudflare Pages:
 
 1. **Push to GitHub**: Commit and push changes to the main branch
+
    ```bash
    git add .
    git commit -m "Your message"
@@ -72,6 +80,7 @@ This project is deployed to **emilioharrison.com** via GitHub → Cloudflare Pag
 3. **Live Site**: Changes are deployed to https://emilioharrison.com within a few minutes
 
 ## Project Structure
+
 ```
 src/
 ├── pages/           # Astro pages (file-based routing)

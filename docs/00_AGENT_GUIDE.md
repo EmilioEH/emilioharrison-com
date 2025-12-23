@@ -1,6 +1,7 @@
 # Agent Documentation Guide
 
 ## Purpose
+
 This directory (`/docs`) serves as the central knowledge base for the project. All documentation, plans, audits, and research should be stored here to maintain a clean project root and ensure context is easily discoverable.
 
 ## Directory Structure

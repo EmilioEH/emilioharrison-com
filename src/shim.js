@@ -1,5 +1,5 @@
-import { MessageChannel } from 'node:worker_threads';
+import { MessageChannel } from 'node:worker_threads'
 
 if (!globalThis.MessageChannel) {
-    globalThis.MessageChannel = MessageChannel;
+  globalThis.MessageChannel = MessageChannel
 }

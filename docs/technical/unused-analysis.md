@@ -3,10 +3,12 @@
 The following files and folders have been identified as potentially unused in the codebase.
 
 ## Empty Directories
+
 - `functions/` (Cloudflare Functions directory, currently empty)
 - `public/images/`
 
 ## Unused Assets
+
 - `src/assets/react.svg` (Not imported in any file)
 - `src/assets/blogIMG/When Your AI Breakthrough Doesn’t Save Anyone Time-20251126/`
   - `IMG_7231.jpeg`
@@ -24,13 +26,17 @@ The following files and folders have been identified as potentially unused in th
   - `IMG_7259.jpeg`
 
 ## Unused Code (Commented Out Usage)
+
 These components are imported but their usage is commented out in the code.
+
 - `src/components/NewsletterSignup.jsx` (Commented out in `src/layouts/Layout.astro`)
 - `src/components/experiments/FittsLaw.jsx` (Commented out in `src/components/pages/LabContent.jsx`)
 
 ## Potentially Unused Configuration/Styles
+
 - `src/index.css`
   - Contains `@import "tailwindcss";` but is not imported in `src/layouts/Layout.astro` or any other file. Tailwind might be working via the Astro integration, but this file itself appears disconnected.
 
 ## Sample Content
+
 - `src/content/posts/hello-world.md` (Sample "Hello World" post)

@@ -6,6 +6,7 @@
 ## 1. Redundant Code
 
 ### Duplicate Image Assets
+
 - **File**: `src/assets/blogIMG` and `public/images/blog`
 - **Type**: Redundancy
 - **Description**: The same set of high-resolution blog images exists in both directories, consuming ~12MB each (24MB total).
@@ -14,6 +15,7 @@
 - **Priority**: High
 
 ### Unused Dependencies
+
 - **File**: `package.json`
 - **Type**: Redundancy
 - **Description**: The following dependencies appear unused based on `depcheck` and manual review:
@@ -25,6 +27,7 @@
 - **Priority**: Medium
 
 ### Code Duplication in Page Content
+
 - **File**: `src/components/pages/LabContent.jsx` and `src/components/pages/AboutContent.jsx`
 - **Type**: Redundancy
 - **Description**: `jscpd` identified significant duplication (13.2% in JS files) between these components, particularly in how they handle theme-based styling for cards and section titles.
@@ -35,6 +38,7 @@
 ## 2. Unused Code & Dead Files
 
 ### Broken Component Usage
+
 - **File**: `src/pages/fieldnotes/index.astro`
 - **Type**: Unused Code / Bug
 - **Description**: The `<BlogList client:load />` component is used without passing the required `posts` prop.
@@ -45,6 +49,7 @@
 ## 3. Illogical Patterns
 
 ### Unnecessary Client Hydration
+
 - **File**: `src/pages/index.astro`, `src/pages/fieldnotes/index.astro`
 - **Type**: Illogical Pattern
 - **Description**: `BlogList` is hydrated with `client:load`. If the list is purely presentational (just links), it should be static. However, it uses `useStore` for theming.
@@ -53,6 +58,7 @@
 - **Priority**: Medium
 
 ### Hardcoded Data in Components
+
 - **File**: `src/components/pages/AboutContent.jsx`
 - **Type**: Illogical Pattern
 - **Description**: Large arrays of data (skills, certifications, expertise) are hardcoded inside the component function.
@@ -63,6 +69,7 @@
 ## 4. Performance Issues
 
 ### Large Unoptimized Images
+
 - **File**: `src/assets/blogIMG`
 - **Type**: Performance
 - **Description**: The blog images are large JPEGs (total 12MB).
@@ -73,6 +80,7 @@
 ## 5. File Organization Problems
 
 ### Top-Level Experiments Directory
+
 - **File**: `src/experiments/`
 - **Type**: Organization
 - **Description**: `experiments` sits at the top level of `src`, which is non-standard.
@@ -81,6 +89,7 @@
 - **Priority**: Low
 
 ### Page Content Components
+
 - **File**: `src/components/pages/`
 - **Type**: Organization
 - **Description**: Having a dedicated folder for "Page Content" components (`AboutContent.jsx`, `LabContent.jsx`) that are essentially full pages is a bit unusual.
@@ -91,6 +100,7 @@
 ## 6. Code Smells
 
 ### Prop Drilling for Theme
+
 - **File**: Multiple components
 - **Type**: Code Smell
 - **Description**: The `theme` object is retrieved from the store in every component and passed down or re-retrieved.
@@ -99,6 +109,7 @@
 - **Priority**: Low
 
 ## Summary of Automated Checks
+
 - **Depcheck**: Found 3 unused dependencies.
 - **JSCPD**: Found 13% duplication in JS files.
 - **Knip**: (Not fully run, but manual check confirms unused exports/files).

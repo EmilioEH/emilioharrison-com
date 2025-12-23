@@ -1,65 +1,69 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import BlogPostContent from '../../components/features/blog/BlogPostContent';
-import { getEntry, getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro'
+import BlogPostContent from '../../components/features/blog/BlogPostContent'
+import { getEntry, getCollection } from 'astro:content'
 
-const { slug } = Astro.params;
-if (!slug) return Astro.redirect('/404');
+const { slug } = Astro.params
+if (!slug) return Astro.redirect('/404')
 
-const post = await getEntry('posts', slug);
-if (!post) return Astro.redirect('/404');
+const post = await getEntry('posts', slug)
+if (!post) return Astro.redirect('/404')
 
 // In production, prevent access to drafts and future scheduled posts
 if (import.meta.env.PROD) {
-    if (post.data.status === 'draft') return Astro.redirect('/404');
-    if (post.data.status === 'scheduled') {
-        const publishDate = post.data.publishedDate || new Date(post.data.date);
-        if (publishDate > new Date()) return Astro.redirect('/404');
-    }
+  if (post.data.status === 'draft') return Astro.redirect('/404')
+  if (post.data.status === 'scheduled') {
+    const publishDate = post.data.publishedDate || new Date(post.data.date)
+    if (publishDate > new Date()) return Astro.redirect('/404')
+  }
 }
 
-const { Content } = await post.render();
+const { Content } = await post.render()
 
-const categoryEntry = post.data.category ? await getEntry('categories', post.data.category) : null;
-const categoryLabel = categoryEntry?.data.name || post.data.category;
+const categoryEntry = post.data.category ? await getEntry('categories', post.data.category) : null
+const categoryLabel = categoryEntry?.data.name || post.data.category
 
-const tagsWithLabels = post.data.tags ? await Promise.all(post.data.tags.map(async (tag) => {
-    const entry = await getEntry('tags', tag);
-    return {
-        slug: tag,
-        label: entry?.data.name || tag
-    };
-})) : [];
+const tagsWithLabels = post.data.tags
+  ? await Promise.all(
+      post.data.tags.map(async (tag) => {
+        const entry = await getEntry('tags', tag)
+        return {
+          slug: tag,
+          label: entry?.data.name || tag,
+        }
+      }),
+    )
+  : []
 
 // Fetch all posts for related posts
-const allPosts = await getCollection('posts');
-const validPosts = allPosts.filter(p => {
-    if (!import.meta.env.PROD) return true;
-    if (p.data.status === 'draft') return false;
-    if (p.data.status === 'scheduled') {
-        const publishDate = p.data.publishedDate || new Date(p.data.date);
-        return publishDate <= new Date();
-    }
-    return true;
-});
+const allPosts = await getCollection('posts')
+const validPosts = allPosts.filter((p) => {
+  if (!import.meta.env.PROD) return true
+  if (p.data.status === 'draft') return false
+  if (p.data.status === 'scheduled') {
+    const publishDate = p.data.publishedDate || new Date(p.data.date)
+    return publishDate <= new Date()
+  }
+  return true
+})
 
 const relatedPosts = validPosts
-    .filter(p => p.slug !== post.slug && p.data.category === post.data.category)
-    .slice(0, 3);
+  .filter((p) => p.slug !== post.slug && p.data.category === post.data.category)
+  .slice(0, 3)
 
-const allCategoriesCollection = await getCollection('categories');
-const categoriesMap = Object.fromEntries(allCategoriesCollection.map(c => [c.id, c.data.name]));
+const allCategoriesCollection = await getCollection('categories')
+const categoriesMap = Object.fromEntries(allCategoriesCollection.map((c) => [c.id, c.data.name]))
 ---
 
 <Layout title={`${post.data.title} | Field Notes`}>
-    <BlogPostContent 
-        client:visible 
-        post={post} 
-        categoryLabel={categoryLabel}
-        tagsWithLabels={tagsWithLabels}
-        relatedPosts={relatedPosts}
-        categoriesMap={categoriesMap}
-    >
-        <Content />
-    </BlogPostContent>
+  <BlogPostContent
+    client:visible
+    post={post}
+    categoryLabel={categoryLabel}
+    tagsWithLabels={tagsWithLabels}
+    relatedPosts={relatedPosts}
+    categoriesMap={categoriesMap}
+  >
+    <Content />
+  </BlogPostContent>
 </Layout>

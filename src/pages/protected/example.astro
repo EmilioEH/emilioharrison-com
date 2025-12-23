@@ -1,18 +1,18 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../layouts/Layout.astro'
 ---
 
 <Layout title="Protected Sub-page">
   <div class="container mx-auto p-8">
-    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+    <div class="mx-auto max-w-2xl rounded-lg bg-white p-8 shadow-md dark:bg-gray-800">
       <div class="mb-6">
         <a href="/protected" class="text-blue-500 hover:underline">&larr; Back to Dashboard</a>
       </div>
-      
-      <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Secret Sub-page</h1>
+
+      <h1 class="mb-4 text-3xl font-bold text-gray-900 dark:text-white">Secret Sub-page</h1>
       <p class="text-lg text-gray-700 dark:text-gray-300">
-        This is another page inside the <code>/protected</code> folder. 
-        It is automatically protected by the middleware because its URL starts with <code>/protected</code>.
+        This is another page inside the <code>/protected</code> folder. It is automatically protected
+        by the middleware because its URL starts with <code>/protected</code>.
       </p>
     </div>
   </div>

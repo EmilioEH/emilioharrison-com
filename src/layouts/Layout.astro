@@ -1,92 +1,94 @@
 ---
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import PatternDefs from '../components/ui/PatternDefs';
-import ReactiveBackground from '../components/ui/ReactiveBackground';
+import Navbar from '../components/layout/Navbar'
+import Footer from '../components/layout/Footer'
+import PatternDefs from '../components/ui/PatternDefs'
+import ReactiveBackground from '../components/ui/ReactiveBackground'
 
 export interface Props {
-	title: string;
-    description?: string;
+  title: string
+  description?: string
 }
 
-const { title, description } = Astro.props;
-const defaultDescription = "UX Researcher & Creative Technologist building utility-focused AI tools";
+const { title, description } = Astro.props
+const defaultDescription = 'UX Researcher & Creative Technologist building utility-focused AI tools'
 
-import '@fontsource/archivo-black';
-import '@fontsource/dm-sans/400.css';
-import '@fontsource/dm-sans/500.css';
-import '@fontsource/dm-sans/700.css';
-import '@fontsource/space-grotesk/300.css';
-import '@fontsource/space-grotesk/400.css';
-import '@fontsource/space-grotesk/500.css';
-import '@fontsource/space-grotesk/600.css';
-import '@fontsource/space-grotesk/700.css';
+import '@fontsource/archivo-black'
+import '@fontsource/dm-sans/400.css'
+import '@fontsource/dm-sans/500.css'
+import '@fontsource/dm-sans/700.css'
+import '@fontsource/space-grotesk/300.css'
+import '@fontsource/space-grotesk/400.css'
+import '@fontsource/space-grotesk/500.css'
+import '@fontsource/space-grotesk/600.css'
+import '@fontsource/space-grotesk/700.css'
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="description" content="Emilio Harrison - UX Researcher & Creative Technologist" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-        
-        <!-- SEO Meta Tags -->
-        <meta name="description" content={description || defaultDescription} />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Emilio Harrison - UX Researcher & Creative Technologist" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
 
-        <!-- Open Graph -->
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description || defaultDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={Astro.url} />
-        <meta property="og:site_name" content="Emilio Harrison" />
+    <!-- SEO Meta Tags -->
+    <meta name="description" content={description || defaultDescription} />
 
-        <!-- Twitter Card -->
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={description || defaultDescription} />
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description || defaultDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url} />
+    <meta property="og:site_name" content="Emilio Harrison" />
 
-        <!-- JSON-LD Schema -->
-        <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "Person",
-          "name": "Emilio Harrison",
-          "jobTitle": "UX Research Strategist",
-          "url": "https://emilioharrison.com",
-          "alumniOf": "University of Texas at Austin",
-          "workLocation": "Austin, TX"
-        }
-        </script>
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description || defaultDescription} />
 
-		<title>{title}</title>
-        <style is:global>
-            @import "../styles/global.css";
-        </style>
-	</head>
-	<body class="bg-paper text-ink font-sans antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-mustard selection:text-black">
-        <PatternDefs />
-        <ReactiveBackground client:idle rippleTrigger={false} />
-        
-        <div class="relative z-10 flex flex-col min-h-screen">
-        <!-- Skip to content link for accessibility -->
-        <a 
-          href="#main-content" 
-          class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-mustard focus:text-black focus:font-bold focus:border-4 focus:border-black focus:shadow-hard"
-        >
-          Skip to main content
-        </a>
+    <!-- JSON-LD Schema -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Emilio Harrison",
+        "jobTitle": "UX Research Strategist",
+        "url": "https://emilioharrison.com",
+        "alumniOf": "University of Texas at Austin",
+        "workLocation": "Austin, TX"
+      }
+    </script>
 
-            <Navbar client:load />
-            <main id="main-content" class="flex-grow container mx-auto px-4 py-8 md:py-12 max-w-6xl">
-                <slot />
-            </main>
-            <Footer client:idle />
-        </div>
+    <title>{title}</title>
+    <style is:global>
+      @import '../styles/global.css';
+    </style>
+  </head>
+  <body
+    class="selection:bg-mustard flex min-h-screen flex-col overflow-x-hidden bg-paper font-sans text-ink antialiased selection:text-black"
+  >
+    <PatternDefs />
+    <ReactiveBackground client:idle rippleTrigger={false} />
 
-        <script>
-            import '../lib/themeInit';
-        </script>
-	</body>
+    <div class="relative z-10 flex min-h-screen flex-col">
+      <!-- Skip to content link for accessibility -->
+      <a
+        href="#main-content"
+        class="focus:bg-mustard sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:border-4 focus:border-black focus:px-4 focus:py-2 focus:font-bold focus:text-black focus:shadow-hard"
+      >
+        Skip to main content
+      </a>
+
+      <Navbar client:load />
+      <main id="main-content" class="container mx-auto max-w-6xl flex-grow px-4 py-8 md:py-12">
+        <slot />
+      </main>
+      <Footer client:idle />
+    </div>
+
+    <script>
+      import '../lib/themeInit'
+    </script>
+  </body>
 </html>

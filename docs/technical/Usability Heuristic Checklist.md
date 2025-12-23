@@ -5,6 +5,7 @@
 **Agent Task: Systematically explore and document the application structure**
 
 **Discovery Instructions:**
+
 1. Open the application homepage/main entry point
 2. Navigate through all accessible pages and sections
 3. Identify and document all primary user flows
@@ -15,6 +16,7 @@
 8. Identify key user tasks and features
 
 **Deliverables:**
+
 - Site map or application structure diagram
 - List of all unique pages/views
 - Inventory of interactive components (buttons, forms, modals, etc.)
@@ -40,6 +42,7 @@
 ---
 
 #### **1. Visibility of System Status**
+
 - [ ] Does this feature provide immediate feedback for user actions?
 - [ ] Are loading states clearly indicated during operations?
 - [ ] Do interactive elements show hover/focus/active states?
@@ -47,6 +50,7 @@
 - [ ] Is progress clearly communicated in multi-step processes?
 
 **Agent Testing:**
+
 - Execute the complete feature workflow
 - Record all state changes
 - Capture feedback mechanisms
@@ -55,12 +59,14 @@
 ---
 
 #### **2. Match Between System and Real World**
+
 - [ ] Does this feature use terminology familiar to target users?
 - [ ] Are icons and metaphors intuitive for this specific task?
 - [ ] Is the language appropriate for the user's expertise level?
 - [ ] Does the workflow match real-world task expectations?
 
 **Agent Testing:**
+
 - Analyze all labels and copy
 - Screenshot icon usage
 - Document terminology consistency
@@ -68,6 +74,7 @@
 ---
 
 #### **3. User Control and Freedom**
+
 - [ ] Can users undo actions in this feature?
 - [ ] Are there clear exit points at each step?
 - [ ] Can users cancel mid-process?
@@ -75,6 +82,7 @@
 - [ ] Can users go back to previous steps?
 
 **Agent Testing:**
+
 - Test all escape routes
 - Attempt to cancel operations
 - Verify undo functionality
@@ -83,12 +91,14 @@
 ---
 
 #### **4. Consistency and Standards**
+
 - [ ] Does this feature follow patterns established elsewhere in the app?
 - [ ] Are UI components styled consistently with other features?
 - [ ] Is the layout consistent with similar features?
 - [ ] Do interactions work the same way as comparable features?
 
 **Agent Testing:**
+
 - Compare with similar features
 - Screenshot UI components
 - Document interaction patterns
@@ -97,6 +107,7 @@
 ---
 
 #### **5. Error Prevention**
+
 - [ ] Are there input validations specific to this feature?
 - [ ] Does the feature provide format examples or hints?
 - [ ] Are destructive actions protected by confirmations?
@@ -104,6 +115,7 @@
 - [ ] Are there helpful defaults or suggestions?
 
 **Agent Testing:**
+
 - Attempt invalid inputs
 - Test boundary conditions
 - Try to trigger errors
@@ -112,6 +124,7 @@
 ---
 
 #### **6. Recognition Rather Than Recall**
+
 - [ ] Does the feature show contextual information?
 - [ ] Are there inline help or tooltips?
 - [ ] Is previous data visible or suggested?
@@ -119,6 +132,7 @@
 - [ ] Is autocomplete available where useful?
 
 **Agent Testing:**
+
 - Navigate through feature workflow
 - Check for contextual aids
 - Test memory aids
@@ -127,6 +141,7 @@
 ---
 
 #### **7. Flexibility and Efficiency of Use**
+
 - [ ] Are there keyboard shortcuts for this feature?
 - [ ] Can expert users skip steps?
 - [ ] Are there bulk actions if applicable?
@@ -134,6 +149,7 @@
 - [ ] Are there alternative paths to accomplish the task?
 
 **Agent Testing:**
+
 - Test keyboard navigation
 - Look for shortcuts
 - Identify optimization opportunities
@@ -142,6 +158,7 @@
 ---
 
 #### **8. Aesthetic and Minimalist Design**
+
 - [ ] Does this feature display only essential information?
 - [ ] Is the visual hierarchy clear?
 - [ ] Is white space used effectively?
@@ -149,6 +166,7 @@
 - [ ] Is information density appropriate for the task?
 
 **Agent Testing:**
+
 - Screenshot the feature interface
 - Count UI elements
 - Assess visual complexity
@@ -157,6 +175,7 @@
 ---
 
 #### **9. Help Users Recognize, Diagnose, and Recover from Errors**
+
 - [ ] Are error messages specific to this feature clear?
 - [ ] Do errors explain what went wrong?
 - [ ] Are solutions suggested?
@@ -164,6 +183,7 @@
 - [ ] Is error styling distinctive?
 
 **Agent Testing:**
+
 - Trigger feature-specific errors
 - Read console for error messages
 - Test error recovery paths
@@ -172,12 +192,14 @@
 ---
 
 #### **10. Help and Documentation**
+
 - [ ] Is help available for this specific feature?
 - [ ] Is documentation contextual to the task?
 - [ ] Are tooltips informative for this feature?
 - [ ] Is there task-based guidance?
 
 **Agent Testing:**
+
 - Locate feature-specific help
 - Test contextual assistance
 - Document help accessibility
@@ -185,12 +207,14 @@
 ---
 
 #### **11. Responsive Design (if applicable)**
+
 - [ ] Does this feature work on different screen sizes?
 - [ ] Are touch targets appropriately sized?
 - [ ] Does the feature adapt gracefully?
 - [ ] Are all feature controls accessible on mobile?
 
 **Agent Testing:**
+
 - Test feature at multiple breakpoints
 - Verify mobile functionality
 - Record responsive behavior
@@ -198,6 +222,7 @@
 ---
 
 #### **12. Accessibility**
+
 - [ ] Is this feature keyboard accessible?
 - [ ] Are focus indicators visible?
 - [ ] Do form fields have labels?
@@ -206,6 +231,7 @@
 - [ ] Is color contrast sufficient?
 
 **Agent Testing:**
+
 - Complete feature using keyboard only
 - Check DOM for accessibility attributes
 - Verify focus management
@@ -214,12 +240,14 @@
 ---
 
 #### **13. Performance**
+
 - [ ] Does this feature respond quickly?
 - [ ] Are there loading indicators if needed?
 - [ ] Does the feature feel responsive?
 - [ ] Are there performance optimizations?
 
 **Agent Testing:**
+
 - Measure feature interaction times
 - Monitor console for warnings
 - Check network requests
@@ -228,6 +256,7 @@
 ---
 
 #### **14. Form Usability (if applicable)**
+
 - [ ] Are form fields clearly labeled?
 - [ ] Is required vs optional indicated?
 - [ ] Are validation messages helpful?
@@ -235,6 +264,7 @@
 - [ ] Is progress shown for multi-step forms?
 
 **Agent Testing:**
+
 - Complete form workflow
 - Test validation
 - Verify submission feedback
@@ -243,12 +273,14 @@
 ---
 
 #### **15. Console Health**
+
 - [ ] Are there JavaScript errors during this feature use?
 - [ ] Are there CSS warnings?
 - [ ] Are there failed network requests?
 - [ ] Are there security warnings?
 
 **Agent Testing:**
+
 - Monitor console during feature use
 - Document all warnings/errors
 - Check network tab
@@ -261,6 +293,7 @@
 **Agent Task: Identify patterns and systemic issues**
 
 **Analysis Instructions:**
+
 1. Compare heuristic results across all features
 2. Identify recurring usability issues
 3. Note inconsistencies between features
@@ -269,6 +302,7 @@
 6. Generate recommendations for systemic improvements
 
 **Deliverables:**
+
 - Comparative analysis report
 - Heat map of usability issues by feature
 - Prioritized issue list
@@ -283,6 +317,7 @@
 **Agent Task: Generate comprehensive findings document**
 
 **Report Structure:**
+
 1. Executive Summary
    - Overall usability rating
    - Key findings

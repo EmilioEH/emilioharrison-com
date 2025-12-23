@@ -1,12 +1,13 @@
-/// <reference path="../.astro/types.d.ts" />
+import '../.astro/types.d.ts'
 /// <reference types="astro/client" />
 
 interface Env {
-    SITE_PASSWORD: string;
+  SITE_PASSWORD: string
 }
 
-type Runtime = import("@astrojs/cloudflare").Runtime<Env>;
+type Runtime = import('@astrojs/cloudflare').Runtime<Env>
 
 declare namespace App {
-    interface Locals extends Runtime { }
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface Locals extends Runtime {}
 }

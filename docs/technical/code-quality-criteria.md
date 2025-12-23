@@ -293,6 +293,7 @@
 ## Code Quality Tools
 
 **Automated Detection:**
+
 - [ ] **Depcheck**: Finds unused dependencies
   ```bash
   npx depcheck
@@ -314,7 +315,7 @@
   ```bash
   npx tsc --noEmit --noUnusedLocals --noUnusedParameters
   ```
-- [ ] **Duplicate code detection**: 
+- [ ] **Duplicate code detection**:
   ```bash
   npx jscpd src/
   ```
@@ -329,12 +330,14 @@
 ## Audit Categories (Periodic Review)
 
 ### 1. Redundant Code
+
 - [ ] **Duplicate Logic**: Identify duplicate functions or components with similar logic (use `jscpd`).
 - [ ] **Repeated Blocks**: Abstract repeated code blocks into utilities.
 - [ ] **Copy-Paste**: Refactor copy-pasted code with minor variations into configurable components.
 - [ ] **Redundant Imports**: Remove unused or duplicate imports.
 
 ### 2. Unused Code & Dead Files
+
 - [ ] **Dead Components**: Remove components/utilities that are never imported or used.
 - [ ] **Unused CSS**: Remove unused CSS classes (especially custom CSS outside Tailwind).
 - [ ] **Commented-out Code**: Delete commented-out code blocks; rely on git history.
@@ -343,6 +346,7 @@
 - [ ] **Orphaned Assets**: Delete images/fonts not referenced anywhere.
 
 ### 3. Illogical Patterns
+
 - [ ] **Over-Complexity**: Simplify overly complex logic.
 - [ ] **Unnecessary Abstraction**: Remove abstraction layers that add no value.
 - [ ] **Single Responsibility**: Ensure components have one clear responsibility.
@@ -351,6 +355,7 @@
 - [ ] **Client Directives**: Verify `client:*` directives are actually needed (prefer server rendering).
 
 ### 4. Performance Issues
+
 - [ ] **Client-Side Weight**: Reduce heavy client-side JavaScript where static HTML suffices.
 - [ ] **Re-renders**: Optimize React components to avoid unnecessary re-renders.
 - [ ] **Dependency Weight**: Replace large dependencies with lighter alternatives (e.g., date-fns vs moment).
@@ -358,17 +363,20 @@
 - [ ] **Bundle Size**: Monitor and reduce bundle size.
 
 ### 5. File Organization Problems
+
 - [ ] **Directory Structure**: Ensure files are in the correct directories (`src/components`, `src/pages`, etc.).
 - [ ] **Naming Conventions**: Enforce consistent naming (PascalCase for components, camelCase for logic).
 - [ ] **Colocation**: Colocate related components and styles/tests.
 - [ ] **Nesting**: Avoid deeply nested folder structures (> 3 levels) unless necessary.
 
 ### 6. Dependencies
+
 - [ ] **Overlap**: Remove packages that overlap in functionality.
 - [ ] **Modern Alternatives**: Replace outdated packages with modern, lighter alternatives.
 - [ ] **Dev Dependencies**: Ensure `devDependencies` are correctly categorized.
 
 ### 7. Code Smells
+
 - [ ] **Function Length**: Refactor functions longer than 50 lines.
 - [ ] **File Length**: Split files longer than 300-400 lines.
 - [ ] **Complexity**: Flatten deeply nested conditionals (> 3 levels).
@@ -387,6 +395,7 @@ When performing a code quality audit based on this checklist, the coding agent m
 **Output format:**
 
 For each issue found, provide:
+
 - **File path**: Exact location
 - **Issue type**: (Redundancy/Unused/Illogical/Performance/Organization/Dependency)
 - **Description**: What's wrong
@@ -395,8 +404,10 @@ For each issue found, provide:
 - **Priority**: High/Medium/Low
 
 **Example output:**
+
 ```markdown
 ## Issue #1
+
 - **File**: `src/components/Button.jsx` and `src/components/ui/BrutalButton.jsx`
 - **Type**: Redundancy
 - **Description**: Two button components with 80% overlapping functionality
@@ -406,6 +417,7 @@ For each issue found, provide:
 ```
 
 **Scope of Check:**
+
 - All files in `src/`
 - `package.json` dependencies
 - Static assets in `public/` and `src/assets/`
@@ -413,6 +425,7 @@ For each issue found, provide:
 
 **Prioritization:**
 Prioritize issues by impact:
+
 1. Bundle size reduction
 2. Maintainability improvement
 3. Performance gains
