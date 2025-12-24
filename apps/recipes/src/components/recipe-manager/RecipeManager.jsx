@@ -9,7 +9,8 @@ import {
   Loader2,
   Save,
   Check,
-  MoreHorizontal,
+      MoreHorizontal,
+  Sparkles,
 } from 'lucide-react'
 import PrepMode from './PrepMode'
 import { generateGroceryList } from './grocery-utils'
@@ -163,6 +164,16 @@ const RecipeManager = () => {
           >
             <ShoppingBag className="h-5 w-5" />
           </button>
+          
+          {/* Smart Add */}
+          <a
+            href="add-recipe"
+            className="flex items-center justify-center rounded-full border-2 border-ink bg-purple-200 p-2 text-ink shadow-hard-sm transition-all hover:translate-y-0.5 hover:shadow-none"
+            title="AI Add"
+          >
+            <Sparkles className="h-5 w-5" />
+          </a>
+
           <button
             onClick={() => {
               setSelectedRecipe(null)

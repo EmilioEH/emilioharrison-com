@@ -412,7 +412,7 @@ export const RecipeInput = () => {
           >
             Add Another
           </Button>
-          <Button intent="secondary" href="/">
+          <Button intent="secondary" href=".">
             View All
           </Button>
         </div>
