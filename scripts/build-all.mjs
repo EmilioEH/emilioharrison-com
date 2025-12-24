@@ -36,9 +36,8 @@ fs.cpSync('apps/website/dist', 'dist', {
 
 // Copy Recipes Statics (excluding worker)
 console.log('Copying Recipes statics...');
-const recipesDest = path.join(distDir, 'protected', 'recipes');
-fs.mkdirSync(recipesDest, { recursive: true });
-fs.cpSync('apps/recipes/dist', recipesDest, {
+// We merge directly into dist because Astro already created the /protected/recipes structure in the output
+fs.cpSync('apps/recipes/dist', 'dist', {
   recursive: true,
   filter: (source) => path.basename(source) !== '_worker.js',
 });
