@@ -15,7 +15,6 @@
     "check:hygiene": "npx knip && npx depcheck && npx jscpd src/",
     "check:full": "npm run check:safety && npm run check:hygiene && npm run test && npm run scan",
     "sync": "git add . && git commit -m \"Auto-sync: $(date)\" && git push",
-
     "scan": "npm audit --audit-level=high",
     "format": "prettier --write .",
     "prepare": "husky"

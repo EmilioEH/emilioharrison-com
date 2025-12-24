@@ -14,13 +14,17 @@ export interface Props {
 }
 
 const { title } = Astro.props
+const user = Astro.cookies.get('site_user')?.value
 ---
 
 <!doctype html>
 <html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | Chef Mode</title>
@@ -28,9 +32,19 @@ const { title } = Astro.props
       @import '../styles/global.css';
     </style>
   </head>
-  <body class="h-full bg-paper font-sans text-ink antialiased overflow-hidden">
-    <div class="h-full flex flex-col">
-       <slot />
+  <body class="h-full overflow-hidden bg-paper font-sans text-ink antialiased">
+    <div class="flex h-full flex-col">
+      {
+        user && (
+          <div class="flex items-center justify-between bg-ink px-4 py-2 text-xs font-bold uppercase tracking-wider text-paper">
+            <span>Welcome, {user}</span>
+            <a href="/logout" class="opacity-80 hover:underline hover:opacity-100">
+              Log Out
+            </a>
+          </div>
+        )
+      }
+      <slot />
     </div>
   </body>
 </html>

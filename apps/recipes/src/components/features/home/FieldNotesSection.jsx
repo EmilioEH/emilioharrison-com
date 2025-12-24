@@ -1,10 +1,8 @@
-
 import React from 'react'
 import { ArrowRight } from 'lucide-react'
 import SectionTitle from '../../ui/SectionTitle'
 import StickyNote from '../../ui/StickyNote'
 import { Heading, Text, Label } from '../../ui/Typography'
-
 
 const FieldNotesSection = ({ posts }) => {
   return (

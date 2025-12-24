@@ -7,6 +7,7 @@ if (Astro.request.method === 'POST') {
   try {
     const data = await Astro.request.formData()
     const password = data.get('password')
+    const name = data.get('name')?.toString().trim()
 
     // Access environment variable.
     // In dev with platformProxy, it's in Astro.locals.runtime.env
@@ -17,13 +18,27 @@ if (Astro.request.method === 'POST') {
     const sitePassword = env.SITE_PASSWORD
 
     if (password === sitePassword) {
-      Astro.cookies.set('site_auth', 'true', {
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-      })
-      return Astro.redirect('/protected')
+      if (!name) {
+        error = 'Please enter your name'
+      } else {
+        const cookieOptions = {
+          path: '/',
+          httpOnly: true, // Note: We might need to access this in client JS, so we might flip this to false later or expose it via a script
+          secure: true,
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        }
+
+        // Auth token
+        Astro.cookies.set('site_auth', 'true', cookieOptions)
+
+        // User identity (not httpOnly so client can read "Welcome, Name")
+        Astro.cookies.set('site_user', name, {
+          ...cookieOptions,
+          httpOnly: false,
+        })
+
+        return Astro.redirect('/protected/recipes')
+      }
     } else {
       error = 'Incorrect password'
     }
@@ -40,18 +55,41 @@ if (Astro.request.method === 'POST') {
       <h1 class="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-white">Login</h1>
       {error && <p class="mb-4 text-center text-red-500">{error}</p>}
       <form method="POST" class="flex flex-col gap-4">
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter password"
-          class="rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          required
-        />
+        <div>
+          <label
+            htmlFor="name"
+            class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label
+          >
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="e.g. Emilio"
+            class="w-full rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label
+          >
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter site password"
+            class="w-full rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
+
         <button
           type="submit"
           class="rounded bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600"
         >
-          Submit
+          Login
         </button>
       </form>
     </div>

@@ -4,8 +4,6 @@ import Tag from '../../ui/Tag'
 import CategoryBadge from '../../ui/CategoryBadge'
 import { Text, Label } from '../../ui/Typography'
 
-
-
 const SearchFilterBar = ({
   searchQuery,
   setSearchQuery,
@@ -21,7 +19,6 @@ const SearchFilterBar = ({
   categoriesMap = {},
   resultCount,
 }) => {
-
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
   // Toggle tag selection

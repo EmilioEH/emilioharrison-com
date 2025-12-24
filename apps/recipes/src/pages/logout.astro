@@ -1,0 +1,5 @@
+---
+Astro.cookies.delete('site_auth', { path: '/' })
+Astro.cookies.delete('site_user', { path: '/' })
+return Astro.redirect('/login')
+---

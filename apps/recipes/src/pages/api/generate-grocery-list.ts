@@ -1,21 +1,21 @@
 // @ts-expect-error - Request type definition is complex in Astro
 export const POST = async ({ request }) => {
-  const apiKey = import.meta.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.GEMINI_API_KEY
 
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "Missing API Key" }), {
+    return new Response(JSON.stringify({ error: 'Missing API Key' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
-  const { recipes } = await request.json();
+  const { recipes } = await request.json()
 
   if (!recipes || recipes.length === 0) {
-    return new Response(JSON.stringify({ text: "# Grocery List\n\nNo recipes selected." }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+    return new Response(JSON.stringify({ text: '# Grocery List\n\nNo recipes selected.' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const GROCERY_SYSTEM_PROMPT = `<role>You are an expert Grocery List Generator specializing in consolidating recipe ingredients into organized shopping lists.</role>
@@ -48,14 +48,16 @@ When only one item exists for an ingredient across all recipes, list directly wi
 ## [Category Name]
 [Ingredients]
 </output_structure>
-`;
+`
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const inputList = recipes.map((r: any) => {
+  const inputList = recipes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ingredientsList = r.ingredients.map((i: any) => `• ${i.amount} ${i.name}`).join('\n');
-    return `${r.title}\nIngredients:\n${ingredientsList}`;
-  }).join('\n\n');
+    .map((r: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ingredientsList = r.ingredients.map((i: any) => `• ${i.amount} ${i.name}`).join('\n')
+      return `${r.title}\nIngredients:\n${ingredientsList}`
+    })
+    .join('\n\n')
 
   try {
     const response = await fetch(
@@ -67,28 +69,28 @@ When only one item exists for an ingredient across all recipes, list directly wi
         },
         body: JSON.stringify({
           contents: [{ parts: [{ text: inputList }] }],
-          systemInstruction: { parts: [{ text: GROCERY_SYSTEM_PROMPT }] }
+          systemInstruction: { parts: [{ text: GROCERY_SYSTEM_PROMPT }] },
         }),
-      }
-    );
+      },
+    )
 
     if (!response.ok) {
-        throw new Error('API request failed');
+      throw new Error('API request failed')
     }
-    
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "# Error\nCould not generate list.";
+
+    const data = await response.json()
+    const text =
+      data.candidates?.[0]?.content?.parts?.[0]?.text || '# Error\nCould not generate list.'
 
     return new Response(JSON.stringify({ text }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return new Response(JSON.stringify({ error: "Failed to generate list" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+    console.error('Gemini API Error:', error)
+    return new Response(JSON.stringify({ error: 'Failed to generate list' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
-};
+}

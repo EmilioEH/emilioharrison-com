@@ -26,12 +26,16 @@ const BlogList = ({
   const [sortOrder, setSortOrder] = useState(initialFilters.sort || 'newest')
 
   // Filtered posts derived state
-  const filteredPosts = useMemo(() => applyAllFilters(posts, {
-    search: searchQuery,
-    tags: selectedTags,
-    categories: selectedCategories,
-    sort: sortOrder,
-  }), [posts, searchQuery, selectedTags, selectedCategories, sortOrder])
+  const filteredPosts = useMemo(
+    () =>
+      applyAllFilters(posts, {
+        search: searchQuery,
+        tags: selectedTags,
+        categories: selectedCategories,
+        sort: sortOrder,
+      }),
+    [posts, searchQuery, selectedTags, selectedCategories, sortOrder],
+  )
 
   // Check for 'from' parameter to show back link
   const [backLink] = useState(() => {

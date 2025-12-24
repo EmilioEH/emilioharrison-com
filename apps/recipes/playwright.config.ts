@@ -1,10 +1,9 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test'
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -69,11 +68,12 @@ export default defineConfig({
     // },
   ],
 
+  timeout: 60 * 1000,
   /* Run your local dev server before starting the tests */
-  webServer: {
+  /* webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:4321/protected/recipes',
-    reuseExistingServer: !process.env.CI,
+    url: 'http://localhost:4321/login',
+    reuseExistingServer: true,
     timeout: 120 * 1000,
-  },
-});
+  }, */
+})
