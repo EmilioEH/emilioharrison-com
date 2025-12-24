@@ -1,5 +1,16 @@
 import React from 'react'
 
+/**
+ * @typedef {Object} BrutalCardProps
+ * @property {React.ReactNode} children
+ * @property {string} [className]
+ * @property {string} [color]
+ * @property {{ border?: string, shadow?: string, shadowHover?: string, colors: { card: string } }} [theme]
+ * @property {() => void} [onClick]
+ * @property {boolean} [disableHover]
+ */
+
+/** @param {BrutalCardProps & React.HTMLAttributes<HTMLDivElement>} props */
 const BrutalCard = ({
   children,
   className = '',

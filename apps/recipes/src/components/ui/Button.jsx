@@ -52,6 +52,8 @@ const buttonVariants = cva(
  * @property {string} [href]
  * @property {'button' | 'submit' | 'reset'} [type]
  * @property {React.ReactNode} children
+ * @property {React.MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>} [onClick]
+ * @property {boolean} [disabled]
  */
 
 /** @type {React.ForwardRefExoticComponent<ButtonProps & React.RefAttributes<any>>} */

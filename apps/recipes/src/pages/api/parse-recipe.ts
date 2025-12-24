@@ -1,0 +1,123 @@
+import type { APIRoute } from 'astro'
+
+export const POST: APIRoute = async ({ request }) => {
+  const apiKey = import.meta.env.GEMINI_API_KEY
+
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: 'Missing API Key' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  try {
+    const { url, image } = await request.json()
+
+    if (!url && !image) {
+      return new Response(JSON.stringify({ error: 'No input provided' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    let userContentPart
+    if (url) {
+      // Fetch URL content
+      // Note: In a real production app, you might probably need a proxy or specific scraping tool
+      // to handle blockers, but fetch works for many simple sites.
+      const siteRes = await fetch(url, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      })
+      if (!siteRes.ok) throw new Error('Failed to fetch URL')
+      const html = await siteRes.text()
+      // Basic cleanup to reduce tokens (optional with Flash but good practice)
+      // Just taking body might be enough, or just sending the whole thing.
+      userContentPart = { text: `Source URL: ${url}\n\nHTML Content:\n${html}` }
+    } else if (image) {
+      // Image is expected to be base64 data URL: "data:image/jpeg;base64,..."
+      // Extract base64
+      const base64Data = image.split(',')[1]
+      const mimeType = image.split(';')[0].split(':')[1]
+      userContentPart = {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data,
+        },
+      }
+    }
+
+    const SYSTEM_PROMPT = `
+    You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided text (webpage) or image.
+    
+    Return a strict JSON object (NO markdown formatting, NO code blocks, just raw JSON) matching this schema:
+    {
+      "title": "string",
+      "servings": number (estimate if missing, default 2),
+      "prepTime": number (in minutes),
+      "cookTime": number (in minutes),
+      "ingredients": [
+        { "name": "string", "amount": "string", "prep": "string (optional)" }
+      ],
+      "steps": ["string (instruction step)"],
+      "notes": "string (optional description or tips)",
+      "metadata": {
+        "protein": "string (Chicken, Beef, Pork, Fish, Seafood, Vegetarian, Vegan, Other)",
+        "difficulty": "string (Easy, Medium, Hard)",
+        "cuisine": "string",
+        "dietary": ["string"]
+      }
+    }
+
+    If the input is an image, describe what you see and infer the recipe (ingredients/steps) as best as possible.
+    If the input is a URL, parse the HTML.
+    `
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ parts: [userContentPart] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        }),
+      },
+    )
+
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error('Gemini API Error:', errText)
+      throw new Error('Gemini API request failed')
+    }
+
+    const data = await response.json()
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!resultText) throw new Error('No content generated')
+
+    // Parse JSON safely
+    const recipeData = JSON.parse(resultText)
+
+    // Add source info
+    if (url) recipeData.sourceUrl = url
+    if (image) recipeData.sourceImage = image // Keep the base64 for preview, ideally upload to generic storage in prod
+
+    return new Response(JSON.stringify(recipeData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (error: unknown) {
+    console.error('Parse Error:', error)
+    const message = error instanceof Error ? error.message : 'Failed to process recipe'
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
