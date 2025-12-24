@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro'
+
+let error = ''
+
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData()
+    const password = data.get('password')
+
+    // Access environment variable.
+    // In dev with platformProxy, it's in Astro.locals.runtime.env
+    // In prod, it's also in Astro.locals.runtime.env
+    // We fallback to import.meta.env for safety if runtime is missing (though it shouldn't be)
+    // @ts-expect-error - Runtime env type missing from Locals interface in dev
+    const env = Astro.locals.runtime?.env || import.meta.env
+    const sitePassword = env.SITE_PASSWORD
+
+    if (password === sitePassword) {
+      Astro.cookies.set('site_auth', 'true', {
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+      })
+      return Astro.redirect('/protected')
+    } else {
+      error = 'Incorrect password'
+    }
+  } catch (e) {
+    console.error(e)
+    error = 'Something went wrong'
+  }
+}
+---
+
+<Layout title="Login">
+  <div class="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+    <div class="w-96 rounded bg-white p-8 shadow-md dark:bg-gray-800">
+      <h1 class="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-white">Login</h1>
+      {error && <p class="mb-4 text-center text-red-500">{error}</p>}
+      <form method="POST" class="flex flex-col gap-4">
+        <input
+          type="password"
+          name="password"
+          placeholder="Enter password"
+          class="rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          required
+        />
+        <button
+          type="submit"
+          class="rounded bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+  </div>
+</Layout>
