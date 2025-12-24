@@ -3,6 +3,7 @@ import '../.astro/types.d.ts'
 
 interface Env {
   SITE_PASSWORD: string
+  SESSION: KVNamespace
 }
 
 type Runtime = import('@astrojs/cloudflare').Runtime<Env>
