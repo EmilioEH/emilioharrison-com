@@ -1,0 +1,8 @@
+name = "emilioharrison-com"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "47c74c58b25e4147984b57d677370493"
