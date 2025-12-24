@@ -1,5 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro'
+import { formatPageList } from '../../lib/page-utils'
+
+const allPages = await Astro.glob('./*.astro')
+const pages = formatPageList(allPages)
 ---
 
 <Layout title="Protected Area">
@@ -11,15 +15,19 @@ import Layout from '../../layouts/Layout.astro'
       </p>
 
       <div class="grid gap-4">
-        <a
-          href="/protected/example"
-          class="block rounded border p-4 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-        >
-          <h3 class="font-bold text-blue-600 dark:text-blue-400">Example Sub-page &rarr;</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Check out another protected page in this folder.
-          </p>
-        </a>
+        {
+          pages.map((page) => (
+            <a
+              href={page.href}
+              class="block rounded border p-4 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+            >
+              <h3 class="font-bold text-blue-600 dark:text-blue-400">{page.title} &rarr;</h3>
+              {page.description && (
+                <p class="text-sm text-gray-600 dark:text-gray-400">{page.description}</p>
+              )}
+            </a>
+          ))
+        }
       </div>
 
       <div

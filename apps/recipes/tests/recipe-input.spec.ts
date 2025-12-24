@@ -5,6 +5,12 @@ test.describe('Recipe Input Flow', () => {
     // Mock Auth
     await context.addCookies([
       {
+        name: 'site_auth',
+        value: 'true',
+        domain: 'localhost',
+        path: '/',
+      },
+      {
         name: 'site_user',
         value: 'testuser',
         domain: 'localhost',
@@ -44,12 +50,19 @@ test.describe('Recipe Input Flow', () => {
     })
   })
 
-  test('should allow adding a recipe via URL input', async ({ page }) => {
-    await page.goto('/add-recipe')
+  test('should allow adding a recipe via AI flow', async ({ page }) => {
+    // 1. Go to dashboard
+    await page.goto('/protected/recipes')
 
-    // Verify URL
-    await expect(page).toHaveURL(/\/add-recipe/)
-    await page.waitForLoadState('networkidle')
+    // Confirm we are on the recipe page (not redirected to login)
+    await expect(page).toHaveURL(/\/protected\/recipes/)
+    
+    // 2. Click "AI Add" (Sparkles icon)
+    await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 10000 })
+    await page.getByTitle('AI Add').click()
+
+    // 3. Verify we are in the "New Recipe from AI" view
+    await expect(page.getByText('New Recipe from AI')).toBeVisible()
 
     // Select URL tab
     await page.getByText('URL', { exact: true }).click()
@@ -69,11 +82,11 @@ test.describe('Recipe Input Flow', () => {
     // Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Expect Success Message
-    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
-
-    // Verify "Add Another" returns to initial state
-    await page.getByRole('button', { name: 'Add Another' }).click()
-    await expect(page.getByRole('button', { name: 'Process Recipe' })).toBeVisible()
+    // Expect to be back on the dashboard (List View)
+    // "Review & Edit" should be gone
+    await expect(page.getByRole('heading', { name: 'Review & Edit' })).not.toBeVisible()
+    
+    // The new recipe should be in the list
+    await expect(page.getByText('Mocked Pancake')).toBeVisible()
   })
 })
