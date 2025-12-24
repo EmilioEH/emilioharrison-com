@@ -1,0 +1,36 @@
+:root {
+  /* Typography Scale */
+  /* Typography Scale */
+  --text-display-xl: clamp(3.5rem, 10vw, 5.33rem);
+  --text-display-l: clamp(2.5rem, 8vw, 4rem);
+  --text-heading-xl: clamp(2rem, 6vw, 3rem);
+  --text-heading-l: clamp(1.75rem, 5vw, 2.25rem);
+  --text-heading-m: 1.69rem;
+  --text-heading-s: 1.27rem;
+  --text-body-xl: 1.5rem;
+  --text-body-l: 1.27rem;
+  --text-body-base: 1.125rem;
+  --text-body-s: 1rem;
+  --text-eyebrow: 0.89rem;
+  --text-fine: 0.79rem;
+
+  /* Line Heights */
+  --leading-tight: 1.1;
+  --leading-snug: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Spacing Rhythm (12px base) */
+  --space-xs: 6px;
+  --space-s: 12px;
+  --space-m: 24px;
+  --space-l: 36px;
+  --space-xl: 60px;
+  --space-2xl: 120px;
+
+  /* Borders */
+  --border-thin: 2px;
+  --border-medium: 3px;
+  --border-thick: 4px;
+  --border-heavy: 6px;
+}
