@@ -28,13 +28,20 @@ fs.mkdirSync(distDir);
 // --- Static Assets ---
 
 // Copy Website Statics (excluding worker)
-// using rsync to exclude the worker directory
-run(`rsync -a --exclude='_worker.js' apps/website/dist/ dist/`);
+console.log('Copying Website statics...');
+fs.cpSync('apps/website/dist', 'dist', {
+  recursive: true,
+  filter: (source) => path.basename(source) !== '_worker.js',
+});
 
 // Copy Recipes Statics (excluding worker)
+console.log('Copying Recipes statics...');
 const recipesDest = path.join(distDir, 'protected', 'recipes');
 fs.mkdirSync(recipesDest, { recursive: true });
-run(`rsync -a --exclude='_worker.js' apps/recipes/dist/ "${recipesDest}/"`);
+fs.cpSync('apps/recipes/dist', recipesDest, {
+  recursive: true,
+  filter: (source) => path.basename(source) !== '_worker.js',
+});
 
 // --- Gateway Worker ---
 
