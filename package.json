@@ -8,6 +8,7 @@
     "build": "node scripts/build-all.mjs",
     "dev": "npm run dev --workspaces",
     "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces"
+    "lint": "npm run lint --workspaces",
+    "preview": "npx wrangler pages dev dist"
   }
 }

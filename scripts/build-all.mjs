@@ -25,12 +25,42 @@ if (fs.existsSync(distDir)) {
 }
 fs.mkdirSync(distDir);
 
-// Copy Website to dist
-run(`cp -r apps/website/dist/* dist/`);
+// --- Static Assets ---
 
-// Copy Recipes to dist/protected/recipes
+// Copy Website Statics (excluding worker)
+// using rsync to exclude the worker directory
+run(`rsync -a --exclude='_worker.js' apps/website/dist/ dist/`);
+
+// Copy Recipes Statics (excluding worker)
 const recipesDest = path.join(distDir, 'protected', 'recipes');
 fs.mkdirSync(recipesDest, { recursive: true });
-run(`cp -r apps/recipes/dist/* "${recipesDest}/"`);
+run(`rsync -a --exclude='_worker.js' apps/recipes/dist/ "${recipesDest}/"`);
 
-console.log('Unified build complete in dist/');
+// --- Gateway Worker ---
+
+const gatewayDir = path.join(distDir, '_worker.js');
+fs.mkdirSync(gatewayDir, { recursive: true });
+
+// Copy Workers to subdirectories
+run(`cp -r apps/website/dist/_worker.js "${gatewayDir}/website"`);
+run(`cp -r apps/recipes/dist/_worker.js "${gatewayDir}/recipes"`);
+
+// Create Router Script
+const routerCode = `
+import website from './website/index.js';
+import recipes from './recipes/index.js';
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/protected/recipes')) {
+      return recipes.fetch(request, env, ctx);
+    }
+    return website.fetch(request, env, ctx);
+  }
+};
+`;
+
+fs.writeFileSync(path.join(gatewayDir, 'index.js'), routerCode);
+
+console.log('Unified build complete in dist/ (with Gateway Worker)');
