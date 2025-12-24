@@ -7,6 +7,123 @@ import type { Recipe } from '../lib/types'
 type InputMode = 'photo' | 'url'
 type Status = 'idle' | 'processing' | 'review' | 'saving' | 'success' | 'error'
 
+// --- Sub-Components ---
+
+const SuccessView = ({ onReset }: { onReset: () => void }) => (
+  <div className="animate-in fade-in zoom-in flex flex-col items-center justify-center space-y-4 py-12 text-center duration-300">
+    <div className="rounded-full bg-green-100 p-4 text-green-600">
+      <ChefHat className="h-12 w-12" />
+    </div>
+    <h2 className="font-display text-2xl font-bold text-ink">Recipe Saved!</h2>
+    <p className="max-w-xs text-gray-500">
+      Your delicious new recipe has been added to your collection.
+    </p>
+    <div className="flex gap-4">
+      <Button onClick={onReset}>Add Another</Button>
+      <Button intent="secondary" href=".">
+        View All
+      </Button>
+    </div>
+  </div>
+)
+
+const LinkPlaceholder = () => (
+  <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-white shadow-sm">
+    <LinkIcon className="h-8 w-8 text-gray-300" />
+  </div>
+)
+
+const ImageThumbnail = ({ src }: { src: string }) => (
+  <img src={src} alt="Recipe Source" className="h-20 w-20 rounded-lg object-cover shadow-sm" />
+)
+
+const SourcePreview = ({
+  mode,
+  imagePreview,
+  url,
+}: {
+  mode: InputMode
+  imagePreview: string | null
+  url: string
+}) => (
+  <div className="flex items-center gap-4 rounded-xl border-2 border-black/5 bg-gray-50 p-4">
+    {mode === 'photo' && imagePreview ? <ImageThumbnail src={imagePreview} /> : <LinkPlaceholder />}
+    <div className="text-sm">
+      <p className="text-xs font-bold uppercase text-gray-500">Source</p>
+      <p className="line-clamp-1 font-bold text-ink">
+        {mode === 'photo' ? 'Uploaded Image' : url}
+      </p>
+    </div>
+  </div>
+)
+
+const SourceToggle = ({ mode, setMode }: { mode: InputMode; setMode: (m: InputMode) => void }) => (
+  <div className="mb-6 flex border-b-2 border-black">
+    <button
+      className={`flex-1 py-3 text-center font-bold uppercase tracking-wider transition-colors ${
+        mode === 'photo' ? 'bg-black text-white' : 'hover:bg-gray-100'
+      }`}
+      onClick={() => setMode('photo')}
+    >
+      <div className="flex items-center justify-center gap-2">
+        <Camera className="h-4 w-4" /> Photo
+      </div>
+    </button>
+    <button
+      className={`flex-1 py-3 text-center font-bold uppercase tracking-wider transition-colors ${
+        mode === 'url' ? 'bg-black text-white' : 'hover:bg-gray-100'
+      }`}
+      onClick={() => setMode('url')}
+    >
+      <div className="flex items-center justify-center gap-2">
+        <LinkIcon className="h-4 w-4" /> URL
+      </div>
+    </button>
+  </div>
+)
+
+const PhotoUploader = ({
+  imagePreview,
+  setImagePreview,
+  handleFileChange,
+}: {
+  imagePreview: string | null
+  setImagePreview: (s: string | null) => void
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) => (
+  <div
+    className={`flex h-64 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors ${
+      imagePreview ? 'border-transparent p-0' : 'group relative hover:border-ink hover:bg-gray-100'
+    }`}
+  >
+    {imagePreview ? (
+      <div className="relative h-full w-full">
+        <img src={imagePreview} className="h-full w-full rounded-xl object-cover" alt="Preview" />
+        <button
+          onClick={() => setImagePreview(null)}
+          className="absolute right-2 top-2 rounded-full bg-white/90 p-2 shadow-sm hover:text-red-500"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    ) : (
+      <>
+        <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
+          <Upload className="h-8 w-8 text-gray-400" />
+        </div>
+        <p className="text-sm font-bold text-gray-500">Tap to upload or take photo</p>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="absolute inset-0 cursor-pointer opacity-0"
+          onChange={handleFileChange}
+        />
+      </>
+    )}
+  </div>
+)
+
 interface RecipeReviewFormProps {
   formData: Partial<Recipe>
   setFormData: React.Dispatch<React.SetStateAction<Partial<Recipe>>>
@@ -29,11 +146,8 @@ const RecipeReviewForm = ({
   onCancel,
 }: RecipeReviewFormProps) => {
   const ingredientsText = Array.isArray(formData.ingredients)
-    ? formData.ingredients
-        .map((i) => (typeof i === 'string' ? i : `${i.amount} ${i.name}`))
-        .join('\n')
+    ? formData.ingredients.map((i) => (typeof i === 'string' ? i : `${i.amount} ${i.name}`)).join('\n')
     : ''
-
   const instructionsText = formData.steps?.join('\n') || ''
 
   return (
@@ -45,28 +159,8 @@ const RecipeReviewForm = ({
         </Button>
       </div>
 
-      {/* Preview Input Source */}
-      <div className="flex items-center gap-4 rounded-xl border-2 border-black/5 bg-gray-50 p-4">
-        {mode === 'photo' && imagePreview ? (
-          <img
-            src={imagePreview}
-            alt="Recipe Source"
-            className="h-20 w-20 rounded-lg object-cover shadow-sm"
-          />
-        ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-white shadow-sm">
-            <LinkIcon className="h-8 w-8 text-gray-300" />
-          </div>
-        )}
-        <div className="text-sm">
-          <p className="text-xs font-bold uppercase text-gray-500">Source</p>
-          <p className="line-clamp-1 font-bold text-ink">
-            {mode === 'photo' ? 'Uploaded Image' : url}
-          </p>
-        </div>
-      </div>
+      <SourcePreview mode={mode} imagePreview={imagePreview} url={url} />
 
-      {/* Edit Form */}
       <div className="space-y-4">
         <div>
           <label htmlFor="title" className="mb-1 block text-xs font-bold uppercase text-gray-400">
@@ -84,10 +178,7 @@ const RecipeReviewForm = ({
         <div className="grid grid-cols-3 gap-4">
           {['servings', 'prepTime', 'cookTime'].map((field) => (
             <div key={field} className="rounded-lg border-2 border-gray-100 bg-white p-2">
-              <label
-                htmlFor={field}
-                className="mb-1 block text-[10px] font-bold uppercase text-gray-400"
-              >
+              <label htmlFor={field} className="mb-1 block text-[10px] font-bold uppercase text-gray-400">
                 {field.replace('Time', '')}
               </label>
               <input
@@ -104,10 +195,7 @@ const RecipeReviewForm = ({
         </div>
 
         <div>
-          <label
-            htmlFor="ingredients"
-            className="mb-1 block text-xs font-bold uppercase text-gray-400"
-          >
+          <label htmlFor="ingredients" className="mb-1 block text-xs font-bold uppercase text-gray-400">
             Ingredients
           </label>
           <textarea
@@ -141,11 +229,7 @@ const RecipeReviewForm = ({
 
       <div className="pt-4">
         <Button fullWidth size="lg" onClick={onSave} disabled={status === 'saving'}>
-          {status === 'saving' ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Save className="h-5 w-5" />
-          )}
+          {status === 'saving' ? <Loader2 className="animate-spin" /> : <Save className="h-5 w-5" />}
           {status === 'saving' ? 'Saving...' : 'Save Recipe'}
         </Button>
       </div>
@@ -195,70 +279,15 @@ const RecipeSourceSelector = ({
         colors: { card: 'bg-white' },
       }}
     >
-      <div className="mb-6 flex border-b-2 border-black">
-        <button
-          className={`flex-1 py-3 text-center font-bold uppercase tracking-wider transition-colors ${
-            mode === 'photo' ? 'bg-black text-white' : 'hover:bg-gray-100'
-          }`}
-          onClick={() => setMode('photo')}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <Camera className="h-4 w-4" /> Photo
-          </div>
-        </button>
-        <button
-          className={`flex-1 py-3 text-center font-bold uppercase tracking-wider transition-colors ${
-            mode === 'url' ? 'bg-black text-white' : 'hover:bg-gray-100'
-          }`}
-          onClick={() => setMode('url')}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <LinkIcon className="h-4 w-4" /> URL
-          </div>
-        </button>
-      </div>
+      <SourceToggle mode={mode} setMode={setMode} />
 
       <div className="space-y-6">
         {mode === 'photo' ? (
-          <div
-            className={`flex h-64 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors ${
-              imagePreview
-                ? 'border-transparent p-0'
-                : 'group relative hover:border-ink hover:bg-gray-100'
-            }`}
-          >
-            {imagePreview ? (
-              <div className="relative h-full w-full">
-                <img
-                  src={imagePreview}
-                  className="h-full w-full rounded-xl object-cover"
-                  alt="Preview"
-                />
-                <button
-                  onClick={() => {
-                    setImagePreview(null)
-                  }}
-                  className="absolute right-2 top-2 rounded-full bg-white/90 p-2 shadow-sm hover:text-red-500"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
-                  <Upload className="h-8 w-8 text-gray-400" />
-                </div>
-                <p className="text-sm font-bold text-gray-500">Tap to upload or take photo</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="absolute inset-0 cursor-pointer opacity-0"
-                  onChange={handleFileChange}
-                />
-              </>
-            )}
-          </div>
+          <PhotoUploader
+            imagePreview={imagePreview}
+            setImagePreview={setImagePreview}
+            handleFileChange={handleFileChange}
+          />
         ) : (
           <div className="space-y-2">
             <label
@@ -305,22 +334,22 @@ const RecipeSourceSelector = ({
   )
 }
 
-export const RecipeInput = () => {
+interface RecipeInputProps {
+  onRecipeCreated?: (recipe: Recipe) => void
+}
+
+export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
   const [mode, setMode] = useState<InputMode>('photo')
   const [url, setUrl] = useState('')
-  // const [file, setFile] = useState<File | null>(null) // Unused for now
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-
   const [status, setStatus] = useState<Status>('idle')
   const [parsedRecipe, setParsedRecipe] = useState<Recipe | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
-
   const [formData, setFormData] = useState<Partial<Recipe>>({})
 
   const handleProcess = async () => {
     setStatus('processing')
     setErrorMsg('')
-
     try {
       const payload: { url?: string; image?: string } = {}
       if (mode === 'url') {
@@ -338,7 +367,6 @@ export const RecipeInput = () => {
       })
 
       if (!res.ok) throw new Error('Failed to parse recipe')
-
       const data = await res.json()
       const recipeWithId = { ...data, id: crypto.randomUUID() }
       setParsedRecipe(recipeWithId)
@@ -346,77 +374,52 @@ export const RecipeInput = () => {
       setStatus('review')
     } catch (err: unknown) {
       console.error(err)
-      if (err instanceof Error) {
-        setErrorMsg(err.message)
-      } else {
-        setErrorMsg('Something went wrong')
-      }
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
       setStatus('error')
     }
   }
 
   const handleSave = async () => {
     if (!parsedRecipe) return
-    setStatus('saving')
+    const newRecipe = { ...formData, id: formData.id || crypto.randomUUID() } as Recipe
 
+    if (onRecipeCreated) {
+      onRecipeCreated(newRecipe)
+      setStatus('success')
+      return
+    }
+
+    setStatus('saving')
     try {
       const userRes = await fetch('/api/user-data')
       if (!userRes.ok) throw new Error('Failed to fetch user data')
       const userData = await userRes.json()
       const currentRecipes: Recipe[] = Array.isArray(userData.recipes) ? userData.recipes : []
-
-      const newRecipe = { ...formData, id: formData.id || crypto.randomUUID() } as Recipe
-      const updatedRecipes = [...currentRecipes, newRecipe]
-
       const saveRes = await fetch('/api/user-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipes: updatedRecipes }),
+        body: JSON.stringify({ recipes: [...currentRecipes, newRecipe] }),
       })
-
       if (!saveRes.ok) throw new Error('Failed to save')
-
       setStatus('success')
     } catch (err: unknown) {
       console.error(err)
-      if (err instanceof Error) {
-        setErrorMsg(err.message)
-      } else {
-        setErrorMsg('Failed to save recipe')
-      }
+      setErrorMsg('Failed to save recipe')
       setStatus('error')
     }
   }
 
-  // Success View
   if (status === 'success') {
     return (
-      <div className="animate-in fade-in zoom-in flex flex-col items-center justify-center space-y-4 py-12 text-center duration-300">
-        <div className="rounded-full bg-green-100 p-4 text-green-600">
-          <ChefHat className="h-12 w-12" />
-        </div>
-        <h2 className="font-display text-2xl font-bold text-ink">Recipe Saved!</h2>
-        <p className="max-w-xs text-gray-500">
-          Your delicious new recipe has been added to your collection.
-        </p>
-        <div className="flex gap-4">
-          <Button
-            onClick={() => {
-              setStatus('idle')
-              setParsedRecipe(null)
-              setFormData({})
-              setImagePreview(null)
-              setUrl('')
-              // setFile(null)
-            }}
-          >
-            Add Another
-          </Button>
-          <Button intent="secondary" href=".">
-            View All
-          </Button>
-        </div>
-      </div>
+      <SuccessView
+        onReset={() => {
+          setStatus('idle')
+          setParsedRecipe(null)
+          setFormData({})
+          setImagePreview(null)
+          setUrl('')
+        }}
+      />
     )
   }
 
