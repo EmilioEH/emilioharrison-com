@@ -1,92 +1,74 @@
-# emilioharrison.com
+# Chefboard: The AI-Powered Recipe Manager
 
-Personal website built with Astro, React, and Tailwind CSS.
+Chefboard is a intelligent recipe management system built for speed, utility, and seamless user experiences. It leverages AI to handle the tedious parts of cooking—like parsing messy web contents into structured data and generating organized grocery lists.
 
-## Tech Stack
+> [!NOTE]
+> This application is living inside the `apps/recipes` directory as part of a monorepo and is deployed to `/protected/recipes`.
 
-- **Astro**: Static site generator with React islands for interactivity
-- **React**: Component library for interactive elements
-- **Tailwind CSS**: Utility-first CSS framework
-- **Nano Stores**: State management for theme switching across React islands
+## 🚀 Core Features
 
-## Development
+- **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically.
+- **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
+- **Persistence & Sync**: Your data is securely stored in Cloudflare KV, synced across your devices via your `site_user` identity.
+- **Privacy First**: Secure, protected dashboard accessible only to authenticated users.
 
-```bash
-npm install
-npm run dev      # Start dev server at http://localhost:4321
-npm run build    # Build for production
-npm run preview  # Preview production build locally
-npm test         # Run unit tests
-```
+## 🛠 Tech Stack
 
-## Adding New Field Notes
+- **Framework**: [Astro 5](https://astro.build/) (Islands Architecture for performance)
+- **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
+- **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
+- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [KV](https://www.cloudflare.com/products/workers-kv/)
+- **CMS**: [Keystatic](https://keystatic.com/) for structured content
 
-Field notes are managed through Astro Content Collections:
+## 🚦 The Quality Gate
 
-1. Create a new `.md` file in `src/content/posts/`
-2. Add required frontmatter:
+We maintain high code health through a mandatory protocol. Before contributing or committing, ensure these checks pass:
 
-```yaml
----
-title: 'Your Post Title'
-date: '2025-11-27'
-category: 'Research | Design | Development'
-excerpt: 'Brief summary of the post'
----
-```
-
-3. Write your content in Markdown
-4. Run `npm run dev` to preview locally
-
-## Environment Variables
-
-Currently, no environment variables are required for local development.
-
-For production deployment on Cloudflare Pages:
-
-- All environment variables are managed through the Cloudflare Pages dashboard
-- No secrets are committed to the repository
-
-## Testing
-
-Run tests with:
+### Safety Checks
 
 ```bash
-npm test        # Run all unit tests with Vitest
-npm run lint    # Check code quality with ESLint
+npm run check:safety
+# Runs: Linting, Type Checking (TSC + Astro), and Formatting
 ```
 
-Current test coverage:
+### Hygiene Checks
 
-- UI Components: BrutalButton, BrutalCard
-- More tests coming soon!
+```bash
+npm run check:hygiene
+# Runs: Knip (dead code), Depcheck (unused deps), and Jscpd (duplicates)
+```
 
-## Deployment Workflow
+### User Journey Validation
 
-This project is deployed to **emilioharrison.com** via GitHub → Cloudflare Pages:
+```bash
+npm run test:e2e
+# Runs: Playwright E2E tests to verify the core user journey
+```
 
-1. **Push to GitHub**: Commit and push changes to the main branch
+## 💻 Getting Started
+
+1. **Install Dependencies**:
 
    ```bash
-   git add .
-   git commit -m "Your message"
-   git push
+   npm install
    ```
 
-2. **Cloudflare Pages**: Automatically detects the push and triggers a build
-   - Build command: `npm run build`
-   - Build output directory: `dist`
+2. **Environment Setup**:
+   Copy `.env.local.example` to `.env.local` and add your `GEMINI_API_KEY`.
 
-3. **Live Site**: Changes are deployed to https://emilioharrison.com within a few minutes
+3. **Development**:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:4321/protected/recipes`.
 
-## Project Structure
+## 📂 Project Structure
 
-```
-src/
-├── pages/           # Astro pages (file-based routing)
-├── layouts/         # Global layouts
-├── components/      # React components (hydrated as islands)
-├── experiments/     # Interactive lab experiments
-├── content/         # Markdown blog posts
-└── lib/            # Utilities and stores
-```
+- `src/components/`: React islands for interactive features.
+- `src/pages/api/`: Serverless functions for parsing, grocery generation, and data syncing.
+- `src/lib/`: Shared utilities, stores, and API clients.
+- `tests/`: End-to-end user journey tests.
+
+---
+
+Built with ❤️ by Emilio.

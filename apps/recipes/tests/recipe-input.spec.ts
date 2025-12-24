@@ -56,7 +56,7 @@ test.describe('Recipe Input Flow', () => {
 
     // Confirm we are on the recipe page (not redirected to login)
     await expect(page).toHaveURL(/\/protected\/recipes/)
-    
+
     // 2. Click "AI Add" (Sparkles icon)
     await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 10000 })
     await page.getByTitle('AI Add').click()
@@ -85,7 +85,7 @@ test.describe('Recipe Input Flow', () => {
     // Expect to be back on the dashboard (List View)
     // "Review & Edit" should be gone
     await expect(page.getByRole('heading', { name: 'Review & Edit' })).not.toBeVisible()
-    
+
     // The new recipe should be in the list
     await expect(page.getByText('Mocked Pancake')).toBeVisible()
   })

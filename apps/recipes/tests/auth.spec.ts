@@ -42,7 +42,10 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByText('Please enter your name')).toBeVisible()
   })
 
-  test('should redirect to login if site_user cookie is missing (stale session)', async ({ context, page }) => {
+  test('should redirect to login if site_user cookie is missing (stale session)', async ({
+    context,
+    page,
+  }) => {
     // Manually set authorized cookie but NOT the user cookie
     await context.addCookies([
       {
@@ -54,7 +57,7 @@ test.describe('Authentication Flow', () => {
     ])
 
     await page.goto('/protected/recipes')
-    
+
     // CURRENT BEHAVIOR (BUG): It stays on recipes page
     // DESIRED BEHAVIOR (FIX): It redirects to /login
     // We expect this to fail initially if we assert the redirect

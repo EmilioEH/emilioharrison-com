@@ -50,9 +50,7 @@ const SourcePreview = ({
     {mode === 'photo' && imagePreview ? <ImageThumbnail src={imagePreview} /> : <LinkPlaceholder />}
     <div className="text-sm">
       <p className="text-xs font-bold uppercase text-gray-500">Source</p>
-      <p className="line-clamp-1 font-bold text-ink">
-        {mode === 'photo' ? 'Uploaded Image' : url}
-      </p>
+      <p className="line-clamp-1 font-bold text-ink">{mode === 'photo' ? 'Uploaded Image' : url}</p>
     </div>
   </div>
 )
@@ -146,7 +144,9 @@ const RecipeReviewForm = ({
   onCancel,
 }: RecipeReviewFormProps) => {
   const ingredientsText = Array.isArray(formData.ingredients)
-    ? formData.ingredients.map((i) => (typeof i === 'string' ? i : `${i.amount} ${i.name}`)).join('\n')
+    ? formData.ingredients
+        .map((i) => (typeof i === 'string' ? i : `${i.amount} ${i.name}`))
+        .join('\n')
     : ''
   const instructionsText = formData.steps?.join('\n') || ''
 
@@ -178,7 +178,10 @@ const RecipeReviewForm = ({
         <div className="grid grid-cols-3 gap-4">
           {['servings', 'prepTime', 'cookTime'].map((field) => (
             <div key={field} className="rounded-lg border-2 border-gray-100 bg-white p-2">
-              <label htmlFor={field} className="mb-1 block text-[10px] font-bold uppercase text-gray-400">
+              <label
+                htmlFor={field}
+                className="mb-1 block text-[10px] font-bold uppercase text-gray-400"
+              >
                 {field.replace('Time', '')}
               </label>
               <input
@@ -195,7 +198,10 @@ const RecipeReviewForm = ({
         </div>
 
         <div>
-          <label htmlFor="ingredients" className="mb-1 block text-xs font-bold uppercase text-gray-400">
+          <label
+            htmlFor="ingredients"
+            className="mb-1 block text-xs font-bold uppercase text-gray-400"
+          >
             Ingredients
           </label>
           <textarea
@@ -229,7 +235,11 @@ const RecipeReviewForm = ({
 
       <div className="pt-4">
         <Button fullWidth size="lg" onClick={onSave} disabled={status === 'saving'}>
-          {status === 'saving' ? <Loader2 className="animate-spin" /> : <Save className="h-5 w-5" />}
+          {status === 'saving' ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Save className="h-5 w-5" />
+          )}
           {status === 'saving' ? 'Saving...' : 'Save Recipe'}
         </Button>
       </div>

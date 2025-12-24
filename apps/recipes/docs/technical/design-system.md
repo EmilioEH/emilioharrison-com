@@ -2,7 +2,7 @@
 
 **Last Updated**: November 27, 2025  
 **Design Name**: Vibe Coding  
-**Version**: 1.0  
+**Version**: 1.0
 
 This document serves as the single source of truth for design decisions, patterns, and conventions used in the Emilio Harrison portfolio project.
 
@@ -11,6 +11,7 @@ This document serves as the single source of truth for design decisions, pattern
 ## Design Philosophy
 
 The **Vibe Coding** design embraces:
+
 - **Utility Over Decoration**: Every element serves a functional purpose
 - **Tangible Digital**: Physical metaphors (sticky notes, tape, shadows) translated to screen
 - **Intentional Chaos**: Controlled asymmetry that guides rather than confuses
@@ -25,59 +26,58 @@ Colors are defined as constant values and should be referenced consistently thro
 
 ### Primary Palette
 
-
-| Name | Hex | Tailwind Class | Usage |
-|------|-----|----------------|-------|
-| **Paper** | `#fdfbf7` | `bg-paper` | Main page background, warm off-white paper texture |
-| **Ink** | `#264653` | `text-ink` | Primary text color, dark navy for high readability |
-| **Teal** | `#2a9d8f` | `bg-teal` | Primary brand color, CTAs and key highlights |
-| **Coral** | `#e76f51` | `bg-coral` | Secondary accent, energetic and warm |
-| **Mustard** | `#e9c46a` | `bg-mustard` | Tertiary accent, playful and friendly |
+| Name        | Hex       | Tailwind Class | Usage                                              |
+| ----------- | --------- | -------------- | -------------------------------------------------- |
+| **Paper**   | `#fdfbf7` | `bg-paper`     | Main page background, warm off-white paper texture |
+| **Ink**     | `#264653` | `text-ink`     | Primary text color, dark navy for high readability |
+| **Teal**    | `#2a9d8f` | `bg-teal`      | Primary brand color, CTAs and key highlights       |
+| **Coral**   | `#e76f51` | `bg-coral`     | Secondary accent, energetic and warm               |
+| **Mustard** | `#e9c46a` | `bg-mustard`   | Tertiary accent, playful and friendly              |
 
 ### THEME Configuration
 
 ```javascript
 const THEME = {
   colors: {
-    bg: "bg-paper",        // Paper background
-    text: "text-ink",     // Ink text
-    primary: "bg-teal",    // Teal - Primary actions
-    secondary: "bg-coral",  // Coral - Secondary actions
-    accent: "bg-mustard",     // Mustard - Highlights
-    dark: "bg-ink",       // Dark navy for structure
-    stickyYellow: "bg-mustard",
-    stickyBlue: "bg-teal",
-    stickyPink: "bg-coral",
-    stickyWhite: "bg-white",
+    bg: 'bg-paper', // Paper background
+    text: 'text-ink', // Ink text
+    primary: 'bg-teal', // Teal - Primary actions
+    secondary: 'bg-coral', // Coral - Secondary actions
+    accent: 'bg-mustard', // Mustard - Highlights
+    dark: 'bg-ink', // Dark navy for structure
+    stickyYellow: 'bg-mustard',
+    stickyBlue: 'bg-teal',
+    stickyPink: 'bg-coral',
+    stickyWhite: 'bg-white',
   },
-  shadow: "shadow-[6px_6px_0px_0px_#000000]",
-  border: "border-4 border-black",
-};
+  shadow: 'shadow-[6px_6px_0px_0px_#000000]',
+  border: 'border-4 border-black',
+}
 ```
 
 ### Usage Guidelines
 
 ```jsx
 // Background
-<div className="bg-paper">
+<div className="bg-paper" />
 
 // Text
-<h1 className="text-ink">
+<h1 className="text-ink" />
 
 // Accent colors for sticky notes
-<StickyNote color="stickyYellow">
-<StickyNote color="stickyBlue">
-<StickyNote color="stickyPink">
+<StickyNote color="stickyYellow" />
+<StickyNote color="stickyBlue" />
+<StickyNote color="stickyPink" />
 ```
 
 ### Color Combinations
 
-| Combination | Usage | Example |
-|-------------|-------|---------|
-| Paper + Ink | Default page layout | Body text on background |
-| Teal + White | Primary actions | Main call-to-action buttons |
-| Coral + White | Secondary actions | Submit buttons, alerts |
-| Mustard + Black | Highlights | Badges, tags, sticky notes |
+| Combination     | Usage               | Example                     |
+| --------------- | ------------------- | --------------------------- |
+| Paper + Ink     | Default page layout | Body text on background     |
+| Teal + White    | Primary actions     | Main call-to-action buttons |
+| Coral + White   | Secondary actions   | Submit buttons, alerts      |
+| Mustard + Black | Highlights          | Badges, tags, sticky notes  |
 
 ---
 
@@ -86,29 +86,36 @@ const THEME = {
 ### Font Families
 
 **Primary**: System UI Stack
+
 ```css
-font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif
+font-family:
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  sans-serif;
 ```
+
 - Uses native system fonts for optimal performance
 - No web font loading required
 
 **Special Use**: Comic Sans MS (for handwritten feel in Marginalia tooltips)
+
 ```css
-font-family: "Comic Sans MS", cursive, sans-serif
+font-family: 'Comic Sans MS', cursive, sans-serif;
 ```
 
 ### Type Scale & Hierarchy
 
-| Level | Classes | Weight | Usage | Example |
-|-------|---------|--------|-------|---------|
-| **Display** | `text-6xl md:text-8xl` | `font-black` (900) | Hero headings | "EMILIO HARRISON" |
-| **H2** | `text-4xl` | `font-black` (900) | Section titles | "Field Notes", "The Lab" |
-| **H3** | `text-2xl` or `text-3xl` | `font-black` (900) | Card titles, experiment titles | Blog post titles |
-| **Body Large** | `text-xl` or `text-2xl` | `font-bold` (700) | Intro paragraphs, callouts | Hero descriptions |
-| **Body** | `text-lg` | `font-medium` (500-600) | Standard content | Article text, descriptions |
-| **Body Small** | `text-base` | `font-bold` (700) | UI elements | Button text |
-| **Small** | `text-sm` | `font-bold` (700) | Labels, metadata | Category tags, dates |
-| **Tiny** | `text-xs` | `font-bold` (700) | Badges, footnotes | "EXP 01", marginalia IDs |
+| Level          | Classes                  | Weight                  | Usage                          | Example                    |
+| -------------- | ------------------------ | ----------------------- | ------------------------------ | -------------------------- |
+| **Display**    | `text-6xl md:text-8xl`   | `font-black` (900)      | Hero headings                  | "EMILIO HARRISON"          |
+| **H2**         | `text-4xl`               | `font-black` (900)      | Section titles                 | "Field Notes", "The Lab"   |
+| **H3**         | `text-2xl` or `text-3xl` | `font-black` (900)      | Card titles, experiment titles | Blog post titles           |
+| **Body Large** | `text-xl` or `text-2xl`  | `font-bold` (700)       | Intro paragraphs, callouts     | Hero descriptions          |
+| **Body**       | `text-lg`                | `font-medium` (500-600) | Standard content               | Article text, descriptions |
+| **Body Small** | `text-base`              | `font-bold` (700)       | UI elements                    | Button text                |
+| **Small**      | `text-sm`                | `font-bold` (700)       | Labels, metadata               | Category tags, dates       |
+| **Tiny**       | `text-xs`                | `font-bold` (700)       | Badges, footnotes              | "EXP 01", marginalia IDs   |
 
 ### Typography Patterns
 
@@ -138,6 +145,7 @@ font-family: "Comic Sans MS", cursive, sans-serif
 ```
 
 ### Text Treatments
+
 - **All-caps**: Used for labels, tags, buttons, and section identifiers
 - **Uppercase tracking**: `tracking-wider` or `tracking-widest` for emphasis
 - **Tight tracking**: `tracking-tighter` or `tracking-tight` for display headlines
@@ -160,15 +168,15 @@ font-family: "Comic Sans MS", cursive, sans-serif
 
 ### Spacing Scale
 
-| Use Case | Class | Value |
-|----------|-------|-------|
-| Tight spacing | `gap-1` or `gap-2` | 4px / 8px |
-| Component internal | `gap-3` or `gap-4` | 12px / 16px |
-| Component padding | `p-6` or `p-8` | 24px / 32px |
-| Related elements | `gap-6` | 24px |
-| Section internal | `gap-8` or `space-y-8` | 32px |
-| Between sections | `gap-12` or `mb-12` | 48px |
-| Major section breaks | `mb-24` | 96px |
+| Use Case             | Class                  | Value       |
+| -------------------- | ---------------------- | ----------- |
+| Tight spacing        | `gap-1` or `gap-2`     | 4px / 8px   |
+| Component internal   | `gap-3` or `gap-4`     | 12px / 16px |
+| Component padding    | `p-6` or `p-8`         | 24px / 32px |
+| Related elements     | `gap-6`                | 24px        |
+| Section internal     | `gap-8` or `space-y-8` | 32px        |
+| Between sections     | `gap-12` or `mb-12`    | 48px        |
+| Major section breaks | `mb-24`                | 96px        |
 
 ### Grid Layouts
 
@@ -194,14 +202,15 @@ font-family: "Comic Sans MS", cursive, sans-serif
 
 The design uses **hard-edged shadows** with no blur for a neo-brutalist aesthetic:
 
-| Token | Value | Usage | Visual Weight |
-|-------|-------|-------|---------------|
-| **Button Rest** | `shadow-[4px_4px_0px_0px_#000000]` | Default button state | Medium |
-| **Standard** | `shadow-[6px_6px_0px_0px_#000000]` | Cards, sticky notes, containers | Heavy |
-| **Hover** | `shadow-[8px_8px_0px_0px_#000000]` | Interactive hover states | Extra Heavy |
-| **Large** | `shadow-[12px_12px_0px_0px_#000000]` | Full-page content blocks | Maximum |
+| Token           | Value                                | Usage                           | Visual Weight |
+| --------------- | ------------------------------------ | ------------------------------- | ------------- |
+| **Button Rest** | `shadow-[4px_4px_0px_0px_#000000]`   | Default button state            | Medium        |
+| **Standard**    | `shadow-[6px_6px_0px_0px_#000000]`   | Cards, sticky notes, containers | Heavy         |
+| **Hover**       | `shadow-[8px_8px_0px_0px_#000000]`   | Interactive hover states        | Extra Heavy   |
+| **Large**       | `shadow-[12px_12px_0px_0px_#000000]` | Full-page content blocks        | Maximum       |
 
 **Shadow Philosophy:**
+
 - All shadows are **hard-edged offset shadows**, never soft/blurred
 - Shadow direction is consistently bottom-right (positive X and Y offset)
 - Shadows scale with interaction depth (larger = more "lifted")
@@ -212,17 +221,19 @@ The design uses **hard-edged shadows** with no blur for a neo-brutalist aestheti
 ## 6. Layout & Grid
 
 ### Container System
+
 ```css
 max-w-6xl mx-auto           /* 1152px max width, centered */
 px-4 md:px-8                /* Responsive horizontal padding */
 ```
 
 ### Grid Patterns
+
 ```jsx
 // Two-column responsive
 grid grid-cols-1 md:grid-cols-2 gap-8
 
-// Three-column responsive  
+// Three-column responsive
 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8
 
 // Asymmetric (7/5 split)
@@ -232,6 +243,7 @@ md:col-span-5  // Sidebar
 ```
 
 ### Breakpoints (Tailwind defaults)
+
 - **Mobile**: < 768px (base styles)
 - **Tablet**: ≥ 768px (`md:` prefix)
 - **Desktop**: ≥ 1024px (`lg:` prefix)
@@ -241,15 +253,19 @@ md:col-span-5  // Sidebar
 ## 7. Core Components
 
 ### 7.1 Button Usage & Hierarchy
+
 To ensure visual consistency, use the following hierarchy for all interactive elements:
 
 #### 1. Primary Button
+
 **Usage:**
+
 - The main Call-to-Action (CTA) on a page.
 - Use for actions like "Submit", "Subscribe", "Buy", or primary navigation drivers (e.g., "Read Field Notes" on Homepage).
 - Limit to 1-2 per view to maintain focus.
 
 **Visual Style:**
+
 - **Background:** Brand Color (e.g., `bg-blue-600`, `bg-zinc-900`) or High-Viz Color (e.g., `bg-yellow-400` for emphasis).
 - **Text:** White (on dark bg) or Black (on light bg). Bold, Uppercase preferred for "Tape" style.
 - **Border:** `4px solid black`.
@@ -258,11 +274,14 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 - **Font Size:** `14px` (text-sm) or `16px` (text-base).
 
 #### 2. Secondary Button
+
 **Usage:**
+
 - Alternative actions that are important but not the primary focus.
 - Examples: "Read More" on a card, "Back" buttons, "Cancel".
 
 **Visual Style:**
+
 - **Background:** White (`bg-white`) or Light Gray.
 - **Text:** Black (`text-black`).
 - **Border:** `2px solid black`.
@@ -271,11 +290,14 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 - **Font Size:** `16px` (text-base).
 
 #### 3. Tertiary Button / Text Link
+
 **Usage:**
+
 - Low emphasis actions, utility triggers, or inline navigation.
 - Examples: "Filter", "Sort", "Edit", Footer links.
 
 **Visual Style:**
+
 - **Background:** Transparent.
 - **Text:** Dark Gray (`text-zinc-800`) or Brand Color.
 - **Border:** None (or bottom border for links).
@@ -283,11 +305,14 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 - **Font Size:** `14px` (text-sm).
 
 #### 4. Categories & Tags
+
 **Usage:**
+
 - Labeling content metadata.
 - Interactive elements that filter content.
 
 **Visual Style:**
+
 - **Background:** White (`bg-white`).
 - **Text:** Black (`text-black`).
 - **Border:** `2px solid black`.
@@ -302,7 +327,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 **Purpose**: Primary interactive button styled like tape with hard shadow
 
 ```jsx
-<TapeButton 
+<TapeButton
   onClick={handler}
   color={THEME.colors.primary}
   active={false}
@@ -315,6 +340,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 ```
 
 **Visual Specs:**
+
 - Border: `border-4 border-black`
 - Shadow (rest): `shadow-[4px_4px_0px_0px_#000000]`
 - Shadow (hover): `shadow-[6px_6px_0px_0px_#000000]`
@@ -324,14 +350,16 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 - Transform on active: `translate-x-[2px] translate-y-[2px]` + no shadow
 
 **States:**
+
 1. **Rest**: Standard shadow, no transform
 2. **Hover**: Larger shadow, translate up-left
 3. **Active/Pressed**: No shadow, translate down-right
 4. **Disabled**: Add `opacity-90`
 
 **Color Variants:**
+
 - Primary (Teal): Main actions
-- Secondary (Coral): Secondary actions  
+- Secondary (Coral): Secondary actions
 - Accent (Mustard): Special/creative actions
 
 ---
@@ -341,16 +369,13 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 **Purpose**: Content container styled as a physical sticky note with pin
 
 ```jsx
-<StickyNote 
-  color="stickyYellow"
-  rotate={-2}
-  className="..."
->
+<StickyNote color="stickyYellow" rotate={-2} className="...">
   {children}
 </StickyNote>
 ```
 
 **Visual Specs:**
+
 - Border: `border-4 border-black`
 - Shadow: `shadow-[6px_6px_0px_0px_#000000]`
 - Padding: `p-6` mobile, `p-8` desktop
@@ -360,11 +385,13 @@ To ensure visual consistency, use the following hierarchy for all interactive el
   - Inner dot: `w-2 h-2 bg-black rounded-full`
 
 **Hover State:**
+
 - Scale: `scale-[1.01]`
 - Shadow: `shadow-[8px_8px_0px_0px_#000000]`
 - Z-index: `z-10`
 
 **Color Variants:**
+
 - Yellow (`#e9c46a`): Warnings, highlights
 - Blue (`#2a9d8f`): Info, primary content
 - Pink/Coral (`#e76f51`): Alerts, secondary
@@ -381,6 +408,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 ```
 
 **Visual Specs:**
+
 - Typography: `text-4xl font-black uppercase tracking-tight`
 - Color: Navy (`#264653`)
 - Flex layout with decorative circle bullet:
@@ -401,6 +429,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 **Visual Specs:**
 
 **Trigger Badge:**
+
 - Size: `text-xs font-black`
 - Background: Coral (`#e76f51`)
 - Border: `border-2 border-black`
@@ -409,6 +438,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 - Position: `align-super` (superscript)
 
 **Tooltip (on hover/click):**
+
 - Width: `w-64` (256px)
 - Padding: `p-4`
 - Border: `border-4 border-black`
@@ -418,6 +448,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 - Animation: Scale and slight rotation on open
 
 **States:**
+
 - Closed: `opacity-0 scale-95`
 - Open: `opacity-100 scale-100 rotate-1`
 
@@ -428,7 +459,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 **Purpose**: Container for interactive experiments/demos
 
 ```jsx
-<ExperimentCard 
+<ExperimentCard
   number="01"
   title="Experiment Name"
   subtitle="Description"
@@ -441,6 +472,7 @@ To ensure visual consistency, use the following hierarchy for all interactive el
 ```
 
 **Structure:**
+
 1. **Header Section**: Metadata and title
    - Number badge with rotation
    - Large title (`text-3xl font-black`)
@@ -470,6 +502,7 @@ Three repeating patterns used for decorative background shapes:
 ```
 
 **Usage:**
+
 - Applied as `fill` to background SVG shapes
 - Opacity: `0.2-0.3` for subtle texture
 - Color: Always navy (`#264653`)
@@ -479,6 +512,7 @@ Three repeating patterns used for decorative background shapes:
 ## 9. Animation & Motion
 
 ### Transition Timing
+
 ```css
 transition-all duration-200 ease-out          /* Buttons, fast interactions */
 transition-all duration-300 ease-in-out       /* Cards, medium interactions */
@@ -488,16 +522,17 @@ transition-transform 0.8s cubic-bezier(...)   /* Background shapes */
 
 ### Standard Animations
 
-| Name | Duration | Easing | Usage |
-|------|----------|--------|-------|
-| **Button Hover** | 200ms | `ease-out` | Shadow + transform |
-| **Card Hover** | 300ms | `ease-in-out` | Scale + shadow |
-| **Page Fade In** | 500-700ms | Default | Content appear |
-| **Background Float** | 0.8s | `cubic-bezier(0.175, 0.885, 0.32, 1.27)` | Parallax shapes |
+| Name                 | Duration  | Easing                                   | Usage              |
+| -------------------- | --------- | ---------------------------------------- | ------------------ |
+| **Button Hover**     | 200ms     | `ease-out`                               | Shadow + transform |
+| **Card Hover**       | 300ms     | `ease-in-out`                            | Scale + shadow     |
+| **Page Fade In**     | 500-700ms | Default                                  | Content appear     |
+| **Background Float** | 0.8s      | `cubic-bezier(0.175, 0.885, 0.32, 1.27)` | Parallax shapes    |
 
 ### Transform Patterns
 
 **Button Interaction:**
+
 ```css
 /* Hover */
 transform: translate(-2px, -2px)
@@ -507,11 +542,13 @@ transform: translate(2px, 2px)
 ```
 
 **Card Hover:**
+
 ```css
-transform: scale(1.01) rotate(slight-variation)
+transform: scale(1.01) rotate(slight-variation);
 ```
 
 **Rotation Variations:**
+
 - Use `-2deg` to `2deg` range
 - Alternate positive/negative for adjacent elements
 - Never exceed ±3deg for readability
@@ -522,25 +559,27 @@ transform: scale(1.01) rotate(slight-variation)
 
 ### Button States
 
-| State | Transform | Shadow | Opacity |
-|-------|-----------|--------|---------|
-| **Rest** | `translate(0, 0)` | `4px 4px` | `1` |
-| **Hover** | `translate(-2px, -2px)` | `6px 6px` | `1` |
-| **Active** | `translate(2px, 2px)` | `none` | `0.9` |
-| **Focus** | Same as hover | Same as hover | `1` |
-| **Disabled** | `translate(0, 0)` | `4px 4px` | `0.5` |
+| State        | Transform               | Shadow        | Opacity |
+| ------------ | ----------------------- | ------------- | ------- |
+| **Rest**     | `translate(0, 0)`       | `4px 4px`     | `1`     |
+| **Hover**    | `translate(-2px, -2px)` | `6px 6px`     | `1`     |
+| **Active**   | `translate(2px, 2px)`   | `none`        | `0.9`   |
+| **Focus**    | Same as hover           | Same as hover | `1`     |
+| **Disabled** | `translate(0, 0)`       | `4px 4px`     | `0.5`   |
 
 ### Form Input States
+
 ```css
 /* Base */
 bg-white border-4 border-black
 
 /* Focus */
-focus:outline-none 
+focus:outline-none
 focus:shadow-[4px_4px_0px_0px_#000000]
 ```
 
 ### Card/Container Hover
+
 ```css
 hover:scale-[1.01]
 hover:shadow-[8px_8px_0px_0px_#000000]
@@ -552,11 +591,13 @@ hover:z-10
 ## 11. Responsive Behavior
 
 ### Mobile-First Approach
+
 Base styles target mobile, with `md:` and `lg:` overrides.
 
 ### Key Breakpoints
 
 **Typography:**
+
 ```css
 text-4xl md:text-6xl              /* Hero titles */
 text-xl md:text-2xl               /* Large body text */
@@ -564,6 +605,7 @@ p-6 md:p-8                        /* Container padding */
 ```
 
 **Layout:**
+
 ```css
 grid-cols-1 md:grid-cols-2        /* Two-column cards */
 grid-cols-1 md:grid-cols-12       /* Asymmetric layouts */
@@ -572,6 +614,7 @@ md:hidden                         /* Mobile-only elements */
 ```
 
 ### Mobile Navigation
+
 - Hamburger menu (Menu/X icon toggle)
 - Full-width dropdown on mobile
 - Horizontal nav on desktop
@@ -581,26 +624,31 @@ md:hidden                         /* Mobile-only elements */
 ## 12. Accessibility Guidelines
 
 ### Color Contrast
+
 - Navy on Cream: **AAA** (very high contrast)
 - White on Teal: **AA** minimum
 - White on Coral: **AA** minimum
 - All interactive elements maintain minimum **4.5:1** contrast ratio
 
 ### Interaction Targets
+
 - Minimum touch target: **44×44px** (iOS/Android guidelines)
 - Button padding: `px-6 py-3` = 48×48px minimum
 
 ### Focus States
+
 - All interactive elements have visible focus styles
 - Focus inherits hover styles (shadow + transform)
 - Never remove outline without replacement
 
 ### Keyboard Navigation
+
 - All buttons/links are keyboard accessible
 - Logical tab order maintained
 - Sticky note tooltips support both hover and click
 
 ### Screen Readers
+
 - Semantic HTML structure
 - Icon buttons should include `aria-label` where text isn't visible
 - Form inputs must have associated labels
@@ -610,12 +658,14 @@ md:hidden                         /* Mobile-only elements */
 ## 13. Content Guidelines
 
 ### Voice & Tone
+
 - **Direct**: No corporate jargon, speak plainly
 - **Confident**: Strong opinions, backed by experience
 - **Technical but Accessible**: Explain concepts without condescension
 - **Slightly Playful**: Personality without unprofessionalism
 
 ### Typography Hierarchy in Content
+
 1. **Section Title**: Largest, all-caps, with decorative bullet
 2. **Card Title**: Large, title case, bold
 3. **Body Large**: Intros, callouts, emphasis
@@ -623,6 +673,7 @@ md:hidden                         /* Mobile-only elements */
 5. **Metadata**: Small, uppercase, high tracking
 
 ### Content Formatting
+
 - **No bullet points in prose**: Write lists as natural sentences
 - **Border-left emphasis**: Use `border-l-4 border-black pl-4` for callouts
 - **Footnotes**: Inline via Marginalia component, not bottom-of-page
@@ -633,30 +684,27 @@ md:hidden                         /* Mobile-only elements */
 ## 14. Component Usage Examples
 
 ### Hero Section Pattern
+
 ```jsx
-<div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+<div className="grid grid-cols-1 gap-8 md:grid-cols-12">
   <div className="md:col-span-7">
     {/* Badge */}
-    <div className="inline-block transform -rotate-2">
-      <div className="bg-[#e9c46a] border-2 border-black px-4 py-1 
-                      font-black tracking-widest uppercase text-sm 
-                      shadow-[4px_4px_0px_0px_#000000]">
+    <div className="inline-block -rotate-2 transform">
+      <div className="border-2 border-black bg-[#e9c46a] px-4 py-1 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_#000000]">
         Badge Text
       </div>
     </div>
-    
+
     {/* Title */}
-    <h1 className="text-6xl md:text-8xl font-black leading-[0.9] 
-                   tracking-tighter text-[#264653]">
+    <h1 className="text-6xl font-black leading-[0.9] tracking-tighter text-[#264653] md:text-8xl">
       MAIN TITLE
     </h1>
-    
+
     {/* Description Card */}
-    <div className="relative p-6 bg-white border-4 border-black 
-                    shadow-[8px_8px_0px_0px_#000000] transform rotate-1">
-      <p className="text-xl text-black font-bold">Description</p>
+    <div className="relative rotate-1 transform border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_#000000]">
+      <p className="text-xl font-bold text-black">Description</p>
     </div>
-    
+
     {/* CTA Buttons */}
     <div className="flex gap-4">
       <TapeButton color={THEME.colors.primary}>Primary</TapeButton>
@@ -667,40 +715,36 @@ md:hidden                         /* Mobile-only elements */
 ```
 
 ### Blog Card Pattern
+
 ```jsx
 <StickyNote color="stickyYellow" rotate={-1}>
   {/* Header */}
   <div className="flex justify-between border-b-4 border-black pb-2">
-    <span className="text-xs font-bold uppercase bg-[#264653] 
-                     text-white px-2 py-1 border-2 border-black">
+    <span className="border-2 border-black bg-[#264653] px-2 py-1 text-xs font-bold uppercase text-white">
       Category
     </span>
     <span className="text-sm font-bold text-gray-700">Date</span>
   </div>
-  
+
   {/* Title */}
-  <h3 className="text-2xl font-black mb-3 leading-tight">Title</h3>
-  
+  <h3 className="mb-3 text-2xl font-black leading-tight">Title</h3>
+
   {/* Excerpt */}
-  <p className="text-black font-medium border-l-4 border-black pl-4">
-    Excerpt text...
-  </p>
-  
+  <p className="border-l-4 border-black pl-4 font-medium text-black">Excerpt text...</p>
+
   {/* Read More */}
-  <div className="flex items-center gap-2 font-black text-sm uppercase">
+  <div className="flex items-center gap-2 text-sm font-black uppercase">
     Read <ArrowRight size={18} strokeWidth={3} />
   </div>
 </StickyNote>
 ```
 
 ### Form Input Pattern
+
 ```jsx
-<input 
+<input
   type="email"
-  className="w-full bg-white border-4 border-black p-3 
-             focus:outline-none 
-             focus:shadow-[4px_4px_0px_0px_#000000] 
-             font-bold text-lg"
+  className="w-full border-4 border-black bg-white p-3 text-lg font-bold focus:shadow-[4px_4px_0px_0px_#000000] focus:outline-none"
   placeholder="Email Address"
 />
 ```
@@ -710,20 +754,24 @@ md:hidden                         /* Mobile-only elements */
 ## 15. Background System
 
 ### Reactive Background
+
 The site features an animated parallax background with geometric shapes:
 
 **Shape Types:**
+
 - Circles (filled with pattern-dots)
 - Rectangles (filled with pattern-hatch)
 - Implicit triangles (filled with pattern-grid)
 
 **Animation Properties:**
+
 - **Mouse parallax**: Shapes drift based on cursor position
 - **Scroll parallax**: Shapes move at different speeds while scrolling
 - **Ripple effect**: Triggered by interactions (button clicks)
 - **Performance**: Uses direct DOM manipulation via refs to avoid React re-renders
 
 **Visual Specs:**
+
 - Opacity: `0.6`
 - Stroke: `2px black`
 - Sizes: 80-180px
@@ -736,34 +784,38 @@ The site features an animated parallax background with geometric shapes:
 
 ### Stack Order (lowest to highest)
 
-| Layer | Z-Index | Elements |
-|-------|---------|----------|
-| **Background** | `z-0` | Animated SVG shapes |
-| **Content Base** | `z-10` | Main content, cards, sections |
-| **Hover Elements** | `z-10` (hover) | Cards on hover state |
-| **Sticky Nav** | `z-50` | Header navigation |
-| **Tooltips** | `z-50` | Marginalia tooltips |
+| Layer              | Z-Index        | Elements                      |
+| ------------------ | -------------- | ----------------------------- |
+| **Background**     | `z-0`          | Animated SVG shapes           |
+| **Content Base**   | `z-10`         | Main content, cards, sections |
+| **Hover Elements** | `z-10` (hover) | Cards on hover state          |
+| **Sticky Nav**     | `z-50`         | Header navigation             |
+| **Tooltips**       | `z-50`         | Marginalia tooltips           |
 
 ---
 
 ## 17. Special Features
 
 ### Reading Mode Toggle
+
 Blog posts feature a **Deep Dive / Skim** toggle:
 
 **Deep Dive Mode:**
+
 - Full article content with marginalia
 - Footnotes appear as inline tooltips
 - Handwritten font (Comic Sans) for footnotes
 - Long-form reading experience
 
 **Skim Mode:**
+
 - Executive summary format
 - Key takeaways in numbered list
 - Yellow accent background
 - Quick consumption focused
 
 ### Canvas-Based Experiments
+
 Three interactive experiments showcase different interaction patterns:
 
 1. **Gyro Maze**: Device orientation / touch controls
@@ -775,6 +827,7 @@ Three interactive experiments showcase different interaction patterns:
 ## 18. File Structure & Organization
 
 ### Component Hierarchy
+
 ```
 App (Main)
 ├── Header (Sticky Navigation)
@@ -793,6 +846,7 @@ App (Main)
 ```
 
 ### Shared Components
+
 - `TapeButton`
 - `StickyNote`
 - `SectionTitle`
@@ -805,18 +859,22 @@ App (Main)
 ## 19. Brand Assets
 
 ### Logo Treatment
+
 ```
 EMILIO.HARRISON
 ```
+
 - Format: `FIRSTNAME.LASTNAME`
 - Typography: Font black, tracking tight
 - Accent: Red dot separator (Coral `#e76f51`)
 - Hover: Text color shift to gray
 
 ### Tagline/Badge
+
 ```
 "UX Researcher & Creative Technologist"
 ```
+
 - Style: Mustard background, rotated -2deg
 - Border: 2px black
 - Typography: Bold, tracking widest, uppercase, xs
@@ -826,6 +884,7 @@ EMILIO.HARRISON
 ## 20. Do's and Don'ts
 
 ### ✅ Do:
+
 - Use hard-edged, offset shadows exclusively
 - Rotate elements within -3° to +3° range
 - Maintain 4px border on all primary containers
@@ -836,6 +895,7 @@ EMILIO.HARRISON
 - Provide hover states for all interactive elements
 
 ### ❌ Don't:
+
 - Use soft/blurred shadows or gradients
 - Rotate elements beyond ±3° (readability suffers)
 - Use borders thinner than 2px on major elements
@@ -850,11 +910,13 @@ EMILIO.HARRISON
 ## 21. Implementation Notes
 
 ### CSS Framework
+
 - **Tailwind CSS** (utility-first)
 - Custom configuration for brand colors
 - Arbitrary values used for precise spacing/colors
 
 ### React Patterns
+
 - Functional components with hooks
 - `useRef` for performance-critical animations
 - `useState` for UI state management
@@ -862,6 +924,7 @@ EMILIO.HARRISON
 - `useMemo` for expensive computations
 
 ### Performance Optimizations
+
 - Direct DOM manipulation for background animations
 - `requestAnimationFrame` for smooth 60fps animation
 - Passive event listeners for scroll/touch
@@ -873,18 +936,21 @@ EMILIO.HARRISON
 ## 22. Future Considerations
 
 ### Scalability
+
 - Component library extraction
 - Storybook documentation
 - Design tokens in JSON format
 - Dark mode variant system
 
 ### Accessibility Enhancements
+
 - Reduced motion preferences
 - High contrast mode
 - Screen reader announcements
 - Keyboard shortcut system
 
 ### Progressive Enhancement
+
 - Touch gesture library
 - WebGL background upgrade
 - PWA capabilities
@@ -894,9 +960,9 @@ EMILIO.HARRISON
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | Nov 27, 2025 | Initial design system documentation |
+| Version | Date         | Changes                             |
+| ------- | ------------ | ----------------------------------- |
+| 1.0     | Nov 27, 2025 | Initial design system documentation |
 
 ---
 
