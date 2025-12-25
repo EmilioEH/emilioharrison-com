@@ -26,11 +26,16 @@ If the input is an image, describe what you see and infer the recipe (ingredient
 If the input is a URL, parse the HTML.
 `
 
-export const POST: APIRoute = async ({ request }) => {
-  const apiKey = import.meta.env.GEMINI_API_KEY
+export const POST: APIRoute = async ({ request, locals }) => {
+  // Access environment variable.
+  // In Cloudflare (SSR), secrets are in locals.runtime.env
+  // We fallback to import.meta.env for local dev if not using platformProxy or for build-time vars
+  // @ts-expect-error - Runtime env type definition might be missing in some setups
+  const env = locals.runtime?.env || import.meta.env
+  const apiKey = env.GEMINI_API_KEY
 
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Missing API Key' }), {
+    return new Response(JSON.stringify({ error: 'Missing API Key configuration' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
