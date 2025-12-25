@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Plus,
   ShoppingBag,
@@ -47,8 +47,16 @@ const useRecipes = () => {
     fetchRecipes()
   }, [])
 
+  const isInitialLoad = useRef(true)
+
   useEffect(() => {
-    if (loading || syncStatus === 'error') return
+    if (loading) return
+
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false
+      return
+    }
+
     const timeoutId = setTimeout(async () => {
       setSyncStatus('syncing')
       try {
@@ -68,7 +76,7 @@ const useRecipes = () => {
       }
     }, 1000)
     return () => clearTimeout(timeoutId)
-  }, [recipes, loading, syncStatus])
+  }, [recipes, loading])
 
   return { recipes, setRecipes, loading, syncStatus }
 }

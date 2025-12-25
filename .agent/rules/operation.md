@@ -4,6 +4,10 @@ trigger: always_on
 
 # Agent Workflow & Planning
 
+## Phase 0: Context (Mandatory)
+- **Read:** You MUST read `apps/recipes/README.md` to understand the architectural context and current state of the Recipe App.
+- **Reference:** Use this as your primary source of truth for feature explanations and architectural decisions.
+
 ## Phase 1: Plan
 - Generate an `implementation_plan.md`.
 - **Constraint:** Frame the task strictly as a **User Story** (per @01-emilio-persona.md).
@@ -19,3 +23,7 @@ trigger: always_on
 ## Phase 3: Verification
 - Before asking for approval, you must explicitly confirm:
 > "I have verified the User Journey with Playwright and the Code Health with the Quality Gate."
+
+## Phase 4: Documentation
+- **Update:** If your changes affect the architecture, features, or setup instructions, you MUST update `apps/recipes/README.md`.
+- **Reflect:** Ensure the README remains the "Source of Truth" for the next agent.
