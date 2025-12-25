@@ -40,7 +40,7 @@ const DetailHeader = ({ recipe, onClose, onAction, cookingMode, setCookingMode }
   >
     <button
       onClick={onClose}
-      className="rounded-full p-2 transition hover:bg-md-sys-color-on-surface/[0.08]"
+      className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 transition"
       aria-label="Back to Library"
       title="Back to Library"
     >
@@ -56,33 +56,33 @@ const DetailHeader = ({ recipe, onClose, onAction, cookingMode, setCookingMode }
         {cookingMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
       </button>
       <div className="group relative">
-        <button className="rounded-full p-2 text-md-sys-color-on-surface-variant hover:bg-md-sys-color-on-surface/[0.08]">
+        <button className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 text-md-sys-color-on-surface-variant">
           <MoreHorizontal className="h-6 w-6" />
         </button>
         {/* Dropdown Menu */}
         <div className="invisible absolute right-0 top-full z-30 mt-2 flex w-48 flex-col overflow-hidden rounded-md-m border border-md-sys-color-outline bg-md-sys-color-surface opacity-0 shadow-md-2 transition-all group-hover:visible group-hover:opacity-100">
           <button
             onClick={() => onAction('addToWeek')}
-            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-md-sys-color-primary/[0.08]"
+            className="hover:bg-md-sys-color-primary/[0.08] flex items-center gap-2 px-4 py-3 text-left text-sm font-medium"
           >
             <Calendar className="h-4 w-4" />{' '}
             {recipe.thisWeek ? 'Remove from Week' : 'Add to This Week'}
           </button>
           <button
             onClick={() => onAction('move')}
-            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-md-sys-color-primary/[0.08]"
+            className="hover:bg-md-sys-color-primary/[0.08] flex items-center gap-2 px-4 py-3 text-left text-sm font-medium"
           >
             <FolderInput className="h-4 w-4" /> Move Folder
           </button>
           <button
             onClick={() => onAction('edit')}
-            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-md-sys-color-primary/[0.08]"
+            className="hover:bg-md-sys-color-primary/[0.08] flex items-center gap-2 px-4 py-3 text-left text-sm font-medium"
           >
             <Edit2 className="h-4 w-4" /> Edit Recipe
           </button>
           <button
             onClick={() => onAction('delete')}
-            className="flex items-center gap-2 border-t border-md-sys-color-outline px-4 py-3 text-left text-sm font-medium text-md-sys-color-error hover:bg-md-sys-color-error/[0.08]"
+            className="hover:bg-md-sys-color-error/[0.08] flex items-center gap-2 border-t border-md-sys-color-outline px-4 py-3 text-left text-sm font-medium text-md-sys-color-error"
           >
             <Trash2 className="h-4 w-4" /> Delete
           </button>
@@ -99,7 +99,7 @@ const CheckableItem = ({ text, isChecked, onToggle, largeText }) => {
       className={`flex w-full items-start gap-4 p-3 text-left transition-all ${isChecked ? 'opacity-40 grayscale' : ''}`}
     >
       <div
-        className={`mt-0.5 flex items-center justify-center rounded-md-xs border border-md-sys-color-outline transition-colors ${isChecked ? 'bg-md-sys-color-primary border-md-sys-color-primary' : 'bg-md-sys-color-surface'} ${largeText ? 'h-6 w-6' : 'h-5 w-5'}`}
+        className={`mt-0.5 flex items-center justify-center rounded-md-xs border border-md-sys-color-outline transition-colors ${isChecked ? 'border-md-sys-color-primary bg-md-sys-color-primary' : 'bg-md-sys-color-surface'} ${largeText ? 'h-6 w-6' : 'h-5 w-5'}`}
       >
         {isChecked && <Check className="h-3 w-3 text-md-sys-color-on-primary" />}
       </div>
@@ -183,7 +183,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
                 {recipe.title}
               </h1>
 
-              <div className="mt-4 flex gap-4 border-y border-md-sys-color-outline/20 py-3 text-sm font-medium text-md-sys-color-on-surface-variant">
+              <div className="border-md-sys-color-outline/20 mt-4 flex gap-4 border-y py-3 text-sm font-medium text-md-sys-color-on-surface-variant">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4 text-md-sys-color-primary" />
                   <span>{recipe.prepTime + recipe.cookTime}m</span>
@@ -208,7 +208,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
                 </span>
               </h2>
               <div
-                className={`rounded-md-l border border-dashed border-md-sys-color-outline p-2 ${cookingMode ? 'border-md-sys-color-tertiary-container bg-md-sys-color-tertiary-container/20' : 'bg-md-sys-color-surface-variant/20'}`}
+                className={`rounded-md-l border border-dashed border-md-sys-color-outline p-2 ${cookingMode ? 'bg-md-sys-color-tertiary-container/20 border-md-sys-color-tertiary-container' : 'bg-md-sys-color-surface-variant/20'}`}
               >
                 {recipe.ingredients.map((ing, idx) => {
                   const prep = ing.prep ? `, ${ing.prep}` : ''
@@ -227,7 +227,9 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
 
             {/* Steps */}
             <div className="mb-8">
-              <h2 className="mb-4 font-display text-xl font-bold text-md-sys-color-on-surface">Instructions</h2>
+              <h2 className="mb-4 font-display text-xl font-bold text-md-sys-color-on-surface">
+                Instructions
+              </h2>
               <div className="space-y-4">
                 {recipe.steps.map((step, idx) => (
                   <div key={idx} className="flex gap-4">

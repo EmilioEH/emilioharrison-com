@@ -45,7 +45,7 @@ test.describe('Recipe Manager', () => {
     await page.getByLabel('Title').fill(testTitle)
     await page.getByLabel('Ingredients (One per line)').fill('1 lb Beef')
     await page.getByLabel('Instructions (One per line)').fill('Stew beef')
-    
+
     // Select protein
     await page.getByLabel('Protein').selectOption('Beef')
 
@@ -53,14 +53,18 @@ test.describe('Recipe Manager', () => {
 
     // 3. Verify it appears in the list inside the Beef accordion
     // The accordion header contains a heading with 'Beef' and a count.
-    const beefAccordion = page.getByRole('button').filter({ has: page.getByRole('heading', { name: 'Beef', exact: true }) })
+    const beefAccordion = page
+      .getByRole('button')
+      .filter({ has: page.getByRole('heading', { name: 'Beef', exact: true }) })
     await expect(beefAccordion).toBeVisible()
-    
+
     // Explicitly click to ensure it's open
     await beefAccordion.click()
-    
+
     // Find the specific recipe card by its unique title heading
-    const recipeCard = page.getByRole('button').filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })
+    const recipeCard = page
+      .getByRole('button')
+      .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })
     await expect(recipeCard).toBeVisible()
 
     // Wait for accordion animation to settle
@@ -81,16 +85,28 @@ test.describe('Recipe Manager', () => {
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Verify we are back in the library and the accordion is still there
-    await expect(page.getByRole('button').filter({ has: page.getByRole('heading', { name: 'Beef', exact: true }) })).toBeVisible()
-    await expect(page.getByRole('button').filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })).toBeVisible()
+    await expect(
+      page
+        .getByRole('button')
+        .filter({ has: page.getByRole('heading', { name: 'Beef', exact: true }) }),
+    ).toBeVisible()
+    await expect(
+      page
+        .getByRole('button')
+        .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) }),
+    ).toBeVisible()
 
     // Test sorting change
     await page.getByRole('button', { name: 'Sort & Filter' }).click()
     await page.getByRole('button', { name: 'Alphabetical' }).click()
     await page.locator('button:has(svg.lucide-x)').click()
-    
+
     // After sorting alpha, it should be grouped by first letter
     const firstLetter = testTitle.charAt(0).toUpperCase()
-    await expect(page.getByRole('button').filter({ has: page.getByRole('heading', { name: firstLetter, exact: true }) })).toBeVisible()
+    await expect(
+      page
+        .getByRole('button')
+        .filter({ has: page.getByRole('heading', { name: firstLetter, exact: true }) }),
+    ).toBeVisible()
   })
 })

@@ -46,7 +46,7 @@ const AccordionGroup = ({ title, count, children, isOpen, onToggle }) => (
   <div className="border-b border-md-sys-color-outline last:border-0">
     <button
       onClick={onToggle}
-      className="flex w-full items-center justify-between px-6 py-4 transition-colors hover:bg-md-sys-color-primary/[0.04]"
+      className="hover:bg-md-sys-color-primary/[0.04] flex w-full items-center justify-between px-6 py-4 transition-colors"
     >
       <div className="flex items-center gap-3">
         <h3 className="font-display text-xl font-bold text-md-sys-color-on-surface">{title}</h3>

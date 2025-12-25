@@ -50,7 +50,9 @@ if (Astro.request.method === 'POST') {
 
 <RecipeLayout title="Login">
   <div class="flex flex-1 items-center justify-center p-4">
-    <div class="w-full max-w-md rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 shadow-md-3">
+    <div
+      class="w-full max-w-md rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 shadow-md-3"
+    >
       <h1 class="mb-6 font-display text-4xl font-bold text-md-sys-color-primary">Chef Login</h1>
 
       {
@@ -63,25 +65,29 @@ if (Astro.request.method === 'POST') {
 
       <form method="POST" class="flex flex-col gap-6">
         <label class="flex flex-col gap-2">
-          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant">Your Name</span>
+          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant"
+            >Your Name</span
+          >
           <input
             type="text"
             name="name"
             id="name"
             placeholder="e.g. Emilio"
-            class="rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-3 font-medium text-md-sys-color-on-surface outline-none focus:ring-2 focus:ring-md-sys-color-primary transition-all"
+            class="bg-md-sys-color-surface-variant/20 rounded-md-l border border-md-sys-color-outline p-3 font-medium text-md-sys-color-on-surface outline-none transition-all focus:ring-2 focus:ring-md-sys-color-primary"
             required
           />
         </label>
 
         <label class="flex flex-col gap-2">
-          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant">Password</span>
+          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant"
+            >Password</span
+          >
           <input
             type="password"
             name="password"
             id="password"
             placeholder="Enter password"
-            class="rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-3 font-medium text-md-sys-color-on-surface outline-none focus:ring-2 focus:ring-md-sys-color-primary transition-all"
+            class="bg-md-sys-color-surface-variant/20 rounded-md-l border border-md-sys-color-outline p-3 font-medium text-md-sys-color-on-surface outline-none transition-all focus:ring-2 focus:ring-md-sys-color-primary"
             required
           />
         </label>

@@ -28,7 +28,7 @@ const SuccessView = ({ onReset }: { onReset: () => void }) => (
 )
 
 const LinkPlaceholder = () => (
-  <div className="flex h-20 w-20 items-center justify-center rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 shadow-md-1">
+  <div className="bg-md-sys-color-surface-variant/20 flex h-20 w-20 items-center justify-center rounded-md-s border border-md-sys-color-outline shadow-md-1">
     <LinkIcon className="h-8 w-8 text-md-sys-color-on-surface-variant" />
   </div>
 )
@@ -46,11 +46,13 @@ const SourcePreview = ({
   imagePreview: string | null
   url: string
 }) => (
-  <div className="flex items-center gap-4 rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-4">
+  <div className="bg-md-sys-color-surface-variant/20 flex items-center gap-4 rounded-md-xl border border-md-sys-color-outline p-4">
     {mode === 'photo' && imagePreview ? <ImageThumbnail src={imagePreview} /> : <LinkPlaceholder />}
     <div className="text-sm">
       <p className="text-xs font-medium uppercase text-md-sys-color-on-surface-variant">Source</p>
-      <p className="line-clamp-1 font-medium text-md-sys-color-on-surface">{mode === 'photo' ? 'Uploaded Image' : url}</p>
+      <p className="line-clamp-1 font-medium text-md-sys-color-on-surface">
+        {mode === 'photo' ? 'Uploaded Image' : url}
+      </p>
     </div>
   </div>
 )
@@ -59,7 +61,9 @@ const SourceToggle = ({ mode, setMode }: { mode: InputMode; setMode: (m: InputMo
   <div className="mb-6 flex border-b border-md-sys-color-outline">
     <button
       className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
-        mode === 'photo' ? 'bg-md-sys-color-primary text-md-sys-color-on-primary' : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
+        mode === 'photo'
+          ? 'bg-md-sys-color-primary text-md-sys-color-on-primary'
+          : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
       }`}
       onClick={() => setMode('photo')}
     >
@@ -69,7 +73,9 @@ const SourceToggle = ({ mode, setMode }: { mode: InputMode; setMode: (m: InputMo
     </button>
     <button
       className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
-        mode === 'url' ? 'bg-md-sys-color-primary text-md-sys-color-on-primary' : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
+        mode === 'url'
+          ? 'bg-md-sys-color-primary text-md-sys-color-on-primary'
+          : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
       }`}
       onClick={() => setMode('url')}
     >
@@ -90,16 +96,20 @@ const PhotoUploader = ({
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) => (
   <div
-    className={`flex h-64 w-full flex-col items-center justify-center rounded-md-xl border border-dashed border-md-sys-color-outline bg-md-sys-color-surface-variant/10 transition-colors ${
-      imagePreview ? 'border-none p-0' : 'group relative hover:bg-md-sys-color-primary/[0.04]'
+    className={`bg-md-sys-color-surface-variant/10 flex h-64 w-full flex-col items-center justify-center rounded-md-xl border border-dashed border-md-sys-color-outline transition-colors ${
+      imagePreview ? 'border-none p-0' : 'hover:bg-md-sys-color-primary/[0.04] group relative'
     }`}
   >
     {imagePreview ? (
       <div className="relative h-full w-full">
-        <img src={imagePreview} className="h-full w-full rounded-md-xl object-cover" alt="Preview" />
+        <img
+          src={imagePreview}
+          className="h-full w-full rounded-md-xl object-cover"
+          alt="Preview"
+        />
         <button
           onClick={() => setImagePreview(null)}
-          className="absolute right-2 top-2 rounded-full bg-md-sys-color-surface/90 p-2 shadow-md-1 hover:text-md-sys-color-error"
+          className="bg-md-sys-color-surface/90 absolute right-2 top-2 rounded-full p-2 shadow-md-1 hover:text-md-sys-color-error"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -109,7 +119,9 @@ const PhotoUploader = ({
         <div className="mb-4 rounded-full bg-md-sys-color-surface p-4 shadow-md-1">
           <Upload className="h-8 w-8 text-md-sys-color-on-surface-variant" />
         </div>
-        <p className="text-sm font-medium text-md-sys-color-on-surface-variant">Tap to upload or take photo</p>
+        <p className="text-sm font-medium text-md-sys-color-on-surface-variant">
+          Tap to upload or take photo
+        </p>
         <input
           type="file"
           accept="image/*"
@@ -163,7 +175,10 @@ const RecipeReviewForm = ({
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="title" className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant">
+          <label
+            htmlFor="title"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+          >
             Title
           </label>
           <input
@@ -177,7 +192,10 @@ const RecipeReviewForm = ({
 
         <div className="grid grid-cols-3 gap-4">
           {['servings', 'prepTime', 'cookTime'].map((field) => (
-            <div key={field} className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2">
+            <div
+              key={field}
+              className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2"
+            >
               <label
                 htmlFor={field}
                 className="mb-1 block text-[10px] font-medium uppercase text-md-sys-color-on-surface-variant"
@@ -243,7 +261,10 @@ const RecipeReviewForm = ({
         </div>
 
         <div>
-          <label htmlFor="cuisine" className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant">
+          <label
+            htmlFor="cuisine"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+          >
             Cuisine
           </label>
           <input
@@ -275,11 +296,16 @@ const RecipeReviewForm = ({
               setFormData({ ...formData, ingredients: newIngredients })
             }}
           />
-          <p className="mt-1 text-[10px] text-md-sys-color-on-surface-variant">One ingredient per line</p>
+          <p className="mt-1 text-[10px] text-md-sys-color-on-surface-variant">
+            One ingredient per line
+          </p>
         </div>
 
         <div>
-          <label htmlFor="steps" className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant">
+          <label
+            htmlFor="steps"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+          >
             Instructions
           </label>
           <textarea
@@ -364,7 +390,7 @@ const RecipeSourceSelector = ({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://cooking.nytimes.com/..."
-              className="w-full rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-4 font-mono text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary transition-all"
+              className="bg-md-sys-color-surface-variant/20 w-full rounded-md-l border border-md-sys-color-outline p-4 font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-md-sys-color-primary"
             />
             <p className="text-xs text-md-sys-color-on-surface-variant">
               We&apos;ll scrape the ingredients and instructions for you.

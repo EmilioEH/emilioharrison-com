@@ -9,7 +9,7 @@
 
 @layer base {
   body {
-    @apply bg-md-sys-color-surface text-md-sys-color-on-surface font-sans;
+    @apply bg-md-sys-color-surface font-sans text-md-sys-color-on-surface;
     font-size: var(--md-sys-typescale-body-large-size);
     line-height: var(--md-sys-typescale-body-large-line-height);
   }
@@ -17,18 +17,18 @@
   h1 {
     font-size: var(--md-sys-typescale-display-large-size);
     line-height: var(--md-sys-typescale-display-large-line-height);
-    @apply font-display mb-6;
+    @apply mb-6 font-display;
   }
 
   h2 {
     font-size: var(--md-sys-typescale-headline-large-size);
     line-height: var(--md-sys-typescale-headline-large-line-height);
-    @apply font-display mb-4;
+    @apply mb-4 font-display;
   }
 
   h3 {
     font-size: var(--md-sys-typescale-title-large-size);
     line-height: var(--md-sys-typescale-title-large-line-height);
-    @apply font-display mb-2;
+    @apply mb-2 font-display;
   }
 }

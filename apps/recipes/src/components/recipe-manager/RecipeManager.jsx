@@ -81,7 +81,9 @@ import { RecipeFilters } from './RecipeFilters'
 const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpenFilters }) => (
   <header className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
     <div>
-      <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-primary">CHEFBOARD</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-primary">
+        CHEFBOARD
+      </h1>
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
         {syncStatus === 'syncing' && (
           <>
@@ -100,7 +102,7 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
     <div className="flex gap-2">
       <button
         onClick={onOpenFilters}
-        className="rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant hover:bg-md-sys-color-primary/[0.08]"
+        className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
         title="Sort & Filter"
       >
         <ListFilter className="h-5 w-5" />
@@ -186,7 +188,7 @@ const QuickImport = ({ rawText, setRawText, onParse, showImport, setShowImport }
         />
         <button
           onClick={onParse}
-          className="w-full rounded bg-ink py-1 text-xs font-bold text-white"
+          className="bg-ink w-full rounded py-1 text-xs font-bold text-white"
         >
           Auto-fill
         </button>
@@ -276,7 +278,10 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
         <h2 className="font-display text-xl font-bold">
           {recipe.id ? 'Edit Recipe' : 'New Recipe'}
         </h2>
-        <button onClick={onCancel} className="rounded-md-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium">
+        <button
+          onClick={onCancel}
+          className="rounded-md-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
+        >
           Cancel
         </button>
       </div>
@@ -301,7 +306,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Grandma's Pancakes"
-          className="w-full border-b border-md-sys-color-outline bg-transparent py-1 font-display text-xl font-medium placeholder-md-sys-color-on-surface-variant/30 outline-none focus:border-md-sys-color-primary"
+          className="placeholder-md-sys-color-on-surface-variant/30 w-full border-b border-md-sys-color-outline bg-transparent py-1 font-display text-xl font-medium outline-none focus:border-md-sys-color-primary"
         />
       </div>
 
@@ -348,8 +353,14 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
 
       <div className="grid grid-cols-3 gap-2">
         {['servings', 'prepTime', 'cookTime'].map((k) => (
-          <div key={k} className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2">
-            <label htmlFor={k} className="mb-1 block text-[10px] font-medium uppercase text-md-sys-color-on-surface-variant">
+          <div
+            key={k}
+            className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2"
+          >
+            <label
+              htmlFor={k}
+              className="mb-1 block text-[10px] font-medium uppercase text-md-sys-color-on-surface-variant"
+            >
               {k.replace('Time', '')}
             </label>
             <input

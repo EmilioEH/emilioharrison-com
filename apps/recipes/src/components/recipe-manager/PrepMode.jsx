@@ -34,9 +34,11 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
 
   if (items.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-md-sys-color-on-surface/20 backdrop-blur-sm p-4">
+      <div className="bg-md-sys-color-on-surface/20 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div className="rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-6 text-center shadow-md-2">
-          <p className="mb-4 font-body text-md-sys-color-on-surface-variant">No ingredients to prep for this recipe.</p>
+          <p className="mb-4 font-body text-md-sys-color-on-surface-variant">
+            No ingredients to prep for this recipe.
+          </p>
           <button
             onClick={onClose}
             className="rounded-md-full bg-md-sys-color-primary px-4 py-2 font-medium text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
@@ -49,16 +51,20 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col bg-paper duration-300">
+    <div className="animate-in slide-in-from-bottom-10 bg-paper fixed inset-0 z-50 flex flex-col duration-300">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-4 py-4">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-xl font-bold text-md-sys-color-primary">Steps</h2>
-          <p className="font-body text-xs text-md-sys-color-on-surface-variant">Prep for {recipe.title}</p>
+          <h2 className="flex items-center gap-2 font-display text-xl font-bold text-md-sys-color-primary">
+            Steps
+          </h2>
+          <p className="font-body text-xs text-md-sys-color-on-surface-variant">
+            Prep for {recipe.title}
+          </p>
         </div>
         <button
           onClick={onClose}
-          className="rounded-full p-2 transition hover:bg-md-sys-color-on-surface/[0.08]"
+          className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 transition"
         >
           <X className="h-5 w-5 text-md-sys-color-on-surface" />
         </button>
@@ -74,7 +80,6 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
 
       {/* Main Content */}
       <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-md-sys-color-surface p-6">
-
         <div className="relative w-full max-w-md overflow-hidden rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 text-center shadow-md-3">
           <span className="mb-4 inline-block rounded-md-full border border-md-sys-color-outline px-3 py-1 font-body text-xs font-medium uppercase tracking-widest text-md-sys-color-on-surface-variant">
             Ingredient {currentIndex + 1} of {items.length}

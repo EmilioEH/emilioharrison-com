@@ -3,7 +3,9 @@ import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat } from 'lucide-react'
 
 const FilterSection = ({ title, children }) => (
   <div className="mb-6">
-  <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">{title}</h3>
+    <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
+      {title}
+    </h3>
     <div className="flex flex-wrap gap-2">{children}</div>
   </div>
 )
@@ -14,7 +16,7 @@ const FilterChip = ({ label, active, onClick }) => (
     className={`rounded-md-s border px-3 py-1 text-sm font-medium transition-all ${
       active
         ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
-        : 'border-md-sys-color-outline bg-md-sys-color-surface text-md-sys-color-on-surface hover:bg-md-sys-color-on-surface/[0.04]'
+        : 'hover:bg-md-sys-color-on-surface/[0.04] border-md-sys-color-outline bg-md-sys-color-surface text-md-sys-color-on-surface'
     }`}
   >
     {label}
@@ -45,11 +47,16 @@ export const RecipeFilters = ({
   }
 
   return (
-    <div className="animate-in fade-in fixed inset-0 z-50 flex justify-end bg-md-sys-color-on-surface/20 backdrop-blur-sm transition-opacity">
+    <div className="animate-in fade-in bg-md-sys-color-on-surface/20 fixed inset-0 z-50 flex justify-end backdrop-blur-sm transition-opacity">
       <div className="animate-in slide-in-from-right h-full w-full max-w-xs overflow-y-auto bg-md-sys-color-surface shadow-md-3 duration-300">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
-          <h2 className="font-display text-xl font-bold text-md-sys-color-on-surface">Sort & Filter</h2>
-          <button onClick={onClose} className="rounded-full p-2 hover:bg-md-sys-color-on-surface/[0.08]">
+          <h2 className="font-display text-xl font-bold text-md-sys-color-on-surface">
+            Sort & Filter
+          </h2>
+          <button
+            onClick={onClose}
+            className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2"
+          >
             <X className="h-5 w-5 text-md-sys-color-on-surface" />
           </button>
         </div>
@@ -82,7 +89,7 @@ export const RecipeFilters = ({
                   className={`flex items-center gap-2 rounded-md-s border px-3 py-2 text-sm font-medium transition-all ${
                     sort === opt.id
                       ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
-                      : 'border-transparent bg-md-sys-color-surface-variant/40 text-md-sys-color-on-surface-variant hover:bg-md-sys-color-surface-variant/60'
+                      : 'bg-md-sys-color-surface-variant/40 hover:bg-md-sys-color-surface-variant/60 border-transparent text-md-sys-color-on-surface-variant'
                   }`}
                 >
                   <opt.icon className="h-4 w-4" />
