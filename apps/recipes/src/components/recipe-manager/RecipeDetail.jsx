@@ -18,7 +18,7 @@ import {
 // Wake Lock Helper
 const useWakeLock = (enabled) => {
   useEffect(() => {
-    if (!enabled || (!'wakeLock') in navigator) return
+    if (!enabled || !('wakeLock' in navigator)) return
 
     let wakeLock = null
     const requestLock = async () => {
@@ -36,48 +36,53 @@ const useWakeLock = (enabled) => {
 
 const DetailHeader = ({ recipe, onClose, onAction, cookingMode, setCookingMode }) => (
   <div
-    className={`sticky top-0 z-20 flex items-center justify-between border-b-2 border-ink bg-paper px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
+    className={`sticky top-0 z-20 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
   >
-    <button onClick={onClose} className="rounded-full p-2 transition hover:bg-black/5">
-      <ArrowLeft className="h-6 w-6 text-ink" />
+    <button
+      onClick={onClose}
+      className="rounded-full p-2 transition hover:bg-md-sys-color-on-surface/[0.08]"
+      aria-label="Back to Library"
+      title="Back to Library"
+    >
+      <ArrowLeft className="h-6 w-6 text-md-sys-color-on-surface" />
     </button>
 
     <div className="flex gap-2">
       <button
         onClick={() => setCookingMode(!cookingMode)}
-        className={`rounded-full border-2 p-2 transition ${cookingMode ? 'border-ink bg-teal text-ink' : 'border-transparent text-gray-400 hover:text-ink'}`}
+        className={`rounded-full border p-2 transition ${cookingMode ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container' : 'border-transparent text-md-sys-color-on-surface-variant hover:text-md-sys-color-on-surface'}`}
         title="Cooking Mode (Keep Screen On)"
       >
         {cookingMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
       </button>
       <div className="group relative">
-        <button className="rounded-full p-2 text-ink hover:bg-black/5">
+        <button className="rounded-full p-2 text-md-sys-color-on-surface-variant hover:bg-md-sys-color-on-surface/[0.08]">
           <MoreHorizontal className="h-6 w-6" />
         </button>
         {/* Dropdown Menu */}
-        <div className="invisible absolute right-0 top-full z-30 mt-2 flex w-48 flex-col overflow-hidden rounded-xl border-2 border-ink bg-white opacity-0 shadow-hard transition-all group-hover:visible group-hover:opacity-100">
+        <div className="invisible absolute right-0 top-full z-30 mt-2 flex w-48 flex-col overflow-hidden rounded-md-m border border-md-sys-color-outline bg-md-sys-color-surface opacity-0 shadow-md-2 transition-all group-hover:visible group-hover:opacity-100">
           <button
             onClick={() => onAction('addToWeek')}
-            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-bold hover:bg-yellow-50"
+            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-md-sys-color-primary/[0.08]"
           >
             <Calendar className="h-4 w-4" />{' '}
             {recipe.thisWeek ? 'Remove from Week' : 'Add to This Week'}
           </button>
           <button
             onClick={() => onAction('move')}
-            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-bold hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-md-sys-color-primary/[0.08]"
           >
             <FolderInput className="h-4 w-4" /> Move Folder
           </button>
           <button
             onClick={() => onAction('edit')}
-            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-bold hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-md-sys-color-primary/[0.08]"
           >
             <Edit2 className="h-4 w-4" /> Edit Recipe
           </button>
           <button
             onClick={() => onAction('delete')}
-            className="flex items-center gap-2 border-t border-gray-100 px-4 py-3 text-left text-sm font-bold text-red-500 hover:bg-red-50"
+            className="flex items-center gap-2 border-t border-md-sys-color-outline px-4 py-3 text-left text-sm font-medium text-md-sys-color-error hover:bg-md-sys-color-error/[0.08]"
           >
             <Trash2 className="h-4 w-4" /> Delete
           </button>
@@ -94,12 +99,12 @@ const CheckableItem = ({ text, isChecked, onToggle, largeText }) => {
       className={`flex w-full items-start gap-4 p-3 text-left transition-all ${isChecked ? 'opacity-40 grayscale' : ''}`}
     >
       <div
-        className={`mt-0.5 flex items-center justify-center rounded border-2 border-ink transition-colors ${isChecked ? 'bg-ink' : 'bg-white'} ${largeText ? 'h-6 w-6' : 'h-5 w-5'}`}
+        className={`mt-0.5 flex items-center justify-center rounded-md-xs border border-md-sys-color-outline transition-colors ${isChecked ? 'bg-md-sys-color-primary border-md-sys-color-primary' : 'bg-md-sys-color-surface'} ${largeText ? 'h-6 w-6' : 'h-5 w-5'}`}
       >
-        {isChecked && <Check className="h-3 w-3 text-white" />}
+        {isChecked && <Check className="h-3 w-3 text-md-sys-color-on-primary" />}
       </div>
       <span
-        className={`flex-1 font-body text-ink ${largeText ? 'text-lg leading-relaxed' : 'text-base'} ${isChecked ? 'line-through' : ''}`}
+        className={`flex-1 font-body text-md-sys-color-on-surface ${largeText ? 'text-lg leading-relaxed' : 'text-base'} ${isChecked ? 'line-through opacity-40' : ''}`}
       >
         {text}
       </span>
@@ -139,7 +144,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
 
   return (
     <div
-      className={`animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col overflow-hidden bg-paper ${cookingMode ? 'safe-area-pt bg-white' : ''}`}
+      className={`animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col overflow-hidden bg-md-sys-color-surface ${cookingMode ? 'safe-area-pt' : ''}`}
     >
       <DetailHeader
         recipe={recipe}
@@ -158,37 +163,37 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
           )}
 
           <div
-            className={`relative bg-paper ${cookingMode ? 'pt-4' : '-mt-6 rounded-t-3xl border-t-2 border-ink p-6'}`}
+            className={`relative bg-md-sys-color-surface ${cookingMode ? 'pt-4' : '-mt-6 rounded-t-md-xl border-t border-md-sys-color-outline p-6 shadow-md-3'}`}
           >
             {/* Metadata Header */}
             <div className="mb-6">
               <div className="mb-2 flex gap-2">
                 {recipe.protein && (
-                  <span className="rounded bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                  <span className="rounded-md-full bg-md-sys-color-secondary-container px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
                     {recipe.protein}
                   </span>
                 )}
                 {recipe.difficulty && (
-                  <span className="rounded bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-600">
+                  <span className="rounded-md-full bg-md-sys-color-surface-variant px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
                     {recipe.difficulty}
                   </span>
                 )}
               </div>
-              <h1 className="mb-2 font-display text-3xl font-black leading-tight text-ink">
+              <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-md-sys-color-on-surface">
                 {recipe.title}
               </h1>
 
-              <div className="mt-4 flex gap-4 border-y border-gray-200 py-3 text-sm font-bold text-gray-500">
+              <div className="mt-4 flex gap-4 border-y border-md-sys-color-outline/20 py-3 text-sm font-medium text-md-sys-color-on-surface-variant">
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-teal" />
+                  <Clock className="h-4 w-4 text-md-sys-color-primary" />
                   <span>{recipe.prepTime + recipe.cookTime}m</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4 text-teal" />
+                  <Users className="h-4 w-4 text-md-sys-color-primary" />
                   <span>{recipe.servings} Servings</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Flame className="h-4 w-4 text-teal" />
+                  <Flame className="h-4 w-4 text-md-sys-color-primary" />
                   <span>{recipe.difficulty || 'Easy'}</span>
                 </div>
               </div>
@@ -196,14 +201,14 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
 
             {/* Ingredients */}
             <div className="mb-8">
-              <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
+              <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-bold text-md-sys-color-on-surface">
                 Ingredients
-                <span className="font-body text-sm font-normal text-gray-400">
+                <span className="font-body text-sm font-normal text-md-sys-color-on-surface-variant">
                   ({recipe.ingredients?.length || 0})
                 </span>
               </h2>
               <div
-                className={`rounded-xl border-2 border-dashed border-gray-300 p-2 ${cookingMode ? 'border-yellow-200 bg-yellow-50' : 'bg-gray-50'}`}
+                className={`rounded-md-l border border-dashed border-md-sys-color-outline p-2 ${cookingMode ? 'border-md-sys-color-tertiary-container bg-md-sys-color-tertiary-container/20' : 'bg-md-sys-color-surface-variant/20'}`}
               >
                 {recipe.ingredients.map((ing, idx) => {
                   const prep = ing.prep ? `, ${ing.prep}` : ''
@@ -222,18 +227,18 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
 
             {/* Steps */}
             <div className="mb-8">
-              <h2 className="mb-4 font-display text-xl font-bold">Instructions</h2>
+              <h2 className="mb-4 font-display text-xl font-bold text-md-sys-color-on-surface">Instructions</h2>
               <div className="space-y-4">
                 {recipe.steps.map((step, idx) => (
                   <div key={idx} className="flex gap-4">
                     <div
-                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 font-bold transition-colors ${checkedSteps[idx] ? 'border-teal bg-teal text-white' : 'border-ink bg-white text-ink'}`}
+                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border font-bold transition-colors ${checkedSteps[idx] ? 'border-md-sys-color-primary bg-md-sys-color-primary text-md-sys-color-on-primary' : 'border-md-sys-color-outline bg-md-sys-color-surface text-md-sys-color-on-surface'}`}
                     >
                       {checkedSteps[idx] ? <Check className="h-4 w-4" /> : idx + 1}
                     </div>
                     <button
                       onClick={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
-                      className={`text-left font-body text-ink transition-opacity ${cookingMode ? 'text-lg leading-relaxed' : ''} ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
+                      className={`text-left font-body text-md-sys-color-on-surface transition-opacity ${cookingMode ? 'text-lg leading-relaxed' : ''} ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
                     >
                       {step}
                     </button>
@@ -243,7 +248,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
             </div>
 
             {recipe.notes && (
-              <div className="mb-8 rounded-xl border-l-4 border-blue-400 bg-blue-50 p-4 text-sm text-blue-800">
+              <div className="mb-8 rounded-md-l border-l-4 border-md-sys-color-tertiary bg-md-sys-color-tertiary-container p-4 text-sm text-md-sys-color-on-tertiary-container">
                 <strong>Chef's Notes:</strong>
                 <p className="mt-1">{recipe.notes}</p>
               </div>

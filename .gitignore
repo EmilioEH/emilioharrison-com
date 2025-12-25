@@ -17,7 +17,9 @@ dist-ssr
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea
+# macOS / Finder artifacts
 .DS_Store
+* 2.*
 *.suo
 *.ntvs*
 *.njsproj
@@ -40,8 +42,15 @@ coverage/
 
 # Secrets
 .dev.vars
+.env
+.env.*
+!.env.example
 
 # Build Artifacts
 audit-results/
 lint_output.txt
+lint_report.json
+lint_results.txt
 prettier_error.txt
+reports/
+.stryker-tmp/

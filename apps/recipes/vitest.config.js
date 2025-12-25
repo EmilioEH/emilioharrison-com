@@ -10,7 +10,8 @@ export default getViteConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.{js,jsx,ts,tsx,astro}'],
-      exclude: ['src/env.d.ts', 'src/content/config.ts'],
+      exclude: ['src/env.d.ts', 'src/content/config.ts', 'tests/**', '**/*.spec.ts'],
     },
+    exclude: ['tests/**', 'node_modules/**', 'dist/**'],
   },
 })

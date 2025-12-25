@@ -34,12 +34,12 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
 
   if (items.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-paper p-4">
-        <div className="rounded-xl border-2 border-ink bg-white p-6 text-center shadow-hard">
-          <p className="mb-4 font-body text-gray-500">No ingredients to prep for this recipe.</p>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-md-sys-color-on-surface/20 backdrop-blur-sm p-4">
+        <div className="rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-6 text-center shadow-md-2">
+          <p className="mb-4 font-body text-md-sys-color-on-surface-variant">No ingredients to prep for this recipe.</p>
           <button
             onClick={onClose}
-            className="rounded-lg bg-ink px-4 py-2 font-bold text-paper shadow-hard-sm transition-all hover:translate-y-0.5 hover:shadow-none"
+            className="rounded-md-full bg-md-sys-color-primary px-4 py-2 font-medium text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
           >
             Close
           </button>
@@ -51,51 +51,49 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
   return (
     <div className="animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col bg-paper duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between border-b-2 border-ink bg-white px-4 py-4 shadow-sm">
+      <div className="flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-4 py-4">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-xl font-bold text-ink">Steps</h2>
-          <p className="font-body text-xs text-gray-500">Prep for {recipe.title}</p>
+          <h2 className="flex items-center gap-2 font-display text-xl font-bold text-md-sys-color-primary">Steps</h2>
+          <p className="font-body text-xs text-md-sys-color-on-surface-variant">Prep for {recipe.title}</p>
         </div>
         <button
           onClick={onClose}
-          className="rounded-full border-2 border-transparent bg-gray-100 p-2 transition hover:border-ink hover:bg-gray-200"
+          className="rounded-full p-2 transition hover:bg-md-sys-color-on-surface/[0.08]"
         >
-          <X className="h-5 w-5 text-ink" />
+          <X className="h-5 w-5 text-md-sys-color-on-surface" />
         </button>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2 w-full bg-gray-200">
+      <div className="h-1 w-full bg-md-sys-color-surface-variant">
         <div
-          className="h-full bg-teal transition-all duration-300"
+          className="h-full bg-md-sys-color-primary transition-all duration-300"
           style={{ width: `${progress}%` }}
         ></div>
       </div>
 
       {/* Main Content */}
-      <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-paper p-6">
-        {/* Dynamic decorative background */}
-        <div className="absolute left-0 top-0 h-2 w-full bg-gradient-to-r from-orange-400 to-red-500"></div>
+      <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-md-sys-color-surface p-6">
 
-        <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-2 border-ink bg-white p-8 text-center shadow-hard-xl">
-          <span className="mb-4 inline-block rounded-full border border-gray-200 px-3 py-1 font-accent text-xs font-bold uppercase tracking-widest text-gray-400">
+        <div className="relative w-full max-w-md overflow-hidden rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 text-center shadow-md-3">
+          <span className="mb-4 inline-block rounded-md-full border border-md-sys-color-outline px-3 py-1 font-body text-xs font-medium uppercase tracking-widest text-md-sys-color-on-surface-variant">
             Ingredient {currentIndex + 1} of {items.length}
           </span>
 
-          <div className="mb-2 mt-4 font-display text-4xl font-bold tracking-tight text-ink md:text-5xl">
+          <div className="mb-2 mt-4 font-display text-4xl font-bold tracking-tight text-md-sys-color-primary md:text-5xl">
             {currentItem.amount}
           </div>
-          <div className="mb-8 font-body text-xl font-medium capitalize text-gray-600">
+          <div className="mb-8 font-body text-xl font-medium capitalize text-md-sys-color-on-surface-variant">
             {currentItem.name}
           </div>
 
           <div
-            className={`mb-8 rounded-xl border-2 border-ink p-6 ${currentItem.prep ? 'bg-orange-50' : 'bg-gray-50'}`}
+            className={`mb-8 rounded-md-l border border-md-sys-color-outline p-6 ${currentItem.prep ? 'bg-md-sys-color-secondary-container' : 'bg-md-sys-color-surface-variant/20'}`}
           >
-            <div className="mb-2 font-accent text-xs font-bold uppercase tracking-wider text-ink">
+            <div className="mb-2 font-body text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
               Action
             </div>
-            <div className="font-display text-2xl font-bold capitalize text-coral">
+            <div className="font-display text-2xl font-bold capitalize text-md-sys-color-secondary">
               {currentItem.prep || 'Measure & Reserve'}
             </div>
           </div>
@@ -103,7 +101,7 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
           <div className="space-y-3">
             <button
               onClick={handleToggleAndNext}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink py-4 font-display text-lg font-bold text-paper shadow-hard transition hover:bg-black active:translate-y-1 active:shadow-none"
+              className="flex w-full items-center justify-center gap-2 rounded-md-full bg-md-sys-color-primary py-4 font-body text-lg font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
             >
               {isChecked ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
               {isChecked ? 'Next Item' : 'Mark Done & Next'}
@@ -132,7 +130,7 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') setCurrentIndex(idx)
                 }}
-                className={`h-2.5 w-2.5 shrink-0 cursor-pointer rounded-full border border-ink transition-all ${bgClass}`}
+                className={`h-2.5 w-2.5 shrink-0 cursor-pointer rounded-full border border-md-sys-color-outline transition-all ${bgClass}`}
               />
             )
           })}

@@ -10,10 +10,12 @@
     "preview": "astro preview",
     "lint": "eslint .",
     "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:stryker": "stryker run",
     "test:e2e": "playwright test",
-    "check:safety": "npm run lint && npm run format && npx tsc --noEmit && npx astro check",
+    "check:safety": "npm run lint && npm run format && npx tsc --noEmit && npx astro check && npm run test -- --run",
     "check:hygiene": "npx knip && npx depcheck && npx jscpd src/",
-    "check:full": "npm run check:safety && npm run check:hygiene && npm run test && npm run scan",
+    "check:full": "npm run check:safety && npm run test:stryker && npm run test:e2e && npm run scan",
     "sync": "git add . && git commit -m \"Auto-sync: $(date)\" && git push",
     "scan": "npm audit --audit-level=high",
     "format": "prettier --write .",
@@ -86,6 +88,9 @@
     "wrangler": "^4.50.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,astro}": "eslint --fix"
+    "*.{js,jsx,ts,tsx,astro}": [
+      "eslint --fix",
+      "vitest related --run"
+    ]
   }
 }

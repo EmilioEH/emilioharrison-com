@@ -1,33 +1,14 @@
 import React, { useState, useMemo } from 'react'
-import { Folder, Calendar, ChevronRight, Clock, Users, ArrowLeft, ChefHat } from 'lucide-react'
+import { Clock, Users, ChefHat, ChevronDown } from 'lucide-react'
 
-const PROTEIN_TYPES = ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other']
-
-const FolderCard = ({ icon: Icon, title, count, onClick, colorClass = 'bg-white' }) => (
+const LibraryRecipeCard = ({ recipe, onClick, 'data-testid': testId }) => (
   <button
     onClick={onClick}
-    className={`group flex w-full items-center justify-between rounded-xl border-2 border-ink p-4 shadow-hard transition-all hover:-translate-y-0.5 hover:shadow-hard-lg ${colorClass}`}
-  >
-    <div className="flex items-center gap-4">
-      <div className="rounded-full border-2 border-ink bg-white p-3 shadow-sm">
-        <Icon className="h-6 w-6 text-ink" />
-      </div>
-      <div className="text-left">
-        <h3 className="font-display text-lg font-bold text-ink">{title}</h3>
-        <p className="text-xs font-bold uppercase tracking-wider text-gray-500">{count} Recipes</p>
-      </div>
-    </div>
-    <ChevronRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1 group-hover:text-ink" />
-  </button>
-)
-
-const LibraryRecipeCard = ({ recipe, onClick }) => (
-  <button
-    onClick={onClick}
-    className="group relative flex w-full flex-col overflow-hidden rounded-xl border-2 border-ink bg-white text-left shadow-hard transition-all hover:-translate-y-0.5 hover:shadow-hard-lg"
+    data-testid={testId}
+    className="group relative flex w-full flex-col overflow-hidden rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface text-left shadow-md-1 transition-all hover:shadow-md-2"
   >
     {recipe.sourceImage && (
-      <div className="h-32 w-full overflow-hidden border-b-2 border-ink">
+      <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
         <img
           src={recipe.sourceImage}
           alt={recipe.title}
@@ -38,16 +19,16 @@ const LibraryRecipeCard = ({ recipe, onClick }) => (
     <div className="p-4">
       <div className="mb-2">
         {recipe.protein && (
-          <span className="mb-1 inline-block rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-yellow-800">
+          <span className="mb-1 inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
             {recipe.protein}
           </span>
         )}
-        <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight text-ink">
+        <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
           {recipe.title}
         </h3>
       </div>
 
-      <div className="mt-auto flex gap-3 text-xs font-bold text-gray-500">
+      <div className="mt-auto flex gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           <span>{recipe.cookTime + recipe.prepTime}m</span>
@@ -61,110 +42,132 @@ const LibraryRecipeCard = ({ recipe, onClick }) => (
   </button>
 )
 
-export const RecipeLibrary = ({ recipes, onSelectRecipe }) => {
-  const [activeFolder, setActiveFolder] = useState(null) // null = root, 'This Week' or protein name
+const AccordionGroup = ({ title, count, children, isOpen, onToggle }) => (
+  <div className="border-b border-md-sys-color-outline last:border-0">
+    <button
+      onClick={onToggle}
+      className="flex w-full items-center justify-between px-6 py-4 transition-colors hover:bg-md-sys-color-primary/[0.04]"
+    >
+      <div className="flex items-center gap-3">
+        <h3 className="font-display text-xl font-bold text-md-sys-color-on-surface">{title}</h3>
+        <span className="rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-xs font-medium text-md-sys-color-on-primary-container">
+          {count}
+        </span>
+      </div>
+      <ChevronDown
+        className={`h-5 w-5 text-md-sys-color-on-surface-variant transition-transform duration-200 ${
+          isOpen ? 'rotate-180' : ''
+        }`}
+      />
+    </button>
+    <div
+      className={`grid transition-all duration-200 ease-in-out ${
+        isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+      }`}
+    >
+      <div className="overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 p-4 pb-8">{children}</div>
+      </div>
+    </div>
+  </div>
+)
 
-  const folders = useMemo(() => {
-    // Calculate counts
-    const proteinCounts = {}
-    PROTEIN_TYPES.forEach((p) => (proteinCounts[p] = 0))
-    let uncategorizedCount = 0
-    let thisWeekCount = 0
+export const RecipeLibrary = ({ recipes, onSelectRecipe, sort }) => {
+  const [openGroups, setOpenGroups] = useState({})
 
-    recipes.forEach((r) => {
-      if (r.thisWeek) thisWeekCount++
-      if (r.protein && PROTEIN_TYPES.includes(r.protein)) {
-        proteinCounts[r.protein]++
-      } else {
-        uncategorizedCount++
+  const toggleGroup = (groupName) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [groupName]: !prev[groupName],
+    }))
+  }
+
+  const groupedRecipes = useMemo(() => {
+    const groups = {}
+
+    recipes.forEach((recipe) => {
+      let groupKey = 'Other'
+
+      if (sort === 'protein') {
+        groupKey = recipe.protein || 'Uncategorized'
+      } else if (sort === 'alpha') {
+        groupKey = recipe.title ? recipe.title[0].toUpperCase() : '#'
+      } else if (sort === 'recent') {
+        groupKey = 'All Recipes'
+      } else if (sort === 'time') {
+        const totalMinutes = (recipe.prepTime || 0) + (recipe.cookTime || 0)
+        if (totalMinutes <= 15) groupKey = '15 Min or Less'
+        else if (totalMinutes <= 30) groupKey = '30 Min or Less'
+        else if (totalMinutes <= 60) groupKey = 'Under 1 Hour'
+        else groupKey = 'Over 1 Hour'
       }
+
+      if (!groups[groupKey]) groups[groupKey] = []
+      groups[groupKey].push(recipe)
     })
 
-    return { proteinCounts, uncategorizedCount, thisWeekCount }
-  }, [recipes])
+    // Sort group keys if needed
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (sort === 'protein') {
+        const order = [
+          'Chicken',
+          'Beef',
+          'Pork',
+          'Fish',
+          'Seafood',
+          'Vegetarian',
+          'Vegan',
+          'Uncategorized',
+          'Other',
+        ]
+        const idxA = order.indexOf(a)
+        const idxB = order.indexOf(b)
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB
+        if (idxA !== -1) return -1
+        if (idxB !== -1) return 1
+        return a.localeCompare(b)
+      }
+      return a.localeCompare(b)
+    })
+    return { groups, sortedKeys }
+  }, [recipes, sort])
 
-  const filteredRecipes = useMemo(() => {
-    if (!activeFolder) return []
-    if (activeFolder === 'This Week') {
-      return recipes.filter((r) => r.thisWeek)
+  // Effect to open the first group by default if none are open
+  React.useEffect(() => {
+    if (Object.keys(openGroups).length === 0 && groupedRecipes.sortedKeys.length > 0) {
+      setOpenGroups({ [groupedRecipes.sortedKeys[0]]: true })
     }
-    if (activeFolder === 'Uncategorized') {
-      return recipes.filter((r) => !r.protein || !PROTEIN_TYPES.includes(r.protein))
-    }
-    return recipes.filter((r) => r.protein === activeFolder)
-  }, [recipes, activeFolder])
+  }, [groupedRecipes.sortedKeys, openGroups])
 
-  if (activeFolder) {
+  if (recipes.length === 0) {
     return (
-      <div className="animate-in slide-in-from-right-4 flex h-full flex-col">
-        <div className="sticky top-0 z-10 flex items-center gap-4 border-b-2 border-ink bg-paper px-6 py-4">
-          <button
-            onClick={() => setActiveFolder(null)}
-            className="-ml-2 rounded-full p-2 hover:bg-black/5"
-          >
-            <ArrowLeft className="h-6 w-6 text-ink" />
-          </button>
-          <h2 className="font-display text-2xl font-black">{activeFolder}</h2>
-          <span className="rounded-full bg-ink px-2 py-1 text-xs font-bold text-white">
-            {filteredRecipes.length}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 overflow-y-auto p-4 pb-20">
-          {filteredRecipes.length === 0 ? (
-            <div className="col-span-2 py-20 text-center text-gray-400">
-              <ChefHat className="mx-auto mb-4 h-16 w-16 opacity-50" />
-              <p className="font-bold">No recipes in this folder yet.</p>
-            </div>
-          ) : (
-            filteredRecipes.map((recipe) => (
-              <LibraryRecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                onClick={() => onSelectRecipe(recipe)}
-              />
-            ))
-          )}
-        </div>
+      <div className="py-20 text-center text-gray-400">
+        <ChefHat className="mx-auto mb-4 h-16 w-16 opacity-50" />
+        <p className="font-bold">No recipes found.</p>
       </div>
     )
   }
 
   return (
-    <div className="animate-in fade-in space-y-4 p-4 pb-20">
-      <div className="mb-6">
-        <h2 className="mb-2 font-display text-lg font-bold">My Meal Plan</h2>
-        <FolderCard
-          icon={Calendar}
-          title="This Week"
-          count={folders.thisWeekCount}
-          onClick={() => setActiveFolder('This Week')}
-          colorClass="bg-teal/10 border-teal"
-        />
-      </div>
-
-      <div>
-        <h2 className="mb-2 font-display text-lg font-bold">Browse by Protein</h2>
-        <div className="space-y-3">
-          {PROTEIN_TYPES.map((protein) => (
-            <FolderCard
-              key={protein}
-              icon={Folder}
-              title={protein}
-              count={folders.proteinCounts[protein]}
-              onClick={() => setActiveFolder(protein)}
+    <div className="animate-in fade-in h-full overflow-y-auto pb-24">
+      {groupedRecipes.sortedKeys.map((key) => (
+        <AccordionGroup
+          key={key}
+          title={key}
+          count={groupedRecipes.groups[key].length}
+          isOpen={!!openGroups[key]}
+          onToggle={() => toggleGroup(key)}
+        >
+          {groupedRecipes.groups[key].map((recipe) => (
+            <LibraryRecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onClick={() => onSelectRecipe(recipe)}
+              data-testid={`recipe-card-${recipe.id}`}
             />
           ))}
-          {folders.uncategorizedCount > 0 && (
-            <FolderCard
-              icon={Folder}
-              title="Uncategorized"
-              count={folders.uncategorizedCount}
-              onClick={() => setActiveFolder('Uncategorized')}
-            />
-          )}
-        </div>
-      </div>
+        </AccordionGroup>
+      ))}
     </div>
   )
 }

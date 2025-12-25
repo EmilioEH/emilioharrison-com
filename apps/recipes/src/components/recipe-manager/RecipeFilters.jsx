@@ -1,9 +1,9 @@
 import React from 'react'
-import { X, ArrowDownAZ, Clock, Calendar, Search } from 'lucide-react'
+import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat } from 'lucide-react'
 
 const FilterSection = ({ title, children }) => (
   <div className="mb-6">
-    <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-400">{title}</h3>
+  <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">{title}</h3>
     <div className="flex flex-wrap gap-2">{children}</div>
   </div>
 )
@@ -11,10 +11,10 @@ const FilterSection = ({ title, children }) => (
 const FilterChip = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
-    className={`rounded-full border-2 px-3 py-1 text-sm font-bold transition-all ${
+    className={`rounded-md-s border px-3 py-1 text-sm font-medium transition-all ${
       active
-        ? 'border-ink bg-ink text-white'
-        : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+        ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
+        : 'border-md-sys-color-outline bg-md-sys-color-surface text-md-sys-color-on-surface hover:bg-md-sys-color-on-surface/[0.04]'
     }`}
   >
     {label}
@@ -45,25 +45,25 @@ export const RecipeFilters = ({
   }
 
   return (
-    <div className="animate-in fade-in fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm transition-opacity">
-      <div className="animate-in slide-in-from-right h-full w-full max-w-xs overflow-y-auto bg-paper shadow-2xl duration-300">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-ink bg-white px-6 py-4">
-          <h2 className="font-display text-xl font-bold">Sort & Filter</h2>
-          <button onClick={onClose} className="rounded-full bg-gray-100 p-2 hover:bg-gray-200">
-            <X className="h-5 w-5" />
+    <div className="animate-in fade-in fixed inset-0 z-50 flex justify-end bg-md-sys-color-on-surface/20 backdrop-blur-sm transition-opacity">
+      <div className="animate-in slide-in-from-right h-full w-full max-w-xs overflow-y-auto bg-md-sys-color-surface shadow-md-3 duration-300">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
+          <h2 className="font-display text-xl font-bold text-md-sys-color-on-surface">Sort & Filter</h2>
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-md-sys-color-on-surface/[0.08]">
+            <X className="h-5 w-5 text-md-sys-color-on-surface" />
           </button>
         </div>
 
         <div className="space-y-6 p-6">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-md-sys-color-on-surface-variant" />
             <input
               type="text"
               placeholder="Search recipes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border-2 border-gray-200 bg-white py-2 pl-9 pr-3 text-sm font-bold outline-none focus:border-ink"
+              className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 pl-9 pr-3 text-sm font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
             />
           </div>
 
@@ -71,6 +71,7 @@ export const RecipeFilters = ({
           <FilterSection title="Sort By">
             <div className="grid grid-cols-1 gap-2">
               {[
+                { id: 'protein', label: 'Protein', icon: ChefHat },
                 { id: 'alpha', label: 'Alphabetical', icon: ArrowDownAZ },
                 { id: 'recent', label: 'Most Recent', icon: Calendar },
                 { id: 'time', label: 'Shortest Time', icon: Clock },
@@ -78,10 +79,10 @@ export const RecipeFilters = ({
                 <button
                   key={opt.id}
                   onClick={() => setSort(opt.id)}
-                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm font-bold transition-all ${
+                  className={`flex items-center gap-2 rounded-md-s border px-3 py-2 text-sm font-medium transition-all ${
                     sort === opt.id
-                      ? 'text-teal-800 border-teal bg-teal/10'
-                      : 'border-transparent bg-white text-gray-500 hover:bg-gray-50'
+                      ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
+                      : 'border-transparent bg-md-sys-color-surface-variant/40 text-md-sys-color-on-surface-variant hover:bg-md-sys-color-surface-variant/60'
                   }`}
                 >
                   <opt.icon className="h-4 w-4" />
@@ -89,6 +90,20 @@ export const RecipeFilters = ({
                 </button>
               ))}
             </div>
+          </FilterSection>
+
+          {/* Protein */}
+          <FilterSection title="Protein">
+            {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
+              (p) => (
+                <FilterChip
+                  key={p}
+                  label={p}
+                  active={filters.protein?.includes(p)}
+                  onClick={() => handleFilterToggle('protein', p)}
+                />
+              ),
+            )}
           </FilterSection>
 
           {/* Difficulty */}
@@ -115,14 +130,14 @@ export const RecipeFilters = ({
             ))}
           </FilterSection>
 
-          <div className="pt-8 text-center text-xs text-gray-400">
+          <div className="pt-8 text-center text-xs text-md-sys-color-on-surface-variant">
             <button
               onClick={() => {
                 setFilters({})
-                setSort('alpha')
+                setSort('protein')
                 setSearchQuery('')
               }}
-              className="underline hover:text-ink"
+              className="underline hover:text-md-sys-color-primary"
             >
               Reset all filters
             </button>

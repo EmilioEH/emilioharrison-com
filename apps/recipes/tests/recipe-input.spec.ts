@@ -88,7 +88,7 @@ test.describe('Recipe Input Flow', () => {
     await expect(page.getByRole('heading', { name: 'Review & Edit' })).not.toBeVisible()
 
     // The new recipe should be in the Chicken folder
-    await page.getByRole('button', { name: 'Chicken' }).click()
+    await page.getByRole('button', { name: 'Chicken' }).first().click()
     await expect(page.getByText('Mocked Pancake')).toBeVisible()
   })
 

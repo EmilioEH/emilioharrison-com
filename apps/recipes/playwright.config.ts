@@ -19,7 +19,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [['html', { open: 'never' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
@@ -68,11 +68,12 @@ export default defineConfig({
     // },
   ],
 
-  timeout: 60 * 1000,
+  timeout: 45 * 1000,
+  globalTimeout: 5 * 60 * 1000, // Hard limit of 5 minutes for the entire test run
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:4321/protected/recipes/login',
     reuseExistingServer: true,
-    timeout: 120 * 1000,
+    timeout: 60 * 1000, // Reduce webserver boot timeout
   },
 })

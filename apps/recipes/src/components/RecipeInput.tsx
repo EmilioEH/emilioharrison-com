@@ -11,11 +11,11 @@ type Status = 'idle' | 'processing' | 'review' | 'saving' | 'success' | 'error'
 
 const SuccessView = ({ onReset }: { onReset: () => void }) => (
   <div className="animate-in fade-in zoom-in flex flex-col items-center justify-center space-y-4 py-12 text-center duration-300">
-    <div className="rounded-full bg-green-100 p-4 text-green-600">
+    <div className="rounded-full bg-md-sys-color-primary-container p-4 text-md-sys-color-on-primary-container">
       <ChefHat className="h-12 w-12" />
     </div>
-    <h2 className="font-display text-2xl font-bold text-ink">Recipe Saved!</h2>
-    <p className="max-w-xs text-gray-500">
+    <h2 className="font-display text-2xl font-bold text-md-sys-color-on-surface">Recipe Saved!</h2>
+    <p className="max-w-xs text-md-sys-color-on-surface-variant">
       Your delicious new recipe has been added to your collection.
     </p>
     <div className="flex gap-4">
@@ -28,13 +28,13 @@ const SuccessView = ({ onReset }: { onReset: () => void }) => (
 )
 
 const LinkPlaceholder = () => (
-  <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-white shadow-sm">
-    <LinkIcon className="h-8 w-8 text-gray-300" />
+  <div className="flex h-20 w-20 items-center justify-center rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 shadow-md-1">
+    <LinkIcon className="h-8 w-8 text-md-sys-color-on-surface-variant" />
   </div>
 )
 
 const ImageThumbnail = ({ src }: { src: string }) => (
-  <img src={src} alt="Recipe Source" className="h-20 w-20 rounded-lg object-cover shadow-sm" />
+  <img src={src} alt="Recipe Source" className="h-20 w-20 rounded-md-s object-cover shadow-md-1" />
 )
 
 const SourcePreview = ({
@@ -46,20 +46,20 @@ const SourcePreview = ({
   imagePreview: string | null
   url: string
 }) => (
-  <div className="flex items-center gap-4 rounded-xl border-2 border-black/5 bg-gray-50 p-4">
+  <div className="flex items-center gap-4 rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-4">
     {mode === 'photo' && imagePreview ? <ImageThumbnail src={imagePreview} /> : <LinkPlaceholder />}
     <div className="text-sm">
-      <p className="text-xs font-bold uppercase text-gray-500">Source</p>
-      <p className="line-clamp-1 font-bold text-ink">{mode === 'photo' ? 'Uploaded Image' : url}</p>
+      <p className="text-xs font-medium uppercase text-md-sys-color-on-surface-variant">Source</p>
+      <p className="line-clamp-1 font-medium text-md-sys-color-on-surface">{mode === 'photo' ? 'Uploaded Image' : url}</p>
     </div>
   </div>
 )
 
 const SourceToggle = ({ mode, setMode }: { mode: InputMode; setMode: (m: InputMode) => void }) => (
-  <div className="mb-6 flex border-b-2 border-black">
+  <div className="mb-6 flex border-b border-md-sys-color-outline">
     <button
-      className={`flex-1 py-3 text-center font-bold uppercase tracking-wider transition-colors ${
-        mode === 'photo' ? 'bg-black text-white' : 'hover:bg-gray-100'
+      className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
+        mode === 'photo' ? 'bg-md-sys-color-primary text-md-sys-color-on-primary' : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
       }`}
       onClick={() => setMode('photo')}
     >
@@ -68,8 +68,8 @@ const SourceToggle = ({ mode, setMode }: { mode: InputMode; setMode: (m: InputMo
       </div>
     </button>
     <button
-      className={`flex-1 py-3 text-center font-bold uppercase tracking-wider transition-colors ${
-        mode === 'url' ? 'bg-black text-white' : 'hover:bg-gray-100'
+      className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
+        mode === 'url' ? 'bg-md-sys-color-primary text-md-sys-color-on-primary' : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
       }`}
       onClick={() => setMode('url')}
     >
@@ -90,26 +90,26 @@ const PhotoUploader = ({
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) => (
   <div
-    className={`flex h-64 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors ${
-      imagePreview ? 'border-transparent p-0' : 'group relative hover:border-ink hover:bg-gray-100'
+    className={`flex h-64 w-full flex-col items-center justify-center rounded-md-xl border border-dashed border-md-sys-color-outline bg-md-sys-color-surface-variant/10 transition-colors ${
+      imagePreview ? 'border-none p-0' : 'group relative hover:bg-md-sys-color-primary/[0.04]'
     }`}
   >
     {imagePreview ? (
       <div className="relative h-full w-full">
-        <img src={imagePreview} className="h-full w-full rounded-xl object-cover" alt="Preview" />
+        <img src={imagePreview} className="h-full w-full rounded-md-xl object-cover" alt="Preview" />
         <button
           onClick={() => setImagePreview(null)}
-          className="absolute right-2 top-2 rounded-full bg-white/90 p-2 shadow-sm hover:text-red-500"
+          className="absolute right-2 top-2 rounded-full bg-md-sys-color-surface/90 p-2 shadow-md-1 hover:text-md-sys-color-error"
         >
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
     ) : (
       <>
-        <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
-          <Upload className="h-8 w-8 text-gray-400" />
+        <div className="mb-4 rounded-full bg-md-sys-color-surface p-4 shadow-md-1">
+          <Upload className="h-8 w-8 text-md-sys-color-on-surface-variant" />
         </div>
-        <p className="text-sm font-bold text-gray-500">Tap to upload or take photo</p>
+        <p className="text-sm font-medium text-md-sys-color-on-surface-variant">Tap to upload or take photo</p>
         <input
           type="file"
           accept="image/*"
@@ -153,7 +153,7 @@ const RecipeReviewForm = ({
   return (
     <div className="animate-in slide-in-from-right-8 space-y-6 duration-300">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-2xl font-black italic">Review & Edit</h2>
+        <h2 className="font-display text-2xl font-bold">Review & Edit</h2>
         <Button intent="tertiary" size="sm" onClick={onCancel}>
           Cancel
         </Button>
@@ -163,12 +163,12 @@ const RecipeReviewForm = ({
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="title" className="mb-1 block text-xs font-bold uppercase text-gray-400">
+          <label htmlFor="title" className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant">
             Title
           </label>
           <input
             id="title"
-            className="w-full border-b-2 border-gray-200 bg-transparent py-2 font-display text-xl font-bold outline-none focus:border-ink"
+            className="w-full border-b border-md-sys-color-outline bg-transparent py-2 font-display text-xl font-medium outline-none focus:border-md-sys-color-primary"
             value={formData.title || ''}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="Recipe Title"
@@ -177,17 +177,17 @@ const RecipeReviewForm = ({
 
         <div className="grid grid-cols-3 gap-4">
           {['servings', 'prepTime', 'cookTime'].map((field) => (
-            <div key={field} className="rounded-lg border-2 border-gray-100 bg-white p-2">
+            <div key={field} className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2">
               <label
                 htmlFor={field}
-                className="mb-1 block text-[10px] font-bold uppercase text-gray-400"
+                className="mb-1 block text-[10px] font-medium uppercase text-md-sys-color-on-surface-variant"
               >
                 {field.replace('Time', '')}
               </label>
               <input
                 id={field}
                 type="number"
-                className="w-full text-lg font-bold outline-none"
+                className="w-full bg-transparent text-lg font-medium outline-none"
                 value={(formData[field as keyof Recipe] as number) || ''}
                 onChange={(e) =>
                   setFormData({ ...formData, [field]: parseInt(e.target.value) || 0 })
@@ -201,13 +201,13 @@ const RecipeReviewForm = ({
           <div>
             <label
               htmlFor="protein-select"
-              className="mb-1 block text-xs font-bold uppercase text-gray-400"
+              className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
             >
               Protein
             </label>
             <select
               id="protein-select"
-              className="w-full rounded-lg border-2 border-gray-100 bg-white p-2 font-bold outline-none"
+              className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2 font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
               value={formData.protein || ''}
               onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
             >
@@ -224,13 +224,13 @@ const RecipeReviewForm = ({
           <div>
             <label
               htmlFor="difficulty-select"
-              className="mb-1 block text-xs font-bold uppercase text-gray-400"
+              className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
             >
               Difficulty
             </label>
             <select
               id="difficulty-select"
-              className="w-full rounded-lg border-2 border-gray-100 bg-white p-2 font-bold outline-none"
+              className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2 font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
               value={formData.difficulty || 'Medium'}
               // @ts-expect-error - difficulty type literal
               onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
@@ -243,12 +243,12 @@ const RecipeReviewForm = ({
         </div>
 
         <div>
-          <label htmlFor="cuisine" className="mb-1 block text-xs font-bold uppercase text-gray-400">
+          <label htmlFor="cuisine" className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant">
             Cuisine
           </label>
           <input
             id="cuisine"
-            className="w-full border-b-2 border-gray-200 bg-transparent py-1 font-bold outline-none focus:border-ink"
+            className="w-full border-b border-md-sys-color-outline bg-transparent py-1 font-medium outline-none focus:border-md-sys-color-primary"
             placeholder="e.g. Italian"
             value={formData.cuisine || ''}
             onChange={(e) => setFormData({ ...formData, cuisine: e.target.value })}
@@ -258,13 +258,13 @@ const RecipeReviewForm = ({
         <div>
           <label
             htmlFor="ingredients"
-            className="mb-1 block text-xs font-bold uppercase text-gray-400"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
           >
             Ingredients
           </label>
           <textarea
             id="ingredients"
-            className="h-40 w-full rounded-lg border-2 border-gray-100 p-3 font-mono text-sm outline-none focus:border-ink"
+            className="h-40 w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
             value={ingredientsText}
             onChange={(e) => {
               const lines = e.target.value.split('\n')
@@ -275,16 +275,16 @@ const RecipeReviewForm = ({
               setFormData({ ...formData, ingredients: newIngredients })
             }}
           />
-          <p className="mt-1 text-[10px] text-gray-400">One ingredient per line</p>
+          <p className="mt-1 text-[10px] text-md-sys-color-on-surface-variant">One ingredient per line</p>
         </div>
 
         <div>
-          <label htmlFor="steps" className="mb-1 block text-xs font-bold uppercase text-gray-400">
+          <label htmlFor="steps" className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant">
             Instructions
           </label>
           <textarea
             id="steps"
-            className="h-40 w-full rounded-lg border-2 border-gray-100 p-3 font-mono text-sm outline-none focus:border-ink"
+            className="h-40 w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
             value={instructionsText}
             onChange={(e) => setFormData({ ...formData, steps: e.target.value.split('\n') })}
           />
@@ -340,7 +340,7 @@ const RecipeSourceSelector = ({
   }
 
   return (
-    <div className="border-2 border-black bg-white shadow-hard">
+    <div className="rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-6 shadow-md-2">
       <SourceToggle mode={mode} setMode={setMode} />
 
       <div className="space-y-6">
@@ -354,7 +354,7 @@ const RecipeSourceSelector = ({
           <div className="space-y-2">
             <label
               htmlFor="url-input"
-              className="text-sm font-bold uppercase tracking-wider text-gray-500"
+              className="text-sm font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant"
             >
               Paste Recipe Link
             </label>
@@ -364,16 +364,16 @@ const RecipeSourceSelector = ({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://cooking.nytimes.com/..."
-              className="w-full rounded-xl border-2 border-black p-4 font-mono text-sm outline-none ring-black/10 transition-all focus:ring-4"
+              className="w-full rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-4 font-mono text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary transition-all"
             />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-md-sys-color-on-surface-variant">
               We&apos;ll scrape the ingredients and instructions for you.
             </p>
           </div>
         )}
 
         {errorMsg && (
-          <div className="animate-in shake rounded-lg border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">
+          <div className="animate-in shake rounded-md-s border border-md-sys-color-error bg-md-sys-color-error-container p-4 text-sm font-medium text-md-sys-color-on-error-container">
             Error: {errorMsg}
           </div>
         )}

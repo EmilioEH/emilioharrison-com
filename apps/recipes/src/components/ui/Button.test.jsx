@@ -7,12 +7,12 @@ describe('Button', () => {
     render(<Button>Click me</Button>)
     const button = screen.getByRole('button', { name: /click me/i })
     expect(button).toBeInTheDocument()
-    expect(button).toHaveClass('bg-btn-primary') // Default intent
+    expect(button).toHaveClass('bg-md-sys-color-primary') // Default intent
   })
 
   it('renders different intents', () => {
     const { rerender } = render(<Button intent="secondary">Secondary</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-white')
+    expect(screen.getByRole('button')).toHaveClass('bg-md-sys-color-secondary-container')
 
     rerender(<Button intent="tertiary">Tertiary</Button>)
     expect(screen.getByRole('button')).toHaveClass('bg-transparent')

@@ -50,12 +50,12 @@ if (Astro.request.method === 'POST') {
 
 <RecipeLayout title="Login">
   <div class="flex flex-1 items-center justify-center p-4">
-    <div class="w-full max-w-md border-4 border-black bg-white p-8 shadow-hard">
-      <h1 class="mb-6 text-4xl font-black uppercase tracking-tighter">Chef Login</h1>
+    <div class="w-full max-w-md rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 shadow-md-3">
+      <h1 class="mb-6 font-display text-4xl font-bold text-md-sys-color-primary">Chef Login</h1>
 
       {
         error && (
-          <div class="mb-6 border-2 border-black bg-red-100 p-3 font-bold text-red-600">
+          <div class="mb-6 rounded-md-s border border-md-sys-color-error bg-md-sys-color-error-container p-3 font-medium text-md-sys-color-on-error-container">
             {error}
           </div>
         )
@@ -63,30 +63,32 @@ if (Astro.request.method === 'POST') {
 
       <form method="POST" class="flex flex-col gap-6">
         <label class="flex flex-col gap-2">
-          <span class="text-sm font-black uppercase">Your Name</span>
+          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant">Your Name</span>
           <input
             type="text"
             name="name"
+            id="name"
             placeholder="e.g. Emilio"
-            class="focus:bg-mustard border-4 border-black p-3 font-bold focus:outline-none"
+            class="rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-3 font-medium text-md-sys-color-on-surface outline-none focus:ring-2 focus:ring-md-sys-color-primary transition-all"
             required
           />
         </label>
 
         <label class="flex flex-col gap-2">
-          <span class="text-sm font-black uppercase">Password</span>
+          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant">Password</span>
           <input
             type="password"
             name="password"
+            id="password"
             placeholder="Enter password"
-            class="focus:bg-mustard border-4 border-black p-3 font-bold focus:outline-none"
+            class="rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface-variant/20 p-3 font-medium text-md-sys-color-on-surface outline-none focus:ring-2 focus:ring-md-sys-color-primary transition-all"
             required
           />
         </label>
 
         <button
           type="submit"
-          class="bg-mustard border-4 border-black p-4 text-xl font-black uppercase shadow-hard transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+          class="rounded-md-full bg-md-sys-color-primary p-4 text-xl font-bold uppercase text-md-sys-color-on-primary shadow-md-2 transition-all hover:shadow-md-3 active:shadow-none"
         >
           Enter Kitchen
         </button>

@@ -16,7 +16,7 @@ import {
 import { generateGroceryList } from './grocery-utils'
 import { RecipeInput } from '../RecipeInput'
 
-const RECIPES_API_URL = '/api/user-data'
+const RECIPES_API_URL = '/protected/recipes/api/user-data'
 
 // --- Hooks ---
 
@@ -32,9 +32,14 @@ const useRecipes = () => {
         if (res.ok) {
           const data = await res.json()
           setRecipes(Array.isArray(data.recipes) ? data.recipes : [])
+          setSyncStatus('idle')
+        } else {
+          console.error(`Failed to fetch recipes: ${res.status}`)
+          setSyncStatus('error')
         }
       } catch (err) {
         console.error('Failed to fetch recipes', err)
+        setSyncStatus('error')
       } finally {
         setLoading(false)
       }
@@ -43,7 +48,7 @@ const useRecipes = () => {
   }, [])
 
   useEffect(() => {
-    if (loading) return
+    if (loading || syncStatus === 'error') return
     const timeoutId = setTimeout(async () => {
       setSyncStatus('syncing')
       try {
@@ -63,7 +68,7 @@ const useRecipes = () => {
       }
     }, 1000)
     return () => clearTimeout(timeoutId)
-  }, [recipes, loading])
+  }, [recipes, loading, syncStatus])
 
   return { recipes, setRecipes, loading, syncStatus }
 }
@@ -74,10 +79,10 @@ import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 
 const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpenFilters }) => (
-  <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-ink bg-white px-6 py-4">
+  <header className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
     <div>
-      <h1 className="font-display text-2xl font-black tracking-tight">CHEFBOARD</h1>
-      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+      <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-primary">CHEFBOARD</h1>
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
         {syncStatus === 'syncing' && (
           <>
             <Loader2 className="h-3 w-3 animate-spin" /> Syncing
@@ -95,7 +100,7 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
     <div className="flex gap-2">
       <button
         onClick={onOpenFilters}
-        className="rounded-full border-2 border-transparent bg-gray-100 p-2 text-ink hover:border-black/10 hover:bg-white"
+        className="rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant hover:bg-md-sys-color-primary/[0.08]"
         title="Sort & Filter"
       >
         <ListFilter className="h-5 w-5" />
@@ -105,7 +110,7 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
 
       <button
         onClick={onGenerateList}
-        className="rounded-full border-2 border-ink bg-teal p-2 text-ink shadow-hard-sm transition-all hover:translate-y-0.5 hover:shadow-none"
+        className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container shadow-md-1 transition-all hover:shadow-md-2"
         title="Grocery List"
       >
         <ShoppingBag className="h-5 w-5" />
@@ -113,7 +118,7 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
 
       <button
         onClick={onAddAi}
-        className="flex items-center justify-center rounded-full border-2 border-ink bg-purple-200 p-2 text-ink shadow-hard-sm transition-all hover:translate-y-0.5 hover:shadow-none"
+        className="flex items-center justify-center rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container shadow-md-1 transition-all hover:shadow-md-2"
         title="AI Add"
       >
         <Sparkles className="h-5 w-5" />
@@ -121,7 +126,9 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
 
       <button
         onClick={onAddManual}
-        className="items-center gap-1 rounded-full bg-ink p-2 text-paper shadow-hard-sm transition-all hover:translate-y-0.5 hover:shadow-none"
+        className="items-center gap-1 rounded-full bg-md-sys-color-primary p-2 text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
+        title="Add Recipe"
+        aria-label="Add Recipe"
       >
         <Plus className="h-5 w-5" />
       </button>
@@ -147,12 +154,12 @@ const GroceryView = ({ isGenerating, groceryList, onClose }) => (
       </button>
     </div>
     {isGenerating ? (
-      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-12">
-        <Loader2 className="mb-2 h-8 w-8 animate-spin text-teal" />
-        <p className="animate-pulse font-bold">Consulting the AI Chef...</p>
+      <div className="flex flex-col items-center justify-center rounded-md-xl border border-dashed border-md-sys-color-outline p-12">
+        <Loader2 className="mb-2 h-8 w-8 animate-spin text-md-sys-color-primary" />
+        <p className="animate-pulse font-medium">Consulting the AI Chef...</p>
       </div>
     ) : (
-      <div className="prose prose-sm max-w-none rounded-xl border-2 border-ink bg-white p-6 font-body shadow-hard">
+      <div className="prose prose-sm max-w-none rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-6 font-body text-md-sys-color-on-surface shadow-md-1">
         <div dangerouslySetInnerHTML={{ __html: groceryList.replace(/\n/g, '<br/>') }} />
       </div>
     )}
@@ -188,14 +195,17 @@ const QuickImport = ({ rawText, setRawText, onParse, showImport, setShowImport }
   </div>
 )
 
-const RecipeTextEditor = ({ label, value, onChange, placeholder }) => (
+const RecipeTextEditor = ({ label, id, value, onChange, placeholder }) => (
   <div>
-    <label className="mb-1 block text-xs font-bold uppercase text-gray-400">{label}</label>
+    <label htmlFor={id} className="mb-1 block text-xs font-bold uppercase text-gray-400">
+      {label}
+    </label>
     <textarea
+      id={id}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className="h-32 w-full resize-y rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm outline-none focus:border-ink"
+      className="h-32 w-full resize-y rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
     />
   </div>
 )
@@ -261,12 +271,12 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-4 space-y-4 rounded-xl border-2 border-ink bg-white p-4 shadow-hard">
+    <div className="animate-in slide-in-from-bottom-4 space-y-4 rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-4 shadow-md-1">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-display text-xl font-bold">
           {recipe.id ? 'Edit Recipe' : 'New Recipe'}
         </h2>
-        <button onClick={onCancel} className="rounded-lg bg-gray-100 p-1 px-3 text-sm font-bold">
+        <button onClick={onCancel} className="rounded-md-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium">
           Cancel
         </button>
       </div>
@@ -291,7 +301,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Grandma's Pancakes"
-          className="w-full border-b-2 border-gray-200 py-1 font-display text-xl font-bold placeholder-gray-300 outline-none focus:border-ink"
+          className="w-full border-b border-md-sys-color-outline bg-transparent py-1 font-display text-xl font-medium placeholder-md-sys-color-on-surface-variant/30 outline-none focus:border-md-sys-color-primary"
         />
       </div>
 
@@ -304,7 +314,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
             id="protein"
             value={formData.protein || ''}
             onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
-            className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
+            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium"
           >
             <option value="">None</option>
             {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
@@ -327,7 +337,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
             id="difficulty"
             value={formData.difficulty || 'Medium'}
             onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-            className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
+            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium"
           >
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
@@ -338,8 +348,8 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
 
       <div className="grid grid-cols-3 gap-2">
         {['servings', 'prepTime', 'cookTime'].map((k) => (
-          <div key={k} className="rounded border border-ink/10 bg-paper p-2">
-            <label htmlFor={k} className="mb-1 block text-[10px] font-bold uppercase text-gray-400">
+          <div key={k} className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2">
+            <label htmlFor={k} className="mb-1 block text-[10px] font-medium uppercase text-md-sys-color-on-surface-variant">
               {k.replace('Time', '')}
             </label>
             <input
@@ -347,7 +357,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
               type="number"
               value={formData[k]}
               onChange={(e) => setFormData({ ...formData, [k]: parseInt(e.target.value) || 0 })}
-              className="w-full bg-transparent font-bold text-ink outline-none"
+              className="w-full bg-transparent font-medium text-md-sys-color-on-surface outline-none"
             />
           </div>
         ))}
@@ -355,6 +365,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
 
       <RecipeTextEditor
         label="Ingredients (One per line)"
+        id="ingredients-editor"
         value={ingText}
         onChange={(e) => setIngText(e.target.value)}
         placeholder="2 cups Flour&#10;1 tsp Salt"
@@ -362,6 +373,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
 
       <RecipeTextEditor
         label="Instructions (One per line)"
+        id="instructions-editor"
         value={stepText}
         onChange={(e) => setStepText(e.target.value)}
         placeholder="Mix dry ingredients.&#10;Add wet ingredients."
@@ -371,7 +383,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
         {recipe.id && (
           <button
             onClick={() => onDelete(recipe.id)}
-            className="rounded-xl border border-red-100 bg-red-50 p-3 font-bold text-red-500"
+            className="rounded-md-xl border border-md-sys-color-error-container bg-md-sys-color-error-container p-3 font-medium text-md-sys-color-on-error-container"
             title="Delete Recipe"
           >
             <Trash2 className="h-5 w-5" />
@@ -379,7 +391,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
         )}
         <button
           onClick={handleInternalSave}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-ink py-3 font-bold text-white shadow-hard transition active:translate-y-1 active:shadow-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-md-full bg-md-sys-color-primary py-3 font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
         >
           <Save className="h-4 w-4" /> Save Recipe
         </button>
@@ -397,7 +409,7 @@ const RecipeManager = () => {
   // Filtering & Sorting State
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [filters, setFilters] = useState({})
-  const [sort, setSort] = useState('alpha')
+  const [sort, setSort] = useState('protein')
   const [searchQuery, setSearchQuery] = useState('')
 
   // Grocery
@@ -470,6 +482,12 @@ const RecipeManager = () => {
 
     // Sort
     result.sort((a, b) => {
+      if (sort === 'protein') {
+        const pA = a.protein || 'Other'
+        const pB = b.protein || 'Other'
+        if (pA === pB) return a.title.localeCompare(b.title)
+        return pA.localeCompare(pB)
+      }
       if (sort === 'alpha') return a.title.localeCompare(b.title)
       if (sort === 'recent') return parseInt(b.id) - parseInt(a.id) // Assuming ID is timestamp-ish
       if (sort === 'time') return a.prepTime + a.cookTime - (b.prepTime + b.cookTime)
@@ -482,8 +500,8 @@ const RecipeManager = () => {
   // --- RENDER ---
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-paper">
-        <Loader2 className="h-8 w-8 animate-spin text-ink" />
+      <div className="flex h-full items-center justify-center bg-md-sys-color-surface">
+        <Loader2 className="h-8 w-8 animate-spin text-md-sys-color-primary" />
       </div>
     )
   }
@@ -503,12 +521,12 @@ const RecipeManager = () => {
   // AI Add View
   if (view === 'ai-add') {
     return (
-      <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col bg-paper">
-        <div className="flex items-center justify-between border-b-2 border-ink bg-white px-6 py-4">
+      <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col bg-md-sys-color-surface">
+        <div className="flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
           <h2 className="font-display text-xl font-bold">New Recipe from AI</h2>
           <button
             onClick={() => setView('library')}
-            className="rounded-lg bg-gray-100 p-1 px-3 text-sm font-bold"
+            className="rounded-md-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
           >
             Cancel
           </button>
@@ -526,7 +544,7 @@ const RecipeManager = () => {
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-paper text-ink shadow-2xl">
+    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-md-sys-color-surface text-md-sys-color-on-surface shadow-md-3">
       <RecipeFilters
         isOpen={filtersOpen}
         onClose={() => setFiltersOpen(false)}
@@ -554,12 +572,21 @@ const RecipeManager = () => {
           <div className="scrollbar-hide h-full overflow-y-auto">
             <RecipeLibrary
               recipes={processedRecipes}
+              sort={sort}
               onSelectRecipe={(r) => {
                 setSelectedRecipe(r)
                 setView('detail')
               }}
             />
           </div>
+        )}
+        {view === 'detail' && (
+          <RecipeDetail
+            recipe={selectedRecipe}
+            onClose={() => setView('library')}
+            onUpdate={handleSaveRecipe}
+            onDelete={handleDeleteRecipe}
+          />
         )}
 
         {view === 'edit' && (

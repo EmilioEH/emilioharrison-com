@@ -1,0 +1,7 @@
+dist
+node_modules
+.astro
+.wrangler
+coverage
+playwright-report
+test-results
