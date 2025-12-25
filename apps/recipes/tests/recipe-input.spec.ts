@@ -89,4 +89,22 @@ test.describe('Recipe Input Flow', () => {
     // The new recipe should be in the list
     await expect(page.getByText('Mocked Pancake')).toBeVisible()
   })
+
+  test('should display backend error message when parsing fails', async ({ page }) => {
+    // Override the mock for this specific test
+    await page.route('/api/parse-recipe', async (route) => {
+      await route.fulfill({
+        status: 400,
+        json: { error: 'Invalid URL provided' },
+      })
+    })
+
+    await page.goto('/protected/recipes')
+    await page.getByTitle('AI Add').click()
+    await page.getByText('URL', { exact: true }).click()
+    await page.getByLabel('Paste Recipe Link').fill('https://example.com/bad')
+    await page.getByRole('button', { name: 'Process Recipe' }).click()
+
+    await expect(page.getByText('Error: Invalid URL provided')).toBeVisible()
+  })
 })

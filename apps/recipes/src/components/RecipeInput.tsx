@@ -370,7 +370,16 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
         body: JSON.stringify(payload),
       })
 
-      if (!res.ok) throw new Error('Failed to parse recipe')
+      if (!res.ok) {
+        let errMsg = 'Failed to parse recipe'
+        try {
+          const errData = await res.json()
+          if (errData.error) errMsg = errData.error
+        } catch {
+          // ignore
+        }
+        throw new Error(errMsg)
+      }
       const data = await res.json()
       const recipeWithId = { ...data, id: crypto.randomUUID() }
       setParsedRecipe(recipeWithId)
