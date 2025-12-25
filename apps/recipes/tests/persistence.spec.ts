@@ -7,33 +7,18 @@ test.describe('Recipe Persistence', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: 'localhost',
-        path: '/',
+        url: 'http://127.0.0.1:8788',
+
       },
       {
         name: 'site_user',
         value: `ReproUser-${Date.now()}`,
-        domain: 'localhost',
-        path: '/',
+        url: 'http://127.0.0.1:8788',
+
       },
     ])
 
-    // Mock the user-data API to simulate KV storage
-    // This needs to persist across page reloads
-    let savedRecipes: unknown[] = []
-    
-    // Set up route handler that persists across navigations
-    await context.route('/api/user-data', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { recipes: savedRecipes } })
-      } else if (route.request().method() === 'POST') {
-        const body = route.request().postDataJSON()
-        savedRecipes = body.recipes || []
-        await route.fulfill({ json: { success: true } })
-      } else {
-        await route.continue()
-      }
-    })
+
 
     await page.goto('/protected/recipes')
 
@@ -52,8 +37,7 @@ test.describe('Recipe Persistence', () => {
     await page.reload()
 
     // Verify it's still there
-    // It defaults to Uncategorized folder
-    await page.getByRole('button', { name: 'Uncategorized' }).click()
-    await expect(page.getByText(testTitle)).toBeVisible()
+    // Verify it's still there
+    await expect(page.getByText(testTitle)).toBeVisible({ timeout: 15000 })
   })
 })

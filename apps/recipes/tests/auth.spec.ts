@@ -56,7 +56,7 @@ test.describe('Authentication Flow', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: 'localhost',
+        domain: '127.0.0.1',
         path: '/',
       },
     ])

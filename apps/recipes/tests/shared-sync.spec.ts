@@ -1,23 +1,7 @@
-import { test, expect, type Browser, type BrowserContext } from '@playwright/test'
+import { test, expect, type Browser } from '@playwright/test'
 
 test.describe('Shared Recipe Storage', () => {
-  // Shared storage simulation (mimics Cloudflare KV shared key)
-  // This is outside the test so it's shared across all contexts
-  let sharedRecipes: unknown[] = []
 
-  const setupMockStorage = async (context: BrowserContext) => {
-    await context.route('/api/user-data', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { recipes: sharedRecipes } })
-      } else if (route.request().method() === 'POST') {
-        const body = route.request().postDataJSON()
-        sharedRecipes = body.recipes || []
-        await route.fulfill({ json: { success: true } })
-      } else {
-        await route.continue()
-      }
-    })
-  }
 
   const createAuthContext = async (browser: Browser, name: string) => {
     const context = await browser.newContext({
@@ -26,7 +10,7 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_auth',
             value: 'true',
-            domain: 'localhost',
+            domain: '127.0.0.1',
             path: '/',
             expires: -1,
             httpOnly: false,
@@ -36,7 +20,7 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_user',
             value: name,
-            domain: 'localhost',
+            domain: '127.0.0.1',
             path: '/',
             expires: -1,
             httpOnly: false,
@@ -48,15 +32,13 @@ test.describe('Shared Recipe Storage', () => {
       },
     })
     
-    // Set up mock storage for this context
-    await setupMockStorage(context)
+
     
     return context
   }
 
   test('recipes should be shared between all family members', async ({ browser }) => {
-    // Reset shared storage before test
-    sharedRecipes = []
+
 
     // Create unique recipe name to avoid conflicts with other test runs
     const uniqueRecipe = `Family Recipe ${Date.now()}`

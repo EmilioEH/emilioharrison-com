@@ -24,7 +24,7 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://localhost:4321',
+    baseURL: 'http://127.0.0.1:8788',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -71,9 +71,9 @@ export default defineConfig({
   timeout: 45 * 1000,
   globalTimeout: 5 * 60 * 1000, // Hard limit of 5 minutes for the entire test run
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:4321/protected/recipes/login',
-    reuseExistingServer: true,
-    timeout: 60 * 1000, // Reduce webserver boot timeout
+    command: 'npm run build && npm run preview:wrangler',
+    url: 'http://127.0.0.1:8788/protected/recipes/login',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
   },
 })

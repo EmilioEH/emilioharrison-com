@@ -6,9 +6,9 @@ test.describe('Recipe Organization', () => {
   test.beforeEach(async ({ page, context }) => {
     // Set cookie to bypass login for some tests, or login normally
     await context.addCookies([
-      { name: 'site_user', value: 'Test User', domain: 'localhost', path: '/' },
-      { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
-      { name: 'recipe_auth_token', value: 'valid-token', domain: 'localhost', path: '/' },
+      { name: 'site_user', value: 'Test User', domain: '127.0.0.1', path: '/' },
+      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'recipe_auth_token', value: 'valid-token', domain: '127.0.0.1', path: '/' },
     ])
 
     // Go to recipes page

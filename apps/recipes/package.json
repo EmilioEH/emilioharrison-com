@@ -8,6 +8,7 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "preview:wrangler": "wrangler pages dev dist --port 8788",
     "lint": "eslint .",
     "test": "vitest",
     "test:watch": "vitest watch",

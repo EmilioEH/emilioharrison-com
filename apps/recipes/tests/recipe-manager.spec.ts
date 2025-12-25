@@ -8,7 +8,7 @@ test.describe('Recipe Manager', () => {
         {
           name: 'site_auth',
           value: 'true',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -18,7 +18,7 @@ test.describe('Recipe Manager', () => {
         {
           name: 'site_user',
           value: 'TestUser',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
