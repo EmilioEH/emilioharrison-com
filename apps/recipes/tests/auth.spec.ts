@@ -39,7 +39,7 @@ test.describe('Authentication Flow', () => {
     await page.evaluate(() => {
       document.querySelector('input[name="name"]')?.removeAttribute('required')
     })
-    
+
     // Don't fill name
     await page.getByLabel('Password').fill('password123')
     await page.getByRole('button', { name: 'Enter Kitchen' }).click()

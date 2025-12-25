@@ -4,6 +4,15 @@ import { formatPageList } from '../../lib/page-utils'
 
 const allPages = await Astro.glob('./*.astro')
 const pages = formatPageList(allPages)
+
+// Manual entry for the Recipe App (mounted at /protected/recipes)
+const recipeApp = {
+  title: 'Recipe Manager',
+  href: '/protected/recipes',
+  description: 'Manage your personal recipe collection with AI assistance.',
+}
+
+const allLinks = [recipeApp, ...pages]
 ---
 
 <Layout title="Protected Area">
@@ -16,7 +25,7 @@ const pages = formatPageList(allPages)
 
       <div class="grid gap-4">
         {
-          pages.map((page) => (
+          allLinks.map((page) => (
             <a
               href={page.href}
               class="block rounded border p-4 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
