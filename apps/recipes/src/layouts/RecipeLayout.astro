@@ -25,7 +25,29 @@ const user = Astro.cookies.get('site_user')?.value
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+    <meta
+      name="description"
+      content="AI-powered recipe manager for organizing, parsing, and generating grocery lists from your favorite recipes"
+    />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Web App Manifest for Android/Chrome -->
+    <link rel="manifest" href="/protected/recipes/manifest.json" />
+
+    <!-- Apple Touch Icons for iOS -->
+    <link rel="apple-touch-icon" href="/protected/recipes/apple-touch-icon.png" />
+
+    <!-- iOS Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Chefboard" />
+
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#FF6B35" />
+    <meta name="msapplication-TileColor" content="#FF6B35" />
+
     <meta name="generator" content={Astro.generator} />
     <title>{title} | Chef Mode</title>
     <style is:global>

@@ -1,0 +1,25 @@
+{
+  "name": "Chefboard",
+  "short_name": "Chefboard",
+  "description": "AI-powered recipe manager for organizing, parsing, and generating grocery lists from your favorite recipes",
+  "start_url": "/protected/recipes",
+  "scope": "/protected/recipes",
+  "display": "standalone",
+  "background_color": "#FFFCF5",
+  "theme_color": "#FF6B35",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/protected/recipes/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/protected/recipes/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
