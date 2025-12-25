@@ -159,7 +159,11 @@ const RecipeReviewForm = ({
         </Button>
       </div>
 
-      <SourcePreview mode={mode} imagePreview={imagePreview} url={url} />
+      <SourcePreview 
+        mode={mode} 
+        imagePreview={imagePreview} 
+        url={url} 
+      />
 
       <div className="space-y-4">
         <div>
@@ -195,6 +199,48 @@ const RecipeReviewForm = ({
               />
             </div>
           ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                 <label htmlFor="protein-select" className="mb-1 block text-xs font-bold uppercase text-gray-400">Protein</label>
+                 <select
+                    id="protein-select"
+                    className="w-full rounded-lg border-2 border-gray-100 bg-white p-2 font-bold outline-none"
+                    value={formData.protein || ''}
+                    onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
+                 >
+                    <option value="">None</option>
+                    {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(p => (
+                        <option key={p} value={p}>{p}</option>
+                    ))}
+                 </select>
+            </div>
+             <div>
+                 <label htmlFor="difficulty-select" className="mb-1 block text-xs font-bold uppercase text-gray-400">Difficulty</label>
+                 <select
+                    id="difficulty-select"
+                    className="w-full rounded-lg border-2 border-gray-100 bg-white p-2 font-bold outline-none"
+                    value={formData.difficulty || 'Medium'}
+                    // @ts-expect-error - difficulty type literal
+                    onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                 >
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                 </select>
+            </div>
+        </div>
+
+        <div>
+           <label htmlFor="cuisine" className="mb-1 block text-xs font-bold uppercase text-gray-400">Cuisine</label>
+           <input 
+              id="cuisine"
+              className="w-full border-b-2 border-gray-200 bg-transparent py-1 font-bold outline-none focus:border-ink"
+              placeholder="e.g. Italian"
+              value={formData.cuisine || ''}
+              onChange={(e) => setFormData({ ...formData, cuisine: e.target.value })}
+           />
         </div>
 
         <div>

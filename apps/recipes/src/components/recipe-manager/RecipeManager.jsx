@@ -9,10 +9,10 @@ import {
   Loader2,
   Save,
   Check,
-  MoreHorizontal,
   Sparkles,
+  ListFilter,
 } from 'lucide-react'
-import PrepMode from './PrepMode'
+
 import { generateGroceryList } from './grocery-utils'
 import { RecipeInput } from '../RecipeInput'
 
@@ -47,11 +47,14 @@ const useRecipes = () => {
     const timeoutId = setTimeout(async () => {
       setSyncStatus('syncing')
       try {
-        await fetch(RECIPES_API_URL, {
+        const res = await fetch(RECIPES_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipes }),
         })
+        if (!res.ok) {
+           throw new Error(`Save failed with status: ${res.status}`)
+        }
         setSyncStatus('saved')
         setTimeout(() => setSyncStatus('idle'), 2000)
       } catch (err) {
@@ -66,8 +69,11 @@ const useRecipes = () => {
 }
 
 // --- Sub-Components ---
+import { RecipeLibrary } from './RecipeLibrary'
+import { RecipeDetail } from './RecipeDetail'
+import { RecipeFilters } from './RecipeFilters'
 
-const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual }) => (
+const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpenFilters }) => (
   <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-ink bg-white px-6 py-4">
     <div>
       <h1 className="font-display text-2xl font-black tracking-tight">CHEFBOARD</h1>
@@ -87,6 +93,16 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual }) => (
       </div>
     </div>
     <div className="flex gap-2">
+      <button
+        onClick={onOpenFilters}
+        className="rounded-full border-2 border-transparent bg-gray-100 p-2 text-ink hover:border-black/10 hover:bg-white"
+        title="Sort & Filter"
+      >
+        <ListFilter className="h-5 w-5" />
+      </button>
+
+      <div className="h-9 w-px bg-gray-200 mx-1"></div>
+
       <button
         onClick={onGenerateList}
         className="rounded-full border-2 border-ink bg-teal p-2 text-ink shadow-hard-sm transition-all hover:translate-y-0.5 hover:shadow-none"
@@ -114,15 +130,16 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual }) => (
 )
 
 const EmptyState = () => (
-  <div className="py-20 text-center opacity-50">
-    <ChefHat className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-    <p className="font-display text-xl">No Recipes Yet</p>
-    <p className="font-body">Add your first tasty dish!</p>
-  </div>
+    <div className="py-20 text-center opacity-50">
+      <ChefHat className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+      <p className="font-display text-xl">No Recipes Yet</p>
+      <p className="font-body">Add your first tasty dish!</p>
+    </div>
 )
 
+/* ...Keeping existing GroceryView... */
 const GroceryView = ({ isGenerating, groceryList, onClose }) => (
-  <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+  <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 h-full overflow-y-auto p-4">
     <div className="mb-4 flex items-center justify-between">
       <h2 className="font-display text-2xl font-bold">Grocery List</h2>
       <button onClick={onClose} className="text-sm font-bold underline">
@@ -142,6 +159,7 @@ const GroceryView = ({ isGenerating, groceryList, onClose }) => (
   </div>
 )
 
+/* ...Keeping QuickImport and RecipeTextEditor and RecipeEditor ... */
 const QuickImport = ({ rawText, setRawText, onParse, showImport, setShowImport }) => (
   <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
     <button
@@ -170,33 +188,6 @@ const QuickImport = ({ rawText, setRawText, onParse, showImport, setShowImport }
   </div>
 )
 
-const RecipeCard = ({ recipe, onEdit, onPrep }) => (
-  <div className="group rounded-xl border-2 border-ink bg-white p-4 shadow-hard transition-all hover:-translate-y-0.5">
-    <div className="mb-3 flex items-start justify-between">
-      <h3 className="font-display text-lg font-bold leading-tight">{recipe.title}</h3>
-      <div className="flex gap-1">
-        <button
-          onClick={onEdit}
-          className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-ink"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-    <div className="mb-4 flex gap-4 text-xs font-bold uppercase tracking-wider text-gray-500">
-      <span>{recipe.prepTime}m Prep</span>
-      <span>{recipe.cookTime}m Cook</span>
-      <span>{recipe.servings} Serves</span>
-    </div>
-    <button
-      onClick={onPrep}
-      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-ink bg-paper py-2.5 font-bold text-ink transition-colors group-hover:border-ink group-hover:bg-teal"
-    >
-      <ChefHat className="h-4 w-4" /> Start Cooking
-    </button>
-  </div>
-)
-
 const RecipeTextEditor = ({ label, value, onChange, placeholder }) => (
   <div>
     <label className="mb-1 block text-xs font-bold uppercase text-gray-400">{label}</label>
@@ -221,6 +212,8 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
       ingredients: [],
       steps: [],
       notes: '',
+      protein: '',
+      difficulty: 'Medium',
     }
   })
   const [rawText, setRawText] = useState('')
@@ -302,6 +295,36 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="protein" className="mb-1 block text-xs font-bold uppercase text-gray-400">Protein</label>
+            <select 
+                id="protein"
+                value={formData.protein || ''} 
+                onChange={e => setFormData({...formData, protein: e.target.value})}
+                className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
+            >
+                <option value="">None</option>
+                {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(p => (
+                    <option key={p} value={p}>{p}</option>
+                ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="difficulty" className="mb-1 block text-xs font-bold uppercase text-gray-400">Difficulty</label>
+             <select 
+                id="difficulty"
+                value={formData.difficulty || 'Medium'} 
+                onChange={e => setFormData({...formData, difficulty: e.target.value})}
+                className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
+            >
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+            </select>
+          </div>
+      </div>
+
       <div className="grid grid-cols-3 gap-2">
         {['servings', 'prepTime', 'cookTime'].map((k) => (
           <div key={k} className="rounded border border-ink/10 bg-paper p-2">
@@ -338,6 +361,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
           <button
             onClick={() => onDelete(recipe.id)}
             className="rounded-xl border border-red-100 bg-red-50 p-3 font-bold text-red-500"
+            title="Delete Recipe"
           >
             <Trash2 className="h-5 w-5" />
           </button>
@@ -356,9 +380,16 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
 // --- MAIN COMPONENT ---
 const RecipeManager = () => {
   const { recipes, setRecipes, loading, syncStatus } = useRecipes()
-  const [prepState, setPrepState] = useState({})
-  const [view, setView] = useState('list')
+  const [view, setView] = useState('library') // 'library', 'detail', 'edit', 'grocery', 'ai-add'
   const [selectedRecipe, setSelectedRecipe] = useState(null)
+  
+  // Filtering & Sorting State
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filters, setFilters] = useState({})
+  const [sort, setSort] = useState('alpha')
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Grocery
   const [groceryList, setGroceryList] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -368,35 +399,72 @@ const RecipeManager = () => {
     } else {
       setRecipes([...recipes, recipe])
     }
-    setView('list')
+    setView('library')
     setSelectedRecipe(null)
   }
 
   const handleDeleteRecipe = (id) => {
-    if (window.confirm('Are you sure you want to delete this recipe?')) {
       setRecipes(recipes.filter((r) => r.id !== id))
-      setView('list')
+      setView('library')
       setSelectedRecipe(null)
-    }
   }
 
-  const handleTogglePrep = (recipeId, stepIdx) => {
-    setPrepState((prev) => ({
-      ...prev,
-      [recipeId]: {
-        ...prev[recipeId],
-        [stepIdx]: !prev[recipeId]?.[stepIdx],
-      },
-    }))
+  const handleUpdateRecipe = (updatedRecipe, mode = 'save') => {
+      // mode can be 'save' (direct update) or 'edit' (open editor)
+      if (mode === 'edit') {
+          setSelectedRecipe(updatedRecipe)
+          setView('edit')
+      } else {
+          // Direct save (e.g. toggle "This Week")
+          handleSaveRecipe(updatedRecipe)
+          // If we are currently viewing it, update the view too
+          if (selectedRecipe && selectedRecipe.id === updatedRecipe.id) {
+              setSelectedRecipe(updatedRecipe)
+          }
+      }
   }
 
   const handleGenerateList = async () => {
     setIsGenerating(true)
     setView('grocery')
-    const list = await generateGroceryList(recipes)
-    setGroceryList(list)
+    const recipesToShop = recipes.filter(r => r.thisWeek).length > 0 ? recipes.filter(r => r.thisWeek) : recipes
+    
+    const list = await generateGroceryList(recipesToShop)
+    setGroceryList(list) 
     setIsGenerating(false)
   }
+  
+  // Apply Sorting and Filtering
+  const processedRecipes = React.useMemo(() => {
+      let result = [...recipes]
+      
+      // Search
+      if (searchQuery) {
+          const q = searchQuery.toLowerCase()
+          result = result.filter(r => 
+              r.title?.toLowerCase().includes(q) || 
+              r.ingredients?.some(i => i.name.toLowerCase().includes(q))
+          )
+      }
+      
+      // Filter
+      if (filters.difficulty && filters.difficulty.length > 0) {
+          result = result.filter(r => filters.difficulty.includes(r.difficulty))
+      }
+      if (filters.cuisine && filters.cuisine.length > 0) {
+          result = result.filter(r => filters.cuisine.includes(r.cuisine))
+      }
+
+      // Sort
+      result.sort((a, b) => {
+          if (sort === 'alpha') return a.title.localeCompare(b.title)
+          if (sort === 'recent') return parseInt(b.id) - parseInt(a.id) // Assuming ID is timestamp-ish
+          if (sort === 'time') return (a.prepTime + a.cookTime) - (b.prepTime + b.cookTime)
+          return 0
+      })
+      
+      return result
+  }, [recipes, searchQuery, filters, sort])
 
   // --- RENDER ---
   if (loading) {
@@ -406,25 +474,27 @@ const RecipeManager = () => {
       </div>
     )
   }
-
-  if (view === 'prep' && selectedRecipe) {
-    return (
-      <PrepMode
-        recipe={selectedRecipe}
-        prepState={prepState}
-        togglePrep={handleTogglePrep}
-        onClose={() => setView('list')}
-      />
-    )
+  
+  // Detail View (Cooking Mode)
+  if (view === 'detail' && selectedRecipe) {
+      return (
+          <RecipeDetail 
+            recipe={selectedRecipe}
+            onClose={() => setView('library')}
+            onUpdate={handleUpdateRecipe}
+            onDelete={(id) => handleDeleteRecipe(id)}
+          />
+      )
   }
 
+  // AI Add View
   if (view === 'ai-add') {
     return (
       <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col bg-paper">
         <div className="flex items-center justify-between border-b-2 border-ink bg-white px-6 py-4">
           <h2 className="font-display text-xl font-bold">New Recipe from AI</h2>
           <button
-            onClick={() => setView('list')}
+            onClick={() => setView('library')}
             className="rounded-lg bg-gray-100 p-1 px-3 text-sm font-bold"
           >
             Cancel
@@ -434,7 +504,7 @@ const RecipeManager = () => {
           <RecipeInput
             onRecipeCreated={(recipe) => {
               handleSaveRecipe(recipe)
-              setView('list')
+              setView('library')
             }}
           />
         </div>
@@ -443,52 +513,58 @@ const RecipeManager = () => {
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col bg-paper text-ink shadow-2xl">
+    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col bg-paper text-ink shadow-2xl overflow-hidden">
+      <RecipeFilters 
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        filters={filters}
+        setFilters={setFilters}
+        sort={sort}
+        setSort={setSort}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
+      
       <RecipeHeader
         syncStatus={syncStatus}
         onGenerateList={handleGenerateList}
         onAddAi={() => setView('ai-add')}
         onAddManual={() => {
-          setSelectedRecipe(null)
+          setSelectedRecipe({})
           setView('edit')
         }}
+        onOpenFilters={() => setFiltersOpen(true)}
       />
 
-      <main className="scrollbar-hide flex-1 space-y-4 overflow-y-auto p-4 pb-20">
-        {view === 'list' && (
-          <div className="space-y-4">
-            {recipes.length === 0 && <EmptyState />}
-            {recipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                onEdit={() => {
-                  setSelectedRecipe(recipe)
-                  setView('edit')
-                }}
-                onPrep={() => {
-                  setSelectedRecipe(recipe)
-                  setView('prep')
-                }}
-              />
-            ))}
-          </div>
+      <main className="flex-1 overflow-hidden relative">
+        {view === 'library' && (
+             <div className="h-full overflow-y-auto scrollbar-hide">
+                 <RecipeLibrary 
+                    recipes={processedRecipes} 
+                    onSelectRecipe={(r) => {
+                        setSelectedRecipe(r)
+                        setView('detail')
+                    }} 
+                />
+             </div>
         )}
 
         {view === 'edit' && (
-          <RecipeEditor
-            recipe={selectedRecipe || {}}
-            onSave={handleSaveRecipe}
-            onCancel={() => setView('list')}
-            onDelete={handleDeleteRecipe}
-          />
+          <div className="h-full overflow-y-auto p-4">
+            <RecipeEditor
+                recipe={selectedRecipe || {}}
+                onSave={handleSaveRecipe}
+                onCancel={() => setView('library')}
+                onDelete={handleDeleteRecipe}
+            />
+          </div>
         )}
 
         {view === 'grocery' && (
           <GroceryView
             isGenerating={isGenerating}
             groceryList={groceryList}
-            onClose={() => setView('list')}
+            onClose={() => setView('library')}
           />
         )}
       </main>

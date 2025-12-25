@@ -1,3 +1,5 @@
+import { formatRecipesForPrompt } from '../../lib/api-utils'
+
 // @ts-expect-error - Request type definition is complex in Astro
 export const POST = async ({ request }) => {
   const apiKey = import.meta.env.GEMINI_API_KEY
@@ -50,14 +52,7 @@ When only one item exists for an ingredient across all recipes, list directly wi
 </output_structure>
 `
 
-  const inputList = recipes
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((r: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ingredientsList = r.ingredients.map((i: any) => `• ${i.amount} ${i.name}`).join('\n')
-      return `${r.title}\nIngredients:\n${ingredientsList}`
-    })
-    .join('\n\n')
+  const inputList = formatRecipesForPrompt(recipes)
 
   try {
     const response = await fetch(

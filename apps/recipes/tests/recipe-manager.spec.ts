@@ -52,25 +52,30 @@ test.describe('Recipe Manager', () => {
 
     await page.getByText('Save Recipe').click()
 
-    // 3. Verify it appears in the list
+    // 3. Verify it appears in the list (inside Uncategorized folder since no protein set)
+    // Wait for "Uncategorized" folder to appear and click it
+    await page.getByRole('button', { name: 'Uncategorized' }).click()
     await expect(page.getByText(testTitle)).toBeVisible()
 
     // 4. Click into it to verify details
-    // Click 'Start Cooking' on the SPECIFIC card we just created
-    // We filter by the unique title to ensure we don't click an old/empty recipe
-    await page
-      .locator('div')
-      .filter({ hasText: testTitle })
-      .getByRole('button', { name: 'Start Cooking' })
-      .first()
-      .click()
+    await page.getByText(testTitle).click()
 
-    // Wait for prep mode
-    await expect(page.getByText('Steps')).toBeVisible()
-    await expect(page.getByText('Prep for ' + testTitle)).toBeVisible()
+    // Wait for Detail View
+    await expect(page.getByText('Ingredients')).toBeVisible()
+    await expect(page.getByText(testTitle)).toBeVisible()
 
-    // Close prep mode
-    await page.getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByText('CHEFBOARD')).toBeVisible()
+    // Check interaction (check an ingredient)
+    await page.getByText('1 cup Flour').click()
+    
+    // Close detail view (Arrow Left)
+    await page.locator('button:has(svg.lucide-arrow-left)').first().click()
+    
+    // Verify we are back in the folder
+    await expect(page.getByText('Uncategorized')).toBeVisible()
+    await expect(page.getByText('Browse by Protein')).not.toBeVisible() // We are inside folder
+    
+    // Go back to root
+    await page.locator('button:has(svg.lucide-arrow-left)').click()
+    await expect(page.getByText('Browse by Protein')).toBeVisible()
   })
 })

@@ -44,7 +44,8 @@ test.describe('Recipe Input Flow', () => {
             { name: 'Milk', amount: '1 cup' },
           ],
           steps: ['Mix everything', 'Cook on pan'],
-          metadata: { difficulty: 'Easy' },
+          difficulty: 'Easy',
+          protein: 'Chicken', // Mock it as Chicken so we can find it in Chicken folder
         },
       })
     })
@@ -82,11 +83,12 @@ test.describe('Recipe Input Flow', () => {
     // Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Expect to be back on the dashboard (List View)
+    // Expect to be back on the dashboard (List View / Library)
     // "Review & Edit" should be gone
     await expect(page.getByRole('heading', { name: 'Review & Edit' })).not.toBeVisible()
 
-    // The new recipe should be in the list
+    // The new recipe should be in the Chicken folder
+    await page.getByRole('button', { name: 'Chicken' }).click()
     await expect(page.getByText('Mocked Pancake')).toBeVisible()
   })
 

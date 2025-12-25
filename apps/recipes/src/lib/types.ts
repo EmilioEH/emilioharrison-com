@@ -13,13 +13,16 @@ export interface Recipe {
   ingredients: Ingredient[]
   steps: string[]
   notes?: string
+  // New metadata for organization
+  protein?: string
+  difficulty?: 'Easy' | 'Medium' | 'Hard'
+  cuisine?: string
+  dietary?: string[]
+  thisWeek?: boolean // Added for "This Week" folder logic
   sourceUrl?: string
   sourceImage?: string // Base64 or URL
   tags?: string[]
   metadata?: {
-    protein?: string
-    difficulty?: 'Easy' | 'Medium' | 'Hard'
-    cuisine?: string
     dishesUsed?: number
     dietary?: string[]
   }

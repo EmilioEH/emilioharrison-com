@@ -49,5 +49,8 @@ if (!globalThis.MessageChannel) {
       },
     },
   },
+  devToolbar: {
+    enabled: false,
+  },
   integrations: [react(), tailwind(), markdoc()],
 })

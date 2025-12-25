@@ -1,0 +1,37 @@
+
+> @emilio/recipes@0.0.0 lint
+> eslint .
+
+
+/Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/src/components/RecipeInput.tsx
+  136:26  warning  Arrow function has too many lines (145). Maximum allowed is 100  max-lines-per-function
+  387:28  warning  Arrow function has too many lines (114). Maximum allowed is 100  max-lines-per-function
+
+/Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/src/components/recipe-manager/PrepMode.jsx
+  4:18  warning  Arrow function has too many lines (120). Maximum allowed is 100  max-lines-per-function
+
+/Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/src/components/recipe-manager/RecipeDetail.jsx
+    6:10  error    Remove this unused import of 'Button'                            sonarjs/unused-import
+   81:29  warning  Arrow function has too many lines (109). Maximum allowed is 100  max-lines-per-function
+  162:85  error    Refactor this code to not use nested template literals           sonarjs/no-nested-template-literals
+
+/Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/src/components/recipe-manager/RecipeFilters.jsx
+  24:30  warning  Arrow function has too many lines (104). Maximum allowed is 100  max-lines-per-function
+
+/Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/src/components/recipe-manager/RecipeManager.jsx
+  203:22  warning  Arrow function has too many lines (163). Maximum allowed is 100  max-lines-per-function
+  381:23  warning  Arrow function has too many lines (161). Maximum allowed is 100  max-lines-per-function
+
+/Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/tests/recipe-organization.spec.ts
+  4:3  warning  Unused eslint-disable directive (no problems were reported from 'sonarjs/no-hardcoded-passwords')
+
+✖ 10 problems (2 errors, 8 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+npm error Lifecycle script `lint` failed with error:
+npm error code 1
+npm error path /Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes
+npm error workspace @emilio/recipes@0.0.0
+npm error location /Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes
+npm error command failed
+npm error command sh -c eslint .

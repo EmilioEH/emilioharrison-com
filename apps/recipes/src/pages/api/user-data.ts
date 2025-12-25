@@ -12,11 +12,14 @@ export const GET: APIRoute = async ({ cookies, locals }) => {
   }
 
   try {
-    // Access KV from locals (Cloudflare)
-    // In dev (platformProxy), it's locals.runtime.env.SESSION
-    // In prod, it's locals.runtime.env.SESSION
     // @ts-expect-error - Runtime env type missing from Locals interface in dev
-    const { env } = locals.runtime
+    const runtime = locals.runtime
+
+    if (!runtime || !runtime.env || !runtime.env.SESSION) {
+        return new Response(JSON.stringify({ error: 'KV configuration error' }), { status: 500 })
+    }
+    const { env } = runtime
+
     const data = await env.SESSION.get(`user:${user}`, 'json')
 
     return new Response(JSON.stringify(data || {}), {
@@ -45,8 +48,15 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   try {
     const body = await request.json()
+    
     // @ts-expect-error - Runtime env type missing from Locals interface in dev
-    const { env } = locals.runtime
+    const runtime = locals.runtime
+    
+    if (!runtime || !runtime.env || !runtime.env.SESSION) {
+        throw new Error('KV binding missing')
+    }
+
+    const { env } = runtime
 
     // Save to KV
     await env.SESSION.put(`user:${user}`, JSON.stringify(body))
