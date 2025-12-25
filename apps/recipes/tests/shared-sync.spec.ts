@@ -1,6 +1,6 @@
 import { test, expect, type Browser } from '@playwright/test'
 
-test.describe('Shared Recipe Sync', () => {
+test.describe('User Data Isolation', () => {
   const createAuthContext = async (browser: Browser, name: string) => {
     return await browser.newContext({
       storageState: {
@@ -31,13 +31,13 @@ test.describe('Shared Recipe Sync', () => {
     })
   }
 
-  test('recipes should be shared between different users', async ({ browser }) => {
+  test('recipes should be isolated per user (not shared)', async ({ browser }) => {
     // 1. User A creates a recipe
-    const contextA = await createAuthContext(browser, 'Alice')
+    const contextA = await createAuthContext(browser, `Alice-${Date.now()}`)
     const pageA = await contextA.newPage()
     await pageA.goto('/protected/recipes')
 
-    const uniqueTitle = `Shared Pie ${Date.now()}`
+    const aliceRecipe = `Alice's Secret Recipe ${Date.now()}`
 
     // Add Recipe
     await pageA
@@ -45,26 +45,20 @@ test.describe('Shared Recipe Sync', () => {
       .filter({ has: pageA.locator('svg.lucide-plus') })
       .click()
 
-    await pageA.getByLabel('Title').fill(uniqueTitle)
+    await pageA.getByLabel('Title').fill(aliceRecipe)
     await pageA.getByRole('button', { name: 'Save Recipe' }).click()
 
     // Wait for save confirmation
     await expect(pageA.getByText('Saved')).toBeVisible()
 
-    // 2. User B (different session) should see it
-    const contextB = await createAuthContext(browser, 'Bob')
+    // 2. User B (different session) should NOT see Alice's recipe
+    const contextB = await createAuthContext(browser, `Bob-${Date.now()}`)
     const pageB = await contextB.newPage()
     await pageB.goto('/protected/recipes')
 
-    // 3. Verify with retry (KV is eventually consistent)
-    await expect(async () => {
-      await pageB.reload()
-      // Expand 'Uncategorized' if it exists (default group for new recipes)
-      // Note: It usually defaults to open if it's the first group.
-      // Toggling it blindly might close it.
-      // Just check for visibility.
-      await expect(pageB.getByText(uniqueTitle)).toBeVisible()
-    }).toPass({ timeout: 15_000 })
+    // 3. Verify Bob doesn't see Alice's recipe
+    await pageB.waitForLoadState('networkidle')
+    await expect(pageB.getByText(aliceRecipe)).not.toBeVisible()
 
     await contextA.close()
     await contextB.close()
