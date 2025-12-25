@@ -27,8 +27,6 @@
     "@fontsource/archivo-black": "^5.2.8",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
-    "@keystatic/astro": "^5.0.6",
-    "@keystatic/core": "^0.5.48",
     "@nanostores/react": "^1.0.0",
     "astro": "^5.16.1",
     "class-variance-authority": "^0.7.1",

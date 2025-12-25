@@ -69,11 +69,10 @@ export default defineConfig({
   ],
 
   timeout: 60 * 1000,
-  /* Run your local dev server before starting the tests */
-  /* webServer: {
+  webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:4321/login',
+    url: 'http://localhost:4321/protected/recipes/login',
     reuseExistingServer: true,
     timeout: 120 * 1000,
-  }, */
+  },
 })

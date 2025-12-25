@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Camera, Link as LinkIcon, Loader2, ChefHat, Save, Trash2, Upload } from 'lucide-react'
 import { Button } from './ui/Button'
-import BrutalCard from './ui/BrutalCard'
+// import BrutalCard from './ui/BrutalCard'
 import type { Recipe } from '../lib/types'
 
 type InputMode = 'photo' | 'url'
@@ -282,13 +282,7 @@ const RecipeSourceSelector = ({
   }
 
   return (
-    <BrutalCard
-      theme={{
-        border: 'border-2 border-black',
-        shadow: 'shadow-hard',
-        colors: { card: 'bg-white' },
-      }}
-    >
+    <div className="border-2 border-black bg-white shadow-hard">
       <SourceToggle mode={mode} setMode={setMode} />
 
       <div className="space-y-6">
@@ -340,7 +334,7 @@ const RecipeSourceSelector = ({
           {status === 'processing' ? 'Consulting Chef Gemini...' : 'Process Recipe'}
         </Button>
       </div>
-    </BrutalCard>
+    </div>
   )
 }
 
