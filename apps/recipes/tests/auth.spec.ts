@@ -35,6 +35,11 @@ test.describe('Authentication Flow', () => {
 
   test('should require name', async ({ page }) => {
     await page.goto('/protected/recipes/login')
+    // Remove required attribute to test server-side validation
+    await page.evaluate(() => {
+      document.querySelector('input[name="name"]')?.removeAttribute('required')
+    })
+    
     // Don't fill name
     await page.getByLabel('Password').fill('password123')
     await page.getByRole('button', { name: 'Enter Kitchen' }).click()
