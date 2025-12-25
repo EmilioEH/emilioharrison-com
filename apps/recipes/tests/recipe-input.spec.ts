@@ -7,29 +7,18 @@ test.describe('Recipe Input Flow', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: 'localhost',
+        domain: '127.0.0.1',
         path: '/',
       },
       {
         name: 'site_user',
         value: 'testuser',
-        domain: 'localhost',
+        domain: '127.0.0.1',
         path: '/',
       },
     ])
 
-    // Mock User Data (Initial state)
-    await page.route('/api/user-data', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { recipes: [] } })
-      } else if (route.request().method() === 'POST') {
-        // const body = route.request().postDataJSON();
-        // Verify payload here if needed
-        await route.fulfill({ json: { success: true } })
-      } else {
-        await route.continue()
-      }
-    })
+
 
     // Mock Parse Recipe API
     await page.route('/api/parse-recipe', async (route) => {
