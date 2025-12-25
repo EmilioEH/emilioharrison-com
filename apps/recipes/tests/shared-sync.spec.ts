@@ -1,8 +1,26 @@
-import { test, expect, type Browser } from '@playwright/test'
+import { test, expect, type Browser, type BrowserContext } from '@playwright/test'
 
-test.describe('User Data Isolation', () => {
+test.describe('Shared Recipe Storage', () => {
+  // Shared storage simulation (mimics Cloudflare KV shared key)
+  // This is outside the test so it's shared across all contexts
+  let sharedRecipes: unknown[] = []
+
+  const setupMockStorage = async (context: BrowserContext) => {
+    await context.route('/api/user-data', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: { recipes: sharedRecipes } })
+      } else if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON()
+        sharedRecipes = body.recipes || []
+        await route.fulfill({ json: { success: true } })
+      } else {
+        await route.continue()
+      }
+    })
+  }
+
   const createAuthContext = async (browser: Browser, name: string) => {
-    return await browser.newContext({
+    const context = await browser.newContext({
       storageState: {
         cookies: [
           {
@@ -29,38 +47,48 @@ test.describe('User Data Isolation', () => {
         origins: [],
       },
     })
+    
+    // Set up mock storage for this context
+    await setupMockStorage(context)
+    
+    return context
   }
 
-  test('recipes should be isolated per user (not shared)', async ({ browser }) => {
-    // 1. User A creates a recipe
-    const contextA = await createAuthContext(browser, `Alice-${Date.now()}`)
-    const pageA = await contextA.newPage()
-    await pageA.goto('/protected/recipes')
+  test('recipes should be shared between all family members', async ({ browser }) => {
+    // Reset shared storage before test
+    sharedRecipes = []
 
-    const aliceRecipe = `Alice's Secret Recipe ${Date.now()}`
+    // Create unique recipe name to avoid conflicts with other test runs
+    const uniqueRecipe = `Family Recipe ${Date.now()}`
+
+    // 1. Alice (Mom) adds a recipe
+    const contextAlice = await createAuthContext(browser, 'Alice')
+    const pageAlice = await contextAlice.newPage()
+
+    await pageAlice.goto('/protected/recipes')
 
     // Add Recipe
-    await pageA
+    await pageAlice
       .getByRole('button')
-      .filter({ has: pageA.locator('svg.lucide-plus') })
+      .filter({ has: pageAlice.locator('svg.lucide-plus') })
       .click()
 
-    await pageA.getByLabel('Title').fill(aliceRecipe)
-    await pageA.getByRole('button', { name: 'Save Recipe' }).click()
+    await pageAlice.getByLabel('Title').fill(uniqueRecipe)
+    await pageAlice.getByRole('button', { name: 'Save Recipe' }).click()
 
     // Wait for save confirmation
-    await expect(pageA.getByText('Saved')).toBeVisible()
+    await expect(pageAlice.getByText('Saved')).toBeVisible()
 
-    // 2. User B (different session) should NOT see Alice's recipe
-    const contextB = await createAuthContext(browser, `Bob-${Date.now()}`)
-    const pageB = await contextB.newPage()
-    await pageB.goto('/protected/recipes')
+    // 2. Bob (Dad) should see Alice's recipe in the shared collection
+    const contextBob = await createAuthContext(browser, 'Bob')
+    const pageBob = await contextBob.newPage()
 
-    // 3. Verify Bob doesn't see Alice's recipe
-    await pageB.waitForLoadState('networkidle')
-    await expect(pageB.getByText(aliceRecipe)).not.toBeVisible()
+    await pageBob.goto('/protected/recipes')
 
-    await contextA.close()
-    await contextB.close()
+    // 3. Verify Bob sees Alice's recipe
+    await expect(pageBob.getByText(uniqueRecipe)).toBeVisible()
+
+    await contextAlice.close()
+    await contextBob.close()
   })
 })

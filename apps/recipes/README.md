@@ -9,7 +9,7 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 
 - **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
-- **Persistence & Sync**: Your data is securely stored in Cloudflare KV, synced across your devices via your `site_user` identity.
+- **Shared Family Collection**: All recipes are stored in Cloudflare KV and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure, protected dashboard accessible only to authenticated users.
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 

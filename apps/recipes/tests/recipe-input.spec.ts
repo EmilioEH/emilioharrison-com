@@ -35,7 +35,7 @@ test.describe('Recipe Input Flow', () => {
     await page.route('/api/parse-recipe', async (route) => {
       await route.fulfill({
         json: {
-          title: 'Mocked Pancake',
+          title: `Mocked Pancake ${Date.now()}`,
           servings: 4,
           prepTime: 10,
           cookTime: 20,
@@ -77,8 +77,10 @@ test.describe('Recipe Input Flow', () => {
     // Expect Review Mode to appear
     await expect(page.getByRole('heading', { name: 'Review & Edit' })).toBeVisible()
 
-    // Check if data is populated
-    await expect(page.getByLabel('Title')).toHaveValue('Mocked Pancake')
+    // Check if data is populated and capture the dynamic title
+    const titleInput = page.getByLabel('Title')
+    await expect(titleInput).toHaveValue(/Mocked Pancake \d+/)
+    const recipeTitle = await titleInput.inputValue()
 
     // Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
@@ -89,7 +91,7 @@ test.describe('Recipe Input Flow', () => {
 
     // The new recipe should be in the Chicken folder
     await page.getByRole('button', { name: 'Chicken' }).first().click()
-    await expect(page.getByText('Mocked Pancake')).toBeVisible()
+    await expect(page.getByText(recipeTitle)).toBeVisible()
   })
 
   test('should display backend error message when parsing fails', async ({ page }) => {

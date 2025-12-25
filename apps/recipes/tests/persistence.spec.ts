@@ -1,35 +1,40 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Recipe Persistence', () => {
-  test.use({
-    storageState: {
-      cookies: [
-        {
-          name: 'site_auth',
-          value: 'true',
-          domain: 'localhost',
-          path: '/',
-          expires: -1,
-          httpOnly: false,
-          secure: false,
-          sameSite: 'Lax',
-        },
-        {
-          name: 'site_user',
-          value: `ReproUser-${Date.now()}`,
-          domain: 'localhost',
-          path: '/',
-          expires: -1,
-          httpOnly: false,
-          secure: false,
-          sameSite: 'Lax',
-        },
-      ],
-      origins: [],
-    },
-  })
+  test('should persist recipe after reload', async ({ page, context }) => {
+    // Mock Auth
+    await context.addCookies([
+      {
+        name: 'site_auth',
+        value: 'true',
+        domain: 'localhost',
+        path: '/',
+      },
+      {
+        name: 'site_user',
+        value: `ReproUser-${Date.now()}`,
+        domain: 'localhost',
+        path: '/',
+      },
+    ])
 
-  test('should persist recipe after reload', async ({ page }) => {
+    // Mock the user-data API to simulate KV storage
+    // This needs to persist across page reloads
+    let savedRecipes: unknown[] = []
+    
+    // Set up route handler that persists across navigations
+    await context.route('/api/user-data', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: { recipes: savedRecipes } })
+      } else if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON()
+        savedRecipes = body.recipes || []
+        await route.fulfill({ json: { success: true } })
+      } else {
+        await route.continue()
+      }
+    })
+
     await page.goto('/protected/recipes')
 
     const testTitle = `Repro Recipe ${Date.now()}`

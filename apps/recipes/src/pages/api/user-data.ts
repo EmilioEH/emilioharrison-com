@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ cookies, locals }) => {
     }
     const { env } = runtime
 
-    const data = await env.SESSION.get(`user:${user}`, 'json')
+    const data = await env.SESSION.get('recipes:shared', 'json')
 
     return new Response(JSON.stringify(data || {}), {
       status: 200,
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const { env } = runtime
 
     // Save to KV
-    await env.SESSION.put(`user:${user}`, JSON.stringify(body))
+    await env.SESSION.put('recipes:shared', JSON.stringify(body))
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
