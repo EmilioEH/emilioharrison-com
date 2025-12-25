@@ -13,7 +13,6 @@ if (Astro.request.method === 'POST') {
     // In dev with platformProxy, it's in Astro.locals.runtime.env
     // In prod, it's also in Astro.locals.runtime.env
     // We fallback to import.meta.env for safety if runtime is missing (though it shouldn't be)
-    // @ts-expect-error - Runtime env type missing from Locals interface in dev
     const env = Astro.locals.runtime?.env || import.meta.env
     const sitePassword = env.SITE_PASSWORD
 

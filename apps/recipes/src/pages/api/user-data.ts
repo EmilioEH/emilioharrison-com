@@ -12,11 +12,10 @@ export const GET: APIRoute = async ({ cookies, locals }) => {
   }
 
   try {
-    // @ts-expect-error - Runtime env type missing from Locals interface in dev
     const runtime = locals.runtime
 
     if (!runtime || !runtime.env || !runtime.env.SESSION) {
-        return new Response(JSON.stringify({ error: 'KV configuration error' }), { status: 500 })
+      return new Response(JSON.stringify({ error: 'KV configuration error' }), { status: 500 })
     }
     const { env } = runtime
 
@@ -48,12 +47,11 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   try {
     const body = await request.json()
-    
-    // @ts-expect-error - Runtime env type missing from Locals interface in dev
+
     const runtime = locals.runtime
-    
+
     if (!runtime || !runtime.env || !runtime.env.SESSION) {
-        throw new Error('KV binding missing')
+      throw new Error('KV binding missing')
     }
 
     const { env } = runtime

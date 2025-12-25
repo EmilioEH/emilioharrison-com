@@ -24,11 +24,15 @@ const FolderCard = ({ icon: Icon, title, count, onClick, colorClass = 'bg-white'
 const LibraryRecipeCard = ({ recipe, onClick }) => (
   <button
     onClick={onClick}
-    className="group relative flex w-full flex-col overflow-hidden rounded-xl border-2 border-ink bg-white shadow-hard transition-all hover:-translate-y-0.5 hover:shadow-hard-lg text-left"
+    className="group relative flex w-full flex-col overflow-hidden rounded-xl border-2 border-ink bg-white text-left shadow-hard transition-all hover:-translate-y-0.5 hover:shadow-hard-lg"
   >
     {recipe.sourceImage && (
       <div className="h-32 w-full overflow-hidden border-b-2 border-ink">
-        <img src={recipe.sourceImage} alt={recipe.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+        <img
+          src={recipe.sourceImage}
+          alt={recipe.title}
+          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+        />
       </div>
     )}
     <div className="p-4">
@@ -42,7 +46,7 @@ const LibraryRecipeCard = ({ recipe, onClick }) => (
           {recipe.title}
         </h3>
       </div>
-      
+
       <div className="mt-auto flex gap-3 text-xs font-bold text-gray-500">
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
@@ -63,11 +67,11 @@ export const RecipeLibrary = ({ recipes, onSelectRecipe }) => {
   const folders = useMemo(() => {
     // Calculate counts
     const proteinCounts = {}
-    PROTEIN_TYPES.forEach(p => proteinCounts[p] = 0)
+    PROTEIN_TYPES.forEach((p) => (proteinCounts[p] = 0))
     let uncategorizedCount = 0
     let thisWeekCount = 0
 
-    recipes.forEach(r => {
+    recipes.forEach((r) => {
       if (r.thisWeek) thisWeekCount++
       if (r.protein && PROTEIN_TYPES.includes(r.protein)) {
         proteinCounts[r.protein]++
@@ -82,65 +86,67 @@ export const RecipeLibrary = ({ recipes, onSelectRecipe }) => {
   const filteredRecipes = useMemo(() => {
     if (!activeFolder) return []
     if (activeFolder === 'This Week') {
-      return recipes.filter(r => r.thisWeek)
+      return recipes.filter((r) => r.thisWeek)
     }
     if (activeFolder === 'Uncategorized') {
-      return recipes.filter(r => !r.protein || !PROTEIN_TYPES.includes(r.protein))
+      return recipes.filter((r) => !r.protein || !PROTEIN_TYPES.includes(r.protein))
     }
-    return recipes.filter(r => r.protein === activeFolder)
+    return recipes.filter((r) => r.protein === activeFolder)
   }, [recipes, activeFolder])
 
   if (activeFolder) {
     return (
-      <div className="h-full flex flex-col animate-in slide-in-from-right-4">
-        <div className="flex items-center gap-4 px-6 py-4 border-b-2 border-ink bg-paper sticky top-0 z-10">
-            <button 
-                onClick={() => setActiveFolder(null)}
-                className="p-2 -ml-2 rounded-full hover:bg-black/5"
-            >
-                <ArrowLeft className="h-6 w-6 text-ink" />
-            </button>
-            <h2 className="font-display text-2xl font-black">{activeFolder}</h2>
-            <span className="bg-ink text-white text-xs font-bold px-2 py-1 rounded-full">{filteredRecipes.length}</span>
+      <div className="animate-in slide-in-from-right-4 flex h-full flex-col">
+        <div className="sticky top-0 z-10 flex items-center gap-4 border-b-2 border-ink bg-paper px-6 py-4">
+          <button
+            onClick={() => setActiveFolder(null)}
+            className="-ml-2 rounded-full p-2 hover:bg-black/5"
+          >
+            <ArrowLeft className="h-6 w-6 text-ink" />
+          </button>
+          <h2 className="font-display text-2xl font-black">{activeFolder}</h2>
+          <span className="rounded-full bg-ink px-2 py-1 text-xs font-bold text-white">
+            {filteredRecipes.length}
+          </span>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4 p-4 pb-20 overflow-y-auto">
-            {filteredRecipes.length === 0 ? (
-                <div className="col-span-2 py-20 text-center text-gray-400">
-                    <ChefHat className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p className="font-bold">No recipes in this folder yet.</p>
-                </div>
-            ) : (
-                filteredRecipes.map(recipe => (
-                    <LibraryRecipeCard 
-                        key={recipe.id} 
-                        recipe={recipe} 
-                        onClick={() => onSelectRecipe(recipe)} 
-                    />
-                ))
-            )}
+
+        <div className="grid grid-cols-2 gap-4 overflow-y-auto p-4 pb-20">
+          {filteredRecipes.length === 0 ? (
+            <div className="col-span-2 py-20 text-center text-gray-400">
+              <ChefHat className="mx-auto mb-4 h-16 w-16 opacity-50" />
+              <p className="font-bold">No recipes in this folder yet.</p>
+            </div>
+          ) : (
+            filteredRecipes.map((recipe) => (
+              <LibraryRecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                onClick={() => onSelectRecipe(recipe)}
+              />
+            ))
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-4 space-y-4 pb-20 animate-in fade-in">
+    <div className="animate-in fade-in space-y-4 p-4 pb-20">
       <div className="mb-6">
-        <h2 className="font-display text-lg font-bold mb-2">My Meal Plan</h2>
-        <FolderCard 
-            icon={Calendar} 
-            title="This Week" 
-            count={folders.thisWeekCount} 
-            onClick={() => setActiveFolder('This Week')}
-            colorClass="bg-teal/10 border-teal"
+        <h2 className="mb-2 font-display text-lg font-bold">My Meal Plan</h2>
+        <FolderCard
+          icon={Calendar}
+          title="This Week"
+          count={folders.thisWeekCount}
+          onClick={() => setActiveFolder('This Week')}
+          colorClass="bg-teal/10 border-teal"
         />
       </div>
 
       <div>
-        <h2 className="font-display text-lg font-bold mb-2">Browse by Protein</h2>
+        <h2 className="mb-2 font-display text-lg font-bold">Browse by Protein</h2>
         <div className="space-y-3">
-          {PROTEIN_TYPES.map(protein => (
+          {PROTEIN_TYPES.map((protein) => (
             <FolderCard
               key={protein}
               icon={Folder}

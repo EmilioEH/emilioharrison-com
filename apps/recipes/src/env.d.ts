@@ -1,14 +1,22 @@
-import '../.astro/types.d.ts'
 /// <reference types="astro/client" />
 
-interface Env {
-  SITE_PASSWORD: string
-  SESSION: KVNamespace
+declare global {
+  namespace App {
+    interface Locals {
+      runtime: {
+        env: {
+          SITE_PASSWORD: string
+          GEMINI_API_KEY?: string
+          SESSION: import('@cloudflare/workers-types').KVNamespace
+        }
+        cf: import('@cloudflare/workers-types').IncomingRequestCfProperties
+        ctx: {
+          waitUntil: (promise: Promise<unknown>) => void
+          passThroughOnException: () => void
+        }
+      }
+    }
+  }
 }
 
-type Runtime = import('@astrojs/cloudflare').Runtime<Env>
-
-declare namespace App {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface Locals extends Runtime {}
-}
+export {}

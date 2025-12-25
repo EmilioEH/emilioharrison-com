@@ -53,7 +53,7 @@ const useRecipes = () => {
           body: JSON.stringify({ recipes }),
         })
         if (!res.ok) {
-           throw new Error(`Save failed with status: ${res.status}`)
+          throw new Error(`Save failed with status: ${res.status}`)
         }
         setSyncStatus('saved')
         setTimeout(() => setSyncStatus('idle'), 2000)
@@ -101,7 +101,7 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
         <ListFilter className="h-5 w-5" />
       </button>
 
-      <div className="h-9 w-px bg-gray-200 mx-1"></div>
+      <div className="mx-1 h-9 w-px bg-gray-200"></div>
 
       <button
         onClick={onGenerateList}
@@ -130,16 +130,16 @@ const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpen
 )
 
 const EmptyState = () => (
-    <div className="py-20 text-center opacity-50">
-      <ChefHat className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-      <p className="font-display text-xl">No Recipes Yet</p>
-      <p className="font-body">Add your first tasty dish!</p>
-    </div>
+  <div className="py-20 text-center opacity-50">
+    <ChefHat className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+    <p className="font-display text-xl">No Recipes Yet</p>
+    <p className="font-body">Add your first tasty dish!</p>
+  </div>
 )
 
 /* ...Keeping existing GroceryView... */
 const GroceryView = ({ isGenerating, groceryList, onClose }) => (
-  <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 h-full overflow-y-auto p-4">
+  <div className="animate-in fade-in slide-in-from-bottom-4 h-full overflow-y-auto p-4 duration-300">
     <div className="mb-4 flex items-center justify-between">
       <h2 className="font-display text-2xl font-bold">Grocery List</h2>
       <button onClick={onClose} className="text-sm font-bold underline">
@@ -296,33 +296,44 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="protein" className="mb-1 block text-xs font-bold uppercase text-gray-400">Protein</label>
-            <select 
-                id="protein"
-                value={formData.protein || ''} 
-                onChange={e => setFormData({...formData, protein: e.target.value})}
-                className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
-            >
-                <option value="">None</option>
-                {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(p => (
-                    <option key={p} value={p}>{p}</option>
-                ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="difficulty" className="mb-1 block text-xs font-bold uppercase text-gray-400">Difficulty</label>
-             <select 
-                id="difficulty"
-                value={formData.difficulty || 'Medium'} 
-                onChange={e => setFormData({...formData, difficulty: e.target.value})}
-                className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
-            >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-            </select>
-          </div>
+        <div>
+          <label htmlFor="protein" className="mb-1 block text-xs font-bold uppercase text-gray-400">
+            Protein
+          </label>
+          <select
+            id="protein"
+            value={formData.protein || ''}
+            onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
+            className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
+          >
+            <option value="">None</option>
+            {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
+              (p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ),
+            )}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="difficulty"
+            className="mb-1 block text-xs font-bold uppercase text-gray-400"
+          >
+            Difficulty
+          </label>
+          <select
+            id="difficulty"
+            value={formData.difficulty || 'Medium'}
+            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+            className="w-full rounded border bg-gray-50 p-2 text-sm font-bold"
+          >
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -382,13 +393,13 @@ const RecipeManager = () => {
   const { recipes, setRecipes, loading, syncStatus } = useRecipes()
   const [view, setView] = useState('library') // 'library', 'detail', 'edit', 'grocery', 'ai-add'
   const [selectedRecipe, setSelectedRecipe] = useState(null)
-  
+
   // Filtering & Sorting State
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [filters, setFilters] = useState({})
   const [sort, setSort] = useState('alpha')
   const [searchQuery, setSearchQuery] = useState('')
-  
+
   // Grocery
   const [groceryList, setGroceryList] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -404,66 +415,68 @@ const RecipeManager = () => {
   }
 
   const handleDeleteRecipe = (id) => {
-      setRecipes(recipes.filter((r) => r.id !== id))
-      setView('library')
-      setSelectedRecipe(null)
+    setRecipes(recipes.filter((r) => r.id !== id))
+    setView('library')
+    setSelectedRecipe(null)
   }
 
   const handleUpdateRecipe = (updatedRecipe, mode = 'save') => {
-      // mode can be 'save' (direct update) or 'edit' (open editor)
-      if (mode === 'edit') {
-          setSelectedRecipe(updatedRecipe)
-          setView('edit')
-      } else {
-          // Direct save (e.g. toggle "This Week")
-          handleSaveRecipe(updatedRecipe)
-          // If we are currently viewing it, update the view too
-          if (selectedRecipe && selectedRecipe.id === updatedRecipe.id) {
-              setSelectedRecipe(updatedRecipe)
-          }
+    // mode can be 'save' (direct update) or 'edit' (open editor)
+    if (mode === 'edit') {
+      setSelectedRecipe(updatedRecipe)
+      setView('edit')
+    } else {
+      // Direct save (e.g. toggle "This Week")
+      handleSaveRecipe(updatedRecipe)
+      // If we are currently viewing it, update the view too
+      if (selectedRecipe && selectedRecipe.id === updatedRecipe.id) {
+        setSelectedRecipe(updatedRecipe)
       }
+    }
   }
 
   const handleGenerateList = async () => {
     setIsGenerating(true)
     setView('grocery')
-    const recipesToShop = recipes.filter(r => r.thisWeek).length > 0 ? recipes.filter(r => r.thisWeek) : recipes
-    
+    const recipesToShop =
+      recipes.filter((r) => r.thisWeek).length > 0 ? recipes.filter((r) => r.thisWeek) : recipes
+
     const list = await generateGroceryList(recipesToShop)
-    setGroceryList(list) 
+    setGroceryList(list)
     setIsGenerating(false)
   }
-  
+
   // Apply Sorting and Filtering
   const processedRecipes = React.useMemo(() => {
-      let result = [...recipes]
-      
-      // Search
-      if (searchQuery) {
-          const q = searchQuery.toLowerCase()
-          result = result.filter(r => 
-              r.title?.toLowerCase().includes(q) || 
-              r.ingredients?.some(i => i.name.toLowerCase().includes(q))
-          )
-      }
-      
-      // Filter
-      if (filters.difficulty && filters.difficulty.length > 0) {
-          result = result.filter(r => filters.difficulty.includes(r.difficulty))
-      }
-      if (filters.cuisine && filters.cuisine.length > 0) {
-          result = result.filter(r => filters.cuisine.includes(r.cuisine))
-      }
+    let result = [...recipes]
 
-      // Sort
-      result.sort((a, b) => {
-          if (sort === 'alpha') return a.title.localeCompare(b.title)
-          if (sort === 'recent') return parseInt(b.id) - parseInt(a.id) // Assuming ID is timestamp-ish
-          if (sort === 'time') return (a.prepTime + a.cookTime) - (b.prepTime + b.cookTime)
-          return 0
-      })
-      
-      return result
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (r) =>
+          r.title?.toLowerCase().includes(q) ||
+          r.ingredients?.some((i) => i.name.toLowerCase().includes(q)),
+      )
+    }
+
+    // Filter
+    if (filters.difficulty && filters.difficulty.length > 0) {
+      result = result.filter((r) => filters.difficulty.includes(r.difficulty))
+    }
+    if (filters.cuisine && filters.cuisine.length > 0) {
+      result = result.filter((r) => filters.cuisine.includes(r.cuisine))
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sort === 'alpha') return a.title.localeCompare(b.title)
+      if (sort === 'recent') return parseInt(b.id) - parseInt(a.id) // Assuming ID is timestamp-ish
+      if (sort === 'time') return a.prepTime + a.cookTime - (b.prepTime + b.cookTime)
+      return 0
+    })
+
+    return result
   }, [recipes, searchQuery, filters, sort])
 
   // --- RENDER ---
@@ -474,17 +487,17 @@ const RecipeManager = () => {
       </div>
     )
   }
-  
+
   // Detail View (Cooking Mode)
   if (view === 'detail' && selectedRecipe) {
-      return (
-          <RecipeDetail 
-            recipe={selectedRecipe}
-            onClose={() => setView('library')}
-            onUpdate={handleUpdateRecipe}
-            onDelete={(id) => handleDeleteRecipe(id)}
-          />
-      )
+    return (
+      <RecipeDetail
+        recipe={selectedRecipe}
+        onClose={() => setView('library')}
+        onUpdate={handleUpdateRecipe}
+        onDelete={(id) => handleDeleteRecipe(id)}
+      />
+    )
   }
 
   // AI Add View
@@ -513,8 +526,8 @@ const RecipeManager = () => {
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col bg-paper text-ink shadow-2xl overflow-hidden">
-      <RecipeFilters 
+    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-paper text-ink shadow-2xl">
+      <RecipeFilters
         isOpen={filtersOpen}
         onClose={() => setFiltersOpen(false)}
         filters={filters}
@@ -524,7 +537,7 @@ const RecipeManager = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
-      
+
       <RecipeHeader
         syncStatus={syncStatus}
         onGenerateList={handleGenerateList}
@@ -536,26 +549,26 @@ const RecipeManager = () => {
         onOpenFilters={() => setFiltersOpen(true)}
       />
 
-      <main className="flex-1 overflow-hidden relative">
+      <main className="relative flex-1 overflow-hidden">
         {view === 'library' && (
-             <div className="h-full overflow-y-auto scrollbar-hide">
-                 <RecipeLibrary 
-                    recipes={processedRecipes} 
-                    onSelectRecipe={(r) => {
-                        setSelectedRecipe(r)
-                        setView('detail')
-                    }} 
-                />
-             </div>
+          <div className="scrollbar-hide h-full overflow-y-auto">
+            <RecipeLibrary
+              recipes={processedRecipes}
+              onSelectRecipe={(r) => {
+                setSelectedRecipe(r)
+                setView('detail')
+              }}
+            />
+          </div>
         )}
 
         {view === 'edit' && (
           <div className="h-full overflow-y-auto p-4">
             <RecipeEditor
-                recipe={selectedRecipe || {}}
-                onSave={handleSaveRecipe}
-                onCancel={() => setView('library')}
-                onDelete={handleDeleteRecipe}
+              recipe={selectedRecipe || {}}
+              onSave={handleSaveRecipe}
+              onCancel={() => setView('library')}
+              onDelete={handleDeleteRecipe}
             />
           </div>
         )}

@@ -66,14 +66,14 @@ test.describe('Recipe Manager', () => {
 
     // Check interaction (check an ingredient)
     await page.getByText('1 cup Flour').click()
-    
+
     // Close detail view (Arrow Left)
     await page.locator('button:has(svg.lucide-arrow-left)').first().click()
-    
+
     // Verify we are back in the folder
     await expect(page.getByText('Uncategorized')).toBeVisible()
     await expect(page.getByText('Browse by Protein')).not.toBeVisible() // We are inside folder
-    
+
     // Go back to root
     await page.locator('button:has(svg.lucide-arrow-left)').click()
     await expect(page.getByText('Browse by Protein')).toBeVisible()

@@ -1,3 +1,4 @@
+import type { APIRoute } from 'astro'
 import { cleanGeminiResponse } from '../../lib/api-utils'
 import { GoogleGenAI } from '@google/genai'
 
@@ -27,7 +28,6 @@ If the input is a URL, parse the HTML.
 `
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  // @ts-expect-error - Runtime env type definition might be missing in some setups
   const env = locals.runtime?.env || import.meta.env
   const apiKey = env.GEMINI_API_KEY
 
