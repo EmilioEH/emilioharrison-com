@@ -11,6 +11,8 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
 - **Shared Family Collection**: All recipes are stored in Cloudflare KV and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure, protected dashboard accessible only to authenticated users.
+- **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
+- **Rich Text Grocery Lists**: Grocery lists are now generated in formatted Rich Text, making them easy to read and check off.
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 
 ## 🛠 Tech Stack
