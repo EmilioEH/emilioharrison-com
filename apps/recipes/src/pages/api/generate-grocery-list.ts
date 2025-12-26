@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
-import { formatRecipesForPrompt, cleanGeminiResponse } from '../../lib/api-utils'
+import { formatRecipesForPrompt } from '../../lib/api-utils'
+import { GoogleGenAI, Type as SchemaType } from '@google/genai'
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime?.env || import.meta.env
@@ -31,62 +32,56 @@ Ingredients:
 - 1 cup flour
 - 2 eggs
 
-Output Format: A single JSON array of objects. NO markdown.
-Schema:
-[
-  {
-    "original": "string (the exact input line)",
-    "name": "string (normalized name, e.g. 'flour', 'egg')",
-    "amount": number (parsed quantity, e.g. 1, 2.5. If unknown/to-taste, use 0)",
-    "unit": "string (normalized unit, e.g. 'cup', 'tbsp', 'piece', 'g'. If none, use 'unit')",
-    "category": "string (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)"
-  }
-]
-
 Rules:
 1. Normalize names: "clove of garlic" -> "garlic", "minced garlic" -> "garlic".
 2. Normalize units: "tablespoon" -> "tbsp", "cups" -> "cup".
-3. Category must be one of the predefined list.
-4. If an ingredient appears multiple times, return them as SEPARATE items in the array (do not merge them yet, the client will do that).
+3. Category must be one of: Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other.
+4. If an ingredient appears multiple times, return them as SEPARATE items in the array.
 `
 
   const inputList = formatRecipesForPrompt(recipes)
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
-            },
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      ingredients: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            original: { type: SchemaType.STRING },
+            name: { type: SchemaType.STRING },
+            amount: { type: SchemaType.NUMBER },
+            unit: { type: SchemaType.STRING },
+            category: { type: SchemaType.STRING },
           },
-        }),
+          required: ['original', 'name', 'amount', 'unit', 'category'],
+        },
       },
-    )
+    },
+    required: ['ingredients'],
+  }
 
-    if (!response.ok) {
-      const errText = await response.text()
-      throw new Error(`Gemini API Failed: ${response.status} ${errText}`)
-    }
+  try {
+    const client = new GoogleGenAI({ apiKey })
+    const response = await client.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
+        },
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: schema,
+      },
+    })
 
-    const data = await response.json()
-    // Gemini REST API structure: data.candidates[0].content.parts[0].text
-    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text
-
+    const resultText = response.text
     if (!resultText) throw new Error('No content generated')
 
-    const cleanedText = cleanGeminiResponse(resultText)
-    const structuredIngredients = JSON.parse(cleanedText)
+    const structuredIngredients = JSON.parse(resultText)
 
     return new Response(JSON.stringify({ ingredients: structuredIngredients }), {
       status: 200,

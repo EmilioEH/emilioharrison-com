@@ -20,31 +20,52 @@ test.describe('Grocery List Generation', () => {
       await route.fulfill({ json })
     })
 
+    // Mock User Data with 3 recipes to satisfy minimum requirement
+    await page.route('/protected/recipes/api/user-data', async (route) => {
+      await route.fulfill({
+        json: {
+          recipes: [
+            {
+              id: '1',
+              title: 'Pancakes',
+              ingredients: [
+                { name: 'flour', amount: '1 cup' },
+                { name: 'eggs', amount: '2' },
+              ],
+              structuredIngredients: undefined, // Force AI generation
+              thisWeek: true,
+              protein: 'Vegetarian',
+            },
+            {
+              id: '2',
+              title: 'Omelette',
+              ingredients: [],
+              structuredIngredients: undefined,
+              thisWeek: true,
+              protein: 'Vegetarian',
+            },
+            {
+              id: '3',
+              title: 'Toast',
+              ingredients: [],
+              structuredIngredients: undefined,
+              thisWeek: true,
+              protein: 'Vegetarian',
+            },
+          ],
+        },
+      })
+    })
+
     await page.goto('/')
   })
 
   test('should generate and display grocery list from "This Week" recipes', async ({ page }) => {
-    // 1. Add a recipe manually (since we cleared storage)
-    // Click "Add Recipe"
-    await page.getByRole('button', { name: 'Add Recipe' }).click()
+    // 1. Recipes are loaded from mock
+    // Wait for them to appear
+    await expect(page.getByText('Pancakes')).toBeVisible()
 
-    // Fill form
-    await page.getByLabel('Title').fill('Pancakes')
-    await page.getByLabel('Protein').selectOption('Vegetarian')
-    await page.getByLabel('Ingredients (One per line)').fill('1 cup flour\n2 eggs')
-    await page.getByRole('button', { name: 'Save Recipe' }).click()
-
-    // 2. Add to "This Week"
-    // The button is on the card in the library view
-    await page.getByRole('button', { name: 'Add to This Week' }).click()
-
-    // Check for success sync/save if applicable, wait for UI update
-    // Instead of checking button class, check for the badge which is more explicit
-    await expect(
-      page.locator('.text-md-sys-color-on-primary-container').getByText('This Week'),
-    ).toBeVisible()
-
-    // 3. Generate List
+    // 2. Generate List
     // First, verify button exists
     const generateBtn = page.getByTitle('Grocery List')
     await generateBtn.click()
