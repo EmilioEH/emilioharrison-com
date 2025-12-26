@@ -1,0 +1,100 @@
+16:07:24 [WARN] Missing pages directory: src/pages
+16:07:24 [WARN] Missing pages directory: src/pages
+16:07:24 [WARN] Missing pages directory: src/pages
+16:07:24 [WARN] Missing pages directory: src/pages
+16:07:24 [WARN] Missing pages directory: src/pages
+16:07:24 [WARN] Missing pages directory: src/pages
+16:07:25 [WARN] Missing pages directory: src/pages
+16:07:25 [WARN] Missing pages directory: src/pages
+16:07:25 [WARN] Missing pages directory: src/pages
+16:07:25 [WARN] Missing pages directory: src/pages
+16:07:25 [WARN] Missing pages directory: src/pages
+16:07:25 [WARN] Missing pages directory: src/pages
+Unused files (53)
+apps/recipes/keystatic.config.ts                                   
+apps/recipes/public/sw.js                                          
+apps/recipes/scripts/sync-feedback.ts                              
+apps/recipes/src/components/layout/Footer.jsx                      
+apps/recipes/src/components/layout/Navbar.jsx                      
+apps/recipes/src/components/recipe-manager/PrepMode.jsx            
+apps/recipes/src/components/ui/CategoryBadge.jsx                   
+apps/recipes/src/components/ui/ContentBlock.jsx                    
+apps/recipes/src/components/ui/Marginalia.jsx                      
+apps/recipes/src/components/ui/PatternDefs.jsx                     
+apps/recipes/src/components/ui/QuoteBlock.jsx                      
+apps/recipes/src/components/ui/ReactiveBackground.constants.js     
+apps/recipes/src/components/ui/ReactiveBackground.jsx              
+apps/recipes/src/components/ui/SectionTitle.jsx                    
+apps/recipes/src/components/ui/SkillCategory.jsx                   
+apps/recipes/src/components/ui/StickyNote.jsx                      
+apps/recipes/src/components/ui/Tag.jsx                             
+apps/recipes/src/components/ui/Typography.jsx                      
+apps/recipes/src/data/about.js                                     
+apps/recipes/src/hooks/useTheme.js                                 
+apps/recipes/src/layouts/Layout.astro                              
+apps/recipes/src/lib/store.js                                      
+apps/recipes/src/lib/themeInit.js                                  
+apps/recipes/src/lib/themes.js                                     
+apps/recipes/src/shim.js                                           
+apps/website/keystatic.config.ts                                   
+apps/website/src/components/features 2/about/AboutContent.jsx      
+apps/website/src/components/features 2/blog/BlogList.jsx           
+apps/website/src/components/features 2/blog/BlogPostContent.jsx    
+apps/website/src/components/features 2/blog/SearchFilterBar.jsx    
+apps/website/src/components/features 2/contact/ContactContent.jsx  
+apps/website/src/components/features 2/home/FieldNotesSection.jsx  
+apps/website/src/components/features 2/home/Hero.jsx               
+apps/website/src/components/features 2/shop/ShopContent.jsx        
+apps/website/src/components/layout 2/Footer.jsx                    
+apps/website/src/components/layout 2/Navbar.jsx                    
+apps/website/src/components/ui 2/CategoryBadge.jsx                 
+apps/website/src/components/ui 2/ContentBlock.jsx                  
+apps/website/src/components/ui 2/Marginalia.jsx                    
+apps/website/src/components/ui 2/PatternDefs.jsx                   
+apps/website/src/components/ui 2/QuoteBlock.jsx                    
+apps/website/src/components/ui 2/ReactiveBackground.constants.js   
+apps/website/src/components/ui 2/ReactiveBackground.jsx            
+apps/website/src/components/ui 2/SectionTitle.jsx                  
+apps/website/src/components/ui 2/SkillCategory.jsx                 
+apps/website/src/components/ui 2/StickyNote.jsx                    
+apps/website/src/components/ui 2/Tag.jsx                           
+apps/website/src/components/ui 2/Typography.jsx                    
+apps/website/src/components/ui/Marginalia.jsx                      
+apps/website/src/components/ui/QuoteBlock.jsx                      
+apps/website/src/components/ui/SkillCategory.jsx                   
+apps/website/src/data/about.js                                     
+apps/website/src/shim.js                                           
+Unused dependencies (3)
+@nanostores/react  apps/recipes/package.json:42:6
+fuse.js            apps/recipes/package.json:46:6
+nanostores         apps/recipes/package.json:48:6
+Unused devDependencies (10)
+@stryker-mutator/typescript-checker  apps/recipes/package.json:60:6
+astro-eslint-parser                  apps/recipes/package.json:70:6
+eslint-plugin-astro                  apps/recipes/package.json:75:6
+eslint-plugin-unused-imports         apps/recipes/package.json:80:6
+lint-staged                          apps/recipes/package.json:87:6
+rollup-plugin-visualizer             apps/recipes/package.json:93:6
+eslint-plugin-unused-imports         apps/website/package.json:67:6
+lint-staged                          apps/website/package.json:73:6
+rollup-plugin-visualizer             apps/website/package.json:78:6
+wrangler                             apps/website/package.json:84:6
+Unlisted dependencies (1)
+@cloudflare/workers-types  apps/recipes/src/env.d.ts:10:28
+Unlisted binaries (1)
+wrangler  package.json
+Unresolved imports (2)
+@tailwindcss/postcss  apps/recipes/postcss.config.js
+@tailwindcss/postcss  apps/website/postcss.config.js
+Unused exports (6)
+buttonVariants            apps/recipes/src/components/ui/Button.jsx:86:18  
+Button                    apps/website/src/components/ui 2/Button.jsx:81:10
+buttonVariants            apps/website/src/components/ui 2/Button.jsx:81:18
+Button                    apps/website/src/components/ui/Button.jsx:81:10  
+buttonVariants            apps/website/src/components/ui/Button.jsx:81:18  
+initTheme       function  apps/website/src/lib/themeInit.js:5:17           
+Unused exported types (3)
+Ingredient     interface  apps/recipes/src/lib/types.ts:1:18     
+PageLink       interface  apps/website/src/lib/page-utils.ts:1:18
+AstroPageGlob  interface  apps/website/src/lib/page-utils.ts:7:18
+Configuration hints (2)
