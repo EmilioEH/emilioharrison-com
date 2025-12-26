@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat } from 'lucide-react'
+import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat, Star, Heart } from 'lucide-react'
 
 const FilterSection = ({ title, children }) => (
   <div className="mb-6">
@@ -82,6 +82,7 @@ export const RecipeFilters = ({
                 { id: 'alpha', label: 'Alphabetical', icon: ArrowDownAZ },
                 { id: 'recent', label: 'Most Recent', icon: Calendar },
                 { id: 'time', label: 'Shortest Time', icon: Clock },
+                { id: 'rating', label: 'Highest Rated', icon: Star },
               ].map((opt) => (
                 <button
                   key={opt.id}
@@ -97,6 +98,15 @@ export const RecipeFilters = ({
                 </button>
               ))}
             </div>
+          </FilterSection>
+
+          {/* Special Filters */}
+          <FilterSection title="Show">
+             <FilterChip
+                label="Favorites Only"
+                active={filters.onlyFavorites}
+                onClick={() => setFilters(prev => ({ ...prev, onlyFavorites: !prev.onlyFavorites }))}
+             />
           </FilterSection>
 
           {/* Protein */}

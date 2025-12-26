@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
-import { Clock, Users, ChefHat, ChevronDown, Calendar, Star } from 'lucide-react'
+import { Clock, Users, ChefHat, ChevronDown, Calendar, Star, Heart, Check } from 'lucide-react'
 
-const LibraryRecipeCard = ({ recipe, onClick, onToggleThisWeek, 'data-testid': testId }) => (
+const LibraryRecipeCard = ({ recipe, onClick, onToggleThisWeek, 'data-testid': testId, isSelectionMode, isSelected }) => (
   <div
     data-testid={testId}
     className={`group relative flex w-full flex-col overflow-hidden rounded-md-l border bg-md-sys-color-surface text-left shadow-md-1 transition-all hover:shadow-md-2 ${
@@ -10,12 +10,20 @@ const LibraryRecipeCard = ({ recipe, onClick, onToggleThisWeek, 'data-testid': t
         : 'border-md-sys-color-outline'
     }`}
   >
-    <button onClick={onClick} className="flex h-full w-full flex-1 flex-col text-left">
+    <button onClick={onClick} className="flex h-full w-full flex-1 flex-col text-left relative">
+        {isSelectionMode && (
+          <div className="absolute top-2 left-2 z-20">
+             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-md-sys-color-primary border-md-sys-color-primary' : 'bg-white/80 border-gray-400'}`}>
+                {isSelected && <Check className="w-4 h-4 text-md-sys-color-on-primary" />}
+             </div>
+          </div>
+       )}
       {recipe.sourceImage && (
         <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
           <img
             src={recipe.sourceImage}
             alt={recipe.title}
+            loading="lazy"
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
           />
         </div>
@@ -27,6 +35,9 @@ const LibraryRecipeCard = ({ recipe, onClick, onToggleThisWeek, 'data-testid': t
               <span className="inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
                 {recipe.protein}
               </span>
+            )}
+            {recipe.isFavorite && (
+               <Heart className="h-4 w-4 fill-red-500 text-red-500" />
             )}
             {recipe.thisWeek && (
               <span className="inline-flex items-center gap-1 rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
@@ -98,13 +109,13 @@ const AccordionGroup = ({ title, count, children, isOpen, onToggle }) => (
       }`}
     >
       <div className="overflow-hidden">
-        <div className="grid grid-cols-2 gap-4 p-4 pb-8">{children}</div>
+        <div className="grid grid-cols-1 gap-4 p-4 pb-8 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
       </div>
     </div>
   </div>
 )
 
-export const RecipeLibrary = ({ recipes, onSelectRecipe, onToggleThisWeek, sort }) => {
+export const RecipeLibrary = ({ recipes, onSelectRecipe, onToggleThisWeek, sort, isSelectionMode, selectedIds }) => {
   const [openGroups, setOpenGroups] = useState({})
 
   const toggleGroup = (groupName) => {
@@ -197,6 +208,8 @@ export const RecipeLibrary = ({ recipes, onSelectRecipe, onToggleThisWeek, sort 
               onClick={() => onSelectRecipe(recipe)}
               onToggleThisWeek={onToggleThisWeek}
               data-testid={`recipe-card-${recipe.id}`}
+              isSelectionMode={isSelectionMode}
+              isSelected={selectedIds?.has(recipe.id)}
             />
           ))}
         </AccordionGroup>

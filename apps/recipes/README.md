@@ -7,6 +7,9 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 
 ## 🚀 Core Features
 
+- **PWA Experience**: Installable on mobile with offline support.
+- **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes.
+- **Data Control**: Export/Import your data and manage bulk deletions.
 - **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
 - **Shared Family Collection**: All recipes are stored in Cloudflare KV and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
@@ -60,6 +63,7 @@ npm run test:e2e
 
 2. **Environment Setup**:
    Copy `.env.local.example` to `.env.local` and add your `GEMINI_API_KEY`.
+
    > **Production Note**: For the live site, the `GEMINI_API_KEY` is configured in **Cloudflare Pages Environment Variables**.
 
 3. **Development**:

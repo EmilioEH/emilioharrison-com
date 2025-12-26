@@ -65,11 +65,24 @@ const user = Astro.cookies.get('site_user')?.value
               class="opacity-80 hover:underline hover:opacity-100"
             >
               Log Out
-            </a>
           </div>
         )
       }
       <slot />
     </div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/protected/recipes/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration)
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError)
+            })
+        })
+      }
+    </script>
   </body>
 </html>

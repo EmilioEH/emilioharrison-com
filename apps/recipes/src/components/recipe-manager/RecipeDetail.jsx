@@ -18,7 +18,9 @@ import {
   RotateCcw,
   Play,
   CheckCircle2,
+  Heart,
 } from 'lucide-react'
+import { StarRating } from '../ui/StarRating'
 
 // Wake Lock Helper
 const useWakeLock = (enabled) => {
@@ -83,6 +85,15 @@ const DetailHeader = ({
       >
         {cookingMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
       </button>
+      
+      <button
+        onClick={() => onAction('toggleFavorite')}
+        className={`rounded-full border p-2 transition ${recipe.isFavorite ? 'border-red-200 bg-red-50 text-red-500' : 'border-transparent text-md-sys-color-on-surface-variant hover:text-red-500'}`}
+        title={recipe.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      >
+        <Heart className={`h-5 w-5 ${recipe.isFavorite ? 'fill-red-500' : ''}`} />
+      </button>
+
       <div className="group relative">
         <button className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 text-md-sys-color-on-surface-variant">
           <MoreHorizontal className="h-6 w-6" />
@@ -143,21 +154,21 @@ const CheckableItem = ({ text, isChecked, onToggle, largeText }) => {
   )
 }
 
-const StarRating = ({ rating, setRating }) => (
-  <div className="flex gap-2">
-    {[1, 2, 3, 4, 5].map((s) => (
-      <button
-        key={s}
-        onClick={() => setRating(s)}
-        className="p-1 transition-transform active:scale-90"
-      >
-        <Star
-          className={`h-8 w-8 ${s <= rating ? 'fill-md-sys-color-primary text-md-sys-color-primary' : 'text-md-sys-color-outline'}`}
-        />
-      </button>
-    ))}
-  </div>
-)
+// const StarRating = ({ rating, setRating }) => (
+//   <div className="flex gap-2">
+//     {[1, 2, 3, 4, 5].map((s) => (
+//       <button
+//         key={s}
+//         onClick={() => setRating(s)}
+//         className="p-1 transition-transform active:scale-90"
+//       >
+//         <Star
+//           className={`h-8 w-8 ${s <= rating ? 'fill-md-sys-color-primary text-md-sys-color-primary' : 'text-md-sys-color-outline'}`}
+//         />
+//       </button>
+//     ))}
+//   </div>
+// )
 
 export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThisWeek }) => {
   const [cookingMode, setCookingMode] = useState(false)
@@ -192,8 +203,18 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
     } else if (action === 'addToWeek') {
       onUpdate({ ...recipe, thisWeek: !recipe.thisWeek }, 'save')
     } else if (action === 'move') {
-      onUpdate({ ...recipe }, 'edit')
+      onUpdate({ ...recipe }, 'edit') // Simply go to edit to change protein
+    } else if (action === 'toggleFavorite') {
+      onUpdate({ ...recipe, isFavorite: !recipe.isFavorite }, 'save')
+    } else if (action === 'rate') {
+      // action is actually the rating value here if passed directly, 
+      // but let's handle it via a separate handler or modifying this one.
+      // Retaining this block just in case, but will use direct onUpdate in render.
     }
+  }
+
+  const handleRate = (rating) => {
+    onUpdate({ ...recipe, rating }, 'save')
   }
 
   const handleFinishCooking = () => {
@@ -419,6 +440,13 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
                   <Flame className="h-4 w-4 text-md-sys-color-primary" />
                   <span>{recipe.difficulty || 'Easy'}</span>
                 </div>
+                {recipe.updatedAt && (
+                  <div className="flex items-center gap-1 sm:ml-auto" title="Last Modified">
+                    <span className="text-xs opacity-70">
+                      Updated {new Date(recipe.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -447,6 +475,14 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
                 )}
               </div>
             )}
+
+
+              
+              <div className="mt-4 flex items-center justify-between">
+                 <StarRating rating={recipe.rating || 0} onRate={handleRate} size="lg" />
+                 {/* Placeholder for future specific rating text or count */}
+              </div>
+
 
             {/* Ingredients */}
             <div className="mb-8">

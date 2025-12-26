@@ -28,8 +28,19 @@ export interface Recipe {
   }
   // Structured ingredients for grocery list generation (Hybrid Approach)
   structuredIngredients?: StructuredIngredient[]
+
+  // Phase 7: Advanced Features
+  rating?: number // 1-5
+  isFavorite?: boolean
+  createdAt?: string // ISO Date
+  updatedAt?: string // ISO Date
+  // Optional: keep track of simplified history
+  versionHistory?: {
+    date: string
+    changeType: 'create' | 'edit' | 'import'
+  }[]
   // Post-cooking feedback
-  rating?: number
+
   userNotes?: string
   wouldMakeAgain?: boolean
   lastCooked?: string // ISO date

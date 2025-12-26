@@ -75,8 +75,8 @@ Rules:
     )
 
     if (!response.ok) {
-        const errText = await response.text()
-        throw new Error(`Gemini API Failed: ${response.status} ${errText}`)
+      const errText = await response.text()
+      throw new Error(`Gemini API Failed: ${response.status} ${errText}`)
     }
 
     const data = await response.json()
