@@ -574,8 +574,7 @@ const RecipeManager = () => {
     } else {
       setRecipes([...recipes, recipe])
     }
-    setView('library')
-    setSelectedRecipe(null)
+    // Removed side-effects (setView and setSelectedRecipe) to allow more flexible usage
   }
 
   const handleDeleteRecipe = (id) => {
@@ -712,6 +711,11 @@ const RecipeManager = () => {
   const processedRecipes = React.useMemo(() => {
     let result = [...recipes]
 
+    // View Mode Filter (Library vs Week)
+    if (view === 'week') {
+      result = result.filter((r) => r.thisWeek)
+    }
+
     // Search
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -757,7 +761,7 @@ const RecipeManager = () => {
     })
 
     return result
-  }, [recipes, searchQuery, filters, sort])
+  }, [recipes, searchQuery, filters, sort, view])
 
   // Selection Logic
   const toggleSelection = (id) => {
@@ -934,40 +938,75 @@ const RecipeManager = () => {
       />
 
       <main className="relative flex-1 overflow-hidden">
-        {view === 'library' && (
-          <div className="scrollbar-hide h-full overflow-y-auto">
-            {/* Selection Trigger (FAB or similiar? Or maybe integrated into library header if we had one) */}
-            {/* For now, let's allow entering selection mode via Long Press (simulated by a button in Settings? Or a dedicated button) */}
-            {/* Let's add a "Select" button to header? No header is full. */}
-            {/* Let's double click to select? Or just add a small "Select" button in the library view if not empty */}
-
-            {!isSelectionMode && recipes.length > 0 && (
-              <div className="flex justify-end px-4 pt-2">
-                <button
-                  onClick={() => setIsSelectionMode(true)}
-                  className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary"
+        {(view === 'library' || view === 'week') && (
+          <div className="flex h-full flex-col">
+            {/* Tab Switcher */}
+            <div className="flex border-b border-md-sys-color-outline bg-md-sys-color-surface px-6">
+              <button
+                onClick={() => setView('library')}
+                className={`mr-6 flex items-center gap-2 border-b-2 py-4 text-sm font-bold transition-colors ${
+                  view === 'library'
+                    ? 'border-md-sys-color-primary text-md-sys-color-primary'
+                    : 'border-transparent text-md-sys-color-on-surface-variant hover:text-md-sys-color-on-surface'
+                }`}
+              >
+                <ChefHat className="h-4 w-4" />
+                Library
+                <span className="ml-1 rounded-full bg-md-sys-color-surface-variant px-2 py-0.5 text-xs text-md-sys-color-on-surface-variant">
+                  {recipes.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setView('week')}
+                className={`flex items-center gap-2 border-b-2 py-4 text-sm font-bold transition-colors ${
+                  view === 'week'
+                    ? 'border-md-sys-color-primary text-md-sys-color-primary'
+                    : 'border-transparent text-md-sys-color-on-surface-variant hover:text-md-sys-color-on-surface'
+                }`}
+              >
+                <Calendar className="h-4 w-4" />
+                This Week
+                <span
+                  className={`ml-1 rounded-full px-2 py-0.5 text-xs ${
+                    view === 'week'
+                      ? 'bg-md-sys-color-primary text-md-sys-color-on-primary'
+                      : 'bg-md-sys-color-surface-variant text-md-sys-color-on-surface-variant'
+                  }`}
                 >
-                  Select Recipes
-                </button>
-              </div>
-            )}
+                  {recipes.filter((r) => r.thisWeek).length}
+                </span>
+              </button>
+            </div>
 
-            <RecipeLibrary
-              recipes={processedRecipes}
-              sort={sort}
-              onSelectRecipe={(r) => {
-                if (isSelectionMode) {
-                  toggleSelection(r.id)
-                } else {
-                  setSelectedRecipe(r)
-                  setView('detail')
-                }
-              }}
-              onToggleThisWeek={handleToggleThisWeek}
-              isSelectionMode={isSelectionMode}
-              selectedIds={selectedIds}
-              onToggleSelection={toggleSelection}
-            />
+            <div className="scrollbar-hide flex-1 overflow-y-auto">
+              {!isSelectionMode && view === 'library' && recipes.length > 0 && (
+                <div className="flex justify-end px-4 pt-2">
+                  <button
+                    onClick={() => setIsSelectionMode(true)}
+                    className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary"
+                  >
+                    Select Recipes
+                  </button>
+                </div>
+              )}
+
+              <RecipeLibrary
+                recipes={processedRecipes}
+                sort={sort}
+                onSelectRecipe={(r) => {
+                  if (isSelectionMode) {
+                    toggleSelection(r.id)
+                  } else {
+                    setSelectedRecipe(r)
+                    setView('detail')
+                  }
+                }}
+                onToggleThisWeek={handleToggleThisWeek}
+                isSelectionMode={isSelectionMode}
+                selectedIds={selectedIds}
+                onToggleSelection={toggleSelection}
+              />
+            </div>
           </div>
         )}
         {view === 'detail' && (
@@ -984,7 +1023,10 @@ const RecipeManager = () => {
           <div className="h-full overflow-y-auto p-4">
             <RecipeEditor
               recipe={selectedRecipe || {}}
-              onSave={handleSaveRecipe}
+              onSave={(r) => {
+                handleSaveRecipe(r)
+                setView('library')
+              }}
               onCancel={() => setView('library')}
               onDelete={handleDeleteRecipe}
             />

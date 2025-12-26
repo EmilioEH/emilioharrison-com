@@ -1,4 +1,5 @@
 /// <reference types="vitest" />
+import { configDefaults } from 'vitest/config'
 import { getViteConfig } from 'astro/config'
 
 export default getViteConfig({
@@ -12,6 +13,6 @@ export default getViteConfig({
       include: ['src/**/*.{js,jsx,ts,tsx,astro}'],
       exclude: ['src/env.d.ts', 'src/content/config.ts', 'tests/**', '**/*.spec.ts'],
     },
-    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
+    exclude: [...configDefaults.exclude, '**/tests/*.spec.ts', '**/node_modules/**', '**/dist/**'],
   },
 })

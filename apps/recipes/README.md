@@ -27,6 +27,11 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [KV](https://www.cloudflare.com/products/workers-kv/)
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
+- **AI Standards**:
+  - [Gemini API Guide](file:///Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/docs/technical/gemini-api-guide.md)
+  - [Recipe Data Schema](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/recipe-schema.md)
+  - [Grocery Logic Standards](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/grocery-logic.md)
+  - [Sync & Persistence Standards](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/sync-standards.md)
 
 ## 🚦 The Quality Gate
 
@@ -57,8 +62,6 @@ npm run test:unit
 npm run test:e2e
 # Runs: Playwright E2E tests to verify the core user journey
 ```
-
-
 
 ## 💻 Getting Started
 
