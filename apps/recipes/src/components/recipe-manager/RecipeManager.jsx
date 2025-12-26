@@ -18,6 +18,7 @@ import {
 
 import { generateGroceryList } from './grocery-utils'
 import { RecipeInput } from '../RecipeInput'
+import ReactMarkdown from 'react-markdown'
 
 const RECIPES_API_URL = '/protected/recipes/api/user-data'
 
@@ -173,7 +174,7 @@ const GroceryView = ({ isGenerating, groceryList, onClose }) => (
       </div>
     ) : (
       <div className="prose prose-sm max-w-none rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-6 font-body text-md-sys-color-on-surface shadow-md-1">
-        <div dangerouslySetInnerHTML={{ __html: groceryList.replace(/\n/g, '<br/>') }} />
+        <ReactMarkdown>{groceryList}</ReactMarkdown>
       </div>
     )}
   </div>
@@ -437,6 +438,7 @@ const RecipeManager = () => {
   // Grocery
   const [groceryList, setGroceryList] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [lastGeneratedIds, setLastGeneratedIds] = useState(null) // Cache key: sorted recipe IDs
 
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState(null) // { protein: string, count: number }
@@ -497,7 +499,9 @@ const RecipeManager = () => {
     handleUpdateRecipe({ ...recipe, thisWeek: willBeInWeek })
   }
 
-  const handleGenerateList = async () => {
+  const handleGenerateList = async (forceRegenerate) => {
+    const shouldRegenerate = forceRegenerate === true
+
     // Determine if we should prioritize "This Week"
     const thisWeekRecipes = recipes.filter((r) => r.thisWeek)
     let recipesToShop = thisWeekRecipes
@@ -522,11 +526,20 @@ const RecipeManager = () => {
       recipesToShop = recipes
     }
 
+    // Optimization: Check cache
+    const currentIds = recipesToShop.map(r => r.id).sort().join(',')
+    
+    if (!shouldRegenerate && groceryList && lastGeneratedIds === currentIds) {
+      setView('grocery')
+      return
+    }
+
     setIsGenerating(true)
     setView('grocery')
 
     const list = await generateGroceryList(recipesToShop)
     setGroceryList(list)
+    setLastGeneratedIds(currentIds)
     setIsGenerating(false)
   }
 
