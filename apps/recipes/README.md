@@ -19,6 +19,7 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 - **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
+- **Feedback System**: Directly submit bug reports and enhancement ideas from the dashboard. Captured reports include screenshots, console logs, and application state to help developers/agents solve issues faster.
 
 ## 🛠 Tech Stack
 
@@ -62,6 +63,16 @@ npm run test:unit
 npm run test:e2e
 # Runs: Playwright E2E tests to verify the core user journey
 ```
+
+### Processing Feedback
+
+To review user bugs and enhancement ideas, sync them from the live environment to this repository:
+
+```bash
+npx tsx scripts/sync-feedback.ts
+```
+
+Synced reports will be available in `docs/feedback/active-reports.md`.
 
 ## 💻 Getting Started
 

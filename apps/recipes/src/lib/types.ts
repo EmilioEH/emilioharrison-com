@@ -53,3 +53,20 @@ export interface StructuredIngredient {
   unit: string
   category: string
 }
+
+export interface Feedback {
+  id: string
+  timestamp: string
+  type: 'bug' | 'idea'
+  description: string
+  expected?: string // For bugs
+  actual?: string // For bugs
+  screenshot?: string // Base64 string
+  logs: string[] // Recent console errors
+  context: {
+    url: string
+    userAgent: string
+    user: string
+    appState: string // Serialized JSON of recipes/selections
+  }
+}

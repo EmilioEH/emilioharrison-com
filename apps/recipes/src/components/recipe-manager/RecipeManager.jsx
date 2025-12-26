@@ -17,10 +17,12 @@ import {
   Settings,
   Download,
   Upload,
+  MessageSquare,
 } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
 import { RecipeInput } from '../RecipeInput'
+import { FeedbackModal } from './FeedbackModal'
 import ReactMarkdown from 'react-markdown'
 
 const RECIPES_API_URL = '/protected/recipes/api/user-data'
@@ -158,6 +160,7 @@ const RecipeHeader = ({
   onAddManual,
   onOpenFilters,
   onOpenSettings,
+  onOpenFeedback,
   isSelectionMode,
   selectedCount,
   onCancelSelection,
@@ -217,6 +220,14 @@ const RecipeHeader = ({
             title="Settings"
           >
             <Settings className="h-5 w-5" />
+          </button>
+
+          <button
+            onClick={onOpenFeedback}
+            className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
+            title="Feedback"
+          >
+            <MessageSquare className="h-5 w-5" />
           </button>
 
           <div className="mx-1 h-9 w-px bg-gray-200"></div>
@@ -551,6 +562,7 @@ const RecipeManager = () => {
   const { recipes, setRecipes, loading, syncStatus } = useRecipes()
   const [view, setView] = useState('library') // 'library', 'detail', 'edit', 'grocery', 'ai-add'
   const [selectedRecipe, setSelectedRecipe] = useState(null)
+  const [showFeedback, setShowFeedback] = useState(false)
 
   // Filtering & Sorting State
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -927,6 +939,7 @@ const RecipeManager = () => {
         }}
         onOpenFilters={() => setFiltersOpen(true)}
         onOpenSettings={() => setView('settings')}
+        onOpenFeedback={() => setShowFeedback(true)}
         // Selection Props
         isSelectionMode={isSelectionMode}
         selectedCount={selectedIds.size}
@@ -1037,6 +1050,12 @@ const RecipeManager = () => {
           <GroceryList ingredients={groceryItems} onClose={() => setView('library')} />
         )}
       </main>
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        appState={{ recipes, selectedRecipe, sort, filters }}
+        user={null} // TODO: Pass real user if available
+      />
     </div>
   )
 }
