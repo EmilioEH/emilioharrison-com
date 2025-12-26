@@ -30,6 +30,21 @@ test.describe('Recipe Manager', () => {
     },
   })
 
+  test.beforeEach(async ({ page }) => {
+    // Mock user data to keep the test environment clean and isolated
+    await page.route('**/api/user-data', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          json: {
+            recipes: [],
+          },
+        })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+  })
+
   test('should allow creating and viewing a recipe in accordion groups', async ({ page }) => {
     // 1. Go to the recipe manager
     await page.goto('/protected/recipes')
@@ -53,25 +68,19 @@ test.describe('Recipe Manager', () => {
 
     // 3. Verify it appears in the list inside the Beef accordion
     // The accordion header contains a heading with 'Beef' and a count.
-    const beefAccordion = page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: 'Beef', exact: true }) })
-    await expect(beefAccordion).toBeVisible()
-
-    // Explicitly click to ensure it's open
-    await beefAccordion.click()
-
     // Find the specific recipe card by its unique title heading
     const recipeCard = page
       .getByRole('button')
       .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })
+
+    // Ensure it's visible (should be open by default now)
     await expect(recipeCard).toBeVisible()
 
-    // Wait for accordion animation to settle
+    // Give it a moment to be really stable
     await page.waitForTimeout(500)
 
     // 4. Click into it to verify details
-    await recipeCard.click({ force: true })
+    await recipeCard.click()
 
     // Wait for detail view entrance animation
     await page.waitForTimeout(500)

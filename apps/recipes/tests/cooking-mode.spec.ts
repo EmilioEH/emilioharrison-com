@@ -29,6 +29,21 @@ test.describe('Recipe Cooking Mode', () => {
     },
   })
 
+  test.beforeEach(async ({ page }) => {
+    // Mock user data to keep the test environment clean and isolated
+    await page.route('**/api/user-data', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          json: {
+            recipes: [],
+          },
+        })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+  })
+
   test('should navigate through full cooking mode lifecycle', async ({ page }) => {
     await page.goto('/protected/recipes')
 
@@ -41,14 +56,15 @@ test.describe('Recipe Cooking Mode', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open the recipe
-    // Since we didn't set a protein, it will be in "Uncategorized"
-    const uncategorizedGroup = page.getByRole('button').filter({ hasText: 'Uncategorized' })
-    if (await uncategorizedGroup.isVisible()) {
-      await uncategorizedGroup.click()
-    }
+    // Find the specific recipe card by its unique title heading
+    const recipeCard = page
+      .getByRole('button')
+      .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })
 
-    // Use force click because the library has an entrance animation that might intercept pointer events
-    await page.getByRole('button').filter({ hasText: testTitle }).first().click({ force: true })
+    // Ensure it's visible (should be open by default now)
+    await expect(recipeCard).toBeVisible()
+    await page.waitForTimeout(500)
+    await recipeCard.click()
 
     // 3. Enter Cooking Mode (Starts with Pre-cooking)
     // Wait for the detail view to be stable
@@ -89,14 +105,9 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByText('CHEFBOARD')).toBeVisible()
 
     // Re-open and check notes/rating
-    // Ensure the group is open again (Uncategorized)
-    const uncategorizedGroup2 = page.getByRole('button').filter({ hasText: 'Uncategorized' })
-    // If it's visible but not expanded (we can check aria-expanded if available, but simplest is to click if found)
-    // Actually, in our case, if it's visible it might be closed. Clicking it again is safer if we wait for it.
-    await uncategorizedGroup2.scrollIntoViewIfNeeded()
-    await uncategorizedGroup2.click({ force: true })
-
-    await page.getByRole('button').filter({ hasText: testTitle }).first().click({ force: true })
+    await expect(recipeCard).toBeVisible()
+    await page.waitForTimeout(500)
+    await recipeCard.click()
     await expect(page.getByText('Delicious and fluffy!')).toBeVisible()
     // Check if 4 stars are visible in the preview section
     const previewStars = page.locator(

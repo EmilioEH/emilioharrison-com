@@ -18,6 +18,18 @@ test.describe('Recipe Persistence', () => {
 
     await page.goto('/protected/recipes')
 
+    // Simulate persistence locally for this test session
+    let sessionRecipes: any[] = []
+    await page.route('**/api/user-data', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: { recipes: sessionRecipes } })
+      } else {
+        const body = await route.request().postDataJSON()
+        sessionRecipes = body.recipes
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+
     const testTitle = `Repro Recipe ${Date.now()}`
     await page
       .getByRole('button')

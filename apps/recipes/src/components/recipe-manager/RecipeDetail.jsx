@@ -95,7 +95,10 @@ const DetailHeader = ({
       </button>
 
       <div className="group relative">
-        <button className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 text-md-sys-color-on-surface-variant">
+        <button
+          className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 text-md-sys-color-on-surface-variant"
+          aria-label="More Options"
+        >
           <MoreHorizontal className="h-6 w-6" />
         </button>
         {/* Dropdown Menu */}
@@ -230,6 +233,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
     )
     setCookingStage('idle')
     setCookingMode(false)
+    onClose()
   }
 
   const renderContent = () => {
@@ -355,7 +359,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
               <span className="text-xs font-bold uppercase tracking-widest text-md-sys-color-on-surface-variant">
                 Rating
               </span>
-              <StarRating rating={rating} setRating={setRating} />
+              <StarRating rating={rating} onRate={setRating} />
             </div>
 
             <div className="space-y-2">

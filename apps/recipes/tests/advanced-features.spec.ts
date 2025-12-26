@@ -30,6 +30,21 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     },
   })
 
+  test.beforeEach(async ({ page }) => {
+    // Mock user data to keep the test environment clean and isolated
+    await page.route('**/api/user-data', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          json: {
+            recipes: [], // Start with empty library for these tests
+          },
+        })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+  })
+
   test('should allow favoriting a recipe and filtering by favorites', async ({ page }) => {
     await page.goto('/protected/recipes')
 
@@ -41,14 +56,13 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open it
-    await page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: 'Other', exact: true }) })
-      .click()
-    const card = page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: title }) })
+    const card = page.getByRole('button').filter({ hasText: title }).first()
+    await expect(card).toBeVisible()
+    await page.waitForTimeout(1000)
     await card.click()
+
+    // Ensure detail view is open
+    await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
     // 3. Toggle Favorite (Heart icon in header)
     // Find the heart button. It has title "Add to Favorites"
@@ -91,31 +105,26 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open it
-    await page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: 'Other', exact: true }) })
-      .click()
-    const card = page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: title }) })
+    const card = page.getByRole('button').filter({ hasText: title }).first()
+    await expect(card).toBeVisible()
+    await page.waitForTimeout(1000)
     await card.click()
+
+    // Ensure detail view is open
+    await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
     // 3. Rate it 5 stars
     // The star rating component renders buttons with aria-label="Rate X stars"
     await page.getByRole('button', { name: 'Rate 5 stars' }).click()
 
+    // Allow state to settle
+    await page.waitForTimeout(1000)
+
     // 4. Close detail
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 5. Verify rating on card
-    // The card should show "5"
-    // const cardContent = page.getByTestId(`recipe-card-${title}`)
-    // Since we don't know the ID, we search by text.
-    // The rating is displayed next to a star icon.
-    // We can assume the text "5" is visible within the card.
     await expect(card.getByText('5', { exact: true })).toBeVisible()
-
-    // 6. Test styling? (optional)
   })
 
   test('should update modification date on edit', async ({ page }) => {
@@ -127,26 +136,24 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByLabel('Protein').selectOption('Chicken')
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // 2. Open
-    await page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: 'Chicken', exact: true }) })
-      .click()
-    const card = page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: title }) })
+    // 2. Open it
+    const card = page.getByRole('button').filter({ hasText: title }).first()
+    await expect(card).toBeVisible()
+    await page.waitForTimeout(1000)
     await card.click()
 
-    // 3. Check "Updated" text exists (might be "Updated today" or date)
-    // New recipes set updatedAt to created time, so it should be visible if we implemented the check `recipe.updatedAt`.
-    // Our implementation shows it if it exists.
-    // Wait, we need to make sure the date format matches local date string.
+    // Ensure detail view is open
+    await expect(page.getByRole('heading', { name: title })).toBeVisible()
+
+    // 3. Check "Updated" text exists
     const today = new Date().toLocaleDateString()
     await expect(page.getByText(`Updated ${today}`)).toBeVisible()
 
     // 4. Edit
-    // Click Menu -> Edit
-    await page.locator('button:has(svg.lucide-more-horizontal)').click()
+    // Open More Options and click Edit
+    const moreBtn = page.getByRole('button', { name: 'More Options' })
+    await expect(moreBtn).toBeVisible()
+    await moreBtn.hover()
     await page.getByRole('button', { name: 'Edit Recipe' }).click()
 
     // Change title
@@ -154,8 +161,18 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByLabel('Title').fill(newTitle)
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // 5. Verify Title updated
+    // Allow saving and closing
+    await page.waitForTimeout(1000)
+
+    // 5. Verify Title updated in library
     await expect(page.getByRole('heading', { name: newTitle })).toBeVisible()
+
+    // 6. Re-open to verify "Updated" date in Detail View
+    const newCard = page
+      .getByRole('button')
+      .filter({ has: page.getByRole('heading', { name: newTitle }) })
+    await newCard.click()
+
     // Date should still be today.
     await expect(page.getByText(`Updated ${today}`)).toBeVisible()
   })

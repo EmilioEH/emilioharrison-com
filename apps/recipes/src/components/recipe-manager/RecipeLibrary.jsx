@@ -191,10 +191,13 @@ export const RecipeLibrary = ({
     return { groups, sortedKeys }
   }, [recipes, sort])
 
-  // Effect to open the first group by default if none are open
   React.useEffect(() => {
     if (Object.keys(openGroups).length === 0 && groupedRecipes.sortedKeys.length > 0) {
-      setOpenGroups({ [groupedRecipes.sortedKeys[0]]: true })
+      const allOpen = {}
+      groupedRecipes.sortedKeys.forEach((key) => {
+        allOpen[key] = true
+      })
+      setOpenGroups(allOpen)
     }
   }, [groupedRecipes.sortedKeys, openGroups])
 

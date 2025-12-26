@@ -31,6 +31,23 @@ test.describe('Feedback System', () => {
   })
 
   test.beforeEach(async ({ page }) => {
+    // Mock user data to keep the page light and stable
+    await page.route('**/api/user-data', async (route) => {
+      await route.fulfill({
+        json: {
+          recipes: [
+            {
+              id: '1',
+              title: 'Test Recipe',
+              protein: 'Chicken',
+              ingredients: [],
+              steps: [],
+            },
+          ],
+        },
+      })
+    })
+
     await page.goto('/protected/recipes')
     // Wait for the app UI to stabilize - 'Add Recipe' button is more reliable for interaction checks
     await expect(page.getByRole('button', { name: 'Add Recipe' })).toBeVisible({ timeout: 15000 })
@@ -47,8 +64,8 @@ test.describe('Feedback System', () => {
     )
 
     // 3. Fill out bug details
-    await page.getByPlaceholder('What happened? (Actual)').fill('Search button is frozen')
-    await page.getByPlaceholder('What did you expect?').fill('Expected results to show')
+    await page.getByLabel('What happened? (Actual)').fill('Search button is frozen')
+    await page.getByLabel('What did you expect?').fill('Expected results to show')
 
     // 4. Submit
     await page.getByRole('button', { name: 'Send Feedback' }).click()
@@ -70,7 +87,7 @@ test.describe('Feedback System', () => {
 
     // 3. Fill out idea
     await page
-      .getByPlaceholder('Tell us about your idea')
+      .getByLabel('Tell us about your idea')
       .fill('Add a unit converter for international recipes')
 
     // 4. Submit

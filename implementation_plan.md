@@ -1,25 +1,32 @@
-# Implementation Plan: Fix Git Repository Corruption
+# Implementation Plan - Git Repository Health Check
 
 ## User Story
 
-**As Emilio**, I want to recover my Git repository from corruption so that I can continue my work without these "missing tree" errors blocking my progress.
-
-## Problem Description
-
-The Git repository is reporting a `fatal: unable to read tree` error. This happens when the database Git uses to track folders (trees) becomes damaged or missing, often due to an interrupted save or a disk problem.
-
-## Proposed Solution
-
-We will attempt to repair the repository by re-syncing with the remote server on GitHub and rebuilding the local index.
-
-## Steps
-
-1. [x] **Investigation:** Run `git fsck` to identify missing objects (Multiple missing trees found).
-2. [ ] **Force Fetch:** Attempt to download all history from the remote to fill in the gaps.
-3. [ ] **Reset Index:** If still broken, remove the local index file and reset to the latest known good state.
-4. [ ] **Verification:** Run `git status` and `git fsck` to ensure the repository is healthy.
+**As a developer (Emilio)**, I want to ensure that my Git repository is still fully functional and healthy after moving the directory so that I can continue working without disruption.
 
 ## Quality Gate Tools
 
-- `git fsck --full` (Integrity check)
-- `git status` (Functional check)
+- **Safety Checks:** `npm run check:safety` (Verified as `npm run lint`, `npx tsc --noEmit`, etc.)
+- **User Journey Validation:** `npx playwright test`
+
+## Proposed Actions
+
+### Phase 1: Context & Verification
+
+- [x] Read `apps/recipes/README.md`.
+- [x] Check `git status` to ensure a clean working tree.
+- [x] Check `git remote -v` to verify remote connections.
+- [x] Run `git fsck` to check for object database corruption.
+
+### Phase 2: Functional Health
+
+- [ ] Run safety checks (`npm run check:safety`) to ensure file paths and scripts are intact.
+- [ ] Run a test commit/undo to verify Git write operations.
+
+### Phase 3: User Journey Validation
+
+- [ ] Run Playwright tests (`npx playwright test`) to ensure the move didn't impact the runtime environment or test configurations.
+
+### Phase 4: Final Confirmation
+
+- [ ] Report results to Emilio.
