@@ -34,7 +34,7 @@ const useWakeLock = (enabled) => {
   }, [enabled])
 }
 
-const DetailHeader = ({ recipe, onClose, onAction, cookingMode, setCookingMode }) => (
+const DetailHeader = ({ recipe, onClose, onAction, cookingMode, setCookingMode, onToggleThisWeek }) => (
   <div
     className={`sticky top-0 z-20 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
   >
@@ -62,7 +62,10 @@ const DetailHeader = ({ recipe, onClose, onAction, cookingMode, setCookingMode }
         {/* Dropdown Menu */}
         <div className="invisible absolute right-0 top-full z-30 mt-2 flex w-48 flex-col overflow-hidden rounded-md-m border border-md-sys-color-outline bg-md-sys-color-surface opacity-0 shadow-md-2 transition-all group-hover:visible group-hover:opacity-100">
           <button
-            onClick={() => onAction('addToWeek')}
+            onClick={() => {
+                if (onToggleThisWeek) onToggleThisWeek()
+                else onAction('addToWeek') // Fallback if prop not direct
+            }}
             className="hover:bg-md-sys-color-primary/[0.08] flex items-center gap-2 px-4 py-3 text-left text-sm font-medium"
           >
             <Calendar className="h-4 w-4" />{' '}
@@ -112,7 +115,7 @@ const CheckableItem = ({ text, isChecked, onToggle, largeText }) => {
   )
 }
 
-export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
+export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThisWeek }) => {
   const [cookingMode, setCookingMode] = useState(false)
 
   // Local state for checkboxes
@@ -152,6 +155,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete }) => {
         onAction={handleAction}
         cookingMode={cookingMode}
         setCookingMode={setCookingMode}
+        onToggleThisWeek={onToggleThisWeek}
       />
 
       <div className={`flex-1 overflow-y-auto pb-20 ${cookingMode ? 'px-4' : ''}`}>

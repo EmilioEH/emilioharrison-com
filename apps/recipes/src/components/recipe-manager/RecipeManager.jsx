@@ -11,6 +11,9 @@ import {
   Check,
   Sparkles,
   ListFilter,
+  Calendar,
+  AlertCircle,
+  X,
 } from 'lucide-react'
 
 import { generateGroceryList } from './grocery-utils'
@@ -435,6 +438,9 @@ const RecipeManager = () => {
   const [groceryList, setGroceryList] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
 
+  // Smart Suggestion State
+  const [proteinWarning, setProteinWarning] = useState(null) // { protein: string, count: number }
+
   const handleSaveRecipe = (recipe) => {
     if (recipes.find((r) => r.id === recipe.id)) {
       setRecipes(recipes.map((r) => (r.id === recipe.id ? recipe : r)))
@@ -466,11 +472,58 @@ const RecipeManager = () => {
     }
   }
 
+  const handleToggleThisWeek = (recipeId) => {
+    const recipe = recipes.find((r) => r.id === recipeId)
+    if (!recipe) return
+
+    const willBeInWeek = !recipe.thisWeek
+
+    // Smart Variety Logic
+    if (willBeInWeek && recipe.protein) {
+      const currentWeekRecipes = recipes.filter((r) => r.thisWeek)
+      // If we are adding the 4th+ recipe (so currently have 3+)
+      // And it matches a protein of an EXISTING this-week recipe
+      if (currentWeekRecipes.length >= 3) {
+        const sameProteinCount = currentWeekRecipes.filter((r) => r.protein === recipe.protein).length
+        if (sameProteinCount >= 1) {
+          // Trigger Warning
+          setProteinWarning({ protein: recipe.protein, count: sameProteinCount + 1 })
+          // Auto-dismiss after 5s
+          setTimeout(() => setProteinWarning(null), 5000)
+        }
+      }
+    }
+
+    handleUpdateRecipe({ ...recipe, thisWeek: willBeInWeek })
+  }
+
   const handleGenerateList = async () => {
+    // Determine if we should prioritize "This Week"
+    const thisWeekRecipes = recipes.filter((r) => r.thisWeek)
+    let recipesToShop = thisWeekRecipes
+
+    // If no recipes in This Week, use all recipes (legacy behavior? Or maybe none?)
+    // Requirement: "This Week folder shows 3+ recipes before allowing grocery list creation"
+    // Interpretation: If user Has selected recipes for this week, we MUST use them, AND there must be at least 3.
+    // If user has NOT selected any, maybe fallback to "All" or just show empty?
+    // Let's assume: If user has ANY "thisWeek" recipes, we enforce the 3+ rule on THEM.
+    // If ZERO "thisWeek" recipes, maybe we fallback to "All" or just do nothing.
+    // Let's implement strict "This Week" usage if ANY are selected.
+
+    if (thisWeekRecipes.length > 0) {
+      if (thisWeekRecipes.length < 3) {
+        alert('Please select at least 3 recipes for This Week to generate a grocery list.')
+        return
+      }
+      recipesToShop = thisWeekRecipes
+    } else {
+      // Fallback: If nothing selected for week, maybe allow generating for ALL (or user can filter manually first)
+      // For now, let's just default to "All" if nothing marked for week, for backward compatibility
+      recipesToShop = recipes
+    }
+
     setIsGenerating(true)
     setView('grocery')
-    const recipesToShop =
-      recipes.filter((r) => r.thisWeek).length > 0 ? recipes.filter((r) => r.thisWeek) : recipes
 
     const list = await generateGroceryList(recipesToShop)
     setGroceryList(list)
@@ -501,6 +554,9 @@ const RecipeManager = () => {
 
     // Sort
     result.sort((a, b) => {
+      // Always put "This Week" at top if sort is 'recent' (default-ish) or maybe a new 'Plan' sort?
+      // For now, let's keep standard sorts but maybe we visualize 'This Week' differently
+      
       if (sort === 'protein') {
         const pA = a.protein || 'Other'
         const pB = b.protein || 'Other'
@@ -533,6 +589,7 @@ const RecipeManager = () => {
         onClose={() => setView('library')}
         onUpdate={handleUpdateRecipe}
         onDelete={(id) => handleDeleteRecipe(id)}
+        onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
       />
     )
   }
@@ -564,6 +621,24 @@ const RecipeManager = () => {
 
   return (
     <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-md-sys-color-surface text-md-sys-color-on-surface shadow-md-3">
+      {/* Toast Warning */}
+      {proteinWarning && (
+        <div className="absolute left-4 right-4 top-20 z-50 flex animate-in slide-in-from-top-2 items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800 shadow-lg">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5" />
+            <div>
+              <p className="font-bold">Variety Check!</p>
+              <p className="text-sm">
+                You've selected {proteinWarning.count} {proteinWarning.protein} recipes this week.
+              </p>
+            </div>
+          </div>
+          <button onClick={() => setProteinWarning(null)}>
+            <X className="h-5 w-5 opacity-50 hover:opacity-100" />
+          </button>
+        </div>
+      )}
+
       <RecipeFilters
         isOpen={filtersOpen}
         onClose={() => setFiltersOpen(false)}
@@ -596,6 +671,7 @@ const RecipeManager = () => {
                 setSelectedRecipe(r)
                 setView('detail')
               }}
+              onToggleThisWeek={handleToggleThisWeek}
             />
           </div>
         )}
@@ -605,6 +681,7 @@ const RecipeManager = () => {
             onClose={() => setView('library')}
             onUpdate={handleSaveRecipe}
             onDelete={handleDeleteRecipe}
+            onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
           />
         )}
 

@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react'
-import { Clock, Users, ChefHat, ChevronDown } from 'lucide-react'
+import { Clock, Users, ChefHat, ChevronDown, Calendar } from 'lucide-react'
 
-const LibraryRecipeCard = ({ recipe, onClick, 'data-testid': testId }) => (
-  <button
-    onClick={onClick}
+const LibraryRecipeCard = ({ recipe, onClick, onToggleThisWeek, 'data-testid': testId }) => (
+  <div
     data-testid={testId}
-    className="group relative flex w-full flex-col overflow-hidden rounded-md-l border border-md-sys-color-outline bg-md-sys-color-surface text-left shadow-md-1 transition-all hover:shadow-md-2"
+    className={`group relative flex w-full flex-col overflow-hidden rounded-md-l border bg-md-sys-color-surface text-left shadow-md-1 transition-all hover:shadow-md-2 ${
+      recipe.thisWeek ? 'border-md-sys-color-primary ring-1 ring-md-sys-color-primary' : 'border-md-sys-color-outline'
+    }`}
   >
+    <button onClick={onClick} className="flex-1 text-left w-full h-full flex flex-col">
     {recipe.sourceImage && (
       <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
         <img
@@ -18,11 +20,18 @@ const LibraryRecipeCard = ({ recipe, onClick, 'data-testid': testId }) => (
     )}
     <div className="p-4">
       <div className="mb-2">
-        {recipe.protein && (
-          <span className="mb-1 inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
-            {recipe.protein}
-          </span>
-        )}
+        <div className="flex justify-between items-start mb-1">
+            {recipe.protein && (
+            <span className="inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
+                {recipe.protein}
+            </span>
+            )}
+            {recipe.thisWeek && (
+             <span className="inline-flex items-center gap-1 rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
+               <Calendar className="w-3 h-3" /> This Week
+             </span>
+            )}
+        </div>
         <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
           {recipe.title}
         </h3>
@@ -39,7 +48,22 @@ const LibraryRecipeCard = ({ recipe, onClick, 'data-testid': testId }) => (
         </div>
       </div>
     </div>
-  </button>
+    </button>
+    <button
+        onClick={(e) => {
+            e.stopPropagation()
+            onToggleThisWeek(recipe.id)
+        }}
+        className={`absolute top-2 right-2 p-2 rounded-full shadow-sm transition-colors z-10 ${
+            recipe.thisWeek
+                ? 'bg-md-sys-color-primary text-md-sys-color-on-primary hover:bg-md-sys-color-primary/90'
+                : 'bg-md-sys-color-surface-variant text-md-sys-color-on-surface-variant hover:bg-md-sys-color-secondary-container hover:text-md-sys-color-on-secondary-container'
+        }`}
+        title={recipe.thisWeek ? "Remove from This Week" : "Add to This Week"}
+    >
+        <Calendar className="w-4 h-4" />
+    </button>
+  </div>
 )
 
 const AccordionGroup = ({ title, count, children, isOpen, onToggle }) => (
@@ -72,7 +96,7 @@ const AccordionGroup = ({ title, count, children, isOpen, onToggle }) => (
   </div>
 )
 
-export const RecipeLibrary = ({ recipes, onSelectRecipe, sort }) => {
+export const RecipeLibrary = ({ recipes, onSelectRecipe, onToggleThisWeek, sort }) => {
   const [openGroups, setOpenGroups] = useState({})
 
   const toggleGroup = (groupName) => {
@@ -163,6 +187,7 @@ export const RecipeLibrary = ({ recipes, onSelectRecipe, sort }) => {
               key={recipe.id}
               recipe={recipe}
               onClick={() => onSelectRecipe(recipe)}
+              onToggleThisWeek={onToggleThisWeek}
               data-testid={`recipe-card-${recipe.id}`}
             />
           ))}
