@@ -60,6 +60,7 @@ npm run test:e2e
 
 2. **Environment Setup**:
    Copy `.env.local.example` to `.env.local` and add your `GEMINI_API_KEY`.
+   > **Production Note**: For the live site, the `GEMINI_API_KEY` is configured in **Cloudflare Pages Environment Variables**.
 
 3. **Development**:
    ```bash
