@@ -13,7 +13,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y'
  * - Scoped to src/ for faster linting
  */
 export default tseslint.config(
-  { ignores: ['dist', '.astro', 'node_modules', '**/*.astro', '.wrangler'] },
+  { ignores: ['dist', '.astro', 'node_modules', '**/*.astro', '.wrangler', '** 2.*', '** 2/**'] },
   {
     extends: [
       js.configs.recommended,

@@ -1,0 +1,59 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import BlogList from '../../components/features/blog/BlogList'
+import { getCollection } from 'astro:content'
+
+const allPosts = await getCollection('posts')
+
+const posts = allPosts
+  .filter((post) => {
+    // In development, show all posts
+    if (!import.meta.env.PROD) return true
+
+    // In production, filter out drafts
+    if (post.data.status === 'draft') return false
+
+    // In production, filter out scheduled posts that are in the future
+    if (post.data.status === 'scheduled') {
+      const publishDate = post.data.publishedDate || new Date(post.data.date)
+      return publishDate <= new Date()
+    }
+
+    return true
+  })
+  .sort((a, b) => {
+    const dateA = a.data.publishedDate || new Date(a.data.date)
+    const dateB = b.data.publishedDate || new Date(b.data.date)
+    return dateB.valueOf() - dateA.valueOf()
+  })
+
+const allTagsCollection = await getCollection('tags')
+const allCategoriesCollection = await getCollection('categories')
+
+const tagsMap = Object.fromEntries(allTagsCollection.map((t) => [t.id, t.data.name]))
+const categoriesMap = Object.fromEntries(allCategoriesCollection.map((c) => [c.id, c.data.name]))
+
+// Extract unique tags and categories (slugs)
+const allTags = [...new Set(posts.flatMap((post) => post.data.tags || []))].sort()
+const allCategories = [...new Set(posts.map((post) => post.data.category).filter(Boolean))].sort()
+
+// Get initial filters from URL (server-side for SEO/initial render if needed, but mainly client-side handled)
+const initialFilters = {
+  search: Astro.url.searchParams.get('search') || '',
+  tags: Astro.url.searchParams.get('tags') || '',
+  category: Astro.url.searchParams.get('category') || '',
+  sort: Astro.url.searchParams.get('sort') || 'newest',
+}
+---
+
+<Layout title="Field Notes | Emilio Harrison">
+  <BlogList
+    client:visible
+    posts={posts}
+    allTags={allTags}
+    allCategories={allCategories}
+    tagsMap={tagsMap}
+    categoriesMap={categoriesMap}
+    initialFilters={initialFilters}
+  />
+</Layout>
