@@ -646,6 +646,12 @@ const RecipeManager = () => {
       return
     }
 
+    // Enforce 3-recipe minimum for "This Week" planning to ensure efficient shopping
+    if (thisWeekRecipes.length > 0 && thisWeekRecipes.length < 3) {
+      alert('Please select at least 3 recipes to ensure efficient meal planning!')
+      return
+    }
+
     setView('grocery')
 
     // 1. Identify recipes missing structured data

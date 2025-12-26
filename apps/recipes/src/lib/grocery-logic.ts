@@ -1,6 +1,6 @@
 import type { StructuredIngredient } from './types'
 
-export interface GroceryCategory {
+interface GroceryCategory {
   name: string
   items: StructuredIngredient[]
 }

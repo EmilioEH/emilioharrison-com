@@ -12,6 +12,6 @@ export default getViteConfig({
       include: ['src/**/*.{js,jsx,ts,tsx,astro}'],
       exclude: ['src/env.d.ts', 'src/content/config.ts', 'tests/**', '**/*.spec.ts'],
     },
-    exclude: ['tests/**', 'node_modules/**', 'dist/**'],
+    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
   },
 })

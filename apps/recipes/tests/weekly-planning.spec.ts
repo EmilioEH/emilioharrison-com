@@ -103,16 +103,18 @@ test.describe('Weekly Meal Planning', () => {
     await page.locator('[data-testid="recipe-card-1"] button[title="Add to This Week"]').click()
 
     // Try generate
-    let alertMessage = ''
-    page.on('dialog', async (dialog) => {
-      alertMessage = dialog.message()
-      await dialog.accept()
+    // Expect alert check
+    const dialogPromise = new Promise<string>((resolve) => {
+      page.once('dialog', async (dialog) => {
+        resolve(dialog.message())
+        await dialog.accept()
+      })
     })
 
     await page.locator('button[title="Grocery List"]').click()
 
-    // Expect alert check
-    expect(alertMessage).toContain('Please select at least 3 recipes')
+    const msg = await dialogPromise
+    expect(msg).toContain('Please select at least 3 recipes')
 
     // As we only have 1 selected (and Mock logic in component enforces strict rule on This Week items),
     // wait... in component: "if (thisWeekRecipes.length > 0) ... if (length < 3) alert"

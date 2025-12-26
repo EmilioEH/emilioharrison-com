@@ -26,7 +26,7 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [KV](https://www.cloudflare.com/products/workers-kv/)
-- **CMS**: [Keystatic](https://keystatic.com/) for structured content
+- **Content**: [Markdoc](https://markdoc.dev/) + Markdown
 
 ## 🚦 The Quality Gate
 
@@ -46,12 +46,19 @@ npm run check:hygiene
 # Runs: Knip (dead code), Depcheck (unused deps), and Jscpd (duplicates)
 ```
 
-### User Journey Validation
+### Testing & Validation
+
+```bash
+npm run test:unit
+# Runs: Vitest unit tests
+```
 
 ```bash
 npm run test:e2e
 # Runs: Playwright E2E tests to verify the core user journey
 ```
+
+
 
 ## 💻 Getting Started
 

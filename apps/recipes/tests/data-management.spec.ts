@@ -36,9 +36,10 @@ test.describe('Data Management Features', () => {
     await page.goto('/protected/recipes')
 
     // 1. Create 2 recipes
+    const timestamp = Date.now()
     for (let i = 1; i <= 2; i++) {
       await page.getByRole('button', { name: 'Add Recipe' }).click()
-      await page.getByLabel('Title').fill(`Bulk Delete ${i}`)
+      await page.getByLabel('Title').fill(`Bulk Delete ${i} ${timestamp}`)
       await page.getByLabel('Protein').selectOption('Chicken')
       await page.getByRole('button', { name: 'Save Recipe' }).click()
       // Wait for library to show
@@ -54,12 +55,12 @@ test.describe('Data Management Features', () => {
     // 3. Select recipes
     // We can click the cards. In selection mode, clicking card -> toggle.
     await page
-      .getByRole('button')
-      .filter({ has: page.getByText('Bulk Delete 1') })
+      .getByRole('button', { name: `Bulk Delete 1 ${timestamp}`, exact: false })
+      .first()
       .click()
     await page
-      .getByRole('button')
-      .filter({ has: page.getByText('Bulk Delete 2') })
+      .getByRole('button', { name: `Bulk Delete 2 ${timestamp}`, exact: false })
+      .first()
       .click()
 
     // 4. Verify Header shows "2 Selected"
@@ -70,8 +71,9 @@ test.describe('Data Management Features', () => {
     await page.getByRole('button', { name: 'Delete (2)' }).click()
 
     // 6. Verify gone
-    await expect(page.getByText('Bulk Delete 1')).not.toBeVisible()
-    await expect(page.getByText('Bulk Delete 2')).not.toBeVisible()
+    // 6. Verify gone
+    await expect(page.getByText(`Bulk Delete 1 ${timestamp}`)).not.toBeVisible()
+    await expect(page.getByText(`Bulk Delete 2 ${timestamp}`)).not.toBeVisible()
   })
 
   test('should allow exporting data', async ({ page }) => {
