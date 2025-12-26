@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 
 test.describe('Data Management Features', () => {
-   // Bypass auth
+  // Bypass auth
   test.use({
     storageState: {
       cookies: [
@@ -37,12 +37,12 @@ test.describe('Data Management Features', () => {
 
     // 1. Create 2 recipes
     for (let i = 1; i <= 2; i++) {
-        await page.getByRole('button', { name: 'Add Recipe' }).click()
-        await page.getByLabel('Title').fill(`Bulk Delete ${i}`)
-        await page.getByLabel('Protein').selectOption('Chicken')
-        await page.getByRole('button', { name: 'Save Recipe' }).click()
-        // Wait for library to show
-        await page.getByRole('button', { name: 'Add Recipe' }).waitFor()
+      await page.getByRole('button', { name: 'Add Recipe' }).click()
+      await page.getByLabel('Title').fill(`Bulk Delete ${i}`)
+      await page.getByLabel('Protein').selectOption('Chicken')
+      await page.getByRole('button', { name: 'Save Recipe' }).click()
+      // Wait for library to show
+      await page.getByRole('button', { name: 'Add Recipe' }).waitFor()
     }
 
     // 2. Enter Selection Mode (Button in Library view)
@@ -53,14 +53,20 @@ test.describe('Data Management Features', () => {
 
     // 3. Select recipes
     // We can click the cards. In selection mode, clicking card -> toggle.
-    await page.getByRole('button').filter({ has: page.getByText('Bulk Delete 1') }).click()
-    await page.getByRole('button').filter({ has: page.getByText('Bulk Delete 2') }).click()
+    await page
+      .getByRole('button')
+      .filter({ has: page.getByText('Bulk Delete 1') })
+      .click()
+    await page
+      .getByRole('button')
+      .filter({ has: page.getByText('Bulk Delete 2') })
+      .click()
 
     // 4. Verify Header shows "2 Selected"
     await expect(page.getByText('2 Selected')).toBeVisible()
 
     // 5. Click Delete
-    page.on('dialog', dialog => dialog.accept()); // Handle confirmation
+    page.on('dialog', (dialog) => dialog.accept()) // Handle confirmation
     await page.getByRole('button', { name: 'Delete (2)' }).click()
 
     // 6. Verify gone
@@ -70,7 +76,7 @@ test.describe('Data Management Features', () => {
 
   test('should allow exporting data', async ({ page }) => {
     await page.goto('/protected/recipes')
-    
+
     // Create one recipe to export
     await page.getByRole('button', { name: 'Add Recipe' }).click()
     await page.getByLabel('Title').fill(`Export Test`)
@@ -78,12 +84,12 @@ test.describe('Data Management Features', () => {
 
     // Open Settings
     await page.getByTitle('Settings').click()
-    
+
     // Click Export and wait for download
-    const downloadPromise = page.waitForEvent('download');
+    const downloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: 'Export Data' }).click()
-    const download = await downloadPromise;
-    
+    const download = await downloadPromise
+
     expect(download.suggestedFilename()).toContain('chefboard_backup')
   })
 
@@ -95,26 +101,29 @@ test.describe('Data Management Features', () => {
 
     // Prepare content
     const importData = [
-        {
-            id: 'import-123',
-            title: 'Imported Recipe',
-            ingredients: [],
-            steps: [],
-            protein: 'Beef'
-        }
+      {
+        id: 'import-123',
+        title: 'Imported Recipe',
+        ingredients: [],
+        steps: [],
+        protein: 'Beef',
+      },
     ]
     const jsonPath = path.join(process.cwd(), 'temp_import.json')
     fs.writeFileSync(jsonPath, JSON.stringify(importData))
 
     // Upload
     // The input is hidden inside the label. We can target input[type=file]
-    page.on('dialog', dialog => dialog.accept()); // Alert success
+    page.on('dialog', (dialog) => dialog.accept()) // Alert success
     await page.setInputFiles('input[type="file"]', jsonPath)
 
     // Verify
     // Close settings
-    await page.getByRole('button').filter({ has: page.locator('svg.lucide-x') }).click()
-    
+    await page
+      .getByRole('button')
+      .filter({ has: page.locator('svg.lucide-x') })
+      .click()
+
     // Check for recipe
     await expect(page.getByText('Imported Recipe')).toBeVisible()
 

@@ -85,11 +85,11 @@ const DetailHeader = ({
       >
         {cookingMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
       </button>
-      
+
       <button
         onClick={() => onAction('toggleFavorite')}
         className={`rounded-full border p-2 transition ${recipe.isFavorite ? 'border-red-200 bg-red-50 text-red-500' : 'border-transparent text-md-sys-color-on-surface-variant hover:text-red-500'}`}
-        title={recipe.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+        title={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
       >
         <Heart className={`h-5 w-5 ${recipe.isFavorite ? 'fill-red-500' : ''}`} />
       </button>
@@ -207,7 +207,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
     } else if (action === 'toggleFavorite') {
       onUpdate({ ...recipe, isFavorite: !recipe.isFavorite }, 'save')
     } else if (action === 'rate') {
-      // action is actually the rating value here if passed directly, 
+      // action is actually the rating value here if passed directly,
       // but let's handle it via a separate handler or modifying this one.
       // Retaining this block just in case, but will use direct onUpdate in render.
     }
@@ -476,13 +476,10 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
               </div>
             )}
 
-
-              
-              <div className="mt-4 flex items-center justify-between">
-                 <StarRating rating={recipe.rating || 0} onRate={handleRate} size="lg" />
-                 {/* Placeholder for future specific rating text or count */}
-              </div>
-
+            <div className="mt-4 flex items-center justify-between">
+              <StarRating rating={recipe.rating || 0} onRate={handleRate} size="lg" />
+              {/* Placeholder for future specific rating text or count */}
+            </div>
 
             {/* Ingredients */}
             <div className="mb-8">

@@ -95,131 +95,158 @@ import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 
 const SettingsView = ({ onExport, onImport, onDeleteAccount, onClose }) => (
-  <div className="absolute inset-0 z-50 bg-md-sys-color-surface p-6 animate-in slide-in-from-right">
-    <div className="flex items-center justify-between mb-8">
-       <h2 className="text-2xl font-bold font-display text-md-sys-color-on-surface">Data Management</h2>
-       <button onClick={onClose}><X className="h-6 w-6" /></button>
+  <div className="animate-in slide-in-from-right absolute inset-0 z-50 bg-md-sys-color-surface p-6">
+    <div className="mb-8 flex items-center justify-between">
+      <h2 className="font-display text-2xl font-bold text-md-sys-color-on-surface">
+        Data Management
+      </h2>
+      <button onClick={onClose}>
+        <X className="h-6 w-6" />
+      </button>
     </div>
-    
+
     <div className="space-y-8">
-       <section>
-         <h3 className="font-bold mb-4 text-md-sys-color-on-surface-variant uppercase text-xs tracking-wider">Export & Import</h3>
-         <div className="flex flex-col gap-4">
-            <button onClick={onExport} className="flex items-center gap-3 p-4 rounded-lg border border-md-sys-color-outline hover:bg-md-sys-color-surface-variant transition-colors text-left">
-                <div className="bg-md-sys-color-secondary-container p-2 rounded-full text-md-sys-color-on-secondary-container">
-                    <Download className="h-5 w-5" />
-                </div>
-                <div>
-                    <div className="font-bold">Export Data</div>
-                    <div className="text-xs opacity-70">Download your recipes as JSON</div>
-                </div>
-            </button>
-            <label className="flex items-center gap-3 p-4 rounded-lg border border-md-sys-color-outline hover:bg-md-sys-color-surface-variant transition-colors text-left cursor-pointer">
-                <div className="bg-md-sys-color-tertiary-container p-2 rounded-full text-md-sys-color-on-tertiary-container">
-                    <Upload className="h-5 w-5" />
-                </div>
-                <div>
-                    <div className="font-bold">Import Data</div>
-                    <div className="text-xs opacity-70">Restore recipes from JSON backup</div>
-                </div>
-                <input type="file" className="hidden" onChange={onImport} accept=".json" />
-            </label>
-         </div>
-       </section>
-       
-       <section className="border-t border-md-sys-color-outline pt-6">
-          <h3 className="font-bold mb-4 text-red-600 uppercase text-xs tracking-wider">Danger Zone</h3>
-          <button onClick={onDeleteAccount} className="w-full flex items-center justify-center gap-2 text-red-600 border border-red-200 bg-red-50 p-4 rounded-lg hover:bg-red-100 transition-colors font-bold">
-            <Trash2 className="h-5 w-5" /> Delete All Data
+      <section>
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-md-sys-color-on-surface-variant">
+          Export & Import
+        </h3>
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={onExport}
+            className="flex items-center gap-3 rounded-lg border border-md-sys-color-outline p-4 text-left transition-colors hover:bg-md-sys-color-surface-variant"
+          >
+            <div className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container">
+              <Download className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-bold">Export Data</div>
+              <div className="text-xs opacity-70">Download your recipes as JSON</div>
+            </div>
           </button>
-       </section>
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-md-sys-color-outline p-4 text-left transition-colors hover:bg-md-sys-color-surface-variant">
+            <div className="rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container">
+              <Upload className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-bold">Import Data</div>
+              <div className="text-xs opacity-70">Restore recipes from JSON backup</div>
+            </div>
+            <input type="file" className="hidden" onChange={onImport} accept=".json" />
+          </label>
+        </div>
+      </section>
+
+      <section className="border-t border-md-sys-color-outline pt-6">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-red-600">
+          Danger Zone
+        </h3>
+        <button
+          onClick={onDeleteAccount}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 font-bold text-red-600 transition-colors hover:bg-red-100"
+        >
+          <Trash2 className="h-5 w-5" /> Delete All Data
+        </button>
+      </section>
     </div>
   </div>
 )
 
-const RecipeHeader = ({ syncStatus, onGenerateList, onAddAi, onAddManual, onOpenFilters, onOpenSettings, isSelectionMode, selectedCount, onCancelSelection, onDeleteSelection }) => (
-  <header className={`sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline px-6 py-4 transition-colors ${isSelectionMode ? 'bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container' : 'bg-md-sys-color-surface'}`}>
+const RecipeHeader = ({
+  syncStatus,
+  onGenerateList,
+  onAddAi,
+  onAddManual,
+  onOpenFilters,
+  onOpenSettings,
+  isSelectionMode,
+  selectedCount,
+  onCancelSelection,
+  onDeleteSelection,
+}) => (
+  <header
+    className={`sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline px-6 py-4 transition-colors ${isSelectionMode ? 'bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container' : 'bg-md-sys-color-surface'}`}
+  >
     {isSelectionMode ? (
-        <>
-            <div className="flex items-center gap-4">
-                <button onClick={onCancelSelection} className="p-2 rounded-full hover:bg-black/10">
-                    <X className="h-5 w-5" />
-                </button>
-                <div className="font-bold text-lg">{selectedCount} Selected</div>
-            </div>
-            <button
-                onClick={onDeleteSelection}
-                className="flex items-center gap-2 bg-md-sys-color-error text-md-sys-color-on-error px-4 py-2 rounded-full font-bold shadow-md-1"
-            >
-                <Trash2 className="h-4 w-4" /> Delete ({selectedCount})
-            </button>
-        </>
+      <>
+        <div className="flex items-center gap-4">
+          <button onClick={onCancelSelection} className="rounded-full p-2 hover:bg-black/10">
+            <X className="h-5 w-5" />
+          </button>
+          <div className="text-lg font-bold">{selectedCount} Selected</div>
+        </div>
+        <button
+          onClick={onDeleteSelection}
+          className="flex items-center gap-2 rounded-full bg-md-sys-color-error px-4 py-2 font-bold text-md-sys-color-on-error shadow-md-1"
+        >
+          <Trash2 className="h-4 w-4" /> Delete ({selectedCount})
+        </button>
+      </>
     ) : (
-    <>
-    <div>
-      <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-primary">
-        CHEFBOARD
-      </h1>
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
-        {syncStatus === 'syncing' && (
-          <>
-            <Loader2 className="h-3 w-3 animate-spin" /> Syncing
-          </>
-        )}
-        {syncStatus === 'saved' && (
-          <>
-            <Check className="h-3 w-3" /> Saved
-          </>
-        )}
-        {syncStatus === 'error' && <span className="text-red-500">Sync Error</span>}
-        {syncStatus === 'idle' && <span>Ready</span>}
-      </div>
-    </div>
-    <div className="flex gap-2">
-      <button
-        onClick={onOpenFilters}
-        className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
-        title="Sort & Filter"
-      >
-        <ListFilter className="h-5 w-5" />
-      </button>
+      <>
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-primary">
+            CHEFBOARD
+          </h1>
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
+            {syncStatus === 'syncing' && (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" /> Syncing
+              </>
+            )}
+            {syncStatus === 'saved' && (
+              <>
+                <Check className="h-3 w-3" /> Saved
+              </>
+            )}
+            {syncStatus === 'error' && <span className="text-red-500">Sync Error</span>}
+            {syncStatus === 'idle' && <span>Ready</span>}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={onOpenFilters}
+            className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
+            title="Sort & Filter"
+          >
+            <ListFilter className="h-5 w-5" />
+          </button>
 
-      <button
-        onClick={onOpenSettings}
-        className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
-        title="Settings"
-      >
-        <Settings className="h-5 w-5" />
-      </button>
+          <button
+            onClick={onOpenSettings}
+            className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
+            title="Settings"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
 
-      <div className="mx-1 h-9 w-px bg-gray-200"></div>
+          <div className="mx-1 h-9 w-px bg-gray-200"></div>
 
-      <button
-        onClick={onGenerateList}
-        className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container shadow-md-1 transition-all hover:shadow-md-2"
-        title="Grocery List"
-      >
-        <ShoppingBag className="h-5 w-5" />
-      </button>
+          <button
+            onClick={onGenerateList}
+            className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container shadow-md-1 transition-all hover:shadow-md-2"
+            title="Grocery List"
+          >
+            <ShoppingBag className="h-5 w-5" />
+          </button>
 
-      <button
-        onClick={onAddAi}
-        className="flex items-center justify-center rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container shadow-md-1 transition-all hover:shadow-md-2"
-        title="AI Add"
-      >
-        <Sparkles className="h-5 w-5" />
-      </button>
+          <button
+            onClick={onAddAi}
+            className="flex items-center justify-center rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container shadow-md-1 transition-all hover:shadow-md-2"
+            title="AI Add"
+          >
+            <Sparkles className="h-5 w-5" />
+          </button>
 
-      <button
-        onClick={onAddManual}
-        className="items-center gap-1 rounded-full bg-md-sys-color-primary p-2 text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
-        title="Add Recipe"
-        aria-label="Add Recipe"
-      >
-        <Plus className="h-5 w-5" />
-      </button>
-    </div>
-    </>
+          <button
+            onClick={onAddManual}
+            className="items-center gap-1 rounded-full bg-md-sys-color-primary p-2 text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
+            title="Add Recipe"
+            aria-label="Add Recipe"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+        </div>
+      </>
     )}
   </header>
 )
@@ -530,7 +557,7 @@ const RecipeManager = () => {
   const [filters, setFilters] = useState({})
   const [sort, setSort] = useState('protein')
   const [searchQuery, setSearchQuery] = useState('')
-  
+
   // Selection Mode
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -715,10 +742,10 @@ const RecipeManager = () => {
       if (sort === 'recent') return parseInt(b.id) - parseInt(a.id) // Assuming ID is timestamp-ish
       if (sort === 'time') return a.prepTime + a.cookTime - (b.prepTime + b.cookTime)
       if (sort === 'rating') {
-          const rA = a.rating || 0
-          const rB = b.rating || 0
-          if (rA === rB) return a.title.localeCompare(b.title)
-          return rB - rA
+        const rA = a.rating || 0
+        const rB = b.rating || 0
+        if (rA === rB) return a.title.localeCompare(b.title)
+        return rB - rA
       }
       return 0
     })
@@ -728,67 +755,67 @@ const RecipeManager = () => {
 
   // Selection Logic
   const toggleSelection = (id) => {
-      setSelectedIds(prev => {
-          const next = new Set(prev)
-          if (next.has(id)) next.delete(id)
-          else next.add(id)
-          return next
-      })
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   const handleBulkDelete = () => {
-      if (confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
-          console.log("Deleting ids: ", Array.from(selectedIds)) // Debug
-          setRecipes(recipes.filter(r => !selectedIds.has(r.id)))
-          setIsSelectionMode(false)
-          setSelectedIds(new Set())
-      }
+    if (confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
+      console.log('Deleting ids: ', Array.from(selectedIds)) // Debug
+      setRecipes(recipes.filter((r) => !selectedIds.has(r.id)))
+      setIsSelectionMode(false)
+      setSelectedIds(new Set())
+    }
   }
 
   // Data Mgmt
   const handleExport = () => {
-    const dataStr = JSON.stringify(recipes, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = `chefboard_backup_${new Date().toISOString().split('T')[0]}.json`;
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const dataStr = JSON.stringify(recipes, null, 2)
+    const blob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.download = `chefboard_backup_${new Date().toISOString().split('T')[0]}.json`
+    link.href = url
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const handleImport = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
     reader.onload = (event) => {
-        try {
-            const imported = JSON.parse(event.target.result);
-            if (Array.isArray(imported)) {
-                // Merge logic: Add new, update existing if imported is newer?
-                // For simplicity: Add all that don't satisfy existing ID.
-                const existingIds = new Set(recipes.map(r => r.id));
-                const newRecipes = imported.filter(r => !existingIds.has(r.id));
-                
-                // Or maybe confirm overwrite? simple merge for now.
-                setRecipes([...recipes, ...newRecipes]);
-                alert(`Imported ${newRecipes.length} recipes.`);
-            }
-        } catch(err) {
-            console.error(err);
-            alert("Failed to parse JSON.");
+      try {
+        const imported = JSON.parse(event.target.result)
+        if (Array.isArray(imported)) {
+          // Merge logic: Add new, update existing if imported is newer?
+          // For simplicity: Add all that don't satisfy existing ID.
+          const existingIds = new Set(recipes.map((r) => r.id))
+          const newRecipes = imported.filter((r) => !existingIds.has(r.id))
+
+          // Or maybe confirm overwrite? simple merge for now.
+          setRecipes([...recipes, ...newRecipes])
+          alert(`Imported ${newRecipes.length} recipes.`)
         }
-    };
-    reader.readAsText(file);
+      } catch (err) {
+        console.error(err)
+        alert('Failed to parse JSON.')
+      }
+    }
+    reader.readAsText(file)
   }
 
   const handleDeleteAll = () => {
-      if (confirm("DANGER: This will delete ALL your recipes permanently. Are you sure?")) {
-          setRecipes([]);
-          setView('library'); // Close settings
-      }
+    if (confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
+      setRecipes([])
+      setView('library') // Close settings
+    }
   }
 
   // --- RENDER ---
@@ -814,12 +841,14 @@ const RecipeManager = () => {
   }
 
   if (view === 'settings') {
-      return <SettingsView 
+    return (
+      <SettingsView
         onClose={() => setView('library')}
         onExport={handleExport}
         onImport={handleImport}
         onDeleteAccount={handleDeleteAll}
       />
+    )
   }
 
   // AI Add View
@@ -892,8 +921,8 @@ const RecipeManager = () => {
         isSelectionMode={isSelectionMode}
         selectedCount={selectedIds.size}
         onCancelSelection={() => {
-            setIsSelectionMode(false)
-            setSelectedIds(new Set())
+          setIsSelectionMode(false)
+          setSelectedIds(new Set())
         }}
         onDeleteSelection={handleBulkDelete}
       />
@@ -901,26 +930,31 @@ const RecipeManager = () => {
       <main className="relative flex-1 overflow-hidden">
         {view === 'library' && (
           <div className="scrollbar-hide h-full overflow-y-auto">
-             {/* Selection Trigger (FAB or similiar? Or maybe integrated into library header if we had one) */}
-             {/* For now, let's allow entering selection mode via Long Press (simulated by a button in Settings? Or a dedicated button) */}
-             {/* Let's add a "Select" button to header? No header is full. */}
-             {/* Let's double click to select? Or just add a small "Select" button in the library view if not empty */}
-             
-             {!isSelectionMode && recipes.length > 0 && (
-                 <div className="flex justify-end px-4 pt-2">
-                     <button onClick={() => setIsSelectionMode(true)} className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary">Select Recipes</button>
-                 </div>
-             )}
+            {/* Selection Trigger (FAB or similiar? Or maybe integrated into library header if we had one) */}
+            {/* For now, let's allow entering selection mode via Long Press (simulated by a button in Settings? Or a dedicated button) */}
+            {/* Let's add a "Select" button to header? No header is full. */}
+            {/* Let's double click to select? Or just add a small "Select" button in the library view if not empty */}
+
+            {!isSelectionMode && recipes.length > 0 && (
+              <div className="flex justify-end px-4 pt-2">
+                <button
+                  onClick={() => setIsSelectionMode(true)}
+                  className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary"
+                >
+                  Select Recipes
+                </button>
+              </div>
+            )}
 
             <RecipeLibrary
               recipes={processedRecipes}
               sort={sort}
               onSelectRecipe={(r) => {
                 if (isSelectionMode) {
-                    toggleSelection(r.id)
+                  toggleSelection(r.id)
                 } else {
-                    setSelectedRecipe(r)
-                    setView('detail')
+                  setSelectedRecipe(r)
+                  setView('detail')
                 }
               }}
               onToggleThisWeek={handleToggleThisWeek}

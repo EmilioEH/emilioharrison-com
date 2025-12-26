@@ -5,7 +5,7 @@ export const StarRating = ({ rating = 0, onRate, readonly = false, size = 'md' }
   const [hoverRating, setHoverRating] = React.useState(0)
 
   const stars = [1, 2, 3, 4, 5]
-  
+
   const iconSize = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5'
 
   return (
@@ -15,12 +15,12 @@ export const StarRating = ({ rating = 0, onRate, readonly = false, size = 'md' }
           key={star}
           type="button"
           onClick={(e) => {
-             e.preventDefault()
-             e.stopPropagation()
-             if (!readonly && onRate) onRate(star)
+            e.preventDefault()
+            e.stopPropagation()
+            if (!readonly && onRate) onRate(star)
           }}
           onMouseEnter={() => !readonly && setHoverRating(star)}
-          className={`transition-all p-0.5 ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
+          className={`p-0.5 transition-all ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
           disabled={readonly}
           aria-label={`Rate ${star} stars`}
         >

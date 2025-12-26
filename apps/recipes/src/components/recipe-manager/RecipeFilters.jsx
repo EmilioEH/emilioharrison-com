@@ -102,11 +102,13 @@ export const RecipeFilters = ({
 
           {/* Special Filters */}
           <FilterSection title="Show">
-             <FilterChip
-                label="Favorites Only"
-                active={filters.onlyFavorites}
-                onClick={() => setFilters(prev => ({ ...prev, onlyFavorites: !prev.onlyFavorites }))}
-             />
+            <FilterChip
+              label="Favorites Only"
+              active={filters.onlyFavorites}
+              onClick={() =>
+                setFilters((prev) => ({ ...prev, onlyFavorites: !prev.onlyFavorites }))
+              }
+            />
           </FilterSection>
 
           {/* Protein */}
