@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import type { Feedback } from '../../lib/types'
 
 export const GET: APIRoute = async ({ cookies, locals }) => {
   const userCookie = cookies.get('site_user')
@@ -56,7 +57,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const { env } = runtime
 
     // Get existing feedback
-    const existingData = (await env.SESSION.get('feedback:active', 'json')) || []
+    const existingData = (await env.SESSION.get<Feedback[]>('feedback:active', 'json')) || []
 
     // Append new feedback
     const updatedData = [feedback, ...existingData]
