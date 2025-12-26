@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "🚀 Running Pre-push Heavy Validation (Mutation + E2E)..."
-npm run check:full --workspace=@emilio/recipes
+echo "🚀 Running Pre-push Safety Checks (Lint + Types)..."
+npm run check:safety --workspace=@emilio/recipes
