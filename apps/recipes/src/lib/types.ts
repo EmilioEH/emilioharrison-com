@@ -26,4 +26,14 @@ export interface Recipe {
     dishesUsed?: number
     dietary?: string[]
   }
+  // Structured ingredients for grocery list generation (Hybrid Approach)
+  structuredIngredients?: StructuredIngredient[]
+}
+
+export interface StructuredIngredient {
+  original: string
+  name: string
+  amount: number
+  unit: string
+  category: string
 }

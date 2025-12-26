@@ -1,8 +1,10 @@
-import { formatRecipesForPrompt } from '../../lib/api-utils'
+import type { APIRoute } from 'astro'
+import { formatRecipesForPrompt, cleanGeminiResponse } from '../../lib/api-utils'
+import { GoogleGenAI } from '@google/genai'
 
-// @ts-expect-error - Request type definition is complex in Astro
-export const POST = async ({ request }) => {
-  const apiKey = import.meta.env.GEMINI_API_KEY
+export const POST: APIRoute = async ({ request, locals }) => {
+  const env = locals.runtime?.env || import.meta.env
+  const apiKey = env.GEMINI_API_KEY
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Missing API Key' }), {
@@ -14,70 +16,66 @@ export const POST = async ({ request }) => {
   const { recipes } = await request.json()
 
   if (!recipes || recipes.length === 0) {
-    return new Response(JSON.stringify({ text: '# Grocery List\n\nNo recipes selected.' }), {
+    return new Response(JSON.stringify({ ingredients: [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  const GROCERY_SYSTEM_PROMPT = `<role>You are an expert Grocery List Generator specializing in consolidating recipe ingredients into organized shopping lists.</role>
-<task>Process user-provided recipes and output a categorized grocery list in Markdown format. Begin output directly with the "# Consolidated Grocery List" heading—no introductory text, explanations, or commentary.</task>
-<input_format>Users will provide recipes in the following format:
+  const SYSTEM_PROMPT = `
+You are an expert Data Engineer specializing in culinary ingredients.
+Your task is to take a list of raw ingredient strings from multiple recipes and parse them into structured data.
+
+Input Format:
 [Recipe Title]
 Ingredients:
-• [ingredient list]
-</input_format>
-<ingredient_handling>
-When processing ingredients, follow this three-tier grouping logic:
-**Tier 1 - Multiple Variants (Hierarchical):**
-When 2 or more distinct variants of a core ingredient exist across all recipes, use hierarchical structure:
-* **[Core Ingredient]**
-    * **[Variant 1]** ...
-    * **[Variant 2]** ...
+- 1 cup flour
+- 2 eggs
 
-**Tier 2 - Single Variant, Multiple Items (Core Ingredient Only):**
-When only one variant exists but multiple quantity entries across recipes, list under core ingredient:
-* **[Core Ingredient]**
-    * Item 1...
-    * Item 2...
+Output Format: A single JSON array of objects. NO markdown.
+Schema:
+[
+  {
+    "original": "string (the exact input line)",
+    "name": "string (normalized name, e.g. 'flour', 'egg')",
+    "amount": number (parsed quantity, e.g. 1, 2.5. If unknown/to-taste, use 0)",
+    "unit": "string (normalized unit, e.g. 'cup', 'tbsp', 'piece', 'g'. If none, use 'unit')",
+    "category": "string (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)"
+  }
+]
 
-**Tier 3 - Single Item Total (No Grouping):**
-When only one item exists for an ingredient across all recipes, list directly without core ingredient header:
-* [Quantity] [Full Ingredient] (Recipe: [Recipe Title])
-</ingredient_handling>
-<output_structure>
-# Consolidated Grocery List
-## [Category Name]
-[Ingredients]
-</output_structure>
+Rules:
+1. Normalize names: "clove of garlic" -> "garlic", "minced garlic" -> "garlic".
+2. Normalize units: "tablespoon" -> "tbsp", "cups" -> "cup".
+3. Category must be one of the predefined list.
+4. If an ingredient appears multiple times, return them as SEPARATE items in the array (do not merge them yet, the client will do that).
 `
 
   const inputList = formatRecipesForPrompt(recipes)
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: inputList }] }],
-          systemInstruction: { parts: [{ text: GROCERY_SYSTEM_PROMPT }] },
-        }),
+    const client = new GoogleGenAI({ apiKey })
+
+    const response = await client.models.generateContent({
+      model: 'gemini-2.5-flash',
+      config: {
+        responseMimeType: 'application/json',
       },
-    )
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
+        },
+      ],
+    })
 
-    if (!response.ok) {
-      throw new Error('API request failed')
-    }
+    const resultText = response.text
+    if (!resultText) throw new Error('No content generated')
 
-    const data = await response.json()
-    const text =
-      data.candidates?.[0]?.content?.parts?.[0]?.text || '# Error\nCould not generate list.'
+    const cleanedText = cleanGeminiResponse(resultText)
+    const structuredIngredients = JSON.parse(cleanedText)
 
-    return new Response(JSON.stringify({ text }), {
+    return new Response(JSON.stringify({ ingredients: structuredIngredients }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
