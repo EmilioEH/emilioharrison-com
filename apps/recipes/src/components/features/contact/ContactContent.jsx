@@ -97,13 +97,13 @@ const ContactContent = () => {
         {/* Contact Form */}
         <div className="md:col-span-7">
           <ContentBlock color="bg-white" padding="p-8" rotate={-1} pin>
-            <Heading variant="heading-l" className="mb-6 text-ink">
+            <Heading variant="heading-l" className="text-ink mb-6">
               Send a Message
             </Heading>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="mb-2 block font-accent font-bold text-ink">
+                <label htmlFor="name" className="font-accent text-ink mb-2 block font-bold">
                   Name *
                 </label>
                 <input
@@ -119,7 +119,7 @@ const ContactContent = () => {
               </div>
 
               <div>
-                <label htmlFor="email" className="mb-2 block font-accent font-bold text-ink">
+                <label htmlFor="email" className="font-accent text-ink mb-2 block font-bold">
                   Email *
                 </label>
                 <input
@@ -135,7 +135,7 @@ const ContactContent = () => {
               </div>
 
               <div>
-                <label htmlFor="subject" className="mb-2 block font-accent font-bold text-ink">
+                <label htmlFor="subject" className="font-accent text-ink mb-2 block font-bold">
                   Subject *
                 </label>
                 <input
@@ -151,7 +151,7 @@ const ContactContent = () => {
               </div>
 
               <div>
-                <label htmlFor="message" className="mb-2 block font-accent font-bold text-ink">
+                <label htmlFor="message" className="font-accent text-ink mb-2 block font-bold">
                   Message *
                 </label>
                 <textarea
@@ -237,7 +237,7 @@ const ContactContent = () => {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-3 border-2 border-black bg-white p-3 shadow-hard-sm transition-colors hover:bg-gray-50"
+                    className="shadow-hard-sm group flex items-center gap-3 border-2 border-black bg-white p-3 transition-colors hover:bg-gray-50"
                   >
                     <Icon size={24} className="text-black" />
                     <div className="flex-grow">

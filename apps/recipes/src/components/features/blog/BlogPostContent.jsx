@@ -148,7 +148,7 @@ const BlogPostContent = ({
                       <div className="mb-4 flex items-start justify-between border-b-4 border-black pb-2">
                         <Label
                           variant="tag"
-                          className="border-2 border-black bg-ink px-2 py-1 text-white"
+                          className="bg-ink border-2 border-black px-2 py-1 text-white"
                         >
                           {categoriesMap[relatedPost.data.category] ||
                             relatedPost.data.category ||
@@ -157,7 +157,7 @@ const BlogPostContent = ({
                       </div>
                       <Heading
                         variant="heading-s"
-                        className="mb-3 line-clamp-2 leading-tight text-ink decoration-black decoration-4 underline-offset-4 group-hover:underline"
+                        className="text-ink mb-3 line-clamp-2 leading-tight decoration-black decoration-4 underline-offset-4 group-hover:underline"
                       >
                         {relatedPost.data.title}
                       </Heading>

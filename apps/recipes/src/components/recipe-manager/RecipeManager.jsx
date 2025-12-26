@@ -437,7 +437,7 @@ const RecipeManager = () => {
   const [searchQuery, setSearchQuery] = useState('')
 
   // Grocery
-  const [groceryItems, setGroceryItems] = useState([]) 
+  const [groceryItems, setGroceryItems] = useState([])
 
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState(null) // { protein: string, count: number }
@@ -485,7 +485,9 @@ const RecipeManager = () => {
       // If we are adding the 4th+ recipe (so currently have 3+)
       // And it matches a protein of an EXISTING this-week recipe
       if (currentWeekRecipes.length >= 3) {
-        const sameProteinCount = currentWeekRecipes.filter((r) => r.protein === recipe.protein).length
+        const sameProteinCount = currentWeekRecipes.filter(
+          (r) => r.protein === recipe.protein,
+        ).length
         if (sameProteinCount >= 1) {
           // Trigger Warning
           setProteinWarning({ protein: recipe.protein, count: sameProteinCount + 1 })
@@ -500,19 +502,21 @@ const RecipeManager = () => {
 
   const handleGenerateList = async () => {
     const thisWeekRecipes = recipes.filter((r) => r.thisWeek)
-    
+
     // Fallback if no recipes selected
     const recipesToProcess = thisWeekRecipes.length > 0 ? thisWeekRecipes : recipes
-    
+
     if (recipesToProcess.length === 0) {
-      alert("No recipes found to generate a list.")
+      alert('No recipes found to generate a list.')
       return
     }
 
     setView('grocery')
 
     // 1. Identify recipes missing structured data
-    const missingDataRecipes = recipesToProcess.filter(r => !r.structuredIngredients || r.structuredIngredients.length === 0)
+    const missingDataRecipes = recipesToProcess.filter(
+      (r) => !r.structuredIngredients || r.structuredIngredients.length === 0,
+    )
 
     if (missingDataRecipes.length > 0) {
       try {
@@ -521,43 +525,45 @@ const RecipeManager = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipes: missingDataRecipes }),
         })
-        
+
         if (response.ok) {
-           const { ingredients } = await response.json()
-           // The API returns a flat list of ALL ingredients from the batch.
-           // This is a bit tricky: we need to map them back to recipes for caching to work perfectly efficiently 
-           // BUT the current API design aggregates them.
-           // Plan Modification: 
-           // For now, since caching per-recipe requires the API to return per-recipe data (which `parse-recipe` does but `generate-grocery-list` aggregates),
-           // we will just use the aggregated result for the View and NOT persist it back to individual recipes yet.
-           // To fully implement the "Cache" plan, we'd need to loop and call `parse` for each recipe or update the API to return grouped data.
-           // Given the "Task 5.1" scope, let's just make it work first:
-           // We will combine:
-           // A) Cached ingredients from recipes that have them
-           // B) New API results for the rest
-           
-           // Actually, `generate-grocery-list` API was updated to return a flat JSON array. 
-           // Let's just USE that for the current session.
-           // Future optimization: Save these back to recipes.
-           
-           setGroceryItems([
-             ...recipesToProcess.filter(r => r.structuredIngredients).flatMap(r => r.structuredIngredients),
-             ...ingredients
-           ])
+          const { ingredients } = await response.json()
+          // The API returns a flat list of ALL ingredients from the batch.
+          // This is a bit tricky: we need to map them back to recipes for caching to work perfectly efficiently
+          // BUT the current API design aggregates them.
+          // Plan Modification:
+          // For now, since caching per-recipe requires the API to return per-recipe data (which `parse-recipe` does but `generate-grocery-list` aggregates),
+          // we will just use the aggregated result for the View and NOT persist it back to individual recipes yet.
+          // To fully implement the "Cache" plan, we'd need to loop and call `parse` for each recipe or update the API to return grouped data.
+          // Given the "Task 5.1" scope, let's just make it work first:
+          // We will combine:
+          // A) Cached ingredients from recipes that have them
+          // B) New API results for the rest
+
+          // Actually, `generate-grocery-list` API was updated to return a flat JSON array.
+          // Let's just USE that for the current session.
+          // Future optimization: Save these back to recipes.
+
+          setGroceryItems([
+            ...recipesToProcess
+              .filter((r) => r.structuredIngredients)
+              .flatMap((r) => r.structuredIngredients),
+            ...ingredients,
+          ])
         } else {
-           throw new Error("Failed to fetch")
+          throw new Error('Failed to fetch')
         }
       } catch (err) {
-        console.error("Grocery gen failed", err)
+        console.error('Grocery gen failed', err)
         // Fallback: Try to parse locally or show error?
         // Simple fallback: just don't show the missing ones, or show alert.
-        alert("Could not generate list from AI. Please check connection.")
+        alert('Could not generate list from AI. Please check connection.')
       }
     } else {
       // All have data!
-      setGroceryItems(recipesToProcess.flatMap(r => r.structuredIngredients || []))
+      setGroceryItems(recipesToProcess.flatMap((r) => r.structuredIngredients || []))
     }
-    
+
     setIsGenerating(false)
   }
 
@@ -587,7 +593,7 @@ const RecipeManager = () => {
     result.sort((a, b) => {
       // Always put "This Week" at top if sort is 'recent' (default-ish) or maybe a new 'Plan' sort?
       // For now, let's keep standard sorts but maybe we visualize 'This Week' differently
-      
+
       if (sort === 'protein') {
         const pA = a.protein || 'Other'
         const pB = b.protein || 'Other'
@@ -654,7 +660,7 @@ const RecipeManager = () => {
     <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-md-sys-color-surface text-md-sys-color-on-surface shadow-md-3">
       {/* Toast Warning */}
       {proteinWarning && (
-        <div className="absolute left-4 right-4 top-20 z-50 flex animate-in slide-in-from-top-2 items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800 shadow-lg">
+        <div className="animate-in slide-in-from-top-2 absolute left-4 right-4 top-20 z-50 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800 shadow-lg">
           <div className="flex items-center gap-3">
             <AlertCircle className="h-5 w-5" />
             <div>
@@ -728,10 +734,7 @@ const RecipeManager = () => {
         )}
 
         {view === 'grocery' && (
-          <GroceryList
-            ingredients={groceryItems}
-            onClose={() => setView('library')}
-          />
+          <GroceryList ingredients={groceryItems} onClose={() => setView('library')} />
         )}
       </main>
     </div>

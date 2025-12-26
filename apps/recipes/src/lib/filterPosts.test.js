@@ -14,7 +14,7 @@ const mockPosts = [
       title: 'Intro to AI',
       excerpt: 'Basics of artificial intelligence',
       takeaways: { text: 'AI is growing fast' },
-      tags:['tech', 'ai'],
+      tags: ['tech', 'ai'],
       category: 'Tech',
       date: '2023-01-01',
     },
@@ -24,7 +24,7 @@ const mockPosts = [
       title: 'Cooking 101',
       excerpt: 'Learn to cook',
       takeaways: { text: 'Food is good' },
-      tags:['lifestyle', 'cooking'],
+      tags: ['lifestyle', 'cooking'],
       category: 'Lifestyle',
       date: '2023-02-01',
     },
@@ -34,7 +34,7 @@ const mockPosts = [
       title: 'Advanced AI',
       excerpt: 'Deep learning concepts',
       takeaways: { text: 'Neural networks are cool' },
-      tags:['tech', 'ai', 'deep-learning'],
+      tags: ['tech', 'ai', 'deep-learning'],
       category: 'Tech',
       date: '2023-03-01',
     },
@@ -126,7 +126,7 @@ describe('filterPosts', () => {
         sort: 'oldest',
       }
       const result = applyAllFilters(mockPosts, filters)
-      
+
       // Should match "Intro to AI" and "Advanced AI" because both have "AI" in title/excerpt and 'tech' tag
       expect(result).toHaveLength(2)
       // Sorted oldest first: Intro (Jan) then Advanced (March)

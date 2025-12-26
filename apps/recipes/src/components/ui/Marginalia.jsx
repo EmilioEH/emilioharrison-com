@@ -20,12 +20,12 @@ const Marginalia = ({ id, text }) => {
         onMouseLeave={() => setIsOpen(false)}
         aria-expanded={isOpen}
         aria-label={`View note ${id}`}
-        className="hover:bg-mustard mx-0.5 cursor-pointer rounded-full border-2 border-black bg-coral px-1.5 align-super text-xs font-black text-white transition-colors hover:text-black"
+        className="hover:bg-mustard bg-coral mx-0.5 cursor-pointer rounded-full border-2 border-black px-1.5 align-super text-xs font-black text-white transition-colors hover:text-black"
       >
         {id}
       </button>
       <div
-        className={`absolute bottom-full left-1/2 z-50 mb-4 w-64 origin-bottom -translate-x-1/2 border-4 border-black bg-white p-4 shadow-hard transition-all duration-200 ease-out ${isOpen ? 'rotate-1 scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'} `}
+        className={`shadow-hard absolute bottom-full left-1/2 z-50 mb-4 w-64 origin-bottom -translate-x-1/2 border-4 border-black bg-white p-4 transition-all duration-200 ease-out ${isOpen ? 'rotate-1 scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'} `}
         role="tooltip"
       >
         <Label variant="eyebrow" className="mb-2 font-sans text-gray-500">

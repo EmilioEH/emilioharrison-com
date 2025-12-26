@@ -24,7 +24,7 @@ const ContentBlock = ({
 }) => {
   return (
     <div
-      className={` ${color} border-4 border-black shadow-hard ${padding} relative ${className} `}
+      className={` ${color} shadow-hard border-4 border-black ${padding} relative ${className} `}
       style={{
         transform: rotate ? `rotate(${rotate}deg)` : 'none',
       }}

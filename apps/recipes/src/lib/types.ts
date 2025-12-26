@@ -28,6 +28,11 @@ export interface Recipe {
   }
   // Structured ingredients for grocery list generation (Hybrid Approach)
   structuredIngredients?: StructuredIngredient[]
+  // Post-cooking feedback
+  rating?: number
+  userNotes?: string
+  wouldMakeAgain?: boolean
+  lastCooked?: string // ISO date
 }
 
 export interface StructuredIngredient {

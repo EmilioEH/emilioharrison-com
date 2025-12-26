@@ -1,10 +1,8 @@
-
 import React from 'react'
 import { ArrowRight } from 'lucide-react'
 import SectionTitle from '../../ui/SectionTitle'
 import StickyNote from '../../ui/StickyNote'
 import { Heading, Text, Label } from '../../ui/Typography'
-
 
 const FieldNotesSection = ({ posts }) => {
   return (
@@ -59,7 +57,7 @@ const FieldNotesSection = ({ posts }) => {
                       <div className="mb-4 flex items-start justify-between border-b-4 border-black pb-2">
                         <Label
                           variant="tag"
-                          className="border-2 border-black bg-ink px-2 py-1 text-white"
+                          className="bg-ink border-2 border-black px-2 py-1 text-white"
                         >
                           {post.data.category || 'Uncategorized'}
                         </Label>
@@ -69,7 +67,7 @@ const FieldNotesSection = ({ posts }) => {
                       </div>
                       <Heading
                         variant="heading-m"
-                        className="mb-3 leading-tight text-ink decoration-black decoration-4 underline-offset-4 group-hover:underline"
+                        className="text-ink mb-3 leading-tight decoration-black decoration-4 underline-offset-4 group-hover:underline"
                       >
                         {post.data.title}
                       </Heading>
@@ -79,7 +77,7 @@ const FieldNotesSection = ({ posts }) => {
                       >
                         {post.data.excerpt}
                       </Text>
-                      <div className="mt-auto flex items-center gap-2 pt-4 text-ink">
+                      <div className="text-ink mt-auto flex items-center gap-2 pt-4">
                         <Label variant="eyebrow" className="flex items-center gap-2">
                           Read <ArrowRight size={18} strokeWidth={3} />
                         </Label>
@@ -98,7 +96,7 @@ const FieldNotesSection = ({ posts }) => {
                     <div className="mb-4 flex items-start justify-between border-b-4 border-black pb-2">
                       <Label
                         variant="tag"
-                        className="border-2 border-black bg-ink px-2 py-1 text-white"
+                        className="bg-ink border-2 border-black px-2 py-1 text-white"
                       >
                         {post.data.category || 'Uncategorized'}
                       </Label>
@@ -108,7 +106,7 @@ const FieldNotesSection = ({ posts }) => {
                     </div>
                     <Heading
                       variant="heading-m"
-                      className="mb-3 leading-tight text-ink decoration-black decoration-4 underline-offset-4 group-hover:underline"
+                      className="text-ink mb-3 leading-tight decoration-black decoration-4 underline-offset-4 group-hover:underline"
                     >
                       {post.data.title}
                     </Heading>
@@ -118,7 +116,7 @@ const FieldNotesSection = ({ posts }) => {
                     >
                       {post.data.excerpt}
                     </Text>
-                    <div className="mt-auto flex items-center gap-2 pt-4 text-ink">
+                    <div className="text-ink mt-auto flex items-center gap-2 pt-4">
                       <Label variant="eyebrow" className="flex items-center gap-2">
                         Read <ArrowRight size={18} strokeWidth={3} />
                       </Label>

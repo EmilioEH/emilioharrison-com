@@ -14,6 +14,7 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Rich Text Grocery Lists**: Grocery lists are now generated in formatted Rich Text, making them easy to read and check off.
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
+- **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
 
 ## 🛠 Tech Stack
 

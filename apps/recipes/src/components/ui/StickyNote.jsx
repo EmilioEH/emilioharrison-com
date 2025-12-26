@@ -32,7 +32,7 @@ const StickyNote = ({
 
   return (
     <div
-      className={` ${color} ${textColor} border-4 border-black font-body shadow-hard ${padding ? 'p-6 md:p-8' : ''} relative transition-transform duration-300 ease-in-out ${variant === 'action' ? 'cursor-pointer hover:z-10 hover:scale-[1.01] hover:shadow-hard-lg' : ''} ${sizeClasses[size] || sizeClasses.square} ${className} `}
+      className={` ${color} ${textColor} shadow-hard border-4 border-black font-body ${padding ? 'p-6 md:p-8' : ''} relative transition-transform duration-300 ease-in-out ${variant === 'action' ? 'hover:shadow-hard-lg cursor-pointer hover:z-10 hover:scale-[1.01]' : ''} ${sizeClasses[size] || sizeClasses.square} ${className} `}
       style={{ transform: `rotate(${rotate}deg)` }}
     >
       {/* Pin */}

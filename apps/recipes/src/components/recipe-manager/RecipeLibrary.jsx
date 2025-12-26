@@ -1,67 +1,75 @@
 import React, { useState, useMemo } from 'react'
-import { Clock, Users, ChefHat, ChevronDown, Calendar } from 'lucide-react'
+import { Clock, Users, ChefHat, ChevronDown, Calendar, Star } from 'lucide-react'
 
 const LibraryRecipeCard = ({ recipe, onClick, onToggleThisWeek, 'data-testid': testId }) => (
   <div
     data-testid={testId}
     className={`group relative flex w-full flex-col overflow-hidden rounded-md-l border bg-md-sys-color-surface text-left shadow-md-1 transition-all hover:shadow-md-2 ${
-      recipe.thisWeek ? 'border-md-sys-color-primary ring-1 ring-md-sys-color-primary' : 'border-md-sys-color-outline'
+      recipe.thisWeek
+        ? 'border-md-sys-color-primary ring-1 ring-md-sys-color-primary'
+        : 'border-md-sys-color-outline'
     }`}
   >
-    <button onClick={onClick} className="flex-1 text-left w-full h-full flex flex-col">
-    {recipe.sourceImage && (
-      <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
-        <img
-          src={recipe.sourceImage}
-          alt={recipe.title}
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-        />
-      </div>
-    )}
-    <div className="p-4">
-      <div className="mb-2">
-        <div className="flex justify-between items-start mb-1">
+    <button onClick={onClick} className="flex h-full w-full flex-1 flex-col text-left">
+      {recipe.sourceImage && (
+        <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
+          <img
+            src={recipe.sourceImage}
+            alt={recipe.title}
+            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          />
+        </div>
+      )}
+      <div className="p-4">
+        <div className="mb-2">
+          <div className="mb-1 flex items-start justify-between">
             {recipe.protein && (
-            <span className="inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
+              <span className="inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
                 {recipe.protein}
-            </span>
+              </span>
             )}
             {recipe.thisWeek && (
-             <span className="inline-flex items-center gap-1 rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
-               <Calendar className="w-3 h-3" /> This Week
-             </span>
+              <span className="inline-flex items-center gap-1 rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
+                <Calendar className="h-3 w-3" /> This Week
+              </span>
             )}
+          </div>
+          <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
+            {recipe.title}
+          </h3>
         </div>
-        <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
-          {recipe.title}
-        </h3>
-      </div>
 
-      <div className="mt-auto flex gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          <span>{recipe.cookTime + recipe.prepTime}m</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Users className="h-3 w-3" />
-          <span>{recipe.servings}</span>
+        <div className="mt-auto flex gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{recipe.cookTime + recipe.prepTime}m</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            <span>{recipe.servings}</span>
+          </div>
+          {recipe.rating && (
+            <div className="ml-auto flex items-center gap-0.5 text-md-sys-color-primary">
+              <Star className="h-3 w-3 fill-current" />
+              <span className="font-bold">{recipe.rating}</span>
+            </div>
+          )}
         </div>
       </div>
-    </div>
     </button>
     <button
-        onClick={(e) => {
-            e.stopPropagation()
-            onToggleThisWeek(recipe.id)
-        }}
-        className={`absolute top-2 right-2 p-2 rounded-full shadow-sm transition-colors z-10 ${
-            recipe.thisWeek
-                ? 'bg-md-sys-color-primary text-md-sys-color-on-primary hover:bg-md-sys-color-primary/90'
-                : 'bg-md-sys-color-surface-variant text-md-sys-color-on-surface-variant hover:bg-md-sys-color-secondary-container hover:text-md-sys-color-on-secondary-container'
-        }`}
-        title={recipe.thisWeek ? "Remove from This Week" : "Add to This Week"}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggleThisWeek(recipe.id)
+      }}
+      className={`absolute right-2 top-2 z-10 rounded-full p-2 shadow-sm transition-colors ${
+        recipe.thisWeek
+          ? 'hover:bg-md-sys-color-primary/90 bg-md-sys-color-primary text-md-sys-color-on-primary'
+          : 'bg-md-sys-color-surface-variant text-md-sys-color-on-surface-variant hover:bg-md-sys-color-secondary-container hover:text-md-sys-color-on-secondary-container'
+      }`}
+      title={recipe.thisWeek ? 'Remove from This Week' : 'Add to This Week'}
     >
-        <Calendar className="w-4 h-4" />
+      <Calendar className="h-4 w-4" />
     </button>
   </div>
 )

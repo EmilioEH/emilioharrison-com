@@ -61,7 +61,7 @@ export const categorizeIngredients = (ingredients: StructuredIngredient[]): Groc
 
   // Convert to array in desired order, filtering out empty categories
   const result: GroceryCategory[] = []
-  
+
   // First, add known categories in order
   for (const catName of DESIRED_ORDER) {
     const items = categories.get(catName)
@@ -73,9 +73,9 @@ export const categorizeIngredients = (ingredients: StructuredIngredient[]): Groc
 
   // Then add any remaining categories (API might return new ones)
   for (const [catName, items] of categories.entries()) {
-     if (items.length > 0) {
-       result.push({ name: catName, items })
-     }
+    if (items.length > 0) {
+      result.push({ name: catName, items })
+    }
   }
 
   return result

@@ -3,20 +3,22 @@ import { mergeIngredients, categorizeIngredients } from './grocery-logic'
 import type { StructuredIngredient } from './types'
 
 describe('grocery-logic', () => {
-  const makeItem = (name: string, amount: number, unit: string, category: string): StructuredIngredient => ({
+  const makeItem = (
+    name: string,
+    amount: number,
+    unit: string,
+    category: string,
+  ): StructuredIngredient => ({
     original: '',
     name,
     amount,
     unit,
-    category
+    category,
   })
 
   describe('mergeIngredients', () => {
     it('should sum amounts for same name and unit', () => {
-      const input = [
-        makeItem('flour', 1, 'cup', 'Pantry'),
-        makeItem('flour', 2, 'cup', 'Pantry'),
-      ]
+      const input = [makeItem('flour', 1, 'cup', 'Pantry'), makeItem('flour', 2, 'cup', 'Pantry')]
       const result = mergeIngredients(input)
       expect(result).toHaveLength(1)
       expect(result[0].amount).toBe(3)
@@ -24,10 +26,7 @@ describe('grocery-logic', () => {
     })
 
     it('should NOT merge if units are different', () => {
-      const input = [
-        makeItem('sugar', 1, 'cup', 'Pantry'),
-        makeItem('sugar', 2, 'tbsp', 'Pantry'),
-      ]
+      const input = [makeItem('sugar', 1, 'cup', 'Pantry'), makeItem('sugar', 2, 'tbsp', 'Pantry')]
       const result = mergeIngredients(input)
       expect(result).toHaveLength(2)
     })
@@ -45,20 +44,17 @@ describe('grocery-logic', () => {
         makeItem('apple', 2, 'pc', 'Produce'),
       ]
       const result = categorizeIngredients(input)
-      
+
       expect(result).toHaveLength(2)
-      
-      const produce = result.find(c => c.name === 'Produce')
+
+      const produce = result.find((c) => c.name === 'Produce')
       expect(produce?.items).toHaveLength(2)
-      expect(produce?.items.map(i => i.name)).toContain('carrot')
-      expect(produce?.items.map(i => i.name)).toContain('apple')
+      expect(produce?.items.map((i) => i.name)).toContain('carrot')
+      expect(produce?.items.map((i) => i.name)).toContain('apple')
     })
 
     it('should respect desired sort order', () => {
-      const input = [
-        makeItem('salt', 1, 'g', 'Spices'),
-        makeItem('lettuce', 1, 'head', 'Produce'),
-      ]
+      const input = [makeItem('salt', 1, 'g', 'Spices'), makeItem('lettuce', 1, 'head', 'Produce')]
       const result = categorizeIngredients(input)
       // Produce should be before Spices in our logic
       expect(result[0].name).toBe('Produce')

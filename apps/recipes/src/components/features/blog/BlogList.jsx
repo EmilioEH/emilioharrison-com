@@ -26,12 +26,16 @@ const BlogList = ({
   const [sortOrder, setSortOrder] = useState(initialFilters.sort || 'newest')
 
   // Filtered posts derived state
-  const filteredPosts = useMemo(() => applyAllFilters(posts, {
-    search: searchQuery,
-    tags: selectedTags,
-    categories: selectedCategories,
-    sort: sortOrder,
-  }), [posts, searchQuery, selectedTags, selectedCategories, sortOrder])
+  const filteredPosts = useMemo(
+    () =>
+      applyAllFilters(posts, {
+        search: searchQuery,
+        tags: selectedTags,
+        categories: selectedCategories,
+        sort: sortOrder,
+      }),
+    [posts, searchQuery, selectedTags, selectedCategories, sortOrder],
+  )
 
   // Check for 'from' parameter to show back link
   const [backLink] = useState(() => {
@@ -146,7 +150,7 @@ const BlogList = ({
                         <div className="mb-4 flex items-start justify-between border-b-4 border-black pb-2">
                           <Label
                             variant="tag"
-                            className="border-2 border-black bg-ink px-2 py-1 text-white"
+                            className="bg-ink border-2 border-black px-2 py-1 text-white"
                           >
                             {categoriesMap[post.data.category] ||
                               post.data.category ||
@@ -158,7 +162,7 @@ const BlogList = ({
                         </div>
                         <Heading
                           variant="heading-m"
-                          className="mb-3 leading-tight text-ink decoration-black decoration-4 underline-offset-4 group-hover:underline"
+                          className="text-ink mb-3 leading-tight decoration-black decoration-4 underline-offset-4 group-hover:underline"
                         >
                           {post.data.title}
                         </Heading>
@@ -190,7 +194,7 @@ const BlogList = ({
                       <div className="mb-4 flex items-start justify-between border-b-4 border-black pb-2">
                         <Label
                           variant="tag"
-                          className="border-2 border-black bg-ink px-2 py-1 text-white"
+                          className="bg-ink border-2 border-black px-2 py-1 text-white"
                         >
                           {categoriesMap[post.data.category] ||
                             post.data.category ||
@@ -202,7 +206,7 @@ const BlogList = ({
                       </div>
                       <Heading
                         variant="heading-m"
-                        className="mb-3 leading-tight text-ink decoration-black decoration-4 underline-offset-4 group-hover:underline"
+                        className="text-ink mb-3 leading-tight decoration-black decoration-4 underline-offset-4 group-hover:underline"
                       >
                         {post.data.title}
                       </Heading>

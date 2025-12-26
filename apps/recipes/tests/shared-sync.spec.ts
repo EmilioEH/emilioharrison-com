@@ -1,8 +1,6 @@
 import { test, expect, type Browser } from '@playwright/test'
 
 test.describe('Shared Recipe Storage', () => {
-
-
   const createAuthContext = async (browser: Browser, name: string) => {
     const context = await browser.newContext({
       storageState: {
@@ -31,15 +29,11 @@ test.describe('Shared Recipe Storage', () => {
         origins: [],
       },
     })
-    
 
-    
     return context
   }
 
   test('recipes should be shared between all family members', async ({ browser }) => {
-
-
     // Create unique recipe name to avoid conflicts with other test runs
     const uniqueRecipe = `Family Recipe ${Date.now()}`
 
