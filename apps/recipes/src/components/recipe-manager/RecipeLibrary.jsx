@@ -39,7 +39,7 @@ const LibraryRecipeCard = ({
       )}
       <div className="p-4">
         <div className="mb-2">
-          <div className="mb-1 flex items-start justify-between">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
             {recipe.protein && (
               <span className="inline-block rounded-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
                 {recipe.protein}
