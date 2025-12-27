@@ -5,10 +5,11 @@ import type { StructuredIngredient } from '../../lib/types'
 
 interface GroceryListProps {
   ingredients: StructuredIngredient[]
+  isLoading?: boolean
   onClose: () => void
 }
 
-export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, onClose }) => {
+export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading, onClose }) => {
   // 1. Merge & Categorize (Memoized)
   const categorizedList = useMemo(() => {
     const merged = mergeIngredients(ingredients)
@@ -141,62 +142,71 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, onClose }
 
       {/* Content */}
       <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-20">
-        {categorizedList.map((category) => (
-          <div key={category.name} className="animate-in fade-in duration-500">
-            <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-md-sys-color-primary">
-              {category.name}
-            </h3>
-            <div className="bg-md-sys-color-surface-container-low border-md-sys-color-outline-variant overflow-hidden rounded-xl border shadow-sm">
-              {category.items.map((item) => {
-                const isChecked = checkedItems.has(item.name)
-                return (
-                  <button
-                    key={`${item.name}-${item.unit}`}
-                    type="button"
-                    onClick={() => toggleItem(item.name)}
-                    aria-pressed={isChecked}
-                    className={`border-md-sys-color-outline-variant flex w-full cursor-pointer items-center justify-between border-b p-4 text-left transition-colors last:border-0 ${isChecked ? 'bg-md-sys-color-surface-container-high opacity-50' : 'hover:bg-md-sys-color-surface-container'} `}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
-                          isChecked
-                            ? 'border-md-sys-color-primary bg-md-sys-color-primary'
-                            : 'border-md-sys-color-outline hover:border-md-sys-color-primary'
-                        } `}
-                      >
-                        {isChecked && (
-                          <Check className="h-3.5 w-3.5 text-md-sys-color-on-primary" />
-                        )}
-                      </div>
-                      <div
-                        className={
-                          isChecked
-                            ? 'text-md-sys-color-on-surface-variant line-through'
-                            : 'text-md-sys-color-on-surface'
-                        }
-                      >
-                        <span className="mr-1 font-display text-lg font-bold">
-                          {item.amount > 0 ? Math.round(item.amount * 100) / 100 : ''}
-                        </span>
-                        <span className="mr-2 text-sm font-medium opacity-80">
-                          {item.unit !== 'unit' ? item.unit : ''}
-                        </span>
-                        <span className="font-medium capitalize">{item.name}</span>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 opacity-50">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-md-sys-color-primary border-t-transparent"></div>
+            <p className="mt-4 font-bold">Consulting AI Chef...</p>
           </div>
-        ))}
+        ) : (
+          <>
+            {categorizedList.map((category) => (
+              <div key={category.name} className="animate-in fade-in duration-500">
+                <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-md-sys-color-primary">
+                  {category.name}
+                </h3>
+                <div className="bg-md-sys-color-surface-container-low border-md-sys-color-outline-variant overflow-hidden rounded-xl border shadow-sm">
+                  {category.items.map((item) => {
+                    const isChecked = checkedItems.has(item.name)
+                    return (
+                      <button
+                        key={`${item.name}-${item.unit}`}
+                        type="button"
+                        onClick={() => toggleItem(item.name)}
+                        aria-pressed={isChecked}
+                        className={`border-md-sys-color-outline-variant flex w-full cursor-pointer items-center justify-between border-b p-4 text-left transition-colors last:border-0 ${isChecked ? 'bg-md-sys-color-surface-container-high opacity-50' : 'hover:bg-md-sys-color-surface-container'} `}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+                              isChecked
+                                ? 'border-md-sys-color-primary bg-md-sys-color-primary'
+                                : 'border-md-sys-color-outline hover:border-md-sys-color-primary'
+                            } `}
+                          >
+                            {isChecked && (
+                              <Check className="h-3.5 w-3.5 text-md-sys-color-on-primary" />
+                            )}
+                          </div>
+                          <div
+                            className={
+                              isChecked
+                                ? 'text-md-sys-color-on-surface-variant line-through'
+                                : 'text-md-sys-color-on-surface'
+                            }
+                          >
+                            <span className="mr-1 font-display text-lg font-bold">
+                              {item.amount > 0 ? Math.round(item.amount * 100) / 100 : ''}
+                            </span>
+                            <span className="mr-2 text-sm font-medium opacity-80">
+                              {item.unit !== 'unit' ? item.unit : ''}
+                            </span>
+                            <span className="font-medium capitalize">{item.name}</span>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
 
-        {categorizedList.length === 0 && (
-          <div className="py-20 text-center opacity-50">
-            <ShoppingBasket className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <p>No ingredients found.</p>
-          </div>
+            {categorizedList.length === 0 && (
+              <div className="py-20 text-center opacity-50">
+                <ShoppingBasket className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                <p>No ingredients found.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

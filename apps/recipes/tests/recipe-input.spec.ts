@@ -19,7 +19,7 @@ test.describe('Recipe Input Flow', () => {
     ])
 
     // Mock Parse Recipe API
-    await page.route('/api/parse-recipe', async (route) => {
+    await page.route('**/api/parse-recipe', async (route) => {
       await route.fulfill({
         json: {
           title: `Mocked Pancake ${Date.now()}`,
@@ -83,7 +83,7 @@ test.describe('Recipe Input Flow', () => {
 
   test('should display backend error message when parsing fails', async ({ page }) => {
     // Override the mock for this specific test
-    await page.route('/api/parse-recipe', async (route) => {
+    await page.route('**/api/parse-recipe', async (route) => {
       await route.fulfill({
         status: 400,
         json: { error: 'Invalid URL provided' },

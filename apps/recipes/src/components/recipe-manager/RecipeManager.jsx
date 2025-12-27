@@ -23,7 +23,11 @@ import { Tabs } from '../ui/Tabs'
 import { Fab } from '../ui/Fab'
 import ReactMarkdown from 'react-markdown'
 
-const RECIPES_API_URL = '/protected/recipes/api/user-data'
+const getBaseUrl = () => {
+  const base = import.meta.env.BASE_URL
+  return base.endsWith('/') ? base : `${base}/`
+}
+const RECIPES_API_URL = `${getBaseUrl()}api/user-data`
 
 // --- Hooks ---
 
@@ -531,6 +535,7 @@ const RecipeManager = () => {
 
   // Grocery
   const [groceryItems, setGroceryItems] = useState([])
+  const [isGenerating, setIsGenerating] = useState(false)
 
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState(null) // { protein: string, count: number }
@@ -626,6 +631,15 @@ const RecipeManager = () => {
     }
 
     setView('grocery')
+    setIsGenerating(true)
+    setGroceryItems([]) // Clear previous items to avoid confusion? Or keep them? Let's clear for now or keep 'thisWeek' ones.
+    // Actually, we should show the 'current' valid ones immediately, and then append the AI ones?
+    // But list generation logic below replaces everything. Let's just set empty and let loader show.
+
+    // Calculate "local" ingredients immediately
+    const localIngredients = recipesToProcess
+      .filter((r) => r.structuredIngredients)
+      .flatMap((r) => r.structuredIngredients)
 
     // 1. Identify recipes missing structured data
     const missingDataRecipes = recipesToProcess.filter(
@@ -634,48 +648,36 @@ const RecipeManager = () => {
 
     if (missingDataRecipes.length > 0) {
       try {
-        const response = await fetch('/api/generate-grocery-list', {
+        const response = await fetch(`${getBaseUrl()}api/generate-grocery-list`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipes: missingDataRecipes }),
         })
 
         if (response.ok) {
-          const { ingredients } = await response.json()
-          // The API returns a flat list of ALL ingredients from the batch.
-          // This is a bit tricky: we need to map them back to recipes for caching to work perfectly efficiently
-          // BUT the current API design aggregates them.
-          // Plan Modification:
-          // For now, since caching per-recipe requires the API to return per-recipe data (which `parse-recipe` does but `generate-grocery-list` aggregates),
-          // we will just use the aggregated result for the View and NOT persist it back to individual recipes yet.
-          // To fully implement the "Cache" plan, we'd need to loop and call `parse` for each recipe or update the API to return grouped data.
-          // Given the "Task 5.1" scope, let's just make it work first:
-          // We will combine:
-          // A) Cached ingredients from recipes that have them
-          // B) New API results for the rest
+          const { ingredients = [] } = await response.json()
 
-          // Actually, `generate-grocery-list` API was updated to return a flat JSON array.
-          // Let's just USE that for the current session.
-          // Future optimization: Save these back to recipes.
+          const validNewIngredients = Array.isArray(ingredients)
+            ? ingredients.filter((i) => i && i.name)
+            : []
 
-          setGroceryItems([
-            ...recipesToProcess
-              .filter((r) => r.structuredIngredients)
-              .flatMap((r) => r.structuredIngredients),
-            ...ingredients,
-          ])
+          setGroceryItems([...localIngredients, ...validNewIngredients])
         } else {
-          throw new Error('Failed to fetch')
+          console.error(`Grocery API failed: ${response.status}`)
+          // Fallback: show what we have
+          setGroceryItems(localIngredients)
+          alert(
+            `Failed to generate complete list (Server ${response.status}). Showing local items only.`,
+          )
         }
       } catch (err) {
         console.error('Grocery gen failed', err)
-        // Fallback: Try to parse locally or show error?
-        // Simple fallback: just don't show the missing ones, or show alert.
-        alert('Could not generate list from AI. Please check connection.')
+        setGroceryItems(localIngredients)
+        alert('Could not reach AI Chef. Showing locally available ingredients.')
       }
     } else {
       // All have data!
-      setGroceryItems(recipesToProcess.flatMap((r) => r.structuredIngredients || []))
+      setGroceryItems(localIngredients)
     }
 
     setIsGenerating(false)
@@ -991,7 +993,11 @@ const RecipeManager = () => {
         )}
 
         {view === 'grocery' && (
-          <GroceryList ingredients={groceryItems} onClose={() => setView('library')} />
+          <GroceryList
+            ingredients={groceryItems}
+            isLoading={isGenerating}
+            onClose={() => setView('library')}
+          />
         )}
       </main>
 

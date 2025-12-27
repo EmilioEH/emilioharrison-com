@@ -33,20 +33,39 @@ async function syncFeedback() {
         // Try remote D1 first (production)
         try {
           console.log('☁️  Attempting fetch from Remote Production D1...')
-          const d1Output = execSync(
-            'npx wrangler d1 execute recipes-db --remote --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
-            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
-          )
-          const parsedOutput = JSON.parse(d1Output)
-          const rows = parsedOutput[0]?.results || []
 
-          feedbackList = rows.map((row: any) => ({
-            ...row,
-            logs: row.logs ? JSON.parse(row.logs) : [],
-            context: row.context ? JSON.parse(row.context) : {},
-          }))
-          console.log(`✅ Retrieved ${feedbackList.length} items from Remote D1`)
+          const tempFile = path.join(process.cwd(), 'temp_feedback.json')
+          try {
+            // Use file redirection to avoid stdio issues
+            execSync(
+              `npx wrangler d1 execute recipes-db --remote -y --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json > "${tempFile}"`,
+              { encoding: 'utf-8', stdio: 'inherit', env: { ...process.env, CI: 'true' } },
+            )
+
+            if (fs.existsSync(tempFile)) {
+              const d1Output = fs.readFileSync(tempFile, 'utf-8')
+              // Cleanup
+              fs.unlinkSync(tempFile)
+
+              const parsedOutput = JSON.parse(d1Output)
+              const rows = parsedOutput[0]?.results || []
+
+              feedbackList = rows.map((row: any) => ({
+                ...row,
+                logs: row.logs ? JSON.parse(row.logs) : [],
+                context: row.context ? JSON.parse(row.context) : {},
+              }))
+              console.log(`✅ Retrieved ${feedbackList.length} items from Remote D1`)
+            } else {
+              throw new Error('Output file not created')
+            }
+          } catch (e) {
+            console.error('DEBUG: Remote sync via file failed', e)
+            if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile)
+            throw e
+          }
         } catch (remoteErr) {
+          console.error('DEBUG: Remote D1 Error Details:', remoteErr)
           // If remote fails, try local D1
           console.log('⚠️  Remote D1 failed. Attempting fetch from Local D1...')
           try {

@@ -448,17 +448,26 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
         payload.image = imagePreview
       }
 
-      const res = await fetch('/api/parse-recipe', {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+      const res = await fetch(`${baseUrl}api/parse-recipe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
       if (!res.ok) {
-        let errMsg = 'Failed to parse recipe'
+        let errMsg = `Failed: ${res.status} ${res.statusText}`
         try {
-          const errData = await res.json()
-          if (errData.error) errMsg = errData.error
+          const textBody = await res.text()
+          try {
+            const errData = JSON.parse(textBody)
+            if (errData.error) errMsg = errData.error
+          } catch {
+            // Not JSON, use text body if short, else info
+            if (textBody.length < 200) errMsg = textBody
+          }
         } catch {
           // ignore
         }
@@ -488,11 +497,14 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
 
     setStatus('saving')
     try {
-      const userRes = await fetch('/api/user-data')
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+      const userRes = await fetch(`${baseUrl}api/user-data`)
       if (!userRes.ok) throw new Error('Failed to fetch user data')
       const userData = await userRes.json()
       const currentRecipes: Recipe[] = Array.isArray(userData.recipes) ? userData.recipes : []
-      const saveRes = await fetch('/api/user-data', {
+      const saveRes = await fetch(`${baseUrl}api/user-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipes: [...currentRecipes, newRecipe] }),

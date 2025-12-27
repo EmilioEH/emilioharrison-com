@@ -10,7 +10,7 @@ test.describe('Grocery List Generation', () => {
     })
 
     // Mock API for grocery list generation
-    await page.route('/api/generate-grocery-list', async (route) => {
+    await page.route('**/api/generate-grocery-list', async (route) => {
       const json = {
         ingredients: [
           { original: '1 cup flour', name: 'flour', amount: 1, unit: 'cup', category: 'Pantry' },
@@ -21,7 +21,7 @@ test.describe('Grocery List Generation', () => {
     })
 
     // Mock User Data with 3 recipes to satisfy minimum requirement
-    await page.route('/protected/recipes/api/user-data', async (route) => {
+    await page.route('**/api/user-data', async (route) => {
       await route.fulfill({
         json: {
           recipes: [

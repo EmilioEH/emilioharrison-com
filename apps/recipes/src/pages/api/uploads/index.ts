@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     await uploadImage(bucket, key, file)
-    return new Response(JSON.stringify({ key, url: `/api/uploads/${key}` }), {
+    return new Response(JSON.stringify({ key, url: `api/uploads/${key}` }), {
       // URL depends on how we serve it. For now returning key.
       status: 200,
       headers: {
