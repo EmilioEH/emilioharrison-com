@@ -92,11 +92,25 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
           setIsSuccess(false)
         }, 2000)
       } else {
-        alert('Failed to submit feedback. please try again.')
+        // Try to get the error details from the response
+        let errorMessage = 'Failed to submit feedback. please try again.'
+        try {
+          const errorData = await response.json()
+          if (errorData.details) {
+            errorMessage = `Error: ${errorData.details}`
+          } else if (errorData.error) {
+            errorMessage = `Error: ${errorData.error}`
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_e) {
+          // If response isn't JSON, use status text
+          errorMessage = `Error ${response.status}: ${response.statusText}`
+        }
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Feedback Error:', error)
-      alert('A technical error occurred.')
+      alert(`A technical error occurred: ${error.message || error}`)
     } finally {
       setIsSubmitting(false)
     }
