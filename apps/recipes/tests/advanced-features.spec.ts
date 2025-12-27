@@ -20,6 +20,29 @@ const login = async (page: Page) => {
 }
 
 test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
+  let currentRecipes: any[] = []
+
+  test.beforeEach(async ({ page }) => {
+    currentRecipes = []
+    await page.route(/\/api\/recipes/, async (route) => {
+      const method = route.request().method()
+      if (method === 'GET') {
+        await route.fulfill({ json: { recipes: currentRecipes } })
+      } else if (method === 'POST') {
+        const body = await route.request().postDataJSON()
+        const newRecipe = { ...body, id: body.id || `recipe-${Date.now()}` }
+        currentRecipes.push(newRecipe)
+        await route.fulfill({ json: { success: true, id: newRecipe.id } })
+      } else if (method === 'PUT') {
+        const body = await route.request().postDataJSON()
+        currentRecipes = currentRecipes.map((r) => (r.id === body.id ? body : r))
+        await route.fulfill({ json: { success: true } })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+  })
+
   test('should allow favoriting a recipe and filtering by favorites', async ({ page }) => {
     await login(page)
     await page.goto('/protected/recipes')
@@ -34,7 +57,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open it
-    const card = page.getByRole('button').filter({ hasText: title }).first()
+    const card = page.getByText(title).first()
     await expect(card).toBeVisible()
     await page.waitForTimeout(1000)
     await card.click()
@@ -79,7 +102,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open it
-    const card = page.getByRole('button').filter({ hasText: title }).first()
+    const card = page.getByText(title).first()
     await expect(card).toBeVisible()
     await page.waitForTimeout(1000)
     await card.click()
@@ -113,7 +136,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open it
-    const card = page.getByRole('button').filter({ hasText: title }).first()
+    const card = page.getByText(title).first()
     await expect(card).toBeVisible()
     await page.waitForTimeout(1000)
     await card.click()

@@ -34,11 +34,21 @@ test.describe('Recipe Metadata & Filtering', () => {
       },
     ]
 
-    await page.route('/api/recipes', async (route) => {
-      await route.fulfill({ json: { recipes: mockRecipes } })
+    let currentRecipes = [...mockRecipes]
+    await page.route('**/api/recipes*', async (route) => {
+      const method = route.request().method()
+      if (method === 'GET') {
+        await route.fulfill({ json: { recipes: currentRecipes } })
+      } else if (method === 'PUT') {
+        const body = await route.request().postDataJSON()
+        currentRecipes = currentRecipes.map((r) => (r.id === body.id ? body : r))
+        await route.fulfill({ json: { success: true } })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
     })
 
-    await page.goto('/')
+    await page.goto('/protected/recipes')
 
     // 2. Open Filters
     await page.getByLabel('Open Filters').click()

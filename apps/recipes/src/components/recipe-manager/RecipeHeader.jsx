@@ -31,7 +31,6 @@ export const RecipeHeader = ({
     ) : (
       <>
         <div className="flex items-center gap-3">
-          <GlobalBurgerMenu />
           <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-on-surface">
             CHEFBOARD
           </h1>

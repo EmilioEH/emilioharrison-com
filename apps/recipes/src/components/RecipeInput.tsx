@@ -163,6 +163,7 @@ interface RecipeReviewFormProps {
   status: Status
   onSave: () => void
   onCancel: () => void
+  isSaving?: boolean
 }
 
 const RecipeReviewForm = ({
@@ -174,6 +175,7 @@ const RecipeReviewForm = ({
   status,
   onSave,
   onCancel,
+  isSaving,
 }: RecipeReviewFormProps) => {
   const ingredientsText = Array.isArray(formData.ingredients)
     ? formData.ingredients
@@ -455,13 +457,13 @@ const RecipeReviewForm = ({
       </div>
 
       <div className="pt-4">
-        <Button fullWidth size="lg" onClick={onSave} disabled={status === 'saving'}>
-          {status === 'saving' ? (
+        <Button fullWidth size="lg" onClick={onSave} disabled={status === 'saving' || isSaving}>
+          {status === 'saving' || isSaving ? (
             <Loader2 className="animate-spin" />
           ) : (
             <Save className="h-5 w-5" />
           )}
-          {status === 'saving' ? 'Saving...' : 'Save Recipe'}
+          {status === 'saving' || isSaving ? 'Saving...' : 'Save Recipe'}
         </Button>
       </div>
     </div>
@@ -478,6 +480,7 @@ interface RecipeSourceSelectorProps {
   errorMsg: string
   status: Status
   onProcess: () => void
+  isUploading: boolean
 }
 
 const RecipeSourceSelector = ({
@@ -490,7 +493,10 @@ const RecipeSourceSelector = ({
   errorMsg,
   status,
   onProcess,
+  isUploading,
 }: RecipeSourceSelectorProps) => {
+  const [internalIsUploading, setInternalIsUploading] = useState(false)
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
@@ -502,6 +508,7 @@ const RecipeSourceSelector = ({
       reader.readAsDataURL(file)
 
       // Upload to R2
+      setInternalIsUploading(true)
       try {
         const formData = new FormData()
         formData.append('file', file)
@@ -522,10 +529,11 @@ const RecipeSourceSelector = ({
           setImagePreview(publicUrl)
         } else {
           console.error('Failed to upload image')
-          // Keep local preview? Or warn?
         }
       } catch (err) {
         console.error('Upload error', err)
+      } finally {
+        setInternalIsUploading(false)
       }
     }
   }
@@ -575,12 +583,22 @@ const RecipeSourceSelector = ({
           onClick={onProcess}
           disabled={
             status === 'processing' ||
+            internalIsUploading ||
+            isUploading ||
             (mode === 'url' && !url) ||
             (mode === 'photo' && !imagePreview)
           }
         >
-          {status === 'processing' ? <Loader2 className="animate-spin" /> : <ChefHat />}
-          {status === 'processing' ? 'Consulting Chef Gemini...' : 'Process Recipe'}
+          {status === 'processing' || internalIsUploading || isUploading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <ChefHat />
+          )}
+          {internalIsUploading || isUploading
+            ? 'Uploading Photo...'
+            : status === 'processing'
+              ? 'Consulting Chef Gemini...'
+              : 'Process Recipe'}
         </Button>
       </div>
     </div>
@@ -588,7 +606,7 @@ const RecipeSourceSelector = ({
 }
 
 interface RecipeInputProps {
-  onRecipeCreated?: (recipe: Recipe) => void
+  onRecipeCreated?: (recipe: Recipe) => Promise<boolean | void> | void
 }
 
 export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
@@ -599,6 +617,7 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
   const [parsedRecipe, setParsedRecipe] = useState<Recipe | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [formData, setFormData] = useState<Partial<Recipe>>({})
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleProcess = async () => {
     setStatus('processing')
@@ -658,9 +677,19 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
     const newRecipe = { ...formData, id: formData.id || crypto.randomUUID() } as Recipe
 
     if (onRecipeCreated) {
-      // Pass the recipe with the uploaded image URL (if set in imagePreview)
-      onRecipeCreated(newRecipe)
-      setStatus('success')
+      setIsSaving(true)
+      try {
+        // Pass the recipe with the uploaded image URL (if set in imagePreview)
+        const success = await onRecipeCreated(newRecipe)
+        if (success !== false) {
+          setStatus('success')
+        }
+      } catch (e) {
+        console.error('Failed to save recipe', e)
+        setErrorMsg('Failed to save recipe to database.')
+      } finally {
+        setIsSaving(false)
+      }
     }
   }
 
@@ -690,6 +719,7 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
           status={status}
           onSave={handleSave}
           onCancel={() => setStatus('idle')}
+          isSaving={isSaving}
         />
       ) : (
         <RecipeSourceSelector
@@ -702,6 +732,7 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
           errorMsg={errorMsg}
           status={status}
           onProcess={handleProcess}
+          isUploading={false} // Uplifted state handled internally in selector for now
         />
       )}
     </div>

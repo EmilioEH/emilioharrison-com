@@ -204,7 +204,7 @@ export const RecipeDetail = ({
         setCookingStage={setCookingStage}
       />
 
-      {renderContent()}
+      <div className="flex-1 overflow-y-auto">{renderContent()}</div>
     </div>
   )
 }

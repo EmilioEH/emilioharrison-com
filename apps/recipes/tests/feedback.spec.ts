@@ -32,7 +32,7 @@ test.describe('Feedback System', () => {
 
   test.beforeEach(async ({ page }) => {
     // Mock user data to keep the page light and stable
-    await page.route('**/api/user-data', async (route) => {
+    await page.route('**/api/recipes*', async (route) => {
       await route.fulfill({
         json: {
           recipes: [
@@ -75,7 +75,7 @@ test.describe('Feedback System', () => {
     await menuBtn.click()
 
     // Then click Send Feedback in the burger menu
-    const feedbackBtn = page.getByRole('button', { name: 'Send Feedback' }).first()
+    const feedbackBtn = page.getByRole('menuitem', { name: 'Send Feedback' }).first()
     await expect(feedbackBtn).toBeVisible()
     await feedbackBtn.click()
 

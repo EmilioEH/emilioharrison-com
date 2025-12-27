@@ -32,7 +32,7 @@ test.describe('Recipe Manager', () => {
 
   test.beforeEach(async ({ page }) => {
     // Mock user data to keep the test environment clean and isolated
-    await page.route('**/api/user-data', async (route) => {
+    await page.route('**/api/recipes*', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
           json: {

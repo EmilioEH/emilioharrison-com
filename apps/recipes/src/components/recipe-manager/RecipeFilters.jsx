@@ -56,6 +56,7 @@ export const RecipeFilters = ({
           <button
             onClick={onClose}
             className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2"
+            aria-label="Close"
           >
             <X className="h-5 w-5 text-md-sys-color-on-surface" />
           </button>

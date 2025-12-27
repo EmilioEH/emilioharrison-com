@@ -1,6 +1,6 @@
 # Chefboard: The AI-Powered Recipe Manager
 
-Chefboard is a intelligent recipe management system built for speed, utility, and seamless user experiences. It leverages AI to handle the tedious parts of cooking—like parsing messy web contents into structured data and generating organized grocery lists.
+Chefboard is an intelligent recipe management system built for speed, utility, and seamless user experiences. It leverages AI to handle the tedious parts of cooking—like parsing messy web contents into structured data and generating organized grocery lists.
 
 > [!NOTE]
 > This application is living inside the `apps/recipes` directory as part of a monorepo and is deployed to `/protected/recipes`.
@@ -9,8 +9,10 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 
 - **PWA Experience**: Installable on mobile with offline support.
 - **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes.
+- **Rich Metadata Tagging**: Organize recipes by Meal Type (Breakfast, Dinner, etc.), Dish Type (Main, Side, etc.), Dietary restrictions (Vegan, Keto), required Equipment (Air Fryer, Slow Cooker), and Occasion (Weeknight, Party).
+- **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
-- **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically.
+- **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically—including Meal Type, Equipment, and Dietary tags.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
 - **Shared Family Collection**: All recipes are stored in Cloudflare D1 (SQL) and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure, protected dashboard accessible only to authenticated users.
@@ -19,21 +21,45 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 - **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
-- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the persistent global feedback button. Captured reports include screenshots (saved to R2), console logs, and application state to help developers/agents solve issues faster.
+- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu. Captured reports include screenshots (saved to R2), console logs, and application state to help developers/agents solve issues faster.
 
 ## 🛠 Tech Stack
 
 - **Framework**: [Astro 5](https://astro.build/) (Islands Architecture for performance)
 - **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
+- **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library)
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [D1](https://developers.cloudflare.com/d1/) (SQL) + [R2](https://developers.cloudflare.com/r2/) (Images) + [KV](https://developers.cloudflare.com/kv/) (Sessions)
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
-- **AI Standards**:
-  - [Gemini API Guide](file:///Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/docs/technical/gemini-api-guide.md)
-  - [Deployment Guide](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/docs/technical/deployment.md)
-  - [Recipe Data Schema](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/recipe-schema.md)
-  - [Grocery Logic Standards](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/grocery-logic.md)
-  - [Sync & Persistence Standards](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/sync-standards.md)
+- **Testing**: [Vitest](https://vitest.dev/) (Unit) + [Playwright](https://playwright.dev/) (E2E) + [Stryker](https://stryker-mutator.io/) (Mutation)
+
+### Technical Documentation
+
+- [Gemini API Guide](docs/technical/gemini-api-guide.md) – AI integration patterns
+- [Deployment Guide](docs/technical/deployment.md) – Production deployment steps
+- [Design System](docs/technical/design-system.md) – UI tokens and component styles
+- [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
+
+### 🤖 Agent Quick Reference
+
+Key entry points for common tasks:
+
+| Task                       | Primary Files                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| **Fix UI bug**             | `src/components/recipe-manager/*.jsx` → find component by feature name                      |
+| **Add new metadata field** | `src/lib/types.ts` (Recipe interface) → `RecipeEditor.jsx` → `RecipeFilters.jsx`            |
+| **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                |
+| **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI) |
+| **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                       |
+| **Update global UI**       | `src/components/layout/` (Navbar, GlobalBurgerMenu)                                         |
+| **Add E2E test**           | Create `tests/<feature>.spec.ts` – use existing tests as templates                          |
+
+**Conventions:**
+
+- React components use `.jsx`/`.tsx` extensions and PascalCase naming
+- Nanostores in `src/lib/*Store.ts` manage global state
+- All API routes return JSON with `{ success, data?, error? }` pattern
+- Run `npm run check:safety` before committing
 
 ## 🚦 The Quality Gate
 
@@ -44,6 +70,11 @@ We maintain high code health through a mandatory protocol. Before contributing o
 ```bash
 npm run check:safety
 # Runs: Linting, Type Checking (TSC + Astro), and Formatting
+```
+
+```bash
+npm run check:quick
+# Runs: Just Linting + Type Checking (faster for iteration)
 ```
 
 ### Hygiene Checks
@@ -62,7 +93,17 @@ npm run test:unit
 
 ```bash
 npm run test:e2e
-# Runs: Playwright E2E tests to verify the core user journey
+# Runs: Playwright E2E tests (all browsers)
+```
+
+```bash
+npm run test:e2e:fast
+# Runs: Playwright E2E tests (Chromium only, faster)
+```
+
+```bash
+npm run test:stryker
+# Runs: Stryker mutation testing to verify test quality
 ```
 
 ### Processing Feedback (Holodeck)
@@ -72,7 +113,8 @@ We utilize an "Agent-Ready" feedback system that captures deep technical context
 To sync reports from the live environment:
 
 ```bash
-npx tsx scripts/sync-feedback.ts
+npm run sync:feedback
+# Or: npx tsx scripts/sync-feedback.ts
 ```
 
 Synced reports are saved to `docs/feedback/active-reports.md` and include:
@@ -96,10 +138,18 @@ Synced reports are saved to `docs/feedback/active-reports.md` and include:
    > **Production Note**: For the live site, the `GEMINI_API_KEY` is configured in **Cloudflare Pages Environment Variables**.
 
 3. **Development**:
+
    ```bash
    npm run dev
    ```
+
    The app will be available at `http://localhost:4321/protected/recipes`.
+
+4. **Preview with Wrangler** (simulates production bindings):
+   ```bash
+   npm run build && npm run preview:wrangler
+   ```
+   Available at `http://localhost:8788/protected/recipes`.
 
 ## 🚀 Production Deployment
 
@@ -139,10 +189,70 @@ The following bindings must be configured in the **Cloudflare Pages Dashboard** 
 
 ## 📂 Project Structure
 
-- `src/components/`: React islands for interactive features.
-- `src/pages/api/`: Serverless functions for parsing, grocery generation, and data syncing.
-- `src/lib/`: Shared utilities, stores, and API clients.
-- `tests/`: End-to-end user journey tests.
+```
+src/
+├── components/
+│   ├── RecipeInput.tsx          # AI recipe parsing form (URL, text, or image)
+│   ├── recipe-manager/          # Core recipe management
+│   │   ├── RecipeManager.jsx    # Main orchestrator component
+│   │   ├── RecipeLibrary.jsx    # Recipe grid/list with grouping
+│   │   ├── RecipeDetail.jsx     # Individual recipe view
+│   │   ├── RecipeEditor.jsx     # Edit/create recipe form
+│   │   ├── RecipeFilters.jsx    # Filter panel (metadata, search)
+│   │   ├── RecipeHeader.jsx     # App bar with navigation
+│   │   ├── LibraryToolbar.jsx   # Inline search/sort/filter controls
+│   │   ├── GroceryList.tsx      # Grocery list with shopping mode
+│   │   ├── SettingsView.jsx     # Settings and data management
+│   │   ├── VarietyWarning.jsx   # Protein variety alerts
+│   │   └── hooks/
+│   │       ├── useRecipes.js           # Recipe CRUD operations
+│   │       ├── useFilteredRecipes.js   # Filtering, sorting, search
+│   │       ├── useGroceryListGenerator.js # Grocery list with caching
+│   │       └── useUrlSync.js           # Deep linking and back button
+│   ├── recipe-details/          # Cooking mode sub-components
+│   │   ├── DetailHeader.jsx     # Navigation and actions
+│   │   ├── MiseEnPlace.jsx      # Pre-cooking ingredient checklist
+│   │   ├── CookingMode.jsx      # Step-by-step instructions
+│   │   ├── ReviewMode.jsx       # Post-cooking rating/notes
+│   │   ├── OverviewMode.jsx     # Default recipe display
+│   │   └── CheckableItem.jsx    # Reusable checkbox item
+│   ├── ui/                      # Reusable UI primitives
+│   │   ├── Button.jsx, Fab.jsx, Tabs.jsx, StarRating.jsx, etc.
+│   └── layout/                  # Global layout components
+│       ├── GlobalBurgerMenu.jsx # Slide-out settings/feedback menu
+│       ├── GlobalFeedback.jsx   # Feedback modal wrapper
+│       ├── Navbar.jsx           # Top navigation bar
+│       └── Footer.jsx           # Site footer
+├── lib/                         # Shared utilities
+│   ├── store.js                 # Recipe list nanostore
+│   ├── burgerMenuStore.ts       # Burger menu open/close state
+│   ├── feedbackStore.ts         # Feedback modal state
+│   ├── types.ts                 # TypeScript interfaces (Recipe, Feedback)
+│   ├── d1.ts                    # D1 database types
+│   ├── r2.ts                    # R2 bucket utilities
+│   ├── grocery-logic.ts         # Deterministic grocery merging
+│   └── api-utils.js             # API helper functions
+├── pages/
+│   ├── index.astro              # Main recipe app page
+│   └── api/
+│       ├── parse-recipe.ts      # AI recipe extraction
+│       ├── generate-grocery-list.ts # AI grocery categorization
+│       ├── feedback.ts          # Feedback submission
+│       ├── recipes/             # Recipe CRUD endpoints
+│       └── uploads/             # R2 image serving
+├── layouts/
+│   ├── Layout.astro             # Base HTML layout
+│   └── RecipeLayout.astro       # Recipe app wrapper with global menus
+└── styles/                      # Global CSS
+tests/                           # Playwright E2E tests
+├── recipe-manager.spec.ts       # Core recipe management
+├── cooking-mode.spec.ts         # Cooking workflow
+├── grocery-list.spec.ts         # Grocery list generation
+├── feedback.spec.ts             # Feedback submission
+├── weekly-planning.spec.ts      # This Week feature
+├── metadata.spec.ts             # Filtering and tagging
+└── ...                          # Additional test suites
+```
 
 ---
 

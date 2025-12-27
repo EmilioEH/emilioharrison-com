@@ -63,8 +63,9 @@ const GlobalBurgerMenu = () => {
             </div>
 
             {/* Menu Items */}
-            <nav className="p-2">
+            <div className="p-2" role="menu">
               <button
+                role="menuitem"
                 onClick={handleSettings}
                 className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-md-sys-color-surface-variant"
               >
@@ -73,6 +74,7 @@ const GlobalBurgerMenu = () => {
               </button>
 
               <button
+                role="menuitem"
                 onClick={handleFeedback}
                 className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-md-sys-color-surface-variant"
                 aria-label="Send Feedback"
@@ -80,7 +82,7 @@ const GlobalBurgerMenu = () => {
                 <MessageSquare className="h-5 w-5 text-md-sys-color-on-surface-variant" />
                 <span className="font-medium text-md-sys-color-on-surface">Send Feedback</span>
               </button>
-            </nav>
+            </div>
 
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 border-t border-md-sys-color-outline p-4">

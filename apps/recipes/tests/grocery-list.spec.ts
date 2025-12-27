@@ -38,7 +38,7 @@ test.describe('Grocery List', () => {
     })
 
     // 2. Mock User Data to ensure we have recipes
-    await page.route('**/api/recipes', async (route) => {
+    await page.route('**/api/recipes*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -126,7 +126,7 @@ test.describe('Grocery List', () => {
     // RecipeCard has a "Calendar" icon button for "Add to Week".
 
     // Let's just mock the 'update' API too, or just trigger the state change if possible.
-    // Since we mocked /api/user-data, we need to be careful.
+    // Since we mocked /api/recipes, we need to be careful.
     // Let's reload page with NEW mock data to simulate 'change'?
     // Or better, just interact with the UI.
 
@@ -149,7 +149,7 @@ test.describe('Grocery List', () => {
     // That's cleaner for testing the "Grocery List" logic specifically.
 
     // Mock User Data Update: 3 recipes this week
-    await page.route('**/api/recipes', async (route) => {
+    await page.route('**/api/recipes*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -178,7 +178,7 @@ test.describe('Grocery List', () => {
     // Reset apiCallCount = 0
     apiCallCount = 0
     // Mock user-data again original state
-    await page.route('**/api/recipes', async (route) => {
+    await page.route('**/api/recipes*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

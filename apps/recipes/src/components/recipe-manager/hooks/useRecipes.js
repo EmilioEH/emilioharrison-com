@@ -9,8 +9,8 @@ export const useRecipes = () => {
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const refreshRecipes = async () => {
-    setLoading(true)
+  const refreshRecipes = async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const res = await fetch(`${getBaseUrl()}api/recipes`)
       if (res.ok) {
@@ -20,7 +20,7 @@ export const useRecipes = () => {
     } catch (err) {
       console.error('Failed to load recipes', err)
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 

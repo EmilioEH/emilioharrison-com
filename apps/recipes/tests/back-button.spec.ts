@@ -58,10 +58,7 @@ test.describe('Back Button Navigation', () => {
       })
     })
 
-    // Just in case
-    await page.route('**/api/user-data*', async (route) => {
-      await route.fulfill({ json: { success: true } })
-    })
+    // Clean state
   })
 
   test('should navigate back to library from grocery view instead of logging out', async ({

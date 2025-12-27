@@ -52,8 +52,8 @@ test.describe('Shared Recipe Storage', () => {
     await pageAlice.getByLabel('Title').fill(uniqueRecipe)
     await pageAlice.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Wait for save confirmation (UI shows Check icon)
-    await expect(pageAlice.locator('svg.lucide-check')).toBeVisible()
+    // Wait for save confirmation (Review & Edit or New Recipe header should be gone)
+    await expect(pageAlice.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()
 
     // 2. Bob (Dad) should see Alice's recipe in the shared collection
     const contextBob = await createAuthContext(browser, 'Bob')

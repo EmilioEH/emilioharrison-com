@@ -94,6 +94,20 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     // Ensure data object has everything
     const dataStr = JSON.stringify({ ...recipe, id })
 
+    // Safety check for D1 row size limit (roughly 2MB)
+    if (dataStr.length > 1.5 * 1024 * 1024) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Recipe content is too large. This usually happens if a high-resolution photo failed to upload and is being sent as raw data. Try a smaller photo or check your connection.',
+        }),
+        {
+          status: 413,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
     const batch = [
       db
         .prepare(

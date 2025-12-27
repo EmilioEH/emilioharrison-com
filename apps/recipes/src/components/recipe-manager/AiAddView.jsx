@@ -16,7 +16,7 @@ export const AiAddView = ({ onClose, onSave }) => {
       <div className="flex-1 overflow-y-auto p-4">
         <RecipeInput
           onRecipeCreated={(recipe) => {
-            onSave(recipe)
+            return onSave(recipe)
           }}
         />
       </div>

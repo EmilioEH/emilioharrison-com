@@ -34,11 +34,16 @@ test.describe('Week View Grouping', () => {
       },
     ]
 
-    await page.route('**/api/user-data', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { recipes: mockRecipes } })
+    let currentRecipes = [...mockRecipes]
+    await page.route('**/api/recipes/**', async (route) => {
+      const method = route.request().method()
+      if (method === 'GET') {
+        await route.fulfill({ json: { recipes: currentRecipes } })
+      } else if (method === 'PUT') {
+        const body = await route.request().postDataJSON()
+        currentRecipes = currentRecipes.map((r) => (r.id === body.id ? body : r))
+        await route.fulfill({ json: { success: true } })
       } else {
-        // Mock Save
         await route.fulfill({ json: { success: true } })
       }
     })

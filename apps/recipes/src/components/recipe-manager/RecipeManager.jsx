@@ -81,25 +81,33 @@ const RecipeManager = () => {
           const { id } = await res.json()
           recipe.id = id
         }
-        await refreshRecipes()
+
         // Optimistic update for immediate feedback
-        if (isNew) {
-          setRecipes((prev) => [recipe, ...prev])
-        } else {
-          setRecipes((prev) => prev.map((r) => (r.id === recipe.id ? recipe : r)))
-        }
+        setRecipes((prev) => {
+          const exists = prev.find((r) => r.id === recipe.id)
+          if (exists) {
+            return prev.map((r) => (r.id === recipe.id ? recipe : r))
+          }
+          return [recipe, ...prev]
+        })
 
         if (view === 'edit' || view === 'ai-add') {
-          setView('library') // Or detail?
+          setView('library')
           setSelectedRecipe(null)
         }
+
+        await refreshRecipes(false)
+
+        return true
       } else {
         console.error('Failed to save recipe')
         alert('Failed to save recipe')
+        return false
       }
     } catch (e) {
       console.error(e)
       alert('Error saving recipe')
+      return false
     }
   }
 
@@ -312,15 +320,7 @@ const RecipeManager = () => {
 
   // AI Add View
   if (view === 'ai-add') {
-    return (
-      <AiAddView
-        onClose={() => setView('library')}
-        onSave={(recipe) => {
-          handleSaveRecipe(recipe)
-          setView('library')
-        }}
-      />
-    )
+    return <AiAddView onClose={() => setView('library')} onSave={handleSaveRecipe} />
   }
 
   return (
@@ -429,10 +429,7 @@ const RecipeManager = () => {
           <div className="h-full overflow-y-auto p-4">
             <RecipeEditor
               recipe={selectedRecipe || {}}
-              onSave={(r) => {
-                handleSaveRecipe(r)
-                setView('library')
-              }}
+              onSave={handleSaveRecipe}
               onCancel={() => setView('library')}
               onDelete={handleDeleteRecipe}
             />

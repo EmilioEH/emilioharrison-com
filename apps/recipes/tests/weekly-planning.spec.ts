@@ -67,11 +67,19 @@ test.describe('Weekly Meal Planning', () => {
       },
     ]
 
-    await page.route('**/api/user-data', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { recipes: mockRecipes } })
-      } else {
-        // Mock Save
+    let currentRecipes = [...mockRecipes]
+    await page.route('**/api/recipes/**', async (route) => {
+      const method = route.request().method()
+      if (method === 'GET') {
+        await route.fulfill({ json: { recipes: currentRecipes } })
+      } else if (method === 'POST') {
+        const body = await route.request().postDataJSON()
+        const newRecipe = { ...body, id: body.id || `recipe-${Date.now()}` }
+        currentRecipes.push(newRecipe)
+        await route.fulfill({ json: { success: true, id: newRecipe.id } })
+      } else if (method === 'PUT') {
+        const body = await route.request().postDataJSON()
+        currentRecipes = currentRecipes.map((r) => (r.id === body.id ? body : r))
         await route.fulfill({ json: { success: true } })
       }
     })

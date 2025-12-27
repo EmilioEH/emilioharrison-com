@@ -11,7 +11,7 @@ test.describe('Prep Mode Scroll', () => {
 
   test('should allow scrolling in mise en place view with many ingredients', async ({ page }) => {
     // 1. Mock Recipe with many ingredients
-    await page.route('**/api/recipes', async (route) => {
+    await page.route('**/api/recipes*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

@@ -31,13 +31,20 @@ test.describe('Recipe Cooking Mode', () => {
 
   test.beforeEach(async ({ page }) => {
     // Mock user data to keep the test environment clean and isolated
-    await page.route('**/api/user-data', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          json: {
-            recipes: [],
-          },
-        })
+    let currentRecipes: any[] = []
+    await page.route('**/api/recipes*', async (route) => {
+      const method = route.request().method()
+      if (method === 'GET') {
+        await route.fulfill({ json: { recipes: currentRecipes } })
+      } else if (method === 'POST') {
+        const body = await route.request().postDataJSON()
+        const newRecipe = { ...body, id: body.id || `recipe-${Date.now()}` }
+        currentRecipes.push(newRecipe)
+        await route.fulfill({ json: { success: true, id: newRecipe.id } })
+      } else if (method === 'PUT') {
+        const body = await route.request().postDataJSON()
+        currentRecipes = currentRecipes.map((r) => (r.id === body.id ? body : r))
+        await route.fulfill({ json: { success: true } })
       } else {
         await route.fulfill({ json: { success: true } })
       }
@@ -57,9 +64,7 @@ test.describe('Recipe Cooking Mode', () => {
 
     // 2. Open the recipe
     // Find the specific recipe card by its unique title heading
-    const recipeCard = page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })
+    const recipeCard = page.getByText(testTitle).first()
 
     // Ensure it's visible (should be open by default now)
     await expect(recipeCard).toBeVisible()
@@ -105,9 +110,9 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByText('CHEFBOARD')).toBeVisible()
 
     // Re-open and check notes/rating
-    await expect(recipeCard).toBeVisible()
+    await expect(page.getByText(testTitle).first()).toBeVisible()
     await page.waitForTimeout(500)
-    await recipeCard.click()
+    await page.getByText(testTitle).first().click()
     await expect(page.getByText('Delicious and fluffy!')).toBeVisible()
     // Check if 4 stars are visible in the preview section
     const previewStars = page.locator(
