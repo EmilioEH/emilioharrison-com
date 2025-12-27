@@ -82,7 +82,7 @@ test.describe('Recipe Organization', () => {
     await page.getByRole('button', { name: 'Open Filters' }).click()
 
     // 2. Select "Easy" difficulty
-    await page.getByRole('button', { name: 'Easy' }).click()
+    await page.getByRole('button', { name: 'Easy', exact: true }).click()
 
     // 3. Close panel
     await page

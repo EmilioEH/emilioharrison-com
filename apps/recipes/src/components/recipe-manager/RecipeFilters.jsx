@@ -79,6 +79,8 @@ export const RecipeFilters = ({
             <div className="grid grid-cols-1 gap-2">
               {[
                 { id: 'protein', label: 'Protein', icon: ChefHat },
+                { id: 'mealType', label: 'Meal Type', icon: Star },
+                { id: 'dishType', label: 'Dish Type', icon: Star },
                 { id: 'alpha', label: 'Alphabetical', icon: ArrowDownAZ },
                 { id: 'recent', label: 'Most Recent', icon: Calendar },
                 { id: 'time', label: 'Shortest Time', icon: Clock },
@@ -111,6 +113,30 @@ export const RecipeFilters = ({
             />
           </FilterSection>
 
+          {/* Meal Type */}
+          <FilterSection title="Meal Type">
+            {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
+              <FilterChip
+                key={t}
+                label={t}
+                active={filters.mealType?.includes(t)}
+                onClick={() => handleFilterToggle('mealType', t)}
+              />
+            ))}
+          </FilterSection>
+
+          {/* Dish Type */}
+          <FilterSection title="Dish Type">
+            {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
+              <FilterChip
+                key={t}
+                label={t}
+                active={filters.dishType?.includes(t)}
+                onClick={() => handleFilterToggle('dishType', t)}
+              />
+            ))}
+          </FilterSection>
+
           {/* Protein */}
           <FilterSection title="Protein">
             {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
@@ -123,6 +149,46 @@ export const RecipeFilters = ({
                 />
               ),
             )}
+          </FilterSection>
+
+          {/* Dietary */}
+          <FilterSection title="Dietary">
+            {['Vegan', 'Vegetarian', 'Gluten-Free', 'Keto', 'Paleo', 'Dairy-Free', 'Low-Carb'].map(
+              (d) => (
+                <FilterChip
+                  key={d}
+                  label={d}
+                  active={filters.dietary?.includes(d)}
+                  onClick={() => handleFilterToggle('dietary', d)}
+                />
+              ),
+            )}
+          </FilterSection>
+
+          {/* Equipment */}
+          <FilterSection title="Equipment">
+            {['Air Fryer', 'Slow Cooker', 'Instant Pot', 'Blender', 'Sheet Pan', 'Grill'].map(
+              (e) => (
+                <FilterChip
+                  key={e}
+                  label={e}
+                  active={filters.equipment?.includes(e)}
+                  onClick={() => handleFilterToggle('equipment', e)}
+                />
+              ),
+            )}
+          </FilterSection>
+
+          {/* Occasion */}
+          <FilterSection title="Occasion">
+            {['Weeknight', 'Party', 'Holiday', 'Date Night', 'Kid-Friendly', 'Quick'].map((o) => (
+              <FilterChip
+                key={o}
+                label={o}
+                active={filters.occasion?.includes(o)}
+                onClick={() => handleFilterToggle('occasion', o)}
+              />
+            ))}
           </FilterSection>
 
           {/* Difficulty */}

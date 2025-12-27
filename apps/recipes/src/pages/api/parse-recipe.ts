@@ -21,7 +21,12 @@ Rules:
 1. If the input is an image, describe what you see and infer the recipe (ingredients/steps) as best as possible.
 2. If the input is a URL, parse the HTML.
 3. Use reasonable defaults if data is missing (e.g. 2 servings).
-4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}. If unclear, use "Other".
+4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+5. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+6. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+7. List any specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender).
+8. Suggest any "Occasion" tags (e.g. Weeknight, Party, Holiday).
+9. Extract "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto).
 `
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -94,9 +99,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
           type: SchemaType.STRING,
           enum: ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'],
         },
+        mealType: {
+          type: SchemaType.STRING,
+          enum: ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
+        },
+        dishType: {
+          type: SchemaType.STRING,
+          enum: ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'],
+        },
+        equipment: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        occasion: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        dietary: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
         difficulty: { type: SchemaType.STRING },
         cuisine: { type: SchemaType.STRING },
-        dietary: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
       },
       required: ['title', 'ingredients', 'steps'],
     }

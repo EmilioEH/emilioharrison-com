@@ -1,12 +1,12 @@
-export interface Recipe {
+export interface RecipeRow {
   id: string
   title: string
-  description: string | null
-  instructions: string | null
-  category: string | null
-  image_url: string | null
+  protein: string | null
+  difficulty: string | null
+  cuisine: string | null
+  is_favorite: number // 0 | 1
+  this_week: number // 0 | 1
   created_at: number
   updated_at: number
+  data: string // JSON string
 }
-
-export type NewRecipe = Omit<Recipe, 'created_at' | 'updated_at'>

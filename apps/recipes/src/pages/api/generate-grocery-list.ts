@@ -23,8 +23,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const SYSTEM_PROMPT = `
-You are an expert Data Engineer specializing in culinary ingredients.
-Your task is to take a list of raw ingredient strings from multiple recipes and parse them into structured data.
+You are an expert Data Engineer and Chef.
+Your task is to take a list of raw ingredient strings from multiple recipes and parse them into a structured, AGGREGATED list.
 
 Input Format:
 [Recipe Title]
@@ -34,9 +34,12 @@ Ingredients:
 
 Rules:
 1. Normalize names: "clove of garlic" -> "garlic", "minced garlic" -> "garlic".
-2. Normalize units: "tablespoon" -> "tbsp", "cups" -> "cup".
-3. Category must be one of: Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other.
-4. If an ingredient appears multiple times, return them as SEPARATE items in the array.
+2. Normalize units to standard metric/imperial (e.g. oz, lb, cup, tbsp).
+3. **AGGREGATE** quantities for the same ingredient.
+   - Example: "16 oz beef" + "1 lb beef" -> "2 lb beef" (or "32 oz beef").
+   - Example: "1 cup flour" + "2 cups flour" -> "3 cups flour".
+4. Keep distinctly different ingredients separate (e.g. "ground beef" vs "steak").
+5. Category must be one of: Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other.
 `
 
   const inputList = formatRecipesForPrompt(recipes)

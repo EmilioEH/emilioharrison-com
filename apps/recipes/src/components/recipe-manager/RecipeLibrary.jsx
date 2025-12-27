@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { Clock, Users, ChefHat, ChevronDown, Calendar, Star, Heart, Check } from 'lucide-react'
+import { getCurrentWeekDays } from '../../lib/date-helpers'
 
 const LibraryRecipeCard = ({
   recipe,
@@ -8,6 +9,8 @@ const LibraryRecipeCard = ({
   'data-testid': testId,
   isSelectionMode,
   isSelected,
+  onAssignDay,
+  weekDays,
 }) => (
   <div
     data-testid={testId}
@@ -27,10 +30,10 @@ const LibraryRecipeCard = ({
           </div>
         </div>
       )}
-      {recipe.sourceImage && (
+      {(recipe.finishedImage || recipe.sourceImage) && (
         <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
           <img
-            src={recipe.sourceImage}
+            src={recipe.finishedImage || recipe.sourceImage}
             alt={recipe.title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
@@ -92,6 +95,28 @@ const LibraryRecipeCard = ({
     >
       <Calendar className="h-4 w-4" />
     </button>
+
+    {/* Day Assignment Selection */}
+    {onAssignDay && weekDays && weekDays.length > 0 && (
+      <div className="bg-md-sys-color-surface-variant/30 border-t border-md-sys-color-outline p-2">
+        <select
+          value={recipe.assignedDate || ''}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            e.stopPropagation()
+            onAssignDay(recipe, e.target.value)
+          }}
+          className="w-full rounded border border-md-sys-color-outline bg-white p-1 text-xs"
+        >
+          <option value="">Move to...</option>
+          {weekDays.map((day) => (
+            <option key={day.date} value={day.date}>
+              {day.displayLabel}
+            </option>
+          ))}
+        </select>
+      </div>
+    )}
   </div>
 )
 
@@ -134,8 +159,11 @@ export const RecipeLibrary = ({
   sort,
   isSelectionMode,
   selectedIds,
+  onAssignDay,
 }) => {
   const [openGroups, setOpenGroups] = useState({})
+
+  const weekDays = useMemo(() => getCurrentWeekDays(), [])
 
   const toggleGroup = (groupName) => {
     setOpenGroups((prev) => ({
@@ -147,11 +175,23 @@ export const RecipeLibrary = ({
   const groupedRecipes = useMemo(() => {
     const groups = {}
 
+    // Default Groups for Week View
+    if (sort === 'week-day') {
+      weekDays.forEach((d) => {
+        groups[d.date] = []
+      })
+      groups['Unassigned'] = []
+    }
+
     recipes.forEach((recipe) => {
       let groupKey = 'Other'
 
       if (sort === 'protein') {
         groupKey = recipe.protein || 'Uncategorized'
+      } else if (sort === 'mealType') {
+        groupKey = recipe.mealType || 'Other'
+      } else if (sort === 'dishType') {
+        groupKey = recipe.dishType || 'Other'
       } else if (sort === 'alpha') {
         groupKey = recipe.title ? recipe.title[0].toUpperCase() : '#'
       } else if (sort === 'recent') {
@@ -162,37 +202,61 @@ export const RecipeLibrary = ({
         else if (totalMinutes <= 30) groupKey = '30 Min or Less'
         else if (totalMinutes <= 60) groupKey = 'Under 1 Hour'
         else groupKey = 'Over 1 Hour'
+      } else if (sort === 'week-day') {
+        // Check if assignedDate aligns with current week
+        const isValidDate = recipe.assignedDate && groups[recipe.assignedDate]
+        groupKey = isValidDate ? recipe.assignedDate : 'Unassigned'
       }
 
       if (!groups[groupKey]) groups[groupKey] = []
       groups[groupKey].push(recipe)
     })
 
-    // Sort group keys if needed
+    // Sort group keys
     const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (sort === 'week-day') {
+        // Unassigned first, then dates
+        if (a === 'Unassigned') return -1
+        if (b === 'Unassigned') return 1
+        return a.localeCompare(b)
+      }
       if (sort === 'protein') {
-        const order = [
-          'Chicken',
-          'Beef',
-          'Pork',
-          'Fish',
-          'Seafood',
-          'Vegetarian',
-          'Vegan',
-          'Uncategorized',
-          'Other',
-        ]
-        const idxA = order.indexOf(a)
-        const idxB = order.indexOf(b)
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB
-        if (idxA !== -1) return -1
-        if (idxB !== -1) return 1
+        const order = ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other']
+        // Handle unknown keys (put them at end)
+        const aIdx = order.indexOf(a)
+        const bIdx = order.indexOf(b)
+        if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
+        if (aIdx === -1) return 1
+        if (bIdx === -1) return -1
+        return aIdx - bIdx
+      }
+      if (sort === 'mealType') {
+        const order = ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert']
+        // Handle unknown keys (put them at end)
+        const aIdx = order.indexOf(a)
+        const bIdx = order.indexOf(b)
+        if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
+        if (aIdx === -1) return 1
+        if (bIdx === -1) return -1
+        return aIdx - bIdx
+      }
+      if (sort === 'dishType') {
+        const order = ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce']
+        const aIdx = order.indexOf(a)
+        const bIdx = order.indexOf(b)
+        if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
+        if (aIdx === -1) return 1
+        if (bIdx === -1) return -1
+        return aIdx - bIdx
+      }
+      if (sort === 'time' || sort === 'recent') {
+        // No specific order, just alphabetical for these groups
         return a.localeCompare(b)
       }
       return a.localeCompare(b)
     })
     return { groups, sortedKeys }
-  }, [recipes, sort])
+  }, [recipes, sort, weekDays])
 
   React.useEffect(() => {
     if (Object.keys(openGroups).length === 0 && groupedRecipes.sortedKeys.length > 0) {
@@ -203,6 +267,15 @@ export const RecipeLibrary = ({
       setOpenGroups(allOpen)
     }
   }, [groupedRecipes.sortedKeys, openGroups])
+
+  const getGroupTitle = (key) => {
+    if (sort === 'week-day') {
+      if (key === 'Unassigned') return 'To Plan'
+      const d = weekDays.find((wd) => wd.date === key)
+      return d ? d.displayLabel : key
+    }
+    return key
+  }
 
   if (recipes.length === 0) {
     return (
@@ -218,7 +291,7 @@ export const RecipeLibrary = ({
       {groupedRecipes.sortedKeys.map((key) => (
         <AccordionGroup
           key={key}
-          title={key}
+          title={getGroupTitle(key)}
           count={groupedRecipes.groups[key].length}
           isOpen={!!openGroups[key]}
           onToggle={() => toggleGroup(key)}
@@ -232,6 +305,8 @@ export const RecipeLibrary = ({
               data-testid={`recipe-card-${recipe.id}`}
               isSelectionMode={isSelectionMode}
               isSelected={selectedIds?.has(recipe.id)}
+              onAssignDay={onAssignDay}
+              weekDays={sort === 'week-day' ? weekDays : null}
             />
           ))}
         </AccordionGroup>

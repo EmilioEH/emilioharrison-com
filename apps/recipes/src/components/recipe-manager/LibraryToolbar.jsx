@@ -11,6 +11,8 @@ export const LibraryToolbar = ({
 }) => {
   const sortOptions = [
     { id: 'protein', label: 'Protein' },
+    { id: 'mealType', label: 'Meal Type' },
+    { id: 'dishType', label: 'Dish Type' },
     { id: 'alpha', label: 'A-Z' },
     { id: 'recent', label: 'Recent' },
     { id: 'time', label: 'Time' },

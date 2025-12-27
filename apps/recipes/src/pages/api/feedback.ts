@@ -34,11 +34,36 @@ export const GET: APIRoute = async ({ cookies, locals }) => {
     }
 
     // Parse JSON fields
-    const parsedResults = (results as unknown as FeedbackRow[]).map((row) => ({
-      ...row,
-      logs: row.logs ? JSON.parse(row.logs) : [],
-      context: row.context ? JSON.parse(row.context) : {},
-    }))
+    // Note: If data was offloaded to R2, the field will contain "r2:..." string.
+    // The frontend/consumer will need to handle fetching that content if needed.
+    const parsedResults = (results as unknown as FeedbackRow[]).map((row) => {
+      let logs: unknown = []
+      let context: unknown = {}
+
+      try {
+        // Only parse if it looks like JSON and not an R2 reference or error message
+        if (row.logs && !row.logs.startsWith('r2:') && !row.logs.startsWith('[')) {
+          logs = JSON.parse(row.logs)
+        } else if (typeof row.logs === 'string') {
+          // Keep as string if it's an R2 reference or error message
+          logs = row.logs
+        }
+
+        if (row.context && !row.context.startsWith('r2:') && !row.context.startsWith('[')) {
+          context = JSON.parse(row.context)
+        } else if (typeof row.context === 'string') {
+          context = row.context
+        }
+      } catch (e) {
+        console.warn('Failed to parse feedback row JSON', e)
+      }
+
+      return {
+        ...row,
+        logs,
+        context,
+      }
+    })
 
     return new Response(JSON.stringify(parsedResults), {
       status: 200,
@@ -51,6 +76,64 @@ export const GET: APIRoute = async ({ cookies, locals }) => {
       headers: { 'Content-Type': 'application/json' },
     })
   }
+}
+
+/**
+ * Helper to upload data to R2 if available, or return original data if small enough.
+ * Returns the string to be stored in D1 (either original data, R2 key, or error placeholder).
+ */
+async function handleLargeData(
+  env: App.Locals['runtime']['env'],
+  id: string,
+  field: string,
+  data: string,
+  contentType: string,
+  maxD1Size = 20000, // 20KB safe limit for text in D1
+): Promise<string> {
+  if (!data) return data
+
+  const isR2Available = !!env.BUCKET
+  const size = data.length
+
+  // If small enough for D1, keep it
+  if (size <= maxD1Size) {
+    return data
+  }
+
+  // If R2 is available, try to upload
+  if (isR2Available) {
+    try {
+      const key = `feedback/${id}/${field}`
+      // If it's a base64 image (screenshot), decode it first
+      let body: string | Buffer = data
+      let finalContentType = contentType
+
+      if (field === 'screenshot' && data.startsWith('data:image')) {
+        const base64Data = data.replace(/^data:image\/\w+;base64,/, '')
+        body = Buffer.from(base64Data, 'base64')
+        finalContentType = 'image/png'
+      }
+
+      await env.BUCKET.put(key, body, {
+        httpMetadata: { contentType: finalContentType },
+      })
+      console.log(`[Feedback API] Offloaded ${field} (${size} chars) to R2: ${key}`)
+      return `r2:${key}`
+    } catch (err) {
+      console.error(`[Feedback API] Failed to upload ${field} to R2:`, err)
+      // Fall through to size check fallback
+    }
+  }
+
+  // If R2 missing or failed, and still too big -> Truncate/Drop
+  // We use a larger "absolute max" for D1 if we really have to, but 1MB is the hard row limit.
+  // 100KB is a safer fallback limit.
+  if (size > 100000) {
+    console.warn(`[Feedback API] ${field} too large (${size}) and R2 unavailable/failed. Dropping.`)
+    return `[${field} Too Large - R2 Missing]`
+  }
+
+  return data
 }
 
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
@@ -71,16 +154,13 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       type: feedback.type,
       hasScreenshot: !!feedback.screenshot,
       screenshotSize: feedback.screenshot?.length || 0,
+      logsLength: JSON.stringify(feedback.logs).length,
+      contextLength: JSON.stringify(feedback.context).length,
     })
 
     const runtime = locals.runtime
 
     if (!runtime || !runtime.env || !runtime.env.DB) {
-      console.error('[Feedback API] Missing runtime or DB binding:', {
-        hasRuntime: !!runtime,
-        hasEnv: !!runtime?.env,
-        hasDB: !!runtime?.env?.DB,
-      })
       return new Response(
         JSON.stringify({
           error: 'Database not configured',
@@ -92,53 +172,32 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
     const { env } = runtime
 
-    let screenshotVal = feedback.screenshot
+    // Process fields that might be large (screenshot, logs, context)
+    const screenshotVal = await handleLargeData(
+      env,
+      feedback.id,
+      'screenshot',
+      feedback.screenshot,
+      'image/png',
+    )
 
-    // Debug logging for bindings
-    console.log('[Feedback API] Runtime env keys:', Object.keys(env))
-    console.log('[Feedback API] BUCKET binding present:', !!env.BUCKET)
+    const logsStr = JSON.stringify(feedback.logs || [])
+    const logsVal = await handleLargeData(
+      env,
+      feedback.id,
+      'logs.json',
+      logsStr,
+      'application/json',
+    )
 
-    // Offload screenshot to R2 if present and is base64
-    if (feedback.screenshot && feedback.screenshot.startsWith('data:image')) {
-      if (env.BUCKET) {
-        try {
-          console.log('[Feedback API] Attempting R2 upload...')
-          const base64Data = feedback.screenshot.replace(/^data:image\/\w+;base64,/, '')
-          // Convert base64 to Uint8Array using Buffer (nodejs_compat enabled)
-          const buffer = Buffer.from(base64Data, 'base64')
-          const bytes = new Uint8Array(buffer)
-
-          const key = `feedback/${feedback.id}.png`
-          await env.BUCKET.put(key, bytes, {
-            httpMetadata: { contentType: 'image/png' },
-          })
-
-          // Store the R2 key instead of the massive base64 string
-          screenshotVal = key
-          console.log('[Feedback API] Uploaded screenshot to R2:', key)
-        } catch (r2Error) {
-          console.error('[Feedback API] Failed to upload screenshot to R2:', r2Error)
-          // Fallback: Check size, if too big, drop it
-          if (feedback.screenshot.length > 100000) {
-            console.warn('[Feedback API] Screenshot too large for D1 fallback, dropping it.')
-            screenshotVal = '[Image Upload Failed - Too Large for DB]'
-          }
-        }
-      } else {
-        console.warn('[Feedback API] BUCKET binding missing, skipping R2 upload')
-        // Fail-safe: If image is too large for D1 (approx > 100KB is risky if limit is 1MB but let's be safe)
-        // Actually D1 limit is 100MB for DB size but statement size is 1MB/100MB depending on plan.
-        // Let's assume 1MB. 1MB chars is roughly 1MB bytes.
-
-        if (feedback.screenshot.length > 500000) {
-          // ~500KB safety limit
-          console.warn(
-            '[Feedback API] Screenshot too large for default D1 storage (missing R2), dropping it.',
-          )
-          screenshotVal = '[Image Too Large - R2 Missing]'
-        }
-      }
-    }
+    const contextStr = JSON.stringify(feedback.context || {})
+    const contextVal = await handleLargeData(
+      env,
+      feedback.id,
+      'context.json',
+      contextStr,
+      'application/json',
+    )
 
     console.log('[Feedback API] Preparing D1 insert statement...')
     const stmt = env.DB.prepare(
@@ -154,8 +213,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       feedback.expected,
       feedback.actual,
       screenshotVal,
-      JSON.stringify(feedback.logs),
-      JSON.stringify(feedback.context),
+      logsVal,
+      contextVal,
       feedback.timestamp,
     )
 

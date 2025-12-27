@@ -33,7 +33,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
       // Small delay to ensure render stability?
       requestAnimationFrame(() => capture())
     }
-  }, [isOpen])
+  }, [isOpen, screenshot])
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0]

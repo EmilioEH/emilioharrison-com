@@ -15,6 +15,10 @@ export interface Recipe {
   notes?: string
   // New metadata for organization
   protein?: string
+  mealType?: string
+  dishType?: string
+  equipment?: string[]
+  occasion?: string[]
   difficulty?: 'Easy' | 'Medium' | 'Hard'
   cuisine?: string
   dietary?: string[]
@@ -44,6 +48,7 @@ export interface Recipe {
   userNotes?: string
   wouldMakeAgain?: boolean
   lastCooked?: string // ISO date
+  finishedImage?: string // Base64 or URL
 }
 
 export interface StructuredIngredient {

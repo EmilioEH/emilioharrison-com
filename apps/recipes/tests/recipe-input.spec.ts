@@ -1,22 +1,36 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Recipe Input Flow', () => {
-  test.beforeEach(async ({ page, context }) => {
+  test.beforeEach(async ({ page }) => {
     // Mock Auth
-    await context.addCookies([
-      {
-        name: 'site_auth',
-        value: 'true',
-        domain: '127.0.0.1',
-        path: '/',
-      },
-      {
-        name: 'site_user',
-        value: 'testuser',
-        domain: '127.0.0.1',
-        path: '/',
-      },
-    ])
+    // Mock Login POST to bypass server logic
+    await page.route('**/login', async (route) => {
+      if (route.request().method() === 'POST') {
+        await page.context().addCookies([
+          { name: 'site_auth', value: 'true', url: 'http://127.0.0.1:8788/' },
+          { name: 'site_user', value: 'TestUser', url: 'http://127.0.0.1:8788/' },
+        ])
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          body: '<html><body>Login Success<script>window.location.href="/protected/recipes"</script></body></html>',
+        })
+      } else {
+        await route.continue()
+      }
+    })
+
+    // Perform UI Login
+    await page.goto('/protected/recipes')
+    // Expect login page
+    await expect(page).toHaveURL(/.*\/login/)
+
+    await page.fill('#name', 'TestUser')
+    await page.fill('#password', 'password123')
+    await page.getByRole('button', { name: 'Enter Kitchen' }).click()
+
+    // Wait for redirect back
+    await expect(page).toHaveURL(/\/protected\/recipes\/?$/)
 
     // Mock Parse Recipe API
     await page.route('**/api/parse-recipe', async (route) => {
@@ -97,5 +111,25 @@ test.describe('Recipe Input Flow', () => {
     await page.getByRole('button', { name: 'Process Recipe' }).click()
 
     await expect(page.getByText('Error: Invalid URL provided')).toBeVisible()
+  })
+
+  test('should display camera and gallery options', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await page.getByTitle('AI Chef').click()
+
+    // Verify default view (Photo tab)
+    await expect(page.getByText('Add a photo of your dish')).toBeVisible()
+
+    // Verify Gallery Option
+    const galleryBtn = page.getByRole('button', { name: 'Gallery' })
+    await expect(galleryBtn).toBeVisible()
+    const galleryInput = page.locator('input[type="file"]').first()
+    await expect(galleryInput).not.toHaveAttribute('capture')
+
+    // Verify Camera Option
+    const cameraBtn = page.getByRole('button', { name: 'Camera' })
+    await expect(cameraBtn).toBeVisible()
+    const cameraInput = page.locator('input[type="file"]').nth(1)
+    await expect(cameraInput).toHaveAttribute('capture', 'environment')
   })
 })

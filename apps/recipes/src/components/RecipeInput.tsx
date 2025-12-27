@@ -97,7 +97,7 @@ const PhotoUploader = ({
 }) => (
   <div
     className={`bg-md-sys-color-surface-variant/10 flex h-64 w-full flex-col items-center justify-center rounded-md-xl border border-dashed border-md-sys-color-outline transition-colors ${
-      imagePreview ? 'border-none p-0' : 'hover:bg-md-sys-color-primary/[0.04] group relative'
+      imagePreview ? 'border-none p-0' : 'group relative'
     }`}
   >
     {imagePreview ? (
@@ -115,20 +115,41 @@ const PhotoUploader = ({
         </button>
       </div>
     ) : (
-      <>
-        <div className="mb-4 rounded-full bg-md-sys-color-surface p-4 shadow-md-1">
+      <div className="flex w-full flex-col items-center gap-4 p-6">
+        <div className="mb-2 rounded-full bg-md-sys-color-surface p-4 shadow-md-1">
           <Upload className="h-8 w-8 text-md-sys-color-on-surface-variant" />
         </div>
         <p className="text-sm font-medium text-md-sys-color-on-surface-variant">
-          Tap to upload or take photo
+          Add a photo of your dish
         </p>
-        <input
-          type="file"
-          accept="image/*"
-          className="absolute inset-0 cursor-pointer opacity-0"
-          onChange={handleFileChange}
-        />
-      </>
+
+        <div className="flex w-full gap-3">
+          <div className="relative flex-1">
+            <Button fullWidth intent="secondary">
+              <Upload className="mr-2 h-4 w-4" /> Gallery
+            </Button>
+            <input
+              type="file"
+              accept="image/*"
+              className="absolute inset-0 cursor-pointer opacity-0"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          <div className="relative flex-1">
+            <Button fullWidth>
+              <Camera className="mr-2 h-4 w-4" /> Camera
+            </Button>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="absolute inset-0 cursor-pointer opacity-0"
+              onChange={handleFileChange}
+            />
+          </div>
+        </div>
+      </div>
     )}
   </div>
 )
@@ -275,6 +296,123 @@ const RecipeReviewForm = ({
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="mealType"
+              className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+            >
+              Meal Type
+            </label>
+            <select
+              id="mealType"
+              className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2 font-medium outline-none"
+              value={formData.mealType || ''}
+              onChange={(e) => setFormData({ ...formData, mealType: e.target.value })}
+            >
+              <option value="">Select...</option>
+              {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="dishType"
+              className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+            >
+              Dish Type
+            </label>
+            <select
+              id="dishType"
+              className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface p-2 font-medium outline-none"
+              value={formData.dishType || ''}
+              onChange={(e) => setFormData({ ...formData, dishType: e.target.value })}
+            >
+              <option value="">Select...</option>
+              {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="dietary"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+          >
+            Dietary Tags (comma separated)
+          </label>
+          <input
+            id="dietary"
+            className="w-full border-b border-md-sys-color-outline bg-transparent py-1 font-medium outline-none focus:border-md-sys-color-primary"
+            placeholder="e.g. Vegan, Gluten-Free"
+            value={formData.dietary?.join(', ') || ''}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                dietary: e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="equipment"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+          >
+            Equipment (comma separated)
+          </label>
+          <input
+            id="equipment"
+            className="w-full border-b border-md-sys-color-outline bg-transparent py-1 font-medium outline-none focus:border-md-sys-color-primary"
+            placeholder="e.g. Air Fryer, Slow Cooker"
+            value={formData.equipment?.join(', ') || ''}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                equipment: e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="occasion"
+            className="mb-1 block text-xs font-medium uppercase text-md-sys-color-on-surface-variant"
+          >
+            Occasion (comma separated)
+          </label>
+          <input
+            id="occasion"
+            className="w-full border-b border-md-sys-color-outline bg-transparent py-1 font-medium outline-none focus:border-md-sys-color-primary"
+            placeholder="e.g. Weeknight, Party"
+            value={formData.occasion?.join(', ') || ''}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                occasion: e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </div>
+
         <div>
           <label
             htmlFor="ingredients"
@@ -353,14 +491,42 @@ const RecipeSourceSelector = ({
   status,
   onProcess,
 }: RecipeSourceSelectorProps) => {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedMap = e.target.files[0]
+      const file = e.target.files[0]
+      // Optimistic preview
       const reader = new FileReader()
       reader.onloadend = () => {
         setImagePreview(reader.result as string)
       }
-      reader.readAsDataURL(selectedMap)
+      reader.readAsDataURL(file)
+
+      // Upload to R2
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+
+        const res = await fetch(`${baseUrl}api/uploads`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (res.ok) {
+          const { key } = await res.json()
+          // Use the proxy URL for the preview/storage
+          const publicUrl = `${baseUrl}api/uploads/${key}`
+          setImagePreview(publicUrl)
+        } else {
+          console.error('Failed to upload image')
+          // Keep local preview? Or warn?
+        }
+      } catch (err) {
+        console.error('Upload error', err)
+      }
     }
   }
 
@@ -474,6 +640,9 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
       }
       const data = await res.json()
       const recipeWithId = { ...data, id: crypto.randomUUID() }
+      if (mode === 'photo' && imagePreview) {
+        recipeWithId.sourceImage = imagePreview
+      }
       setParsedRecipe(recipeWithId)
       setFormData(recipeWithId)
       setStatus('review')
@@ -489,31 +658,9 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
     const newRecipe = { ...formData, id: formData.id || crypto.randomUUID() } as Recipe
 
     if (onRecipeCreated) {
+      // Pass the recipe with the uploaded image URL (if set in imagePreview)
       onRecipeCreated(newRecipe)
       setStatus('success')
-      return
-    }
-
-    setStatus('saving')
-    try {
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-      const userRes = await fetch(`${baseUrl}api/user-data`)
-      if (!userRes.ok) throw new Error('Failed to fetch user data')
-      const userData = await userRes.json()
-      const currentRecipes: Recipe[] = Array.isArray(userData.recipes) ? userData.recipes : []
-      const saveRes = await fetch(`${baseUrl}api/user-data`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipes: [...currentRecipes, newRecipe] }),
-      })
-      if (!saveRes.ok) throw new Error('Failed to save')
-      setStatus('success')
-    } catch (err: unknown) {
-      console.error(err)
-      setErrorMsg('Failed to save recipe')
-      setStatus('error')
     }
   }
 

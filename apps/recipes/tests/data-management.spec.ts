@@ -84,8 +84,9 @@ test.describe('Data Management Features', () => {
     await page.getByLabel('Title').fill(`Export Test`)
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Open Settings
-    await page.getByTitle('Settings').click()
+    // Open Settings via Burger Menu
+    await page.getByRole('button', { name: 'Open Menu' }).click()
+    await page.getByRole('menuitem', { name: 'Settings' }).click()
 
     // Click Export and wait for download
     const downloadPromise = page.waitForEvent('download')
@@ -98,8 +99,9 @@ test.describe('Data Management Features', () => {
   test('should allow importing data', async ({ page }) => {
     await page.goto('/protected/recipes')
 
-    // Open Settings
-    await page.getByTitle('Settings').click()
+    // Open Settings via Burger Menu
+    await page.getByRole('button', { name: 'Open Menu' }).click()
+    await page.getByRole('menuitem', { name: 'Settings' }).click()
 
     // Prepare content
     const importData = [

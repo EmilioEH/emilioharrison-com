@@ -1,0 +1,81 @@
+import { test, expect } from '@playwright/test'
+
+test.describe('Recipe Metadata & Filtering', () => {
+  test('should create recipe with metadata and filter by it', async ({ page }) => {
+    // 1. Load Page with Mock Data
+    const mockRecipes = [
+      {
+        id: 'r1',
+        title: 'Vegan Breakfast Burrito',
+        protein: 'Vegetarian',
+        mealType: 'Breakfast',
+        dishType: 'Main',
+        dietary: ['Vegan', 'Gluten-Free'],
+        equipment: ['Pan'],
+        occasion: ['Weeknight'],
+        ingredients: [],
+        steps: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'r2',
+        title: 'Steak Dinner',
+        protein: 'Beef',
+        mealType: 'Dinner',
+        dishType: 'Main',
+        dietary: ['Keto'],
+        equipment: ['Grill'],
+        occasion: ['Date Night'],
+        ingredients: [],
+        steps: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]
+
+    await page.route('/api/recipes', async (route) => {
+      await route.fulfill({ json: { recipes: mockRecipes } })
+    })
+
+    await page.goto('/')
+
+    // 2. Open Filters
+    await page.getByLabel('Open Filters').click()
+
+    // 3. Filter by Meal Type: Breakfast
+    // Wait for filter modal
+    await expect(page.getByText('Sort & Filter')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Breakfast' }).click()
+
+    // Close filters
+    await page.getByRole('button', { name: /close/i }).first().click() // Close icon
+
+    // 4. Verify Grid
+    await expect(page.getByText('Vegan Breakfast Burrito')).toBeVisible()
+    await expect(page.getByText('Steak Dinner')).toBeHidden()
+
+    // 5. Reset Filters
+    await page.getByLabel('Open Filters').click()
+    await page.getByText('Reset all filters').click()
+    await page.getByRole('button', { name: /close/i }).first().click()
+
+    // 6. Filter by Dietary: Keto
+    await page.getByLabel('Open Filters').click()
+    await page.getByRole('button', { name: 'Keto' }).click()
+    await page.getByRole('button', { name: /close/i }).first().click()
+
+    await expect(page.getByText('Steak Dinner')).toBeVisible()
+    await expect(page.getByText('Vegan Breakfast Burrito')).toBeHidden()
+
+    // 7. Grouping (Sort by Meal Type)
+    await page.getByLabel('Open Filters').click()
+    await page.getByRole('button', { name: 'Meal Type' }).click()
+    await page.getByRole('button', { name: /close/i }).first().click()
+
+    // Expect Accordion Headers
+    await expect(page.getByText('Breakfast')).toBeVisible()
+    await expect(page.getByText('Dinner')).toBeVisible()
+  })
+})
