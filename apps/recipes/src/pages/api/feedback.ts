@@ -85,12 +85,9 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       if (env.BUCKET) {
         try {
           const base64Data = feedback.screenshot.replace(/^data:image\/\w+;base64,/, '')
-          // Convert base64 to Uint8Array
-          const binaryString = atob(base64Data)
-          const bytes = new Uint8Array(binaryString.length)
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i)
-          }
+          // Convert base64 to Uint8Array using Buffer (nodejs_compat enabled)
+          const buffer = Buffer.from(base64Data, 'base64')
+          const bytes = new Uint8Array(buffer)
 
           const key = `feedback/${feedback.id}.png`
           await env.BUCKET.put(key, bytes, {
