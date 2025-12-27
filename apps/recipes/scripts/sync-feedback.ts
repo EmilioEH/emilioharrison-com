@@ -30,12 +30,12 @@ async function syncFeedback() {
       try {
         const { execSync } = await import('child_process')
 
-        // Try local D1 first
+        // Try remote D1 first (production)
         try {
-          console.log('📂 Attempting fetch from Local D1...')
+          console.log('☁️  Attempting fetch from Remote Production D1...')
           const d1Output = execSync(
-            'npx wrangler d1 execute recipes-db --local --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
-            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
+            'npx wrangler d1 execute recipes-db --remote --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
           )
           const parsedOutput = JSON.parse(d1Output)
           const rows = parsedOutput[0]?.results || []
@@ -45,14 +45,14 @@ async function syncFeedback() {
             logs: row.logs ? JSON.parse(row.logs) : [],
             context: row.context ? JSON.parse(row.context) : {},
           }))
-          console.log(`✅ Retrieved ${feedbackList.length} items from Local D1`)
-        } catch (localErr) {
-          // If local fails, try remote
-          console.log('☁️  Local D1 invalid/empty. Attempting fetch from Cloudflare Remote D1...')
+          console.log(`✅ Retrieved ${feedbackList.length} items from Remote D1`)
+        } catch (remoteErr) {
+          // If remote fails, try local D1
+          console.log('⚠️  Remote D1 failed. Attempting fetch from Local D1...')
           try {
             const d1Output = execSync(
-              'npx wrangler d1 execute recipes-db --remote --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
-              { encoding: 'utf-8' },
+              'npx wrangler d1 execute recipes-db --local --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
+              { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
             )
             const parsedOutput = JSON.parse(d1Output)
             const rows = parsedOutput[0]?.results || []
@@ -62,9 +62,10 @@ async function syncFeedback() {
               logs: row.logs ? JSON.parse(row.logs) : [],
               context: row.context ? JSON.parse(row.context) : {},
             }))
-          } catch (remoteErr) {
-            console.error('Failed to fetch from remote D1:', remoteErr)
-            throw remoteErr
+            console.log(`✅ Retrieved ${feedbackList.length} items from Local D1`)
+          } catch (localErr) {
+            console.error('❌ Both remote and local D1 failed.')
+            throw localErr
           }
         }
       } catch (err) {
