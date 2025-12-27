@@ -76,6 +76,10 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
     let screenshotVal = feedback.screenshot
 
+    // Debug logging for bindings
+    console.log('[Feedback API] Runtime env keys:', Object.keys(env))
+    console.log('[Feedback API] BUCKET binding present:', !!env.BUCKET)
+
     // Offload screenshot to R2 if present and is base64
     if (feedback.screenshot && feedback.screenshot.startsWith('data:image')) {
       if (env.BUCKET) {
@@ -95,13 +99,28 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
           // Store the R2 key instead of the massive base64 string
           screenshotVal = key
+          console.log('[Feedback API] Uploaded screenshot to R2:', key)
         } catch (r2Error) {
-          console.error('Failed to upload screenshot to R2:', r2Error)
-          // Fallback: try to store it as is (might fail D1 limit) or null it
-          // We'll keep it as is and let it fail or succeed, but logging the error is important
+          console.error('[Feedback API] Failed to upload screenshot to R2:', r2Error)
+          // Fallback: Check size, if too big, drop it
+          if (feedback.screenshot.length > 100000) {
+            console.warn('[Feedback API] Screenshot too large for D1 fallback, dropping it.')
+            screenshotVal = '[Image Upload Failed - Too Large for DB]'
+          }
         }
       } else {
-        console.warn('BUCKET binding missing, skipping R2 upload')
+        console.warn('[Feedback API] BUCKET binding missing, skipping R2 upload')
+        // Fail-safe: If image is too large for D1 (approx > 100KB is risky if limit is 1MB but let's be safe)
+        // Actually D1 limit is 100MB for DB size but statement size is 1MB/100MB depending on plan.
+        // Let's assume 1MB. 1MB chars is roughly 1MB bytes.
+
+        if (feedback.screenshot.length > 500000) {
+          // ~500KB safety limit
+          console.warn(
+            '[Feedback API] Screenshot too large for default D1 storage (missing R2), dropping it.',
+          )
+          screenshotVal = '[Image Too Large - R2 Missing]'
+        }
       }
     }
 
