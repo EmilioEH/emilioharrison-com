@@ -38,40 +38,42 @@ const LibraryRecipeCard = ({
         </div>
       )}
       <div className="p-4">
-        <div className="mb-2">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            {recipe.protein && (
-              <span className="inline-block rounded-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
-                {recipe.protein}
-              </span>
-            )}
-            {recipe.isFavorite && <Heart className="h-4 w-4 fill-red-500 text-red-500" />}
-            {recipe.thisWeek && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
-                <Calendar className="h-3 w-3" /> This Week
-              </span>
-            )}
-          </div>
-          <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
-            {recipe.title}
-          </h3>
+        {/* Supporting Metadata - Top */}
+        <div className="mb-2 flex items-center justify-between">
+          {recipe.protein && (
+            <span className="rounded-full bg-md-sys-color-secondary-container px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-md-sys-color-on-secondary-container">
+              {recipe.protein}
+            </span>
+          )}
+          {recipe.thisWeek && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-md-sys-color-primary-container px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-md-sys-color-on-primary-container">
+              <Calendar className="h-3.5 w-3.5" /> This Week
+            </span>
+          )}
         </div>
 
-        <div className="mt-auto flex gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
+        {/* Primary Content - Title */}
+        <h3 className="mb-3 line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
+          {recipe.title}
+        </h3>
+
+        {/* Secondary Metadata - Bottom */}
+        <div className="flex items-center gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
           <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+            <Clock className="h-3.5 w-3.5" />
             <span>{recipe.cookTime + recipe.prepTime}m</span>
           </div>
           <div className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
+            <Users className="h-3.5 w-3.5" />
             <span>{recipe.servings}</span>
           </div>
           {recipe.rating && (
-            <div className="ml-auto flex items-center gap-0.5 text-md-sys-color-primary">
-              <Star className="h-3 w-3 fill-current" />
-              <span className="font-bold">{recipe.rating}</span>
+            <div className="ml-auto flex items-center gap-1 text-md-sys-color-primary">
+              <Star className="h-3.5 w-3.5 fill-current" />
+              <span className="font-semibold">{recipe.rating}</span>
             </div>
           )}
+          {recipe.isFavorite && <Heart className="h-4 w-4 fill-red-500 text-red-500" />}
         </div>
       </div>
     </button>
