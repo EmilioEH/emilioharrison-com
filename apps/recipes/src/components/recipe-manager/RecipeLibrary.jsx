@@ -39,7 +39,9 @@ const LibraryRecipeCard = ({
       )}
       <div className="p-4">
         {/* Supporting Metadata - Top */}
-        <div className="mb-2 flex items-center justify-between">
+        <div
+          className={`mb-2 flex items-center gap-2 ${recipe.protein && recipe.thisWeek ? 'justify-between' : ''}`}
+        >
           {recipe.protein && (
             <span className="rounded-full bg-md-sys-color-secondary-container px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-md-sys-color-on-secondary-container">
               {recipe.protein}
