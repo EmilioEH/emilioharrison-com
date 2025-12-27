@@ -12,21 +12,21 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **Data Control**: Export/Import your data and manage bulk deletions.
 - **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
-- **Shared Family Collection**: All recipes are stored in Cloudflare KV and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
+- **Shared Family Collection**: All recipes are stored in Cloudflare D1 (SQL) and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure, protected dashboard accessible only to authenticated users.
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to parse messy ingredients and deterministic logic to merge quantities and organize by aisle.
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 - **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
-- **Feedback System**: Directly submit bug reports and enhancement ideas from the dashboard. Captured reports include screenshots, console logs, and application state to help developers/agents solve issues faster.
+- **Feedback System**: Directly submit bug reports and enhancement ideas from the dashboard. Captured reports include screenshots (saved to R2), console logs, and application state to help developers/agents solve issues faster.
 
 ## 🛠 Tech Stack
 
 - **Framework**: [Astro 5](https://astro.build/) (Islands Architecture for performance)
 - **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
-- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [D1](https://developers.cloudflare.com/d1/) (SQL) + [R2](https://developers.cloudflare.com/r2/) (Storage)
+- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [D1](https://developers.cloudflare.com/d1/) (SQL) + [R2](https://developers.cloudflare.com/r2/) (Images) + [KV](https://developers.cloudflare.com/kv/) (Sessions)
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
 - **AI Standards**:
   - [Gemini API Guide](file:///Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/docs/technical/gemini-api-guide.md)

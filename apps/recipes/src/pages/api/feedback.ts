@@ -74,6 +74,37 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
     const { env } = runtime
 
+    let screenshotVal = feedback.screenshot
+
+    // Offload screenshot to R2 if present and is base64
+    if (feedback.screenshot && feedback.screenshot.startsWith('data:image')) {
+      if (env.BUCKET) {
+        try {
+          const base64Data = feedback.screenshot.replace(/^data:image\/\w+;base64,/, '')
+          // Convert base64 to Uint8Array
+          const binaryString = atob(base64Data)
+          const bytes = new Uint8Array(binaryString.length)
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i)
+          }
+
+          const key = `feedback/${feedback.id}.png`
+          await env.BUCKET.put(key, bytes, {
+            httpMetadata: { contentType: 'image/png' },
+          })
+
+          // Store the R2 key instead of the massive base64 string
+          screenshotVal = key
+        } catch (r2Error) {
+          console.error('Failed to upload screenshot to R2:', r2Error)
+          // Fallback: try to store it as is (might fail D1 limit) or null it
+          // We'll keep it as is and let it fail or succeed, but logging the error is important
+        }
+      } else {
+        console.warn('BUCKET binding missing, skipping R2 upload')
+      }
+    }
+
     await env.DB.prepare(
       `INSERT INTO feedback (id, type, description, expected, actual, screenshot, logs, context, timestamp)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -84,7 +115,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
         feedback.description,
         feedback.expected,
         feedback.actual,
-        feedback.screenshot,
+        screenshotVal,
         JSON.stringify(feedback.logs),
         JSON.stringify(feedback.context),
         feedback.timestamp,
