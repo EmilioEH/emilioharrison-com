@@ -20,9 +20,9 @@ npm install @google/genai
 The SDK automatically detects the `GEMINI_API_KEY` environment variable.
 
 ```javascript
-import { Client } from '@google/genai'
+import { GoogleGenAI } from '@google/genai'
 
-const client = new Client() // Uses process.env.GEMINI_API_KEY
+const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 ```
 
 ---

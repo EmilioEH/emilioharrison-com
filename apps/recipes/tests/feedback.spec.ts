@@ -69,11 +69,13 @@ test.describe('Feedback System', () => {
 
   // Helper to open feedback modal regardless of viewport
   const openFeedback = async (page: Page) => {
-    // Feedback button is now always in the header in the new MD3 layout
-    // We try to find it by accessible name
-    const feedbackBtn = page.getByRole('button', { name: 'Send Feedback' }).first()
+    // First open the burger menu (global menu icon in top-right)
+    const menuBtn = page.getByRole('button', { name: 'Open Menu' })
+    await expect(menuBtn).toBeVisible()
+    await menuBtn.click()
 
-    // Ensure it exists and is visible before clicking
+    // Then click Send Feedback in the burger menu
+    const feedbackBtn = page.getByRole('button', { name: 'Send Feedback' }).first()
     await expect(feedbackBtn).toBeVisible()
     await feedbackBtn.click()
 

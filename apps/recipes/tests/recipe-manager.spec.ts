@@ -105,8 +105,8 @@ test.describe('Recipe Manager', () => {
         .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) }),
     ).toBeVisible()
 
-    // Test sorting change
-    await page.getByRole('button', { name: 'Sort & Filter' }).click()
+    // Test sorting change - filter is now in LibraryToolbar
+    await page.getByRole('button', { name: 'Open Filters' }).click()
     await page.getByRole('button', { name: 'Alphabetical' }).click()
     await page.locator('button:has(svg.lucide-x)').click()
 

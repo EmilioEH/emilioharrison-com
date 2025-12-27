@@ -38,8 +38,8 @@ test.describe('Recipe Persistence', () => {
     await page.getByLabel('Title').fill(testTitle)
     await page.getByText('Save Recipe').click()
 
-    // Wait for save sync (UI shows "Saved")
-    await expect(page.getByText('Saved')).toBeVisible()
+    // Wait for save sync (UI shows Check icon)
+    await expect(page.locator('svg.lucide-check')).toBeVisible()
 
     // Reload the page
     await page.reload()

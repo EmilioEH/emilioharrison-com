@@ -47,7 +47,7 @@ test.describe('Recipe Input Flow', () => {
 
     // 2. Click "AI Add" (Sparkles icon)
     await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 10000 })
-    await page.getByTitle('AI Add').click()
+    await page.getByTitle('AI Chef').click()
 
     // 3. Verify we are in the "New Recipe from AI" view
     await expect(page.getByText('New Recipe from AI')).toBeVisible()
@@ -91,7 +91,7 @@ test.describe('Recipe Input Flow', () => {
     })
 
     await page.goto('/protected/recipes')
-    await page.getByTitle('AI Add').click()
+    await page.getByTitle('AI Chef').click()
     await page.getByText('URL', { exact: true }).click()
     await page.getByLabel('Paste Recipe Link').fill('https://example.com/bad')
     await page.getByRole('button', { name: 'Process Recipe' }).click()

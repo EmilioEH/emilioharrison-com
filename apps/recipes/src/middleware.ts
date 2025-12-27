@@ -6,6 +6,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Check if the user is trying to access the protected route
   // Exclude login page to avoid redirect loops and allow form submission
   if (url.pathname.startsWith('/protected') && !url.pathname.includes('/login')) {
+    // Allow API routes without authentication
+    if (url.pathname.includes('/api/')) {
+      return next()
+    }
+
     const authCookie = cookies.get('site_auth')
     const userCookie = cookies.get('site_user')
 

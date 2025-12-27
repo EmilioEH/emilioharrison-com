@@ -88,21 +88,23 @@ test.describe('Weekly Meal Planning', () => {
     const card = page.locator('[data-testid="recipe-card-1"]')
     await expect(card).toBeVisible()
 
-    // Verify Tabs exist - use exact name match for tab buttons
-    const libraryTab = page.getByRole('button', { name: 'Library 5', exact: true })
-    const thisWeekTab = page.getByRole('button', { name: 'This Week 0', exact: true })
-    await expect(libraryTab).toBeVisible()
+    // Verify Tabs exist
+    await expect(page.getByRole('button', { name: /Library/i })).toBeVisible()
+
+    const thisWeekTab = page.getByRole('button', { name: /^This Week/i })
     await expect(thisWeekTab).toBeVisible()
 
-    // Toggle ID 1 (Chicken Curry) to add to This Week
+    // Verify badge is 0
+    await expect(thisWeekTab.locator('span').last()).toHaveText('0')
+
+    // Toggle ID 1 (Chicken Curry)
     await card.locator('button[title="Add to This Week"]').click()
 
-    // Verify badge updates to 1 - tab accessible name now includes "1"
-    const thisWeekTabUpdated = page.getByRole('button', { name: 'This Week 1', exact: true })
-    await expect(thisWeekTabUpdated).toBeVisible()
+    // Verify badge updates to 1
+    await expect(thisWeekTab.locator('span').last()).toHaveText('1')
 
     // Switch to Week View
-    await thisWeekTabUpdated.click()
+    await page.getByRole('button', { name: /^This Week/i }).click()
 
     // Verify only ID 1 is visible
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeVisible()
@@ -114,8 +116,13 @@ test.describe('Weekly Meal Planning', () => {
       .click()
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeHidden()
 
-    // Badge should be 0 - tab accessible name back to 0
-    await expect(page.getByRole('button', { name: 'This Week 0', exact: true })).toBeVisible()
+    // Badge should be 0
+    await expect(
+      page
+        .getByRole('button', { name: /^This Week/i })
+        .locator('span')
+        .last(),
+    ).toHaveText('0')
   })
 
   test('enforces minimum 3 recipes for grocery list', async ({ page }) => {

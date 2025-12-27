@@ -78,8 +78,8 @@ test.describe('Recipe Organization', () => {
   })
 
   test('should filter recipes', async ({ page }) => {
-    // 1. Open Filter Panel
-    await page.getByTitle('Sort & Filter').click()
+    // 1. Open Filter Panel (now in LibraryToolbar)
+    await page.getByRole('button', { name: 'Open Filters' }).click()
 
     // 2. Select "Easy" difficulty
     await page.getByRole('button', { name: 'Easy' }).click()

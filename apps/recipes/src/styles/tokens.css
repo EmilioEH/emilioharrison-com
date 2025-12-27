@@ -1,36 +1,32 @@
 :root {
-  /* Material Design 3 - Chefboard Theme (Orange/Terracotta) */
+  /* Wireframe / Blueprint Theme */
 
-  /* Primary - Orange/Terracotta for main actions */
-  --md-sys-color-primary: #c45e2c;
+  /* Core Colors - Monochrome High Contrast */
+  --md-sys-color-primary: #000000;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #ffdbce;
-  --md-sys-color-on-primary-container: #351000;
+  --md-sys-color-primary-container: #ffffff;
+  --md-sys-color-on-primary-container: #000000;
 
-  /* Secondary - Warm Brown for supporting elements */
-  --md-sys-color-secondary: #765849;
+  --md-sys-color-secondary: #000000;
   --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-secondary-container: #ffdbce;
-  --md-sys-color-on-secondary-container: #2c150b;
+  --md-sys-color-secondary-container: #eeeeee;
+  --md-sys-color-on-secondary-container: #000000;
 
-  /* Tertiary - Olive/Yellow for accents */
-  --md-sys-color-tertiary: #656119;
+  --md-sys-color-tertiary: #000000;
   --md-sys-color-on-tertiary: #ffffff;
-  --md-sys-color-tertiary-container: #ece690;
-  --md-sys-color-on-tertiary-container: #1e1c00;
+  --md-sys-color-tertiary-container: #eeeeee;
+  --md-sys-color-on-tertiary-container: #000000;
 
-  /* Error - Proper red for errors */
-  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-error: #000000; /* No red in wireframe generally, or keep it strict black */
   --md-sys-color-on-error: #ffffff;
-  --md-sys-color-error-container: #ffdad6;
-  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-error-container: #eeeeee;
+  --md-sys-color-on-error-container: #000000;
 
-  /* Surface & Outline */
-  --md-sys-color-outline: #85736b;
-  --md-sys-color-surface: #fffbff;
-  --md-sys-color-on-surface: #201a17;
-  --md-sys-color-surface-variant: #f4ded4;
-  --md-sys-color-on-surface-variant: #52443d;
+  --md-sys-color-outline: #000000;
+  --md-sys-color-surface: #ffffff;
+  --md-sys-color-on-surface: #000000;
+  --md-sys-color-surface-variant: #eeeeee;
+  --md-sys-color-on-surface-variant: #000000;
 
   /* Typography (Material Design 3 Scale) - Keep scales for hierarchy, just fallback fonts elsewhere */
   --md-sys-typescale-display-large-size: 57px;
@@ -68,17 +64,17 @@
   --md-sys-typescale-label-small-size: 11px;
   --md-sys-typescale-label-small-line-height: 16px;
 
-  /* Elevation (MD3 Shadow Scale) */
-  --md-sys-elevation-1: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-  --md-sys-elevation-2: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
-  --md-sys-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.15), 0px 1px 3px rgba(0, 0, 0, 0.3);
+  /* Elevation (No Shadows) */
+  --md-sys-elevation-1: none;
+  --md-sys-elevation-2: none;
+  --md-sys-elevation-3: none;
 
-  /* Shape (MD3 Corner Radius) */
+  /* Shape (No Rounding) */
   --md-sys-shape-corner-none: 0px;
-  --md-sys-shape-corner-extra-small: 4px;
-  --md-sys-shape-corner-small: 8px;
-  --md-sys-shape-corner-medium: 12px;
-  --md-sys-shape-corner-large: 16px;
-  --md-sys-shape-corner-extra-large: 28px;
-  --md-sys-shape-corner-full: 9999px;
+  --md-sys-shape-corner-extra-small: 0px;
+  --md-sys-shape-corner-small: 0px;
+  --md-sys-shape-corner-medium: 0px;
+  --md-sys-shape-corner-large: 0px;
+  --md-sys-shape-corner-extra-large: 0px;
+  --md-sys-shape-corner-full: 0px;
 }

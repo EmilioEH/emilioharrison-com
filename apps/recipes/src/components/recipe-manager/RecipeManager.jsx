@@ -10,20 +10,15 @@ import {
   Save,
   Check,
   Sparkles,
-  ListFilter,
   Calendar,
   AlertCircle,
   X,
-  Settings,
   Download,
   Upload,
-  MessageSquare,
 } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
 import { RecipeInput } from '../RecipeInput'
-// Removed local FeedbackModal import
-import { openFeedbackModal } from '../../lib/feedbackStore'
 import { Tabs } from '../ui/Tabs'
 import { Fab } from '../ui/Fab'
 import ReactMarkdown from 'react-markdown'
@@ -98,6 +93,7 @@ const useRecipes = () => {
 import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
+import { LibraryToolbar } from './LibraryToolbar'
 
 const SettingsView = ({ onExport, onImport, onDeleteAccount, onClose }) => (
   <div className="animate-in slide-in-from-right absolute inset-0 z-50 bg-md-sys-color-surface p-6">
@@ -160,9 +156,6 @@ const RecipeHeader = ({
   syncStatus,
   onGenerateList,
   onAddAi,
-  onOpenFilters,
-  onOpenSettings,
-  onOpenFeedback,
   isSelectionMode,
   selectedCount,
   onCancelSelection,
@@ -201,35 +194,6 @@ const RecipeHeader = ({
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            onClick={onOpenFeedback}
-            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
-            title="Send Feedback"
-            aria-label="Send Feedback"
-          >
-            <MessageSquare className="h-5 w-5" />
-          </button>
-
-          <button
-            onClick={onOpenFilters}
-            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
-            title="Sort & Filter"
-            aria-label="Sort & Filter"
-          >
-            <ListFilter className="h-6 w-6" />
-          </button>
-
-          <button
-            onClick={onOpenSettings}
-            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
-            title="Settings"
-            aria-label="Settings"
-          >
-            <Settings className="h-6 w-6" />
-          </button>
-
-          <div className="bg-md-sys-color-outline-variant mx-2 h-6 w-px"></div>
-
           <button
             onClick={onGenerateList}
             className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
@@ -570,6 +534,13 @@ const RecipeManager = () => {
 
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState(null) // { protein: string, count: number }
+
+  // Listen for settings navigation from burger menu
+  useEffect(() => {
+    const handleNavigateToSettings = () => setView('settings')
+    window.addEventListener('navigate-to-settings', handleNavigateToSettings)
+    return () => window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
+  }, [])
 
   const handleSaveRecipe = (recipe) => {
     if (recipes.find((r) => r.id === recipe.id)) {
@@ -924,10 +895,6 @@ const RecipeManager = () => {
         syncStatus={syncStatus}
         onGenerateList={handleGenerateList}
         onAddAi={() => setView('ai-add')}
-        onOpenFilters={() => setFiltersOpen(true)}
-        onOpenSettings={() => setView('settings')}
-        onOpenFeedback={() => openFeedbackModal()}
-        // Selection Props
         isSelectionMode={isSelectionMode}
         selectedCount={selectedIds.size}
         onCancelSelection={() => {
@@ -952,6 +919,20 @@ const RecipeManager = () => {
                   count: recipes.filter((r) => r.thisWeek).length,
                 },
               ]}
+            />
+
+            <LibraryToolbar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              sort={sort}
+              setSort={setSort}
+              onOpenFilters={() => setFiltersOpen(true)}
+              activeFilterCount={
+                (filters.protein?.length || 0) +
+                (filters.difficulty?.length || 0) +
+                (filters.cuisine?.length || 0) +
+                (filters.onlyFavorites ? 1 : 0)
+              }
             />
 
             <div className="scrollbar-hide flex-1 overflow-y-auto">

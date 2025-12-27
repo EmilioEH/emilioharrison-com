@@ -9,6 +9,7 @@ import '@fontsource/space-grotesk/500.css'
 import '@fontsource/space-grotesk/600.css'
 import '@fontsource/space-grotesk/700.css'
 import GlobalFeedback from '../components/layout/GlobalFeedback'
+import GlobalBurgerMenu from '../components/layout/GlobalBurgerMenu'
 
 export interface Props {
   title: string
@@ -73,6 +74,7 @@ const user = Astro.cookies.get('site_user')?.value
       <slot />
     </div>
 
+    <GlobalBurgerMenu client:load />
     <GlobalFeedback client:load />
 
     <script>
