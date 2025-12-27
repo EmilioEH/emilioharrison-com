@@ -88,22 +88,21 @@ test.describe('Weekly Meal Planning', () => {
     const card = page.locator('[data-testid="recipe-card-1"]')
     await expect(card).toBeVisible()
 
-    // Verify Tabs exist
-    await expect(page.getByRole('button', { name: /Library/i })).toBeVisible()
-    // Use text filter to avoid matching title attributes of other buttons
-    await expect(page.locator('button.border-b-2').filter({ hasText: 'This Week' })).toBeVisible()
+    // Verify Tabs exist - use exact name match for tab buttons
+    const libraryTab = page.getByRole('button', { name: 'Library 5', exact: true })
+    const thisWeekTab = page.getByRole('button', { name: 'This Week 0', exact: true })
+    await expect(libraryTab).toBeVisible()
+    await expect(thisWeekTab).toBeVisible()
 
-    // Verify badge is 0
-    await expect(page.locator('button.border-b-2:has-text("This Week") span')).toHaveText('0')
-
-    // Toggle ID 1 (Chicken Curry)
+    // Toggle ID 1 (Chicken Curry) to add to This Week
     await card.locator('button[title="Add to This Week"]').click()
 
-    // Verify badge updates to 1
-    await expect(page.locator('button.border-b-2:has-text("This Week") span')).toHaveText('1')
+    // Verify badge updates to 1 - tab accessible name now includes "1"
+    const thisWeekTabUpdated = page.getByRole('button', { name: 'This Week 1', exact: true })
+    await expect(thisWeekTabUpdated).toBeVisible()
 
     // Switch to Week View
-    await page.locator('button.border-b-2').filter({ hasText: 'This Week' }).click()
+    await thisWeekTabUpdated.click()
 
     // Verify only ID 1 is visible
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeVisible()
@@ -115,8 +114,8 @@ test.describe('Weekly Meal Planning', () => {
       .click()
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeHidden()
 
-    // Badge should be 0
-    await expect(page.locator('button:has-text("This Week") span')).toHaveText('0')
+    // Badge should be 0 - tab accessible name back to 0
+    await expect(page.getByRole('button', { name: 'This Week 0', exact: true })).toBeVisible()
   })
 
   test('enforces minimum 3 recipes for grocery list', async ({ page }) => {
