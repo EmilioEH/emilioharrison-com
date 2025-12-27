@@ -70,7 +70,7 @@ test.describe('Feedback System', () => {
 
   test('should allow submitting a bug report', async ({ page }) => {
     // 1. Open Feedback Modal
-    await page.getByRole('button', { name: 'Feedback' }).click()
+    await page.getByRole('button', { name: 'Submit Feedback' }).click()
     await expect(page.getByText('Submit Feedback')).toBeVisible()
 
     // 2. Select Bug Report (Default)
@@ -92,7 +92,7 @@ test.describe('Feedback System', () => {
 
   test('should allow submitting an idea', async ({ page }) => {
     // 1. Open Feedback Modal
-    await page.getByRole('button', { name: 'Feedback' }).click()
+    await page.getByRole('button', { name: 'Submit Feedback' }).click()
 
     // 2. Switch to Idea
     await page.getByRole('button', { name: 'Idea / Idea' }).click()
@@ -113,7 +113,7 @@ test.describe('Feedback System', () => {
   })
 
   test('should include technical context automatically', async ({ page }) => {
-    await page.getByRole('button', { name: 'Feedback' }).click()
+    await page.getByRole('button', { name: 'Submit Feedback' }).click()
     await expect(
       page.getByText('Technical context (logs, state, OS) will be included automatically.'),
     ).toBeVisible()
