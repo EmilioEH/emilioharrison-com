@@ -1,11 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import html2canvas from 'html2canvas'
 import { X, Send, Bug, Lightbulb, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react'
 
 // Simple log catcher: in a real app, this might be a sophisticated hook/context
-const getRecentLogs = () => {
-  // Mocking recent logs for this session
-  return [`[INFO] Session started at ${new Date().toISOString()}`, `[INFO] App version: 1.2.0`]
-}
+import { logger } from '../../lib/logger'
 
 export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
   const [type, setType] = useState('bug') // 'bug' | 'idea'
@@ -15,6 +13,27 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
   const [screenshot, setScreenshot] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (isOpen && !screenshot) {
+      const capture = async () => {
+        try {
+          const canvas = await html2canvas(document.body, {
+            ignoreElements: (element) => {
+              // Ignore the modal itself to capture the app state behind it
+              return element === modalRef.current
+            },
+          })
+          setScreenshot(canvas.toDataURL('image/png'))
+        } catch (err) {
+          console.error('Auto-screenshot failed:', err)
+        }
+      }
+      // Small delay to ensure render stability?
+      requestAnimationFrame(() => capture())
+    }
+  }, [isOpen])
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
@@ -39,12 +58,17 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
       expected: type === 'bug' ? expected : undefined,
       actual: type === 'bug' ? actual : undefined,
       screenshot,
-      logs: getRecentLogs(),
+      logs: logger.getLogs(),
       context: {
         url: window.location.href,
         userAgent: navigator.userAgent,
         user: user || 'Unknown',
         appState: JSON.stringify(appState),
+        domSnapshot: document.documentElement.outerHTML,
+        windowSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
       },
     }
 
@@ -81,7 +105,10 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
   if (!isOpen) return null
 
   return (
-    <div className="animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200">
+    <div
+      ref={modalRef}
+      className="animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200"
+    >
       <div className="animate-in zoom-in-95 w-full max-w-lg overflow-hidden rounded-2xl border border-md-sys-color-outline bg-md-sys-color-surface shadow-2xl duration-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-md-sys-color-outline px-6 py-4">

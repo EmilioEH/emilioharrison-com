@@ -41,13 +41,13 @@ const LibraryRecipeCard = ({
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             {recipe.protein && (
-              <span className="inline-block rounded-md-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
+              <span className="inline-block rounded-full bg-md-sys-color-secondary-container px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
                 {recipe.protein}
               </span>
             )}
             {recipe.isFavorite && <Heart className="h-4 w-4 fill-red-500 text-red-500" />}
             {recipe.thisWeek && (
-              <span className="inline-flex items-center gap-1 rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
+              <span className="inline-flex items-center gap-1 rounded-full bg-md-sys-color-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-md-sys-color-on-primary-container">
                 <Calendar className="h-3 w-3" /> This Week
               </span>
             )}
@@ -100,7 +100,7 @@ const AccordionGroup = ({ title, count, children, isOpen, onToggle }) => (
     >
       <div className="flex items-center gap-3">
         <h3 className="font-display text-xl font-bold text-md-sys-color-on-surface">{title}</h3>
-        <span className="rounded-md-full bg-md-sys-color-primary-container px-2 py-0.5 text-xs font-medium text-md-sys-color-on-primary-container">
+        <span className="rounded-full bg-md-sys-color-primary-container px-2 py-0.5 text-xs font-medium text-md-sys-color-on-primary-container">
           {count}
         </span>
       </div>

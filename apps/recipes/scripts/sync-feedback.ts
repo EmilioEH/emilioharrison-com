@@ -31,7 +31,7 @@ async function syncFeedback() {
         const { execSync } = await import('child_process')
         // ID is hardcoded for now based on wrangler.toml analysis
         const kvOutput = execSync(
-          'npx wrangler kv key get feedback:active --namespace-id 47c74c58b25e4147984b57d677370493 --text',
+          'npx wrangler kv key get feedback:active --namespace-id 47c74c58b25e4147984b57d677370493 --text --remote',
           { encoding: 'utf-8' },
         )
         feedbackList = JSON.parse(kvOutput)
@@ -47,7 +47,13 @@ async function syncFeedback() {
             expected: 'Counter should show 1 after adding a recipe.',
             actual: 'Counter stayed at 0 until refresh.',
             screenshot: undefined,
-            logs: ['[ERROR] State sync failed at R102'],
+            logs: [
+              {
+                type: 'error',
+                args: ['State sync failed at R102'],
+                timestamp: new Date().toISOString(),
+              },
+            ],
             context: {
               url: '/protected/recipes',
               userAgent: 'Mozilla/5.0...',
@@ -62,6 +68,12 @@ async function syncFeedback() {
     if (feedbackList.length === 0) {
       console.log('✅ No new feedback to sync.')
       return
+    }
+
+    // Ensure images directory exists
+    const IMAGES_DIR = path.join(path.dirname(FEEDBACK_DOC_PATH), 'images')
+    if (!fs.existsSync(IMAGES_DIR)) {
+      fs.mkdirSync(IMAGES_DIR, { recursive: true })
     }
 
     let markdown = `# Active Feedback Reports\n\n`
@@ -82,11 +94,33 @@ async function syncFeedback() {
       markdown += `<details>\n<summary>Technical Context</summary>\n\n`
       markdown += `- **URL**: ${report.context.url}\n`
       markdown += `- **User Agent**: \`${report.context.userAgent}\`\n`
-      markdown += `\n**Recent Logs**:\n\`\`\`\n${report.logs.join('\n')}\n\`\`\`\n\n`
+      if (report.context.windowSize) {
+        markdown += `- **Window**: ${report.context.windowSize.width}x${report.context.windowSize.height}\n`
+      }
+      markdown += `\n**Recent Logs**:\n\`\`\`json\n${JSON.stringify(report.logs, null, 2)}\n\`\`\`\n\n`
       markdown += `**App State**:\n\`\`\`json\n${report.context.appState}\n\`\`\`\n`
+
+      if (report.context.domSnapshot) {
+        markdown += `\n<details>\n<summary>DOM Snapshot (HTML)</summary>\n\n\`\`\`html\n${report.context.domSnapshot.slice(0, 10000)}...\n\`\`\`\n*(Truncated for display)*\n</details>\n`
+      }
+
       markdown += `</details>\n\n`
 
-      if (report.screenshot) {
+      if (report.screenshot && report.screenshot.startsWith('data:image')) {
+        try {
+          // Extract base64 data
+          const base64Data = report.screenshot.replace(/^data:image\/\w+;base64,/, '')
+          const buffer = Buffer.from(base64Data, 'base64')
+          const imageFilename = `${report.id}.png`
+          const imagePath = path.join(IMAGES_DIR, imageFilename)
+
+          fs.writeFileSync(imagePath, buffer)
+          markdown += `### Screenshot\n![Feedback Image](./images/${imageFilename})\n\n`
+        } catch (err) {
+          console.error(`Failed to save image for report ${report.id}:`, err)
+          markdown += `### Screenshot\n> [Error saving image]\n\n`
+        }
+      } else if (report.screenshot) {
         markdown += `### Screenshot\n![Feedback Image](${report.screenshot})\n\n`
       }
 

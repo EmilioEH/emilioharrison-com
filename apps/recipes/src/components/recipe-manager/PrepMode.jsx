@@ -41,7 +41,7 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
           </p>
           <button
             onClick={onClose}
-            className="rounded-md-full bg-md-sys-color-primary px-4 py-2 font-medium text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
+            className="rounded-full bg-md-sys-color-primary px-4 py-2 font-medium text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
           >
             Close
           </button>
@@ -81,7 +81,7 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
       {/* Main Content */}
       <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-md-sys-color-surface p-6">
         <div className="relative w-full max-w-md overflow-hidden rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 text-center shadow-md-3">
-          <span className="mb-4 inline-block rounded-md-full border border-md-sys-color-outline px-3 py-1 font-body text-xs font-medium uppercase tracking-widest text-md-sys-color-on-surface-variant">
+          <span className="mb-4 inline-block rounded-full border border-md-sys-color-outline px-3 py-1 font-body text-xs font-medium uppercase tracking-widest text-md-sys-color-on-surface-variant">
             Ingredient {currentIndex + 1} of {items.length}
           </span>
 
@@ -106,7 +106,7 @@ const PrepMode = ({ recipe, prepState, togglePrep, onClose }) => {
           <div className="space-y-3">
             <button
               onClick={handleToggleAndNext}
-              className="flex w-full items-center justify-center gap-2 rounded-md-full bg-md-sys-color-primary py-4 font-body text-lg font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-md-sys-color-primary py-4 font-body text-lg font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
             >
               {isChecked ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
               {isChecked ? 'Next Item' : 'Mark Done & Next'}

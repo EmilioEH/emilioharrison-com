@@ -426,7 +426,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
         </h2>
         <button
           onClick={onCancel}
-          className="rounded-md-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
+          className="rounded-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
         >
           Cancel
         </button>
@@ -548,7 +548,7 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
         )}
         <button
           onClick={handleInternalSave}
-          className="flex flex-1 items-center justify-center gap-2 rounded-md-full bg-md-sys-color-primary py-3 font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-md-sys-color-primary py-3 font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
         >
           <Save className="h-4 w-4" /> Save Recipe
         </button>
@@ -881,7 +881,7 @@ const RecipeManager = () => {
           <h2 className="font-display text-xl font-bold">New Recipe from AI</h2>
           <button
             onClick={() => setView('library')}
-            className="rounded-md-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
+            className="rounded-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
           >
             Cancel
           </button>

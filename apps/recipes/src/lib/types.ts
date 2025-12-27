@@ -62,11 +62,19 @@ export interface Feedback {
   expected?: string // For bugs
   actual?: string // For bugs
   screenshot?: string // Base64 string
-  logs: string[] // Recent console errors
+  logs: LogEntry[] // Real console logs
   context: {
     url: string
     userAgent: string
     user: string
     appState: string // Serialized JSON of recipes/selections
+    domSnapshot?: string // Full HTML
+    windowSize?: { width: number; height: number }
   }
+}
+
+export interface LogEntry {
+  type: 'info' | 'warn' | 'error' | 'log'
+  args: unknown[]
+  timestamp: string
 }

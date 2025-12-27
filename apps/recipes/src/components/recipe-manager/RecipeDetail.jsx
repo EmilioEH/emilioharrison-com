@@ -272,7 +272,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
 
           <button
             onClick={startCooking}
-            className="flex w-full items-center justify-center gap-3 rounded-md-full bg-md-sys-color-primary py-4 font-display text-xl font-bold text-md-sys-color-on-primary shadow-md-2"
+            className="flex w-full items-center justify-center gap-3 rounded-full bg-md-sys-color-primary py-4 font-display text-xl font-bold text-md-sys-color-on-primary shadow-md-2"
           >
             <Play className="h-6 w-6 fill-current" />
             Start Cooking
@@ -315,7 +315,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
                   setCookingStage('post')
                 }
               }}
-              className="flex w-full items-center justify-center gap-3 rounded-md-full bg-md-sys-color-primary py-6 font-display text-2xl font-bold text-md-sys-color-on-primary shadow-md-3 transition-transform active:scale-95"
+              className="flex w-full items-center justify-center gap-3 rounded-full bg-md-sys-color-primary py-6 font-display text-2xl font-bold text-md-sys-color-on-primary shadow-md-3 transition-transform active:scale-95"
             >
               <Check className="h-8 w-8 stroke-[3]" />
               {currentStepIdx < recipe.steps.length - 1 ? 'Next Step' : 'Finish Cooking'}
@@ -325,13 +325,13 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
               <button
                 disabled={currentStepIdx === 0}
                 onClick={() => setCurrentStepIdx(currentStepIdx - 1)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-md-full border border-md-sys-color-outline py-3 font-medium text-md-sys-color-on-surface-variant disabled:opacity-30"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-md-sys-color-outline py-3 font-medium text-md-sys-color-on-surface-variant disabled:opacity-30"
               >
                 <ChevronLeft className="h-5 w-5" /> Previous
               </button>
               <button
                 onClick={() => setCookingStage('pre')}
-                className="flex items-center justify-center gap-2 rounded-md-full border border-md-sys-color-outline p-3 text-md-sys-color-on-surface-variant"
+                className="flex items-center justify-center gap-2 rounded-full border border-md-sys-color-outline p-3 text-md-sys-color-on-surface-variant"
                 title="View Ingredients"
               >
                 <RotateCcw className="h-5 w-5" />
@@ -393,7 +393,7 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
 
           <button
             onClick={handleFinishCooking}
-            className="flex w-full items-center justify-center gap-3 rounded-md-full bg-md-sys-color-primary py-4 font-display text-xl font-bold text-md-sys-color-on-primary shadow-md-2"
+            className="flex w-full items-center justify-center gap-3 rounded-full bg-md-sys-color-primary py-4 font-display text-xl font-bold text-md-sys-color-on-primary shadow-md-2"
           >
             Save Review & Finish
           </button>
@@ -417,12 +417,12 @@ export const RecipeDetail = ({ recipe, onClose, onUpdate, onDelete, onToggleThis
             <div className="mb-6">
               <div className="mb-2 flex gap-2">
                 {recipe.protein && (
-                  <span className="rounded-md-full bg-md-sys-color-secondary-container px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
+                  <span className="rounded-full bg-md-sys-color-secondary-container px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
                     {recipe.protein}
                   </span>
                 )}
                 {recipe.difficulty && (
-                  <span className="rounded-md-full bg-md-sys-color-surface-variant px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
+                  <span className="rounded-full bg-md-sys-color-surface-variant px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
                     {recipe.difficulty}
                   </span>
                 )}

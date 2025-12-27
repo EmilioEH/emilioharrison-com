@@ -26,10 +26,11 @@ Chefboard is a intelligent recipe management system built for speed, utility, an
 - **Framework**: [Astro 5](https://astro.build/) (Islands Architecture for performance)
 - **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
-- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [KV](https://www.cloudflare.com/products/workers-kv/)
+- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [D1](https://developers.cloudflare.com/d1/) (SQL) + [R2](https://developers.cloudflare.com/r2/) (Storage)
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
 - **AI Standards**:
   - [Gemini API Guide](file:///Users/emilioharrison/Desktop/emilioharrison-com/apps/recipes/docs/technical/gemini-api-guide.md)
+  - [Deployment Guide](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/docs/technical/deployment.md)
   - [Recipe Data Schema](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/recipe-schema.md)
   - [Grocery Logic Standards](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/grocery-logic.md)
   - [Sync & Persistence Standards](file:///Users/emilioharrison/Desktop/emilioharrison-com/.agent/knowledge/sync-standards.md)
