@@ -101,6 +101,42 @@ Synced reports are saved to `docs/feedback/active-reports.md` and include:
    ```
    The app will be available at `http://localhost:4321/protected/recipes`.
 
+## 🚀 Production Deployment
+
+This application is deployed to Cloudflare Pages and requires proper configuration of bindings for production.
+
+### Required Cloudflare Bindings
+
+The following bindings must be configured in the **Cloudflare Pages Dashboard** for production:
+
+1. **D1 Database Binding**:
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **emilioharrison-com**
+   - Navigate to **Settings** → **Functions** → **D1 database bindings**
+   - Add binding:
+     - **Variable name**: `DB`
+     - **D1 database**: `recipes-db`
+
+2. **R2 Bucket Binding** (for recipe images and feedback screenshots):
+   - In **Settings** → **Functions** → **R2 bucket bindings**
+   - Add binding:
+     - **Variable name**: `BUCKET`
+     - **R2 bucket**: `recipes-images`
+
+3. **KV Namespace Binding** (for sessions):
+   - In **Settings** → **Functions** → **KV namespace bindings**
+   - Add binding:
+     - **Variable name**: `SESSION`
+     - **KV namespace**: Select your session namespace
+
+> [!IMPORTANT]
+> After adding or modifying bindings, you **must trigger a new deployment** for changes to take effect. Either:
+>
+> - Push a new commit to trigger automatic deployment
+> - Or use the dashboard: **Deployments** → **Retry deployment**
+
+> [!NOTE]
+> The `wrangler.toml` file configures bindings for **local development only**. Production bindings must be configured through the Cloudflare dashboard.
+
 ## 📂 Project Structure
 
 - `src/components/`: React islands for interactive features.
