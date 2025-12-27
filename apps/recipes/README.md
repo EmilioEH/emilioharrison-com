@@ -65,15 +65,22 @@ npm run test:e2e
 # Runs: Playwright E2E tests to verify the core user journey
 ```
 
-### Processing Feedback
+### Processing Feedback (Holodeck)
 
-To review user bugs and enhancement ideas, sync them from the live environment to this repository:
+We utilize an "Agent-Ready" feedback system that captures deep technical context to help Coding Agents diagnose issues without needing to reproduce them blindly.
+
+To sync reports from the live environment:
 
 ```bash
 npx tsx scripts/sync-feedback.ts
 ```
 
-Synced reports will be available in `docs/feedback/active-reports.md`.
+Synced reports are saved to `docs/feedback/active-reports.md` and include:
+
+- **📸 Auto-Screenshots**: Automatically captured via `html2canvas` (ignoring the modal itself).
+- **📝 Real Console Logs**: A ring buffer of the last 100 console events (Log, Warn, Error).
+- **🏗 DOM Snapshot**: The full HTML structure of the page at the moment of the report.
+- **📱 Device Metadata**: Window size, User Agent, and App State.
 
 ## 💻 Getting Started
 
