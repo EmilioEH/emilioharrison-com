@@ -1,3 +1,5 @@
+import type { APIRoute } from 'astro'
+
 export const GET: APIRoute = async ({ cookies, locals }) => {
   const userCookie = cookies.get('site_user')
   const user = userCookie?.value
