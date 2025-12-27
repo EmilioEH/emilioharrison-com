@@ -66,10 +66,28 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   try {
     const feedback = await request.json()
+    console.log('[Feedback API] Received feedback submission:', {
+      id: feedback.id,
+      type: feedback.type,
+      hasScreenshot: !!feedback.screenshot,
+      screenshotSize: feedback.screenshot?.length || 0,
+    })
+
     const runtime = locals.runtime
 
     if (!runtime || !runtime.env || !runtime.env.DB) {
-      throw new Error('DB binding missing')
+      console.error('[Feedback API] Missing runtime or DB binding:', {
+        hasRuntime: !!runtime,
+        hasEnv: !!runtime?.env,
+        hasDB: !!runtime?.env?.DB,
+      })
+      return new Response(
+        JSON.stringify({
+          error: 'Database not configured',
+          details: 'DB binding is missing from runtime environment',
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      )
     }
 
     const { env } = runtime
@@ -84,6 +102,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     if (feedback.screenshot && feedback.screenshot.startsWith('data:image')) {
       if (env.BUCKET) {
         try {
+          console.log('[Feedback API] Attempting R2 upload...')
           const base64Data = feedback.screenshot.replace(/^data:image\/\w+;base64,/, '')
           // Convert base64 to Uint8Array using Buffer (nodejs_compat enabled)
           const buffer = Buffer.from(base64Data, 'base64')
@@ -121,32 +140,52 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       }
     }
 
-    await env.DB.prepare(
+    console.log('[Feedback API] Preparing D1 insert statement...')
+    const stmt = env.DB.prepare(
       `INSERT INTO feedback (id, type, description, expected, actual, screenshot, logs, context, timestamp)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-      .bind(
-        feedback.id,
-        feedback.type,
-        feedback.description,
-        feedback.expected,
-        feedback.actual,
-        screenshotVal,
-        JSON.stringify(feedback.logs),
-        JSON.stringify(feedback.context),
-        feedback.timestamp,
-      )
-      .run()
 
+    console.log('[Feedback API] Binding values to statement...')
+    const boundStmt = stmt.bind(
+      feedback.id,
+      feedback.type,
+      feedback.description,
+      feedback.expected,
+      feedback.actual,
+      screenshotVal,
+      JSON.stringify(feedback.logs),
+      JSON.stringify(feedback.context),
+      feedback.timestamp,
+    )
+
+    console.log('[Feedback API] Executing D1 statement...')
+    await boundStmt.run()
+
+    console.log('[Feedback API] Feedback saved successfully!')
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    console.error('DB Error:', err)
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+    const errorStack = err instanceof Error ? err.stack : undefined
+
+    console.error('[Feedback API] Fatal error:', {
+      message: errorMessage,
+      stack: errorStack,
+      error: err,
     })
+
+    return new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        details: errorMessage,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
   }
 }
