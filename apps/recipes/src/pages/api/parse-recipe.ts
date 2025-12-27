@@ -1,6 +1,17 @@
 import type { APIRoute } from 'astro'
 import { GoogleGenAI, Type as SchemaType } from '@google/genai'
 
+const PROTEIN_OPTIONS = [
+  'Chicken',
+  'Beef',
+  'Pork',
+  'Fish',
+  'Seafood',
+  'Vegetarian',
+  'Vegan',
+  'Other',
+]
+
 const SYSTEM_PROMPT = `
 You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided text (webpage) or image.
 
@@ -10,6 +21,7 @@ Rules:
 1. If the input is an image, describe what you see and infer the recipe (ingredients/steps) as best as possible.
 2. If the input is a URL, parse the HTML.
 3. Use reasonable defaults if data is missing (e.g. 2 servings).
+4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}. If unclear, use "Other".
 `
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -78,7 +90,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         },
         steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
         notes: { type: SchemaType.STRING, nullable: true },
-        protein: { type: SchemaType.STRING },
+        protein: {
+          type: SchemaType.STRING,
+          enum: ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'],
+        },
         difficulty: { type: SchemaType.STRING },
         cuisine: { type: SchemaType.STRING },
         dietary: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },

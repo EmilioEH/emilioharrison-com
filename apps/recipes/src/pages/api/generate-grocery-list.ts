@@ -83,7 +83,7 @@ Rules:
 
     const structuredIngredients = JSON.parse(resultText)
 
-    return new Response(JSON.stringify({ ingredients: structuredIngredients }), {
+    return new Response(JSON.stringify(structuredIngredients), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
