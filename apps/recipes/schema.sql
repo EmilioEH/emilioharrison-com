@@ -9,3 +9,15 @@ CREATE TABLE recipes (
   created_at INTEGER DEFAULT (unixepoch()),
   updated_at INTEGER DEFAULT (unixepoch())
 );
+
+CREATE TABLE IF NOT EXISTS feedback (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL, -- 'bug' | 'idea'
+  description TEXT,
+  expected TEXT,
+  actual TEXT,
+  screenshot TEXT, -- base64 string
+  logs TEXT, -- JSON string
+  context TEXT, -- JSON string
+  timestamp TEXT DEFAULT (datetime('now'))
+);

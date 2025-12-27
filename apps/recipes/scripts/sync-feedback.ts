@@ -26,17 +26,49 @@ async function syncFeedback() {
     if (response && response.ok) {
       feedbackList = await response.json()
     } else {
-      console.warn('⚠️ Could not reach local dev server. Attempting to fetch from Cloudflare KV...')
+      console.warn('⚠️ Could not reach local dev server. Checking D1 storage...')
       try {
         const { execSync } = await import('child_process')
-        // ID is hardcoded for now based on wrangler.toml analysis
-        const kvOutput = execSync(
-          'npx wrangler kv key get feedback:active --namespace-id 47c74c58b25e4147984b57d677370493 --text --remote',
-          { encoding: 'utf-8' },
-        )
-        feedbackList = JSON.parse(kvOutput)
+
+        // Try local D1 first
+        try {
+          console.log('📂 Attempting fetch from Local D1...')
+          const d1Output = execSync(
+            'npx wrangler d1 execute recipes-db --local --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
+            { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
+          )
+          const parsedOutput = JSON.parse(d1Output)
+          const rows = parsedOutput[0]?.results || []
+
+          feedbackList = rows.map((row: any) => ({
+            ...row,
+            logs: row.logs ? JSON.parse(row.logs) : [],
+            context: row.context ? JSON.parse(row.context) : {},
+          }))
+          console.log(`✅ Retrieved ${feedbackList.length} items from Local D1`)
+        } catch (localErr) {
+          // If local fails, try remote
+          console.log('☁️  Local D1 invalid/empty. Attempting fetch from Cloudflare Remote D1...')
+          try {
+            const d1Output = execSync(
+              'npx wrangler d1 execute recipes-db --remote --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
+              { encoding: 'utf-8' },
+            )
+            const parsedOutput = JSON.parse(d1Output)
+            const rows = parsedOutput[0]?.results || []
+
+            feedbackList = rows.map((row: any) => ({
+              ...row,
+              logs: row.logs ? JSON.parse(row.logs) : [],
+              context: row.context ? JSON.parse(row.context) : {},
+            }))
+          } catch (remoteErr) {
+            console.error('Failed to fetch from remote D1:', remoteErr)
+            throw remoteErr
+          }
+        }
       } catch (err) {
-        console.warn('⚠️ Could not fetch from Cloudflare KV. Using mock data for demonstration.')
+        console.warn('⚠️ Could not fetch from Cloudflare D1. Using mock data for demonstration.')
         console.error(err)
         feedbackList = [
           {
@@ -66,7 +98,9 @@ async function syncFeedback() {
     }
 
     if (feedbackList.length === 0) {
-      console.log('✅ No new feedback to sync.')
+      console.log('✅ No new feedback to sync. Updating doc to reflect empty state.')
+      const emptyMarkdown = `# Active Feedback Reports\n\n> [!NOTE]\n> No active feedback reports found as of ${new Date().toLocaleString()}.\n\nTry running the app locally and submitting feedback to see it appear here.\n`
+      fs.writeFileSync(FEEDBACK_DOC_PATH, emptyMarkdown)
       return
     }
 
