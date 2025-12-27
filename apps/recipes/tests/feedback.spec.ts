@@ -49,14 +49,13 @@ test.describe('Feedback System', () => {
     })
 
     await page.goto('/protected/recipes')
-    // Wait for the app UI to stabilize - 'Add Recipe' button is more reliable for interaction checks
+    // Wait for the app UI to stabilize
     await expect(page.getByRole('button', { name: 'Add Recipe' })).toBeVisible({ timeout: 15000 })
 
-    // Mock the feedback API to prevent writing to the real KV store
+    // Mock the feedback API
     await page.route('**/api/feedback', async (route) => {
       if (route.request().method() === 'POST') {
         const body = route.request().postDataJSON()
-        // Basic validation to ensure the test sends the right structure
         if (!body.type || !body.context) {
           await route.fulfill({ status: 400, body: 'Invalid data' })
           return
@@ -68,52 +67,71 @@ test.describe('Feedback System', () => {
     })
   })
 
-  test('should allow submitting a bug report', async ({ page }) => {
-    // 1. Open Feedback Modal
-    await page.getByRole('button', { name: 'Submit Feedback' }).click()
-    await expect(page.getByText('Submit Feedback')).toBeVisible()
+  // Helper to open feedback modal regardless of viewport
+  const openFeedback = async (page: Page) => {
+    // Feedback button is now always in the header in the new MD3 layout
+    // We try to find it by accessible name
+    const feedbackBtn = page.getByRole('button', { name: 'Send Feedback' }).first()
 
-    // 2. Select Bug Report (Default)
+    // Ensure it exists and is visible before clicking
+    await expect(feedbackBtn).toBeVisible()
+    await feedbackBtn.click()
+
+    await expect(page.getByText('Submit Feedback')).toBeVisible()
+  }
+
+  test('should allow submitting a bug report', async ({ page }) => {
+    await openFeedback(page)
+
+    // Select Bug Report (Default)
     await expect(page.getByRole('button', { name: 'Bug Report' })).toHaveClass(
       /border-md-sys-color-primary/,
     )
 
-    // 3. Fill out bug details
+    // Fill out bug details
     await page.getByLabel('What happened? (Actual)').fill('Search button is frozen')
     await page.getByLabel('What did you expect?').fill('Expected results to show')
 
-    // 4. Submit
-    await page.getByRole('button', { name: 'Send Feedback' }).click()
+    // Submit
+    // Use filter to Distinguish from the header icon button which also has "Send Feedback" accessible name
+    await page
+      .getByRole('button', { name: 'Send Feedback' })
+      .filter({ hasText: 'Send Feedback' })
+      .click()
 
-    // 5. Verify Success message
+    // Verify Success message
     await expect(page.getByText('Thank you!')).toBeVisible()
     await expect(page.getByText('Your feedback has been received.')).toBeVisible()
   })
 
   test('should allow submitting an idea', async ({ page }) => {
-    // 1. Open Feedback Modal
-    await page.getByRole('button', { name: 'Submit Feedback' }).click()
+    await openFeedback(page)
 
-    // 2. Switch to Idea
+    // Switch to Idea
     await page.getByRole('button', { name: 'Idea / Idea' }).click()
     await expect(page.getByRole('button', { name: 'Idea / Idea' })).toHaveClass(
       /border-md-sys-color-tertiary/,
     )
 
-    // 3. Fill out idea
+    // Fill out idea
     await page
       .getByLabel('Tell us about your idea')
       .fill('Add a unit converter for international recipes')
 
-    // 4. Submit
-    await page.getByRole('button', { name: 'Send Feedback' }).click()
+    // Submit
+    // Use filter to Distinguish from the header icon button which also has "Send Feedback" accessible name
+    await page
+      .getByRole('button', { name: 'Send Feedback' })
+      .filter({ hasText: 'Send Feedback' })
+      .click()
 
-    // 5. Verify Success message
+    // Verify Success message
     await expect(page.getByText('Thank you!')).toBeVisible()
   })
 
   test('should include technical context automatically', async ({ page }) => {
-    await page.getByRole('button', { name: 'Submit Feedback' }).click()
+    await openFeedback(page)
+
     await expect(
       page.getByText('Technical context (logs, state, OS) will be included automatically.'),
     ).toBeVisible()

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, MessageSquarePlus } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
 import { Label } from '../ui/Typography'
+import { openFeedbackModal } from '../../lib/feedbackStore'
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -44,10 +45,19 @@ const Navbar = () => {
               </Label>
             </a>
           ))}
+          <button
+            onClick={openFeedbackModal}
+            className={`opacity-60 transition-opacity hover:opacity-100 ${theme.colors.text}`}
+            aria-label="Send Feedback"
+            title="Send Feedback"
+          >
+            <MessageSquarePlus size={20} />
+          </button>
         </nav>
         <button
           className={`md:hidden ${theme.colors.text}`}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Menu"
         >
           {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -66,6 +76,17 @@ const Navbar = () => {
               <Label variant="eyebrow">{item.label}</Label>
             </a>
           ))}
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false)
+              openFeedbackModal()
+            }}
+            className="block w-full border-b border-gray-100 px-8 py-4 text-left text-black hover:bg-black/5"
+          >
+            <Label variant="eyebrow" className="flex items-center gap-2">
+              <MessageSquarePlus size={16} /> Send Feedback
+            </Label>
+          </button>
         </div>
       )}
     </header>

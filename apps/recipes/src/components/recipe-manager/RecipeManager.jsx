@@ -22,7 +22,10 @@ import {
 
 import { GroceryList } from './GroceryList'
 import { RecipeInput } from '../RecipeInput'
-import { FeedbackModal } from './FeedbackModal'
+// Removed local FeedbackModal import
+import { openFeedbackModal } from '../../lib/feedbackStore'
+import { Tabs } from '../ui/Tabs'
+import { Fab } from '../ui/Fab'
 import ReactMarkdown from 'react-markdown'
 
 const RECIPES_API_URL = '/protected/recipes/api/user-data'
@@ -157,7 +160,6 @@ const RecipeHeader = ({
   syncStatus,
   onGenerateList,
   onAddAi,
-  onAddManual,
   onOpenFilters,
   onOpenSettings,
   onOpenFeedback,
@@ -167,13 +169,13 @@ const RecipeHeader = ({
   onDeleteSelection,
 }) => (
   <header
-    className={`sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline px-6 py-4 transition-colors ${isSelectionMode ? 'bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container' : 'bg-md-sys-color-surface'}`}
+    className={`sticky top-0 z-10 flex h-16 items-center justify-between border-b border-md-sys-color-outline px-4 transition-colors ${isSelectionMode ? 'bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container' : 'bg-md-sys-color-surface'}`}
   >
     {isSelectionMode ? (
       <>
         <div className="flex items-center gap-4">
           <button onClick={onCancelSelection} className="rounded-full p-2 hover:bg-black/10">
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
           <div className="text-lg font-bold">{selectedCount} Selected</div>
         </div>
@@ -186,75 +188,64 @@ const RecipeHeader = ({
       </>
     ) : (
       <>
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-primary">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-md-sys-color-on-surface">
             CHEFBOARD
           </h1>
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
-            {syncStatus === 'syncing' && (
-              <>
-                <Loader2 className="h-3 w-3 animate-spin" /> Syncing
-              </>
-            )}
-            {syncStatus === 'saved' && (
-              <>
-                <Check className="h-3 w-3" /> Saved
-              </>
-            )}
-            {syncStatus === 'error' && <span className="text-red-500">Sync Error</span>}
-            {syncStatus === 'idle' && <span>Ready</span>}
+          {/* Subtle Status Indicator */}
+          <div className="text-md-sys-color-on-surface-variant/70 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+            {syncStatus === 'syncing' && <Loader2 className="h-3 w-3 animate-spin" />}
+            {syncStatus === 'saved' && <Check className="h-3 w-3" />}
+            {syncStatus === 'error' && <span className="text-red-500">Error</span>}
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={onOpenFilters}
-            className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
-            title="Sort & Filter"
-          >
-            <ListFilter className="h-5 w-5" />
-          </button>
 
-          <button
-            onClick={onOpenSettings}
-            className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
-            title="Settings"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
-
+        <div className="flex items-center gap-1">
           <button
             onClick={onOpenFeedback}
-            className="hover:bg-md-sys-color-primary/[0.08] rounded-full bg-md-sys-color-surface-variant p-2 text-md-sys-color-on-surface-variant"
-            title="Feedback"
+            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
+            title="Send Feedback"
+            aria-label="Send Feedback"
           >
             <MessageSquare className="h-5 w-5" />
           </button>
 
-          <div className="mx-1 h-9 w-px bg-gray-200"></div>
+          <button
+            onClick={onOpenFilters}
+            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
+            title="Sort & Filter"
+            aria-label="Sort & Filter"
+          >
+            <ListFilter className="h-6 w-6" />
+          </button>
+
+          <button
+            onClick={onOpenSettings}
+            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
+            title="Settings"
+            aria-label="Settings"
+          >
+            <Settings className="h-6 w-6" />
+          </button>
+
+          <div className="bg-md-sys-color-outline-variant mx-2 h-6 w-px"></div>
 
           <button
             onClick={onGenerateList}
-            className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container shadow-md-1 transition-all hover:shadow-md-2"
+            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-3 text-md-sys-color-on-surface-variant"
             title="Grocery List"
+            aria-label="Grocery List"
           >
-            <ShoppingBag className="h-5 w-5" />
+            <ShoppingBag className="h-6 w-6" />
           </button>
 
           <button
             onClick={onAddAi}
-            className="flex items-center justify-center rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container shadow-md-1 transition-all hover:shadow-md-2"
-            title="AI Add"
+            className="hover:bg-md-sys-color-tertiary-container/50 rounded-full p-3 text-md-sys-color-tertiary"
+            title="AI Chef"
+            aria-label="AI Chef"
           >
-            <Sparkles className="h-5 w-5" />
-          </button>
-
-          <button
-            onClick={onAddManual}
-            className="items-center gap-1 rounded-full bg-md-sys-color-primary p-2 text-md-sys-color-on-primary shadow-md-1 transition-all hover:shadow-md-2"
-            title="Add Recipe"
-            aria-label="Add Recipe"
-          >
-            <Plus className="h-5 w-5" />
+            <Sparkles className="h-6 w-6" />
           </button>
         </div>
       </>
@@ -560,9 +551,9 @@ const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
 // --- MAIN COMPONENT ---
 const RecipeManager = () => {
   const { recipes, setRecipes, loading, syncStatus } = useRecipes()
-  const [view, setView] = useState('library') // 'library', 'detail', 'edit', 'grocery', 'ai-add'
+  const [view, setView] = useState('library') // 'library', 'detail', 'edit', 'grocery', 'ai-add', 'week'
   const [selectedRecipe, setSelectedRecipe] = useState(null)
-  const [showFeedback, setShowFeedback] = useState(false)
+  // Removed local showFeedback state
 
   // Filtering & Sorting State
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -933,13 +924,9 @@ const RecipeManager = () => {
         syncStatus={syncStatus}
         onGenerateList={handleGenerateList}
         onAddAi={() => setView('ai-add')}
-        onAddManual={() => {
-          setSelectedRecipe({})
-          setView('edit')
-        }}
         onOpenFilters={() => setFiltersOpen(true)}
         onOpenSettings={() => setView('settings')}
-        onOpenFeedback={() => setShowFeedback(true)}
+        onOpenFeedback={() => openFeedbackModal()}
         // Selection Props
         isSelectionMode={isSelectionMode}
         selectedCount={selectedIds.size}
@@ -953,43 +940,19 @@ const RecipeManager = () => {
       <main className="relative flex-1 overflow-hidden">
         {(view === 'library' || view === 'week') && (
           <div className="flex h-full flex-col">
-            {/* Tab Switcher */}
-            <div className="flex border-b border-md-sys-color-outline bg-md-sys-color-surface px-6">
-              <button
-                onClick={() => setView('library')}
-                className={`mr-6 flex items-center gap-2 border-b-2 py-4 text-sm font-bold transition-colors ${
-                  view === 'library'
-                    ? 'border-md-sys-color-primary text-md-sys-color-primary'
-                    : 'border-transparent text-md-sys-color-on-surface-variant hover:text-md-sys-color-on-surface'
-                }`}
-              >
-                <ChefHat className="h-4 w-4" />
-                Library
-                <span className="ml-1 rounded-full bg-md-sys-color-surface-variant px-2 py-0.5 text-xs text-md-sys-color-on-surface-variant">
-                  {recipes.length}
-                </span>
-              </button>
-              <button
-                onClick={() => setView('week')}
-                className={`flex items-center gap-2 border-b-2 py-4 text-sm font-bold transition-colors ${
-                  view === 'week'
-                    ? 'border-md-sys-color-primary text-md-sys-color-primary'
-                    : 'border-transparent text-md-sys-color-on-surface-variant hover:text-md-sys-color-on-surface'
-                }`}
-              >
-                <Calendar className="h-4 w-4" />
-                This Week
-                <span
-                  className={`ml-1 rounded-full px-2 py-0.5 text-xs ${
-                    view === 'week'
-                      ? 'bg-md-sys-color-primary text-md-sys-color-on-primary'
-                      : 'bg-md-sys-color-surface-variant text-md-sys-color-on-surface-variant'
-                  }`}
-                >
-                  {recipes.filter((r) => r.thisWeek).length}
-                </span>
-              </button>
-            </div>
+            <Tabs
+              activeTab={view === 'week' ? 'week' : 'library'}
+              onChange={(v) => setView(v)}
+              tabs={[
+                { label: 'Library', value: 'library', icon: ChefHat, count: recipes.length },
+                {
+                  label: 'This Week',
+                  value: 'week',
+                  icon: Calendar,
+                  count: recipes.filter((r) => r.thisWeek).length,
+                },
+              ]}
+            />
 
             <div className="scrollbar-hide flex-1 overflow-y-auto">
               {!isSelectionMode && view === 'library' && recipes.length > 0 && (
@@ -1050,12 +1013,18 @@ const RecipeManager = () => {
           <GroceryList ingredients={groceryItems} onClose={() => setView('library')} />
         )}
       </main>
-      <FeedbackModal
-        isOpen={showFeedback}
-        onClose={() => setShowFeedback(false)}
-        appState={{ recipes, selectedRecipe, sort, filters }}
-        user={null} // TODO: Pass real user if available
-      />
+
+      {/* Primary Floating Action Button */}
+      {(view === 'library' || view === 'week') && !isSelectionMode && (
+        <Fab
+          icon={Plus}
+          label="Add Recipe"
+          onClick={() => {
+            setSelectedRecipe({})
+            setView('edit')
+          }}
+        />
+      )}
     </div>
   )
 }

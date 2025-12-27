@@ -11,10 +11,10 @@ const LibraryRecipeCard = ({
 }) => (
   <div
     data-testid={testId}
-    className={`group relative flex w-full flex-col overflow-hidden rounded-md-l border bg-md-sys-color-surface text-left shadow-md-1 transition-all hover:shadow-md-2 ${
+    className={`group relative flex w-full flex-col overflow-hidden rounded-xl border bg-md-sys-color-surface text-left transition-all ${
       recipe.thisWeek
-        ? 'border-md-sys-color-primary ring-1 ring-md-sys-color-primary'
-        : 'border-md-sys-color-outline'
+        ? 'border-md-sys-color-primary shadow-md-2'
+        : 'border-md-sys-color-outline shadow-md-1 hover:shadow-md-2'
     }`}
   >
     <button onClick={onClick} className="relative flex h-full w-full flex-1 flex-col text-left">
@@ -37,30 +37,29 @@ const LibraryRecipeCard = ({
           />
         </div>
       )}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         {/* Supporting Metadata - Top */}
-        <div
-          className={`mb-2 flex items-center gap-2 ${recipe.protein && recipe.thisWeek ? 'justify-between' : ''}`}
-        >
+        <div className="mb-3 flex flex-wrap items-start gap-2">
           {recipe.protein && (
-            <span className="rounded-full bg-md-sys-color-secondary-container px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-md-sys-color-on-secondary-container">
+            <span className="rounded-full bg-md-sys-color-secondary-container px-3 py-1 text-xs font-medium uppercase tracking-wide text-md-sys-color-on-secondary-container">
               {recipe.protein}
             </span>
           )}
           {recipe.thisWeek && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-md-sys-color-primary-container px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-md-sys-color-on-primary-container">
-              <Calendar className="h-3.5 w-3.5" /> This Week
+            <span className="inline-flex items-center gap-2 rounded-full bg-md-sys-color-primary-container px-3 py-1 text-xs font-semibold uppercase tracking-wide text-md-sys-color-on-primary-container">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>This Week</span>
             </span>
           )}
         </div>
 
         {/* Primary Content - Title */}
-        <h3 className="mb-3 line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
+        <h3 className="mb-4 line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
           {recipe.title}
         </h3>
 
         {/* Secondary Metadata - Bottom */}
-        <div className="flex items-center gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
+        <div className="mt-auto flex items-center gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
           <div className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
             <span>{recipe.cookTime + recipe.prepTime}m</span>
@@ -87,7 +86,7 @@ const LibraryRecipeCard = ({
       className={`absolute right-2 top-2 z-10 rounded-full p-2 shadow-sm transition-colors ${
         recipe.thisWeek
           ? 'hover:bg-md-sys-color-primary/90 bg-md-sys-color-primary text-md-sys-color-on-primary'
-          : 'bg-md-sys-color-surface-variant text-md-sys-color-on-surface-variant hover:bg-md-sys-color-secondary-container hover:text-md-sys-color-on-secondary-container'
+          : 'bg-md-sys-color-surface-variant/80 text-md-sys-color-on-surface-variant backdrop-blur-sm hover:bg-md-sys-color-secondary-container hover:text-md-sys-color-on-secondary-container'
       }`}
       title={recipe.thisWeek ? 'Remove from This Week' : 'Add to This Week'}
     >
