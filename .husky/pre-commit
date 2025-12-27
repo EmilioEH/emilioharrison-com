@@ -1,8 +1,5 @@
-# Sync feedback from DB to docs
+# Sync feedback from DB to docs (kept local only, not committed)
 echo "🔄 Auto-syncing feedback reports..."
 npm run sync:feedback --workspace=@emilio/recipes
-
-# Stage the updated docs so they are included in this commit
-git add apps/recipes/docs/feedback/active-reports.md apps/recipes/docs/feedback/images
 
 npx lint-staged

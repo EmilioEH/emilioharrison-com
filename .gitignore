@@ -55,3 +55,7 @@ lint_results.txt
 prettier_error.txt
 reports/
 .stryker-tmp/
+
+# Feedback Reports (auto-generated, contains sensitive user data)
+apps/recipes/docs/feedback/active-reports.md
+apps/recipes/docs/feedback/images/
