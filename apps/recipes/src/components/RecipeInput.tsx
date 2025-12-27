@@ -125,7 +125,6 @@ const PhotoUploader = ({
         <input
           type="file"
           accept="image/*"
-          capture="environment"
           className="absolute inset-0 cursor-pointer opacity-0"
           onChange={handleFileChange}
         />
