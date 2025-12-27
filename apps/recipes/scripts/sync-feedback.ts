@@ -26,25 +26,37 @@ async function syncFeedback() {
     if (response && response.ok) {
       feedbackList = await response.json()
     } else {
-      console.warn('⚠️ Could not reach local dev server. Using mock data for demonstration.')
-      feedbackList = [
-        {
-          id: 'mock-1',
-          timestamp: new Date().toISOString(),
-          type: 'bug',
-          description: 'The "This Week" counter doesn\'t update immediately.',
-          expected: 'Counter should show 1 after adding a recipe.',
-          actual: 'Counter stayed at 0 until refresh.',
-          screenshot: undefined,
-          logs: ['[ERROR] State sync failed at R102'],
-          context: {
-            url: '/protected/recipes',
-            userAgent: 'Mozilla/5.0...',
-            user: 'emilio',
-            appState: '{}',
+      console.warn('⚠️ Could not reach local dev server. Attempting to fetch from Cloudflare KV...')
+      try {
+        const { execSync } = await import('child_process')
+        // ID is hardcoded for now based on wrangler.toml analysis
+        const kvOutput = execSync(
+          'npx wrangler kv key get feedback:active --namespace-id 47c74c58b25e4147984b57d677370493 --text',
+          { encoding: 'utf-8' },
+        )
+        feedbackList = JSON.parse(kvOutput)
+      } catch (err) {
+        console.warn('⚠️ Could not fetch from Cloudflare KV. Using mock data for demonstration.')
+        console.error(err)
+        feedbackList = [
+          {
+            id: 'mock-1',
+            timestamp: new Date().toISOString(),
+            type: 'bug',
+            description: 'The "This Week" counter doesn\'t update immediately.',
+            expected: 'Counter should show 1 after adding a recipe.',
+            actual: 'Counter stayed at 0 until refresh.',
+            screenshot: undefined,
+            logs: ['[ERROR] State sync failed at R102'],
+            context: {
+              url: '/protected/recipes',
+              userAgent: 'Mozilla/5.0...',
+              user: 'emilio',
+              appState: '{}',
+            },
           },
-        },
-      ]
+        ]
+      }
     }
 
     if (feedbackList.length === 0) {

@@ -51,6 +51,21 @@ test.describe('Feedback System', () => {
     await page.goto('/protected/recipes')
     // Wait for the app UI to stabilize - 'Add Recipe' button is more reliable for interaction checks
     await expect(page.getByRole('button', { name: 'Add Recipe' })).toBeVisible({ timeout: 15000 })
+
+    // Mock the feedback API to prevent writing to the real KV store
+    await page.route('**/api/feedback', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON()
+        // Basic validation to ensure the test sends the right structure
+        if (!body.type || !body.context) {
+          await route.fulfill({ status: 400, body: 'Invalid data' })
+          return
+        }
+        await route.fulfill({ status: 200, json: { success: true } })
+      } else {
+        await route.continue()
+      }
+    })
   })
 
   test('should allow submitting a bug report', async ({ page }) => {
