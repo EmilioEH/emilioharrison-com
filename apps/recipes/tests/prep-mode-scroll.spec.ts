@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Prep Mode Scroll', () => {
-  test.beforeEach(async ({ page, context }) => {
+  test.beforeEach(async ({ context }) => {
     // Mock Auth
     await context.addCookies([
       { name: 'site_auth', value: 'true', url: 'http://127.0.0.1:8788/' },

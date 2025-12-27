@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
+import type { Page, ConsoleMessage } from '@playwright/test'
 
-const login = async (page) => {
+const login = async (page: Page) => {
   await page.context().addCookies([
     {
       name: 'site_auth',
@@ -15,7 +16,7 @@ const login = async (page) => {
       path: '/',
     },
   ])
-  page.on('console', (msg) => console.log('BROWSER LOG:', msg.text()))
+  page.on('console', (msg: ConsoleMessage) => console.log('BROWSER LOG:', msg.text()))
 }
 
 test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
