@@ -105,12 +105,16 @@ async function handleLargeData(
     try {
       const key = `feedback/${id}/${field}`
       // If it's a base64 image (screenshot), decode it first
-      let body: string | Buffer = data
+      let body: string | Uint8Array = data
       let finalContentType = contentType
 
       if (field === 'screenshot' && data.startsWith('data:image')) {
         const base64Data = data.replace(/^data:image\/\w+;base64,/, '')
-        body = Buffer.from(base64Data, 'base64')
+        const binaryString = atob(base64Data)
+        body = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          body[i] = binaryString.charCodeAt(i)
+        }
         finalContentType = 'image/png'
       }
 
@@ -126,11 +130,10 @@ async function handleLargeData(
   }
 
   // If R2 missing or failed, and still too big -> Truncate/Drop
-  // We use a larger "absolute max" for D1 if we really have to, but 1MB is the hard row limit.
-  // 100KB is a safer fallback limit.
   if (size > 100000) {
-    console.warn(`[Feedback API] ${field} too large (${size}) and R2 unavailable/failed. Dropping.`)
-    return `[${field} Too Large - R2 Missing]`
+    const reason = !isR2Available ? 'R2 Missing' : 'R2 Upload Failed'
+    console.warn(`[Feedback API] ${field} too large (${size}) and ${reason}. Dropping.`)
+    return `[${field} Too Large - ${reason}]`
   }
 
   return data

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 export const useUrlSync = (view, setView, recipes, selectedRecipe, setSelectedRecipe, loading) => {
   const isPopState = useRef(false)
+  const initialLoadDone = useRef(false)
 
   // 1. Listen for Back/Forward buttons (Popstate)
   useEffect(() => {
@@ -26,7 +27,8 @@ export const useUrlSync = (view, setView, recipes, selectedRecipe, setSelectedRe
     window.addEventListener('popstate', handlePopState)
 
     // Initial Load: Check URL once when recipes first load to restore deep link
-    if (!loading && recipes.length > 0) {
+    if (!loading && recipes.length > 0 && !initialLoadDone.current) {
+      initialLoadDone.current = true
       const params = new URLSearchParams(window.location.search)
       if (params.get('view') || params.get('id')) {
         handlePopState()

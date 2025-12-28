@@ -99,7 +99,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       return new Response(
         JSON.stringify({
           error:
-            'Recipe content is too large. This usually happens if a high-resolution photo failed to upload and is being sent as raw data. Try a smaller photo or check your connection.',
+            'Recipe content is too large to save. This usually happens if a high-resolution photo failed to upload and is being saved as raw data. Please try again with a smaller photo or check your connection.',
         }),
         {
           status: 413,

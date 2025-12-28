@@ -21,7 +21,8 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 - **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
-- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu. Captured reports include screenshots (saved to R2), console logs, and application state to help developers/agents solve issues faster.
+- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu. Captured reports include screenshots (saved to R2), console logs, and application state.
+- **Feedback Dashboard**: An integrated management interface (restricted to `Emilio`) to review, track, and resolve user feedback reports directly in the app.
 
 ## 🛠 Tech Stack
 
@@ -52,6 +53,7 @@ Key entry points for common tasks:
 | **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI) |
 | **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                       |
 | **Update global UI**       | `src/components/layout/` (Navbar, GlobalBurgerMenu)                                         |
+| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.jsx` & `scripts/resolve-feedback.ts`       |
 | **Add E2E test**           | Create `tests/<feature>.spec.ts` – use existing tests as templates                          |
 
 **Conventions:**
@@ -117,12 +119,23 @@ npm run sync:feedback
 # Or: npx tsx scripts/sync-feedback.ts
 ```
 
-Synced reports are saved to `docs/feedback/active-reports.md` and include:
+Synced reports are saved to `docs/feedback/` as markdown files:
 
-- **📸 Auto-Screenshots**: Automatically captured via `html2canvas` (ignoring the modal itself).
+- `open-reports.md`: All unresolved reports.
+- `all-reports.md`: Full archive of all feedback.
+
+Reports include:
+
+- **📸 Auto-Screenshots**: Automatically captured via `html2canvas` and saved to `docs/feedback/images/`.
 - **📝 Real Console Logs**: A ring buffer of the last 100 console events (Log, Warn, Error).
-- **🏗 DOM Snapshot**: The full HTML structure of the page at the moment of the report.
 - **📱 Device Metadata**: Window size, User Agent, and App State.
+- **🚥 Status Tracking**: Tracks if a report is `OPEN`, `FIXED`, or `WONT-FIX`.
+
+To resolve a report via CLI:
+
+```bash
+npm run feedback:resolve <id> fixed --remote
+```
 
 ## 💻 Getting Started
 
@@ -203,6 +216,7 @@ src/
 │   │   ├── LibraryToolbar.jsx   # Inline search/sort/filter controls
 │   │   ├── GroceryList.tsx      # Grocery list with shopping mode
 │   │   ├── SettingsView.jsx     # Settings and data management
+│   │   ├── FeedbackDashboard.jsx # Integrated feedback management UI
 │   │   ├── VarietyWarning.jsx   # Protein variety alerts
 │   │   └── hooks/
 │   │       ├── useRecipes.js           # Recipe CRUD operations
@@ -249,6 +263,7 @@ tests/                           # Playwright E2E tests
 ├── cooking-mode.spec.ts         # Cooking workflow
 ├── grocery-list.spec.ts         # Grocery list generation
 ├── feedback.spec.ts             # Feedback submission
+├── feedback-dashboard.spec.ts   # Feedback management UI & Access Control
 ├── weekly-planning.spec.ts      # This Week feature
 ├── metadata.spec.ts             # Filtering and tagging
 └── ...                          # Additional test suites

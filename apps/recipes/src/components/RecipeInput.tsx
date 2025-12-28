@@ -481,6 +481,7 @@ interface RecipeSourceSelectorProps {
   status: Status
   onProcess: () => void
   isUploading: boolean
+  setErrorMsg: (msg: string) => void
 }
 
 const RecipeSourceSelector = ({
@@ -494,6 +495,7 @@ const RecipeSourceSelector = ({
   status,
   onProcess,
   isUploading,
+  setErrorMsg,
 }: RecipeSourceSelectorProps) => {
   const [internalIsUploading, setInternalIsUploading] = useState(false)
 
@@ -529,9 +531,13 @@ const RecipeSourceSelector = ({
           setImagePreview(publicUrl)
         } else {
           console.error('Failed to upload image')
+          setErrorMsg(
+            'Failed to upload image to the cloud. You can still process this recipe, but it may fail if the image is too large.',
+          )
         }
       } catch (err) {
         console.error('Upload error', err)
+        setErrorMsg('Network error while uploading image. Please check your connection.')
       } finally {
         setInternalIsUploading(false)
       }
@@ -573,7 +579,7 @@ const RecipeSourceSelector = ({
 
         {errorMsg && (
           <div className="animate-in shake rounded-md-s border border-md-sys-color-error bg-md-sys-color-error-container p-4 text-sm font-medium text-md-sys-color-on-error-container">
-            Error: {errorMsg}
+            {errorMsg}
           </div>
         )}
 
@@ -629,6 +635,13 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
         payload.url = url
       } else {
         if (!imagePreview) throw new Error('Please select an image')
+        // Safety check: If it's still a data URL (not a cloud URL) and too big, stop here.
+        if (imagePreview.startsWith('data:') && imagePreview.length > 1024 * 1024) {
+          throw new Error(
+            'The image failed to upload and is too large to process directly. Please try a smaller photo or check your connection.',
+          )
+        }
+
         payload.image = imagePreview
       }
 
@@ -675,6 +688,15 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
   const handleSave = async () => {
     if (!parsedRecipe) return
     const newRecipe = { ...formData, id: formData.id || crypto.randomUUID() } as Recipe
+
+    // Double check size before saving to D1
+    const recipeSize = JSON.stringify(newRecipe).length
+    if (recipeSize > 1.5 * 1024 * 1024) {
+      setErrorMsg(
+        'This recipe contains too much data (likely a large image) and cannot be saved. Please try again with a smaller photo.',
+      )
+      return
+    }
 
     if (onRecipeCreated) {
       setIsSaving(true)
@@ -733,6 +755,7 @@ export const RecipeInput = ({ onRecipeCreated }: RecipeInputProps) => {
           status={status}
           onProcess={handleProcess}
           isUploading={false} // Uplifted state handled internally in selector for now
+          setErrorMsg={setErrorMsg}
         />
       )}
     </div>

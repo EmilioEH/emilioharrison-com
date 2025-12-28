@@ -42,7 +42,7 @@ const LibraryRecipeCard = ({
       )}
       <div className="flex flex-1 flex-col p-4">
         {/* Supporting Metadata - Top */}
-        <div className="mb-3 flex flex-wrap items-start gap-2">
+        <div className="mb-3 flex flex-wrap items-start gap-2 pr-10">
           {recipe.protein && (
             <span className="rounded-full bg-md-sys-color-secondary-container px-3 py-1 text-xs font-medium uppercase tracking-wide text-md-sys-color-on-secondary-container">
               {recipe.protein}
@@ -258,16 +258,6 @@ export const RecipeLibrary = ({
     return { groups, sortedKeys }
   }, [recipes, sort, weekDays])
 
-  React.useEffect(() => {
-    if (Object.keys(openGroups).length === 0 && groupedRecipes.sortedKeys.length > 0) {
-      const allOpen = {}
-      groupedRecipes.sortedKeys.forEach((key) => {
-        allOpen[key] = true
-      })
-      setOpenGroups(allOpen)
-    }
-  }, [groupedRecipes.sortedKeys, openGroups])
-
   const getGroupTitle = (key) => {
     if (sort === 'week-day') {
       if (key === 'Unassigned') return 'To Plan'
@@ -293,7 +283,7 @@ export const RecipeLibrary = ({
           key={key}
           title={getGroupTitle(key)}
           count={groupedRecipes.groups[key].length}
-          isOpen={!!openGroups[key]}
+          isOpen={openGroups[key] !== false}
           onToggle={() => toggleGroup(key)}
         >
           {groupedRecipes.groups[key].map((recipe) => (
