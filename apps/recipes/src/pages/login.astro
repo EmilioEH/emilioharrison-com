@@ -1,123 +1,27 @@
 ---
 import RecipeLayout from '../layouts/RecipeLayout.astro'
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 
-let error = ''
-
-if (Astro.request.method === 'POST') {
-  try {
-    const data = await Astro.request.formData()
-    const password = data.get('password')
-    const name = data.get('name')?.toString().trim()
-
-    // Access environment variable.
-    // In dev with platformProxy, it's in Astro.locals.runtime.env
-    // In prod, it's also in Astro.locals.runtime.env
-    // We fallback to import.meta.env for safety if runtime is missing (though it shouldn't be)
-    const env = Astro.locals.runtime?.env || import.meta.env
-    const sitePassword = env.SITE_PASSWORD
-
-    if (password === sitePassword) {
-      if (!name) {
-        error = 'Please enter your name'
-      } else {
-        const cookieOptions = {
-          path: '/',
-          httpOnly: true,
-          secure: import.meta.env.PROD,
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-        }
-
-        // Auth token
-        Astro.cookies.set('site_auth', 'true', cookieOptions)
-
-        // User identity (not httpOnly so client can read "Welcome, Name")
-        Astro.cookies.set('site_user', name, {
-          ...cookieOptions,
-          httpOnly: false,
-        })
-
-        // Client-side redirect to replace history
-        return new Response(
-          `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <script>
-                window.location.replace('/protected/recipes');
-              </script>
-            </head>
-            <body>
-              <p>Redirecting... <a href="/protected/recipes">Click here if not redirected</a></p>
-            </body>
-          </html>
-          `,
-          {
-            status: 200,
-            headers: { 'Content-Type': 'text/html' },
-          },
-        )
-      }
-    } else {
-      error = 'Incorrect password'
-    }
-  } catch (e) {
-    console.error(e)
-    error = 'Something went wrong'
-  }
+// Server-side redirect if already logged in?
+// The middleware usually handles protection, but we can double check.
+const auth = Astro.cookies.get('site_auth')
+const user = Astro.cookies.get('site_user')
+if (auth?.value === 'true' && user?.value) {
+  return Astro.redirect('/protected/recipes')
 }
 ---
 
 <RecipeLayout title="Login">
   <div class="flex flex-1 items-center justify-center p-4">
     <div
-      class="w-full max-w-md rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 shadow-md-3"
+      class="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl"
     >
-      <h1 class="mb-6 font-display text-4xl font-bold text-md-sys-color-primary">Chef Login</h1>
+      <div class="mb-8 text-center">
+        <h1 class="mb-2 font-display text-4xl font-bold tracking-tight text-white">Chef Login</h1>
+        <p class="text-white/60">Manage your kitchen with AI</p>
+      </div>
 
-      {
-        error && (
-          <div class="mb-6 rounded-md-s border border-md-sys-color-error bg-md-sys-color-error-container p-3 font-medium text-md-sys-color-on-error-container">
-            {error}
-          </div>
-        )
-      }
-
-      <form method="POST" class="flex flex-col gap-6">
-        <label class="flex flex-col gap-2">
-          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant"
-            >Your Name</span
-          >
-          <input
-            type="text"
-            name="name"
-            id="name"
-            placeholder="e.g. Emilio"
-            class="bg-md-sys-color-surface-variant/20 rounded-md-l border border-md-sys-color-outline p-3 font-medium text-md-sys-color-on-surface outline-none transition-all focus:ring-2 focus:ring-md-sys-color-primary"
-            required
-          />
-        </label>
-
-        <label class="flex flex-col gap-2">
-          <span class="text-sm font-medium uppercase text-md-sys-color-on-surface-variant"
-            >Password</span
-          >
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="Enter password"
-            class="bg-md-sys-color-surface-variant/20 rounded-md-l border border-md-sys-color-outline p-3 font-medium text-md-sys-color-on-surface outline-none transition-all focus:ring-2 focus:ring-md-sys-color-primary"
-            required
-          />
-        </label>
-
-        <button
-          type="submit"
-          class="rounded-full bg-md-sys-color-primary p-4 text-xl font-bold uppercase text-md-sys-color-on-primary shadow-md-2 transition-all hover:shadow-md-3 active:shadow-none"
-        >
-          Enter Kitchen
-        </button>
-      </form>
+      <GoogleSignInButton client:only="react" />
     </div>
   </div>
 </RecipeLayout>

@@ -48,6 +48,7 @@ export interface Recipe {
   userNotes?: string
   wouldMakeAgain?: boolean
   lastCooked?: string // ISO date
+  assignedDate?: string // YYYY-MM-DD
   finishedImage?: string // Base64 or URL
 }
 

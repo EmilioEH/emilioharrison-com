@@ -1,53 +1,21 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Authentication Flow', () => {
-  test('should allow user to log in with password and name', async ({ page }) => {
+  test('should display login page with Google Sign-in', async ({ page }) => {
     // 1. Visit Login Page
     await page.goto('/protected/recipes/login')
 
-    // 2. Fill in credentials
-    await page.getByLabel('Your Name').fill('TestUser')
-    await page.getByLabel('Password').fill('password123') // Assuming default dev password
-
-    // 3. Submit
-    await page.getByRole('button', { name: 'Enter Kitchen' }).click()
-
-    // 4. Verify Redirect to Protected App
-    await expect(page).toHaveURL(/\/protected\/recipes/)
-
-    // 5. Verify User Name in Header
-    await expect(page.getByText('Welcome, TestUser')).toBeVisible()
-
-    // 6. Verify Log Out
-    await page.getByText('Log Out').click()
-    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+    // 2. Verify UI Elements
     await expect(page.getByRole('heading', { name: 'Chef Login' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
   })
 
-  test('should show error for incorrect password', async ({ page }) => {
-    await page.goto('/protected/recipes/login')
-    await page.getByLabel('Your Name').fill('Hacker')
-    await page.getByLabel('Password').fill('wrongpassword')
-    await page.getByRole('button', { name: 'Enter Kitchen' }).click()
-
-    await expect(page.getByText('Incorrect password')).toBeVisible()
+  test('should redirect to login if unauthenticated', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
   })
 
-  test('should require name', async ({ page }) => {
-    await page.goto('/protected/recipes/login')
-    // Remove required attribute to test server-side validation
-    await page.evaluate(() => {
-      document.querySelector('input[name="name"]')?.removeAttribute('required')
-    })
-
-    // Don't fill name
-    await page.getByLabel('Password').fill('password123')
-    await page.getByRole('button', { name: 'Enter Kitchen' }).click()
-
-    await expect(page.getByText('Please enter your name')).toBeVisible()
-  })
-
-  test('should redirect to login if site_user cookie is missing (stale session)', async ({
+  test('should redirect to login if user cookie is missing (stale session)', async ({
     context,
     page,
   }) => {
@@ -62,10 +30,39 @@ test.describe('Authentication Flow', () => {
     ])
 
     await page.goto('/protected/recipes')
-
-    // CURRENT BEHAVIOR (BUG): It stays on recipes page
-    // DESIRED BEHAVIOR (FIX): It redirects to /login
-    // We expect this to fail initially if we assert the redirect
     await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+  })
+
+  test('should allow logout', async ({ context, page }) => {
+    // Manually login
+    await context.addCookies([
+      {
+        name: 'site_auth',
+        value: 'true',
+        domain: '127.0.0.1',
+        path: '/',
+      },
+      {
+        name: 'site_user',
+        value: 'TestUser',
+        domain: '127.0.0.1',
+        path: '/',
+      },
+    ])
+
+    // 1. Visit Protected Page
+    await page.goto('/protected/recipes')
+    await expect(page.getByText('Welcome, TestUser')).toBeVisible()
+
+    // 2. Click Logout
+    await page.getByText('Log Out').click()
+
+    // 3. Verify Redirect
+    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+
+    // 4. Verify Cookie Cleared?
+    // Hard to check cookie deletion directly in Playwright without getting cookies again
+    // But the redirect confirms session is gone (middleware enforces it)
+    await expect(page.getByRole('heading', { name: 'Chef Login' })).toBeVisible()
   })
 })
