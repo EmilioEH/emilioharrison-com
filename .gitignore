@@ -58,4 +58,6 @@ reports/
 
 # Feedback Reports (auto-generated, contains sensitive user data)
 apps/recipes/docs/feedback/active-reports.md
+apps/recipes/docs/feedback/all-reports.md
+apps/recipes/docs/feedback/open-reports.md
 apps/recipes/docs/feedback/images/
