@@ -39,15 +39,6 @@ const getServiceAccount = async (): Promise<ServiceAccount> => {
     console.warn('Local service account file check failed or empty.', e)
   }
 
-  // 3. Fallback to Node.js (Scripts/Local)
-  try {
-    const mod = await import('../../firebase-service-account.json')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (mod as any).default as unknown as ServiceAccount
-  } catch {
-    // Ignore if missing, will throw below
-  }
-
   // If we get here, neither Env nor File worked.
   throw new Error(
     'Service Account not found via Env (FIREBASE_SERVICE_ACCOUNT) or File (firebase-service-account.json). Please check your configuration.',
