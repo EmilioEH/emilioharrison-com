@@ -4,7 +4,11 @@ import type { ServiceAccount } from './types'
 // Helper to get service account from Env or File
 const getServiceAccount = async (): Promise<ServiceAccount> => {
   // 1. Try Environment Variable (Production/CI)
-  const envVar = import.meta.env.FIREBASE_SERVICE_ACCOUNT
+  // Ensure we don't crash in Node.js where import.meta.env isn't defined by Vite
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const env = (import.meta as any).env
+  const envVar = env?.FIREBASE_SERVICE_ACCOUNT
+
   if (envVar) {
     try {
       if (typeof envVar === 'string') {
@@ -33,6 +37,15 @@ const getServiceAccount = async (): Promise<ServiceAccount> => {
     }
   } catch (e) {
     console.warn('Local service account file check failed or empty.', e)
+  }
+
+  // 3. Fallback to Node.js (Scripts/Local)
+  try {
+    const mod = await import('../../firebase-service-account.json')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (mod as any).default as unknown as ServiceAccount
+  } catch {
+    // Ignore if missing, will throw below
   }
 
   // If we get here, neither Env nor File worked.

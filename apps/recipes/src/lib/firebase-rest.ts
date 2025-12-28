@@ -326,6 +326,9 @@ export class FirebaseRestService {
     if (val === null || val === undefined) return { nullValue: null }
     if (typeof val === 'string') return { stringValue: val }
     if (typeof val === 'number') {
+      if (Number.isNaN(val)) return { doubleValue: 'NaN' }
+      if (val === Infinity) return { doubleValue: 'Infinity' }
+      if (val === -Infinity) return { doubleValue: '-Infinity' }
       if (Number.isInteger(val)) return { integerValue: val }
       return { doubleValue: val }
     }
@@ -335,9 +338,12 @@ export class FirebaseRestService {
       return { arrayValue: { values: val.map((v: any) => this.toFirestoreValue(v)) } }
     }
     if (typeof val === 'object') {
+      // Handle Date objects
+      if (val instanceof Date) {
+        return { timestampValue: val.toISOString() }
+      }
       return { mapValue: { fields: this.toFirestoreFields(val) } }
     }
-    // Date handling? User code passes ISO strings mostly.
     return { stringValue: String(val) }
   }
 }
