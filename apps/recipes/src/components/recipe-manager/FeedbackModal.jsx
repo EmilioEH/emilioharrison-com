@@ -73,11 +73,14 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
     }
 
     try {
+      console.log('🚀 Submitting feedback...', feedbackData)
       const response = await fetch('/protected/recipes/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(feedbackData),
       })
+
+      console.log('📡 Response status:', response.status)
 
       if (response.ok) {
         setIsSuccess(true)
@@ -96,6 +99,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
         let errorMessage = 'Failed to submit feedback. please try again.'
         try {
           const errorData = await response.json()
+          console.error('❌ Server Error Data:', errorData)
           if (errorData.details) {
             errorMessage = `Error: ${errorData.details}`
           } else if (errorData.error) {
@@ -106,11 +110,13 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
           // If response isn't JSON, use status text
           errorMessage = `Error ${response.status}: ${response.statusText}`
         }
-        alert(errorMessage)
+        alert(`Submit Failed: ${errorMessage}\n\nCheck console for details.`)
       }
     } catch (error) {
       console.error('Feedback Error:', error)
-      alert(`A technical error occurred: ${error.message || error}`)
+      alert(
+        `A technical error occurred: ${error.message || error}\n\nMake sure ad-blockers are disabled.`,
+      )
     } finally {
       setIsSubmitting(false)
     }
