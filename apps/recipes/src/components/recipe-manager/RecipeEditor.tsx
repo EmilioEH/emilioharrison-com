@@ -1,48 +1,9 @@
 import React, { useState } from 'react'
-import { ChevronUp, ChevronDown, Trash2, Save } from 'lucide-react'
+import { Trash2, Save } from 'lucide-react'
+import { AiImporter } from './AiImporter'
 import type { Recipe, Ingredient } from '../../lib/types'
 
-interface QuickImportProps {
-  rawText: string
-  setRawText: (text: string) => void
-  onParse: () => void
-  showImport: boolean
-  setShowImport: (show: boolean) => void
-}
-
-const QuickImport: React.FC<QuickImportProps> = ({
-  rawText,
-  setRawText,
-  onParse,
-  showImport,
-  setShowImport,
-}) => (
-  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-    <button
-      onClick={() => setShowImport(!showImport)}
-      className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-500"
-    >
-      <span>Paste Raw Text</span>
-      {showImport ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-    </button>
-    {showImport && (
-      <div className="mt-2 space-y-2">
-        <textarea
-          value={rawText}
-          onChange={(e) => setRawText(e.target.value)}
-          className="h-24 w-full rounded border bg-white p-2 font-mono text-xs"
-          placeholder="Paste recipe text here..."
-        />
-        <button
-          onClick={onParse}
-          className="bg-ink w-full rounded py-1 text-xs font-bold text-white"
-        >
-          Auto-fill
-        </button>
-      </div>
-    )}
-  </div>
-)
+// AiImporter replaced the legacy QuickImport functionality
 
 interface RecipeTextEditorProps {
   label: string
@@ -110,8 +71,6 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
       versionHistory: [],
     }
   })
-  const [rawText, setRawText] = useState('')
-  const [showImport, setShowImport] = useState(false)
 
   // Initial load helpers
   const [ingText, setIngText] = useState(() => {
@@ -125,18 +84,27 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   })
   const [stepText, setStepText] = useState(recipe.steps?.join('\n') || '')
 
-  const parseRawText = () => {
-    const lines = rawText
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l)
-    if (lines.length > 0) {
-      const newData = { ...formData }
-      if (!newData.title) newData.title = lines[0]
-      newData.notes = rawText
-      setFormData(newData)
+  const handleRecipeParsed = (parsed: Recipe) => {
+    setFormData((prev) => ({
+      ...prev,
+      ...parsed,
+      updatedAt: new Date().toISOString(),
+    }))
+
+    if (parsed.ingredients) {
+      setIngText(
+        parsed.ingredients
+          .map((i) => {
+            const prepStr = i.prep ? ` (${i.prep})` : ''
+            return `${i.amount} ${i.name}${prepStr}`
+          })
+          .join('\n'),
+      )
     }
-    setShowImport(false)
+
+    if (parsed.steps) {
+      setStepText(parsed.steps.join('\n'))
+    }
   }
 
   const handleInternalSave = () => {
@@ -185,15 +153,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         </button>
       </div>
 
-      {!recipe.id && (
-        <QuickImport
-          rawText={rawText}
-          setRawText={setRawText}
-          onParse={parseRawText}
-          showImport={showImport}
-          setShowImport={setShowImport}
-        />
-      )}
+      {!recipe.id && <AiImporter onRecipeParsed={handleRecipeParsed} />}
 
       <div>
         <label htmlFor="title" className="mb-1 block text-xs font-bold uppercase text-gray-400">

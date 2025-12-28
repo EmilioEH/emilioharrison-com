@@ -55,6 +55,10 @@ const user = Astro.cookies.get('site_user')?.value
     <style is:global>
       @import '../styles/global.css';
     </style>
+    <script>
+      import { logger } from '../lib/logger'
+      logger.init()
+    </script>
   </head>
   <body class="bg-paper text-ink h-full overflow-hidden font-sans antialiased">
     <div class="flex h-full flex-col">
@@ -79,8 +83,6 @@ const user = Astro.cookies.get('site_user')?.value
 
     <script>
       import '../lib/themeInit'
-      import { logger } from '../lib/logger'
-      logger.init()
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {

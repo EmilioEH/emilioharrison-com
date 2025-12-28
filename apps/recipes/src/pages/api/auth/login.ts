@@ -10,8 +10,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Verify the token using Google's public endpoint
-    const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`)
+    const params = new URLSearchParams({ id_token: idToken })
+    const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`)
+
     if (!tokenInfoRes.ok) {
+      const errorText = await tokenInfoRes.text()
+      console.error(`Token verification failed: ${tokenInfoRes.status} ${errorText}`)
       return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401 })
     }
 
@@ -25,7 +29,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // For Firebase Auth ID tokens, 'aud' IS the Project ID.
       // We will log a warning if it doesn't match but might need to be lenient if testing setup is weird.
       // For strict security, we should return 401.
-      console.error(`Token audience mismatch. Expected ${projectId}, got ${payload.aud}`)
+      console.error(
+        `Token audience mismatch. Expected ${projectId}, got ${payload.aud}. Full payload:`,
+        payload,
+      )
       return new Response(JSON.stringify({ error: 'Token audience mismatch' }), { status: 401 })
     }
 
