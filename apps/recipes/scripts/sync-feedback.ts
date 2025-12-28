@@ -50,11 +50,38 @@ async function syncFeedback() {
               const parsedOutput = JSON.parse(d1Output)
               const rows = parsedOutput[0]?.results || []
 
-              feedbackList = rows.map((row: any) => ({
-                ...row,
-                logs: row.logs ? JSON.parse(row.logs) : [],
-                context: row.context ? JSON.parse(row.context) : {},
-              }))
+              feedbackList = rows.map((row: any) => {
+                let logs = []
+                let context = {}
+
+                // Handle logs - check if it's a valid JSON string or an error/R2 reference
+                if (row.logs && !row.logs.startsWith('[') && !row.logs.startsWith('r2:')) {
+                  logs = row.logs // Keep as string if it's an error message
+                } else if (row.logs && row.logs !== '[]') {
+                  try {
+                    logs = JSON.parse(row.logs)
+                  } catch {
+                    logs = row.logs // Keep as string if parsing fails
+                  }
+                }
+
+                // Handle context - check if it's a valid JSON string or an error/R2 reference
+                if (row.context && !row.context.startsWith('{') && !row.context.startsWith('r2:')) {
+                  context = row.context // Keep as string if it's an error message
+                } else if (row.context && row.context !== '{}') {
+                  try {
+                    context = JSON.parse(row.context)
+                  } catch {
+                    context = row.context // Keep as string if parsing fails
+                  }
+                }
+
+                return {
+                  ...row,
+                  logs,
+                  context,
+                }
+              })
               console.log(`✅ Retrieved ${feedbackList.length} items from Remote D1`)
             } else {
               throw new Error('Output file not created')
@@ -76,11 +103,38 @@ async function syncFeedback() {
             const parsedOutput = JSON.parse(d1Output)
             const rows = parsedOutput[0]?.results || []
 
-            feedbackList = rows.map((row: any) => ({
-              ...row,
-              logs: row.logs ? JSON.parse(row.logs) : [],
-              context: row.context ? JSON.parse(row.context) : {},
-            }))
+            feedbackList = rows.map((row: any) => {
+              let logs = []
+              let context = {}
+
+              // Handle logs - check if it's a valid JSON string or an error/R2 reference
+              if (row.logs && !row.logs.startsWith('[') && !row.logs.startsWith('r2:')) {
+                logs = row.logs // Keep as string if it's an error message
+              } else if (row.logs && row.logs !== '[]') {
+                try {
+                  logs = JSON.parse(row.logs)
+                } catch {
+                  logs = row.logs // Keep as string if parsing fails
+                }
+              }
+
+              // Handle context - check if it's a valid JSON string or an error/R2 reference
+              if (row.context && !row.context.startsWith('{') && !row.context.startsWith('r2:')) {
+                context = row.context // Keep as string if it's an error message
+              } else if (row.context && row.context !== '{}') {
+                try {
+                  context = JSON.parse(row.context)
+                } catch {
+                  context = row.context // Keep as string if parsing fails
+                }
+              }
+
+              return {
+                ...row,
+                logs,
+                context,
+              }
+            })
             console.log(`✅ Retrieved ${feedbackList.length} items from Local D1`)
           } catch (localErr) {
             console.error('❌ Both remote and local D1 failed.')
