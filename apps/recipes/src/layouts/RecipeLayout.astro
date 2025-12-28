@@ -78,6 +78,10 @@ const user = Astro.cookies.get('site_user')?.value
     <GlobalFeedback client:load />
 
     <script>
+      import '../lib/themeInit'
+      import { logger } from '../lib/logger'
+      logger.init()
+
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker

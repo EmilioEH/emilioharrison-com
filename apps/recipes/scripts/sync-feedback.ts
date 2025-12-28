@@ -35,7 +35,9 @@ async function syncFeedback() {
     // Split lists
     const openFeedback = feedbackList.filter((f) => !f.status || f.status === 'open')
 
-    console.log(`📝 Writing reports: ${openFeedback.length} Open, ${feedbackList.length} Total`)
+    console.log(`📝 Writing reports:`)
+    console.log(`   - Open: ${OPEN_REPORTS_PATH} (${openFeedback.length} items)`)
+    console.log(`   - All:  ${ALL_REPORTS_PATH} (${feedbackList.length} items)`)
 
     await generateMarkdown(openFeedback, OPEN_REPORTS_PATH, 'Open Feedback Reports')
     await generateMarkdown(feedbackList, ALL_REPORTS_PATH, 'All Feedback Reports')

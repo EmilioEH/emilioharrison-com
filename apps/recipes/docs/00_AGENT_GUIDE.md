@@ -29,7 +29,8 @@ This directory (`/docs`) serves as the central knowledge base for the project. A
 ## Rules for Agents
 
 1.  **Always Check `docs/` First**: Before asking the user for context, check if relevant documentation exists here.
-2.  **Keep Root Clean**: Do not create markdown files in the project root unless explicitly requested (e.g., `README.md`).
-3.  **Update Plans**: When changing plans, update `docs/project-management/implementation_plan.md` instead of creating new scattered files.
-4.  **Naming Conventions**: Use `kebab-case` for filenames (e.g., `new-feature-plan.md`).
-5.  **Timestamps**: For periodic reports (like audits), append the date (e.g., `code-quality-audit-2025-11-27.md`).
+2.  **Check Feedback**: Run the `/check-feedback` slash command or `npm run sync:feedback` to read the latest bug reports in `docs/feedback/`.
+3.  **Keep Root Clean**: Do not create markdown files in the project root unless explicitly requested (e.g., `README.md`).
+4.  **Update Plans**: When changing plans, update `docs/project-management/implementation_plan.md` instead of creating new scattered files.
+5.  **Naming Conventions**: Use `kebab-case` for filenames (e.g., `new-feature-plan.md`).
+6.  **Timestamps**: For periodic reports (like audits), append the date (e.g., `code-quality-audit-2025-11-27.md`).

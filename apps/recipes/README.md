@@ -150,11 +150,11 @@ The project uses aggressive **pre-push hooks** that run linting and type checks.
 
 We utilize an "Agent-Ready" feedback system that captures deep technical context to help Coding Agents diagnose issues without needing to reproduce them blindly.
 
-To sync reports from the live environment:
+To sync reports from the live environment, use the slash command or run the script:
 
 ```bash
-npm run sync:feedback
-# Or: npx tsx scripts/sync-feedback.ts
+/check-feedback  # Recommended for Agents
+# Or: npm run sync:feedback
 ```
 
 Synced reports are saved to `docs/feedback/` as markdown files:

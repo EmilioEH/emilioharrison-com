@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
+import { db } from '../../../lib/firebase-server'
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const { idToken } = await request.json()
 
@@ -17,10 +18,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const payload = await tokenInfoRes.json()
 
     // Verify audience matches Project ID
-    // We can try to get it from runtime env or fall back to import.meta.env
-    // Note: Cloudflare workers env might need 'locals.runtime.env'
-    const env = locals.runtime?.env || import.meta.env
-    const projectId = env.PUBLIC_FIREBASE_PROJECT_ID
+    const projectId = db.projectId
 
     if (payload.aud !== projectId) {
       // It's possible payload.aud is the Client ID, not Project ID, depending on the provider.
