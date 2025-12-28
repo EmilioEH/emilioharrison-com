@@ -27,7 +27,8 @@ export const useUrlSync = (view, setView, recipes, selectedRecipe, setSelectedRe
     window.addEventListener('popstate', handlePopState)
 
     // Initial Load: Check URL once when recipes first load to restore deep link
-    if (!loading && recipes.length > 0 && !initialLoadDone.current) {
+    // Only run this ONCE when the app first loads with data, not every time recipes change
+    if (!initialLoadDone.current && !loading && recipes.length > 0) {
       initialLoadDone.current = true
       const params = new URLSearchParams(window.location.search)
       if (params.get('view') || params.get('id')) {
