@@ -26,6 +26,7 @@
     "check:full": "npm run check:safety && npm run test:stryker && npm run test:e2e:fast && npm run scan",
     "check:ci": "npm run lint:strict && npm run format && npm run check:parallel && npm run test:stryker && npm run test:e2e && npm run check:hygiene && npm run scan",
     "sync:feedback": "npx tsx scripts/sync-feedback.ts",
+    "feedback:resolve": "npx tsx scripts/resolve-feedback.ts",
     "sync": "git add . && git commit -m \"Auto-sync: $(date)\" && git push",
     "scan": "npm audit --audit-level=high",
     "format": "prettier --write .",

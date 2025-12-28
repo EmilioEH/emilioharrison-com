@@ -4,7 +4,7 @@ export const GET: APIRoute = async ({ cookies, locals }) => {
   const userCookie = cookies.get('site_user')
   const user = userCookie?.value
 
-  if (!user) {
+  if (!user || user !== 'Emilio') {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -246,5 +246,59 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
         headers: { 'Content-Type': 'application/json' },
       },
     )
+  }
+}
+
+export const PUT: APIRoute = async ({ request, cookies, locals }) => {
+  const userCookie = cookies.get('site_user')
+  const user = userCookie?.value
+
+  if (!user || user !== 'Emilio') {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  try {
+    const { id, status } = await request.json()
+
+    if (!id || !status) {
+      return new Response(JSON.stringify({ error: 'Missing id or status' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const validStatuses = ['open', 'fixed', 'wont-fix']
+    if (!validStatuses.includes(status)) {
+      return new Response(JSON.stringify({ error: 'Invalid status' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const runtime = locals.runtime
+    if (!runtime || !runtime.env || !runtime.env.DB) {
+      return new Response(JSON.stringify({ error: 'DB configuration error' }), { status: 500 })
+    }
+    const { env } = runtime
+
+    const resolvedAt = status === 'fixed' || status === 'wont-fix' ? new Date().toISOString() : null
+
+    await env.DB.prepare('UPDATE feedback SET status = ?, resolved_at = ? WHERE id = ?')
+      .bind(status, resolvedAt, id)
+      .run()
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (err) {
+    console.error('Feedback PUT Error:', err)
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 }

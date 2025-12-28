@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, ChefHat, Loader2, Calendar } from 'lucide-react'
+import { Plus, ChefHat, Loader2, Calendar, ArrowLeft } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
 import { Tabs } from '../ui/Tabs'
@@ -7,6 +7,7 @@ import { Fab } from '../ui/Fab'
 import { VarietyWarning } from './VarietyWarning'
 import { AiAddView } from './AiAddView'
 import { SettingsView } from './SettingsView'
+import FeedbackDashboard from './FeedbackDashboard'
 import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { EmptyState } from './EmptyState'
@@ -60,8 +61,18 @@ const RecipeManager = () => {
   // Listen for settings navigation from burger menu
   useEffect(() => {
     const handleNavigateToSettings = () => setView('settings')
+    const handleNavigateToFeedbackDashboard = () => setView('feedback-dashboard')
+
     window.addEventListener('navigate-to-settings', handleNavigateToSettings)
-    return () => window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
+    window.addEventListener('navigate-to-feedback-dashboard', handleNavigateToFeedbackDashboard)
+
+    return () => {
+      window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
+      window.removeEventListener(
+        'navigate-to-feedback-dashboard',
+        handleNavigateToFeedbackDashboard,
+      )
+    }
   }, [])
 
   const handleSaveRecipe = async (recipe) => {
@@ -315,6 +326,21 @@ const RecipeManager = () => {
         onImport={handleImport}
         onDeleteAccount={handleDeleteAll}
       />
+    )
+  }
+
+  if (view === 'feedback-dashboard') {
+    return (
+      <div className="flex h-full flex-col bg-white">
+        <div className="flex items-center gap-2 border-b px-4 py-3">
+          <button onClick={() => setView('library')} className="rounded-full p-2 hover:bg-gray-100">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <FeedbackDashboard />
+        </div>
+      </div>
     )
   }
 

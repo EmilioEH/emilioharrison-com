@@ -1,10 +1,10 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
-import { Menu, X, Settings, MessageSquare, Info } from 'lucide-react'
+import { Menu, X, Settings, MessageSquare, Info, LayoutDashboard } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu, openBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
 
-const GlobalBurgerMenu = () => {
+const GlobalBurgerMenu = (props) => {
   const isOpen = useStore(burgerMenuOpen)
 
   const handleSettings = () => {
@@ -16,6 +16,11 @@ const GlobalBurgerMenu = () => {
   const handleFeedback = () => {
     closeBurgerMenu()
     openFeedbackModal()
+  }
+
+  const handleFeedbackDashboard = () => {
+    closeBurgerMenu()
+    window.dispatchEvent(new CustomEvent('navigate-to-feedback-dashboard'))
   }
 
   return (
@@ -72,6 +77,21 @@ const GlobalBurgerMenu = () => {
                 <Settings className="h-5 w-5 text-md-sys-color-on-surface-variant" />
                 <span className="font-medium text-md-sys-color-on-surface">Settings</span>
               </button>
+
+              {/* Only show dashboard to Emilio */}
+              {/* @ts-expect-error - props passed from Astro */}
+              {props.user === 'Emilio' && (
+                <button
+                  role="menuitem"
+                  onClick={handleFeedbackDashboard}
+                  className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-md-sys-color-surface-variant"
+                >
+                  <LayoutDashboard className="h-5 w-5 text-md-sys-color-on-surface-variant" />
+                  <span className="font-medium text-md-sys-color-on-surface">
+                    Feedback Dashboard
+                  </span>
+                </button>
+              )}
 
               <button
                 role="menuitem"

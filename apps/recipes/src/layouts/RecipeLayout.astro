@@ -74,7 +74,7 @@ const user = Astro.cookies.get('site_user')?.value
       <slot />
     </div>
 
-    <GlobalBurgerMenu client:load />
+    <GlobalBurgerMenu client:load user={user} />
     <GlobalFeedback client:load />
 
     <script>

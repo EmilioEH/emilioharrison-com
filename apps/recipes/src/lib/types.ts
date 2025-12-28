@@ -76,6 +76,8 @@ export interface Feedback {
     domSnapshot?: string // Full HTML
     windowSize?: { width: number; height: number }
   }
+  status?: 'open' | 'fixed' | 'wont-fix'
+  resolved_at?: string
 }
 
 export interface LogEntry {
