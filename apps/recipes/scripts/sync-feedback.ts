@@ -1,65 +1,36 @@
 import fs from 'fs'
 import path from 'path'
+import admin from 'firebase-admin'
+import { getFirestore } from 'firebase-admin/firestore'
+import { getStorage } from 'firebase-admin/storage'
 import type { Feedback } from '../src/lib/types'
 
-// This script simulates fetching feedback from the API/KV and writing it to documentation.
-// In a real environment, it would use fetch() with authentication.
+import type { ServiceAccount } from 'firebase-admin'
+
+// JSON import
+import serviceAccount from '../firebase-service-account.json'
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as ServiceAccount),
+    storageBucket: `${serviceAccount.project_id}.firebasestorage.app`,
+  })
+}
+
+const db = getFirestore()
+const bucket = getStorage().bucket()
 
 const OPEN_REPORTS_PATH = path.join(process.cwd(), 'docs/feedback/open-reports.md')
 const ALL_REPORTS_PATH = path.join(process.cwd(), 'docs/feedback/all-reports.md')
 
 async function syncFeedback() {
-  console.log('🔄 Syncing feedback from Chefboard...')
+  console.log('🔄 Syncing feedback from Chefboard (Firebase)...')
 
   try {
-    let feedbackList: Feedback[] = []
+    const snapshot = await db.collection('feedback').orderBy('timestamp', 'desc').get()
+    const feedbackList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Feedback)
 
-    // Try remote D1 first (production)
-    try {
-      const { execSync } = await import('child_process')
-      console.log('☁️  Attempting fetch from Remote Production D1...')
-
-      const tempFile = path.join(process.cwd(), 'temp_feedback.json')
-      try {
-        execSync(
-          `npx wrangler d1 execute recipes-db --remote -y --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json > "${tempFile}"`,
-          { encoding: 'utf-8', stdio: 'inherit', env: { ...process.env, CI: 'true' } },
-        )
-
-        if (fs.existsSync(tempFile)) {
-          const d1Output = fs.readFileSync(tempFile, 'utf-8')
-          fs.unlinkSync(tempFile)
-
-          const parsedOutput = JSON.parse(d1Output)
-          const rows = parsedOutput[0]?.results || []
-          feedbackList = parseRows(rows)
-          console.log(`✅ Retrieved ${feedbackList.length} items from Remote D1`)
-        } else {
-          throw new Error('Output file not created')
-        }
-      } catch (e) {
-        console.error('DEBUG: Remote sync via file failed', e)
-        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile)
-        throw e
-      }
-    } catch (remoteErr) {
-      console.error('DEBUG: Remote D1 Error Details:', remoteErr)
-      console.log('⚠️  Remote D1 failed. Attempting fetch from Local D1...')
-      try {
-        const { execSync } = await import('child_process')
-        const d1Output = execSync(
-          'npx wrangler d1 execute recipes-db --local --command "SELECT * FROM feedback ORDER BY timestamp DESC" --json',
-          { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
-        )
-        const parsedOutput = JSON.parse(d1Output)
-        const rows = parsedOutput[0]?.results || []
-        feedbackList = parseRows(rows)
-        console.log(`✅ Retrieved ${feedbackList.length} items from Local D1`)
-      } catch (localErr) {
-        console.error('❌ Both remote and local D1 failed.')
-        feedbackList = getMockData()
-      }
-    }
+    console.log(`✅ Retrieved ${feedbackList.length} items from Firestore`)
 
     // Split lists
     const openFeedback = feedbackList.filter((f) => !f.status || f.status === 'open')
@@ -73,61 +44,6 @@ async function syncFeedback() {
   } catch (error) {
     console.error('❌ Sync failed:', error)
   }
-}
-
-function parseRows(rows: any[]): Feedback[] {
-  return rows.map((row: any) => {
-    let logs = []
-    let context = {}
-
-    if (row.logs && !row.logs.startsWith('[') && !row.logs.startsWith('r2:')) {
-      logs = row.logs
-    } else if (row.logs && row.logs !== '[]') {
-      try {
-        logs = JSON.parse(row.logs)
-      } catch {
-        logs = row.logs
-      }
-    }
-
-    if (row.context && !row.context.startsWith('{') && !row.context.startsWith('r2:')) {
-      context = row.context
-    } else if (row.context && row.context !== '{}') {
-      try {
-        context = JSON.parse(row.context)
-      } catch {
-        context = row.context
-      }
-    }
-
-    return {
-      ...row,
-      logs,
-      context,
-    }
-  })
-}
-
-function getMockData(): Feedback[] {
-  return [
-    {
-      id: 'mock-1',
-      timestamp: new Date().toISOString(),
-      type: 'bug',
-      description: "The 'This Week' counter doesn't update immediately.",
-      expected: 'Counter should show 1 after adding a recipe.',
-      actual: 'Counter stayed at 0 until refresh.',
-      screenshot: undefined,
-      logs: [],
-      context: {
-        url: '/protected/recipes',
-        userAgent: 'Mozilla/5.0...',
-        user: 'emilio',
-        appState: '{}',
-      },
-      status: 'open',
-    },
-  ]
 }
 
 async function generateMarkdown(list: Feedback[], filePath: string, title: string) {
@@ -174,6 +90,7 @@ async function generateMarkdown(list: Feedback[], filePath: string, title: strin
     if (report.screenshot) {
       markdown += `### Screenshot\n`
       if (report.screenshot.startsWith('data:image')) {
+        // Legacy base64 support
         try {
           const base64Data = report.screenshot.replace(/^data:image\/\w+;base64,/, '')
           const buffer = Buffer.from(base64Data, 'base64')
@@ -182,8 +99,25 @@ async function generateMarkdown(list: Feedback[], filePath: string, title: strin
           fs.writeFileSync(imagePath, buffer)
           markdown += `![Feedback Image](./images/${imageFilename})\n\n`
         } catch (e) {}
+      } else if (report.screenshot.startsWith('storage:')) {
+        // New Storage reference
+        // We could download it to images dir for local viewing
+        const key = report.screenshot.replace('storage:', '')
+        const imageFilename = `${report.id}.png`
+        const imagePath = path.join(IMAGES_DIR, imageFilename)
+
+        try {
+          // Check if exists locally already
+          if (!fs.existsSync(imagePath)) {
+            console.log(`Downloading screenshot for ${report.id}...`)
+            await bucket.file(key).download({ destination: imagePath })
+          }
+          markdown += `![Feedback Image](./images/${imageFilename})\n\n`
+        } catch (e) {
+          markdown += `> Failed to download screenshot: \`${key}\`\n\n`
+        }
       } else if (report.screenshot.startsWith('r2:')) {
-        markdown += `> Stored in R2: \`${report.screenshot}\`\n\n`
+        markdown += `> Legacy R2 Reference: \`${report.screenshot}\`\n\n`
       } else {
         markdown += `![Feedback Image](${report.screenshot})\n\n`
       }

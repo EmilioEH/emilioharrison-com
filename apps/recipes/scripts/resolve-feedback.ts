@@ -1,30 +1,52 @@
-import { execSync } from 'child_process'
+import admin from 'firebase-admin'
+import { getFirestore } from 'firebase-admin/firestore'
+
+import type { ServiceAccount } from 'firebase-admin'
+
+// JSON import
+import serviceAccount from '../firebase-service-account.json'
 
 const id = process.argv[2]
 const status = process.argv[3] || 'fixed'
-const envArg = process.argv[4]
 
 if (!id) {
-  console.error('Usage: npx tsx scripts/resolve-feedback.ts <id> [status=fixed] [env=remote|local]')
-  console.error('Example: npx tsx scripts/resolve-feedback.ts 123-abc fixed remote')
+  console.error('Usage: npx tsx scripts/resolve-feedback.ts <id> [status=fixed]')
+  console.error('Example: npx tsx scripts/resolve-feedback.ts 123-abc fixed')
   process.exit(1)
 }
 
-const isLocal = envArg === 'local'
-const envFlag = isLocal ? '--local' : '--remote'
-
-console.log(`Resolving feedback ${id} as '${status}' (${isLocal ? 'local' : 'remote'})...`)
-
-const resolvedAt = status !== 'open' ? new Date().toISOString() : null
-const query = `UPDATE feedback SET status = '${status}', resolved_at = '${resolvedAt || ''}' WHERE id = '${id}'`
-
-try {
-  execSync(`npx wrangler d1 execute recipes-db ${envFlag} --command "${query}"`, {
-    stdio: 'inherit',
-    env: { ...process.env, CI: 'true' },
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as ServiceAccount),
   })
-  console.log('✅ Feedback updated.')
-} catch (e) {
-  console.error('❌ Failed to update feedback:', e)
-  process.exit(1)
 }
+
+const db = getFirestore()
+
+async function resolveFeedback() {
+  console.log(`Resolving feedback ${id} as '${status}' (Firestore)...`)
+
+  const resolvedAt = status !== 'open' ? new Date().toISOString() : null
+
+  try {
+    const docRef = db.collection('feedback').doc(id)
+    const doc = await docRef.get()
+
+    if (!doc.exists) {
+      console.error('❌ Feedback not found.')
+      process.exit(1)
+    }
+
+    await docRef.update({
+      status,
+      resolved_at: resolvedAt,
+    })
+
+    console.log('✅ Feedback updated.')
+  } catch (e) {
+    console.error('❌ Failed to update feedback:', e)
+    process.exit(1)
+  }
+}
+
+resolveFeedback()

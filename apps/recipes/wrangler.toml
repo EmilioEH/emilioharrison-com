@@ -8,11 +8,3 @@ compatibility_flags = ["nodejs_compat"]
 binding = "SESSION"
 id = "47c74c58b25e4147984b57d677370493"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "recipes-db"
-database_id = "b00b35b4-2269-4e5e-9269-3b1355e6ead7"
-
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "recipes-images"

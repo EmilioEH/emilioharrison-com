@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
-import { uploadImage } from '../../../lib/r2'
+import { bucket } from '../../../lib/firebase-server'
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData()
   const file = formData.get('file')
 
@@ -11,19 +11,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     })
   }
 
-  const bucket = locals.runtime.env.BUCKET
   const key = `${Date.now()}-${file.name}`
+  const fileRef = bucket.file(key)
 
   try {
-    await uploadImage(bucket, key, file)
+    const buffer = await file.arrayBuffer()
+    await fileRef.save(Buffer.from(buffer), {
+      metadata: {
+        contentType: file.type,
+      },
+    })
+
     return new Response(JSON.stringify({ key, url: `api/uploads/${key}` }), {
-      // URL depends on how we serve it. For now returning key.
       status: 200,
       headers: {
         'Content-Type': 'application/json',
       },
     })
   } catch (e) {
+    console.error('Upload Error', e)
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
     })

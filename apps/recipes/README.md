@@ -168,7 +168,23 @@ npm run feedback:resolve <id> fixed --remote
 
 This application is deployed to Cloudflare Pages and requires proper configuration of bindings for production.
 
-### Required Cloudflare Bindings
+### Required Configuration
+
+This application has been migrated to use **Firebase** for data and storage.
+
+1.  **Firebase Project**:
+    - Create a project in the [Firebase Console](https://console.firebase.google.com/).
+    - Enable **Firestore** and **Storage**.
+
+2.  **Service Account**:
+    - Generate a new private key from **Project Settings > Service accounts**.
+    - Save the file as `firebase-service-account.json` in `apps/recipes/`.
+    - **Important**: This file is git-ignored and should not be committed.
+
+3.  **Environment Variables**:
+    - Ensure your deployment environment has access to this file or its contents via secrets.
+
+### Cloudflare Bindings (Legacy / Reference)
 
 The following bindings must be configured in the **Cloudflare Pages Dashboard** for production:
 

@@ -1,46 +1,46 @@
 import type { APIRoute } from 'astro'
+import { db } from '../../../lib/firebase-server'
 
-export const PUT: APIRoute = async ({ request, locals, params }) => {
+export const PUT: APIRoute = async ({ request, cookies, params }) => {
   const { id } = params
-  const db = locals.runtime.env.DB
+  const userCookie = cookies.get('site_user')
+  const user = userCookie?.value
+
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
+  }
 
   try {
-    const recipe = await request.json()
-    const now = Date.now()
+    const recipeData = await request.json()
+    const now = new Date().toISOString()
 
-    // const is_favorite = recipe.isFavorite ? 1 : 0 // Unused
-    const is_favorite = recipe.isFavorite ? 1 : 0
-    const this_week = recipe.thisWeek ? 1 : 0
-    const dataStr = JSON.stringify({ ...recipe, id })
+    const updateData = {
+      ...recipeData,
+      updatedAt: now,
+    }
 
-    const res = await db
-      .prepare(
-        `UPDATE recipes 
-       SET title = ?, protein = ?, meal_type = ?, dish_type = ?, equipment = ?, occasion = ?, dietary = ?, difficulty = ?, cuisine = ?, is_favorite = ?, this_week = ?, updated_at = ?, data = ?
-       WHERE id = ?`,
-      )
-      .bind(
-        recipe.title,
-        recipe.protein || null,
-        recipe.mealType || null,
-        recipe.dishType || null,
-        JSON.stringify(recipe.equipment || []),
-        JSON.stringify(recipe.occasion || []),
-        JSON.stringify(recipe.dietary || []),
-        recipe.difficulty || null,
-        recipe.cuisine || null,
-        is_favorite,
-        this_week,
-        now,
-        dataStr,
-        id,
-      )
-      .run()
-
-    if (res.meta.changes === 0) {
-      // If no changes, maybe it didn't exist? But let's assume success for idempotent-ish behavior or return 404
-      // Use POST logic or return 404. Let's return 404.
+    // Check existence
+    const doc = await db.getDocument('recipes', id)
+    if (!doc) {
       return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
+    }
+
+    // Update recipe
+    await db.updateDocument('recipes', id, updateData)
+
+    // Handle favorites parity
+    if (user && typeof recipeData.isFavorite === 'boolean') {
+      const favCollection = `users/${user}/favorites`
+      if (recipeData.isFavorite) {
+        await db.setDocument(favCollection, id, { createdAt: now })
+      } else {
+        // Ignore delete error if not exists
+        try {
+          await db.deleteDocument(favCollection, id)
+        } catch {
+          /* ignore */
+        }
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
@@ -48,6 +48,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (e) {
+    console.error('PUT Error', e)
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -55,17 +56,21 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   }
 }
 
-export const DELETE: APIRoute = async ({ locals, params }) => {
+export const DELETE: APIRoute = async ({ params }) => {
   const { id } = params
-  const db = locals.runtime.env.DB
+
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
+  }
 
   try {
-    await db.prepare('DELETE FROM recipes WHERE id = ?').bind(id).run()
+    await db.deleteDocument('recipes', id)
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (e) {
+    // If it's already gone, REST might throw or return. If throw, we catch.
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
+import { db } from '../../lib/firebase-server'
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const userCookie = cookies.get('site_user')
   const user = userCookie?.value
 
@@ -21,33 +22,22 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       })
     }
 
-    const runtime = locals.runtime
-    if (!runtime || !runtime.env || !runtime.env.DB) {
-      return new Response(JSON.stringify({ error: 'DB configuration error' }), { status: 500 })
-    }
-    const db = runtime.env.DB
-
-    // Check if favorite exists
-    const existing = await db
-      .prepare('SELECT * FROM user_favorites WHERE user_id = ? AND recipe_id = ?')
-      .bind(user, recipeId)
-      .first()
+    // Check if favorite exists in subcollection
+    const collection = `users/${user}/favorites`
+    const doc = await db.getDocument(collection, recipeId)
 
     let isFavorite = false
 
-    if (existing) {
+    if (doc) {
       // Remove favorite
-      await db
-        .prepare('DELETE FROM user_favorites WHERE user_id = ? AND recipe_id = ?')
-        .bind(user, recipeId)
-        .run()
+      await db.deleteDocument(collection, recipeId)
       isFavorite = false
     } else {
       // Add favorite
-      await db
-        .prepare('INSERT INTO user_favorites (user_id, recipe_id, created_at) VALUES (?, ?, ?)')
-        .bind(user, recipeId, Date.now())
-        .run()
+      await db.createDocument(collection, recipeId, {
+        recipeId,
+        createdAt: new Date().toISOString(),
+      })
       isFavorite = true
     }
 

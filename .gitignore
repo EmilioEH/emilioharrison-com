@@ -60,4 +60,8 @@ reports/
 apps/recipes/docs/feedback/active-reports.md
 apps/recipes/docs/feedback/all-reports.md
 apps/recipes/docs/feedback/open-reports.md
-apps/recipes/docs/feedback/images/
+
+# Firebase
+firebase-service-account.json
+service-account.json
+
