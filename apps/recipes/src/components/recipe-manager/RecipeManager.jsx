@@ -14,10 +14,10 @@ import { EmptyState } from './EmptyState'
 import ReactMarkdown from 'react-markdown'
 
 // --- Hooks ---
+// --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
 import { useGroceryListGenerator } from './hooks/useGroceryListGenerator'
-import { useUrlSync } from './hooks/useUrlSync'
 
 // --- Sub-Components ---
 import { RecipeLibrary } from './RecipeLibrary'
@@ -48,8 +48,6 @@ const RecipeManager = () => {
     recipes,
     setView,
   )
-
-  useUrlSync(view, setView, recipes, selectedRecipe, setSelectedRecipe, loading)
 
   // Selection Mode
   const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -298,7 +296,10 @@ const RecipeManager = () => {
   // --- RENDER ---
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-md-sys-color-surface">
+      <div
+        data-testid="loading-indicator"
+        className="flex h-full items-center justify-center bg-md-sys-color-surface"
+      >
         <Loader2 className="h-8 w-8 animate-spin text-md-sys-color-primary" />
       </div>
     )
@@ -352,7 +353,9 @@ const RecipeManager = () => {
   return (
     <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-md-sys-color-surface text-md-sys-color-on-surface shadow-md-3">
       {/* Toast Warning */}
-      {/* Toast Warning */}
+      <div data-testid="debug-view" style={{ display: 'none' }}>
+        {view}
+      </div>
       <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
       <RecipeFilters

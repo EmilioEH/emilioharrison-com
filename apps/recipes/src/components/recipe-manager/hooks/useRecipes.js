@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const getBaseUrl = () => {
   const base = import.meta.env.BASE_URL
@@ -8,24 +8,32 @@ const getBaseUrl = () => {
 export const useRecipes = () => {
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
+  const mounted = useRef(true)
 
   const refreshRecipes = async (showLoading = true) => {
-    if (showLoading) setLoading(true)
+    // Only set loading true if explicitly requested and component is mounted
+    if (showLoading && mounted.current) setLoading(true)
+
     try {
       const res = await fetch(`${getBaseUrl()}api/recipes`)
       if (res.ok) {
         const data = await res.json()
-        setRecipes(data.recipes || [])
+        if (mounted.current) setRecipes(data.recipes || [])
       }
     } catch (err) {
       console.error('Failed to load recipes', err)
     } finally {
-      if (showLoading) setLoading(false)
+      // Always clear loading state if it was set, provided component is mounted
+      if (showLoading && mounted.current) setLoading(false)
     }
   }
 
   useEffect(() => {
+    mounted.current = true
     refreshRecipes()
+    return () => {
+      mounted.current = false
+    }
   }, [])
 
   return { recipes, setRecipes, loading, refreshRecipes, getBaseUrl }

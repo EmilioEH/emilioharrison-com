@@ -57,6 +57,10 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open it
+    // Wait for view to switch to library
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible({ timeout: 1000 })
+    await expect(page.getByTestId('debug-view')).toHaveText('library')
+
     const card = page.getByText(title).first()
     await expect(card).toBeVisible()
     await page.waitForTimeout(1000)

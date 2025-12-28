@@ -36,7 +36,26 @@ if (Astro.request.method === 'POST') {
           httpOnly: false,
         })
 
-        return Astro.redirect('/protected/recipes')
+        // Client-side redirect to replace history
+        return new Response(
+          `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <script>
+                window.location.replace('/protected/recipes');
+              </script>
+            </head>
+            <body>
+              <p>Redirecting... <a href="/protected/recipes">Click here if not redirected</a></p>
+            </body>
+          </html>
+          `,
+          {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          },
+        )
       }
     } else {
       error = 'Incorrect password'
