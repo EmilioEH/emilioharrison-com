@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat, Star, Heart } from 'lucide-react'
+import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat, Star } from 'lucide-react'
 
 const FilterSection = ({ title, children }) => (
   <div className="mb-6">

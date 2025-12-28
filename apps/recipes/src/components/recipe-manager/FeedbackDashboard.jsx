@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Bug,
   Lightbulb,
-  ExternalLink,
 } from 'lucide-react'
 
 // Simple time ago helper to avoid extra deps

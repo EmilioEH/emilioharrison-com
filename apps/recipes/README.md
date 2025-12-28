@@ -108,6 +108,21 @@ npm run test:stryker
 # Runs: Stryker mutation testing to verify test quality
 ```
 
+### ⚠️ Common Pitfalls for Agents (Avoid Git Errors)
+
+The project uses aggressive **pre-push hooks** that run linting and type checks. To avoid being blocked during a push:
+
+1.  **Strict Linting**: We use a strict `no-unused-vars` rule.
+    - **Always** prefix intentionally unused variables with an underscore (e.g., `_e`, `_recipe`).
+    - **Never** leave incomplete functions or variables that are declared but unused.
+2.  **Type Safety**: Always run `npm run check:ts` after modifying `src/lib/` or `src/pages/api/`.
+    - The **Firebase integration** ([firebase-rest.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/src/lib/firebase-rest.ts)) is custom. Do not assume standard `firebase-admin` methods (like `.file().save()`) work; check the class implementation.
+3.  **Self-Correction Loop**: Before declaring a task finished, **you MUST run**:
+    ```bash
+    npm run check:quick
+    ```
+    If this fails, fix the errors yourself. Do not report them to the user as a blocker.
+
 ### Processing Feedback (Holodeck)
 
 We utilize an "Agent-Ready" feedback system that captures deep technical context to help Coding Agents diagnose issues without needing to reproduce them blindly.

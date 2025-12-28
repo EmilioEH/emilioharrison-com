@@ -1,6 +1,5 @@
 import React from 'react'
 import { X, Trash2, ShoppingBag, Sparkles } from 'lucide-react'
-import GlobalBurgerMenu from '../layout/GlobalBurgerMenu'
 
 export const RecipeHeader = ({
   onGenerateList,

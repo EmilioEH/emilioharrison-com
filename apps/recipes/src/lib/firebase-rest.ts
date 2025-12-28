@@ -9,6 +9,16 @@ const base64UrlEncodeBuffer = (buf: ArrayBuffer) => {
   return base64UrlEncode(String.fromCharCode(...new Uint8Array(buf)))
 }
 
+/**
+ * CUSTOM FIREBASE REST SERVICE
+ *
+ * IMPORTANT FOR AGENTS: This is NOT the standard 'firebase-admin' or 'firebase' SDK.
+ * It is a lightweight REST implementation for Cloudflare Compatibility.
+ *
+ * - Use 'uploadFile(bucket, path, data, type)' NOT 'file().save()'.
+ * - Use 'getCollection()', 'getDocument()', 'createDocument()', etc.
+ * - Always check the method signatures below before using.
+ */
 export class FirebaseRestService {
   private serviceAccount: ServiceAccount
   private token: string | null = null
@@ -172,7 +182,7 @@ export class FirebaseRestService {
     return await res.json()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async setDocument(collection: string, id: string, data: any, _merge = false) {
     // Uses PATCH to update/create
     const token = await this.getAccessToken()
