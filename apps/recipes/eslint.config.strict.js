@@ -38,7 +38,8 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'no-unused-vars': 'off', // Handle by TS
       '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
-      'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': 'off', // Disabled: using cognitive-complexity instead
+      'sonarjs/cognitive-complexity': ['warn', 15],
     },
   },
 )

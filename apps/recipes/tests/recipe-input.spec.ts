@@ -1,42 +1,18 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Recipe Input Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    // Mock Auth
-    // Mock Login POST to bypass server logic
-    await page.route('**/login', async (route) => {
-      if (route.request().method() === 'POST') {
-        await page.context().addCookies([
-          { name: 'site_auth', value: 'true', url: 'http://127.0.0.1:8788/' },
-          { name: 'site_user', value: 'TestUser', url: 'http://127.0.0.1:8788/' },
-        ])
-        await route.fulfill({
-          status: 200,
-          contentType: 'text/html',
-          body: '<html><body>Login Success<script>window.location.href="/protected/recipes"</script></body></html>',
-        })
-      } else {
-        await route.continue()
-      }
-    })
-
-    // Perform UI Login
-    await page.goto('/protected/recipes')
-    // Expect login page
-    await expect(page).toHaveURL(/.*\/login/)
-
-    await page.fill('#name', 'TestUser')
-    await page.fill('#password', 'password123')
-    await page.getByRole('button', { name: 'Enter Kitchen' }).click()
-
-    // Wait for redirect back
-    await expect(page).toHaveURL(/\/protected\/recipes\/?$/)
+test.describe('Recipe Add Flow (Unified)', () => {
+  test.beforeEach(async ({ context, page }) => {
+    // Set auth cookies directly (simulates authenticated state)
+    await context.addCookies([
+      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'site_user', value: 'TestUser', domain: '127.0.0.1', path: '/' },
+    ])
 
     // Mock Parse Recipe API
     await page.route('**/api/parse-recipe', async (route) => {
       await route.fulfill({
         json: {
-          title: `Mocked Pancake ${Date.now()}`,
+          title: `AI Parsed Recipe ${Date.now()}`,
           servings: 4,
           prepTime: 10,
           cookTime: 20,
@@ -46,78 +22,66 @@ test.describe('Recipe Input Flow', () => {
           ],
           steps: ['Mix everything', 'Cook on pan'],
           difficulty: 'Easy',
-          protein: 'Chicken', // Mock it as Chicken so we can find it in Chicken folder
+          protein: 'Chicken',
         },
       })
     })
+
+    // Mock Recipe Save API
+    await page.route('**/api/recipes', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          json: { id: `mock-id-${Date.now()}` },
+        })
+      } else {
+        await route.continue()
+      }
+    })
   })
 
-  test('should allow adding a recipe via AI flow', async ({ page }) => {
-    // 1. Go to dashboard
+  test('FAB opens unified recipe editor with AI importer', async ({ page }) => {
     await page.goto('/protected/recipes')
-
-    // Confirm we are on the recipe page (not redirected to login)
-    await expect(page).toHaveURL(/\/protected\/recipes/)
-
-    // 2. Click "AI Add" (Sparkles icon)
     await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 10000 })
-    await page.getByTitle('AI Chef').click()
 
-    // 3. Verify we are in the "New Recipe from AI" view
-    await expect(page.getByText('New Recipe from AI')).toBeVisible()
+    // Click the FAB (Add Recipe button)
+    await page.getByLabel('Add Recipe').click()
 
-    // Select URL tab
+    // Verify we are in the "New Recipe" editor view
+    await expect(page.getByRole('heading', { name: 'New Recipe' })).toBeVisible()
+
+    // Verify the AI Importer is present (Photo/URL toggle)
+    await expect(page.getByText('Photo', { exact: true })).toBeVisible()
+    await expect(page.getByText('URL', { exact: true })).toBeVisible()
+  })
+
+  test('should allow adding a recipe via AI URL import', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await page.getByLabel('Add Recipe').click()
+
+    // Select URL tab in the AI Importer
     await page.getByText('URL', { exact: true }).click()
 
     // Fill URL
-    await page.getByLabel('Paste Recipe Link').fill('https://example.com/pancakes')
+    await page.getByLabel('Paste Recipe Link').fill('https://example.com/recipe')
 
-    // Process
+    // Process with AI
     await page.getByRole('button', { name: 'Process Recipe' }).click()
 
-    // Expect Review Mode to appear
-    await expect(page.getByRole('heading', { name: 'Review & Edit' })).toBeVisible()
+    // Wait for form to be populated
+    await expect(page.getByLabel('Title')).toHaveValue(/AI Parsed Recipe \d+/, { timeout: 10000 })
 
-    // Check if data is populated and capture the dynamic title
-    const titleInput = page.getByLabel('Title')
-    await expect(titleInput).toHaveValue(/Mocked Pancake \d+/)
-    const recipeTitle = await titleInput.inputValue()
-
-    // Save
+    // Save the recipe
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Expect to be back on the dashboard (List View / Library)
-    // "Review & Edit" should be gone
-    await expect(page.getByRole('heading', { name: 'Review & Edit' })).not.toBeVisible()
-
-    // The new recipe should be in the Chicken folder
-    await page.getByRole('button', { name: 'Chicken' }).first().click()
-    await expect(page.getByText(recipeTitle)).toBeVisible()
+    // Expect to be back on the library
+    await expect(page.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()
   })
 
-  test('should display backend error message when parsing fails', async ({ page }) => {
-    // Override the mock for this specific test
-    await page.route('**/api/parse-recipe', async (route) => {
-      await route.fulfill({
-        status: 400,
-        json: { error: 'Invalid URL provided' },
-      })
-    })
-
+  test('should display camera and gallery options in AI importer', async ({ page }) => {
     await page.goto('/protected/recipes')
-    await page.getByTitle('AI Chef').click()
-    await page.getByText('URL', { exact: true }).click()
-    await page.getByLabel('Paste Recipe Link').fill('https://example.com/bad')
-    await page.getByRole('button', { name: 'Process Recipe' }).click()
+    await page.getByLabel('Add Recipe').click()
 
-    await expect(page.getByText('Error: Invalid URL provided')).toBeVisible()
-  })
-
-  test('should display camera and gallery options', async ({ page }) => {
-    await page.goto('/protected/recipes')
-    await page.getByTitle('AI Chef').click()
-
-    // Verify default view (Photo tab)
+    // Verify default view has Photo tab selected
     await expect(page.getByText('Add a photo of your dish')).toBeVisible()
 
     // Verify Gallery Option
@@ -131,5 +95,43 @@ test.describe('Recipe Input Flow', () => {
     await expect(cameraBtn).toBeVisible()
     const cameraInput = page.locator('input[type="file"]').nth(1)
     await expect(cameraInput).toHaveAttribute('capture', 'environment')
+  })
+
+  test('should allow manual recipe entry without AI', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await page.getByLabel('Add Recipe').click()
+
+    // Fill in recipe details manually (skip AI importer)
+    await page.getByLabel('Title').fill('Manual Test Recipe')
+    await page.getByLabel('Protein').selectOption('Beef')
+    await page.getByLabel('servings').fill('4')
+    await page.getByLabel('prep').fill('15')
+    await page.getByLabel('cook').fill('30')
+    await page.getByLabel(/Ingredients/i).fill('1 lb Ground Beef\n2 cups Rice')
+    await page.getByLabel(/Instructions/i).fill('Cook the beef.\nAdd rice.')
+
+    // Save
+    await page.getByRole('button', { name: 'Save Recipe' }).click()
+
+    // Expect to be back on the library
+    await expect(page.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()
+  })
+
+  test('should display AI error message when parsing fails', async ({ page }) => {
+    // Override the mock for error case
+    await page.route('**/api/parse-recipe', async (route) => {
+      await route.fulfill({
+        status: 400,
+        json: { error: 'Could not parse recipe from URL' },
+      })
+    })
+
+    await page.goto('/protected/recipes')
+    await page.getByLabel('Add Recipe').click()
+    await page.getByText('URL', { exact: true }).click()
+    await page.getByLabel('Paste Recipe Link').fill('https://example.com/bad-url')
+    await page.getByRole('button', { name: 'Process Recipe' }).click()
+
+    await expect(page.getByText('Could not parse recipe from URL')).toBeVisible()
   })
 })

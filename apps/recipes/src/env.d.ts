@@ -5,7 +5,6 @@ declare global {
     interface Locals {
       runtime: {
         env: {
-          SITE_PASSWORD: string
           GEMINI_API_KEY?: string
           SESSION: import('@cloudflare/workers-types').KVNamespace
           PUBLIC_FIREBASE_API_KEY: string

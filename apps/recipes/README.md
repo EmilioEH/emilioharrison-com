@@ -12,10 +12,10 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Rich Metadata Tagging**: Organize recipes by Meal Type (Breakfast, Dinner, etc.), Dish Type (Main, Side, etc.), Dietary restrictions (Vegan, Keto), required Equipment (Air Fryer, Slow Cooker), and Occasion (Weeknight, Party).
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
-- **AI Recipe Parsing**: Paste any recipe text or URL, and our Gemini-powered engine extracts ingredients, instructions, and metadata automatically—including Meal Type, Equipment, and Dietary tags.
+- **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor. Use AI-powered photo/URL import or manually enter recipe details—all from one streamlined interface.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
 - **Shared Family Collection**: All recipes are stored in Cloudflare D1 (SQL) and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
-- **Privacy First**: Secure, protected dashboard accessible only to authenticated users.
+- **Privacy First**: Secure dashboard protected by Google Sign-In authentication. Only authenticated users can access the recipe collection.
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to parse messy ingredients and deterministic logic to merge quantities and organize by aisle.
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
@@ -47,8 +47,8 @@ Key entry points for common tasks:
 
 | Task                       | Primary Files                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------- |
-| **Fix UI bug**             | `src/components/recipe-manager/*.jsx` → find component by feature name                      |
-| **Add new metadata field** | `src/lib/types.ts` (Recipe interface) → `RecipeEditor.jsx` → `RecipeFilters.jsx`            |
+| **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                      |
+| **Add new metadata field** | `src/lib/types.ts` (Recipe interface) → `RecipeEditor.tsx` → `RecipeFilters.tsx`            |
 | **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                |
 | **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI) |
 | **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                       |
@@ -58,7 +58,7 @@ Key entry points for common tasks:
 
 **Conventions:**
 
-- React components use `.jsx`/`.tsx` extensions and PascalCase naming
+- React components use `.tsx` extension (TypeScript) and PascalCase naming
 - Nanostores in `src/lib/*Store.ts` manage global state
 - All API routes return JSON with `{ success, data?, error? }` pattern
 - Run `npm run check:safety` before committing
@@ -107,6 +107,29 @@ npm run test:e2e:fast
 npm run test:stryker
 # Runs: Stryker mutation testing to verify test quality
 ```
+
+### 🔬 Testing Strategy: Playwright + Browser Agent
+
+We use **two complementary testing approaches**:
+
+| Tool              | Purpose                    | When to Use                                                          |
+| ----------------- | -------------------------- | -------------------------------------------------------------------- |
+| **Playwright**    | Automated regression tests | Runs in CI/CD; verifies existing features still work after changes   |
+| **Browser Agent** | Visual verification        | During development; records proof that new UI changes work correctly |
+
+**Playwright** is the safety net that catches regressions automatically. Agents must run `npm run test:e2e` before completing any task.
+
+**Browser Agent** is for "show me it works" moments. When building or fixing visual features, agents should:
+
+1. Open the app in the browser subagent
+2. Perform the user action (click, type, navigate)
+3. Record a short video or screenshot
+4. Include the recording in walkthrough artifacts for review
+
+This combination ensures both **automated regression protection** and **human-verifiable visual proof**.
+
+> [!TIP]
+> Mobile viewport tests are enabled (iPhone 12 via Safari). Run `npm run test:e2e` to catch mobile responsiveness issues.
 
 ### ⚠️ Common Pitfalls for Agents (Avoid Git Errors)
 
@@ -161,9 +184,25 @@ npm run feedback:resolve <id> fixed --remote
    ```
 
 2. **Environment Setup**:
-   Copy `.env.local.example` to `.env.local` and add your `GEMINI_API_KEY`.
+   Copy `.env.local.example` to `.env.local` and configure the following:
 
-   > **Production Note**: For the live site, the `GEMINI_API_KEY` is configured in **Cloudflare Pages Environment Variables**.
+   ```bash
+   # Site password (legacy, can be removed)
+   SITE_PASSWORD=your_password
+
+   # Gemini API for AI features
+   GEMINI_API_KEY=your_gemini_key
+
+   # Firebase Client Config (for Google Sign-In)
+   PUBLIC_FIREBASE_API_KEY=your_api_key
+   PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   PUBLIC_FIREBASE_PROJECT_ID=your-project
+   PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+   PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   PUBLIC_FIREBASE_APP_ID=your_app_id
+   ```
+
+   > **Production Note**: These variables must also be set in **Cloudflare Pages Environment Variables**. The `PUBLIC_` prefixed variables are safe to expose as they only identify the Firebase project.
 
 3. **Development**:
 
@@ -233,73 +272,74 @@ The following bindings must be configured in the **Cloudflare Pages Dashboard** 
 
 ## 📂 Project Structure
 
-```
 src/
 ├── components/
-│   ├── RecipeInput.tsx          # AI recipe parsing form (URL, text, or image)
-│   ├── recipe-manager/          # Core recipe management
-│   │   ├── RecipeManager.jsx    # Main orchestrator component
-│   │   ├── RecipeLibrary.jsx    # Recipe grid/list with grouping
-│   │   ├── RecipeDetail.jsx     # Individual recipe view
-│   │   ├── RecipeEditor.jsx     # Edit/create recipe form
-│   │   ├── RecipeFilters.jsx    # Filter panel (metadata, search)
-│   │   ├── RecipeHeader.jsx     # App bar with navigation
-│   │   ├── LibraryToolbar.jsx   # Inline search/sort/filter controls
-│   │   ├── GroceryList.tsx      # Grocery list with shopping mode
-│   │   ├── SettingsView.jsx     # Settings and data management
-│   │   ├── FeedbackDashboard.jsx # Integrated feedback management UI
-│   │   ├── VarietyWarning.jsx   # Protein variety alerts
-│   │   └── hooks/
-│   │       ├── useRecipes.js           # Recipe CRUD operations
-│   │       ├── useFilteredRecipes.js   # Filtering, sorting, search
-│   │       ├── useGroceryListGenerator.js # Grocery list with caching
-│   │       └── useUrlSync.js           # Deep linking and back button
-│   ├── recipe-details/          # Cooking mode sub-components
-│   │   ├── DetailHeader.jsx     # Navigation and actions
-│   │   ├── MiseEnPlace.jsx      # Pre-cooking ingredient checklist
-│   │   ├── CookingMode.jsx      # Step-by-step instructions
-│   │   ├── ReviewMode.jsx       # Post-cooking rating/notes
-│   │   ├── OverviewMode.jsx     # Default recipe display
-│   │   └── CheckableItem.jsx    # Reusable checkbox item
-│   ├── ui/                      # Reusable UI primitives
-│   │   ├── Button.jsx, Fab.jsx, Tabs.jsx, StarRating.jsx, etc.
-│   └── layout/                  # Global layout components
-│       ├── GlobalBurgerMenu.jsx # Slide-out settings/feedback menu
-│       ├── GlobalFeedback.jsx   # Feedback modal wrapper
-│       ├── Navbar.jsx           # Top navigation bar
-│       └── Footer.jsx           # Site footer
-├── lib/                         # Shared utilities
-│   ├── store.js                 # Recipe list nanostore
-│   ├── burgerMenuStore.ts       # Burger menu open/close state
-│   ├── feedbackStore.ts         # Feedback modal state
-│   ├── types.ts                 # TypeScript interfaces (Recipe, Feedback)
-│   ├── d1.ts                    # D1 database types
-│   ├── r2.ts                    # R2 bucket utilities
-│   ├── grocery-logic.ts         # Deterministic grocery merging
-│   └── api-utils.js             # API helper functions
+│ ├── recipe-manager/ # Core recipe management (TypeScript)
+│ │ ├── RecipeManager.tsx # Main orchestrator component
+│ │ ├── RecipeLibrary.tsx # Recipe grid/list with grouping
+│ │ ├── RecipeDetail.tsx # Individual recipe view
+│ │ ├── RecipeEditor.tsx # Edit/create recipe form with AI import
+│ │ ├── AiImporter.tsx # AI recipe parsing (photo/URL)
+│ │ ├── RecipeFilters.tsx # Filter panel (metadata, search)
+│ │ ├── RecipeHeader.tsx # App bar with navigation
+│ │ ├── LibraryToolbar.tsx # Inline search/sort/filter controls
+│ │ ├── GroceryList.tsx # Grocery list with shopping mode
+│ │ ├── SettingsView.tsx # Settings and data management
+│ │ ├── FeedbackDashboard.jsx # Integrated feedback management UI
+│ │ ├── VarietyWarning.tsx # Protein variety alerts
+│ │ └── hooks/
+│ │ ├── useRecipes.ts # Recipe CRUD operations
+│ │ ├── useFilteredRecipes.ts # Filtering, sorting, search
+│ │ └── useGroceryListGenerator.ts # Grocery list with caching
+│ ├── recipe-details/ # Cooking mode sub-components (TypeScript)
+│ │ ├── DetailHeader.tsx # Navigation and actions
+│ │ ├── MiseEnPlace.tsx # Pre-cooking ingredient checklist
+│ │ ├── CookingMode.tsx # Step-by-step instructions
+│ │ ├── ReviewMode.tsx # Post-cooking rating/notes
+│ │ ├── OverviewMode.tsx # Default recipe display
+│ │ └── CheckableItem.tsx # Reusable checkbox item
+│ ├── ui/ # Reusable UI primitives
+│ │ ├── Button.tsx, Fab.tsx, Tabs.tsx, StarRating.jsx, etc.
+│ └── layout/ # Global layout components
+│ ├── GlobalBurgerMenu.jsx # Slide-out settings/feedback menu
+│ ├── GlobalFeedback.jsx # Feedback modal wrapper
+│ ├── Navbar.jsx # Top navigation bar
+│ └── Footer.jsx # Site footer
+├── lib/ # Shared utilities
+│ ├── store.ts # Recipe list nanostore
+│ ├── burgerMenuStore.ts # Burger menu open/close state
+│ ├── feedbackStore.ts # Feedback modal state
+│ ├── types.ts # TypeScript interfaces (Recipe, Feedback)
+│ ├── d1.ts # D1 database types
+│ ├── r2.ts # R2 bucket utilities
+│ ├── grocery-logic.ts # Deterministic grocery merging
+│ └── api-utils.js # API helper functions
 ├── pages/
-│   ├── index.astro              # Main recipe app page
-│   └── api/
-│       ├── parse-recipe.ts      # AI recipe extraction
-│       ├── generate-grocery-list.ts # AI grocery categorization
-│       ├── feedback.ts          # Feedback submission
-│       ├── recipes/             # Recipe CRUD endpoints
-│       └── uploads/             # R2 image serving
+│ ├── index.astro # Main recipe app page
+│ └── api/
+│ ├── parse-recipe.ts # AI recipe extraction
+│ ├── generate-grocery-list.ts # AI grocery categorization
+│ ├── feedback.ts # Feedback submission
+│ ├── recipes/ # Recipe CRUD endpoints
+│ └── uploads/ # R2 image serving
 ├── layouts/
-│   ├── Layout.astro             # Base HTML layout
-│   └── RecipeLayout.astro       # Recipe app wrapper with global menus
-└── styles/                      # Global CSS
-tests/                           # Playwright E2E tests
-├── recipe-manager.spec.ts       # Core recipe management
-├── cooking-mode.spec.ts         # Cooking workflow
-├── grocery-list.spec.ts         # Grocery list generation
-├── feedback.spec.ts             # Feedback submission
-├── feedback-dashboard.spec.ts   # Feedback management UI & Access Control
-├── weekly-planning.spec.ts      # This Week feature
-├── metadata.spec.ts             # Filtering and tagging
-└── ...                          # Additional test suites
+│ ├── Layout.astro # Base HTML layout
+│ └── RecipeLayout.astro # Recipe app wrapper with global menus
+└── styles/ # Global CSS
+tests/ # Playwright E2E tests
+├── auth.spec.ts # Google Sign-In authentication flow
+├── recipe-manager.spec.ts # Core recipe management
+├── cooking-mode.spec.ts # Cooking workflow
+├── grocery-list.spec.ts # Grocery list generation
+├── feedback.spec.ts # Feedback submission
+├── feedback-dashboard.spec.ts # Feedback management UI & Access Control
+├── weekly-planning.spec.ts # This Week feature
+├── metadata.spec.ts # Filtering and tagging
+└── ... # Additional test suites
+
 ```
 
 ---
 
 Built with ❤️ by Emilio.
+```

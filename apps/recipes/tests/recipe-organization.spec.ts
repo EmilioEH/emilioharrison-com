@@ -1,29 +1,18 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Recipe Organization', () => {
-  const TEST_ACCESS_KEY = 'let-me-in-please'
-
   test.beforeEach(async ({ page, context }) => {
-    // Set cookie to bypass login for some tests, or login normally
+    // Set auth cookies (simulates authenticated state)
     await context.addCookies([
       { name: 'site_user', value: 'Test User', domain: '127.0.0.1', path: '/' },
       { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
-      { name: 'recipe_auth_token', value: 'valid-token', domain: '127.0.0.1', path: '/' },
     ])
 
     // Go to recipes page
     await page.goto('/protected/recipes')
 
-    // If redirect happens (invalid token), handle login
-    if (await page.getByPlaceholder('Enter password').isVisible()) {
-      await page.getByPlaceholder('Enter password').fill(TEST_ACCESS_KEY)
-      await page.getByRole('button', { name: 'Unlock' }).click()
-    }
-
     // Wait for app to load
     await expect(page.getByText('CHEFBOARD')).toBeVisible()
-
-    // Clear existing recipes if needed (optional, or rely on isolation)
   })
 
   test('should organize recipes into protein folders', async ({ page }) => {

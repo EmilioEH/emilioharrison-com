@@ -3,6 +3,24 @@ import { Clock, Users, ChefHat, ChevronDown, Calendar, Star, Heart, Check } from
 import { getCurrentWeekDays, type Day } from '../../lib/date-helpers'
 import type { Recipe } from '../../lib/types'
 
+// Predefined sort orders for grouping
+const SORT_ORDERS: Record<string, string[]> = {
+  protein: ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'],
+  mealType: ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
+  dishType: ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'],
+}
+
+// Helper: Sort groups by predefined order or alphabetically
+const sortByPredefinedOrder = (a: string, b: string, order?: string[]): number => {
+  if (!order) return a.localeCompare(b)
+  const aIdx = order.indexOf(a)
+  const bIdx = order.indexOf(b)
+  if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
+  if (aIdx === -1) return 1
+  if (bIdx === -1) return -1
+  return aIdx - bIdx
+}
+
 interface LibraryRecipeCardProps {
   recipe: Recipe
   onClick: () => void
@@ -248,48 +266,16 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       groups[groupKey].push(recipe)
     })
 
-    // Sort group keys
+    // Sort group keys using helper and predefined orders
     const sortedKeys = Object.keys(groups).sort((a, b) => {
+      // Special case: week-day has "Unassigned" first
       if (sort === 'week-day') {
-        // Unassigned first, then dates
         if (a === 'Unassigned') return -1
         if (b === 'Unassigned') return 1
         return a.localeCompare(b)
       }
-      if (sort === 'protein') {
-        const order = ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other']
-        // Handle unknown keys (put them at end)
-        const aIdx = order.indexOf(a)
-        const bIdx = order.indexOf(b)
-        if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
-        if (aIdx === -1) return 1
-        if (bIdx === -1) return -1
-        return aIdx - bIdx
-      }
-      if (sort === 'mealType') {
-        const order = ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert']
-        // Handle unknown keys (put them at end)
-        const aIdx = order.indexOf(a)
-        const bIdx = order.indexOf(b)
-        if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
-        if (aIdx === -1) return 1
-        if (bIdx === -1) return -1
-        return aIdx - bIdx
-      }
-      if (sort === 'dishType') {
-        const order = ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce']
-        const aIdx = order.indexOf(a)
-        const bIdx = order.indexOf(b)
-        if (aIdx === -1 && bIdx === -1) return a.localeCompare(b)
-        if (aIdx === -1) return 1
-        if (bIdx === -1) return -1
-        return aIdx - bIdx
-      }
-      if (sort === 'time' || sort === 'recent') {
-        // No specific order, just alphabetical for these groups
-        return a.localeCompare(b)
-      }
-      return a.localeCompare(b)
+      // Use predefined order if available, otherwise alphabetical
+      return sortByPredefinedOrder(a, b, SORT_ORDERS[sort])
     })
     return { groups, sortedKeys }
   }, [recipes, sort, weekDays])

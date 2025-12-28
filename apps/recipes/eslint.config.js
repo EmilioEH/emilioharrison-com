@@ -6,11 +6,11 @@ import tseslint from 'typescript-eslint'
 import prettyConfig from 'eslint-config-prettier'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
 import unusedImports from 'eslint-plugin-unused-imports'
+import sonarjs from 'eslint-plugin-sonarjs'
 
 /**
  * Fast ESLint config for local development
- * - Excludes SonarJS for speed (~30s instead of 10+ min)
- * - SonarJS runs in CI via eslint.config.strict.js
+ * - Uses cognitive-complexity instead of line counts (smarter)
  * - Scoped to src/ for faster linting
  */
 export default tseslint.config(
@@ -31,6 +31,7 @@ export default tseslint.config(
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
       'unused-imports': unusedImports,
+      sonarjs: sonarjs,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -55,7 +56,9 @@ export default tseslint.config(
           argsIgnorePattern: '^_',
         },
       ],
-      'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
+      // Cognitive complexity: measures mental effort to understand code
+      // Better than line counting for React components with JSX
+      'sonarjs/cognitive-complexity': ['warn', 15],
     },
   },
 )

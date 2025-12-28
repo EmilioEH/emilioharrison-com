@@ -13,6 +13,26 @@ export interface Filters {
   onlyFavorites?: boolean
 }
 
+// Helper: Check if single-value field matches filter (e.g., protein, mealType)
+const matchesSingleFilter = (
+  filterValues: string[] | undefined,
+  recipeValue: string | undefined,
+): boolean => {
+  if (!filterValues || filterValues.length === 0) return true
+  if (!recipeValue) return true // No value = don't exclude
+  return filterValues.includes(recipeValue)
+}
+
+// Helper: Check if array-value field has overlap with filter (e.g., dietary tags)
+const matchesArrayFilter = (
+  filterValues: string[] | undefined,
+  recipeValues: string[] | undefined,
+): boolean => {
+  if (!filterValues || filterValues.length === 0) return true
+  if (!recipeValues || recipeValues.length === 0) return false
+  return recipeValues.some((v) => filterValues.includes(v))
+}
+
 export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false)
   const [filters, setFilters] = useState<Filters>({})
@@ -37,57 +57,22 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       )
     }
 
-    // Filter
+    // Filter using helper to reduce cognitive complexity
     result = result.filter((r) => {
-      if (
-        filters.protein &&
-        filters.protein.length > 0 &&
-        r.protein &&
-        !filters.protein.includes(r.protein)
-      )
-        return false
-      if (
-        filters.mealType &&
-        filters.mealType.length > 0 &&
-        r.mealType &&
-        !filters.mealType.includes(r.mealType)
-      )
-        return false
-      if (
-        filters.dishType &&
-        filters.dishType.length > 0 &&
-        r.dishType &&
-        !filters.dishType.includes(r.dishType)
-      )
-        return false
-      if (
-        filters.difficulty &&
-        filters.difficulty.length > 0 &&
-        r.difficulty &&
-        !filters.difficulty.includes(r.difficulty)
-      )
-        return false
-      if (
-        filters.cuisine &&
-        filters.cuisine.length > 0 &&
-        r.cuisine &&
-        !filters.cuisine.includes(r.cuisine)
-      )
-        return false
+      // Single-value filters
+      if (!matchesSingleFilter(filters.protein, r.protein)) return false
+      if (!matchesSingleFilter(filters.mealType, r.mealType)) return false
+      if (!matchesSingleFilter(filters.dishType, r.dishType)) return false
+      if (!matchesSingleFilter(filters.difficulty, r.difficulty)) return false
+      if (!matchesSingleFilter(filters.cuisine, r.cuisine)) return false
 
-      if (filters.dietary && filters.dietary.length > 0) {
-        if (!r.dietary || !r.dietary.some((d) => filters.dietary!.includes(d))) return false
-      }
-      if (filters.equipment && filters.equipment.length > 0) {
-        if (!r.equipment || !r.equipment.some((e) => filters.equipment!.includes(e))) return false
-      }
-      if (filters.occasion && filters.occasion.length > 0) {
-        if (!r.occasion || !r.occasion.some((o) => filters.occasion!.includes(o))) return false
-      }
+      // Array-value filters (recipe has multiple tags)
+      if (!matchesArrayFilter(filters.dietary, r.dietary)) return false
+      if (!matchesArrayFilter(filters.equipment, r.equipment)) return false
+      if (!matchesArrayFilter(filters.occasion, r.occasion)) return false
 
-      if (filters.onlyFavorites) {
-        if (!r.isFavorite) return false
-      }
+      // Favorites filter
+      if (filters.onlyFavorites && !r.isFavorite) return false
 
       return true
     })

@@ -65,3 +65,7 @@ apps/recipes/docs/feedback/open-reports.md
 firebase-service-account.json
 service-account.json
 
+# User feedback data (contains potentially sensitive information)
+raw_feedback.json
+**/raw_feedback.json
+

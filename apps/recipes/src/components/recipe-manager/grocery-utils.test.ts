@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { generateGroceryList } from './grocery-utils'
+import type { Recipe } from '../../lib/types'
 
 describe('grocery-utils', () => {
   it('should return empty message when no recipes', async () => {
@@ -12,14 +13,14 @@ describe('grocery-utils', () => {
       // Mock global fetch to fail
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
 
-      const recipes = [
+      const recipes: Partial<Recipe>[] = [
         {
           title: 'Pasta',
           ingredients: [{ name: 'Noodles', amount: '1 box' }],
         },
       ]
 
-      const result = await generateGroceryList(recipes)
+      const result = await generateGroceryList(recipes as Recipe[])
 
       expect(result).toContain('Offline Mode')
       expect(result).toContain('Pasta')
@@ -31,14 +32,14 @@ describe('grocery-utils', () => {
         ok: false,
       })
 
-      const recipes = [
+      const recipes: Partial<Recipe>[] = [
         {
           title: 'Salad',
           ingredients: [{ name: 'Lettuce', amount: '1 head' }],
         },
       ]
 
-      const result = await generateGroceryList(recipes)
+      const result = await generateGroceryList(recipes as Recipe[])
 
       expect(result).toContain('Offline Mode')
       expect(result).toContain('Salad')

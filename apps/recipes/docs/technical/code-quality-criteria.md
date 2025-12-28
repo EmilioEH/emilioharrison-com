@@ -187,13 +187,32 @@
 
 ## Testing & Quality Assurance
 
+### Automated Testing (Always Run)
+
 - [ ] Unit tests: Vitest setup (configured in `package.json`)
 - [ ] Component tests: React Testing Library for interactive components
+- [ ] E2E tests: Playwright tests (`npm run test:e2e`) before any task is complete
 - [ ] ESLint: Configured with React hooks plugin
 - [ ] Type checking: Run `astro check` for TypeScript validation
 - [ ] Build verification: Test `npm run build` locally before pushing
 - [ ] Preview testing: Use `npm run preview` to test production build locally
-- [ ] Manual QA: Check critical user flows (navigation, theme switching, content loading)
+
+### Browser Agent Visual Verification (For UI Changes)
+
+When implementing or fixing visual/UI features, coding agents should use the **browser subagent** to provide visual proof:
+
+1. **Open the app**: Navigate to `http://localhost:4321/protected/recipes` (dev) or port 8788 (wrangler preview)
+2. **Navigate to affected screen**: Go to the page/component that changed
+3. **Perform the user action**: Click, type, or interact as a user would
+4. **Record a video or screenshot**: Capture the working feature
+5. **Include in walkthrough**: Add the recording/screenshot to the walkthrough artifact for user review
+
+This "taste test" approach lets the user **see the change works** before approving, rather than just trusting test output.
+
+### Manual QA Checklist
+
+- [ ] Check critical user flows (navigation, theme switching, content loading)
+- [ ] Verify mobile responsiveness (enable mobile viewports in Playwright)
 
 ---
 
@@ -267,7 +286,7 @@
 - [ ] No unused CSS: Check for unused Tailwind classes and custom CSS
 - [ ] No commented-out code: Clean up before production
 - [ ] TypeScript strict mode: Catches unused locals/parameters
-- [ ] Functions under 50 lines: Refactor long functions
+- [ ] Cognitive complexity under 15: Simplify nested logic and branching
 - [ ] Files under 400 lines: Split large components
 - [ ] No deeply nested conditionals: Max 3 levels
 - [ ] No magic numbers: Use named constants
@@ -377,7 +396,7 @@
 
 ### 7. Code Smells
 
-- [ ] **Function Length**: Refactor functions longer than 50 lines.
+- [ ] **Cognitive Complexity**: Reduce cognitive complexity above 15 (nested logic, deep branching).
 - [ ] **File Length**: Split files longer than 300-400 lines.
 - [ ] **Complexity**: Flatten deeply nested conditionals (> 3 levels).
 - [ ] **Magic Numbers**: Replace hard-coded values with constants.
