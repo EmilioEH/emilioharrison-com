@@ -12,15 +12,12 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const key = `${Date.now()}-${file.name}`
-  const fileRef = bucket.file(key)
+  const projectId = bucket.projectId
+  const bucketName = `${projectId}.firebasestorage.app`
 
   try {
     const buffer = await file.arrayBuffer()
-    await fileRef.save(Buffer.from(buffer), {
-      metadata: {
-        contentType: file.type,
-      },
-    })
+    await bucket.uploadFile(bucketName, key, buffer, file.type)
 
     return new Response(JSON.stringify({ key, url: `api/uploads/${key}` }), {
       status: 200,

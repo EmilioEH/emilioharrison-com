@@ -1,0 +1,23 @@
+
+> @emilio/recipes@0.0.0 check:ts
+> tsc --noEmit
+
+src/lib/firebase-rest.ts(1,15): error TS2305: Module '"./types"' has no exported member 'ServiceAccount'.
+src/lib/firebase-rest.ts(241,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type 'ArrayBuffer | Uint8Array<ArrayBufferLike>' is not assignable to type 'BodyInit | null | undefined'.
+      Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BodyInit | null | undefined'.
+        Type 'Uint8Array<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.
+  Overload 2 of 2, '(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type 'ArrayBuffer | Uint8Array<ArrayBufferLike>' is not assignable to type 'BodyInit | null | undefined'.
+      Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BodyInit | null | undefined'.
+        Type 'Uint8Array<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.
+src/lib/firebase-server.ts(2,15): error TS2305: Module '"./types"' has no exported member 'ServiceAccount'.
+src/pages/api/uploads/index.ts(15,26): error TS2339: Property 'file' does not exist on type 'FirebaseRestService'.
+npm error Lifecycle script `check:ts` failed with error:
+npm error code 2
+npm error path /Users/emilioharrison/Code/emilioharrison-com/apps/recipes
+npm error workspace @emilio/recipes@0.0.0
+npm error location /Users/emilioharrison/Code/emilioharrison-com/apps/recipes
+npm error command failed
+npm error command sh -c tsc --noEmit

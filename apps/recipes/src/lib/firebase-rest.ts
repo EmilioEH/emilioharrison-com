@@ -13,7 +13,7 @@ export class FirebaseRestService {
   private serviceAccount: ServiceAccount
   private token: string | null = null
   private tokenExpiresAt: number = 0
-  private projectId: string
+  public projectId: string
 
   constructor(serviceAccount: ServiceAccount) {
     this.serviceAccount = serviceAccount
@@ -238,7 +238,7 @@ export class FirebaseRestService {
         Authorization: `Bearer ${token}`,
         'Content-Type': contentType,
       },
-      body: data,
+      body: data as BodyInit,
     })
 
     if (!res.ok) throw new Error(`Storage UPLOAD failed: ${res.statusText}`)
