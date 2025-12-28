@@ -26,15 +26,29 @@ export const GoogleSignInButton = () => {
         window.location.replace('/protected/recipes')
       } else {
         const data = await response.json()
-        setError(data.error || 'Login failed')
+        const errorMsg = data.error || 'Login failed'
+        setError(errorMsg)
+
+        // Log the detailed error to our global logger
+        import('../../lib/logger').then(({ logger }) => {
+          logger.error('Backend Login Failed', {
+            status: response.status,
+            error: data.error,
+            details: data.details,
+          })
+        })
       }
     } catch (e: unknown) {
       console.error(e)
-      if (e instanceof Error) {
-        setError(e.message)
-      } else {
-        setError('Something went wrong')
-      }
+      const errorMsg = e instanceof Error ? e.message : 'Something went wrong'
+      setError(errorMsg)
+
+      import('../../lib/logger').then(({ logger }) => {
+        logger.error('Client Login Exception', {
+          error: errorMsg,
+          stack: e instanceof Error ? e.stack : undefined,
+        })
+      })
     } finally {
       setLoading(false)
     }
