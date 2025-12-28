@@ -14,11 +14,15 @@ if (auth?.value === 'true' && user?.value) {
 <RecipeLayout title="Login">
   <div class="flex flex-1 items-center justify-center p-4">
     <div
-      class="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl"
+      class="w-full max-w-md rounded-xl border border-md-sys-color-outline bg-md-sys-color-surface p-8 shadow-md"
     >
       <div class="mb-8 text-center">
-        <h1 class="mb-2 font-display text-4xl font-bold tracking-tight text-white">Chef Login</h1>
-        <p class="text-white/60">Manage your kitchen with AI</p>
+        <h1
+          class="mb-2 font-display text-4xl font-bold tracking-tight text-md-sys-color-on-surface"
+        >
+          Chef Login
+        </h1>
+        <p class="text-md-sys-color-on-surface-variant">Manage your kitchen with AI</p>
       </div>
 
       <GoogleSignInButton client:only="react" />

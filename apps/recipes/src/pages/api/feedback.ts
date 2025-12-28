@@ -60,17 +60,9 @@ async function uploadToStorage(
   return data
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
-
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
+export const POST: APIRoute = async ({ request }) => {
+  // Feedback submissions are allowed from any user, including unauthenticated users
+  // The user info is captured in the client-side context object
   try {
     const feedback = await request.json()
     const id = feedback.id || crypto.randomUUID()
