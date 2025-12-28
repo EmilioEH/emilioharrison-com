@@ -18,15 +18,27 @@ const getServiceAccount = async (): Promise<ServiceAccount> => {
 
   // 2. Fallback to local file (Development)
   try {
-    // Dynamic import to avoid build errors if file is missing
-    const serviceAccountModule = await import('../../firebase-service-account.json')
-    return serviceAccountModule.default as unknown as ServiceAccount
+    // Use import.meta.glob to safely check for the file without breaking the build if missing.
+    // import.meta.glob returns an object { path: function }. If file is missing, object is empty.
+    const modules = import.meta.glob('../../firebase-service-account.json', { eager: true })
+
+    // The key must match the pattern exactly or be resolved.
+    // Vite globs are relative to the file.
+    const key = '../../firebase-service-account.json'
+
+    if (modules[key]) {
+      // With eager: true, modules[key] is the module itself (including default export)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (modules[key] as any).default as unknown as ServiceAccount
+    }
   } catch (e) {
-    console.error('Error loading service account:', e)
-    throw new Error(
-      'Service Account not found via Env (FIREBASE_SERVICE_ACCOUNT) or File (firebase-service-account.json). Please check your configuration.',
-    )
+    console.warn('Local service account file check failed or empty.', e)
   }
+
+  // If we get here, neither Env nor File worked.
+  throw new Error(
+    'Service Account not found via Env (FIREBASE_SERVICE_ACCOUNT) or File (firebase-service-account.json). Please check your configuration.',
+  )
 }
 
 // Top-level await for async loading
