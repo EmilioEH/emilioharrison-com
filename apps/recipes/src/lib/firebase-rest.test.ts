@@ -22,7 +22,7 @@ describe('FirebaseRestService', () => {
       private_key:
         '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDb...\n-----END PRIVATE KEY-----',
       token_uri: 'https://oauth2.googleapis.com/token',
-    })
+    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Mock getAccessToken to avoid real auth calls
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
