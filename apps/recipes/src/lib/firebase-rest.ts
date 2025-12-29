@@ -109,15 +109,22 @@ export class FirebaseRestService {
     const token = await this.getAccessToken()
     let url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
 
+    // Verify URL encoding for query parameters
     if (orderByField) {
-      url += `?orderBy=${orderByField} ${direction}`
+      // API expects 'field direction', e.g. 'timestamp desc'
+      const dir = direction === 'DESC' ? 'desc' : 'asc'
+      const orderByValue = `${orderByField} ${dir}`
+      url += `?orderBy=${encodeURIComponent(orderByValue)}`
     }
+
+    console.log(`[FirebaseRest] getCollection: Fetching ${url}`)
 
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     })
 
     if (!res.ok) {
+      console.error(`[FirebaseRest] getCollection failed: ${res.status} ${res.statusText}`)
       // Handle 404 (empty collection often returns empty or 404 depending on structure)
       if (res.status === 404) return []
       throw new Error(`Firestore GET failed: ${res.statusText}`)
