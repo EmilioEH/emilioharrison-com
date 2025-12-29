@@ -164,6 +164,13 @@ export default function FeedbackDashboard() {
           </div>
         )}
 
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-700">
+            <p className="font-medium">Error loading feedback</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
         <div className="space-y-4">
           {filteredFeedback.map((item) => {
             const isExpanded = expandedId === item.id

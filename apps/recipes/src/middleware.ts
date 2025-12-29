@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware'
+import { getEnv } from './lib/env'
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { cookies, url, redirect } = context
@@ -21,7 +22,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // Validate email if whitelist is configured
-    const allowedEmailsEnv = import.meta.env.ALLOWED_EMAILS || ''
+    const allowedEmailsEnv = getEnv(context, 'ALLOWED_EMAILS')
     if (allowedEmailsEnv) {
       const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
       const userEmail = emailCookie?.value?.toLowerCase()

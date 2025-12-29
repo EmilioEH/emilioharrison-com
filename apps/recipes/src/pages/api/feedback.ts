@@ -1,11 +1,13 @@
 import type { APIRoute } from 'astro'
 import { db, bucket } from '../../lib/firebase-server'
+import { getEnv } from '../../lib/env'
 
-export const GET: APIRoute = async ({ cookies }) => {
+export const GET: APIRoute = async (context) => {
+  const { cookies } = context
   const emailCookie = cookies.get('site_email')
   const email = emailCookie?.value
 
-  const adminEmailsEnv = import.meta.env.ADMIN_EMAILS || ''
+  const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
   const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
   if (!email || !adminEmails.includes(email.toLowerCase())) {
@@ -135,11 +137,12 @@ export const POST: APIRoute = async ({ request }) => {
   }
 }
 
-export const PUT: APIRoute = async ({ request, cookies }) => {
+export const PUT: APIRoute = async (context) => {
+  const { request, cookies } = context
   const emailCookie = cookies.get('site_email')
   const email = emailCookie?.value
 
-  const adminEmailsEnv = import.meta.env.ADMIN_EMAILS || ''
+  const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
   const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
   if (!email || !adminEmails.includes(email.toLowerCase())) {

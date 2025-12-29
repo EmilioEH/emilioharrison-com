@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro'
+import { getEnv } from '../../../lib/env'
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async (context) => {
+  const { request, cookies } = context
   try {
     const { idToken } = await request.json()
 
@@ -10,7 +12,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Verify the token using Firebase Auth REST API
     // This is the correct endpoint for Firebase ID Tokens (tokeninfo is for Google OAuth tokens)
-    const apiKey = import.meta.env.PUBLIC_FIREBASE_API_KEY
+    const apiKey = getEnv(context, 'PUBLIC_FIREBASE_API_KEY')
     if (!apiKey) {
       throw new Error('Missing PUBLIC_FIREBASE_API_KEY')
     }
@@ -46,7 +48,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const email = user.email
 
     // Validate email against whitelist
-    const allowedEmailsEnv = import.meta.env.ALLOWED_EMAILS || ''
+    const allowedEmailsEnv = getEnv(context, 'ALLOWED_EMAILS')
     const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
     if (allowedEmailsEnv && (!email || !allowedEmails.includes(email.toLowerCase()))) {
