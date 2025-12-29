@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, Trash2, ShoppingBag } from 'lucide-react'
+import { X, Trash2, ShoppingBag, Edit2 } from 'lucide-react'
 
 interface RecipeHeaderProps {
   onGenerateList: () => void
@@ -7,6 +7,7 @@ interface RecipeHeaderProps {
   selectedCount: number
   onCancelSelection: () => void
   onDeleteSelection: () => void
+  onBulkEdit?: () => void
 }
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
@@ -15,6 +16,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   selectedCount,
   onCancelSelection,
   onDeleteSelection,
+  onBulkEdit,
 }) => (
   <header
     className={`sticky top-0 z-10 flex h-16 items-center justify-between border-b border-md-sys-color-outline px-4 transition-colors ${
@@ -31,12 +33,22 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           </button>
           <div className="text-lg font-bold">{selectedCount} Selected</div>
         </div>
-        <button
-          onClick={onDeleteSelection}
-          className="flex items-center gap-2 rounded-full bg-md-sys-color-error px-4 py-2 font-bold text-md-sys-color-on-error shadow-md-1"
-        >
-          <Trash2 className="h-4 w-4" /> Delete ({selectedCount})
-        </button>
+        <div className="flex items-center gap-2">
+          {onBulkEdit && (
+            <button
+              onClick={onBulkEdit}
+              className="flex items-center gap-2 rounded-full bg-md-sys-color-primary px-4 py-2 font-bold text-md-sys-color-on-primary shadow-md-1 hover:shadow-md-2"
+            >
+              <Edit2 className="h-4 w-4" /> Edit ({selectedCount})
+            </button>
+          )}
+          <button
+            onClick={onDeleteSelection}
+            className="flex items-center gap-2 rounded-full bg-md-sys-color-error px-4 py-2 font-bold text-md-sys-color-on-error shadow-md-1 hover:shadow-md-2"
+          >
+            <Trash2 className="h-4 w-4" /> Delete ({selectedCount})
+          </button>
+        </div>
       </>
     ) : (
       <>

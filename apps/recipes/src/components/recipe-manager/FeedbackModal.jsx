@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import html2canvas from 'html2canvas'
 import { X, Send, Bug, Lightbulb, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react'
+import { processImage } from '../../lib/image-optimization'
 
 // Simple log catcher: in a real app, this might be a sophisticated hook/context
 import { logger } from '../../lib/logger'
@@ -35,14 +36,25 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
     }
   }, [isOpen, screenshot])
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setScreenshot(reader.result)
+      try {
+        const optimizedFile = await processImage(file)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setScreenshot(reader.result)
+        }
+        reader.readAsDataURL(optimizedFile)
+      } catch (err) {
+        console.error('Optimization failed', err)
+        // Fallback
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setScreenshot(reader.result)
+        }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
     }
   }
 

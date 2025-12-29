@@ -41,6 +41,13 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - [Design System](docs/technical/design-system.md) – UI tokens and component styles
 - [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
 
+### Recent Updates (Dec 2025)
+
+- **Admin Bulk Actions**: Administrators can now perform bulk deletions and status updates (Fixed/Open/Ignore) on the Feedback Dashboard.
+- **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein.
+- **List View**: Added a toggle to switch the Recipe Library between the classic Grid view and a compact List view.
+- **Image Optimization**: All user-uploaded images (Recipe photos and Feedback screenshots) are now automatically downscaled (~72dpi, max 1920px) and compressed client-side before upload to optimize storage and performance.
+
 ### 🤖 Agent Quick Reference
 
 Key entry points for common tasks:

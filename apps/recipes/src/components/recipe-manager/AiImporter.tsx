@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Camera, Link as LinkIcon, Loader2, Upload, Trash2, ChefHat } from 'lucide-react'
 import { Button } from '../ui/Button'
 import type { Recipe } from '../../lib/types'
+import { processImage } from '../../lib/image-optimization'
 
 type InputMode = 'photo' | 'url'
 type Status = 'idle' | 'processing' | 'error'
@@ -117,17 +118,21 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      // Optimistic preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+      const originalFile = e.target.files[0]
 
-      // Upload to R2
+      // Upload to R2 (or whatever backend)
       setInternalIsUploading(true)
       try {
+        // Optimize first
+        const file = await processImage(originalFile)
+
+        // Optimistic preview (using optimized file)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string)
+        }
+        reader.readAsDataURL(file)
+
         const formData = new FormData()
         formData.append('file', file)
 

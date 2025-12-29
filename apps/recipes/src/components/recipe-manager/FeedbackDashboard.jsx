@@ -8,6 +8,9 @@ import {
   RefreshCw,
   Bug,
   Lightbulb,
+  Trash2,
+  CheckSquare,
+  Square,
 } from 'lucide-react'
 
 // Simple time ago helper to avoid extra deps
@@ -36,6 +39,10 @@ export default function FeedbackDashboard() {
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('open') // 'open' | 'fixed' | 'all'
   const [expandedId, setExpandedId] = useState(null)
+
+  // Bulk Actions State
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   const fetchFeedback = async () => {
     try {
@@ -88,6 +95,67 @@ export default function FeedbackDashboard() {
     }
   }
 
+  // --- Bulk Actions Logic ---
+
+  const toggleSelection = (id, e) => {
+    e.stopPropagation()
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredFeedback.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredFeedback.map((i) => i.id)))
+    }
+  }
+
+  const handleBulkAction = async (action) => {
+    if (selectedIds.size === 0) return
+    if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} items?`)) return
+
+    try {
+      const baseUrl = import.meta.env.BASE_URL || ''
+      const res = await fetch(`${baseUrl}/api/feedback/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ids: Array.from(selectedIds) }),
+      })
+
+      if (!res.ok) throw new Error('Bulk action failed')
+
+      // Optimistic Update
+      if (action === 'delete') {
+        setFeedback((prev) => prev.filter((i) => !selectedIds.has(i.id)))
+      } else {
+        const resolvedAt = action !== 'open' ? new Date().toISOString() : null
+        setFeedback((prev) =>
+          prev.map((i) => {
+            if (selectedIds.has(i.id)) {
+              return {
+                ...i,
+                status: action,
+                resolved_at: resolvedAt,
+              }
+            }
+            return i
+          }),
+        )
+      }
+
+      setSelectedIds(new Set())
+      setIsSelectionMode(false)
+    } catch (err) {
+      console.error(err)
+      alert('Bulk action failed')
+    }
+  }
+
   const filteredFeedback = feedback.filter((item) => {
     const status = item.status || 'open'
     if (activeTab === 'open') return status === 'open'
@@ -106,14 +174,70 @@ export default function FeedbackDashboard() {
             <h1 className="text-2xl font-bold text-gray-900">Feedback Dashboard</h1>
             <p className="text-sm text-gray-500">Track and manage user reports</p>
           </div>
-          <button
-            onClick={fetchFeedback}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-gray-900"
-          >
-            <RefreshCw size={16} />
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsSelectionMode(!isSelectionMode)}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow-sm transition ${
+                isSelectionMode
+                  ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                  : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <CheckSquare size={16} />
+              {isSelectionMode ? 'Done' : 'Select'}
+            </button>
+            <button
+              onClick={fetchFeedback}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-gray-900"
+            >
+              <RefreshCw size={16} />
+              Refresh
+            </button>
+          </div>
         </header>
+
+        {isSelectionMode && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                {selectedIds.size === filteredFeedback.length && filteredFeedback.length > 0 ? (
+                  <CheckSquare size={20} className="text-blue-600" />
+                ) : (
+                  <Square size={20} className="text-gray-400" />
+                )}
+                Select All
+              </button>
+              <span className="text-sm text-gray-500">{selectedIds.size} selected</span>
+            </div>
+
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleBulkAction('fixed')}
+                  className="rounded bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100"
+                >
+                  Mark Fixed
+                </button>
+                <button
+                  onClick={() => handleBulkAction('wont-fix')}
+                  className="rounded bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+                >
+                  Ignore
+                </button>
+                <div className="mx-1 h-4 w-px bg-gray-300"></div>
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  className="flex items-center gap-1 rounded bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-100"
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="mb-6 flex gap-2 border-b border-gray-200">
@@ -198,6 +322,27 @@ export default function FeedbackDashboard() {
                     }
                   }}
                 >
+                  {isSelectionMode && (
+                    <div
+                      onClick={(e) => toggleSelection(item.id, e)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          toggleSelection(item.id, e)
+                        }
+                      }}
+                      role="checkbox"
+                      aria-checked={selectedIds.has(item.id)}
+                      tabIndex={0}
+                      className="mr-2 flex h-full cursor-pointer items-start pt-1"
+                    >
+                      {selectedIds.has(item.id) ? (
+                        <CheckSquare size={20} className="text-blue-600" />
+                      ) : (
+                        <Square size={20} className="text-gray-300 hover:text-gray-400" />
+                      )}
+                    </div>
+                  )}
                   <div
                     className={`mt-1 flex h-8 w-8 items-center justify-center rounded-lg ${
                       isBug ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'

@@ -10,6 +10,7 @@ import { SettingsView } from './SettingsView'
 import FeedbackDashboard from './FeedbackDashboard'
 import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
+import { BulkEditModal } from './BulkEditModal'
 import type { Recipe } from '../../lib/types'
 
 // --- Hooks ---
@@ -41,6 +42,7 @@ interface ProteinWarning {
 const RecipeManager: React.FC = () => {
   const { recipes, setRecipes, loading, refreshRecipes, getBaseUrl } = useRecipes()
   const [view, setView] = useState<ViewMode>('library')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
 
   // Hooks
@@ -64,6 +66,7 @@ const RecipeManager: React.FC = () => {
   // Selection Mode
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBulkEdit, setShowBulkEdit] = useState(false)
 
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState<ProteinWarning | null>(null)
@@ -262,6 +265,39 @@ const RecipeManager: React.FC = () => {
     }
   }
 
+  const handleBulkEdit = async (updates: Partial<Recipe>) => {
+    try {
+      const res = await fetch(`${getBaseUrl()}api/recipes/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          ids: Array.from(selectedIds),
+          updates,
+        }),
+      })
+
+      if (res.ok) {
+        // Optimistic Update
+        setRecipes((prev) =>
+          prev.map((r) => {
+            if (selectedIds.has(r.id)) {
+              return { ...r, ...updates, updatedAt: new Date().toISOString() }
+            }
+            return r
+          }),
+        )
+        setIsSelectionMode(false)
+        setSelectedIds(new Set())
+      } else {
+        alert('Bulk update failed')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error updating recipes')
+    }
+  }
+
   // Data Mgmt
   const handleExport = () => {
     const dataStr = JSON.stringify(recipes, null, 2)
@@ -390,6 +426,7 @@ const RecipeManager: React.FC = () => {
             setSelectedIds(new Set())
           }}
           onDeleteSelection={handleBulkDelete}
+          onBulkEdit={() => setShowBulkEdit(true)}
         />
 
         <main className="relative flex-1">
@@ -421,6 +458,8 @@ const RecipeManager: React.FC = () => {
                   (filters.cuisine?.length || 0) +
                   (filters.onlyFavorites ? 1 : 0)
                 }
+                viewMode={viewMode}
+                setViewMode={setViewMode}
               />
 
               <div className="scrollbar-hide flex-1 overflow-y-auto">
@@ -450,6 +489,7 @@ const RecipeManager: React.FC = () => {
                   isSelectionMode={isSelectionMode}
                   selectedIds={selectedIds}
                   onAssignDay={handleAssignDay}
+                  viewMode={viewMode}
                 />
               </div>
             </div>
@@ -485,6 +525,14 @@ const RecipeManager: React.FC = () => {
           )}
         </main>
       </div>
+
+      {showBulkEdit && (
+        <BulkEditModal
+          selectedCount={selectedIds.size}
+          onClose={() => setShowBulkEdit(false)}
+          onSave={handleBulkEdit}
+        />
+      )}
 
       {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
       {(view === 'library' || view === 'week') && !isSelectionMode && (

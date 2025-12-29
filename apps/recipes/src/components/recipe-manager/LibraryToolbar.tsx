@@ -8,6 +8,8 @@ interface LibraryToolbarProps {
   setSort: (sort: string) => void
   onOpenFilters: () => void
   activeFilterCount?: number
+  viewMode: 'grid' | 'list'
+  setViewMode: (mode: 'grid' | 'list') => void
 }
 
 export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
@@ -17,6 +19,8 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
   setSort,
   onOpenFilters,
   activeFilterCount = 0,
+  viewMode: _viewMode,
+  setViewMode: _setViewMode,
 }) => {
   const sortOptions = [
     { id: 'protein', label: 'Protein' },
