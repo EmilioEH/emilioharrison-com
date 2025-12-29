@@ -1,6 +1,6 @@
 import React from 'react'
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react'
-import type { CookingStage } from '../../recipe-details/DetailHeader'
+import type { CookingStage } from './DetailHeader'
 
 interface HeaderBackButtonProps {
   cookingStage: CookingStage

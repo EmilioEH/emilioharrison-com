@@ -82,9 +82,9 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
       const data = await parseRecipe(payload, baseUrl)
 
       const recipeWithSource = {
-        ...data,
+        ...(data as object),
         sourceImage: mode === 'photo' ? imagePreview : undefined,
-      }
+      } as Recipe
 
       onRecipeParsed(recipeWithSource)
       setStatus('idle')
