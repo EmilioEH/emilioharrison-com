@@ -75,28 +75,30 @@ export const POST: APIRoute = async ({ request }) => {
     const context =
       typeof feedback.context === 'string' ? JSON.parse(feedback.context) : feedback.context
 
-    // SANITIZATION: Ensure context doesn't contain undefined/invalid values that break Firestore REST
-    // This fixes "Property context contains an invalid nested entity"
-    if (context && typeof context === 'object') {
-      // 1. Force windowSize to be simple strings (or null) to avoid complex nested prototype issues
-      if (context.windowSize && typeof context.windowSize === 'object') {
-        context.windowSize = {
-          width: String(context.windowSize.width || '0'),
-          height: String(context.windowSize.height || '0'),
-        }
-      }
+    // SANITIZATION: Aggressively flatten context to Map<String, String>
+    // This strictly prevents "invalid nested entity" errors by ensuring NO nested objects/arrays exist.
+    const safeContext: Record<string, string> = {}
 
-      // 2. Remove undefined keys (JSON.stringify does this, but let's be explicit before DB)
-      // and ensure simple POJO structure
+    if (context && typeof context === 'object') {
       try {
-        const cleanContext = JSON.parse(JSON.stringify(context))
-        Object.assign(context, cleanContext)
+        Object.entries(context).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            safeContext[key] = value
+          } else if (value === null || value === undefined) {
+            // Skip nulls or store as "null" string if preferred. Skipping is cleaner.
+          } else {
+            // Force everything else (Numbers, Objects, Arrays) to a JSON string representation
+            safeContext[key] = JSON.stringify(value)
+          }
+        })
       } catch (e) {
-        console.warn('Failed to sanitize context via JSON parse', e)
-        // Fallback: reset if corrupt
-        // context = {} // Can't reassign const, so we rely on what we have or mute it
+        console.warn('Context flattening failed', e)
+        safeContext['error'] = 'Context serialization failed'
       }
     }
+
+    // Replace the original context with our safe version
+    const finalContext = safeContext
 
     const newFeedback: Partial<Feedback> = {
       id,
@@ -106,7 +108,7 @@ export const POST: APIRoute = async ({ request }) => {
       actual: feedback.actual,
       screenshot,
       logs,
-      context,
+      context: finalContext,
       timestamp: feedback.timestamp || new Date().toISOString(),
       status: 'open',
     }
