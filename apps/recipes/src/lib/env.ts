@@ -22,3 +22,23 @@ export function getEnv(context: any, key: string): string {
 
   return ''
 }
+
+/**
+ * Safely parse a comma-separated email list from an environment variable.
+ * Returns an empty array if the env var is empty, undefined, or malformed.
+ *
+ * @example
+ * const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
+ * // Returns: ['admin@example.com'] or []
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getEmailList(context: any, key: string): string[] {
+  const envValue = getEnv(context, key)
+  if (!envValue || typeof envValue !== 'string') {
+    return []
+  }
+  return envValue
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+}

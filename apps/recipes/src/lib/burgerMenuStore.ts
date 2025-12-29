@@ -9,7 +9,3 @@ export function openBurgerMenu() {
 export function closeBurgerMenu() {
   burgerMenuOpen.set(false)
 }
-
-export function toggleBurgerMenu() {
-  burgerMenuOpen.set(!burgerMenuOpen.get())
-}

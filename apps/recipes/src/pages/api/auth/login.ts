@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getEnv } from '../../../lib/env'
+import { getEnv, getEmailList } from '../../../lib/env'
 
 export const POST: APIRoute = async (context) => {
   const { request, cookies } = context
@@ -47,11 +47,10 @@ export const POST: APIRoute = async (context) => {
     const name = user.displayName || user.email || 'Chef'
     const email = user.email
 
-    // Validate email against whitelist
-    const allowedEmailsEnv = getEnv(context, 'ALLOWED_EMAILS')
-    const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+    // Validate email against whitelist (only if whitelist is configured)
+    const allowedEmails = getEmailList(context, 'ALLOWED_EMAILS')
 
-    if (allowedEmailsEnv && (!email || !allowedEmails.includes(email.toLowerCase()))) {
+    if (allowedEmails.length > 0 && (!email || !allowedEmails.includes(email.toLowerCase()))) {
       console.error(`Login blocked for unauthorized email: ${email}`)
       return new Response(
         JSON.stringify({

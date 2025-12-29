@@ -129,8 +129,10 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     // 4. Close detail
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
-    // 5. Verify rating on card
-    await expect(card.getByText('5', { exact: true })).toBeVisible({ timeout: 10000 })
+    // 5. Verify rating on card - need to locate the full card, not just the title text
+    // The card contains an h3 with the title, and the rating is in a sibling div
+    const recipeCard = page.locator('[data-testid^="recipe-card-"]').filter({ hasText: title })
+    await expect(recipeCard.getByText('5', { exact: true })).toBeVisible({ timeout: 10000 })
   })
 
   test('should update modification date on edit', async ({ page }) => {

@@ -1,16 +1,15 @@
 import type { APIRoute } from 'astro'
 import { db, bucket } from '../../lib/firebase-server'
-import { getEnv } from '../../lib/env'
+import { getEmailList } from '../../lib/env'
 
 export const GET: APIRoute = async (context) => {
   const { cookies } = context
   const emailCookie = cookies.get('site_email')
   const email = emailCookie?.value
 
-  const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
-  const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+  const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
 
-  if (!email || !adminEmails.includes(email.toLowerCase())) {
+  if (!email || adminEmails.length === 0 || !adminEmails.includes(email.toLowerCase())) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -176,10 +175,9 @@ export const PUT: APIRoute = async (context) => {
   const emailCookie = cookies.get('site_email')
   const email = emailCookie?.value
 
-  const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
-  const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+  const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
 
-  if (!email || !adminEmails.includes(email.toLowerCase())) {
+  if (!email || adminEmails.length === 0 || !adminEmails.includes(email.toLowerCase())) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

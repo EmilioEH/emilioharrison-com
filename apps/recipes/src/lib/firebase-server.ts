@@ -102,6 +102,5 @@ export const db = new Proxy({} as FirebaseRestService, {
   },
 })
 
-// Maintain aliases
-export const firebase = db
+// Alias for storage operations (uses same REST service)
 export const bucket = db

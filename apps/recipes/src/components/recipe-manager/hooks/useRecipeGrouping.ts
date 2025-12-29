@@ -22,43 +22,54 @@ const sortByPredefinedOrder = (a: string, b: string, order?: string[]): number =
   return aIdx - bIdx
 }
 
+// Individual grouping strategies for each sort type
+type GroupKeyResolver = (recipe: Recipe, groups: Record<string, Recipe[]>) => string
+
+const groupByProtein: GroupKeyResolver = (recipe) => recipe.protein || 'Uncategorized'
+const groupByMealType: GroupKeyResolver = (recipe) => recipe.mealType || 'Other'
+const groupByDishType: GroupKeyResolver = (recipe) => recipe.dishType || 'Other'
+const groupByAlpha: GroupKeyResolver = (recipe) =>
+  recipe.title ? recipe.title[0].toUpperCase() : '#'
+const groupByRecent: GroupKeyResolver = () => 'All Recipes'
+
+const groupByTime: GroupKeyResolver = (recipe) => {
+  const totalMinutes = (recipe.prepTime || 0) + (recipe.cookTime || 0)
+  if (totalMinutes <= 15) return '15 Min or Less'
+  if (totalMinutes <= 30) return '30 Min or Less'
+  if (totalMinutes <= 60) return 'Under 1 Hour'
+  return 'Over 1 Hour'
+}
+
+const groupByWeekDay: GroupKeyResolver = (recipe, groups) => {
+  const isValidDate = recipe.assignedDate && groups[recipe.assignedDate]
+  return isValidDate && recipe.assignedDate ? recipe.assignedDate : 'Unassigned'
+}
+
+const groupByCost: GroupKeyResolver = (recipe) => {
+  const cost = recipe.estimatedCost
+  if (cost === undefined || cost === null) return 'Unknown'
+  if (cost < 10) return 'Under $10'
+  if (cost < 20) return '$10 - $20'
+  return 'Over $20'
+}
+
+// Lookup table for group key resolvers
+const GROUP_KEY_RESOLVERS: Record<string, GroupKeyResolver> = {
+  protein: groupByProtein,
+  mealType: groupByMealType,
+  dishType: groupByDishType,
+  alpha: groupByAlpha,
+  recent: groupByRecent,
+  time: groupByTime,
+  'week-day': groupByWeekDay,
+  'cost-low': groupByCost,
+  'cost-high': groupByCost,
+}
+
 // Helper to determine the group key for a recipe based on sort strategy
 const getGroupKey = (recipe: Recipe, sort: string, groups: Record<string, Recipe[]>): string => {
-  if (sort === 'protein') {
-    return recipe.protein || 'Uncategorized'
-  }
-  if (sort === 'mealType') {
-    return recipe.mealType || 'Other'
-  }
-  if (sort === 'dishType') {
-    return recipe.dishType || 'Other'
-  }
-  if (sort === 'alpha') {
-    return recipe.title ? recipe.title[0].toUpperCase() : '#'
-  }
-  if (sort === 'recent') {
-    return 'All Recipes'
-  }
-  if (sort === 'time') {
-    const totalMinutes = (recipe.prepTime || 0) + (recipe.cookTime || 0)
-    if (totalMinutes <= 15) return '15 Min or Less'
-    if (totalMinutes <= 30) return '30 Min or Less'
-    if (totalMinutes <= 60) return 'Under 1 Hour'
-    return 'Over 1 Hour'
-  }
-  if (sort === 'week-day') {
-    // Check if assignedDate aligns with current week
-    const isValidDate = recipe.assignedDate && groups[recipe.assignedDate]
-    return isValidDate && recipe.assignedDate ? recipe.assignedDate : 'Unassigned'
-  }
-  if (sort === 'cost-low' || sort === 'cost-high') {
-    const cost = recipe.estimatedCost
-    if (cost === undefined || cost === null) return 'Unknown'
-    if (cost < 10) return 'Under $10'
-    if (cost < 20) return '$10 - $20'
-    return 'Over $20'
-  }
-  return 'Other'
+  const resolver = GROUP_KEY_RESOLVERS[sort]
+  return resolver ? resolver(recipe, groups) : 'Other'
 }
 
 export function useRecipeGrouping(recipes: Recipe[], sort: string) {
