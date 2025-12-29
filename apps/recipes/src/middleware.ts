@@ -13,10 +13,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     const authCookie = cookies.get('site_auth')
     const userCookie = cookies.get('site_user')
+    const emailCookie = cookies.get('site_email')
 
     // If no cookie or cookie value is wrong, OR if user name is missing, redirect to login
     if (!authCookie || authCookie.value !== 'true' || !userCookie || !userCookie.value) {
       return redirect('/protected/recipes/login')
+    }
+
+    // Validate email if whitelist is configured
+    const allowedEmailsEnv = import.meta.env.ALLOWED_EMAILS || ''
+    if (allowedEmailsEnv) {
+      const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+      const userEmail = emailCookie?.value?.toLowerCase()
+
+      if (!userEmail || !allowedEmails.includes(userEmail)) {
+        // Redirect to login with error (handled by client logic or just a clean slate)
+        return redirect('/protected/recipes/login')
+      }
     }
   }
 

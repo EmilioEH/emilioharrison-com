@@ -2,10 +2,13 @@ import type { APIRoute } from 'astro'
 import { db, bucket } from '../../lib/firebase-server'
 
 export const GET: APIRoute = async ({ cookies }) => {
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
+  const emailCookie = cookies.get('site_email')
+  const email = emailCookie?.value
 
-  if (!user || user !== 'Emilio') {
+  const adminEmailsEnv = import.meta.env.ADMIN_EMAILS || ''
+  const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+
+  if (!email || !adminEmails.includes(email.toLowerCase())) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -133,10 +136,13 @@ export const POST: APIRoute = async ({ request }) => {
 }
 
 export const PUT: APIRoute = async ({ request, cookies }) => {
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
+  const emailCookie = cookies.get('site_email')
+  const email = emailCookie?.value
 
-  if (!user || user !== 'Emilio') {
+  const adminEmailsEnv = import.meta.env.ADMIN_EMAILS || ''
+  const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+
+  if (!email || !adminEmails.includes(email.toLowerCase())) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

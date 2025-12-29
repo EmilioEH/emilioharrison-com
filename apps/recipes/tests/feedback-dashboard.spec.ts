@@ -25,6 +25,16 @@ test.describe('Feedback Dashboard', () => {
           secure: false,
           sameSite: 'Lax',
         },
+        {
+          name: 'site_email',
+          value: 'emilioeh1991@gmail.com', // Whitelisted Admin
+          domain: '127.0.0.1',
+          path: '/',
+          expires: -1,
+          httpOnly: true,
+          secure: false,
+          sameSite: 'Lax',
+        },
       ],
       origins: [],
     },
@@ -144,12 +154,18 @@ test.describe('Feedback Dashboard', () => {
     await expect(page.getByRole('heading', { name: 'Fix the bug' })).toBeVisible()
   })
 
-  test('should NOT show dashboard to non-Emilio user', async ({ page }) => {
+  test('should NOT show dashboard to non-admin user', async ({ page }) => {
     // Override cookie for this specific test
     await page.context().addCookies([
       {
         name: 'site_user',
         value: 'OtherUser', // Not Emilio
+        domain: '127.0.0.1',
+        path: '/',
+      },
+      {
+        name: 'site_email',
+        value: 'user@gmail.com', // Whitelisted but NOT Admin
         domain: '127.0.0.1',
         path: '/',
       },

@@ -48,6 +48,12 @@ test.describe('Authentication Flow', () => {
         domain: '127.0.0.1',
         path: '/',
       },
+      {
+        name: 'site_email',
+        value: 'emilioeh1991@gmail.com', // Whitelisted
+        domain: '127.0.0.1',
+        path: '/',
+      },
     ])
 
     // 1. Visit Protected Page
@@ -64,5 +70,32 @@ test.describe('Authentication Flow', () => {
     // Hard to check cookie deletion directly in Playwright without getting cookies again
     // But the redirect confirms session is gone (middleware enforces it)
     await expect(page.getByRole('heading', { name: 'Chef Login' })).toBeVisible()
+  })
+
+  test('should redirect to login if email is not whitelisted', async ({ context, page }) => {
+    // Manually login with unauthorized email
+    await context.addCookies([
+      {
+        name: 'site_auth',
+        value: 'true',
+        domain: '127.0.0.1',
+        path: '/',
+      },
+      {
+        name: 'site_user',
+        value: 'UnauthorizedUser',
+        domain: '127.0.0.1',
+        path: '/',
+      },
+      {
+        name: 'site_email',
+        value: 'hacker@example.com', // Not in whitelist
+        domain: '127.0.0.1',
+        path: '/',
+      },
+    ])
+
+    await page.goto('/protected/recipes')
+    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
   })
 })

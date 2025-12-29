@@ -43,6 +43,23 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Use email or provider ID as name since display name might be missing
     const name = user.displayName || user.email || 'Chef'
+    const email = user.email
+
+    // Validate email against whitelist
+    const allowedEmailsEnv = import.meta.env.ALLOWED_EMAILS || ''
+    const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+
+    if (allowedEmailsEnv && (!email || !allowedEmails.includes(email.toLowerCase()))) {
+      console.error(`Login blocked for unauthorized email: ${email}`)
+      return new Response(
+        JSON.stringify({
+          error: 'Unauthorized',
+          details: 'Your email is not on the allowed list.',
+        }),
+        { status: 403 },
+      )
+    }
+
     const cookieOptions = {
       path: '/',
       httpOnly: true,
@@ -53,6 +70,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Auth token
     cookies.set('site_auth', 'true', cookieOptions)
+
+    // Store email for access control (httpOnly)
+    if (email) {
+      cookies.set('site_email', email, cookieOptions)
+    }
 
     // User identity (not httpOnly so client can read "Welcome, Name")
     cookies.set('site_user', name, {

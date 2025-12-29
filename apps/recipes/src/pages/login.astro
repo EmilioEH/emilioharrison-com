@@ -6,7 +6,25 @@ import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 // The middleware usually handles protection, but we can double check.
 const auth = Astro.cookies.get('site_auth')
 const user = Astro.cookies.get('site_user')
+const email = Astro.cookies.get('site_email')
+
+let isAllowed = false
+const allowedEmailsEnv = import.meta.env.ALLOWED_EMAILS || ''
+
 if (auth?.value === 'true' && user?.value) {
+  // Check if email is allowed
+  if (allowedEmailsEnv) {
+    const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
+    if (email?.value && allowedEmails.includes(email.value.toLowerCase())) {
+      isAllowed = true
+    }
+  } else {
+    // No whitelist configured, allow all
+    isAllowed = true
+  }
+}
+
+if (isAllowed) {
   return Astro.redirect('/protected/recipes')
 }
 ---

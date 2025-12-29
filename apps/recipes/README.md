@@ -201,6 +201,10 @@ npm run feedback:resolve <id> fixed --remote
    PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
    PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    PUBLIC_FIREBASE_APP_ID=your_app_id
+
+   # Email Whitelists (comma-separated)
+   ALLOWED_EMAILS=user1@gmail.com,user2@gmail.com
+   ADMIN_EMAILS=admin@gmail.com
    ```
 
    > **Production Note**: These variables must also be set in **Cloudflare Pages Environment Variables**. The `PUBLIC_` prefixed variables are safe to expose as they only identify the Firebase project.
