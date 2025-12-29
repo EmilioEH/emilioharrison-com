@@ -67,7 +67,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Format ingredients for the prompt
     const ingredientsList = ingredients
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((i: any) => `- ${i.amount} ${i.unit} ${i.name}`)
+      .map((i: any) => {
+        if (i.original) return `- ${i.original}`
+        if (i.unit) return `- ${i.amount} ${i.unit} ${i.name}`
+        return `- ${i.amount} ${i.name}`
+      })
       .join('\n')
 
     const response = await client.models.generateContent({

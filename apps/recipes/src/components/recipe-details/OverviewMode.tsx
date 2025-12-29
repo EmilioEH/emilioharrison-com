@@ -39,12 +39,16 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const handleEstimateCost = async () => {
     setIsEstimating(true)
     try {
+      const payload = {
+        ingredients: recipe.structuredIngredients || recipe.ingredients,
+      }
       const res = await fetch('/api/estimate-cost', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredients: recipe.ingredients }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
+
       if (data.totalCost) {
         setEstimatedCost(data.totalCost)
         onSaveCost(data.totalCost)
