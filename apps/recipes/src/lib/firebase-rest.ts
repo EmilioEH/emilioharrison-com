@@ -332,15 +332,20 @@ export class FirebaseRestService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private toFirestoreNumber(val: number): any {
+    if (Number.isNaN(val)) return { doubleValue: 'NaN' }
+    if (val === Infinity) return { doubleValue: 'Infinity' }
+    if (val === -Infinity) return { doubleValue: '-Infinity' }
+    if (Number.isInteger(val)) return { integerValue: String(val) }
+    return { doubleValue: val }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private toFirestoreValue(val: any): any {
     if (val === null || val === undefined) return { nullValue: null }
     if (typeof val === 'string') return { stringValue: val }
     if (typeof val === 'number') {
-      if (Number.isNaN(val)) return { doubleValue: 'NaN' }
-      if (val === Infinity) return { doubleValue: 'Infinity' }
-      if (val === -Infinity) return { doubleValue: '-Infinity' }
-      if (Number.isInteger(val)) return { integerValue: val }
-      return { doubleValue: val }
+      return this.toFirestoreNumber(val)
     }
     if (typeof val === 'boolean') return { booleanValue: val }
     if (Array.isArray(val)) {
