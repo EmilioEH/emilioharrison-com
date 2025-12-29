@@ -28,7 +28,6 @@ export interface Recipe {
   tags?: string[]
   metadata?: {
     dishesUsed?: number
-    dishesUsed?: number
     dietary?: string[]
   }
   estimatedCost?: number // Persisted HEB cost
