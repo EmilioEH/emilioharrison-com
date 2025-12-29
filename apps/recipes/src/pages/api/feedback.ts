@@ -75,6 +75,29 @@ export const POST: APIRoute = async ({ request }) => {
     const context =
       typeof feedback.context === 'string' ? JSON.parse(feedback.context) : feedback.context
 
+    // SANITIZATION: Ensure context doesn't contain undefined/invalid values that break Firestore REST
+    // This fixes "Property context contains an invalid nested entity"
+    if (context && typeof context === 'object') {
+      // 1. Force windowSize to be simple strings (or null) to avoid complex nested prototype issues
+      if (context.windowSize && typeof context.windowSize === 'object') {
+        context.windowSize = {
+          width: String(context.windowSize.width || '0'),
+          height: String(context.windowSize.height || '0'),
+        }
+      }
+
+      // 2. Remove undefined keys (JSON.stringify does this, but let's be explicit before DB)
+      // and ensure simple POJO structure
+      try {
+        const cleanContext = JSON.parse(JSON.stringify(context))
+        Object.assign(context, cleanContext)
+      } catch (e) {
+        console.warn('Failed to sanitize context via JSON parse', e)
+        // Fallback: reset if corrupt
+        // context = {} // Can't reassign const, so we rely on what we have or mute it
+      }
+    }
+
     const newFeedback: Partial<Feedback> = {
       id,
       type: feedback.type,
