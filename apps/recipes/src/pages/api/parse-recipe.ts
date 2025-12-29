@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { GoogleGenAI, Type as SchemaType } from '@google/genai'
+import { JSDOM } from 'jsdom'
 
 const PROTEIN_OPTIONS = [
   'Chicken',
@@ -12,22 +13,102 @@ const PROTEIN_OPTIONS = [
   'Other',
 ]
 
-const SYSTEM_PROMPT = `
-You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided text (webpage) or image.
+const IMAGE_SYSTEM_PROMPT = `
+You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided image.
 
 Return a strict JSON object matching the provided schema.
 
 Rules:
-1. If the input is an image, describe what you see and infer the recipe (ingredients/steps) as best as possible.
-2. If the input is a URL, parse the HTML.
-3. Use reasonable defaults if data is missing (e.g. 2 servings).
-4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
-5. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-6. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
-7. List any specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender).
-8. Suggest any "Occasion" tags (e.g. Weeknight, Party, Holiday).
-9. Extract "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto).
+1. Describe what you see in the image and infer the recipe (ingredients/steps) as best as possible.
+2. Use reasonable defaults if data is missing (e.g. 2 servings).
+3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+5. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+6. List any specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender).
+7. Suggest any "Occasion" tags (e.g. Weeknight, Party, Holiday).
+8. Extract "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto).
+9. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+   - 'amount' (number)
+   - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
+   - 'name' (ingredient name without unit)
+   - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 `
+
+const URL_SYSTEM_PROMPT = `
+You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided webpage content (HTML).
+
+Return a strict JSON object matching the provided schema.
+
+Rules:
+1. Analyze the provided HTML content carefully.
+2. Prioritize extracting data from JSON-LD structured data (Recipe schema) if present in the HTML.
+3. If JSON-LD is missing or incomplete, parse the visible text content.
+4. Do not hallucinate ingredients or steps that are not present in the content.
+5. Use reasonable defaults if optional metadata is missing, but be accurate with Ingredients and Steps.
+6. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+7. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+8. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+9. List any specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender).
+10. Suggest any "Occasion" tags (e.g. Weeknight, Party, Holiday).
+11. Extract "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto).
+12. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+    - 'amount' (number)
+    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
+    - 'name' (ingredient name without unit)
+    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+`
+
+const JSON_LD_SYSTEM_PROMPT = `
+You are an expert Chef and Data Engineer. Your task is to MORMALIZE and ENRICH the provided JSON-LD Recipe Data into our internal schema.
+
+The input is already structured data from the source website. Your job is not to guess, but to:
+1. Map the fields to our schema.
+2. Clean up HTML tags from descriptions or steps.
+3. **Normalize Ingredients**: This is critical. Parse the 'recipeIngredient' strings into 'structuredIngredients':
+   - 'amount' (number)
+   - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
+   - 'name' (ingredient name without unit)
+   - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+4. Map "Main Protein Source" to one of: ${PROTEIN_OPTIONS.join(', ')}.
+5. Infer "Meal Type", "Dish Type" based on the recipe title and context.
+`
+
+/**
+ * Helper to extract JSON-LD Recipe data from HTML string using JSDOM.
+ */
+function extractJsonLd(html: string): unknown | null {
+  try {
+    const dom = new JSDOM(html)
+    const doc = dom.window.document
+    const scripts = doc.querySelectorAll('script[type="application/ld+json"]')
+
+    for (const script of Array.from(scripts)) {
+      try {
+        const json = JSON.parse((script as HTMLScriptElement).textContent || '{}')
+        // Handle graph or direct object
+        const items = Array.isArray(json) ? json : json['@graph'] || [json]
+
+        // Find the recipe item safely
+        const recipe = items.find((item: unknown) => {
+          if (typeof item === 'object' && item !== null && '@type' in item) {
+            const type = (item as { '@type': string | string[] })['@type']
+            return type === 'Recipe' || (Array.isArray(type) && type.includes('Recipe'))
+          }
+          return false
+        })
+
+        if (recipe) {
+          return recipe
+        }
+      } catch (e) {
+        console.warn('Failed to parse a JSON-LD script', e)
+      }
+    }
+  } catch (domError) {
+    console.warn('JSDOM parsing failed', domError)
+  }
+  return null
+}
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime?.env || import.meta.env
@@ -51,8 +132,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     let userContentPart: { text?: string; inlineData?: { mimeType: string; data: string } } = {}
+    let selectedPrompt = URL_SYSTEM_PROMPT
 
     if (url) {
+      if (!url.startsWith('http')) {
+        throw new Error('Invalid URL')
+      }
+
       const siteRes = await fetch(url, {
         headers: {
           'User-Agent':
@@ -61,8 +147,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
       })
       if (!siteRes.ok) throw new Error('Failed to fetch URL')
       const html = await siteRes.text()
-      userContentPart = { text: `Source URL: ${url}\n\nHTML Content:\n${html}` }
+
+      // Hybrid Strategy: Try to extract JSON-LD
+      const jsonLdData = extractJsonLd(html)
+
+      if (jsonLdData) {
+        console.log('✅ Found JSON-LD Recipe data. Using deterministic hybrid mode.')
+        selectedPrompt = JSON_LD_SYSTEM_PROMPT
+        userContentPart = {
+          text: `Source URL: ${url}\n\nJSON-LD Data:\n${JSON.stringify(jsonLdData, null, 2)}`,
+        }
+      } else {
+        console.log('⚠️ No JSON-LD found. Fallback to raw HTML parsing.')
+        selectedPrompt = URL_SYSTEM_PROMPT
+        userContentPart = { text: `Source URL: ${url}\n\nHTML Content:\n${html}` }
+      }
     } else if (image) {
+      // Use the specialized Image prompt
+      selectedPrompt = IMAGE_SYSTEM_PROMPT
+
       // Image is expected to be base64 data URL: "data:image/jpeg;base64,..."
       const base64Data = image.split(',')[1]
       const mimeType = image.split(';')[0].split(':')[1]
@@ -91,6 +194,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
               prep: { type: SchemaType.STRING, nullable: true },
             },
             required: ['name', 'amount'],
+          },
+        },
+        structuredIngredients: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              original: { type: SchemaType.STRING },
+              name: { type: SchemaType.STRING },
+              amount: { type: SchemaType.NUMBER },
+              unit: { type: SchemaType.STRING },
+              category: { type: SchemaType.STRING },
+            },
+            required: ['original', 'name', 'amount', 'unit', 'category'],
           },
         },
         steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
@@ -127,7 +244,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       contents: [
         {
           role: 'user',
-          parts: [{ text: SYSTEM_PROMPT }, userContentPart],
+          parts: [{ text: selectedPrompt }, userContentPart],
         },
       ],
     })
