@@ -4,7 +4,11 @@ export const generateGroceryList = async (recipes: Recipe[]): Promise<string> =>
   if (!recipes || recipes.length === 0) return '# Grocery List\n\nNo recipes selected.'
 
   try {
-    const response = await fetch('/api/generate-grocery-list', {
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`
+
+    const response = await fetch(`${baseUrl}api/generate-grocery-list`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

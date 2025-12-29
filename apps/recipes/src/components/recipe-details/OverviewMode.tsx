@@ -44,7 +44,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       const payload = {
         ingredients: recipe.structuredIngredients || recipe.ingredients,
       }
-      const res = await fetch('/api/estimate-cost', {
+
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      const res = await fetch(`${baseUrl}api/estimate-cost`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
