@@ -318,33 +318,16 @@ export default function FeedbackDashboard() {
                       <div className="space-y-4">
                         {item.screenshot && (
                           <div>
-                            <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                               Screenshot
-                              {item.screenshot.startsWith('r2:') && (
-                                <span className="rounded bg-yellow-100 px-1 py-0.5 text-[10px] text-yellow-800">
-                                  R2 Object
-                                </span>
-                              )}
                             </h4>
                             <div className="mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                              {/* If it's an R2 reference, we might need a presigned URL or just show placeholder */}
-                              {item.screenshot.startsWith('r2:') ? (
-                                <div className="flex aspect-video items-center justify-center bg-gray-100 text-sm text-gray-500">
-                                  Screenshot stored in R2
-                                </div>
-                              ) : (
-                                <img
-                                  src={item.screenshot}
-                                  alt="Bug Screenshot"
-                                  className="h-auto w-full object-contain"
-                                />
-                              )}
+                              <img
+                                src={item.screenshot}
+                                alt="Bug Screenshot"
+                                className="h-auto w-full object-contain"
+                              />
                             </div>
-                            {item.screenshot.startsWith('r2:') && (
-                              <p className="mt-1 text-xs text-gray-400">
-                                Key: <code className="text-xs">{item.screenshot.slice(3)}</code>
-                              </p>
-                            )}
                           </div>
                         )}
 

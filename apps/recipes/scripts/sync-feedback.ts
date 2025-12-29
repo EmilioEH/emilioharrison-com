@@ -135,8 +135,6 @@ async function generateMarkdown(list: Feedback[], filePath: string, title: strin
         } catch (e) {
           markdown += `> Failed to download screenshot: \`${key}\`\n\n`
         }
-      } else if (report.screenshot.startsWith('r2:')) {
-        markdown += `> Legacy R2 Reference: \`${report.screenshot}\`\n\n`
       } else {
         markdown += `![Feedback Image](${report.screenshot})\n\n`
       }

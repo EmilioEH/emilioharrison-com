@@ -315,8 +315,8 @@ src/
 │ ├── burgerMenuStore.ts # Burger menu open/close state
 │ ├── feedbackStore.ts # Feedback modal state
 │ ├── types.ts # TypeScript interfaces (Recipe, Feedback)
-│ ├── d1.ts # D1 database types
-│ ├── r2.ts # R2 bucket utilities
+│ ├── firebase-server.ts # Firebase service initialization
+│ ├── firebase-rest.ts # Firebase REST API client
 │ ├── grocery-logic.ts # Deterministic grocery merging
 │ └── api-utils.js # API helper functions
 ├── pages/

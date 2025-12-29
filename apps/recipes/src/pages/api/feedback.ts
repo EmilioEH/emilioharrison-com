@@ -10,15 +10,7 @@ export const GET: APIRoute = async (context) => {
   const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
   const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
-  console.log('[Feedback API] Debug Access Control:', {
-    emailCookieValue: email,
-    adminEmailsEnv,
-    parsedAdminEmails: adminEmails,
-    isAuthorized: email && adminEmails.includes(email.toLowerCase()),
-  })
-
   if (!email || !adminEmails.includes(email.toLowerCase())) {
-    console.warn('[Feedback API] Unauthorized access attempt:', { email })
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -28,9 +20,43 @@ export const GET: APIRoute = async (context) => {
   try {
     // REST API orderBy
     const feedbackList = await db.getCollection('feedback', 'timestamp', 'DESC')
-    // Data already mapped
 
-    return new Response(JSON.stringify(feedbackList), {
+    // Parse JSON strings back to objects for context and logs
+    // (They were stored as strings to avoid Firestore nested entity errors)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsedFeedback = feedbackList.map((item: any) => {
+      let context = {}
+      let logs = []
+
+      try {
+        context = typeof item.context === 'string' ? JSON.parse(item.context) : item.context || {}
+      } catch {
+        context = {}
+      }
+
+      try {
+        logs = typeof item.logs === 'string' ? JSON.parse(item.logs) : item.logs || []
+      } catch {
+        logs = []
+      }
+
+      // Convert storage: references to API URLs
+      let screenshot = item.screenshot
+      if (screenshot && screenshot.startsWith('storage:')) {
+        const path = screenshot.replace('storage:', '')
+        const baseUrl = import.meta.env.BASE_URL || ''
+        screenshot = `${baseUrl}/api/feedback/screenshot?path=${encodeURIComponent(path)}`
+      }
+
+      return {
+        ...item,
+        context,
+        logs,
+        screenshot,
+      }
+    })
+
+    return new Response(JSON.stringify(parsedFeedback), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -153,15 +179,7 @@ export const PUT: APIRoute = async (context) => {
   const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
   const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
-  console.log('[Feedback API PUT] Debug Access Control:', {
-    emailCookieValue: email,
-    adminEmailsEnv,
-    parsedAdminEmails: adminEmails,
-    isAuthorized: email && adminEmails.includes(email.toLowerCase()),
-  })
-
   if (!email || !adminEmails.includes(email.toLowerCase())) {
-    console.warn('[Feedback API PUT] Unauthorized access attempt:', { email })
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
