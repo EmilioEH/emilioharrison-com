@@ -38,11 +38,11 @@ const SourceToggle = ({ mode, setMode }: { mode: InputMode; setMode: (m: InputMo
 
 const PhotoUploader = ({
   imagePreview,
-  setImagePreview,
+  onRemove,
   handleFileChange,
 }: {
   imagePreview: string | null
-  setImagePreview: (s: string | null) => void
+  onRemove: () => void
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) => (
   <div
@@ -58,7 +58,7 @@ const PhotoUploader = ({
           alt="Preview"
         />
         <button
-          onClick={() => setImagePreview(null)}
+          onClick={onRemove}
           className="bg-md-sys-color-surface/90 absolute right-2 top-2 rounded-full p-2 shadow-md-1 hover:text-md-sys-color-error"
         >
           <Trash2 className="h-4 w-4" />
@@ -112,6 +112,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
   const [mode, setMode] = useState<InputMode>('photo')
   const [url, setUrl] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageData, setImageData] = useState<string | null>(null) // Base64 data for AI
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [internalIsUploading, setInternalIsUploading] = useState(false)
@@ -126,13 +127,16 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         // Optimize first
         const file = await processImage(originalFile)
 
-        // Optimistic preview (using optimized file)
+        // Read as base64 for AI processing AND preview
         const reader = new FileReader()
         reader.onloadend = () => {
-          setImagePreview(reader.result as string)
+          const base64 = reader.result as string
+          setImagePreview(base64) // Use base64 for preview initially
+          setImageData(base64) // Keep base64 for AI processing
         }
         reader.readAsDataURL(file)
 
+        // Also upload to storage for permanent hosting (optional)
         const formData = new FormData()
         formData.append('file', file)
 
@@ -148,12 +152,10 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         if (res.ok) {
           const { key } = await res.json()
           const publicUrl = `${baseUrl}api/uploads/${key}`
-          setImagePreview(publicUrl)
+          setImagePreview(publicUrl) // Switch preview to URL for faster display
+          // Keep imageData as base64 for AI processing
         } else {
-          console.error('Failed to upload image')
-          setErrorMsg(
-            'Failed to upload image. You can still process, but it may fail if too large.',
-          )
+          console.error('Failed to upload image - base64 will be used directly')
         }
       } catch (err) {
         console.error('Upload error', err)
@@ -173,13 +175,12 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         if (!url) throw new Error('Please enter a URL')
         payload.url = url
       } else {
-        if (!imagePreview) throw new Error('Please select an image')
-        if (imagePreview.startsWith('data:') && imagePreview.length > 1024 * 1024) {
-          throw new Error(
-            'The image is too large. Please try a smaller photo or check connection for upload.',
-          )
+        // Use imageData (base64) for AI processing, not imagePreview (which might be a URL)
+        if (!imageData) throw new Error('Please select an image')
+        if (imageData.length > 1024 * 1024 * 4) {
+          throw new Error('The image is too large. Please try a smaller photo.')
         }
-        payload.image = imagePreview
+        payload.image = imageData
       }
 
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
@@ -226,7 +227,10 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         {mode === 'photo' ? (
           <PhotoUploader
             imagePreview={imagePreview}
-            setImagePreview={setImagePreview}
+            onRemove={() => {
+              setImagePreview(null)
+              setImageData(null)
+            }}
             handleFileChange={handleFileChange}
           />
         ) : (
@@ -265,7 +269,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             status === 'processing' ||
             internalIsUploading ||
             (mode === 'url' && !url) ||
-            (mode === 'photo' && !imagePreview)
+            (mode === 'photo' && !imageData)
           }
         >
           {status === 'processing' || internalIsUploading ? (
