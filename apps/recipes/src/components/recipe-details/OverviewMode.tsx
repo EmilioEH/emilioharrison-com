@@ -35,9 +35,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     recipe.estimatedCost || null,
   )
   const [isEstimating, setIsEstimating] = React.useState(false)
+  const [estimateError, setEstimateError] = React.useState<string | null>(null)
 
   const handleEstimateCost = async () => {
     setIsEstimating(true)
+    setEstimateError(null)
     try {
       const payload = {
         ingredients: recipe.structuredIngredients || recipe.ingredients,
@@ -49,12 +51,18 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       })
       const data = await res.json()
 
+      if (!res.ok || data.error) {
+        throw new Error(data.details || data.error || 'Estimation failed')
+      }
+
       if (data.totalCost) {
         setEstimatedCost(data.totalCost)
         onSaveCost(data.totalCost)
       }
     } catch (e) {
-      console.error('Cost estimation failed', e)
+      const msg = e instanceof Error ? e.message : 'Could not estimate cost'
+      console.error('Cost estimation failed', msg)
+      setEstimateError(msg)
     } finally {
       setIsEstimating(false)
     }
@@ -138,6 +146,15 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               <div className="bg-md-sys-color-surface-variant/50 flex items-center gap-2 rounded-md-l px-3 py-1 text-xs font-medium text-md-sys-color-on-surface-variant">
                 <span className="animate-spin">⟳</span> Estimating HEB Cost...
               </div>
+            ) : estimateError ? (
+              <button
+                onClick={handleEstimateCost}
+                className="flex items-center gap-2 rounded-md-l bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                title={estimateError}
+              >
+                ⚠️ Couldn't estimate cost
+                <span className="ml-1 text-[10px] uppercase opacity-70">Tap to retry</span>
+              </button>
             ) : estimatedCost !== null ? (
               <button
                 className="flex cursor-pointer items-center gap-2 rounded-md-l bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100"

@@ -100,9 +100,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    console.error('Estimate Cost Error:', error)
-    return new Response(JSON.stringify({ error: 'Failed to estimate cost' }), {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Estimate Cost Error:', message, error)
+    return new Response(JSON.stringify({ error: 'Failed to estimate cost', details: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
