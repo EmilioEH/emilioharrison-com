@@ -1,4 +1,5 @@
-import { defineMiddleware, type APIContext } from 'astro:middleware'
+import { defineMiddleware } from 'astro:middleware'
+import type { APIContext } from 'astro'
 import { getEmailList } from './lib/env'
 import { isProtectedRoute, isLoginPage, isPublicApiRoute, getLoginUrl } from './lib/routes'
 
