@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { GoogleGenAI, Type as SchemaType } from '@google/genai'
-import { JSDOM } from 'jsdom'
+import { load } from 'cheerio'
 
 const PROTEIN_OPTIONS = [
   'Chicken',
@@ -74,17 +74,17 @@ The input is already structured data from the source website. Your job is not to
 `
 
 /**
- * Helper to extract JSON-LD Recipe data from HTML string using JSDOM.
+ * Helper to extract JSON-LD Recipe data from HTML string using Cheerio (Edge compatible).
  */
 function extractJsonLd(html: string): unknown | null {
   try {
-    const dom = new JSDOM(html)
-    const doc = dom.window.document
-    const scripts = doc.querySelectorAll('script[type="application/ld+json"]')
+    const $ = load(html)
+    const scripts = $('script[type="application/ld+json"]')
 
-    for (const script of Array.from(scripts)) {
+    for (const script of scripts) {
       try {
-        const json = JSON.parse((script as HTMLScriptElement).textContent || '{}')
+        const textContent = $(script).html() || ''
+        const json = JSON.parse(textContent)
         // Handle graph or direct object
         const items = Array.isArray(json) ? json : json['@graph'] || [json]
 
@@ -104,8 +104,8 @@ function extractJsonLd(html: string): unknown | null {
         console.warn('Failed to parse a JSON-LD script', e)
       }
     }
-  } catch (domError) {
-    console.warn('JSDOM parsing failed', domError)
+  } catch (parseError) {
+    console.warn('Cheerio parsing failed', parseError)
   }
   return null
 }
