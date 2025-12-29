@@ -183,6 +183,19 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         />
       </div>
 
+      {formData.sourceImage && (
+        <div>
+          <div className="mb-1 block text-xs font-bold uppercase text-gray-400">Source Image</div>
+          <div className="relative h-48 w-full overflow-hidden rounded-md-xl border border-md-sys-color-outline">
+            <img
+              src={formData.sourceImage}
+              alt="Recipe Source"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="protein" className="mb-1 block text-xs font-bold uppercase text-gray-400">

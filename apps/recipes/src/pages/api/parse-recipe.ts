@@ -59,7 +59,7 @@ Rules:
 `
 
 const JSON_LD_SYSTEM_PROMPT = `
-You are an expert Chef and Data Engineer. Your task is to MORMALIZE and ENRICH the provided JSON-LD Recipe Data into our internal schema.
+You are an expert Chef and Data Engineer. Your task is to NORMALIZE and ENRICH the provided JSON-LD Recipe Data into our internal schema.
 
 The input is already structured data from the source website. Your job is not to guess, but to:
 1. Map the fields to our schema.
