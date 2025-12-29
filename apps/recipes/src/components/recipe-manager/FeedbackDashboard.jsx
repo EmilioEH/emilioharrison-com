@@ -40,7 +40,8 @@ export default function FeedbackDashboard() {
   const fetchFeedback = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/feedback')
+      const baseUrl = import.meta.env.BASE_URL || ''
+      const res = await fetch(`${baseUrl}/api/feedback`)
       if (!res.ok) throw new Error('Failed to fetch feedback')
       const data = await res.json()
       // Sort by timestamp desc
@@ -60,7 +61,8 @@ export default function FeedbackDashboard() {
   const updateStatus = async (id, newStatus, e) => {
     e.stopPropagation()
     try {
-      const res = await fetch('/api/feedback', {
+      const baseUrl = import.meta.env.BASE_URL || ''
+      const res = await fetch(`${baseUrl}/api/feedback`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status: newStatus }),
