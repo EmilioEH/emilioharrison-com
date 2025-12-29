@@ -68,8 +68,8 @@ export interface Feedback {
   expected?: string // For bugs
   actual?: string // For bugs
   screenshot?: string // Base64 string
-  logs: LogEntry[] // Real console logs
-  context: Record<string, string>
+  logs: string // JSON string of log entries (Firestore-safe)
+  context: string // JSON string of context object (Firestore-safe)
   status?: 'open' | 'fixed' | 'wont-fix'
   resolved_at?: string
 }
@@ -77,6 +77,13 @@ export interface Feedback {
 export interface LogEntry {
   type: 'info' | 'warn' | 'error' | 'log'
   args: unknown[]
+  timestamp: string
+}
+
+// Firestore-safe log entry with flattened args (no nested arrays)
+export interface SafeLogEntry {
+  type: string
+  args: string // Flattened from array
   timestamp: string
 }
 

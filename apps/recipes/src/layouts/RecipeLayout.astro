@@ -60,8 +60,8 @@ const user = Astro.cookies.get('site_user')?.value
       logger.init()
     </script>
   </head>
-  <body class="bg-paper text-ink h-full overflow-hidden font-sans antialiased">
-    <div class="flex h-full flex-col">
+  <body class="bg-paper text-ink min-h-full overflow-x-hidden font-sans antialiased">
+    <div class="flex min-h-full flex-col">
       {
         user && (
           <div class="bg-ink text-paper relative z-50 flex items-center justify-between px-4 py-2 text-xs font-bold uppercase tracking-wider">

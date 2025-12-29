@@ -362,129 +362,131 @@ const RecipeManager: React.FC = () => {
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden bg-md-sys-color-surface text-md-sys-color-on-surface shadow-md-3">
-      {/* Toast Warning */}
-      <div data-testid="debug-view" style={{ display: 'none' }}>
-        {view}
-      </div>
-      <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
+    <>
+      <div className="relative mx-auto flex min-h-screen w-full max-w-2xl flex-col bg-md-sys-color-surface text-md-sys-color-on-surface shadow-md-3">
+        {/* Toast Warning */}
+        <div data-testid="debug-view" style={{ display: 'none' }}>
+          {view}
+        </div>
+        <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
-      <RecipeFilters
-        isOpen={filtersOpen}
-        onClose={() => setFiltersOpen(false)}
-        filters={filters}
-        setFilters={setFilters}
-        sort={sort}
-        setSort={setSort}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-      />
+        <RecipeFilters
+          isOpen={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          filters={filters}
+          setFilters={setFilters}
+          sort={sort}
+          setSort={setSort}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
 
-      <RecipeHeader
-        onGenerateList={handleGenerateList}
-        isSelectionMode={isSelectionMode}
-        selectedCount={selectedIds.size}
-        onCancelSelection={() => {
-          setIsSelectionMode(false)
-          setSelectedIds(new Set())
-        }}
-        onDeleteSelection={handleBulkDelete}
-      />
+        <RecipeHeader
+          onGenerateList={handleGenerateList}
+          isSelectionMode={isSelectionMode}
+          selectedCount={selectedIds.size}
+          onCancelSelection={() => {
+            setIsSelectionMode(false)
+            setSelectedIds(new Set())
+          }}
+          onDeleteSelection={handleBulkDelete}
+        />
 
-      <main className="relative flex-1 overflow-hidden">
-        {(view === 'library' || view === 'week') && (
-          <div className="flex h-full flex-col">
-            <Tabs
-              activeTab={view === 'week' ? 'week' : 'library'}
-              onChange={(v) => setView(v as ViewMode)}
-              tabs={[
-                { label: 'Library', value: 'library', icon: ChefHat, count: recipes.length },
-                {
-                  label: 'This Week',
-                  value: 'week',
-                  icon: Calendar,
-                  count: recipes.filter((r) => r.thisWeek).length,
-                },
-              ]}
+        <main className="relative flex-1">
+          {(view === 'library' || view === 'week') && (
+            <div className="flex h-full flex-col">
+              <Tabs
+                activeTab={view === 'week' ? 'week' : 'library'}
+                onChange={(v) => setView(v as ViewMode)}
+                tabs={[
+                  { label: 'Library', value: 'library', icon: ChefHat, count: recipes.length },
+                  {
+                    label: 'This Week',
+                    value: 'week',
+                    icon: Calendar,
+                    count: recipes.filter((r) => r.thisWeek).length,
+                  },
+                ]}
+              />
+
+              <LibraryToolbar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                sort={sort}
+                setSort={setSort}
+                onOpenFilters={() => setFiltersOpen(true)}
+                activeFilterCount={
+                  (filters.protein?.length || 0) +
+                  (filters.difficulty?.length || 0) +
+                  (filters.cuisine?.length || 0) +
+                  (filters.onlyFavorites ? 1 : 0)
+                }
+              />
+
+              <div className="scrollbar-hide flex-1 overflow-y-auto">
+                {!isSelectionMode && view === 'library' && recipes.length > 0 && (
+                  <div className="flex justify-end px-4 pt-2">
+                    <button
+                      onClick={() => setIsSelectionMode(true)}
+                      className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary"
+                    >
+                      Select Recipes
+                    </button>
+                  </div>
+                )}
+
+                <RecipeLibrary
+                  recipes={processedRecipes}
+                  sort={view === 'week' ? 'week-day' : sort}
+                  onSelectRecipe={(r) => {
+                    if (isSelectionMode) {
+                      toggleSelection(r.id)
+                    } else {
+                      setSelectedRecipe(r)
+                      setView('detail')
+                    }
+                  }}
+                  onToggleThisWeek={handleToggleThisWeek}
+                  isSelectionMode={isSelectionMode}
+                  selectedIds={selectedIds}
+                  onAssignDay={handleAssignDay}
+                />
+              </div>
+            </div>
+          )}
+          {view === 'detail' && selectedRecipe && (
+            <RecipeDetail
+              recipe={selectedRecipe}
+              onClose={() => setView('library')}
+              onUpdate={handleUpdateRecipe}
+              onDelete={handleDeleteRecipe}
+              onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
+              onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
             />
+          )}
 
-            <LibraryToolbar
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              sort={sort}
-              setSort={setSort}
-              onOpenFilters={() => setFiltersOpen(true)}
-              activeFilterCount={
-                (filters.protein?.length || 0) +
-                (filters.difficulty?.length || 0) +
-                (filters.cuisine?.length || 0) +
-                (filters.onlyFavorites ? 1 : 0)
-              }
-            />
-
-            <div className="scrollbar-hide flex-1 overflow-y-auto">
-              {!isSelectionMode && view === 'library' && recipes.length > 0 && (
-                <div className="flex justify-end px-4 pt-2">
-                  <button
-                    onClick={() => setIsSelectionMode(true)}
-                    className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary"
-                  >
-                    Select Recipes
-                  </button>
-                </div>
-              )}
-
-              <RecipeLibrary
-                recipes={processedRecipes}
-                sort={view === 'week' ? 'week-day' : sort}
-                onSelectRecipe={(r) => {
-                  if (isSelectionMode) {
-                    toggleSelection(r.id)
-                  } else {
-                    setSelectedRecipe(r)
-                    setView('detail')
-                  }
-                }}
-                onToggleThisWeek={handleToggleThisWeek}
-                isSelectionMode={isSelectionMode}
-                selectedIds={selectedIds}
-                onAssignDay={handleAssignDay}
+          {view === 'edit' && (
+            <div className="h-full overflow-y-auto p-4">
+              <RecipeEditor
+                recipe={selectedRecipe || {}}
+                onSave={handleSaveRecipe}
+                onCancel={() => setView('library')}
+                onDelete={handleDeleteRecipe}
               />
             </div>
-          </div>
-        )}
-        {view === 'detail' && selectedRecipe && (
-          <RecipeDetail
-            recipe={selectedRecipe}
-            onClose={() => setView('library')}
-            onUpdate={handleUpdateRecipe}
-            onDelete={handleDeleteRecipe}
-            onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
-            onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
-          />
-        )}
+          )}
 
-        {view === 'edit' && (
-          <div className="h-full overflow-y-auto p-4">
-            <RecipeEditor
-              recipe={selectedRecipe || {}}
-              onSave={handleSaveRecipe}
-              onCancel={() => setView('library')}
-              onDelete={handleDeleteRecipe}
+          {view === 'grocery' && (
+            <GroceryList
+              ingredients={groceryItems}
+              isLoading={isGenerating}
+              onClose={() => setView('library')}
             />
-          </div>
-        )}
+          )}
+        </main>
+      </div>
 
-        {view === 'grocery' && (
-          <GroceryList
-            ingredients={groceryItems}
-            isLoading={isGenerating}
-            onClose={() => setView('library')}
-          />
-        )}
-      </main>
-
-      {/* Primary Floating Action Button */}
+      {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
       {(view === 'library' || view === 'week') && !isSelectionMode && (
         <Fab
           icon={Plus}
@@ -495,7 +497,7 @@ const RecipeManager: React.FC = () => {
           }}
         />
       )}
-    </div>
+    </>
   )
 }
 

@@ -55,6 +55,7 @@ Key entry points for common tasks:
 | **Update global UI**       | `src/components/layout/` (Navbar, GlobalBurgerMenu)                                         |
 | **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.jsx` & `scripts/resolve-feedback.ts`       |
 | **Add E2E test**           | Create `tests/<feature>.spec.ts` – use existing tests as templates                          |
+| **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                        |
 
 **Conventions:**
 

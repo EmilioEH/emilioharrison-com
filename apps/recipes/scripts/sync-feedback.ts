@@ -69,8 +69,25 @@ async function generateMarkdown(list: Feedback[], filePath: string, title: strin
     const statusIcon = report.status === 'fixed' ? '✅' : report.status === 'wont-fix' ? '🚫' : '🔴'
     const statusText = report.status ? report.status.toUpperCase() : 'OPEN'
 
+    // Parse context from JSON string (stored as string in Firestore to avoid nested entity errors)
+    let context: Record<string, unknown> = {}
+    try {
+      context =
+        typeof report.context === 'string' ? JSON.parse(report.context) : report.context || {}
+    } catch {
+      context = {}
+    }
+
+    // Parse logs from JSON string
+    let logs: unknown[] = []
+    try {
+      logs = typeof report.logs === 'string' ? JSON.parse(report.logs) : report.logs || []
+    } catch {
+      logs = []
+    }
+
     markdown += `## [${statusIcon} ${statusText}] ${report.type.toUpperCase()} - ${date}\n`
-    markdown += `**ID**: \`${report.id}\` | **User**: \`${report.context.user || 'Unknown'}\`\n\n`
+    markdown += `**ID**: \`${report.id}\` | **User**: \`${(context.user as string) || 'Unknown'}\`\n\n`
 
     if (report.type === 'bug') {
       markdown += `### Description\n> **Actual**: ${report.actual}\n> **Expected**: ${report.expected}\n\n`
@@ -80,12 +97,12 @@ async function generateMarkdown(list: Feedback[], filePath: string, title: strin
 
     // Technical Details
     markdown += `<details>\n<summary>Technical Context</summary>\n\n`
-    markdown += `- **URL**: ${report.context.url}\n`
+    markdown += `- **URL**: ${(context.url as string) || 'Unknown'}\n`
     if (report.resolved_at) {
       markdown += `- **Resolved At**: ${new Date(report.resolved_at).toLocaleString()}\n`
     }
 
-    markdown += `\n**Recent Logs**:\n\`\`\`json\n${JSON.stringify(report.logs, null, 2)}\n\`\`\`\n\n`
+    markdown += `\n**Recent Logs**:\n\`\`\`json\n${JSON.stringify(logs, null, 2)}\n\`\`\`\n\n`
     markdown += `</details>\n\n`
 
     // Screenshot handling

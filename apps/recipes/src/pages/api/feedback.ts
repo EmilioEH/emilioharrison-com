@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro'
 import { db, bucket } from '../../lib/firebase-server'
-import type { Feedback } from '../../lib/types'
 
 export const GET: APIRoute = async ({ cookies }) => {
   const userCookie = cookies.get('site_user')
@@ -68,52 +67,51 @@ export const POST: APIRoute = async ({ request }) => {
     const id = feedback.id || crypto.randomUUID()
 
     // Upload screenshot if present
-    const screenshot = await uploadToStorage(id, 'screenshot', feedback.screenshot)
-
-    // Logs and Context are just JSON objects, Firestore handles them fine.
-    const logs = typeof feedback.logs === 'string' ? JSON.parse(feedback.logs) : feedback.logs
-    const context =
-      typeof feedback.context === 'string' ? JSON.parse(feedback.context) : feedback.context
-
-    // SANITIZATION: Aggressively flatten context to Map<String, String>
-    // This strictly prevents "invalid nested entity" errors by ensuring NO nested objects/arrays exist.
-    const safeContext: Record<string, string> = {}
-
-    if (context && typeof context === 'object') {
-      try {
-        Object.entries(context).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            safeContext[key] = value
-          } else if (value === null || value === undefined) {
-            // Skip nulls or store as "null" string if preferred. Skipping is cleaner.
-          } else {
-            // Force everything else (Numbers, Objects, Arrays) to a JSON string representation
-            safeContext[key] = JSON.stringify(value)
-          }
-        })
-      } catch (e) {
-        console.warn('Context flattening failed', e)
-        safeContext['error'] = 'Context serialization failed'
-      }
+    let screenshot: string | null = null
+    try {
+      screenshot = await uploadToStorage(id, 'screenshot', feedback.screenshot)
+    } catch (uploadErr) {
+      console.error('Screenshot upload failed, storing error:', uploadErr)
+      screenshot = `upload_error:${(uploadErr as Error).message}`
     }
 
-    // Replace the original context with our safe version
-    const finalContext = safeContext
+    // NUCLEAR OPTION: Store complex data as JSON strings to completely avoid nested entity errors
+    // Firestore REST API is extremely strict about nested structures
 
-    const newFeedback: Partial<Feedback> = {
-      id,
-      type: feedback.type,
-      description: feedback.description,
-      expected: feedback.expected,
-      actual: feedback.actual,
-      screenshot,
-      logs,
-      context: finalContext,
-      timestamp: feedback.timestamp || new Date().toISOString(),
+    // Stringify logs entirely - no nested arrays at all
+    let logsJson = '[]'
+    try {
+      const rawLogs = typeof feedback.logs === 'string' ? JSON.parse(feedback.logs) : feedback.logs
+      logsJson = JSON.stringify(rawLogs || [])
+    } catch {
+      logsJson = '[]'
+    }
+
+    // Stringify context entirely - no nested objects at all
+    let contextJson = '{}'
+    try {
+      const rawContext =
+        typeof feedback.context === 'string' ? JSON.parse(feedback.context) : feedback.context
+      contextJson = JSON.stringify(rawContext || {})
+    } catch {
+      contextJson = '{}'
+    }
+
+    // Store ONLY primitive string values - no nested structures whatsoever
+    const newFeedback = {
+      id: String(id),
+      type: String(feedback.type || ''),
+      description: String(feedback.description || ''),
+      expected: String(feedback.expected || ''),
+      actual: String(feedback.actual || ''),
+      screenshot: screenshot ? String(screenshot) : null,
+      logs: logsJson, // Already a JSON string
+      context: contextJson, // Already a JSON string
+      timestamp: String(feedback.timestamp || new Date().toISOString()),
       status: 'open',
     }
 
-    await db.createDocument('feedback', id, newFeedback)
+    await db.createDocument('feedback', String(id), newFeedback)
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
