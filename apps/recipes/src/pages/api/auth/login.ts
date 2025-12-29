@@ -10,13 +10,25 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Verify the token using Google's public endpoint
-    const params = new URLSearchParams({ id_token: idToken })
-    const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`)
+    // Use POST to avoid URL length limits with large tokens
+    const tokenInfoRes = await fetch('https://oauth2.googleapis.com/tokeninfo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ id_token: idToken }),
+    })
 
     if (!tokenInfoRes.ok) {
       const errorText = await tokenInfoRes.text()
       console.error(`Token verification failed: ${tokenInfoRes.status} ${errorText}`)
-      return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401 })
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid token',
+          details: `Google verification failed: ${tokenInfoRes.status} - ${errorText}`,
+        }),
+        { status: 401 },
+      )
     }
 
     const payload = await tokenInfoRes.json()
