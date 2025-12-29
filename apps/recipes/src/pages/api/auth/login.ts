@@ -9,6 +9,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: 'Missing ID token' }), { status: 400 })
     }
 
+    console.log('[Debug] Backend received token', {
+      length: idToken.length,
+      prefix: idToken.substring(0, 10),
+    })
+
     // Verify the token using Google's public endpoint
     // Use POST to avoid URL length limits with large tokens
     const tokenInfoRes = await fetch('https://oauth2.googleapis.com/tokeninfo', {
