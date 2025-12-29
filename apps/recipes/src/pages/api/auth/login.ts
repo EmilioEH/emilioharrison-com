@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro'
-import { db } from '../../../lib/firebase-server'
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -14,41 +13,41 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       prefix: idToken.substring(0, 10),
     })
 
-    // Verify the token using Google's public endpoint
-    // Use POST to avoid URL length limits with large tokens
-    const tokenInfoRes = await fetch('https://oauth2.googleapis.com/tokeninfo', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({ id_token: idToken }),
-    })
+    // Verify the token using Firebase Auth REST API
+    // This is the correct endpoint for Firebase ID Tokens (tokeninfo is for Google OAuth tokens)
+    const apiKey = import.meta.env.PUBLIC_FIREBASE_API_KEY
+    if (!apiKey) {
+      throw new Error('Missing PUBLIC_FIREBASE_API_KEY')
+    }
 
-    if (!tokenInfoRes.ok) {
-      const errorText = await tokenInfoRes.text()
-      console.error(`Token verification failed: ${tokenInfoRes.status} ${errorText}`)
+    const verifyRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
+      },
+    )
+
+    if (!verifyRes.ok) {
+      const errorText = await verifyRes.text()
+      console.error(`Token verification failed: ${verifyRes.status} ${errorText}`)
       return new Response(
         JSON.stringify({
           error: 'Invalid token',
-          details: `Google verification failed: ${tokenInfoRes.status} - ${errorText}`,
+          details: `Firebase verification failed: ${verifyRes.status} - ${errorText}`,
         }),
         { status: 401 },
       )
     }
 
-    const payload = await tokenInfoRes.json()
+    const data = await verifyRes.json()
+    const user = data.users[0]
 
-    // Verify audience matches Project ID or Client ID
-    const projectId = db.projectId
-    // In some cases, audience is the client ID (e.g., when initialized from a specific client)
-    // We'll be flexible but log clearly if it doesn't match either.
-    if (payload.aud !== projectId) {
-      console.warn(
-        `Token audience (${payload.aud}) does not match Project ID (${projectId}). This might be expected if using a specific Client ID.`,
-      )
-    }
-
-    const name = payload.name || payload.email || 'Chef'
+    // Use email or provider ID as name since display name might be missing
+    const name = user.displayName || user.email || 'Chef'
     const cookieOptions = {
       path: '/',
       httpOnly: true,
