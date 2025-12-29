@@ -47,6 +47,8 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein.
 - **List View**: Added a toggle to switch the Recipe Library between the classic Grid view and a compact List view.
 - **Image Optimization**: All user-uploaded images (Recipe photos and Feedback screenshots) are now automatically downscaled (~72dpi, max 1920px) and compressed client-side before upload to optimize storage and performance.
+- **Smart Recipe Import (Hybrid AI)**: Recipe extraction now uses a hybrid approach. It deterministically uses `jsdom` to extract high-quality JSON-LD data from source websites when available, normalizing it with AI. Falls back to purely Generative AI for unsupported sites or images.
+- **Enhanced Grocery List**: The grocery list generator now leverages pre-normalized ingredient data (Amount, Unit, Category) captured during import, resulting in significantly more accurate aggregation and aisle organization.
 
 ### 🤖 Agent Quick Reference
 

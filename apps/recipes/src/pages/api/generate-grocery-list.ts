@@ -24,22 +24,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const SYSTEM_PROMPT = `
 You are an expert Data Engineer and Chef.
-Your task is to take a list of raw ingredient strings from multiple recipes and parse them into a structured, AGGREGATED list.
+Your task is to take a list of ingredient strings from multiple recipes and parse them into a structured, AGGREGATED list.
 
 Input Format:
 [Recipe Title]
 Ingredients:
 - 1 cup flour
-- 2 eggs
+- 2 eggs [Category: Dairy]
 
 Rules:
-1. Normalize names: "clove of garlic" -> "garlic", "minced garlic" -> "garlic".
-2. Normalize units to standard metric/imperial (e.g. oz, lb, cup, tbsp).
-3. **AGGREGATE** quantities for the same ingredient.
+1. **Prioritize Explicit Data**: If an ingredient has a "[Category: X]" tag, trust that category.
+2. Normalize names: "clove of garlic" -> "garlic", "minced garlic" -> "garlic".
+3. Normalize units to standard metric/imperial (e.g. oz, lb, cup, tbsp).
+4. **AGGREGATE** quantities for the same ingredient.
    - Example: "16 oz beef" + "1 lb beef" -> "2 lb beef" (or "32 oz beef").
    - Example: "1 cup flour" + "2 cups flour" -> "3 cups flour".
-4. Keep distinctly different ingredients separate (e.g. "ground beef" vs "steak").
-5. Category must be one of: Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other.
+5. Keep distinctly different ingredients separate (e.g. "ground beef" vs "steak").
+6. Category must be one of: Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other.
 `
 
   const inputList = formatRecipesForPrompt(recipes)

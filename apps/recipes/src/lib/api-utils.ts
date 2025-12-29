@@ -19,7 +19,16 @@ export function formatRecipesForPrompt(recipes: Recipe[]): string {
   if (!recipes || !Array.isArray(recipes)) return ''
   return recipes
     .map((r) => {
-      const ingredientsList = (r.ingredients || []).map((i) => `• ${i.amount} ${i.name}`).join('\n')
+      let ingredientsList = ''
+      if (r.structuredIngredients && r.structuredIngredients.length > 0) {
+        // Use pre-normalized data
+        ingredientsList = r.structuredIngredients
+          .map((i) => `• ${i.amount} ${i.unit} ${i.name} [Category: ${i.category}]`)
+          .join('\n')
+      } else {
+        // Fallback to raw strings
+        ingredientsList = (r.ingredients || []).map((i) => `• ${i.amount} ${i.name}`).join('\n')
+      }
       return `${r.title}\nIngredients:\n${ingredientsList}`
     })
     .join('\n\n')
