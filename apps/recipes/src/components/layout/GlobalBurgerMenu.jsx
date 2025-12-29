@@ -28,7 +28,7 @@ const GlobalBurgerMenu = (props) => {
       {/* Floating Trigger Button - Always visible in top-right corner */}
       <button
         onClick={openBurgerMenu}
-        className="fixed right-4 top-4 z-40 rounded-full bg-md-sys-color-surface p-3 shadow-md-2 transition-all hover:bg-md-sys-color-surface-variant"
+        className="fixed right-4 top-4 z-[60] rounded-full bg-md-sys-color-surface p-3 shadow-md-2 transition-all hover:bg-md-sys-color-surface-variant"
         aria-label="Open Menu"
       >
         <Menu className="h-6 w-6 text-md-sys-color-on-surface" />
@@ -36,7 +36,7 @@ const GlobalBurgerMenu = (props) => {
 
       {/* Overlay + Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-[70] flex justify-end">
           {/* Backdrop */}
           <div
             role="button"
