@@ -13,12 +13,32 @@ import {
   Square,
 } from 'lucide-react'
 
+interface FeedbackContext {
+  user?: string
+  url?: string
+  userAgent?: string
+  [key: string]: unknown
+}
+
+interface FeedbackItem {
+  id: string
+  type: 'bug' | 'feature' | 'other'
+  description: string
+  expected?: string
+  actual?: string
+  timestamp: string
+  status: 'open' | 'fixed' | 'wont-fix'
+  resolved_at?: string | null
+  screenshot?: string
+  context?: FeedbackContext
+}
+
 // Simple time ago helper to avoid extra deps
-function timeAgo(dateString) {
+function timeAgo(dateString: string) {
   if (!dateString) return ''
   const date = new Date(dateString)
   const now = new Date()
-  const seconds = Math.floor((now - date) / 1000)
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
   let interval = seconds / 31536000
   if (interval > 1) return Math.floor(interval) + ' years ago'
@@ -34,14 +54,14 @@ function timeAgo(dateString) {
 }
 
 export default function FeedbackDashboard() {
-  const [feedback, setFeedback] = useState([])
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [activeTab, setActiveTab] = useState('open') // 'open' | 'fixed' | 'all'
-  const [expandedId, setExpandedId] = useState(null)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'open' | 'fixed' | 'all'>('open')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Bulk Actions State
-  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   const fetchFeedback = async () => {
@@ -50,12 +70,15 @@ export default function FeedbackDashboard() {
       const baseUrl = import.meta.env.BASE_URL || ''
       const res = await fetch(`${baseUrl}/api/feedback`)
       if (!res.ok) throw new Error('Failed to fetch feedback')
-      const data = await res.json()
+      const data = (await res.json()) as FeedbackItem[]
       // Sort by timestamp desc
-      const sorted = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      const sorted = data.sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      )
       setFeedback(sorted)
     } catch (err) {
-      setError(err.message)
+      if (err instanceof Error) setError(err.message)
+      else setError('An unknown error occurred')
     } finally {
       setLoading(false)
     }
@@ -65,7 +88,11 @@ export default function FeedbackDashboard() {
     fetchFeedback()
   }, [])
 
-  const updateStatus = async (id, newStatus, e) => {
+  const updateStatus = async (
+    id: string,
+    newStatus: 'open' | 'fixed' | 'wont-fix',
+    e: React.SyntheticEvent,
+  ) => {
     e.stopPropagation()
     try {
       const baseUrl = import.meta.env.BASE_URL || ''
@@ -89,7 +116,7 @@ export default function FeedbackDashboard() {
             : item,
         ),
       )
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to update status:', err)
       alert('Failed to update status')
     }
@@ -97,7 +124,7 @@ export default function FeedbackDashboard() {
 
   // --- Bulk Actions Logic ---
 
-  const toggleSelection = (id, e) => {
+  const toggleSelection = (id: string, e: React.SyntheticEvent) => {
     e.stopPropagation()
     setSelectedIds((prev) => {
       const next = new Set(prev)
@@ -115,7 +142,7 @@ export default function FeedbackDashboard() {
     }
   }
 
-  const handleBulkAction = async (action) => {
+  const handleBulkAction = async (action: 'fixed' | 'wont-fix' | 'delete' | 'open') => {
     if (selectedIds.size === 0) return
     if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} items?`)) return
 

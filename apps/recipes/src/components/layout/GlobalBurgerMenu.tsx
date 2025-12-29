@@ -4,7 +4,11 @@ import { Menu, X, Settings, MessageSquare, Info, LayoutDashboard } from 'lucide-
 import { burgerMenuOpen, closeBurgerMenu, openBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
 
-const GlobalBurgerMenu = (props) => {
+interface GlobalBurgerMenuProps {
+  user?: string
+}
+
+const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const isOpen = useStore(burgerMenuOpen)
 
   const handleSettings = () => {
@@ -79,7 +83,7 @@ const GlobalBurgerMenu = (props) => {
               </button>
 
               {/* Only show dashboard to Emilio */}
-              {/* @ts-expect-error - props passed from Astro */}
+              {/* Only show dashboard to Emilio */}
               {props.user === 'Emilio' && (
                 <button
                   role="menuitem"

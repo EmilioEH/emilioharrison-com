@@ -17,6 +17,8 @@ import type { Recipe } from '../../lib/types'
 import { useRecipes } from './hooks/useRecipes'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
 import { useGroceryListGenerator } from './hooks/useGroceryListGenerator'
+import { useRecipeSelection } from './hooks/useRecipeSelection'
+import { useRecipeActions } from './hooks/useRecipeActions'
 
 // --- Sub-Components ---
 import { RecipeLibrary } from './RecipeLibrary'
@@ -63,10 +65,18 @@ const RecipeManager: React.FC = () => {
     (v: string) => setView(v as ViewMode),
   )
 
-  // Selection Mode
-  const [isSelectionMode, setIsSelectionMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  // Hooks
+  const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
+    useRecipeSelection()
   const [showBulkEdit, setShowBulkEdit] = useState(false)
+
+  const { saveRecipe, deleteRecipe, toggleFavorite, bulkUpdateRecipes, bulkDeleteRecipes } =
+    useRecipeActions({
+      recipes,
+      setRecipes,
+      refreshRecipes,
+      getBaseUrl,
+    })
 
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState<ProteinWarning | null>(null)
@@ -89,67 +99,22 @@ const RecipeManager: React.FC = () => {
   }, [])
 
   const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
-    // If id is missing, it's new. If id exists but not found locally, treat as new (or sync issue).
-    const isNew = !recipe.id || !recipes.find((r) => r.id === recipe.id)
-    const method = isNew ? 'POST' : 'PUT'
-    const url = isNew ? `${getBaseUrl()}api/recipes` : `${getBaseUrl()}api/recipes/${recipe.id}`
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(recipe),
-      })
-
-      if (res.ok) {
-        const savedRecipe = { ...recipe } as Recipe
-        if (isNew) {
-          const { id } = await res.json()
-          savedRecipe.id = id
-        }
-
-        // Optimistic update for immediate feedback
-        setRecipes((prev) => {
-          const exists = prev.find((r) => r.id === savedRecipe.id)
-          if (exists) {
-            return prev.map((r) => (r.id === savedRecipe.id ? savedRecipe : r))
-          }
-          return [savedRecipe, ...prev]
-        })
-
-        if (view === 'edit') {
-          setView('library')
-          setSelectedRecipe(null)
-        }
-
-        await refreshRecipes(false)
-
-        return true
-      } else {
-        console.error('Failed to save recipe')
-        alert('Failed to save recipe')
-        return false
+    const { success } = await saveRecipe(recipe)
+    if (success) {
+      if (view === 'edit') {
+        setView('library')
+        setSelectedRecipe(null)
       }
-    } catch (e) {
-      console.error(e)
-      alert('Error saving recipe')
-      return false
     }
   }
 
   const handleDeleteRecipe = async (id: string) => {
-    try {
-      const res = await fetch(`${getBaseUrl()}api/recipes/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setRecipes(recipes.filter((r) => r.id !== id))
-        setView('library')
-        setSelectedRecipe(null)
-      } else {
-        alert('Failed to delete')
-      }
-    } catch (e) {
-      console.error(e)
-      alert('Error deleting')
+    const success = await deleteRecipe(id)
+    if (success) {
+      setView('library')
+      setSelectedRecipe(null)
+    } else {
+      alert('Failed to delete')
     }
   }
 
@@ -195,48 +160,9 @@ const RecipeManager: React.FC = () => {
   }
 
   const handleToggleFavorite = async (recipe: Recipe) => {
-    // Optimistic Update
-    const oldIsFavorite = recipe.isFavorite
-    const newIsFavorite = !oldIsFavorite
-
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: newIsFavorite } : r)),
-    )
+    const newRecipe = await toggleFavorite(recipe)
     if (selectedRecipe && selectedRecipe.id === recipe.id) {
-      setSelectedRecipe({ ...selectedRecipe, isFavorite: newIsFavorite })
-    }
-
-    try {
-      const res = await fetch(`${getBaseUrl()}api/favorites`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipeId: recipe.id }),
-      })
-
-      if (!res.ok) {
-        throw new Error('Failed to toggle favorite')
-      }
-
-      const data = await res.json()
-      // Ensure sync with server truth
-      if (data.isFavorite !== newIsFavorite) {
-        setRecipes((prev) =>
-          prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: data.isFavorite } : r)),
-        )
-        if (selectedRecipe && selectedRecipe.id === recipe.id) {
-          setSelectedRecipe({ ...selectedRecipe, isFavorite: data.isFavorite })
-        }
-      }
-    } catch (e) {
-      console.error(e)
-      alert('Error updating favorite')
-      // Revert
-      setRecipes((prev) =>
-        prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: oldIsFavorite } : r)),
-      )
-      if (selectedRecipe && selectedRecipe.id === recipe.id) {
-        setSelectedRecipe({ ...selectedRecipe, isFavorite: oldIsFavorite })
-      }
+      setSelectedRecipe(newRecipe)
     }
   }
 
@@ -244,57 +170,26 @@ const RecipeManager: React.FC = () => {
     handleUpdateRecipe({ ...recipe, assignedDate: dateKey })
   }
 
-  // Apply Sorting and Filtering
+  // Selection Logic handled by hook
 
-  // Selection Logic
-  const toggleSelection = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
-      console.log('Deleting ids: ', Array.from(selectedIds)) // Debug
-      setRecipes(recipes.filter((r) => !selectedIds.has(r.id)))
-      setIsSelectionMode(false)
-      setSelectedIds(new Set())
+      const success = await bulkDeleteRecipes(selectedIds)
+      if (success) {
+        clearSelection()
+      } else {
+        alert('Some deletions failed')
+      }
     }
   }
 
   const handleBulkEdit = async (updates: Partial<Recipe>) => {
-    try {
-      const res = await fetch(`${getBaseUrl()}api/recipes/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update',
-          ids: Array.from(selectedIds),
-          updates,
-        }),
-      })
-
-      if (res.ok) {
-        // Optimistic Update
-        setRecipes((prev) =>
-          prev.map((r) => {
-            if (selectedIds.has(r.id)) {
-              return { ...r, ...updates, updatedAt: new Date().toISOString() }
-            }
-            return r
-          }),
-        )
-        setIsSelectionMode(false)
-        setSelectedIds(new Set())
-      } else {
-        alert('Bulk update failed')
-      }
-    } catch (e) {
-      console.error(e)
-      alert('Error updating recipes')
+    const success = await bulkUpdateRecipes(selectedIds, updates)
+    if (success) {
+      setShowBulkEdit(false)
+      clearSelection()
+    } else {
+      alert('Bulk update failed')
     }
   }
 
@@ -422,8 +317,7 @@ const RecipeManager: React.FC = () => {
           isSelectionMode={isSelectionMode}
           selectedCount={selectedIds.size}
           onCancelSelection={() => {
-            setIsSelectionMode(false)
-            setSelectedIds(new Set())
+            clearSelection()
           }}
           onDeleteSelection={handleBulkDelete}
           onBulkEdit={() => setShowBulkEdit(true)}
