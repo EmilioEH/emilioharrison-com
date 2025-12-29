@@ -10,7 +10,15 @@ export const GET: APIRoute = async (context) => {
   const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
   const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
+  console.log('[Feedback API] Debug Access Control:', {
+    emailCookieValue: email,
+    adminEmailsEnv,
+    parsedAdminEmails: adminEmails,
+    isAuthorized: email && adminEmails.includes(email.toLowerCase()),
+  })
+
   if (!email || !adminEmails.includes(email.toLowerCase())) {
+    console.warn('[Feedback API] Unauthorized access attempt:', { email })
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -145,7 +153,15 @@ export const PUT: APIRoute = async (context) => {
   const adminEmailsEnv = getEnv(context, 'ADMIN_EMAILS')
   const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
 
+  console.log('[Feedback API PUT] Debug Access Control:', {
+    emailCookieValue: email,
+    adminEmailsEnv,
+    parsedAdminEmails: adminEmails,
+    isAuthorized: email && adminEmails.includes(email.toLowerCase()),
+  })
+
   if (!email || !adminEmails.includes(email.toLowerCase())) {
+    console.warn('[Feedback API PUT] Unauthorized access attempt:', { email })
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
