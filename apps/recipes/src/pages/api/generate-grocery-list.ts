@@ -1,16 +1,14 @@
 import type { APIRoute } from 'astro'
 import { formatRecipesForPrompt } from '../../lib/api-utils'
-import { GoogleGenAI, Type as SchemaType } from '@google/genai'
+import { Type as SchemaType } from '@google/genai'
+import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime?.env || import.meta.env
-  const apiKey = env.GEMINI_API_KEY
-
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Missing API Key' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  let client
+  try {
+    client = initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key')
   }
 
   const { recipes } = await request.json()
@@ -67,7 +65,7 @@ Rules:
   }
 
   try {
-    const client = new GoogleGenAI({ apiKey })
+    // Client already initialized above
     const response = await client.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: [

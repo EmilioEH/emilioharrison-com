@@ -1,9 +1,9 @@
 import type { APIContext } from 'astro'
+import { getCloudflareEnv } from '../../lib/api-helpers'
 
 export const GET = async ({ locals }: APIContext) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { SESSION } = (locals as any).runtime.env
+    const { SESSION } = getCloudflareEnv(locals)
     const data = await SESSION.get('RECIPE_DATA')
 
     // Parse if data exists, otherwise return empty array
@@ -21,8 +21,7 @@ export const GET = async ({ locals }: APIContext) => {
 
 export const POST = async ({ request, locals }: APIContext) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { SESSION } = (locals as any).runtime.env
+    const { SESSION } = getCloudflareEnv(locals)
     const body = await request.json()
 
     // Validate body is array

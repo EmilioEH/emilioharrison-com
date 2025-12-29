@@ -6,6 +6,7 @@ test.describe('Grocery List', () => {
     await context.addCookies([
       { name: 'site_auth', value: 'true', url: 'http://127.0.0.1:8788/' },
       { name: 'site_user', value: 'TestUser', url: 'http://127.0.0.1:8788/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', url: 'http://127.0.0.1:8788/' },
     ])
 
     // Go directly to the protected page, bypassing login redirect logic

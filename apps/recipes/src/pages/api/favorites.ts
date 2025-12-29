@@ -1,15 +1,12 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../lib/firebase-server'
+import { getAuthUser, unauthorizedResponse } from '../../lib/api-helpers'
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
+  const user = getAuthUser(cookies)
 
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return unauthorizedResponse()
   }
 
   try {

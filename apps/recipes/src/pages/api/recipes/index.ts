@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
-import type { Recipe } from '../../../lib/types'
+import { isRecipe } from '../../../lib/type-guards'
 
 export const GET: APIRoute = async ({ cookies }) => {
   const userCookie = cookies.get('site_user')
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recipes: Recipe[] = rawRecipes.map((doc: any) => {
+    const recipes = rawRecipes.map((doc: any) => {
       // doc already mapped by service
       return {
         ...doc,
@@ -29,10 +29,16 @@ export const GET: APIRoute = async ({ cookies }) => {
         createdAt: doc.createdAt || new Date().toISOString(),
         updatedAt: doc.updatedAt || new Date().toISOString(),
         isFavorite: favIds.has(doc.id),
-      } as Recipe
+      }
     })
 
-    return new Response(JSON.stringify({ recipes }), {
+    const validRecipes = recipes.filter(isRecipe)
+
+    if (validRecipes.length < recipes.length) {
+      console.warn(`Filtered out ${recipes.length - validRecipes.length} invalid recipes`)
+    }
+
+    return new Response(JSON.stringify({ recipes: validRecipes }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

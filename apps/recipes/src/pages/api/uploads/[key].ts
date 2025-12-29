@@ -16,8 +16,7 @@ export const GET: APIRoute = async ({ params }) => {
 
     // Hack: We didn't store the bucket name in the service instance properly or expose it?
     // Let's assume the project ID based bucket: PROJECT_ID.firebasestorage.app
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const projectId = (bucket as any).projectId
+    const projectId = bucket.projectId
     const bucketName = `${projectId}.firebasestorage.app`
 
     const file = await bucket.downloadFile(bucketName, key)

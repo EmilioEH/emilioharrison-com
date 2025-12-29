@@ -25,8 +25,7 @@ export const GET: APIRoute = async (context) => {
     }
 
     // Get project ID for bucket name
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const projectId = (bucket as any).projectId
+    const projectId = bucket.projectId
     const bucketName = `${projectId}.firebasestorage.app`
 
     // Download the file from Firebase Storage

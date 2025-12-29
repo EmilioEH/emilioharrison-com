@@ -86,8 +86,8 @@ async function uploadToStorage(
     // Assuming we can access uploadFile on bucket alias
     // We need to pass bucket name too? The service class implementation requires bucket name.
     // Hack: getting projectId from service to construct bucket name
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const projectId = (bucket as any).projectId
+    // Hack: getting projectId from service to construct bucket name
+    const projectId = bucket.projectId
     const bucketName = `${projectId}.firebasestorage.app`
 
     await bucket.uploadFile(bucketName, key, buffer, 'image/png')

@@ -6,6 +6,7 @@ test.describe('Recipe Organization', () => {
     await context.addCookies([
       { name: 'site_user', value: 'Test User', domain: '127.0.0.1', path: '/' },
       { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
     ])
 
     // Go to recipes page

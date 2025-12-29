@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
-import { GoogleGenAI, Type as SchemaType } from '@google/genai'
+import { Type as SchemaType } from '@google/genai'
+import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 
 const COST_SYSTEM_PROMPT = `
 You are an expert Grocery Cost Estimator for Austin, Texas. Your task is to estimate the current grocery store cost for the provided list of ingredients in Austin, TX.
@@ -15,14 +16,11 @@ Rules:
 `
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime?.env || import.meta.env
-  const apiKey = env.GEMINI_API_KEY
-
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Missing API Key' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  let client
+  try {
+    client = initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key')
   }
 
   try {
@@ -35,7 +33,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       })
     }
 
-    const client = new GoogleGenAI({ apiKey })
+    // Client initialized above
 
     const schema = {
       type: SchemaType.OBJECT,

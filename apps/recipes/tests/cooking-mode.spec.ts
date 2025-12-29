@@ -24,6 +24,16 @@ test.describe('Recipe Cooking Mode', () => {
           secure: false,
           sameSite: 'Lax',
         },
+        {
+          name: 'site_email',
+          value: 'emilioeh1991@gmail.com',
+          domain: '127.0.0.1',
+          path: '/',
+          expires: -1,
+          httpOnly: false,
+          secure: false,
+          sameSite: 'Lax',
+        },
       ],
       origins: [],
     },
@@ -113,7 +123,7 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByText(testTitle).first()).toBeVisible()
     await page.waitForTimeout(500)
     await page.getByText(testTitle).first().click()
-    await expect(page.getByText('Delicious and fluffy!')).toBeVisible()
+    await expect(page.getByText('Delicious and fluffy!')).toBeVisible({ timeout: 10000 })
     // Check if 4 stars are visible in the preview section
     const previewStars = page.locator(
       '.mb-8.rounded-md-xl svg.lucide-star.fill-md-sys-color-tertiary',

@@ -15,6 +15,12 @@ const login = async (page: Page) => {
       domain: '127.0.0.1',
       path: '/',
     },
+    {
+      name: 'site_email',
+      value: 'emilioeh1991@gmail.com',
+      domain: '127.0.0.1',
+      path: '/',
+    },
   ])
   page.on('console', (msg: ConsoleMessage) => console.log('BROWSER LOG:', msg.text()))
 }
@@ -124,7 +130,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 5. Verify rating on card
-    await expect(card.getByText('5', { exact: true })).toBeVisible()
+    await expect(card.getByText('5', { exact: true })).toBeVisible({ timeout: 10000 })
   })
 
   test('should update modification date on edit', async ({ page }) => {

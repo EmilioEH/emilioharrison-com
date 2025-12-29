@@ -1,7 +1,14 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Recipe Metadata & Filtering', () => {
-  test('should create recipe with metadata and filter by it', async ({ page }) => {
+  test('should create recipe with metadata and filter by it', async ({ page, context }) => {
+    // 0. Set Auth Cookies
+    await context.addCookies([
+      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'site_user', value: 'TestUser', domain: '127.0.0.1', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
+    ])
+
     // 1. Load Page with Mock Data
     const mockRecipes = [
       {
@@ -57,7 +64,7 @@ test.describe('Recipe Metadata & Filtering', () => {
     // Wait for filter modal
     await expect(page.getByText('Sort & Filter')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Breakfast' }).click()
+    await page.getByRole('button', { name: 'Breakfast', exact: true }).click()
 
     // Close filters
     await page.getByRole('button', { name: /close/i }).first().click() // Close icon

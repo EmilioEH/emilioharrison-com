@@ -14,6 +14,11 @@ test.describe('Recipe Persistence', () => {
         value: `ReproUser-${Date.now()}`,
         url: 'http://127.0.0.1:8788',
       },
+      {
+        name: 'site_email',
+        value: 'emilioeh1991@gmail.com',
+        url: 'http://127.0.0.1:8788',
+      },
     ])
 
     await page.goto('/protected/recipes')

@@ -12,6 +12,7 @@ test.describe('Back Button Navigation', () => {
     await context.addCookies([
       { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
       { name: 'site_user', value: 'Emilio', domain: '127.0.0.1', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
     ])
 
     // 3. Go to protected app
