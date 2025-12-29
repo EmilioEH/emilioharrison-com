@@ -169,6 +169,20 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         />
       </div>
 
+      <div>
+        <label htmlFor="sourceUrl" className="mb-1 block text-xs font-bold uppercase text-gray-400">
+          Source URL
+        </label>
+        <input
+          id="sourceUrl"
+          type="url"
+          value={formData.sourceUrl || ''}
+          onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
+          placeholder="https://example.com/recipe"
+          className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium outline-none"
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="protein" className="mb-1 block text-xs font-bold uppercase text-gray-400">

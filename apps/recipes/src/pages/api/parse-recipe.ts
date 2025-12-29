@@ -24,9 +24,9 @@ Rules:
 3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
 5. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
-6. List any specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender).
-7. Suggest any "Occasion" tags (e.g. Weeknight, Party, Holiday).
-8. Extract "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto).
+6. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
+7. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
+8. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
 9. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
    - 'amount' (number)
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
@@ -48,9 +48,9 @@ Rules:
 6. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 7. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
 8. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
-9. List any specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender).
-10. Suggest any "Occasion" tags (e.g. Weeknight, Party, Holiday).
-11. Extract "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto).
+9. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
+10. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
+11. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
 12. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
     - 'amount' (number)
     - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
@@ -71,6 +71,7 @@ The input is already structured data from the source website. Your job is not to
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 4. Map "Main Protein Source" to one of: ${PROTEIN_OPTIONS.join(', ')}.
 5. Infer "Meal Type", "Dish Type" based on the recipe title and context.
+6. **ENRICH** missing metadata: Infer Occasion, Dietary tags, and Equipment from the content if they are missing.
 `
 
 /**

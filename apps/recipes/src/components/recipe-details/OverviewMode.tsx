@@ -58,6 +58,18 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               {recipe.title}
             </h1>
 
+            {recipe.sourceUrl && (
+              <a
+                href={recipe.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-md-sys-color-primary hover:underline"
+              >
+                Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')}{' '}
+                <ChevronRight className="h-3 w-3" />
+              </a>
+            )}
+
             <div className="border-md-sys-color-outline/20 mt-4 flex gap-4 border-y py-3 text-sm font-medium text-md-sys-color-on-surface-variant">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4 text-md-sys-color-primary" />
