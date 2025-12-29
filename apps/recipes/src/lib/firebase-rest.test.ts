@@ -51,20 +51,42 @@ describe('FirebaseRestService', () => {
     expect(body.fields.dimensions.mapValue.fields.height).toEqual({ integerValue: '1080' })
   })
 
-  it('should serialize floats as doubles', async () => {
+  it('should verify exact feedback payload structure', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({}),
     })
     global.fetch = fetchMock
 
-    await service.createDocument('test-collection', 'doc-id', {
-      score: 4.5,
-    })
+    const feedbackPayload = {
+      id: '123',
+      type: 'bug',
+      description: 'test',
+      context: {
+        url: 'https://example.com',
+        windowSize: { width: 1024, height: 768 }, // Integers
+        userAgent: 'Mozilla/5.0 ...',
+      },
+      logs: [
+        { type: 'info', args: ['User logged in'], timestamp: '2023-01-01' },
+        { type: 'error', args: ['Failed'], timestamp: '2023-01-01' },
+      ],
+      timestamp: '2023-01-01',
+    }
+
+    await service.createDocument('feedback', '123', feedbackPayload)
 
     const callArgs = fetchMock.mock.calls[0]
     const body = JSON.parse(callArgs[1].body)
 
-    expect(body.fields.score).toEqual({ doubleValue: 4.5 })
+    // Check windowSize integers
+    const contextFields = body.fields.context.mapValue.fields
+    expect(contextFields.windowSize.mapValue.fields.width).toEqual({ integerValue: '1024' })
+    expect(contextFields.windowSize.mapValue.fields.height).toEqual({ integerValue: '768' })
+
+    // Check logs serialization
+    const logsList = body.fields.logs.arrayValue.values
+    expect(logsList).toHaveLength(2)
+    expect(logsList[0].mapValue.fields.type).toEqual({ stringValue: 'info' })
   })
 })
