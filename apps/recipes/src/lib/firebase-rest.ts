@@ -349,8 +349,17 @@ export class FirebaseRestService {
     }
     if (typeof val === 'boolean') return { booleanValue: val }
     if (Array.isArray(val)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { arrayValue: { values: val.map((v: any) => this.toFirestoreValue(v)) } }
+      // PREVENT "INVALID NESTED ENTITY" ERROR: Firestore Arrays cannot contain Arrays.
+      // We must detect if any child is an array and flatten or stringify it.
+      const safeValues = val.map((v) => {
+        if (Array.isArray(v)) {
+          // Fallback: Stringify nested arrays
+          return { stringValue: JSON.stringify(v) }
+        }
+        return this.toFirestoreValue(v)
+      })
+
+      return { arrayValue: { values: safeValues } }
     }
     if (typeof val === 'object') {
       // Handle Date objects
