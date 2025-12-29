@@ -8,11 +8,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: 'Missing ID token' }), { status: 400 })
     }
 
-    console.log('[Debug] Backend received token', {
-      length: idToken.length,
-      prefix: idToken.substring(0, 10),
-    })
-
     // Verify the token using Firebase Auth REST API
     // This is the correct endpoint for Firebase ID Tokens (tokeninfo is for Google OAuth tokens)
     const apiKey = import.meta.env.PUBLIC_FIREBASE_API_KEY

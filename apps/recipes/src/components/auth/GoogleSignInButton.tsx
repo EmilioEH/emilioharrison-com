@@ -13,11 +13,6 @@ export const GoogleSignInButton = () => {
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
 
-      console.log('[Debug] Token generated', {
-        length: idToken.length,
-        prefix: idToken.substring(0, 10),
-      })
-
       // Verify token with backend
       const response = await fetch('/protected/recipes/api/auth/login', {
         method: 'POST',
