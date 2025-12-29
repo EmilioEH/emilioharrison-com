@@ -69,14 +69,7 @@ export interface Feedback {
   actual?: string // For bugs
   screenshot?: string // Base64 string
   logs: LogEntry[] // Real console logs
-  context: {
-    url: string
-    userAgent: string
-    user: string
-    appState: string // Serialized JSON of recipes/selections
-    domSnapshot?: string // Full HTML
-    windowSize?: { width: string; height: string }
-  }
+  context: Record<string, string>
   status?: 'open' | 'fixed' | 'wont-fix'
   resolved_at?: string
 }
