@@ -168,8 +168,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
       selectedPrompt = IMAGE_SYSTEM_PROMPT
 
       // Image is expected to be base64 data URL: "data:image/jpeg;base64,..."
-      const base64Data = image.split(',')[1]
-      const mimeType = image.split(';')[0].split(':')[1]
+      // Robust parsing to handle edge cases
+      let base64Data = ''
+      let mimeType = 'image/jpeg' // Safe default
+
+      if (image.includes(',')) {
+        base64Data = image.split(',')[1] || ''
+      } else {
+        // Assume it's raw base64 without the data URL prefix
+        base64Data = image
+      }
+
+      // Extract mimeType from data URL prefix if present
+      const mimeMatch = image.match(/^data:([^;]+);base64/)
+      if (mimeMatch && mimeMatch[1]) {
+        mimeType = mimeMatch[1]
+      }
+
+      // Validate we have data
+      if (!base64Data) {
+        throw new Error('Invalid image data: missing base64 content')
+      }
+
+      console.log(`[parse-recipe] Image mimeType: ${mimeType}, data length: ${base64Data.length}`)
+
       userContentPart = {
         inlineData: {
           mimeType: mimeType,
