@@ -64,7 +64,7 @@ describe('FirebaseRestService', () => {
       description: 'test',
       context: {
         url: 'https://example.com',
-        windowSize: { width: 1024, height: 768 }, // Integers
+        windowSize: { width: '1024', height: '768' }, // Strings now
         userAgent: 'Mozilla/5.0 ...',
       },
       logs: [
@@ -79,10 +79,10 @@ describe('FirebaseRestService', () => {
     const callArgs = fetchMock.mock.calls[0]
     const body = JSON.parse(callArgs[1].body)
 
-    // Check windowSize integers
+    // Check windowSize strings - should now be stringValue
     const contextFields = body.fields.context.mapValue.fields
-    expect(contextFields.windowSize.mapValue.fields.width).toEqual({ integerValue: '1024' })
-    expect(contextFields.windowSize.mapValue.fields.height).toEqual({ integerValue: '768' })
+    expect(contextFields.windowSize.mapValue.fields.width).toEqual({ stringValue: '1024' })
+    expect(contextFields.windowSize.mapValue.fields.height).toEqual({ stringValue: '768' })
 
     // Check logs serialization
     const logsList = body.fields.logs.arrayValue.values

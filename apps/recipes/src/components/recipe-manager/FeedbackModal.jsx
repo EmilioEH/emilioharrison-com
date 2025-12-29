@@ -66,8 +66,8 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
         appState: JSON.stringify(appState),
         domSnapshot: document.documentElement.outerHTML,
         windowSize: {
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: String(window.innerWidth),
+          height: String(window.innerHeight),
         },
       },
     }

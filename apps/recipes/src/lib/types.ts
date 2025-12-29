@@ -75,7 +75,7 @@ export interface Feedback {
     user: string
     appState: string // Serialized JSON of recipes/selections
     domSnapshot?: string // Full HTML
-    windowSize?: { width: number; height: number }
+    windowSize?: { width: string; height: string }
   }
   status?: 'open' | 'fixed' | 'wont-fix'
   resolved_at?: string
