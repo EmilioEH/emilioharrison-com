@@ -30,6 +30,8 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
     { id: 'recent', label: 'Recent' },
     { id: 'time', label: 'Time' },
     { id: 'rating', label: 'Rating' },
+    { id: 'cost-low', label: 'Cheapest' },
+    { id: 'cost-high', label: 'Pricey' },
   ]
 
   return (

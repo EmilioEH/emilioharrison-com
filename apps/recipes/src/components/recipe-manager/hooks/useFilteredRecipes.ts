@@ -94,6 +94,20 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
         if (rA === rB) return a.title.localeCompare(b.title)
         return rB - rA
       }
+      if (sort === 'cost-low') {
+        // Unknown cost goes last
+        const cA = a.estimatedCost ?? Infinity
+        const cB = b.estimatedCost ?? Infinity
+        if (cA === cB) return a.title.localeCompare(b.title)
+        return cA - cB
+      }
+      if (sort === 'cost-high') {
+        // Unknown cost goes last
+        const cA = a.estimatedCost ?? -1
+        const cB = b.estimatedCost ?? -1
+        if (cA === cB) return a.title.localeCompare(b.title)
+        return cB - cA
+      }
       return 0
     })
 

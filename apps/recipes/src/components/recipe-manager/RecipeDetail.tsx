@@ -147,6 +147,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     }
   }
 
+  const handleSaveCost = (cost: number) => {
+    if (recipe.estimatedCost !== cost) {
+      onUpdate({ ...recipe, estimatedCost: cost }, 'save')
+    }
+  }
+
   const renderContent = () => {
     switch (cookingStage) {
       case 'pre':
@@ -196,6 +202,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             setCookingStage={setCookingStage}
             handleRate={handleRate}
             startCooking={startCooking}
+            onSaveCost={handleSaveCost}
           />
         )
     }

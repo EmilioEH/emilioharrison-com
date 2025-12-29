@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Clock, Users, Flame, Star, ChevronRight, Play, Check } from 'lucide-react'
 import { StarRating } from '../ui/StarRating'
 import { CheckableItem } from './CheckableItem'
@@ -15,6 +15,7 @@ interface OverviewModeProps {
   setCookingStage: (stage: CookingStage) => void
   handleRate: (rating: number) => void
   startCooking: () => void
+  onSaveCost: (cost: number) => void
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
@@ -27,7 +28,41 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   setCookingStage,
   handleRate,
   startCooking,
+  onSaveCost,
 }) => {
+  // Initialize with persisted cost if available
+  const [estimatedCost, setEstimatedCost] = React.useState<number | null>(
+    recipe.estimatedCost || null,
+  )
+  const [isEstimating, setIsEstimating] = React.useState(false)
+
+  const handleEstimateCost = async () => {
+    setIsEstimating(true)
+    try {
+      const res = await fetch('/api/estimate-cost', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients: recipe.ingredients }),
+      })
+      const data = await res.json()
+      if (data.totalCost) {
+        setEstimatedCost(data.totalCost)
+        onSaveCost(data.totalCost)
+      }
+    } catch (e) {
+      console.error('Cost estimation failed', e)
+    } finally {
+      setIsEstimating(false)
+    }
+  }
+  useEffect(() => {
+    // Auto-trigger if not yet estimated
+    if (estimatedCost === null && !isEstimating) {
+      handleEstimateCost()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Trigger once on mount
+
   return (
     <div className={`flex-1 overflow-y-auto pb-20 ${cookingMode ? 'px-4' : ''}`}>
       <div className="relative">
@@ -93,6 +128,33 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </div>
           </div>
 
+          {/* Cost Estimation (Auto) */}
+          <div className="mb-6 flex justify-end">
+            {isEstimating ? (
+              <div className="bg-md-sys-color-surface-variant/50 flex items-center gap-2 rounded-md-l px-3 py-1 text-xs font-medium text-md-sys-color-on-surface-variant">
+                <span className="animate-spin">⟳</span> Estimating HEB Cost...
+              </div>
+            ) : estimatedCost !== null ? (
+              <button
+                className="flex cursor-pointer items-center gap-2 rounded-md-l bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100"
+                onClick={handleEstimateCost}
+                title="Click to refresh cost"
+                aria-label={`Estimated cost is ${estimatedCost.toFixed(2)} dollars. Click to refresh.`}
+              >
+                Est. Total: ${estimatedCost.toFixed(2)}
+                <span className="ml-1 text-[10px] uppercase opacity-70">(HEB)</span>
+              </button>
+            ) : (
+              // Fallback button if auto failed or initial state before effect
+              <button
+                onClick={handleEstimateCost}
+                className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary hover:underline"
+              >
+                Estimate Cost
+              </button>
+            )}
+          </div>
+
           {/* Quick Stats or Previous Experience */}
           {(recipe.rating || recipe.userNotes) && (
             <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 mb-8 rounded-md-xl border p-4">
@@ -156,6 +218,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 )
               })}
             </div>
+
+            {/* Estimate Cost Section - Moved to Header */}
           </div>
 
           {/* Steps */}

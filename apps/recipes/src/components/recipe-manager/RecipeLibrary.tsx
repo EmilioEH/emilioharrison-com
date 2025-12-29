@@ -8,6 +8,8 @@ const SORT_ORDERS: Record<string, string[]> = {
   protein: ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'],
   mealType: ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
   dishType: ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'],
+  'cost-low': ['Under $10', '$10 - $20', 'Over $20', 'Unknown'],
+  'cost-high': ['Over $20', '$10 - $20', 'Under $10', 'Unknown'],
 }
 
 // Helper: Sort groups by predefined order or alphabetically
@@ -268,6 +270,17 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
         // Check if assignedDate aligns with current week
         const isValidDate = recipe.assignedDate && groups[recipe.assignedDate]
         groupKey = isValidDate && recipe.assignedDate ? recipe.assignedDate : 'Unassigned'
+      } else if (sort === 'cost-low' || sort === 'cost-high') {
+        const cost = recipe.estimatedCost
+        if (cost === undefined || cost === null) {
+          groupKey = 'Unknown'
+        } else if (cost < 10) {
+          groupKey = 'Under $10'
+        } else if (cost < 20) {
+          groupKey = '$10 - $20'
+        } else {
+          groupKey = 'Over $20'
+        }
       }
 
       if (!groups[groupKey]) groups[groupKey] = []
