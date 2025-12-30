@@ -1,15 +1,32 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Check, Trash2, Share, Copy, ArrowLeft, ShoppingBasket } from 'lucide-react'
 import { mergeIngredients, categorizeIngredients } from '../../lib/grocery-logic'
-import type { StructuredIngredient } from '../../lib/types'
+import type { Recipe, StructuredIngredient } from '../../lib/types'
 
 interface GroceryListProps {
   ingredients: StructuredIngredient[]
   isLoading?: boolean
   onClose: () => void
+  recipes?: Recipe[]
 }
 
-export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading, onClose }) => {
+const RECIPE_COLORS = [
+  'bg-red-500',
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-yellow-500',
+  'bg-purple-500',
+  'bg-pink-500',
+  'bg-indigo-500',
+  'bg-orange-500',
+]
+
+export const GroceryList: React.FC<GroceryListProps> = ({
+  ingredients,
+  isLoading,
+  onClose,
+  recipes = [],
+}) => {
   // 1. Merge & Categorize (Memoized)
   const categorizedList = useMemo(() => {
     const merged = mergeIngredients(ingredients)
@@ -97,21 +114,19 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
   ).length
 
   return (
-    <div className="animate-in slide-in-from-right-4 flex h-full flex-col bg-card duration-300">
+    <div className="flex h-full flex-col bg-card duration-300 animate-in slide-in-from-right-4">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="-ml-2 rounded-full p-2 text-foreground hover:bg-card-variant"
+            className="hover:bg-card-variant -ml-2 rounded-full p-2 text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h2 className="font-display text-xl font-bold text-foreground">
-              Grocery List
-            </h2>
-            <p className="text-xs font-medium text-foreground-variant">
+            <h2 className="font-display text-xl font-bold text-foreground">Grocery List</h2>
+            <p className="text-foreground-variant text-xs font-medium">
               {totalCount} items &bull;{' '}
               {Math.round(
                 (checkedCount /
@@ -125,20 +140,43 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
         <div className="flex gap-2">
           <button
             onClick={shareList}
-            className="rounded-full p-2 text-primary hover:bg-card-variant"
+            className="hover:bg-card-variant rounded-full p-2 text-primary"
             title="Share"
           >
             <Share className="h-5 w-5" />
           </button>
           <button
             onClick={copyToClipboard}
-            className="rounded-full p-2 text-primary hover:bg-card-variant"
+            className="hover:bg-card-variant rounded-full p-2 text-primary"
             title="Copy"
           >
             <Copy className="h-5 w-5" />
           </button>
         </div>
       </div>
+
+      {/* Recipe Sources Header */}
+      {!isLoading && recipes.length > 0 && (
+        <div className="bg-card-container border-b border-border px-6 py-3">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Shopping for {recipes.length} Recipes
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {recipes.map((recipe, index) => {
+              const colorClass = RECIPE_COLORS[index % RECIPE_COLORS.length]
+              return (
+                <div
+                  key={recipe.id}
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-xs font-medium shadow-sm"
+                >
+                  <div className={`h-2 w-2 rounded-full ${colorClass}`} />
+                  <span className="max-w-[150px] truncate">{recipe.title}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-20">
@@ -150,7 +188,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
         ) : (
           <>
             {categorizedList.map((category) => (
-              <div key={category.name} className="animate-in fade-in duration-500">
+              <div key={category.name} className="duration-500 animate-in fade-in">
                 <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
                   {category.name}
                 </h3>
@@ -173,15 +211,11 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
                                 : 'border-border hover:border-primary'
                             } `}
                           >
-                            {isChecked && (
-                              <Check className="h-3.5 w-3.5 text-primary-foreground" />
-                            )}
+                            {isChecked && <Check className="h-3.5 w-3.5 text-primary-foreground" />}
                           </div>
                           <div
                             className={
-                              isChecked
-                                ? 'text-foreground-variant line-through'
-                                : 'text-foreground'
+                              isChecked ? 'text-foreground-variant line-through' : 'text-foreground'
                             }
                           >
                             <span className="mr-1 font-display text-lg font-bold">
@@ -191,6 +225,22 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
                               {item.unit !== 'unit' ? item.unit : ''}
                             </span>
                             <span className="font-medium capitalize">{item.name}</span>
+                          </div>
+
+                          {/* Source Indicators */}
+                          <div className="flex -space-x-1">
+                            {item.sourceRecipeIds?.map((id) => {
+                              const recipeIndex = recipes.findIndex((r) => r.id === id)
+                              if (recipeIndex === -1) return null
+                              const colorClass = RECIPE_COLORS[recipeIndex % RECIPE_COLORS.length]
+                              return (
+                                <div
+                                  key={id}
+                                  className={`h-2 w-2 rounded-full ring-1 ring-card ${colorClass}`}
+                                  title={recipes[recipeIndex].title}
+                                />
+                              )
+                            })}
                           </div>
                         </div>
                       </button>

@@ -18,9 +18,19 @@ export const mergeIngredients = (ingredients: StructuredIngredient[]): Structure
     if (mergedMap.has(key)) {
       const existing = mergedMap.get(key)!
       existing.amount += ing.amount
-      // Keep the category of the first occurrence (or could try to be smarter)
+
+      // Merge source IDs
+      if (ing.sourceRecipeIds) {
+        const existingIds = existing.sourceRecipeIds || []
+        const newIds = ing.sourceRecipeIds.filter((id) => !existingIds.includes(id))
+        existing.sourceRecipeIds = [...existingIds, ...newIds]
+      }
     } else {
-      mergedMap.set(key, { ...ing }) // Clone to avoid mutation
+      // Clone and ensure sourceRecipeIds is a new array if present
+      mergedMap.set(key, {
+        ...ing,
+        sourceRecipeIds: ing.sourceRecipeIds ? [...ing.sourceRecipeIds] : [],
+      })
     }
   }
 

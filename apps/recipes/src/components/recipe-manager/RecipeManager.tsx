@@ -66,7 +66,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     processedRecipes,
   } = useFilteredRecipes(recipes, view)
 
-  const { groceryItems, isGenerating, handleGenerateList } = useGroceryListGenerator(
+  const { groceryItems, isGenerating, handleGenerateList, targetRecipes } = useGroceryListGenerator(
     recipes,
     (v: string) => setView(v as ViewMode),
   )
@@ -425,6 +425,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               ingredients={groceryItems}
               isLoading={isGenerating}
               onClose={() => setView('library')}
+              recipes={targetRecipes}
             />
           )}
         </main>

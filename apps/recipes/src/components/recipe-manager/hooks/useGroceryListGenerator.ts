@@ -55,6 +55,7 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
   const [groceryItems, setGroceryItems] = useState<StructuredIngredient[]>([])
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [lastGeneratedIds, setLastGeneratedIds] = useState<string | null>(null)
+  const [targetRecipes, setTargetRecipes] = useState<Recipe[]>([])
 
   const handleGenerateList = async () => {
     // Validate recipes
@@ -65,6 +66,7 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
     }
 
     const recipesToProcess = validation.recipes
+    setTargetRecipes(recipesToProcess)
     const currentIds = getRecipesCacheKey(recipesToProcess)
 
     // Return cached list if unchanged
@@ -82,7 +84,12 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
     // Get local ingredients from recipes with structured data
     const localIngredients = recipesToProcess
       .filter((r) => r.structuredIngredients)
-      .flatMap((r) => r.structuredIngredients!)
+      .flatMap((r) =>
+        r.structuredIngredients!.map((ing) => ({
+          ...ing,
+          sourceRecipeIds: [r.id],
+        })),
+      )
 
     // Find recipes missing structured ingredient data
     const missingDataRecipes = recipesToProcess.filter(
@@ -109,5 +116,6 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
     groceryItems,
     isGenerating,
     handleGenerateList,
+    targetRecipes,
   }
 }

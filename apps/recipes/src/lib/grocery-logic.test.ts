@@ -34,6 +34,17 @@ describe('grocery-logic', () => {
     it('should handle empty list', () => {
       expect(mergeIngredients([])).toEqual([])
     })
+
+    it('should merge sourceRecipeIds', () => {
+      const input = [
+        { ...makeItem('salt', 1, 'tsp', 'Pantry'), sourceRecipeIds: ['1'] },
+        { ...makeItem('salt', 2, 'tsp', 'Pantry'), sourceRecipeIds: ['2'] },
+      ]
+      const result = mergeIngredients(input)
+      expect(result).toHaveLength(1)
+      expect(result[0].amount).toBe(3)
+      expect(result[0].sourceRecipeIds).toEqual(expect.arrayContaining(['1', '2']))
+    })
   })
 
   describe('categorizeIngredients', () => {

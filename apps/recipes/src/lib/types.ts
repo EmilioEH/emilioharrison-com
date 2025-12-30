@@ -59,6 +59,7 @@ export interface StructuredIngredient {
   amount: number
   unit: string
   category: string
+  sourceRecipeIds?: string[] // IDs of recipes generating this ingredient
 }
 
 export interface Feedback {
