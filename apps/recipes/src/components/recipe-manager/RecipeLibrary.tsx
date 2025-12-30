@@ -14,6 +14,8 @@ interface RecipeLibraryProps {
   selectedIds: Set<string>
   onAssignDay: (recipe: Recipe, date: string) => void
   viewMode: 'grid' | 'list'
+  onClearSearch?: () => void
+  hasSearch?: boolean
 }
 
 // Helper to chunk array
@@ -32,6 +34,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   selectedIds,
   onAssignDay,
   viewMode,
+  onClearSearch,
+  hasSearch,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const parentRef = useRef<HTMLDivElement>(null)
@@ -101,9 +105,22 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
   if (recipes.length === 0) {
     return (
-      <div className="py-20 text-center text-gray-400">
-        <ChefHat className="mx-auto mb-4 h-16 w-16 opacity-50" />
-        <p className="font-bold">No recipes found.</p>
+      <div className="flex flex-col items-center justify-center py-20 text-center text-gray-400">
+        <ChefHat className="mb-4 h-16 w-16 opacity-50" />
+        <p className="mb-4 font-bold">No recipes found.</p>
+        <p className="mb-6 max-w-xs text-sm">
+          {hasSearch
+            ? 'Try adjusting your search terms or filters.'
+            : 'Get started by adding your first recipe!'}
+        </p>
+        {hasSearch && onClearSearch && (
+          <button
+            onClick={onClearSearch}
+            className="rounded-full bg-md-sys-color-primary px-4 py-2 text-sm font-bold text-md-sys-color-on-primary shadow-sm hover:shadow-md"
+          >
+            Clear Search
+          </button>
+        )}
       </div>
     )
   }

@@ -25,6 +25,7 @@ import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 import { LibraryToolbar } from './LibraryToolbar'
+import { ResponsiveModal } from '../ui/ResponsiveModal'
 
 type ViewMode =
   | 'library'
@@ -384,6 +385,8 @@ const RecipeManager: React.FC = () => {
                   selectedIds={selectedIds}
                   onAssignDay={handleAssignDay}
                   viewMode={viewMode}
+                  onClearSearch={() => setSearchQuery('')}
+                  hasSearch={!!searchQuery}
                 />
               </div>
             </div>
@@ -397,17 +400,6 @@ const RecipeManager: React.FC = () => {
               onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
               onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
             />
-          )}
-
-          {view === 'edit' && (
-            <div className="h-full overflow-y-auto p-4">
-              <RecipeEditor
-                recipe={selectedRecipe || {}}
-                onSave={handleSaveRecipe}
-                onCancel={() => setView('library')}
-                onDelete={handleDeleteRecipe}
-              />
-            </div>
           )}
 
           {view === 'grocery' && (
@@ -427,7 +419,6 @@ const RecipeManager: React.FC = () => {
           onSave={handleBulkEdit}
         />
       )}
-
       {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
       {(view === 'library' || view === 'week') && !isSelectionMode && (
         <Fab
@@ -439,6 +430,20 @@ const RecipeManager: React.FC = () => {
           }}
         />
       )}
+
+      {/* Edit/Add Recipe Modal */}
+      <ResponsiveModal
+        isOpen={view === 'edit'}
+        onClose={() => setView('library')}
+        title={selectedRecipe?.id ? 'Edit Recipe' : 'New Recipe'}
+      >
+        <RecipeEditor
+          recipe={selectedRecipe || {}}
+          onSave={handleSaveRecipe}
+          onCancel={() => setView('library')}
+          onDelete={handleDeleteRecipe}
+        />
+      </ResponsiveModal>
     </>
   )
 }

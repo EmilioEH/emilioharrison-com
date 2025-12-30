@@ -56,6 +56,17 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
   searchQuery,
   setSearchQuery,
 }) => {
+  // Handle Escape key to close
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (isOpen && e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const handleFilterToggle = (key: keyof Filters, value: string) => {
@@ -74,186 +85,233 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
     })
   }
 
-  return (
-    <div className="animate-in fade-in bg-md-sys-color-on-surface/20 fixed inset-0 z-50 flex justify-end backdrop-blur-sm transition-opacity">
-      <div className="animate-in slide-in-from-right h-full w-full max-w-xs overflow-y-auto bg-md-sys-color-surface shadow-md-3 duration-300">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
-          <h2 className="font-display text-xl font-bold text-md-sys-color-on-surface">
-            Sort & Filter
-          </h2>
-          <button
-            onClick={onClose}
-            className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5 text-md-sys-color-on-surface" />
-          </button>
-        </div>
+  const handleBackdropKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClose()
+    }
+  }
 
-        <div className="space-y-6 p-6">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-md-sys-color-on-surface-variant" />
-            <input
-              type="text"
-              placeholder="Search recipes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 pl-9 pr-3 text-sm font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
-            />
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className="animate-in fade-in bg-md-sys-color-on-surface/20 fixed inset-0 z-50 flex justify-end backdrop-blur-sm transition-opacity"
+      onClick={onClose}
+      onKeyDown={handleBackdropKeyDown}
+      aria-label="Close filters"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="filter-drawer-title"
+        className="animate-in slide-in-from-right flex h-full w-full max-w-xs flex-col bg-md-sys-color-surface shadow-md-3 duration-300"
+      >
+        <div
+          className="flex h-full flex-col"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          role="presentation"
+        >
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
+            <h2
+              id="filter-drawer-title"
+              className="font-display text-xl font-bold text-md-sys-color-on-surface"
+            >
+              Sort & Filter
+            </h2>
+            <button
+              onClick={onClose}
+              className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-md-sys-color-on-surface" />
+            </button>
           </div>
 
-          {/* Sort */}
-          <FilterSection title="Sort By">
-            <div className="grid grid-cols-1 gap-2">
-              {[
-                { id: 'protein', label: 'Protein', icon: ChefHat },
-                { id: 'mealType', label: 'Meal Type', icon: Star },
-                { id: 'dishType', label: 'Dish Type', icon: Star },
-                { id: 'alpha', label: 'Alphabetical', icon: ArrowDownAZ },
-                { id: 'recent', label: 'Most Recent', icon: Calendar },
-                { id: 'time', label: 'Shortest Time', icon: Clock },
-                { id: 'rating', label: 'Highest Rated', icon: Star },
-              ].map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => setSort(opt.id)}
-                  className={`flex items-center gap-2 rounded-md-s border px-3 py-2 text-sm font-medium transition-all ${
-                    sort === opt.id
-                      ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
-                      : 'bg-md-sys-color-surface-variant/40 hover:bg-md-sys-color-surface-variant/60 border-transparent text-md-sys-color-on-surface-variant'
-                  }`}
-                >
-                  <opt.icon className="h-4 w-4" />
-                  {opt.label}
-                </button>
-              ))}
+          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-md-sys-color-on-surface-variant" />
+              <input
+                type="text"
+                placeholder="Search recipes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 pl-9 pr-3 text-sm font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+              />
             </div>
-          </FilterSection>
 
-          {/* Special Filters */}
-          <FilterSection title="Show">
-            <FilterChip
-              label="Favorites Only"
-              active={filters.onlyFavorites}
-              onClick={() =>
-                setFilters((prev) => ({ ...prev, onlyFavorites: !prev.onlyFavorites }))
-              }
-            />
-          </FilterSection>
+            {/* Sort */}
+            <FilterSection title="Sort By">
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { id: 'protein', label: 'Protein', icon: ChefHat },
+                  { id: 'mealType', label: 'Meal Type', icon: Star },
+                  { id: 'dishType', label: 'Dish Type', icon: Star },
+                  { id: 'alpha', label: 'Alphabetical', icon: ArrowDownAZ },
+                  { id: 'recent', label: 'Most Recent', icon: Calendar },
+                  { id: 'time', label: 'Shortest Time', icon: Clock },
+                  { id: 'rating', label: 'Highest Rated', icon: Star },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSort(opt.id)}
+                    className={`flex items-center gap-2 rounded-md-s border px-3 py-2 text-sm font-medium transition-all ${
+                      sort === opt.id
+                        ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
+                        : 'bg-md-sys-color-surface-variant/40 hover:bg-md-sys-color-surface-variant/60 border-transparent text-md-sys-color-on-surface-variant'
+                    }`}
+                  >
+                    <opt.icon className="h-4 w-4" />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </FilterSection>
 
-          {/* Meal Type */}
-          <FilterSection title="Meal Type">
-            {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
+            {/* Special Filters */}
+            <FilterSection title="Show">
               <FilterChip
-                key={t}
-                label={t}
-                active={filters.mealType?.includes(t)}
-                onClick={() => handleFilterToggle('mealType', t)}
+                label="Favorites Only"
+                active={filters.onlyFavorites}
+                onClick={() =>
+                  setFilters((prev) => ({ ...prev, onlyFavorites: !prev.onlyFavorites }))
+                }
               />
-            ))}
-          </FilterSection>
+            </FilterSection>
 
-          {/* Dish Type */}
-          <FilterSection title="Dish Type">
-            {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
-              <FilterChip
-                key={t}
-                label={t}
-                active={filters.dishType?.includes(t)}
-                onClick={() => handleFilterToggle('dishType', t)}
-              />
-            ))}
-          </FilterSection>
-
-          {/* Protein */}
-          <FilterSection title="Protein">
-            {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
-              (p) => (
+            {/* Meal Type */}
+            <FilterSection title="Meal Type">
+              {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
                 <FilterChip
-                  key={p}
-                  label={p}
-                  active={filters.protein?.includes(p)}
-                  onClick={() => handleFilterToggle('protein', p)}
+                  key={t}
+                  label={t}
+                  active={filters.mealType?.includes(t)}
+                  onClick={() => handleFilterToggle('mealType', t)}
                 />
-              ),
-            )}
-          </FilterSection>
+              ))}
+            </FilterSection>
 
-          {/* Dietary */}
-          <FilterSection title="Dietary">
-            {['Vegan', 'Vegetarian', 'Gluten-Free', 'Keto', 'Paleo', 'Dairy-Free', 'Low-Carb'].map(
-              (d) => (
+            {/* Dish Type */}
+            <FilterSection title="Dish Type">
+              {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
+                <FilterChip
+                  key={t}
+                  label={t}
+                  active={filters.dishType?.includes(t)}
+                  onClick={() => handleFilterToggle('dishType', t)}
+                />
+              ))}
+            </FilterSection>
+
+            {/* Protein */}
+            <FilterSection title="Protein">
+              {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
+                (p) => (
+                  <FilterChip
+                    key={p}
+                    label={p}
+                    active={filters.protein?.includes(p)}
+                    onClick={() => handleFilterToggle('protein', p)}
+                  />
+                ),
+              )}
+            </FilterSection>
+
+            {/* Dietary */}
+            <FilterSection title="Dietary">
+              {[
+                'Vegan',
+                'Vegetarian',
+                'Gluten-Free',
+                'Keto',
+                'Paleo',
+                'Dairy-Free',
+                'Low-Carb',
+              ].map((d) => (
                 <FilterChip
                   key={d}
                   label={d}
                   active={filters.dietary?.includes(d)}
                   onClick={() => handleFilterToggle('dietary', d)}
                 />
-              ),
-            )}
-          </FilterSection>
+              ))}
+            </FilterSection>
 
-          {/* Equipment */}
-          <FilterSection title="Equipment">
-            {['Air Fryer', 'Slow Cooker', 'Instant Pot', 'Blender', 'Sheet Pan', 'Grill'].map(
-              (e) => (
+            {/* Equipment */}
+            <FilterSection title="Equipment">
+              {['Air Fryer', 'Slow Cooker', 'Instant Pot', 'Blender', 'Sheet Pan', 'Grill'].map(
+                (e) => (
+                  <FilterChip
+                    key={e}
+                    label={e}
+                    active={filters.equipment?.includes(e)}
+                    onClick={() => handleFilterToggle('equipment', e)}
+                  />
+                ),
+              )}
+            </FilterSection>
+
+            {/* Occasion */}
+            <FilterSection title="Occasion">
+              {['Weeknight', 'Party', 'Holiday', 'Date Night', 'Kid-Friendly', 'Quick'].map((o) => (
                 <FilterChip
-                  key={e}
-                  label={e}
-                  active={filters.equipment?.includes(e)}
-                  onClick={() => handleFilterToggle('equipment', e)}
+                  key={o}
+                  label={o}
+                  active={filters.occasion?.includes(o)}
+                  onClick={() => handleFilterToggle('occasion', o)}
                 />
-              ),
-            )}
-          </FilterSection>
+              ))}
+            </FilterSection>
 
-          {/* Occasion */}
-          <FilterSection title="Occasion">
-            {['Weeknight', 'Party', 'Holiday', 'Date Night', 'Kid-Friendly', 'Quick'].map((o) => (
-              <FilterChip
-                key={o}
-                label={o}
-                active={filters.occasion?.includes(o)}
-                onClick={() => handleFilterToggle('occasion', o)}
-              />
-            ))}
-          </FilterSection>
+            {/* Difficulty */}
+            <FilterSection title="Difficulty">
+              {['Easy', 'Medium', 'Hard'].map((diff) => (
+                <FilterChip
+                  key={diff}
+                  label={diff}
+                  active={filters.difficulty?.includes(diff)}
+                  onClick={() => handleFilterToggle('difficulty', diff)}
+                />
+              ))}
+            </FilterSection>
 
-          {/* Difficulty */}
-          <FilterSection title="Difficulty">
-            {['Easy', 'Medium', 'Hard'].map((diff) => (
-              <FilterChip
-                key={diff}
-                label={diff}
-                active={filters.difficulty?.includes(diff)}
-                onClick={() => handleFilterToggle('difficulty', diff)}
-              />
-            ))}
-          </FilterSection>
+            {/* Cuisine - Hardcoded common ones for now, could be dynamic */}
+            <FilterSection title="Cuisine">
+              {['Italian', 'Mexican', 'Asian', 'American', 'Mediterranean', 'Vegetarian'].map(
+                (c) => (
+                  <FilterChip
+                    key={c}
+                    label={c}
+                    active={filters.cuisine?.includes(c)}
+                    onClick={() => handleFilterToggle('cuisine', c)}
+                  />
+                ),
+              )}
+            </FilterSection>
 
-          {/* Cuisine - Hardcoded common ones for now, could be dynamic */}
-          <FilterSection title="Cuisine">
-            {['Italian', 'Mexican', 'Asian', 'American', 'Mediterranean', 'Vegetarian'].map((c) => (
-              <FilterChip
-                key={c}
-                label={c}
-                active={filters.cuisine?.includes(c)}
-                onClick={() => handleFilterToggle('cuisine', c)}
-              />
-            ))}
-          </FilterSection>
+            <div className="pt-8 text-center text-xs text-md-sys-color-on-surface-variant">
+              <button
+                onClick={() => {
+                  setFilters({})
+                  setSort('protein')
+                  setSearchQuery('')
+                }}
+                className="underline hover:text-md-sys-color-primary"
+              >
+                Reset all filters
+              </button>
+            </div>
+          </div>
 
-          <div className="pt-8 text-center text-xs text-md-sys-color-on-surface-variant">
+          {/* Footer with Apply Button */}
+          <div className="border-t border-md-sys-color-outline bg-md-sys-color-surface p-4">
             <button
-              onClick={() => {
-                setFilters({})
-                setSort('protein')
-                setSearchQuery('')
-              }}
-              className="underline hover:text-md-sys-color-primary"
+              onClick={onClose}
+              className="hover:bg-md-sys-color-primary/90 w-full rounded-full bg-md-sys-color-primary px-4 py-3 text-sm font-bold text-md-sys-color-on-primary shadow-md transition-all hover:shadow-lg focus:ring-2 focus:ring-md-sys-color-primary focus:ring-offset-2"
             >
-              Reset all filters
+              Show Recipes
             </button>
           </div>
         </div>

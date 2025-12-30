@@ -14,7 +14,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Data Control**: Export/Import your data and manage bulk deletions.
 - **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor. Use AI-powered photo/URL import or manually enter recipe details—all from one streamlined interface.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
-- **Shared Family Collection**: All recipes are stored in Cloudflare D1 (SQL) and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
+- **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure dashboard protected by Google Sign-In authentication. Only authenticated users can access the recipe collection.
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to parse messy ingredients and deterministic logic to merge quantities and organize by aisle.
@@ -22,7 +22,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
 - **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu. Captured reports include screenshots (saved to R2), console logs, and application state.
-- **Feedback Dashboard**: An integrated management interface (restricted to `Emilio`) to review, track, and resolve user feedback reports directly in the app.
+- **Feedback Dashboard**: An integrated management interface (restricted to admins via `ADMIN_EMAILS`) to review, track, and resolve user feedback reports directly in the app.
 
 ## 🛠 Tech Stack
 
@@ -30,7 +30,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
 - **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library)
-- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) + [D1](https://developers.cloudflare.com/d1/) (SQL) + [R2](https://developers.cloudflare.com/r2/) (Images) + [KV](https://developers.cloudflare.com/kv/) (Sessions)
+- **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) (Host) + [Firebase Firestore](https://firebase.google.com/docs/firestore) (Data) + [Firebase Storage](https://firebase.google.com/docs/storage) (Images)
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
 - **Testing**: [Vitest](https://vitest.dev/) (Unit) + [Playwright](https://playwright.dev/) (E2E) + [Stryker](https://stryker-mutator.io/) (Mutation)
 
@@ -327,7 +327,7 @@ src/
 │ ├── firebase-server.ts # Firebase service initialization
 │ ├── firebase-rest.ts # Firebase REST API client
 │ ├── grocery-logic.ts # Deterministic grocery merging
-│ └── api-utils.js # API helper functions
+│ └── api-utils.ts # API helper functions
 ├── pages/
 │ ├── index.astro # Main recipe app page
 │ └── api/
