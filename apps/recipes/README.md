@@ -12,7 +12,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Rich Metadata Tagging**: Organize recipes by Meal Type (Breakfast, Dinner, etc.), Dish Type (Main, Side, etc.), Dietary restrictions (Vegan, Keto), required Equipment (Air Fryer, Slow Cooker), and Occasion (Weeknight, Party).
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
-- **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor. Use AI-powered photo/URL import or manually enter recipe details—all from one streamlined interface.
+- **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor. Use AI-powered photo/URL import, **bulk upload markdown files**, or manually enter recipe details—all from one streamlined interface.
 - **Smart Grocery Lists**: Generate categorized grocery lists from your saved recipes with a single click.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure dashboard protected by Google Sign-In authentication. Only authenticated users can access the recipe collection.

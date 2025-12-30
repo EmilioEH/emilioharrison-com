@@ -1,7 +1,7 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
 
-import { X, Settings, MessageSquare, Info, LayoutDashboard } from 'lucide-react'
+import { X, Settings, MessageSquare, Info, LayoutDashboard, FolderUp } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
 
@@ -16,6 +16,11 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
     closeBurgerMenu()
     // Navigate to settings - dispatch custom event that RecipeManager listens to
     window.dispatchEvent(new CustomEvent('navigate-to-settings'))
+  }
+
+  const handleBulkImport = () => {
+    closeBurgerMenu()
+    window.dispatchEvent(new CustomEvent('navigate-to-bulk-import'))
   }
 
   const handleFeedback = () => {
@@ -65,6 +70,15 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
 
             {/* Menu Items */}
             <div className="p-2" role="menu">
+              <button
+                role="menuitem"
+                onClick={handleBulkImport}
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <FolderUp className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Import Recipes</span>
+              </button>
+
               <button
                 role="menuitem"
                 onClick={handleSettings}

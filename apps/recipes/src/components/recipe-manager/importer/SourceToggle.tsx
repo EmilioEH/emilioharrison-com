@@ -14,7 +14,7 @@ export const SourceToggle: React.FC<SourceToggleProps> = ({ mode, setMode }) => 
       className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
         mode === 'photo'
           ? 'bg-primary text-primary-foreground'
-          : 'hover:bg-primary/[0.08] text-foreground-variant'
+          : 'text-foreground-variant hover:bg-primary/[0.08]'
       }`}
       onClick={() => setMode('photo')}
     >
@@ -26,7 +26,7 @@ export const SourceToggle: React.FC<SourceToggleProps> = ({ mode, setMode }) => 
       className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
         mode === 'url'
           ? 'bg-primary text-primary-foreground'
-          : 'hover:bg-primary/[0.08] text-foreground-variant'
+          : 'text-foreground-variant hover:bg-primary/[0.08]'
       }`}
       onClick={() => setMode('url')}
     >

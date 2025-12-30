@@ -35,6 +35,27 @@ Rules:
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 `
 
+const TEXT_SYSTEM_PROMPT = `
+You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided text content (Markdown or Plain Text).
+
+Return a strict JSON object matching the provided schema.
+
+Rules:
+1. Parse the text content to identify the recipe title, ingredients, and instructions.
+2. Use reasonable defaults if data is missing (e.g. 2 servings).
+3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+5. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+6. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
+7. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
+8. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
+9. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+   - 'amount' (number)
+   - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
+   - 'name' (ingredient name without unit)
+   - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+`
+
 const URL_SYSTEM_PROMPT = `
 You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided webpage content (HTML).
 
@@ -121,9 +142,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const { url, image } = await request.json()
+    const { url, image, text } = await request.json()
 
-    if (!url && !image) {
+    if (!url && !image && !text) {
       return new Response(JSON.stringify({ error: 'No input provided' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -131,11 +152,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Process input and get content for AI
-    const { prompt, contentPart, sourceInfo } = url
-      ? await processUrlInput(url)
-      : processImageInput(image)
+    let processedInput: ProcessedInput
+    if (url) {
+      processedInput = await processUrlInput(url)
+    } else if (text) {
+      processedInput = processTextInput(text, image)
+    } else {
+      processedInput = processImageInput(image)
+    }
+
+    const { prompt, contentPart, sourceInfo } = processedInput
 
     const schema = createRecipeSchema()
+
+    const parts = [{ text: prompt }, contentPart]
+
+    // If text input has an accompanying image, add it to the parts
+    if (sourceInfo.image && text) {
+      // Re-process image to get inlineData
+      const imgPart = processImageInput(sourceInfo.image).contentPart
+      parts.push(imgPart)
+    }
 
     const response = await client.models.generateContent({
       model: 'gemini-2.0-flash',
@@ -143,12 +180,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         responseMimeType: 'application/json',
         responseSchema: schema,
       },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }, contentPart],
-        },
-      ],
+      contents: [{ role: 'user', parts }],
     })
 
     const resultText = response.text
@@ -216,6 +248,14 @@ async function processUrlInput(url: string): Promise<ProcessedInput> {
     prompt: URL_SYSTEM_PROMPT,
     contentPart: { text: `Source URL: ${url}\n\nHTML Content:\n${html}` },
     sourceInfo: { url },
+  }
+}
+
+function processTextInput(text: string, image?: string): ProcessedInput {
+  return {
+    prompt: TEXT_SYSTEM_PROMPT,
+    contentPart: { text: `Recipe Text Content:\n${text}` },
+    sourceInfo: { image },
   }
 }
 

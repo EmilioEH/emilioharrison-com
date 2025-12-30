@@ -10,6 +10,7 @@ import FeedbackDashboard from './FeedbackDashboard'
 import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './BulkEditModal'
+import { BulkRecipeImporter } from './BulkRecipeImporter'
 import type { Recipe } from '../../lib/types'
 
 // --- Hooks ---
@@ -34,6 +35,7 @@ export type ViewMode =
   | 'week'
   | 'settings'
   | 'feedback-dashboard'
+  | 'bulk-import'
 
 interface ProteinWarning {
   protein: string
@@ -89,9 +91,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   useEffect(() => {
     const handleNavigateToSettings = () => setView('settings')
     const handleNavigateToFeedbackDashboard = () => setView('feedback-dashboard')
+    const handleNavigateToBulkImport = () => setView('bulk-import')
 
     window.addEventListener('navigate-to-settings', handleNavigateToSettings)
     window.addEventListener('navigate-to-feedback-dashboard', handleNavigateToFeedbackDashboard)
+    window.addEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
 
     return () => {
       window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
@@ -99,6 +103,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         'navigate-to-feedback-dashboard',
         handleNavigateToFeedbackDashboard,
       )
+      window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
     }
   }, [])
 
@@ -244,6 +249,33 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     }
   }
 
+  const handleBulkImportSave = async (recipes: Recipe[]) => {
+    try {
+      await Promise.all(
+        recipes.map(async (r) => {
+          const now = new Date().toISOString()
+          const fullRecipe = {
+            ...r,
+            createdAt: now,
+            updatedAt: now,
+            versionHistory: [{ date: now, changeType: 'create' as const }],
+            // Ensure defaults
+            rating: 0,
+            isFavorite: false,
+          }
+          // Cast to generic recipe to avoid Partial mismatch if any
+          await saveRecipe(fullRecipe as unknown as Partial<Recipe>)
+        }),
+      )
+      refreshRecipes()
+      alert(`Successfully imported ${recipes.length} recipes!`)
+      setView('library')
+    } catch (e) {
+      console.error(e)
+      alert('Failed to save some recipes.')
+    }
+  }
+
   // --- RENDER ---
   if (loading) {
     return (
@@ -277,6 +309,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         onExport={handleExport}
         onImport={handleImport}
         onDeleteAccount={handleDeleteAll}
+      />
+    )
+  }
+
+  if (view === 'bulk-import') {
+    return (
+      <BulkRecipeImporter
+        onClose={() => setView('library')}
+        onRecipesParsed={handleBulkImportSave}
       />
     )
   }
