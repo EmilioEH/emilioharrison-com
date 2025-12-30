@@ -3,12 +3,12 @@ import { test, expect } from '@playwright/test'
 test('header layout and burger menu integration', async ({ page, context }) => {
   // Set auth cookies to bypass middleware
   await context.addCookies([
-    { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
-    { name: 'site_user', value: 'TestUser', domain: 'localhost', path: '/' },
-    { name: 'site_email', value: 'test@example.com', domain: 'localhost', path: '/' },
+    { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+    { name: 'site_user', value: 'TestUser', domain: '127.0.0.1', path: '/' },
+    { name: 'site_email', value: 'test@example.com', domain: '127.0.0.1', path: '/' },
   ])
 
-  await page.goto('http://localhost:4321/protected/recipes')
+  await page.goto('/protected/recipes')
 
   // 1. Verify Header Title
   await expect(page.getByText('CHEFBOARD')).toBeVisible()

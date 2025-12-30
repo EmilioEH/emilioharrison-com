@@ -33,7 +33,13 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            title="More Options"
+            aria-label="More Options"
+          >
             <MoreHorizontal className="h-6 w-6" />
           </Button>
         </DropdownMenuTrigger>

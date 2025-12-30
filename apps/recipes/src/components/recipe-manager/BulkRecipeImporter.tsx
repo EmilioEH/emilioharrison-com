@@ -156,30 +156,55 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
             </p>
           </div>
 
-          <div className="hover:bg-card-variant/50 rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors">
-            <input
-              type="file"
-              id="bulk-file-upload"
-              className="hidden"
-              onChange={handleFileChange}
-              multiple
-              // @ts-expect-error - webkitdirectory is not standard but supported
-              webkitdirectory=""
-            />
-            <label
-              htmlFor="bulk-file-upload"
-              className="flex cursor-pointer flex-col items-center gap-3"
-            >
-              <div className="bg-secondary-container text-on-secondary-container rounded-full p-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Folder Upload (Desktop/Organized) */}
+            <div className="hover:bg-card-variant/50 relative flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors">
+              <input
+                type="file"
+                id="bulk-folder-upload"
+                className="hidden"
+                onChange={handleFileChange}
+                multiple
+                // @ts-expect-error - webkitdirectory is not standard but supported
+                webkitdirectory=""
+              />
+              <label htmlFor="bulk-folder-upload" className="absolute inset-0 cursor-pointer">
+                <span className="sr-only">Upload Folder</span>
+              </label>
+              <div className="bg-secondary-container text-on-secondary-container rounded-full p-3">
+                <FolderUp className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="mb-1 block font-bold text-foreground">Upload Folder</span>
+                <span className="text-foreground-variant block text-xs">
+                  Best for Desktop. Keeps images linked.
+                </span>
+              </div>
+            </div>
+
+            {/* File Upload (Mobile/Drive) */}
+            <div className="hover:bg-card-variant/50 relative flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors">
+              <input
+                type="file"
+                id="bulk-file-upload"
+                className="hidden"
+                onChange={handleFileChange}
+                multiple
+                accept=".md,.markdown,image/*"
+              />
+              <label htmlFor="bulk-file-upload" className="absolute inset-0 cursor-pointer">
+                <span className="sr-only">Select Files</span>
+              </label>
+              <div className="bg-tertiary-container text-on-tertiary-container rounded-full p-3">
                 <FileText className="h-6 w-6" />
               </div>
               <div>
-                <span className="mb-1 block font-bold text-foreground">Select Files or Folder</span>
-                <span className="text-foreground-variant block text-sm">
-                  Supported: .md, .markdown
+                <span className="mb-1 block font-bold text-foreground">Select Files</span>
+                <span className="text-foreground-variant block text-xs">
+                  For Google Drive, iCloud, & Mobile.
                 </span>
               </div>
-            </label>
+            </div>
           </div>
 
           {selectedFiles.length > 0 && (

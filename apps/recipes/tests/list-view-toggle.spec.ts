@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('toggle between grid and list view', async ({ page }) => {
   // 1. Navigate to the app
-  await page.goto('http://localhost:4321/protected/recipes')
+  await page.goto('/protected/recipes')
 
   // 2. Wait for the library to load (check for more than 0 elements)
   await expect(page.getByTestId(/^recipe-card-/).first()).toBeVisible({ timeout: 10000 })

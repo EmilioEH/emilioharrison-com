@@ -80,7 +80,7 @@ test.describe('Feedback System', () => {
   // Helper to open feedback modal regardless of viewport
   const openFeedback = async (page: Page) => {
     // First open the burger menu (global menu icon in top-right)
-    const menuBtn = page.getByRole('button', { name: 'Open Menu' })
+    const menuBtn = page.getByRole('button', { name: 'Menu' })
     await expect(menuBtn).toBeVisible()
     await menuBtn.click()
 
