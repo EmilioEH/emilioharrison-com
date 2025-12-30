@@ -8,24 +8,15 @@ interface GroceryListProps {
   isLoading?: boolean
   onClose: () => void
   recipes?: Recipe[]
+  onOpenRecipe?: (recipe: Recipe) => void
 }
-
-const RECIPE_COLORS = [
-  'bg-red-500',
-  'bg-blue-500',
-  'bg-green-500',
-  'bg-yellow-500',
-  'bg-purple-500',
-  'bg-pink-500',
-  'bg-indigo-500',
-  'bg-orange-500',
-]
 
 export const GroceryList: React.FC<GroceryListProps> = ({
   ingredients,
   isLoading,
   onClose,
   recipes = [],
+  onOpenRecipe,
 }) => {
   // 1. Merge & Categorize (Memoized)
   const categorizedList = useMemo(() => {
@@ -157,23 +148,21 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
       {/* Recipe Sources Header */}
       {!isLoading && recipes.length > 0 && (
-        <div className="bg-card-container border-b border-border px-6 py-3">
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="bg-card-container border-b border-border px-6 py-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Shopping for {recipes.length} Recipes
           </p>
-          <div className="flex flex-wrap gap-2">
-            {recipes.map((recipe, index) => {
-              const colorClass = RECIPE_COLORS[index % RECIPE_COLORS.length]
-              return (
-                <div
-                  key={recipe.id}
-                  className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-xs font-medium shadow-sm"
-                >
-                  <div className={`h-2 w-2 rounded-full ${colorClass}`} />
-                  <span className="max-w-[150px] truncate">{recipe.title}</span>
-                </div>
-              )
-            })}
+          <div className="flex flex-col gap-2">
+            {recipes.map((recipe) => (
+              <button
+                key={recipe.id}
+                onClick={() => onOpenRecipe?.(recipe)}
+                className="flex w-full items-center justify-between text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
+              >
+                <span>{recipe.title}</span>
+                <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -225,22 +214,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               {item.unit !== 'unit' ? item.unit : ''}
                             </span>
                             <span className="font-medium capitalize">{item.name}</span>
-                          </div>
-
-                          {/* Source Indicators */}
-                          <div className="flex -space-x-1">
-                            {item.sourceRecipeIds?.map((id) => {
-                              const recipeIndex = recipes.findIndex((r) => r.id === id)
-                              if (recipeIndex === -1) return null
-                              const colorClass = RECIPE_COLORS[recipeIndex % RECIPE_COLORS.length]
-                              return (
-                                <div
-                                  key={id}
-                                  className={`h-2 w-2 rounded-full ring-1 ring-card ${colorClass}`}
-                                  title={recipes[recipeIndex].title}
-                                />
-                              )
-                            })}
                           </div>
                         </div>
                       </button>

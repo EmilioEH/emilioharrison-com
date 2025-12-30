@@ -426,6 +426,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               isLoading={isGenerating}
               onClose={() => setView('library')}
               recipes={targetRecipes}
+              onOpenRecipe={(recipe) => {
+                setSelectedRecipe(recipe)
+                setView('detail')
+              }}
             />
           )}
         </main>
