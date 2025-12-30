@@ -399,7 +399,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
       {/* Primary Floating Action Button - Lifted for Bottom Bar */}
       {(view === 'library' || view === 'week') && !isSelectionMode && (
-        <div className="fixed bottom-36 right-4 z-40 transition-all duration-300">
+        <div className="fixed bottom-36 right-4 z-[60] transition-all duration-300">
           <Fab
             icon={Plus}
             label="Add Recipe"

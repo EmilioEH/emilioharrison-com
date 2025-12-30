@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Loader2, ChefHat } from 'lucide-react'
-import { Button } from '../ui/button'
+import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
 import { processImage } from '../../lib/image-optimization'
 import { SourceToggle, type InputMode } from './importer/SourceToggle'
@@ -113,7 +113,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
           <div className="space-y-2">
             <label
               htmlFor="url-input"
-              className="text-sm font-medium uppercase tracking-wider text-foreground-variant"
+              className="text-foreground-variant text-sm font-medium uppercase tracking-wider"
             >
               Paste Recipe Link
             </label>
@@ -125,14 +125,14 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               placeholder="https://cooking.nytimes.com/..."
               className="bg-card-variant/20 w-full rounded-lg border border-border p-4 font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary"
             />
-            <p className="text-xs text-foreground-variant">
+            <p className="text-foreground-variant text-xs">
               We&apos;ll scrape the ingredients and instructions for you.
             </p>
           </div>
         )}
 
         {errorMsg && (
-          <div className="animate-in shake rounded-sm border border-md-sys-color-error bg-md-sys-color-error-container p-4 text-sm font-medium text-md-sys-color-on-error-container">
+          <div className="shake border-md-sys-color-error bg-md-sys-color-error-container text-md-sys-color-on-error-container rounded-sm border p-4 text-sm font-medium animate-in">
             {errorMsg}
           </div>
         )}

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Camera, Trash2, Upload } from 'lucide-react'
-import { Button } from '../../ui/button'
+import { Button } from '@/components/ui/button'
 
 interface PhotoUploaderProps {
   imagePreview: string | null
@@ -20,14 +20,10 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   >
     {imagePreview ? (
       <div className="relative h-full w-full">
-        <img
-          src={imagePreview}
-          className="h-full w-full rounded-xl object-cover"
-          alt="Preview"
-        />
+        <img src={imagePreview} className="h-full w-full rounded-xl object-cover" alt="Preview" />
         <button
           onClick={onRemove}
-          className="bg-card/90 absolute right-2 top-2 rounded-full p-2 shadow-sm hover:text-md-sys-color-error"
+          className="hover:text-md-sys-color-error absolute right-2 top-2 rounded-full bg-card/90 p-2 shadow-sm"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -35,11 +31,9 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     ) : (
       <div className="flex w-full flex-col items-center gap-4 p-6">
         <div className="mb-2 rounded-full bg-card p-4 shadow-sm">
-          <Upload className="h-8 w-8 text-foreground-variant" />
+          <Upload className="text-foreground-variant h-8 w-8" />
         </div>
-        <p className="text-sm font-medium text-foreground-variant">
-          Add a photo of your dish
-        </p>
+        <p className="text-foreground-variant text-sm font-medium">Add a photo of your dish</p>
 
         <div className="flex w-full gap-3">
           <div className="relative flex-1">
