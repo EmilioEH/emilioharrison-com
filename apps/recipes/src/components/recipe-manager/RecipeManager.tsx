@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Plus, ChefHat, Loader2, Calendar, ArrowLeft } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Loader2, ArrowLeft } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Fab } from '../ui/Fab'
 import { VarietyWarning } from './VarietyWarning'
 
@@ -24,10 +23,10 @@ import { useRecipeActions } from './hooks/useRecipeActions'
 import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
-import { LibraryToolbar } from './LibraryToolbar'
+import { BottomControls } from './BottomControls'
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
-type ViewMode =
+export type ViewMode =
   | 'library'
   | 'detail'
   | 'edit'
@@ -51,10 +50,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   const [view, setView] = useState<ViewMode>('library')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
-
-  // Scroll tracking state
-  const [isScrolled, setIsScrolled] = useState(false)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Hooks
   const {
@@ -106,12 +101,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       )
     }
   }, [])
-
-  // Handle Scroll Logic
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = e.currentTarget.scrollTop
-    setIsScrolled(scrollTop > 20)
-  }
 
   const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
     const { success } = await saveRecipe(recipe)
@@ -338,62 +327,13 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           onDeleteSelection={handleBulkDelete}
           onBulkEdit={() => setShowBulkEdit(true)}
           user={user}
-          isScrolled={isScrolled}
         />
 
-        {/* Sticky Context Bar (Tabs & Toolbar) */}
-        {(view === 'library' || view === 'week') && (
-          <div className="sticky top-[64px] z-40 flex flex-col bg-card shadow-sm transition-all duration-300">
-            <div className="px-4 pb-2 pt-2">
-              <Tabs
-                value={view === 'week' ? 'week' : 'library'}
-                onValueChange={(v) => setView(v as ViewMode)}
-                className="w-full"
-              >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="library">
-                    <ChefHat className="mr-2 h-4 w-4" />
-                    Library
-                    <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
-                      {recipes.length}
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger value="week">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    This Week
-                    <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
-                      {recipes.filter((r) => r.thisWeek).length}
-                    </span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+        {/* Sticky Context Bar (Tabs & Toolbar) - REMOVED, replaced by BottomControls */}
 
-            <LibraryToolbar
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              sort={sort}
-              setSort={setSort}
-              onOpenFilters={() => setFiltersOpen(true)}
-              activeFilterCount={
-                (filters.protein?.length || 0) +
-                (filters.difficulty?.length || 0) +
-                (filters.cuisine?.length || 0) +
-                (filters.onlyFavorites ? 1 : 0)
-              }
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-            />
-          </div>
-        )}
-
-        <main
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="relative flex-1 overflow-y-auto scroll-smooth"
-        >
+        <main className="relative flex-1 overflow-y-auto scroll-smooth">
           {(view === 'library' || view === 'week') && (
-            <div className="flex h-full flex-col">
+            <div className="flex h-full flex-col pb-32">
               <div className="scrollbar-hide flex-1">
                 {!isSelectionMode && view === 'library' && recipes.length > 0 && (
                   <div className="flex justify-end px-4 pt-2">
@@ -457,15 +397,18 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         />
       )}
       {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
+      {/* Primary Floating Action Button - Lifted for Bottom Bar */}
       {(view === 'library' || view === 'week') && !isSelectionMode && (
-        <Fab
-          icon={Plus}
-          label="Add Recipe"
-          onClick={() => {
-            setSelectedRecipe(null)
-            setView('edit')
-          }}
-        />
+        <div className="fixed bottom-36 right-4 z-40 transition-all duration-300">
+          <Fab
+            icon={Plus}
+            label="Add Recipe"
+            onClick={() => {
+              setSelectedRecipe(null)
+              setView('edit')
+            }}
+          />
+        </div>
       )}
 
       {/* Edit/Add Recipe Modal */}
@@ -481,6 +424,27 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           onDelete={handleDeleteRecipe}
         />
       </ResponsiveModal>
+
+      {/* Sticky Bottom Controls */}
+      {(view === 'library' || view === 'week') && (
+        <BottomControls
+          view={view}
+          setView={(v) => setView(v)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          onOpenFilters={() => setFiltersOpen(true)}
+          activeFilterCount={
+            (filters.protein?.length || 0) +
+            (filters.difficulty?.length || 0) +
+            (filters.cuisine?.length || 0) +
+            (filters.onlyFavorites ? 1 : 0)
+          }
+          recipeCount={recipes.length}
+          weekCount={recipes.filter((r) => r.thisWeek).length}
+        />
+      )}
     </>
   )
 }

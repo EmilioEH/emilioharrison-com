@@ -1,7 +1,8 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
-import { Menu, X, Settings, MessageSquare, Info, LayoutDashboard } from 'lucide-react'
-import { burgerMenuOpen, closeBurgerMenu, openBurgerMenu } from '../../lib/burgerMenuStore'
+
+import { X, Settings, MessageSquare, Info, LayoutDashboard } from 'lucide-react'
+import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
 
 interface GlobalBurgerMenuProps {
@@ -29,14 +30,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
 
   return (
     <>
-      {/* Floating Trigger Button - Always visible in top-right corner */}
-      <button
-        onClick={openBurgerMenu}
-        className="fixed right-4 top-4 z-[60] rounded-full bg-card p-3 shadow-md transition-all hover:bg-card-variant"
-        aria-label="Open Menu"
-      >
-        <Menu className="h-6 w-6 text-foreground" />
-      </button>
+      {/* Floating Trigger Button Removed - Integration moved to RecipeHeader */}
 
       {/* Overlay + Drawer */}
       {isOpen && (
@@ -46,7 +40,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
             role="button"
             tabIndex={0}
             aria-label="Close menu"
-            className="animate-in fade-in absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in"
             onClick={closeBurgerMenu}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -56,15 +50,13 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
           />
 
           {/* Drawer - slides in from right */}
-          <div className="animate-in slide-in-from-right relative h-full w-72 max-w-[85vw] bg-card shadow-md-3 duration-200">
+          <div className="shadow-md-3 relative h-full w-72 max-w-[85vw] bg-card duration-200 animate-in slide-in-from-right">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
-              <span className="font-display text-lg font-bold text-foreground">
-                Menu
-              </span>
+              <span className="font-display text-lg font-bold text-foreground">Menu</span>
               <button
                 onClick={closeBurgerMenu}
-                className="rounded-full p-2 hover:bg-card-variant"
+                className="hover:bg-card-variant rounded-full p-2"
                 aria-label="Close Menu"
               >
                 <X className="h-5 w-5 text-foreground" />
@@ -76,9 +68,9 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleSettings}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-card-variant"
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <Settings className="h-5 w-5 text-foreground-variant" />
+                <Settings className="text-foreground-variant h-5 w-5" />
                 <span className="font-medium text-foreground">Settings</span>
               </button>
 
@@ -88,29 +80,27 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <button
                   role="menuitem"
                   onClick={handleFeedbackDashboard}
-                  className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-card-variant"
+                  className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                 >
-                  <LayoutDashboard className="h-5 w-5 text-foreground-variant" />
-                  <span className="font-medium text-foreground">
-                    Feedback Dashboard
-                  </span>
+                  <LayoutDashboard className="text-foreground-variant h-5 w-5" />
+                  <span className="font-medium text-foreground">Feedback Dashboard</span>
                 </button>
               )}
 
               <button
                 role="menuitem"
                 onClick={handleFeedback}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-card-variant"
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                 aria-label="Send Feedback"
               >
-                <MessageSquare className="h-5 w-5 text-foreground-variant" />
+                <MessageSquare className="text-foreground-variant h-5 w-5" />
                 <span className="font-medium text-foreground">Send Feedback</span>
               </button>
             </div>
 
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 border-t border-border p-4">
-              <div className="flex items-center gap-2 text-xs text-foreground-variant">
+              <div className="text-foreground-variant flex items-center gap-2 text-xs">
                 <Info className="h-4 w-4" />
                 <span>Chefboard v1.0</span>
               </div>

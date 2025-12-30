@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ChefHat, ChevronDown } from 'lucide-react'
+import { ChefHat, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
@@ -58,26 +58,26 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   }
 
   return (
-    <div className="animate-in fade-in scrollbar-hide h-full overflow-y-auto pb-24">
+    <div className="pb-24 animate-in fade-in">
       {groupedRecipes.sortedKeys.map((key) => (
         <div key={key}>
           {/* Group Header */}
-          <div className="border-border bg-muted/30 border-b">
+          <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-200">
             <button
               onClick={() => toggleGroup(key)}
-              className="hover:bg-muted/50 flex w-full items-center justify-between px-4 py-4 transition-colors"
+              className="flex w-full items-center justify-between px-4 py-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center gap-3">
-                <h3 className="text-foreground font-display text-xl font-bold">
+                <h3 className="font-display text-xl font-bold text-foreground">
                   {getGroupTitle(key)}
                 </h3>
-                <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   {groupedRecipes.groups[key].length}
                 </span>
               </div>
-              <ChevronDown
-                className={`text-muted-foreground h-5 w-5 transition-transform duration-200 ${
-                  openGroups[key] !== false ? 'rotate-180' : ''
+              <ChevronRight
+                className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                  openGroups[key] !== false ? 'rotate-90' : ''
                 }`}
               />
             </button>
@@ -110,11 +110,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                   <button
                     key={recipe.id}
                     onClick={() => onSelectRecipe(recipe)}
-                    className={`hover:bg-accent flex w-full items-center gap-4 rounded-lg p-2 text-left transition ${
+                    className={`flex w-full items-center gap-4 rounded-lg p-2 text-left transition hover:bg-accent ${
                       isSelectionMode && selectedIds?.has(recipe.id) ? 'bg-accent' : ''
                     }`}
                   >
-                    <div className="bg-muted h-12 w-12 shrink-0 overflow-hidden rounded-md">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
                       {recipe.finishedImage || recipe.sourceImage ? (
                         <img
                           src={recipe.finishedImage || recipe.sourceImage}
@@ -122,12 +122,12 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                           alt=""
                         />
                       ) : (
-                        <ChefHat className="text-muted-foreground p-2" />
+                        <ChefHat className="p-2 text-muted-foreground" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-foreground truncate font-medium">{recipe.title}</h4>
-                      <div className="text-muted-foreground text-xs">
+                      <h4 className="truncate font-medium text-foreground">{recipe.title}</h4>
+                      <div className="text-xs text-muted-foreground">
                         {recipe.cookTime + recipe.prepTime}m • {recipe.mealType}
                       </div>
                     </div>

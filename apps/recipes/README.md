@@ -20,8 +20,11 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to parse messy ingredients and deterministic logic to merge quantities and organize by aisle.
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
+- **Unified Navigation**: An integrated app header that houses the primary menu and grocery list actions, providing a clean and focused navigation experience.
+- **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
+- **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
 - **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
-- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu. Captured reports include screenshots (saved to R2), console logs, and application state.
+- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu.
 - **Feedback Dashboard**: An integrated management interface (restricted to admins via `ADMIN_EMAILS`) to review, track, and resolve user feedback reports directly in the app.
 
 ## 🛠 Tech Stack
@@ -43,12 +46,14 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 
 ### Recent Updates (Dec 2025)
 
+- **Mobile Navigation Overhaul**: Implemented a unified `BottomControls` component. Centralized search, week/library tabs, and grid/list view toggles into an ergonomic, floating bar at the bottom of the screen.
+- **Collapsible Library Headers**: Redesigned `RecipeLibrary` with interactive group headers that stick to the top and allow users to collapse/expand specific recipe categories.
 - **Admin Bulk Actions**: Administrators can now perform bulk deletions and status updates (Fixed/Open/Ignore) on the Feedback Dashboard.
 - **Shadcn/UI Migration**: Fully migrated the UI stack from a custom M3 token system to shadcn/ui. This includes standardized Buttons, Tabs, Sheets, Badges, and Dropdowns, improving accessibility (Radix UI) and maintainability.
-- **Recipe Library Overhaul**: Removed complex virtualization in `RecipeLibrary` in favor of a clean, responsive CSS Grid. Fixed layout and spacing inconsistencies across the library view.
-- **Clean Architecture**: Removed legacy `tokens.css` and custom `md-sys-*` Tailwind extensions, moving to standard Tailwind utility patterns.
+- **Recipe Library Refactor**: Removed complex virtualization in `RecipeLibrary` in favor of a clean, responsive CSS Grid with built-in list view support.
+- **Clean Architecture**: Removed legacy `tokens.css` and custom `md-sys-*` Tailwind extensions, moving to standard Tailwind utility patterns and shadcn/ui primitives.
 - **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein.
-- **List View**: Added a toggle to switch the Recipe Library between the classic Grid view and a compact List view.
+  , now accessible from the bottom bar.
 
 ### 🤖 Agent Quick Reference
 
@@ -61,8 +66,8 @@ Key entry points for common tasks:
 | **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                |
 | **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI) |
 | **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                       |
-| **Update global UI**       | `src/components/layout/` (Navbar, GlobalBurgerMenu)                                         |
-| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.jsx` & `scripts/resolve-feedback.ts`       |
+| **Update global UI**       | `src/components/layout/` (GlobalBurgerMenu, GlobalFeedback)                                 |
+| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.tsx` & `scripts/resolve-feedback.ts`       |
 | **Add E2E test**           | Create `tests/<feature>.spec.ts` – use existing tests as templates                          |
 | **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                        |
 
@@ -296,8 +301,8 @@ src/
 │ │ ├── RecipeEditor.tsx # Edit/create recipe form with AI import
 │ │ ├── AiImporter.tsx # AI recipe parsing (photo/URL)
 │ │ ├── RecipeFilters.tsx # Filter panel (metadata, search)
-│ │ ├── RecipeHeader.tsx # App bar with navigation
-│ │ ├── LibraryToolbar.tsx # Inline search/sort/filter controls
+│ │ ├── RecipeHeader.tsx # Tightened app bar with menu trigger
+│ │ ├── BottomControls.tsx # Unified sticky bottom navigation
 │ │ ├── GroceryList.tsx # Grocery list with shopping mode
 │ │ ├── SettingsView.tsx # Settings and data management
 │ │ ├── FeedbackDashboard.jsx # Integrated feedback management UI
@@ -315,10 +320,8 @@ src/
 │ │ └── CheckableItem.tsx # Reusable checkbox item
 │ ├── ui/ # shadcn/ui components (button, tabs, input, dialog, etc.)
 │ └── layout/ # Global layout components
-│ ├── GlobalBurgerMenu.jsx # Slide-out settings/feedback menu
-│ ├── GlobalFeedback.jsx # Feedback modal wrapper
-│ ├── Navbar.jsx # Top navigation bar
-│ └── Footer.jsx # Site footer
+│ ├── GlobalBurgerMenu.tsx # Slide-out settings/feedback menu
+│ └── GlobalFeedback.tsx # Feedback modal wrapper
 ├── lib/ # Shared utilities
 │ ├── store.ts # Recipe list nanostore
 │ ├── burgerMenuStore.ts # Burger menu open/close state

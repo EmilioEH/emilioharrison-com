@@ -1,6 +1,7 @@
 import React from 'react'
-import { X, Trash2, ShoppingBag, Edit2, LogOut } from 'lucide-react'
+import { X, Trash2, ShoppingBag, Edit2, LogOut, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { openBurgerMenu } from '../../lib/burgerMenuStore'
 
 interface RecipeHeaderProps {
   onGenerateList: () => void
@@ -10,7 +11,6 @@ interface RecipeHeaderProps {
   onDeleteSelection: () => void
   onBulkEdit?: () => void
   user?: string
-  isScrolled?: boolean
 }
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
@@ -21,15 +21,13 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   onDeleteSelection,
   onBulkEdit,
   user,
-  isScrolled = false,
 }) => (
   <header
     className={`sticky top-0 z-50 flex flex-col border-b border-border shadow-sm transition-all duration-300 ease-in-out ${
       isSelectionMode
-        ? 'h-16 justify-center bg-secondary px-4 text-secondary-foreground'
+        ? 'h-14 justify-center bg-secondary px-4 text-secondary-foreground'
         : 'justify-end bg-card'
     }`}
-    style={{ height: isSelectionMode ? '64px' : isScrolled ? '64px' : '96px' }}
   >
     {isSelectionMode ? (
       <>
@@ -63,26 +61,25 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
       </>
     ) : (
       <>
-        {/* Minimizable Welcome Bar */}
+        {/* Static Welcome Bar - Tightened */}
         {user && (
-          <div
-            className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
-              isScrolled ? 'h-0 opacity-0' : 'h-8 opacity-100'
-            }`}
-          >
-            <div className="flex h-full items-center justify-between bg-foreground px-4 text-[10px] font-black uppercase tracking-widest text-background sm:text-xs">
+          <div className="h-7 w-full overflow-hidden bg-foreground text-background">
+            <div className="flex h-full items-center justify-between px-4 text-[10px] font-black uppercase tracking-widest sm:text-xs">
               <span>Welcome, {user}</span>
-              <a href="/protected/recipes/logout" className="flex items-center hover:underline">
+              <a
+                href="/protected/recipes/logout"
+                className="flex items-center bg-foreground text-background hover:underline"
+              >
                 Log Out <LogOut className="ml-1 h-3 w-3" />
               </a>
             </div>
           </div>
         )}
 
-        {/* Main App Bar */}
-        <div className="flex h-16 flex-none items-center justify-between px-4">
+        {/* Main App Bar - Tightened & Integrated Menu */}
+        <div className="flex h-14 flex-none items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="font-display text-xl font-bold tracking-tight text-foreground">
               CHEFBOARD
             </h1>
           </div>
@@ -92,11 +89,22 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               variant="ghost"
               size="icon"
               onClick={onGenerateList}
-              className="h-10 w-10 rounded-full text-foreground"
+              className="h-9 w-9 rounded-full text-foreground"
               title="Grocery List"
               aria-label="Grocery List"
             >
-              <ShoppingBag className="h-6 w-6" />
+              <ShoppingBag className="h-5 w-5" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openBurgerMenu}
+              className="h-9 w-9 rounded-full text-foreground"
+              title="Menu"
+              aria-label="Menu"
+            >
+              <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>
