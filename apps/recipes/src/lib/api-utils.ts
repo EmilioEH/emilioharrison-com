@@ -12,6 +12,7 @@ export function cleanGeminiResponse(text: string): string {
 
 /**
  * Formats a list of recipes into a structured prompt for grocery list generation.
+ * Includes recipe IDs and titles for source attribution.
  * @param recipes - List of recipe objects
  * @returns Formatted prompt string
  */
@@ -21,15 +22,20 @@ export function formatRecipesForPrompt(recipes: Recipe[]): string {
     .map((r) => {
       let ingredientsList = ''
       if (r.structuredIngredients && r.structuredIngredients.length > 0) {
-        // Use pre-normalized data
+        // Use pre-normalized data with source attribution
         ingredientsList = r.structuredIngredients
-          .map((i) => `• ${i.amount} ${i.unit} ${i.name} [Category: ${i.category}]`)
+          .map(
+            (i) =>
+              `- ${i.amount} ${i.unit} ${i.name} [RECIPE_ID:${r.id}] [RECIPE_TITLE:${r.title}]`,
+          )
           .join('\n')
       } else {
-        // Fallback to raw strings
-        ingredientsList = (r.ingredients || []).map((i) => `• ${i.amount} ${i.name}`).join('\n')
+        // Fallback to raw ingredient strings with source attribution
+        ingredientsList = (r.ingredients || [])
+          .map((i) => `- ${i.amount} ${i.name} [RECIPE_ID:${r.id}] [RECIPE_TITLE:${r.title}]`)
+          .join('\n')
       }
-      return `${r.title}\nIngredients:\n${ingredientsList}`
+      return `Ingredients:\n${ingredientsList}`
     })
     .join('\n\n')
 }

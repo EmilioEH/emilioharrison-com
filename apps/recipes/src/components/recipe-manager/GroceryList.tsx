@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Check, Trash2, Share, Copy, ArrowLeft, ShoppingBasket } from 'lucide-react'
-import { mergeIngredients, categorizeIngredients } from '../../lib/grocery-logic'
-import type { Recipe, StructuredIngredient } from '../../lib/types'
+import {
+  Check,
+  Trash2,
+  Share,
+  Copy,
+  ArrowLeft,
+  ShoppingBasket,
+  ChevronRight,
+  ChevronDown,
+  X,
+} from 'lucide-react'
+import { mergeShoppableIngredients, categorizeShoppableIngredients } from '../../lib/grocery-logic'
+import type { Recipe, ShoppableIngredient } from '../../lib/types'
 
 interface GroceryListProps {
-  ingredients: StructuredIngredient[]
+  ingredients: ShoppableIngredient[]
   isLoading?: boolean
   onClose: () => void
   recipes?: Recipe[]
@@ -20,8 +30,8 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 }) => {
   // 1. Merge & Categorize (Memoized)
   const categorizedList = useMemo(() => {
-    const merged = mergeIngredients(ingredients)
-    return categorizeIngredients(merged)
+    const merged = mergeShoppableIngredients(ingredients)
+    return categorizeShoppableIngredients(merged)
   }, [ingredients])
 
   // 2. Checked State (Persisted)
@@ -34,6 +44,9 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     }
     return new Set()
   })
+
+  // 3. Expanded State for accordion items
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   // Persist effect
   useEffect(() => {
@@ -50,22 +63,32 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     setCheckedItems(next)
   }
 
+  const toggleExpanded = (itemKey: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Don't trigger check when expanding
+    const next = new Set(expandedItems)
+    if (next.has(itemKey)) {
+      next.delete(itemKey)
+    } else {
+      next.add(itemKey)
+    }
+    setExpandedItems(next)
+  }
+
   const clearChecked = () => {
     if (confirm('Remove all checked items?')) {
-      // User confirmed
       setCheckedItems(new Set())
     }
   }
 
-  // 3. Sharing
+  // 4. Sharing
   const copyToClipboard = async () => {
     const text = categorizedList
       .map((cat) => {
         const items = cat.items
-          .filter((i) => !checkedItems.has(i.name)) // Only copy unchecked? Or all? Usually all.
+          .filter((i) => !checkedItems.has(i.name))
           .map(
             (i) =>
-              `- ${i.amount > 0 ? i.amount + ' ' : ''}${i.unit !== 'unit' ? i.unit + ' ' : ''}${i.name}`,
+              `- ${i.purchaseAmount > 0 ? i.purchaseAmount + ' ' : ''}${i.purchaseUnit !== 'unit' ? i.purchaseUnit + ' ' : ''}${i.name}`,
           )
           .join('\n')
         return `## ${cat.name}\n${items}`
@@ -82,7 +105,9 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
   const shareList = async () => {
     const text = categorizedList
-      .map((cat) => cat.items.map((i) => `- ${i.amount} ${i.unit} ${i.name}`).join('\n'))
+      .map((cat) =>
+        cat.items.map((i) => `- ${i.purchaseAmount} ${i.purchaseUnit} ${i.name}`).join('\n'),
+      )
       .join('\n\n')
 
     if (navigator.share) {
@@ -103,6 +128,18 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   const checkedCount = Array.from(checkedItems).filter((name) =>
     categorizedList.some((cat) => cat.items.some((i) => i.name === name)),
   ).length
+
+  // Helper to find recipe by ID for navigation
+  const findRecipeById = (id: string): Recipe | undefined => {
+    return recipes.find((r) => r.id === id)
+  }
+
+  // Info Modal State
+  const [activeInfo, setActiveInfo] = useState<{
+    recipeTitle: string
+    ingredientAmount: string
+    ingredientName: string
+  } | null>(null)
 
   return (
     <div className="flex h-full flex-col bg-card duration-300 animate-in slide-in-from-right-4">
@@ -146,33 +183,32 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         </div>
       </div>
 
-      {/* Recipe Sources Header */}
-      {!isLoading && recipes.length > 0 && (
-        <div className="bg-card-container border-b border-border px-6 py-4">
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Shopping for {recipes.length} Recipes
-          </p>
-          <div className="flex flex-col gap-2">
-            {recipes.map((recipe) => (
-              <button
-                key={recipe.id}
-                onClick={() => onOpenRecipe?.(recipe)}
-                className="flex w-full items-center justify-between text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
-              >
-                <span>{recipe.title}</span>
-                <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Content */}
       <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-20">
+        {/* Recipe Sources Header - scrolls with content */}
+        {!isLoading && recipes.length > 0 && (
+          <div className="bg-card-container -mx-4 -mt-4 mb-6 border-b border-border px-6 py-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Shopping for {recipes.length} Recipes
+            </p>
+            <div className="flex flex-col gap-2">
+              {recipes.map((recipe) => (
+                <button
+                  key={recipe.id}
+                  onClick={() => onOpenRecipe?.(recipe)}
+                  className="flex w-full items-center justify-between text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  <span>{recipe.title}</span>
+                  <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="mt-4 font-bold">Consulting AI Chef...</p>
+            <p className="mt-4 font-bold">Generating shopping list...</p>
           </div>
         ) : (
           <>
@@ -183,40 +219,122 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                 </h3>
                 <div className="bg-card-container-low border-border-variant overflow-hidden rounded-xl border shadow-sm">
                   {category.items.map((item) => {
+                    const itemKey = `${item.name}-${item.purchaseUnit}`
                     const isChecked = checkedItems.has(item.name)
+                    const isExpanded = expandedItems.has(itemKey)
+                    const multipleSources = item.sources.length > 1
+
                     return (
-                      <button
-                        key={`${item.name}-${item.unit}`}
-                        type="button"
-                        onClick={() => toggleItem(item.name)}
-                        aria-pressed={isChecked}
-                        className={`border-border-variant flex w-full cursor-pointer items-center justify-between border-b p-4 text-left transition-colors last:border-0 ${isChecked ? 'bg-card-container-high opacity-50' : 'hover:bg-card-container'} `}
+                      <div
+                        key={itemKey}
+                        className={`border-border-variant border-b last:border-0 ${isChecked ? 'bg-card-container-high opacity-50' : ''}`}
                       >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
-                              isChecked
-                                ? 'border-primary bg-primary'
-                                : 'border-border hover:border-primary'
-                            } `}
-                          >
-                            {isChecked && <Check className="h-3.5 w-3.5 text-primary-foreground" />}
-                          </div>
-                          <div
-                            className={
-                              isChecked ? 'text-foreground-variant line-through' : 'text-foreground'
-                            }
-                          >
-                            <span className="mr-1 font-display text-lg font-bold">
-                              {item.amount > 0 ? Math.round(item.amount * 100) / 100 : ''}
-                            </span>
-                            <span className="mr-2 text-sm font-medium opacity-80">
-                              {item.unit !== 'unit' ? item.unit : ''}
-                            </span>
-                            <span className="font-medium capitalize">{item.name}</span>
+                        {/* Main Item Row */}
+                        <div className="flex flex-col p-4">
+                          <div className="flex items-start">
+                            {/* Expand/Collapse Toggle (Only if > 1 source) */}
+                            {multipleSources ? (
+                              <button
+                                type="button"
+                                onClick={(e) => toggleExpanded(itemKey, e)}
+                                className="mr-2 mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </button>
+                            ) : (
+                              <div className="w-8" /> // Spacer to align with toggle items
+                            )}
+
+                            {/* Checkbox */}
+                            <button
+                              type="button"
+                              onClick={() => toggleItem(item.name)}
+                              aria-pressed={isChecked}
+                              className="mt-1 flex items-center gap-4"
+                            >
+                              <div
+                                className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+                                  isChecked
+                                    ? 'border-primary bg-primary'
+                                    : 'border-border hover:border-primary'
+                                }`}
+                              >
+                                {isChecked && (
+                                  <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                                )}
+                              </div>
+                            </button>
+
+                            {/* Item Details */}
+                            <div
+                              className={`ml-3 flex-1 ${isChecked ? 'text-foreground-variant line-through' : 'text-foreground'}`}
+                            >
+                              <div className="flex flex-wrap items-baseline gap-1">
+                                <span className="font-display text-lg font-bold">
+                                  {item.purchaseAmount > 0
+                                    ? Math.round(item.purchaseAmount * 100) / 100
+                                    : ''}
+                                </span>
+                                <span className="text-sm font-medium opacity-80">
+                                  {item.purchaseUnit !== 'unit' ? item.purchaseUnit : ''}
+                                </span>
+                                <span className="font-medium capitalize">{item.name}</span>
+                              </div>
+
+                              {/* Source Tags */}
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {item.sources.map((source, idx) => {
+                                  // Truncate logic can be CSS based (max-w)
+                                  return (
+                                    <button
+                                      key={`${source.recipeId}-${idx}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setActiveInfo({
+                                          recipeTitle: source.recipeTitle,
+                                          ingredientAmount: source.originalAmount,
+                                          ingredientName: item.name,
+                                        })
+                                      }}
+                                      className="flex max-w-[200px] items-center gap-1 overflow-hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted-foreground/20 hover:text-foreground"
+                                    >
+                                      <span className="truncate">{source.recipeTitle}</span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </button>
+
+                        {/* Expanded Source Details (Only if > 1 source) */}
+                        {multipleSources && isExpanded && (
+                          <div className="border-border-variant border-t bg-muted/30 px-4 py-3 pl-14">
+                            {item.sources.map((source, idx) => {
+                              const recipe = findRecipeById(source.recipeId)
+                              return (
+                                <div key={`${source.recipeId}-${idx}`} className="mb-2 last:mb-0">
+                                  <button
+                                    onClick={() => recipe && onOpenRecipe?.(recipe)}
+                                    className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                                    disabled={!recipe}
+                                  >
+                                    {source.recipeTitle}
+                                  </button>
+                                  <p className="ml-4 text-xs text-muted-foreground">
+                                    {source.originalAmount}
+                                  </p>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>
@@ -238,10 +356,52 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
           <button
             onClick={clearChecked}
-            className="bg-md-sys-color-inverse-surface text-md-sys-color-inverse-on-surface flex items-center gap-2 rounded-full px-6 py-3 font-medium shadow-lg transition-transform hover:scale-105"
+            className="flex items-center gap-2 rounded-full bg-foreground px-6 py-3 font-medium text-background shadow-lg transition-transform hover:scale-105"
           >
             <Trash2 className="h-4 w-4" /> Uncheck All
           </button>
+        </div>
+      )}
+      {/* Info Modal */}
+      {activeInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 duration-200 animate-in fade-in">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl duration-200 animate-in zoom-in-95">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg font-bold">Source Details</h3>
+              <button
+                onClick={() => setActiveInfo(null)}
+                className="rounded-full p-1 hover:bg-muted"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Recipe</p>
+                <p className="font-medium text-foreground">{activeInfo.recipeTitle}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Ingredient</p>
+                <p className="font-medium capitalize text-foreground">
+                  {activeInfo.ingredientName}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Original Quantity
+                </p>
+                <p className="font-display text-2xl font-bold text-primary">
+                  {activeInfo.ingredientAmount}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveInfo(null)}
+              className="mt-6 w-full rounded-lg bg-primary py-2 font-bold text-primary-foreground hover:opacity-90"
+            >
+              Done
+            </button>
+          </div>
         </div>
       )}
     </div>

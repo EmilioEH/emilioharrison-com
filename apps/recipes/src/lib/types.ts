@@ -62,6 +62,22 @@ export interface StructuredIngredient {
   sourceRecipeIds?: string[] // IDs of recipes generating this ingredient
 }
 
+/** A single recipe's contribution to a grocery item */
+export interface RecipeContribution {
+  recipeId: string
+  recipeTitle: string
+  originalAmount: string // "1 clove", "4 garlics" - as written in recipe
+}
+
+/** Enhanced grocery item with purchasable unit + source breakdown */
+export interface ShoppableIngredient {
+  name: string // "garlic"
+  purchaseAmount: number // 1
+  purchaseUnit: string // "head"
+  category: string // "Produce"
+  sources: RecipeContribution[] // Who needs this and how much
+}
+
 export interface Feedback {
   id: string
   timestamp: string

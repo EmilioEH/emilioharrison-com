@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Recipe, StructuredIngredient } from '../../../lib/types'
+import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 
 const getBaseUrl = (): string => {
   const base = import.meta.env.BASE_URL
@@ -35,8 +35,8 @@ const getRecipesCacheKey = (recipes: Recipe[]): string =>
     .sort((a, b) => (a > b ? 1 : -1))
     .join(',')
 
-/** Fetches ingredients from API for recipes missing structured data */
-const fetchMissingIngredients = async (recipes: Recipe[]): Promise<StructuredIngredient[]> => {
+/** Fetches shoppable ingredients from API */
+const fetchShoppableIngredients = async (recipes: Recipe[]): Promise<ShoppableIngredient[]> => {
   const response = await fetch(`${getBaseUrl()}api/generate-grocery-list`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -48,11 +48,56 @@ const fetchMissingIngredients = async (recipes: Recipe[]): Promise<StructuredIng
   }
 
   const { ingredients = [] } = await response.json()
-  return Array.isArray(ingredients) ? ingredients.filter((i) => i && i.name) : []
+  return Array.isArray(ingredients) ? ingredients.filter((i) => i && i.name && i.sources) : []
+}
+
+/**
+ * Converts recipes with structuredIngredients to ShoppableIngredient format.
+ * This is a fallback for when we have local data but need to display in the new format.
+ */
+const convertToShoppableFormat = (recipes: Recipe[]): ShoppableIngredient[] => {
+  const ingredientMap = new Map<string, ShoppableIngredient>()
+
+  for (const recipe of recipes) {
+    if (!recipe.structuredIngredients) continue
+
+    for (const ing of recipe.structuredIngredients) {
+      const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`
+
+      if (ingredientMap.has(key)) {
+        const existing = ingredientMap.get(key)!
+        existing.purchaseAmount += ing.amount
+        // Add this recipe as a source if not already present
+        if (!existing.sources.some((s) => s.recipeId === recipe.id)) {
+          existing.sources.push({
+            recipeId: recipe.id,
+            recipeTitle: recipe.title,
+            originalAmount: `${ing.amount} ${ing.unit}`,
+          })
+        }
+      } else {
+        ingredientMap.set(key, {
+          name: ing.name,
+          purchaseAmount: ing.amount,
+          purchaseUnit: ing.unit,
+          category: ing.category,
+          sources: [
+            {
+              recipeId: recipe.id,
+              recipeTitle: recipe.title,
+              originalAmount: `${ing.amount} ${ing.unit}`,
+            },
+          ],
+        })
+      }
+    }
+  }
+
+  return Array.from(ingredientMap.values())
 }
 
 export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: string) => void) => {
-  const [groceryItems, setGroceryItems] = useState<StructuredIngredient[]>([])
+  const [groceryItems, setGroceryItems] = useState<ShoppableIngredient[]>([])
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [lastGeneratedIds, setLastGeneratedIds] = useState<string | null>(null)
   const [targetRecipes, setTargetRecipes] = useState<Recipe[]>([])
@@ -75,38 +120,61 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
       return
     }
 
+    // Check local storage cache first
+    const cacheKey = `grocery-cache-v1-${currentIds}`
+    try {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        const { ingredients, timestamp: _timestamp } = JSON.parse(cached)
+        // detailed validation could go here, but for now assumption is valid
+        if (Array.isArray(ingredients) && ingredients.length > 0) {
+          console.log('Loaded grocery list from cache')
+          setGroceryItems(ingredients)
+          setIsGenerating(false)
+          setView('grocery')
+          return
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load from cache', e)
+    }
+
     // Start generation
     setView('grocery')
     setIsGenerating(true)
     setLastGeneratedIds(currentIds)
     setGroceryItems([])
 
-    // Get local ingredients from recipes with structured data
-    const localIngredients = recipesToProcess
-      .filter((r) => r.structuredIngredients)
-      .flatMap((r) =>
-        r.structuredIngredients!.map((ing) => ({
-          ...ing,
-          sourceRecipeIds: [r.id],
-        })),
-      )
+    // For the new shoppable format, we always call the API to get proper conversions
+    // The API handles both structured and raw ingredients
+    try {
+      const shoppableIngredients = await fetchShoppableIngredients(recipesToProcess)
+      setGroceryItems(shoppableIngredients)
 
-    // Find recipes missing structured ingredient data
-    const missingDataRecipes = recipesToProcess.filter(
-      (r) => !r.structuredIngredients || r.structuredIngredients.length === 0,
-    )
-
-    if (missingDataRecipes.length > 0) {
+      // Save to cache
       try {
-        const newIngredients = await fetchMissingIngredients(missingDataRecipes)
-        setGroceryItems([...localIngredients, ...newIngredients])
-      } catch (err) {
-        console.error('Grocery gen failed', err)
-        setGroceryItems(localIngredients)
-        alert('Could not reach AI Chef. Showing locally available ingredients.')
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            ingredients: shoppableIngredients,
+            timestamp: Date.now(),
+          }),
+        )
+      } catch (e) {
+        console.warn('Failed to save to cache', e)
       }
-    } else {
-      setGroceryItems(localIngredients)
+    } catch (err) {
+      console.error('Grocery gen failed', err)
+      // Fallback: convert local structured data to shoppable format (without AI conversions)
+      const fallbackIngredients = convertToShoppableFormat(
+        recipesToProcess.filter((r) => r.structuredIngredients),
+      )
+      setGroceryItems(fallbackIngredients)
+      if (fallbackIngredients.length === 0) {
+        alert('Could not generate grocery list. Please try again.')
+      } else {
+        alert('Could not reach AI. Showing ingredients without store-unit conversions.')
+      }
     }
 
     setIsGenerating(false)
