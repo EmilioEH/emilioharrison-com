@@ -1,5 +1,6 @@
 import React from 'react'
-import { Search, ListFilter, ChevronDown } from 'lucide-react'
+import { Search, ListFilter, ChevronDown, LayoutGrid, List } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface LibraryToolbarProps {
   searchQuery: string
@@ -19,8 +20,8 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
   setSort,
   onOpenFilters,
   activeFilterCount = 0,
-  viewMode: _viewMode,
-  setViewMode: _setViewMode,
+  viewMode,
+  setViewMode,
 }) => {
   const sortOptions = [
     { id: 'protein', label: 'Protein' },
@@ -35,17 +36,39 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
   ]
 
   return (
-    <div className="flex items-center gap-2 border-b border-md-sys-color-outline bg-md-sys-color-surface px-4 py-3">
+    <div className="flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-3">
       {/* Search Input */}
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-md-sys-color-on-surface-variant" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="placeholder:text-md-sys-color-on-surface-variant/50 w-full rounded-full border border-md-sys-color-outline bg-md-sys-color-surface-variant py-2 pl-9 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+          className="h-10 w-full rounded-full border border-border bg-card py-2 pl-10 pr-4 text-sm font-medium outline-none transition-all placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary"
         />
+      </div>
+
+      {/* View Mode Toggle */}
+      <div className="hidden items-center gap-1 rounded-full border border-border bg-card p-1 sm:flex">
+        <Button
+          variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={() => setViewMode('grid')}
+          aria-label="Grid View"
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={() => setViewMode('list')}
+          aria-label="List View"
+        >
+          <List className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Sort Dropdown */}
@@ -53,7 +76,7 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="appearance-none rounded-full border border-md-sys-color-outline bg-md-sys-color-surface py-2 pl-3 pr-8 text-sm font-medium text-md-sys-color-on-surface outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+          className="h-10 appearance-none rounded-full border border-border bg-card py-2 pl-3 pr-8 text-sm font-medium text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary"
         >
           {sortOptions.map((opt) => (
             <option key={opt.id} value={opt.id}>
@@ -61,18 +84,18 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-md-sys-color-on-surface-variant" />
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       </div>
 
       {/* Filter Button */}
       <button
         onClick={onOpenFilters}
-        className="relative rounded-full border border-md-sys-color-outline bg-md-sys-color-surface p-2 transition-colors hover:bg-md-sys-color-surface-variant"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card transition-all hover:bg-muted"
         aria-label="Open Filters"
       >
-        <ListFilter className="h-5 w-5 text-md-sys-color-on-surface-variant" />
+        <ListFilter className="h-5 w-5 text-muted-foreground" />
         {activeFilterCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-md-sys-color-primary text-[10px] font-bold text-md-sys-color-on-primary">
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
             {activeFilterCount}
           </span>
         )}

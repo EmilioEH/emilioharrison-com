@@ -1,5 +1,6 @@
 import React from 'react'
 import { Heart } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
 import { DetailHeaderActions } from './DetailHeaderActions'
 import { HeaderBackButton, HeaderModeToggle } from './DetailHeaderComponents'
@@ -29,7 +30,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   setCookingStage,
 }) => (
   <div
-    className={`sticky top-0 z-20 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
+    className={`border-border bg-background sticky top-0 z-20 flex items-center justify-between border-b px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
   >
     <HeaderBackButton
       cookingStage={cookingStage}
@@ -44,14 +45,16 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         setCookingStage={setCookingStage}
       />
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => onAction('toggleFavorite')}
-        className={`rounded-full border p-2 transition ${recipe.isFavorite ? 'border-red-200 bg-red-50 text-red-500' : 'border-transparent text-md-sys-color-on-surface-variant hover:text-red-500'}`}
+        className={`rounded-full ${recipe.isFavorite ? 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600' : 'text-muted-foreground hover:text-red-500'}`}
         aria-label={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
         title={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
       >
         <Heart className={`h-5 w-5 ${recipe.isFavorite ? 'fill-red-500' : ''}`} />
-      </button>
+      </Button>
 
       <DetailHeaderActions
         onAction={onAction}

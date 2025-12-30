@@ -9,12 +9,12 @@ interface SourceToggleProps {
 }
 
 export const SourceToggle: React.FC<SourceToggleProps> = ({ mode, setMode }) => (
-  <div className="mb-6 flex border-b border-md-sys-color-outline">
+  <div className="mb-6 flex border-b border-border">
     <button
       className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
         mode === 'photo'
-          ? 'bg-md-sys-color-primary text-md-sys-color-on-primary'
-          : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
+          ? 'bg-primary text-primary-foreground'
+          : 'hover:bg-primary/[0.08] text-foreground-variant'
       }`}
       onClick={() => setMode('photo')}
     >
@@ -25,8 +25,8 @@ export const SourceToggle: React.FC<SourceToggleProps> = ({ mode, setMode }) => 
     <button
       className={`flex-1 py-3 text-center font-medium uppercase tracking-wider transition-colors ${
         mode === 'url'
-          ? 'bg-md-sys-color-primary text-md-sys-color-on-primary'
-          : 'hover:bg-md-sys-color-primary/[0.08] text-md-sys-color-on-surface-variant'
+          ? 'bg-primary text-primary-foreground'
+          : 'hover:bg-primary/[0.08] text-foreground-variant'
       }`}
       onClick={() => setMode('url')}
     >

@@ -29,7 +29,7 @@ const RecipeTextEditor: React.FC<RecipeTextEditorProps> = ({
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className="h-32 w-full resize-y rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+      className="h-32 w-full resize-y rounded-sm border border-border bg-card-variant p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary"
     />
   </div>
 )
@@ -140,14 +140,14 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-4 space-y-4 rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-4 shadow-md-1">
+    <div className="animate-in slide-in-from-bottom-4 space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-display text-xl font-bold">
           {recipe.id ? 'Edit Recipe' : 'New Recipe'}
         </h2>
         <button
           onClick={onCancel}
-          className="rounded-full bg-md-sys-color-surface-variant p-1 px-3 text-sm font-medium"
+          className="rounded-full bg-card-variant p-1 px-3 text-sm font-medium"
         >
           Cancel
         </button>
@@ -165,7 +165,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Grandma's Pancakes"
-          className="placeholder-md-sys-color-on-surface-variant/30 w-full border-b border-md-sys-color-outline bg-transparent py-1 font-display text-xl font-medium outline-none focus:border-md-sys-color-primary"
+          className="placeholder-foreground-variant/30 w-full border-b border-border bg-transparent py-1 font-display text-xl font-medium outline-none focus:border-primary"
         />
       </div>
 
@@ -179,14 +179,14 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           value={formData.sourceUrl || ''}
           onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
           placeholder="https://example.com/recipe"
-          className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium outline-none"
+          className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium outline-none"
         />
       </div>
 
       {formData.sourceImage && (
         <div>
           <div className="mb-1 block text-xs font-bold uppercase text-gray-400">Source Image</div>
-          <div className="relative h-48 w-full overflow-hidden rounded-md-xl border border-md-sys-color-outline">
+          <div className="relative h-48 w-full overflow-hidden rounded-xl border border-border">
             <img
               src={formData.sourceImage}
               alt="Recipe Source"
@@ -205,7 +205,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             id="protein"
             value={formData.protein || ''}
             onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium"
           >
             <option value="">None</option>
             {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
@@ -233,7 +233,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
                 difficulty: e.target.value as 'Easy' | 'Medium' | 'Hard',
               })
             }
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium"
           >
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
@@ -254,7 +254,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             id="mealType"
             value={formData.mealType || ''}
             onChange={(e) => setFormData({ ...formData, mealType: e.target.value })}
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium"
           >
             <option value="">Select...</option>
             {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
@@ -275,7 +275,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             id="dishType"
             value={formData.dishType || ''}
             onChange={(e) => setFormData({ ...formData, dishType: e.target.value })}
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium"
           >
             <option value="">Select...</option>
             {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
@@ -305,7 +305,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               })
             }
             placeholder="Vegan, Gluten-Free..."
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium outline-none"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium outline-none"
           />
         </div>
         <div>
@@ -328,7 +328,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               })
             }
             placeholder="Air Fryer, Slow Cooker..."
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium outline-none"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium outline-none"
           />
         </div>
         <div>
@@ -351,7 +351,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               })
             }
             placeholder="Weeknight, Party..."
-            className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 text-sm font-medium outline-none"
+            className="w-full rounded-sm border border-border bg-card-variant p-2 text-sm font-medium outline-none"
           />
         </div>
       </div>
@@ -360,11 +360,11 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         {(['servings', 'prepTime', 'cookTime'] as const).map((k) => (
           <div
             key={k}
-            className="rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2"
+            className="rounded-sm border border-border bg-card-variant p-2"
           >
             <label
               htmlFor={k}
-              className="mb-1 block text-[10px] font-medium uppercase text-md-sys-color-on-surface-variant"
+              className="mb-1 block text-[10px] font-medium uppercase text-foreground-variant"
             >
               {k.replace('Time', '')}
             </label>
@@ -373,7 +373,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               type="number"
               value={formData[k] as number}
               onChange={(e) => setFormData({ ...formData, [k]: parseInt(e.target.value) || 0 })}
-              className="w-full bg-transparent font-medium text-md-sys-color-on-surface outline-none"
+              className="w-full bg-transparent font-medium text-foreground outline-none"
             />
           </div>
         ))}
@@ -399,7 +399,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         {recipe.id && (
           <button
             onClick={() => onDelete(recipe.id!)}
-            className="rounded-md-xl border border-md-sys-color-error-container bg-md-sys-color-error-container p-3 font-medium text-md-sys-color-on-error-container"
+            className="rounded-xl border border-md-sys-color-error-container bg-md-sys-color-error-container p-3 font-medium text-md-sys-color-on-error-container"
             title="Delete Recipe"
           >
             <Trash2 className="h-5 w-5" />
@@ -407,7 +407,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         )}
         <button
           onClick={handleInternalSave}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-md-sys-color-primary py-3 font-medium text-md-sys-color-on-primary shadow-md-1 transition hover:shadow-md-2 active:shadow-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-3 font-medium text-primary-foreground shadow-sm transition hover:shadow-md active:shadow-none"
         >
           <Save className="h-4 w-4" /> Save Recipe
         </button>

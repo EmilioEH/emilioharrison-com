@@ -1,5 +1,9 @@
 import React from 'react'
-import { X, ArrowDownAZ, Clock, Calendar, Search, ChefHat, Star } from 'lucide-react'
+import { ArrowDownAZ, Clock, Calendar, Search, ChefHat, Star } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
 import type { Filters } from './hooks/useFilteredRecipes'
 
 interface FilterSectionProps {
@@ -9,7 +13,7 @@ interface FilterSectionProps {
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, children }) => (
   <div className="mb-6">
-    <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
+    <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-foreground-variant">
       {title}
     </h3>
     <div className="flex flex-wrap gap-2">{children}</div>
@@ -23,16 +27,15 @@ interface FilterChipProps {
 }
 
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`rounded-md-s border px-3 py-1 text-sm font-medium transition-all ${
-      active
-        ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
-        : 'hover:bg-md-sys-color-on-surface/[0.04] border-md-sys-color-outline bg-md-sys-color-surface text-md-sys-color-on-surface'
+  <Badge
+    variant={active ? 'default' : 'outline'}
+    className={`hover:bg-secondary h-8 cursor-pointer rounded-full px-3 text-sm font-medium transition-all ${
+      !active ? 'text-muted-foreground hover:text-foreground' : ''
     }`}
+    onClick={onClick}
   >
     {label}
-  </button>
+  </Badge>
 )
 
 interface RecipeFiltersProps {
@@ -56,19 +59,6 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
   searchQuery,
   setSearchQuery,
 }) => {
-  // Handle Escape key to close
-  React.useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (isOpen && e.key === 'Escape') {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [isOpen, onClose])
-
-  if (!isOpen) return null
-
   const handleFilterToggle = (key: keyof Filters, value: string) => {
     setFilters((prev) => {
       // Handle boolean toggle for onlyFavorites
@@ -85,60 +75,26 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
     })
   }
 
-  const handleBackdropKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      onClose()
-    }
-  }
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      className="animate-in fade-in bg-md-sys-color-on-surface/20 fixed inset-0 z-50 flex justify-end backdrop-blur-sm transition-opacity"
-      onClick={onClose}
-      onKeyDown={handleBackdropKeyDown}
-      aria-label="Close filters"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="filter-drawer-title"
-        className="animate-in slide-in-from-right flex h-full w-full max-w-xs flex-col bg-md-sys-color-surface shadow-md-3 duration-300"
-      >
-        <div
-          className="flex h-full flex-col"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
-        >
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
-            <h2
-              id="filter-drawer-title"
-              className="font-display text-xl font-bold text-md-sys-color-on-surface"
-            >
-              Sort & Filter
-            </h2>
-            <button
-              onClick={onClose}
-              className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5 text-md-sys-color-on-surface" />
-            </button>
-          </div>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="flex w-full max-w-sm flex-col p-0 sm:max-w-md">
+        <SheetHeader className="border-b px-6 py-4">
+          <SheetTitle className="text-left font-display text-xl font-bold">
+            Sort & Filter
+          </SheetTitle>
+        </SheetHeader>
 
-          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-md-sys-color-on-surface-variant" />
-              <input
+              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <Input
                 type="text"
                 placeholder="Search recipes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-md-s border border-md-sys-color-outline bg-md-sys-color-surface-variant p-2 pl-9 pr-3 text-sm font-medium outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+                className="pl-10"
               />
             </div>
 
@@ -154,18 +110,16 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                   { id: 'time', label: 'Shortest Time', icon: Clock },
                   { id: 'rating', label: 'Highest Rated', icon: Star },
                 ].map((opt) => (
-                  <button
+                  <Button
                     key={opt.id}
+                    variant={sort === opt.id ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => setSort(opt.id)}
-                    className={`flex items-center gap-2 rounded-md-s border px-3 py-2 text-sm font-medium transition-all ${
-                      sort === opt.id
-                        ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container'
-                        : 'bg-md-sys-color-surface-variant/40 hover:bg-md-sys-color-surface-variant/60 border-transparent text-md-sys-color-on-surface-variant'
-                    }`}
+                    className="justify-start"
                   >
-                    <opt.icon className="h-4 w-4" />
+                    <opt.icon className="mr-2 h-4 w-4" />
                     {opt.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </FilterSection>
@@ -277,7 +231,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
               ))}
             </FilterSection>
 
-            {/* Cuisine - Hardcoded common ones for now, could be dynamic */}
+            {/* Cuisine */}
             <FilterSection title="Cuisine">
               {['Italian', 'Mexican', 'Asian', 'American', 'Mediterranean', 'Vegetarian'].map(
                 (c) => (
@@ -291,31 +245,27 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
               )}
             </FilterSection>
 
-            <div className="pt-8 text-center text-xs text-md-sys-color-on-surface-variant">
+            <div className="text-muted-foreground pt-8 text-center text-xs">
               <button
                 onClick={() => {
                   setFilters({})
                   setSort('protein')
                   setSearchQuery('')
                 }}
-                className="underline hover:text-md-sys-color-primary"
+                className="hover:text-primary underline"
               >
                 Reset all filters
               </button>
             </div>
           </div>
-
-          {/* Footer with Apply Button */}
-          <div className="border-t border-md-sys-color-outline bg-md-sys-color-surface p-4">
-            <button
-              onClick={onClose}
-              className="hover:bg-md-sys-color-primary/90 w-full rounded-full bg-md-sys-color-primary px-4 py-3 text-sm font-bold text-md-sys-color-on-primary shadow-md transition-all hover:shadow-lg focus:ring-2 focus:ring-md-sys-color-primary focus:ring-offset-2"
-            >
-              Show Recipes
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <SheetFooter className="border-t p-4 sm:justify-center">
+          <Button onClick={onClose} className="w-full rounded-full" size="lg">
+            Show Recipes
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -64,7 +64,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
 
       {/* Modal Content */}
       <div
-        className={`relative z-50 flex flex-col bg-md-sys-color-surface shadow-xl transition-all duration-300 ease-out ${
+        className={`relative z-50 flex flex-col bg-card shadow-xl transition-all duration-300 ease-out ${
           isMobile
             ? 'animate-in slide-in-from-bottom mt-auto h-[90vh] w-full rounded-t-[28px]'
             : 'animate-in zoom-in-95 fade-in m-4 h-auto max-h-[85vh] w-full max-w-2xl rounded-[28px]'
@@ -81,19 +81,19 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
             onKeyDown={handleHandleBarKeyDown}
             aria-label="Drag to close"
           >
-            <div className="bg-md-sys-color-outline-variant h-1 w-8 rounded-full opacity-40" />
+            <div className="bg-border-variant h-1 w-8 rounded-full opacity-40" />
           </div>
         )}
 
         {/* Header */}
         <div className={`flex items-center justify-between px-6 ${isMobile ? 'pb-2' : 'py-6'}`}>
-          <h2 className="font-display text-xl font-bold text-md-sys-color-on-surface">{title}</h2>
+          <h2 className="font-display text-xl font-bold text-foreground">{title}</h2>
           <button
             onClick={onClose}
-            className="hover:bg-md-sys-color-surface-variant/50 rounded-full p-2 transition-colors"
+            className="hover:bg-card-variant/50 rounded-full p-2 transition-colors"
             aria-label="Close modal"
           >
-            <X className="h-6 w-6 text-md-sys-color-on-surface-variant" />
+            <X className="h-6 w-6 text-foreground-variant" />
           </button>
         </div>
 

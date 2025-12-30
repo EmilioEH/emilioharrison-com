@@ -97,21 +97,21 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
   ).length
 
   return (
-    <div className="animate-in slide-in-from-right-4 flex h-full flex-col bg-md-sys-color-surface duration-300">
+    <div className="animate-in slide-in-from-right-4 flex h-full flex-col bg-card duration-300">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-md-sys-color-outline bg-md-sys-color-surface px-6 py-4">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="-ml-2 rounded-full p-2 text-md-sys-color-on-surface hover:bg-md-sys-color-surface-variant"
+            className="-ml-2 rounded-full p-2 text-foreground hover:bg-card-variant"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h2 className="font-display text-xl font-bold text-md-sys-color-on-surface">
+            <h2 className="font-display text-xl font-bold text-foreground">
               Grocery List
             </h2>
-            <p className="text-xs font-medium text-md-sys-color-on-surface-variant">
+            <p className="text-xs font-medium text-foreground-variant">
               {totalCount} items &bull;{' '}
               {Math.round(
                 (checkedCount /
@@ -125,14 +125,14 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
         <div className="flex gap-2">
           <button
             onClick={shareList}
-            className="rounded-full p-2 text-md-sys-color-primary hover:bg-md-sys-color-surface-variant"
+            className="rounded-full p-2 text-primary hover:bg-card-variant"
             title="Share"
           >
             <Share className="h-5 w-5" />
           </button>
           <button
             onClick={copyToClipboard}
-            className="rounded-full p-2 text-md-sys-color-primary hover:bg-md-sys-color-surface-variant"
+            className="rounded-full p-2 text-primary hover:bg-card-variant"
             title="Copy"
           >
             <Copy className="h-5 w-5" />
@@ -144,17 +144,17 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
       <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-20">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-md-sys-color-primary border-t-transparent"></div>
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             <p className="mt-4 font-bold">Consulting AI Chef...</p>
           </div>
         ) : (
           <>
             {categorizedList.map((category) => (
               <div key={category.name} className="animate-in fade-in duration-500">
-                <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-md-sys-color-primary">
+                <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
                   {category.name}
                 </h3>
-                <div className="bg-md-sys-color-surface-container-low border-md-sys-color-outline-variant overflow-hidden rounded-xl border shadow-sm">
+                <div className="bg-card-container-low border-border-variant overflow-hidden rounded-xl border shadow-sm">
                   {category.items.map((item) => {
                     const isChecked = checkedItems.has(item.name)
                     return (
@@ -163,25 +163,25 @@ export const GroceryList: React.FC<GroceryListProps> = ({ ingredients, isLoading
                         type="button"
                         onClick={() => toggleItem(item.name)}
                         aria-pressed={isChecked}
-                        className={`border-md-sys-color-outline-variant flex w-full cursor-pointer items-center justify-between border-b p-4 text-left transition-colors last:border-0 ${isChecked ? 'bg-md-sys-color-surface-container-high opacity-50' : 'hover:bg-md-sys-color-surface-container'} `}
+                        className={`border-border-variant flex w-full cursor-pointer items-center justify-between border-b p-4 text-left transition-colors last:border-0 ${isChecked ? 'bg-card-container-high opacity-50' : 'hover:bg-card-container'} `}
                       >
                         <div className="flex items-center gap-4">
                           <div
                             className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                               isChecked
-                                ? 'border-md-sys-color-primary bg-md-sys-color-primary'
-                                : 'border-md-sys-color-outline hover:border-md-sys-color-primary'
+                                ? 'border-primary bg-primary'
+                                : 'border-border hover:border-primary'
                             } `}
                           >
                             {isChecked && (
-                              <Check className="h-3.5 w-3.5 text-md-sys-color-on-primary" />
+                              <Check className="h-3.5 w-3.5 text-primary-foreground" />
                             )}
                           </div>
                           <div
                             className={
                               isChecked
-                                ? 'text-md-sys-color-on-surface-variant line-through'
-                                : 'text-md-sys-color-on-surface'
+                                ? 'text-foreground-variant line-through'
+                                : 'text-foreground'
                             }
                           >
                             <span className="mr-1 font-display text-lg font-bold">

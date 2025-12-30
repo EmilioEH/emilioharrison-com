@@ -210,7 +210,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
   return (
     <div
-      className={`animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col bg-md-sys-color-surface ${cookingMode ? 'safe-area-pt' : ''}`}
+      className={`animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col bg-card ${cookingMode ? 'safe-area-pt' : ''}`}
     >
       <DetailHeader
         recipe={recipe}

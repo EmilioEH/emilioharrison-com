@@ -1,8 +1,11 @@
-# Design System Documentation
+# Design System Documentation (LEGACY)
 
-**Last Updated**: November 27, 2025  
-**Design Name**: Vibe Coding  
-**Version**: 1.0
+> [!CAUTION]
+> **This document describes the legacy "Vibe Coding" design system. The project has been migrated to [shadcn/ui](https://ui.shadcn.com/) for its core design system and components. Please refer to `apps/recipes/README.md` and the components in `src/components/ui/` for the current source of truth.**
+
+**Last Updated**: December 30, 2025  
+**Architectural State**: Migrated to shadcn/ui  
+**Version**: 2.0 (Migration Status)
 
 This document serves as the single source of truth for design decisions, patterns, and conventions used in the Emilio Harrison portfolio project.
 

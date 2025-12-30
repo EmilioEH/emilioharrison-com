@@ -26,24 +26,22 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
 }) => (
   <div
     data-testid={testId}
-    className={`group relative flex w-full flex-col overflow-hidden rounded-xl border bg-md-sys-color-surface text-left transition-all ${
-      recipe.thisWeek
-        ? 'border-md-sys-color-primary shadow-md-2'
-        : 'border-md-sys-color-outline shadow-md-1 hover:shadow-md-2'
+    className={`hover:border-primary/50 bg-card group relative flex w-full flex-col overflow-hidden rounded-xl border text-left transition-all ${
+      recipe.thisWeek ? 'border-primary shadow-md' : 'border-border shadow-sm hover:shadow-md'
     }`}
   >
     <button onClick={onClick} className="relative flex h-full w-full flex-1 flex-col text-left">
       {isSelectionMode && (
         <div className="absolute left-2 top-2 z-20">
           <div
-            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${isSelected ? 'border-md-sys-color-primary bg-md-sys-color-primary' : 'border-gray-400 bg-white/80'}`}
+            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${isSelected ? 'border-primary bg-primary' : 'border-gray-400 bg-white/80'}`}
           >
-            {isSelected && <Check className="h-4 w-4 text-md-sys-color-on-primary" />}
+            {isSelected && <Check className="text-primary-foreground h-4 w-4" />}
           </div>
         </div>
       )}
       {(recipe.finishedImage || recipe.sourceImage) && (
-        <div className="h-32 w-full overflow-hidden border-b border-md-sys-color-outline">
+        <div className="border-border h-32 w-full overflow-hidden border-b">
           <img
             src={recipe.finishedImage || recipe.sourceImage}
             alt={recipe.title}
@@ -56,12 +54,12 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
         {/* Supporting Metadata - Top */}
         <div className="mb-3 flex flex-wrap items-start gap-2 pr-10">
           {recipe.protein && (
-            <span className="rounded-full bg-md-sys-color-secondary-container px-3 py-1 text-xs font-medium uppercase tracking-wide text-md-sys-color-on-secondary-container">
+            <span className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide">
               {recipe.protein}
             </span>
           )}
           {recipe.thisWeek && (
-            <span className="inline-flex items-center gap-2 rounded-full bg-md-sys-color-primary-container px-3 py-1 text-xs font-semibold uppercase tracking-wide text-md-sys-color-on-primary-container">
+            <span className="bg-primary/10 text-primary inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide">
               <Calendar className="h-3.5 w-3.5" />
               <span>This Week</span>
             </span>
@@ -69,12 +67,12 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
         </div>
 
         {/* Primary Content - Title */}
-        <h3 className="mb-4 line-clamp-2 font-display text-lg font-bold leading-tight text-md-sys-color-on-surface">
+        <h3 className="text-card-foreground mb-4 line-clamp-2 font-display text-lg font-bold leading-tight">
           {recipe.title}
         </h3>
 
         {/* Secondary Metadata - Bottom */}
-        <div className="mt-auto flex items-center gap-3 text-xs font-medium text-md-sys-color-on-surface-variant">
+        <div className="text-muted-foreground mt-auto flex items-center gap-3 text-xs font-medium">
           <div className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
             <span>{recipe.cookTime + recipe.prepTime}m</span>
@@ -84,7 +82,7 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
             <span>{recipe.servings}</span>
           </div>
           {recipe.rating && (
-            <div className="ml-auto flex items-center gap-1 text-md-sys-color-primary">
+            <div className="text-primary ml-auto flex items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-current" />
               <span className="font-semibold">{recipe.rating}</span>
             </div>
@@ -98,19 +96,19 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
         e.stopPropagation()
         onToggleThisWeek(recipe.id)
       }}
-      className={`absolute right-2 top-2 z-10 rounded-full p-2 shadow-sm transition-colors ${
+      className={`absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-sm transition-all ${
         recipe.thisWeek
-          ? 'hover:bg-md-sys-color-primary/90 bg-md-sys-color-primary text-md-sys-color-on-primary'
-          : 'bg-md-sys-color-surface-variant/80 text-md-sys-color-on-surface-variant backdrop-blur-sm hover:bg-md-sys-color-secondary-container hover:text-md-sys-color-on-secondary-container'
+          ? 'bg-primary text-primary-foreground hover:shadow-md'
+          : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground bg-white/50 backdrop-blur-sm'
       }`}
       title={recipe.thisWeek ? 'Remove from This Week' : 'Add to This Week'}
     >
-      <Calendar className="h-4 w-4" />
+      <Calendar className="h-5 w-5" />
     </button>
 
     {/* Day Assignment Selection */}
     {onAssignDay && weekDays && weekDays.length > 0 && (
-      <div className="bg-md-sys-color-surface-variant/30 border-t border-md-sys-color-outline p-2">
+      <div className="border-border bg-muted/50 border-t p-2">
         <select
           value={recipe.assignedDate || ''}
           onClick={(e) => e.stopPropagation()}
@@ -118,7 +116,7 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
             e.stopPropagation()
             onAssignDay(recipe, e.target.value)
           }}
-          className="w-full rounded border border-md-sys-color-outline bg-white p-1 text-xs"
+          className="border-border w-full rounded border bg-white p-1 text-xs"
         >
           <option value="">Move to...</option>
           {weekDays.map((day) => (

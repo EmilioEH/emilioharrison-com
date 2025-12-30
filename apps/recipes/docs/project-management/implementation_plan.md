@@ -1,39 +1,17 @@
-# Documentation Organization Plan
+# Implementation Plan - Run Local Dev Server
 
-## Goal
+## User Story
 
-Establish a scalable folder and file system to store all project documents and ensure future coding agents utilize it.
+**As Emilio**, I want to **run the recipe app locally** so that I can **interact with the latest features in a browser** and verify the visual integrity of the app.
 
-## Proposed Structure
+## Quality Gate Tools
 
-Create a `docs` directory at the project root with the following subdirectories:
+- [ ] `npm run check:quick` (Safety check: Linting & Types)
+- [ ] Playwright (Visual verification via Browser Agent)
 
-- **`docs/project-management/`**: Planning, tracking, and status documents.
-  - `implementation_plan.md`
-  - `phase1-complete.md`, `phase2-complete.md`, `phase3-complete.md`
-  - `walkthrough.md`
-- **`docs/technical/`**: Technical specifications, audits, and criteria.
-  - `code-quality-criteria.md`
-  - `code-quality-audit.md`, `code-quality-audit-2025-11-27.md`
-  - `design-system.md`, `design-system-evaluation.md`
-  - `usability_audit_report.md`, `Usability Heuristic Checklist.md`
-  - `unused-analysis.md`
-- **`docs/research/`**: Research findings, comparisons, and options.
-  - `cms-comparison.md`
-  - `cms-options.md`
-- **`docs/guides/`**: User and developer guides.
-  - `how-to-blog-from-iphone.md`
+## Tasks
 
-## Agent Guide
-
-Create `docs/00_AGENT_GUIDE.md` to instruct future agents on:
-
-- Where to look for context.
-- Where to save new documents.
-- Naming conventions.
-
-## Execution Steps
-
-1. Create directories.
-2. Create `docs/00_AGENT_GUIDE.md`.
-3. Move existing files to their respective locations.
+1. [ ] Perform safety checks to ensure the codebase is healthy.
+2. [ ] Start the local development server using `npm run dev`.
+3. [ ] Open the app in the browser subagent at `http://localhost:4321/protected/recipes`.
+4. [ ] Verify that the app loads and the user can navigate the Recipe Library.

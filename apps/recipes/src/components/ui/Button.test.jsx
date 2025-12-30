@@ -1,29 +1,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import Button from './Button'
+import { Button } from './button'
 
 describe('Button', () => {
   it('renders correctly with default props', () => {
     render(<Button>Click me</Button>)
     const button = screen.getByRole('button', { name: /click me/i })
     expect(button).toBeInTheDocument()
-    expect(button).toHaveClass('bg-md-sys-color-primary') // Default intent
   })
 
-  it('renders different intents', () => {
-    const { rerender } = render(<Button intent="secondary">Secondary</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-md-sys-color-secondary-container')
+  it('renders different variants', () => {
+    const { rerender } = render(<Button variant="secondary">Secondary</Button>)
+    expect(screen.getByRole('button')).toHaveClass('bg-secondary')
 
-    rerender(<Button intent="tertiary">Tertiary</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-transparent')
-  })
-
-  it('renders as a link when href is provided', () => {
-    render(<Button href="/about">Link Button</Button>)
-    const link = screen.getByRole('link', { name: /link button/i })
-    expect(link).toBeInTheDocument()
-    expect(link).toHaveAttribute('href', '/about')
-    expect(link.tagName).toBe('A')
+    rerender(<Button variant="outline">Outline</Button>)
+    expect(screen.getByRole('button')).toHaveClass('border')
   })
 
   it('handles click events', () => {
@@ -34,9 +25,12 @@ describe('Button', () => {
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
 
-  it('renders full width when fullWidth prop is true', () => {
-    render(<Button fullWidth>Full Width</Button>)
-    expect(screen.getByRole('button')).toHaveClass('w-full')
+  it('renders different sizes', () => {
+    const { rerender } = render(<Button size="sm">Small</Button>)
+    expect(screen.getByRole('button')).toHaveClass('h-8')
+
+    rerender(<Button size="lg">Large</Button>)
+    expect(screen.getByRole('button')).toHaveClass('h-10')
   })
 
   it('applies custom className', () => {

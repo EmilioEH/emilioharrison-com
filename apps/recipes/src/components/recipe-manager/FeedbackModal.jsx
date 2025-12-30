@@ -141,7 +141,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
       ref={modalRef}
       className="animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200"
     >
-      <div className="animate-in zoom-in-95 w-full max-w-lg overflow-hidden rounded-2xl border border-md-sys-color-outline bg-md-sys-color-surface shadow-2xl duration-200">
+      <div className="animate-in zoom-in-95 w-full max-w-lg overflow-hidden rounded-2xl border border-md-sys-color-outline bg-card shadow-2xl duration-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-md-sys-color-outline px-6 py-4">
           <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-3 font-bold transition-all ${
                   type === 'bug'
                     ? 'bg-md-sys-color-primary/10 border-md-sys-color-primary text-md-sys-color-primary'
-                    : 'border-transparent bg-md-sys-color-surface-variant opacity-60'
+                    : 'border-transparent bg-card-variant opacity-60'
                 }`}
               >
                 <Bug className="h-4 w-4" /> Bug Report
@@ -181,7 +181,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-3 font-bold transition-all ${
                   type === 'idea'
                     ? 'bg-md-sys-color-tertiary/10 border-md-sys-color-tertiary text-md-sys-color-tertiary'
-                    : 'border-transparent bg-md-sys-color-surface-variant opacity-60'
+                    : 'border-transparent bg-card-variant opacity-60'
                 }`}
               >
                 <Lightbulb className="h-4 w-4" /> Idea / Idea
@@ -205,7 +205,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                       value={actual}
                       onChange={(e) => setActual(e.target.value)}
                       placeholder="e.g., The search button didn't react when I clicked it."
-                      className="min-h-[80px] w-full rounded-xl border border-md-sys-color-outline bg-md-sys-color-surface-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+                      className="min-h-[80px] w-full rounded-xl border border-md-sys-color-outline bg-card-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
                     />
                   </div>
                   <div>
@@ -221,7 +221,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                       value={expected}
                       onChange={(e) => setExpected(e.target.value)}
                       placeholder="e.g., I expected the search results to appear below the input."
-                      className="min-h-[80px] w-full rounded-xl border border-md-sys-color-outline bg-md-sys-color-surface-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+                      className="min-h-[80px] w-full rounded-xl border border-md-sys-color-outline bg-card-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
                     />
                   </div>
                 </>
@@ -239,7 +239,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe the enhancement or new feature you'd like to see..."
-                    className="min-h-[160px] w-full rounded-xl border border-md-sys-color-outline bg-md-sys-color-surface-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-tertiary"
+                    className="min-h-[160px] w-full rounded-xl border border-md-sys-color-outline bg-card-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-tertiary"
                   />
                 </div>
               )}

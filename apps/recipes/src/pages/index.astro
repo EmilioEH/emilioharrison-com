@@ -1,8 +1,9 @@
 ---
 import RecipeLayout from '../layouts/RecipeLayout.astro'
 import RecipeManagerClient from '../components/recipe-manager/RecipeManager.jsx'
+const user = Astro.cookies.get('site_user')?.value
 ---
 
 <RecipeLayout title="My Recipes">
-  <RecipeManagerClient client:only="react" />
+  <RecipeManagerClient client:only="react" user={user} />
 </RecipeLayout>

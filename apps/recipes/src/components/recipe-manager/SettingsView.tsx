@@ -14,9 +14,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onDeleteAccount,
   onClose,
 }) => (
-  <div className="animate-in slide-in-from-right absolute inset-0 z-50 bg-md-sys-color-surface p-6">
+  <div className="animate-in slide-in-from-right absolute inset-0 z-50 bg-card p-6">
     <div className="mb-8 flex items-center justify-between">
-      <h2 className="font-display text-2xl font-bold text-md-sys-color-on-surface">
+      <h2 className="font-display text-2xl font-bold text-foreground">
         Data Management
       </h2>
       <button onClick={onClose}>
@@ -26,13 +26,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     <div className="space-y-8">
       <section>
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-md-sys-color-on-surface-variant">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-foreground-variant">
           Export & Import
         </h3>
         <div className="flex flex-col gap-4">
           <button
             onClick={onExport}
-            className="flex items-center gap-3 rounded-lg border border-md-sys-color-outline p-4 text-left transition-colors hover:bg-md-sys-color-surface-variant"
+            className="flex items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors hover:bg-card-variant"
           >
             <div className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container">
               <Download className="h-5 w-5" />
@@ -42,7 +42,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="text-xs opacity-70">Download your recipes as JSON</div>
             </div>
           </button>
-          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-md-sys-color-outline p-4 text-left transition-colors hover:bg-md-sys-color-surface-variant">
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors hover:bg-card-variant">
             <div className="rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container">
               <Upload className="h-5 w-5" />
             </div>
@@ -55,7 +55,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </section>
 
-      <section className="border-t border-md-sys-color-outline pt-6">
+      <section className="border-t border-border pt-6">
         <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-red-600">
           Danger Zone
         </h3>

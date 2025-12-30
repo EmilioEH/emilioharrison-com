@@ -62,19 +62,6 @@ const user = Astro.cookies.get('site_user')?.value
   </head>
   <body class="bg-paper text-ink min-h-full overflow-x-hidden font-sans antialiased">
     <div class="flex min-h-full flex-col">
-      {
-        user && (
-          <div class="bg-ink text-paper relative z-50 flex items-center justify-between px-4 py-2 text-xs font-bold uppercase tracking-wider">
-            <span>Welcome, {user}</span>
-            <a
-              href="/protected/recipes/logout"
-              class="opacity-80 hover:underline hover:opacity-100"
-            >
-              Log Out
-            </a>
-          </div>
-        )
-      }
       <slot />
     </div>
 

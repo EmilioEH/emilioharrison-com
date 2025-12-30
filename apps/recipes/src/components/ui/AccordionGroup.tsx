@@ -18,19 +18,19 @@ export const AccordionGroup: React.FC<AccordionGroupProps> = ({
   onToggle,
   viewMode,
 }) => (
-  <div className="border-b border-md-sys-color-outline last:border-0">
+  <div className="border-b border-border last:border-0">
     <button
       onClick={onToggle}
-      className="hover:bg-md-sys-color-primary/[0.04] flex w-full items-center justify-between px-6 py-4 transition-colors"
+      className="hover:bg-primary/[0.04] flex w-full items-center justify-between px-6 py-4 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <h3 className="font-display text-xl font-bold text-md-sys-color-on-surface">{title}</h3>
-        <span className="rounded-full bg-md-sys-color-primary-container px-2 py-0.5 text-xs font-medium text-md-sys-color-on-primary-container">
+        <h3 className="font-display text-xl font-bold text-foreground">{title}</h3>
+        <span className="rounded-full bg-primary-container px-2 py-0.5 text-xs font-medium text-primary-foreground-container">
           {count}
         </span>
       </div>
       <ChevronDown
-        className={`h-5 w-5 text-md-sys-color-on-surface-variant transition-transform duration-200 ${
+        className={`h-5 w-5 text-foreground-variant transition-transform duration-200 ${
           isOpen ? 'rotate-180' : ''
         }`}
       />

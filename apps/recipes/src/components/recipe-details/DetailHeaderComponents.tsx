@@ -16,14 +16,14 @@ export const HeaderBackButton: React.FC<HeaderBackButtonProps> = ({
   <div className="flex items-center gap-2">
     <button
       onClick={cookingStage !== 'idle' ? () => setCookingStage('idle') : onClose}
-      className="hover:bg-md-sys-color-on-surface/[0.08] rounded-full p-2 transition"
+      className="hover:bg-foreground/[0.08] rounded-full p-2 transition"
       aria-label={cookingStage !== 'idle' ? 'Back to Overview' : 'Back to Library'}
       title={cookingStage !== 'idle' ? 'Back to Overview' : 'Back to Library'}
     >
-      <ArrowLeft className="h-6 w-6 text-md-sys-color-on-surface" />
+      <ArrowLeft className="h-6 w-6 text-foreground" />
     </button>
     {cookingStage !== 'idle' && (
-      <span className="font-display text-xs font-medium uppercase tracking-wider text-md-sys-color-primary">
+      <span className="font-display text-xs font-medium uppercase tracking-wider text-primary">
         {cookingStage === 'pre' && 'Pre-Cooking'}
         {cookingStage === 'during' && 'Cooking'}
         {cookingStage === 'post' && 'Review'}
@@ -50,7 +50,7 @@ export const HeaderModeToggle: React.FC<HeaderModeToggleProps> = ({
       }
       setCookingMode(!cookingMode)
     }}
-    className={`rounded-full border p-2 transition ${cookingMode ? 'border-md-sys-color-primary bg-md-sys-color-primary-container text-md-sys-color-on-primary-container' : 'border-transparent text-md-sys-color-on-surface-variant hover:text-md-sys-color-on-surface'}`}
+    className={`rounded-full border p-2 transition ${cookingMode ? 'border-primary bg-primary-container text-primary-foreground-container' : 'border-transparent text-foreground-variant hover:text-foreground'}`}
     title="Cooking Mode (Keep Screen On)"
   >
     {cookingMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}

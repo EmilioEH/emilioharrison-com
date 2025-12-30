@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Loader2, ChefHat } from 'lucide-react'
-import { Button } from '../ui/Button'
+import { Button } from '../ui/button'
 import type { Recipe } from '../../lib/types'
 import { processImage } from '../../lib/image-optimization'
 import { SourceToggle, type InputMode } from './importer/SourceToggle'
@@ -96,7 +96,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
   }
 
   return (
-    <div className="rounded-md-xl border border-md-sys-color-outline bg-md-sys-color-surface p-6 shadow-md-2">
+    <div className="rounded-xl border border-border bg-card p-6 shadow-md">
       <SourceToggle mode={mode} setMode={setMode} />
 
       <div className="space-y-6">
@@ -113,7 +113,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
           <div className="space-y-2">
             <label
               htmlFor="url-input"
-              className="text-sm font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant"
+              className="text-sm font-medium uppercase tracking-wider text-foreground-variant"
             >
               Paste Recipe Link
             </label>
@@ -123,22 +123,22 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://cooking.nytimes.com/..."
-              className="bg-md-sys-color-surface-variant/20 w-full rounded-md-l border border-md-sys-color-outline p-4 font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-md-sys-color-primary"
+              className="bg-card-variant/20 w-full rounded-lg border border-border p-4 font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary"
             />
-            <p className="text-xs text-md-sys-color-on-surface-variant">
+            <p className="text-xs text-foreground-variant">
               We&apos;ll scrape the ingredients and instructions for you.
             </p>
           </div>
         )}
 
         {errorMsg && (
-          <div className="animate-in shake rounded-md-s border border-md-sys-color-error bg-md-sys-color-error-container p-4 text-sm font-medium text-md-sys-color-on-error-container">
+          <div className="animate-in shake rounded-sm border border-md-sys-color-error bg-md-sys-color-error-container p-4 text-sm font-medium text-md-sys-color-on-error-container">
             {errorMsg}
           </div>
         )}
 
         <Button
-          fullWidth
+          className="w-full"
           size="lg"
           onClick={handleProcess}
           disabled={

@@ -27,7 +27,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 ## 🛠 Tech Stack
 
 - **Framework**: [Astro 5](https://astro.build/) (Islands Architecture for performance)
-- **UI Architecture**: React + [TailwindCSS](https://tailwindcss.com/)
+- **UI Architecture**: React + [shadcn/ui](https://ui.shadcn.com/) (based on [TailwindCSS](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/))
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
 - **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library)
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) (Host) + [Firebase Firestore](https://firebase.google.com/docs/firestore) (Data) + [Firebase Storage](https://firebase.google.com/docs/storage) (Images)
@@ -38,17 +38,17 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 
 - [Gemini API Guide](docs/technical/gemini-api-guide.md) – AI integration patterns
 - [Deployment Guide](docs/technical/deployment.md) – Production deployment steps
-- [Design System](docs/technical/design-system.md) – UI tokens and component styles
+- [Design System](docs/technical/design-system.md) – UI tokens and component styles (Migrated to shadcn/ui)
 - [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
 
 ### Recent Updates (Dec 2025)
 
 - **Admin Bulk Actions**: Administrators can now perform bulk deletions and status updates (Fixed/Open/Ignore) on the Feedback Dashboard.
+- **Shadcn/UI Migration**: Fully migrated the UI stack from a custom M3 token system to shadcn/ui. This includes standardized Buttons, Tabs, Sheets, Badges, and Dropdowns, improving accessibility (Radix UI) and maintainability.
+- **Recipe Library Overhaul**: Removed complex virtualization in `RecipeLibrary` in favor of a clean, responsive CSS Grid. Fixed layout and spacing inconsistencies across the library view.
+- **Clean Architecture**: Removed legacy `tokens.css` and custom `md-sys-*` Tailwind extensions, moving to standard Tailwind utility patterns.
 - **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein.
 - **List View**: Added a toggle to switch the Recipe Library between the classic Grid view and a compact List view.
-- **Image Optimization**: All user-uploaded images (Recipe photos and Feedback screenshots) are now automatically downscaled (~72dpi, max 1920px) and compressed client-side before upload to optimize storage and performance.
-- **Smart Recipe Import (Hybrid AI)**: Recipe extraction now uses a hybrid approach. It deterministically uses `jsdom` to extract high-quality JSON-LD data from source websites when available, normalizing it with AI. Falls back to purely Generative AI for unsupported sites or images.
-- **Enhanced Grocery List**: The grocery list generator now leverages pre-normalized ingredient data (Amount, Unit, Category) captured during import, resulting in significantly more accurate aggregation and aisle organization.
 
 ### 🤖 Agent Quick Reference
 
@@ -69,6 +69,7 @@ Key entry points for common tasks:
 **Conventions:**
 
 - React components use `.tsx` extension (TypeScript) and PascalCase naming
+- UI components are organized in `src/components/ui/` using shadcn/ui patterns
 - Nanostores in `src/lib/*Store.ts` manage global state
 - All API routes return JSON with `{ success, data?, error? }` pattern
 - Run `npm run check:safety` before committing
@@ -312,8 +313,7 @@ src/
 │ │ ├── ReviewMode.tsx # Post-cooking rating/notes
 │ │ ├── OverviewMode.tsx # Default recipe display
 │ │ └── CheckableItem.tsx # Reusable checkbox item
-│ ├── ui/ # Reusable UI primitives
-│ │ ├── Button.tsx, Fab.tsx, Tabs.tsx, StarRating.jsx, etc.
+│ ├── ui/ # shadcn/ui components (button, tabs, input, dialog, etc.)
 │ └── layout/ # Global layout components
 │ ├── GlobalBurgerMenu.jsx # Slide-out settings/feedback menu
 │ ├── GlobalFeedback.jsx # Feedback modal wrapper

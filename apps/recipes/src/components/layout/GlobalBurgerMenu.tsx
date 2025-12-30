@@ -32,10 +32,10 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
       {/* Floating Trigger Button - Always visible in top-right corner */}
       <button
         onClick={openBurgerMenu}
-        className="fixed right-4 top-4 z-[60] rounded-full bg-md-sys-color-surface p-3 shadow-md-2 transition-all hover:bg-md-sys-color-surface-variant"
+        className="fixed right-4 top-4 z-[60] rounded-full bg-card p-3 shadow-md transition-all hover:bg-card-variant"
         aria-label="Open Menu"
       >
-        <Menu className="h-6 w-6 text-md-sys-color-on-surface" />
+        <Menu className="h-6 w-6 text-foreground" />
       </button>
 
       {/* Overlay + Drawer */}
@@ -56,18 +56,18 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
           />
 
           {/* Drawer - slides in from right */}
-          <div className="animate-in slide-in-from-right relative h-full w-72 max-w-[85vw] bg-md-sys-color-surface shadow-md-3 duration-200">
+          <div className="animate-in slide-in-from-right relative h-full w-72 max-w-[85vw] bg-card shadow-md-3 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-md-sys-color-outline px-4 py-4">
-              <span className="font-display text-lg font-bold text-md-sys-color-on-surface">
+            <div className="flex items-center justify-between border-b border-border px-4 py-4">
+              <span className="font-display text-lg font-bold text-foreground">
                 Menu
               </span>
               <button
                 onClick={closeBurgerMenu}
-                className="rounded-full p-2 hover:bg-md-sys-color-surface-variant"
+                className="rounded-full p-2 hover:bg-card-variant"
                 aria-label="Close Menu"
               >
-                <X className="h-5 w-5 text-md-sys-color-on-surface" />
+                <X className="h-5 w-5 text-foreground" />
               </button>
             </div>
 
@@ -76,10 +76,10 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleSettings}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-md-sys-color-surface-variant"
+                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-card-variant"
               >
-                <Settings className="h-5 w-5 text-md-sys-color-on-surface-variant" />
-                <span className="font-medium text-md-sys-color-on-surface">Settings</span>
+                <Settings className="h-5 w-5 text-foreground-variant" />
+                <span className="font-medium text-foreground">Settings</span>
               </button>
 
               {/* Only show dashboard to Emilio */}
@@ -88,10 +88,10 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <button
                   role="menuitem"
                   onClick={handleFeedbackDashboard}
-                  className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-md-sys-color-surface-variant"
+                  className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-card-variant"
                 >
-                  <LayoutDashboard className="h-5 w-5 text-md-sys-color-on-surface-variant" />
-                  <span className="font-medium text-md-sys-color-on-surface">
+                  <LayoutDashboard className="h-5 w-5 text-foreground-variant" />
+                  <span className="font-medium text-foreground">
                     Feedback Dashboard
                   </span>
                 </button>
@@ -100,17 +100,17 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleFeedback}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-md-sys-color-surface-variant"
+                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-card-variant"
                 aria-label="Send Feedback"
               >
-                <MessageSquare className="h-5 w-5 text-md-sys-color-on-surface-variant" />
-                <span className="font-medium text-md-sys-color-on-surface">Send Feedback</span>
+                <MessageSquare className="h-5 w-5 text-foreground-variant" />
+                <span className="font-medium text-foreground">Send Feedback</span>
               </button>
             </div>
 
             {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 border-t border-md-sys-color-outline p-4">
-              <div className="flex items-center gap-2 text-xs text-md-sys-color-on-surface-variant">
+            <div className="absolute bottom-0 left-0 right-0 border-t border-border p-4">
+              <div className="flex items-center gap-2 text-xs text-foreground-variant">
                 <Info className="h-4 w-4" />
                 <span>Chefboard v1.0</span>
               </div>

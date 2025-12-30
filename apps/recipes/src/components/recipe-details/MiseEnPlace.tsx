@@ -19,14 +19,14 @@ export const MiseEnPlace: React.FC<MiseEnPlaceProps> = ({
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 flex-1 space-y-8 overflow-y-auto p-6">
       <header className="text-center">
-        <h2 className="font-display text-2xl font-bold text-md-sys-color-on-surface">
+        <h2 className="font-display text-2xl font-bold text-foreground">
           Mise en Place
         </h2>
-        <p className="font-body text-md-sys-color-on-surface-variant">Gather your ingredients</p>
+        <p className="font-body text-foreground-variant">Gather your ingredients</p>
       </header>
 
-      <div className="bg-md-sys-color-surface-variant/10 rounded-md-xl border border-md-sys-color-outline p-4">
-        <h3 className="mb-4 font-display text-xs font-bold uppercase tracking-widest text-md-sys-color-primary">
+      <div className="bg-card-variant/10 rounded-xl border border-border p-4">
+        <h3 className="mb-4 font-display text-xs font-bold uppercase tracking-widest text-primary">
           Ingredients ({recipe.ingredients.length})
         </h3>
         <div className="space-y-1">
@@ -48,7 +48,7 @@ export const MiseEnPlace: React.FC<MiseEnPlaceProps> = ({
 
       <button
         onClick={startCooking}
-        className="flex w-full items-center justify-center gap-3 rounded-full bg-md-sys-color-primary py-4 font-display text-xl font-bold text-md-sys-color-on-primary shadow-md-2"
+        className="flex w-full items-center justify-center gap-3 rounded-full bg-primary py-4 font-display text-xl font-bold text-primary-foreground shadow-md"
       >
         <Play className="h-6 w-6 fill-current" />
         Start Cooking

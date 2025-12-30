@@ -90,7 +90,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         )}
 
         <div
-          className={`relative bg-md-sys-color-surface ${cookingMode ? 'pt-4' : '-mt-6 rounded-t-md-xl border-t border-md-sys-color-outline p-6 shadow-md-3'}`}
+          className={`relative bg-card ${cookingMode ? 'pt-4' : '-mt-6 rounded-t-md-xl border-t border-border p-6 shadow-md-3'}`}
         >
           {/* Metadata Header */}
           <div className="mb-6">
@@ -101,12 +101,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 </span>
               )}
               {recipe.difficulty && (
-                <span className="rounded-full bg-md-sys-color-surface-variant px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-surface-variant">
+                <span className="rounded-full bg-card-variant px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-foreground-variant">
                   {recipe.difficulty}
                 </span>
               )}
             </div>
-            <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-md-sys-color-on-surface">
+            <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-foreground">
               {recipe.title}
             </h1>
 
@@ -115,24 +115,24 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 href={recipe.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mb-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-md-sys-color-primary hover:underline"
+                className="mb-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary hover:underline"
               >
                 Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')}{' '}
                 <ChevronRight className="h-3 w-3" />
               </a>
             )}
 
-            <div className="border-md-sys-color-outline/20 mt-4 flex gap-4 border-y py-3 text-sm font-medium text-md-sys-color-on-surface-variant">
+            <div className="border-border/20 mt-4 flex gap-4 border-y py-3 text-sm font-medium text-foreground-variant">
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-md-sys-color-primary" />
+                <Clock className="h-4 w-4 text-primary" />
                 <span>{recipe.prepTime + recipe.cookTime}m</span>
               </div>
               <div className="flex items-center gap-1">
-                <Users className="h-4 w-4 text-md-sys-color-primary" />
+                <Users className="h-4 w-4 text-primary" />
                 <span>{recipe.servings} Servings</span>
               </div>
               <div className="flex items-center gap-1">
-                <Flame className="h-4 w-4 text-md-sys-color-primary" />
+                <Flame className="h-4 w-4 text-primary" />
                 <span>{recipe.difficulty || 'Easy'}</span>
               </div>
               {recipe.updatedAt && (
@@ -148,13 +148,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           {/* Cost Estimation (Auto) */}
           <div className="mb-6 flex justify-end">
             {isEstimating ? (
-              <div className="bg-md-sys-color-surface-variant/50 flex items-center gap-2 rounded-md-l px-3 py-1 text-xs font-medium text-md-sys-color-on-surface-variant">
+              <div className="bg-card-variant/50 flex items-center gap-2 rounded-lg px-3 py-1 text-xs font-medium text-foreground-variant">
                 <span className="animate-spin">⟳</span> Estimating HEB Cost...
               </div>
             ) : estimateError ? (
               <button
                 onClick={handleEstimateCost}
-                className="flex items-center gap-2 rounded-md-l bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
                 title={estimateError}
               >
                 ⚠️ Couldn't estimate cost
@@ -162,7 +162,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </button>
             ) : estimatedCost !== null ? (
               <button
-                className="flex cursor-pointer items-center gap-2 rounded-md-l bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100"
+                className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100"
                 onClick={handleEstimateCost}
                 title="Click to refresh cost"
                 aria-label={`Estimated cost is ${estimatedCost.toFixed(2)} dollars. Click to refresh.`}
@@ -174,7 +174,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               // Fallback button if auto failed or initial state before effect
               <button
                 onClick={handleEstimateCost}
-                className="text-xs font-bold uppercase tracking-wider text-md-sys-color-primary hover:underline"
+                className="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
               >
                 Estimate Cost
               </button>
@@ -183,13 +183,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
           {/* Quick Stats or Previous Experience */}
           {(recipe.rating || recipe.userNotes) && (
-            <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 mb-8 rounded-md-xl border p-4">
+            <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 mb-8 rounded-xl border p-4">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
-                      className={`h-4 w-4 ${s <= (recipe.rating || 0) ? 'fill-md-sys-color-tertiary text-md-sys-color-tertiary' : 'text-md-sys-color-outline'}`}
+                      className={`h-4 w-4 ${s <= (recipe.rating || 0) ? 'fill-md-sys-color-tertiary text-md-sys-color-tertiary' : 'text-border'}`}
                     />
                   ))}
                 </div>
@@ -214,22 +214,22 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
           {/* Ingredients */}
           <div className="mb-8">
-            <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-md-sys-color-on-surface">
+            <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-foreground">
               <div className="flex items-center gap-2">
                 Ingredients
-                <span className="font-body text-sm font-normal text-md-sys-color-on-surface-variant">
+                <span className="font-body text-sm font-normal text-foreground-variant">
                   ({recipe.ingredients?.length || 0})
                 </span>
               </div>
               <button
                 onClick={() => setCookingStage('pre')}
-                className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-md-sys-color-primary hover:underline"
+                className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-primary hover:underline"
               >
                 Start Prepping <ChevronRight className="h-3 w-3" />
               </button>
             </h2>
             <div
-              className={`rounded-md-l border border-dashed border-md-sys-color-outline p-2 ${cookingMode ? 'bg-md-sys-color-tertiary-container/20 border-md-sys-color-tertiary-container' : 'bg-md-sys-color-surface-variant/20'}`}
+              className={`rounded-lg border border-dashed border-border p-2 ${cookingMode ? 'bg-md-sys-color-tertiary-container/20 border-md-sys-color-tertiary-container' : 'bg-card-variant/20'}`}
             >
               {recipe.ingredients.map((ing, idx) => {
                 const prep = ing.prep ? `, ${ing.prep}` : '' // Fix this line to ensure proper text content
@@ -250,11 +250,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
           {/* Steps */}
           <div className="mb-8">
-            <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-md-sys-color-on-surface">
+            <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-foreground">
               Instructions
               <button
                 onClick={startCooking}
-                className="bg-md-sys-color-primary/10 hover:bg-md-sys-color-primary/20 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest text-md-sys-color-primary"
+                className="bg-primary/10 hover:bg-primary/20 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary"
               >
                 Cooking Mode <Play className="h-3 w-3 fill-current" />
               </button>
@@ -263,13 +263,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               {recipe.steps.map((step, idx) => (
                 <div key={idx} className="flex gap-4">
                   <div
-                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border font-bold transition-colors ${checkedSteps[idx] ? 'border-md-sys-color-primary bg-md-sys-color-primary text-md-sys-color-on-primary' : 'border-md-sys-color-outline bg-md-sys-color-surface text-md-sys-color-on-surface'}`}
+                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border font-bold transition-colors ${checkedSteps[idx] ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground'}`}
                   >
                     {checkedSteps[idx] ? <Check className="h-4 w-4" /> : idx + 1}
                   </div>
                   <button
                     onClick={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
-                    className={`text-left font-body text-md-sys-color-on-surface transition-opacity ${cookingMode ? 'text-lg leading-relaxed' : ''} ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
+                    className={`text-left font-body text-foreground transition-opacity ${cookingMode ? 'text-lg leading-relaxed' : ''} ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
                   >
                     {step}
                   </button>
@@ -279,7 +279,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           </div>
 
           {recipe.notes && (
-            <div className="mb-8 rounded-md-l border-l-4 border-md-sys-color-tertiary bg-md-sys-color-tertiary-container p-4 text-sm text-md-sys-color-on-tertiary-container">
+            <div className="mb-8 rounded-lg border-l-4 border-md-sys-color-tertiary bg-md-sys-color-tertiary-container p-4 text-sm text-md-sys-color-on-tertiary-container">
               <strong>Chef's Notes:</strong>
               <p className="mt-1">{recipe.notes}</p>
             </div>
