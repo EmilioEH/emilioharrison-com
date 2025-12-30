@@ -225,18 +225,28 @@ npm run feedback:resolve <id> fixed --remote
    > **Production Note**: These variables must also be set in **Cloudflare Pages Environment Variables**. The `PUBLIC_` prefixed variables are safe to expose as they only identify the Firebase project.
 
 3. **Development**:
+   The recommended way to run the app locally is using the **`/run-local`** workflow:
 
    ```bash
+   /run-local  # Recommended for Agents & Humans
+   # Or manually:
    npm run dev
    ```
 
-   The app will be available at `http://localhost:4321/protected/recipes`.
+   The app will be available at [`http://localhost:4321/protected/recipes`](http://localhost:4321/protected/recipes).
 
-4. **Preview with Wrangler** (simulates production bindings):
+4. **Preview with Wrangler** (Production Simulation):
+
+   > [!WARNING]
+   > Use this ONLY for testing Cloudflare-specific bindings (R2/D1/KV). It requires a manual build and **does not** auto-update with code changes. For UI work, always use the **Development** steps above.
+
    ```bash
    npm run build && npm run preview:wrangler
    ```
+
    Available at `http://localhost:8788/protected/recipes`.
+
+For a detailed breakdown of the local environment and how to manage data, see the [Local Run Workflow](file:///Users/emilioharrison/Code/emilioharrison-com/.agent/workflows/run-local.md).
 
 ## 🚀 Production Deployment
 

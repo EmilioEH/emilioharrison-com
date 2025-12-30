@@ -23,10 +23,10 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   user,
 }) => (
   <header
-    className={`sticky top-0 z-50 flex flex-col border-b border-border shadow-sm transition-all duration-300 ease-in-out ${
+    className={`sticky top-0 z-50 flex flex-col border-b border-border shadow-md backdrop-blur-md transition-all duration-300 ease-in-out ${
       isSelectionMode
-        ? 'h-14 justify-center bg-secondary px-4 text-secondary-foreground'
-        : 'justify-end bg-card'
+        ? 'h-14 justify-center bg-secondary/90 px-4 text-secondary-foreground'
+        : 'justify-end bg-background/80'
     }`}
   >
     {isSelectionMode ? (
