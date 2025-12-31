@@ -1,9 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useLayoutEffect, useRef } from 'react'
 import { ChefHat, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { LibraryRecipeCard } from './library/LibraryRecipeCard'
+
+// Global scroll cache
+const scrollCache: Record<string, number> = {}
 
 interface RecipeLibraryProps {
   recipes: Recipe[]
@@ -31,9 +34,40 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   hasSearch,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Use custom hook for complex grouping logic
   const { groupedRecipes, getGroupTitle, weekDays } = useRecipeGrouping(recipes, sort)
+
+  // Scroll Restoration
+  useLayoutEffect(() => {
+    // Restore scroll
+    const cachedScroll = scrollCache['library'] || 0
+    // Try to restore on window/document body if we are scrolling the main page
+    // Or key off a specific container if we are in a sub-scroller.
+    // The main app usually scrolls the 'main' element in RecipeManager.
+    // Since RecipeLibrary is inside that scrollable area, we might need a different approach.
+    // However, the task says the 'library resets to the top'.
+    // In RecipeManager, the <main> has overflow-y-auto.
+    // We need to target THAT scroll container.
+    // The previous implementation of RecipeManager has:
+    // <main className="relative flex-1 overflow-y-auto scroll-smooth">
+
+    // We can't access that REF easily without passing it down.
+    // ALTERNATIVE: Use the parent selector.
+    const scrollContainer = document.querySelector('main.overflow-y-auto')
+
+    if (scrollContainer && cachedScroll > 0) {
+      scrollContainer.scrollTop = cachedScroll
+    }
+
+    // Save scroll on unmount
+    return () => {
+      if (scrollContainer) {
+        scrollCache['library'] = scrollContainer.scrollTop
+      }
+    }
+  }, []) // Run once on mount/unmount
 
   const toggleGroup = (groupName: string) => {
     setOpenGroups((prev) => ({
@@ -58,7 +92,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   }
 
   return (
-    <div className="pb-24 animate-in fade-in">
+    <div ref={containerRef} className="pb-24 animate-in fade-in">
       {groupedRecipes.sortedKeys.map((key) => (
         <div key={key}>
           {/* Group Header */}

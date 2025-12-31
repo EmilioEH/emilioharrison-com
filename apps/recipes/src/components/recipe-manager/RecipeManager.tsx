@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Plus, Loader2, ArrowLeft } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
@@ -17,8 +17,10 @@ import type { Recipe } from '../../lib/types'
 import { useRecipes } from './hooks/useRecipes'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
 import { useGroceryListGenerator } from './hooks/useGroceryListGenerator'
+
 import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
+import { useRouter } from './hooks/useRouter'
 
 // --- Sub-Components ---
 import { RecipeLibrary } from './RecipeLibrary'
@@ -49,9 +51,24 @@ interface RecipeManagerProps {
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   const { recipes, setRecipes, loading, refreshRecipes, getBaseUrl } = useRecipes()
-  const [view, setView] = useState<ViewMode>('library')
+
+  // Use new Router Hook
+  const {
+    view,
+    activeRecipeId,
+    searchQuery: initialSearchQuery,
+    setView,
+    setRecipe,
+    setSearch,
+    setRoute,
+  } = useRouter()
+  // Local view mode (grid/list) stays local as it's a preference, not a route
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
+
+  const selectedRecipe = useMemo(() => {
+    if (!activeRecipeId) return null
+    return recipes.find((r) => r.id === activeRecipeId) || null
+  }, [recipes, activeRecipeId])
 
   // Hooks
   const {
@@ -65,6 +82,19 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     setSearchQuery,
     processedRecipes,
   } = useFilteredRecipes(recipes, view)
+
+  // Sync Router Search to Filter Hook
+  useEffect(() => {
+    if (initialSearchQuery !== searchQuery) {
+      setSearchQuery(initialSearchQuery)
+    }
+  }, [initialSearchQuery])
+
+  // Update Router when Filter Search changes (debounced by hook usually, but here direct)
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+    setSearch(query)
+  }
 
   const { groceryItems, isGenerating, handleGenerateList, targetRecipes } = useGroceryListGenerator(
     recipes,
@@ -112,7 +142,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     if (success) {
       if (view === 'edit') {
         setView('library')
-        setSelectedRecipe(null)
+        setRecipe(null)
       }
     }
   }
@@ -121,7 +151,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     const success = await deleteRecipe(id)
     if (success) {
       setView('library')
-      setSelectedRecipe(null)
+      setRecipe(null)
     } else {
       alert('Failed to delete')
     }
@@ -129,7 +159,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
 
   const handleUpdateRecipe = (updatedRecipe: Recipe, mode: 'save' | 'edit' = 'save') => {
     if (mode === 'edit') {
-      setSelectedRecipe(updatedRecipe)
+      setRecipe(updatedRecipe.id)
       setView('edit')
     } else {
       const changes = {
@@ -139,7 +169,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       handleSaveRecipe(changes)
 
       if (selectedRecipe && selectedRecipe.id === updatedRecipe.id) {
-        setSelectedRecipe(changes)
+        setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
       }
     }
   }
@@ -169,9 +199,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   }
 
   const handleToggleFavorite = async (recipe: Recipe) => {
-    const newRecipe = await toggleFavorite(recipe)
+    await toggleFavorite(recipe)
     if (selectedRecipe && selectedRecipe.id === recipe.id) {
-      setSelectedRecipe(newRecipe)
+      // No-op, derived from recipes
     }
   }
 
@@ -354,7 +384,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           sort={sort}
           setSort={setSort}
           searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          setSearchQuery={handleSearchChange}
         />
 
         {/* Collapsible Header */}
@@ -394,8 +424,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                     if (isSelectionMode) {
                       toggleSelection(r.id)
                     } else {
-                      setSelectedRecipe(r)
-                      setView('detail')
+                      setRoute({ activeRecipeId: r.id, view: 'detail' })
                     }
                   }}
                   onToggleThisWeek={handleToggleThisWeek}
@@ -403,7 +432,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   selectedIds={selectedIds}
                   onAssignDay={handleAssignDay}
                   viewMode={viewMode}
-                  onClearSearch={() => setSearchQuery('')}
+                  onClearSearch={() => handleSearchChange('')}
                   hasSearch={!!searchQuery}
                 />
               </div>
@@ -427,8 +456,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               onClose={() => setView('library')}
               recipes={targetRecipes}
               onOpenRecipe={(recipe) => {
-                setSelectedRecipe(recipe)
-                setView('detail')
+                setRoute({ activeRecipeId: recipe.id, view: 'detail' })
               }}
             />
           )}
@@ -450,7 +478,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
             icon={Plus}
             label="Add Recipe"
             onClick={() => {
-              setSelectedRecipe(null)
+              setRecipe(null)
               setView('edit')
             }}
           />
@@ -477,7 +505,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           view={view}
           setView={(v) => setView(v)}
           searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          setSearchQuery={handleSearchChange}
           viewMode={viewMode}
           setViewMode={setViewMode}
           onOpenFilters={() => setFiltersOpen(true)}
