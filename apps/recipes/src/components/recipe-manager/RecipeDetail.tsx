@@ -6,6 +6,7 @@ import { CookingMode } from '../recipe-details/CookingMode'
 import { ReviewMode } from '../recipe-details/ReviewMode'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import type { Recipe } from '../../lib/types'
+import { Calendar, Play, Check } from 'lucide-react'
 
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
@@ -210,7 +211,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
   return (
     <div
-      className={`animate-in slide-in-from-bottom-10 fixed inset-0 z-50 flex flex-col bg-card ${cookingMode ? 'safe-area-pt' : ''}`}
+      className={`fixed inset-0 z-50 flex flex-col bg-card animate-in slide-in-from-bottom-10 ${cookingMode ? 'safe-area-pt' : ''}`}
     >
       <DetailHeader
         recipe={recipe}
@@ -224,6 +225,42 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       />
 
       <div className="flex-1 overflow-y-auto">{renderContent()}</div>
+
+      {/* Sticky Action Footer */}
+      {cookingStage === 'idle' && (
+        <div className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">
+          <div className="mx-auto flex max-w-md items-center gap-3">
+            {/* Secondary: Add to Week */}
+            <button
+              onClick={() => handleAction('addToWeek')}
+              className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 font-display text-sm font-bold uppercase tracking-wider transition-all active:scale-95 ${
+                recipe.thisWeek
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+              }`}
+            >
+              {recipe.thisWeek ? (
+                <>
+                  <Check className="h-4 w-4" /> Added to Week
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-4 w-4" /> Add to Week
+                </>
+              )}
+            </button>
+
+            {/* Primary: Start Cooking */}
+            <button
+              onClick={startCooking}
+              className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-95"
+            >
+              <span className="font-display text-lg font-bold">Start Cooking</span>
+              <Play className="h-5 w-5 fill-current" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
