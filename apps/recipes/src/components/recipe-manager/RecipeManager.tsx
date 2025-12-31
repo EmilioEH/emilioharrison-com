@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft, Plus } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
 import { VarietyWarning } from './VarietyWarning'
@@ -27,6 +27,7 @@ import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 import { BottomControls } from './BottomControls'
 import { ResponsiveModal } from '../ui/ResponsiveModal'
+import { Fab } from '../ui/Fab'
 
 export type ViewMode =
   | 'library'
@@ -85,7 +86,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     if (initialSearchQuery !== searchQuery) {
       setSearchQuery(initialSearchQuery)
     }
-  }, [initialSearchQuery])
+  }, [initialSearchQuery, searchQuery, setSearchQuery])
 
   // Update Router when Filter Search changes (debounced by hook usually, but here direct)
   const handleSearchChange = (query: string) => {
@@ -135,7 +136,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       )
       window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
     }
-  }, [])
+  }, [setView])
 
   const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
     const { success } = await saveRecipe(recipe)
@@ -168,9 +169,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       }
       handleSaveRecipe(changes)
 
-      if (selectedRecipe && selectedRecipe.id === updatedRecipe.id) {
-        setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
-      }
+      setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
     }
   }
 
@@ -465,7 +464,18 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         />
       )}
       {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
-      {/* Primary Floating Action Button - Lifted for Bottom Bar */}
+      {(view === 'library' || view === 'week') && !isSelectionMode && (
+        <div className="fixed bottom-36 right-4 z-[60] transition-all duration-300">
+          <Fab
+            icon={Plus}
+            label="Add Recipe"
+            onClick={() => {
+              setRecipe(null)
+              setView('edit')
+            }}
+          />
+        </div>
+      )}
 
       {/* Edit/Add Recipe Modal */}
       <ResponsiveModal

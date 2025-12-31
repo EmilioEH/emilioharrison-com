@@ -30,7 +30,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   setCookingStage,
 }) => (
   <div
-    className={`border-border bg-background sticky top-0 z-20 flex items-center justify-between border-b px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
+    className={`sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
   >
     <HeaderBackButton
       cookingStage={cookingStage}

@@ -1,1 +1,9 @@
-[{"id":"import-123","title":"Imported Recipe","ingredients":[],"steps":[],"protein":"Beef"}]
+[
+  {
+    "id": "import-123",
+    "title": "Imported Recipe",
+    "ingredients": [],
+    "steps": [],
+    "protein": "Beef"
+  }
+]

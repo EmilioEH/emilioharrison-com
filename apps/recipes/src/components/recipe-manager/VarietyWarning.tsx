@@ -13,7 +13,7 @@ export const VarietyWarning: React.FC<VarietyWarningProps> = ({ warning, onClose
   if (!warning) return null
 
   return (
-    <div className="animate-in slide-in-from-top-2 absolute left-4 right-4 top-20 z-50 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800 shadow-lg">
+    <div className="absolute left-4 right-4 top-20 z-50 flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800 shadow-lg animate-in slide-in-from-top-2">
       <div className="flex items-center gap-3">
         <AlertCircle className="h-5 w-5" />
         <div>

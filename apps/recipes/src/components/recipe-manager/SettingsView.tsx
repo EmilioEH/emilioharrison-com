@@ -14,11 +14,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onDeleteAccount,
   onClose,
 }) => (
-  <div className="animate-in slide-in-from-right absolute inset-0 z-50 bg-card p-6">
+  <div className="absolute inset-0 z-50 bg-card p-6 animate-in slide-in-from-right">
     <div className="mb-8 flex items-center justify-between">
-      <h2 className="font-display text-2xl font-bold text-foreground">
-        Data Management
-      </h2>
+      <h2 className="font-display text-2xl font-bold text-foreground">Data Management</h2>
       <button onClick={onClose}>
         <X className="h-6 w-6" />
       </button>
@@ -26,15 +24,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     <div className="space-y-8">
       <section>
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-foreground-variant">
+        <h3 className="text-foreground-variant mb-4 text-xs font-bold uppercase tracking-wider">
           Export & Import
         </h3>
         <div className="flex flex-col gap-4">
           <button
             onClick={onExport}
-            className="flex items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors hover:bg-card-variant"
+            className="hover:bg-card-variant flex items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors"
           >
-            <div className="rounded-full bg-md-sys-color-secondary-container p-2 text-md-sys-color-on-secondary-container">
+            <div className="bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container rounded-full p-2">
               <Download className="h-5 w-5" />
             </div>
             <div>
@@ -42,8 +40,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="text-xs opacity-70">Download your recipes as JSON</div>
             </div>
           </button>
-          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors hover:bg-card-variant">
-            <div className="rounded-full bg-md-sys-color-tertiary-container p-2 text-md-sys-color-on-tertiary-container">
+          <label className="hover:bg-card-variant flex cursor-pointer items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors">
+            <div className="bg-md-sys-color-tertiary-container text-md-sys-color-on-tertiary-container rounded-full p-2">
               <Upload className="h-5 w-5" />
             </div>
             <div>

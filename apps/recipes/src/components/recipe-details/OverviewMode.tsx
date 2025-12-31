@@ -90,18 +90,18 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         )}
 
         <div
-          className={`relative bg-card ${cookingMode ? 'pt-4' : '-mt-6 rounded-t-md-xl border-t border-border p-6 shadow-md-3'}`}
+          className={`relative bg-card ${cookingMode ? 'pt-4' : 'rounded-t-md-xl shadow-md-3 -mt-6 border-t border-border p-6'}`}
         >
           {/* Metadata Header */}
           <div className="mb-6">
             <div className="mb-2 flex gap-2">
               {recipe.protein && (
-                <span className="rounded-full bg-md-sys-color-secondary-container px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-md-sys-color-on-secondary-container">
+                <span className="bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wider">
                   {recipe.protein}
                 </span>
               )}
               {recipe.difficulty && (
-                <span className="rounded-full bg-card-variant px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-foreground-variant">
+                <span className="bg-card-variant text-foreground-variant rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wider">
                   {recipe.difficulty}
                 </span>
               )}
@@ -122,7 +122,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </a>
             )}
 
-            <div className="border-border/20 mt-4 flex gap-4 border-y py-3 text-sm font-medium text-foreground-variant">
+            <div className="text-foreground-variant mt-4 flex gap-4 border-y border-border/20 py-3 text-sm font-medium">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4 text-primary" />
                 <span>{recipe.prepTime + recipe.cookTime}m</span>
@@ -148,7 +148,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           {/* Cost Estimation (Auto) */}
           <div className="mb-6 flex justify-end">
             {isEstimating ? (
-              <div className="bg-card-variant/50 flex items-center gap-2 rounded-lg px-3 py-1 text-xs font-medium text-foreground-variant">
+              <div className="bg-card-variant/50 text-foreground-variant flex items-center gap-2 rounded-lg px-3 py-1 text-xs font-medium">
                 <span className="animate-spin">⟳</span> Estimating HEB Cost...
               </div>
             ) : estimateError ? (
@@ -183,13 +183,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
           {/* Quick Stats or Previous Experience */}
           {(recipe.rating || recipe.userNotes) && (
-            <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 mb-8 rounded-xl border p-4">
+            <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 rounded-md-xl mb-8 rounded-xl border p-4">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
-                      className={`h-4 w-4 ${s <= (recipe.rating || 0) ? 'fill-md-sys-color-tertiary text-md-sys-color-tertiary' : 'text-border'}`}
+                      className={`h-4 w-4 ${s <= (recipe.rating || 0) ? 'fill-md-sys-color-tertiary text-md-sys-color-tertiary fill-yellow-400 text-yellow-400' : 'text-border'}`}
                     />
                   ))}
                 </div>
@@ -200,7 +200,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 )}
               </div>
               {recipe.userNotes && (
-                <p className="font-body text-sm italic text-md-sys-color-on-tertiary-container">
+                <p
+                  className="text-md-sys-color-on-tertiary-container font-body text-sm italic"
+                  data-testid="recipe-notes"
+                >
                   "{recipe.userNotes}"
                 </p>
               )}
@@ -217,7 +220,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-foreground">
               <div className="flex items-center gap-2">
                 Ingredients
-                <span className="font-body text-sm font-normal text-foreground-variant">
+                <span className="text-foreground-variant font-body text-sm font-normal">
                   ({recipe.ingredients?.length || 0})
                 </span>
               </div>
@@ -254,7 +257,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               Instructions
               <button
                 onClick={startCooking}
-                className="bg-primary/10 hover:bg-primary/20 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary"
+                className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/20"
               >
                 Cooking Mode <Play className="h-3 w-3 fill-current" />
               </button>
@@ -279,7 +282,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           </div>
 
           {recipe.notes && (
-            <div className="mb-8 rounded-lg border-l-4 border-md-sys-color-tertiary bg-md-sys-color-tertiary-container p-4 text-sm text-md-sys-color-on-tertiary-container">
+            <div className="border-md-sys-color-tertiary bg-md-sys-color-tertiary-container text-md-sys-color-on-tertiary-container mb-8 rounded-lg border-l-4 p-4 text-sm">
               <strong>Chef's Notes:</strong>
               <p className="mt-1">{recipe.notes}</p>
             </div>

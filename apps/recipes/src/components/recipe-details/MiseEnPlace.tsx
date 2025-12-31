@@ -17,12 +17,10 @@ export const MiseEnPlace: React.FC<MiseEnPlaceProps> = ({
   startCooking,
 }) => {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 flex-1 space-y-8 overflow-y-auto p-6">
+    <div className="flex-1 space-y-8 overflow-y-auto p-6 animate-in fade-in slide-in-from-bottom-4">
       <header className="text-center">
-        <h2 className="font-display text-2xl font-bold text-foreground">
-          Mise en Place
-        </h2>
-        <p className="font-body text-foreground-variant">Gather your ingredients</p>
+        <h2 className="font-display text-2xl font-bold text-foreground">Mise en Place</h2>
+        <p className="text-foreground-variant font-body">Gather your ingredients</p>
       </header>
 
       <div className="bg-card-variant/10 rounded-xl border border-border p-4">

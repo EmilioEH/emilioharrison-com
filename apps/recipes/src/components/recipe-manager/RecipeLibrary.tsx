@@ -48,7 +48,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
   // Scrollspy & Tabs
   const [activeGroup, setActiveGroup] = useState<string>(() => {
-    return scrollCache['library_activeGroup'] || ''
+    return (scrollCache['library_activeGroup'] as string) || ''
   })
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const navRef = useRef<HTMLDivElement>(null)
@@ -96,7 +96,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
   // 1. One-time Scroll Restoration
   useLayoutEffect(() => {
-    const cachedScroll = scrollCache['library'] || 0
+    const cachedScroll = Number(scrollCache['library']) || 0
     const container = scrollContainer || window.recipeScrollContainer
 
     if (container && cachedScroll > 0) {
@@ -312,6 +312,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                   key={recipe.id}
                   role="button"
                   tabIndex={0}
+                  data-testid={`recipe-card-${recipe.id}`}
                   className={`group flex w-full cursor-pointer gap-4 rounded-xl border border-transparent p-3 text-left transition-all hover:bg-accent/50 ${
                     isSelectionMode && selectedIds?.has(recipe.id)
                       ? 'border-primary/20 bg-accent'
@@ -349,7 +350,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                         </h4>
                         {recipe.rating && (
                           <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
-                            <span>★</span> {recipe.rating}
+                            <span>★</span> <span data-testid="recipe-rating">{recipe.rating}</span>
                           </div>
                         )}
                       </div>

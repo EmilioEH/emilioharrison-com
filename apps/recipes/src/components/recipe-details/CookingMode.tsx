@@ -32,8 +32,8 @@ export const CookingMode: React.FC<CookingModeProps> = ({
   // So I can choose to remove it.
 
   return (
-    <div className="animate-in fade-in zoom-in-95 flex h-full flex-col p-6">
-      <div className="mb-8 h-2 overflow-hidden rounded-full bg-card-variant">
+    <div className="flex h-full flex-col p-6 animate-in fade-in zoom-in-95">
+      <div className="bg-card-variant mb-8 h-2 overflow-hidden rounded-full">
         <div
           className="h-full bg-primary transition-all duration-500"
           style={{ width: `${progress}%` }}
@@ -61,7 +61,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({
               setCookingStage('post')
             }
           }}
-          className="flex w-full items-center justify-center gap-3 rounded-full bg-primary py-6 font-display text-2xl font-bold text-primary-foreground shadow-md-3 transition-transform active:scale-95"
+          className="shadow-md-3 flex w-full items-center justify-center gap-3 rounded-full bg-primary py-6 font-display text-2xl font-bold text-primary-foreground transition-transform active:scale-95"
         >
           <Check className="h-8 w-8 stroke-[3]" />
           {currentStepIdx < recipe.steps.length - 1 ? 'Next Step' : 'Finish Cooking'}
@@ -71,13 +71,13 @@ export const CookingMode: React.FC<CookingModeProps> = ({
           <button
             disabled={currentStepIdx === 0}
             onClick={() => setCurrentStepIdx(currentStepIdx - 1)}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border py-3 font-medium text-foreground-variant disabled:opacity-30"
+            className="text-foreground-variant flex flex-1 items-center justify-center gap-2 rounded-full border border-border py-3 font-medium disabled:opacity-30"
           >
             <ChevronLeft className="h-5 w-5" /> Previous
           </button>
           <button
             onClick={() => setCookingStage('pre')}
-            className="flex items-center justify-center gap-2 rounded-full border border-border p-3 text-foreground-variant"
+            className="text-foreground-variant flex items-center justify-center gap-2 rounded-full border border-border p-3"
             title="View Ingredients"
           >
             <RotateCcw className="h-5 w-5" />

@@ -56,7 +56,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className="animate-in fade-in absolute inset-0 bg-black/50 backdrop-blur-sm duration-200"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm duration-200 animate-in fade-in"
         onClick={handleBackdropClick}
         onKeyDown={handleBackdropKeyDown}
         aria-label="Close modal"
@@ -66,8 +66,8 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
       <div
         className={`relative z-50 flex flex-col bg-card shadow-xl transition-all duration-300 ease-out ${
           isMobile
-            ? 'animate-in slide-in-from-bottom mt-auto h-[90vh] w-full rounded-t-[28px]'
-            : 'animate-in zoom-in-95 fade-in m-4 h-auto max-h-[85vh] w-full max-w-2xl rounded-[28px]'
+            ? 'mt-auto h-[90vh] w-full rounded-t-[28px] animate-in slide-in-from-bottom'
+            : 'm-4 h-auto max-h-[85vh] w-full max-w-2xl rounded-[28px] animate-in fade-in zoom-in-95'
         } `}
         style={isMobile ? { bottom: 0, position: 'absolute' } : {}}
       >
@@ -93,7 +93,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
             className="hover:bg-card-variant/50 rounded-full p-2 transition-colors"
             aria-label="Close modal"
           >
-            <X className="h-6 w-6 text-foreground-variant" />
+            <X className="text-foreground-variant h-6 w-6" />
           </button>
         </div>
 

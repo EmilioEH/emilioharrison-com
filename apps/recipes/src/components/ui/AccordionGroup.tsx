@@ -21,16 +21,16 @@ export const AccordionGroup: React.FC<AccordionGroupProps> = ({
   <div className="border-b border-border last:border-0">
     <button
       onClick={onToggle}
-      className="hover:bg-primary/[0.04] flex w-full items-center justify-between px-6 py-4 transition-colors"
+      className="flex w-full items-center justify-between px-6 py-4 transition-colors hover:bg-primary/[0.04]"
     >
       <div className="flex items-center gap-3">
         <h3 className="font-display text-xl font-bold text-foreground">{title}</h3>
-        <span className="rounded-full bg-primary-container px-2 py-0.5 text-xs font-medium text-primary-foreground-container">
+        <span className="bg-primary-container text-primary-foreground-container rounded-full px-2 py-0.5 text-xs font-medium">
           {count}
         </span>
       </div>
       <ChevronDown
-        className={`h-5 w-5 text-foreground-variant transition-transform duration-200 ${
+        className={`text-foreground-variant h-5 w-5 transition-transform duration-200 ${
           isOpen ? 'rotate-180' : ''
         }`}
       />

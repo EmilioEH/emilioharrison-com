@@ -13,7 +13,7 @@ interface FilterSectionProps {
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, children }) => (
   <div className="mb-6">
-    <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-foreground-variant">
+    <h3 className="text-foreground-variant mb-3 text-xs font-medium uppercase tracking-wider">
       {title}
     </h3>
     <div className="flex flex-wrap gap-2">{children}</div>
@@ -29,7 +29,7 @@ interface FilterChipProps {
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <Badge
     variant={active ? 'default' : 'outline'}
-    className={`hover:bg-secondary h-8 cursor-pointer rounded-full px-3 text-sm font-medium transition-all ${
+    className={`h-8 cursor-pointer rounded-full px-3 text-sm font-medium transition-all hover:bg-secondary ${
       !active ? 'text-muted-foreground hover:text-foreground' : ''
     }`}
     onClick={onClick}
@@ -88,7 +88,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
           <div className="space-y-6">
             {/* Search */}
             <div className="relative">
-              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search recipes..."
@@ -245,14 +245,14 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
               )}
             </FilterSection>
 
-            <div className="text-muted-foreground pt-8 text-center text-xs">
+            <div className="pt-8 text-center text-xs text-muted-foreground">
               <button
                 onClick={() => {
                   setFilters({})
                   setSort('protein')
                   setSearchQuery('')
                 }}
-                className="hover:text-primary underline"
+                className="underline hover:text-primary"
               >
                 Reset all filters
               </button>

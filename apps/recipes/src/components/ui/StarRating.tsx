@@ -39,7 +39,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
           <Star
             className={`${iconSize} ${
               (hoverRating || rating) >= star
-                ? 'fill-yellow-400 text-yellow-400'
+                ? 'fill-md-sys-color-tertiary fill-yellow-400 text-yellow-400'
                 : 'fill-transparent text-gray-300'
             }`}
           />

@@ -16,7 +16,7 @@ export const HeaderBackButton: React.FC<HeaderBackButtonProps> = ({
   <div className="flex items-center gap-2">
     <button
       onClick={cookingStage !== 'idle' ? () => setCookingStage('idle') : onClose}
-      className="hover:bg-foreground/[0.08] rounded-full p-2 transition"
+      className="rounded-full p-2 transition hover:bg-foreground/[0.08]"
       aria-label={cookingStage !== 'idle' ? 'Back to Overview' : 'Back to Library'}
       title={cookingStage !== 'idle' ? 'Back to Overview' : 'Back to Library'}
     >
@@ -50,7 +50,7 @@ export const HeaderModeToggle: React.FC<HeaderModeToggleProps> = ({
       }
       setCookingMode(!cookingMode)
     }}
-    className={`rounded-full border p-2 transition ${cookingMode ? 'border-primary bg-primary-container text-primary-foreground-container' : 'border-transparent text-foreground-variant hover:text-foreground'}`}
+    className={`rounded-full border p-2 transition ${cookingMode ? 'bg-primary-container text-primary-foreground-container border-primary' : 'text-foreground-variant border-transparent hover:text-foreground'}`}
     title="Cooking Mode (Keep Screen On)"
   >
     {cookingMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}

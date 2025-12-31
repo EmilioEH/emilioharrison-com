@@ -139,13 +139,13 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
   return (
     <div
       ref={modalRef}
-      className="animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200 animate-in fade-in"
     >
-      <div className="animate-in zoom-in-95 w-full max-w-lg overflow-hidden rounded-2xl border border-md-sys-color-outline bg-card shadow-2xl duration-200">
+      <div className="border-md-sys-color-outline w-full max-w-lg overflow-hidden rounded-2xl border bg-card shadow-2xl duration-200 animate-in zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-md-sys-color-outline px-6 py-4">
+        <div className="border-md-sys-color-outline flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
-            <h2 className="font-display text-xl font-bold text-md-sys-color-primary">
+            <h2 className="text-md-sys-color-primary font-display text-xl font-bold">
               Submit Feedback
             </h2>
           </div>
@@ -155,7 +155,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
         </div>
 
         {isSuccess ? (
-          <div className="animate-in zoom-in-90 flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-90">
             <CheckCircle2 className="mb-4 h-16 w-16 text-green-500" />
             <h3 className="text-xl font-bold">Thank you!</h3>
             <p className="text-sm opacity-70">Your feedback has been received.</p>
@@ -170,7 +170,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-3 font-bold transition-all ${
                   type === 'bug'
                     ? 'bg-md-sys-color-primary/10 border-md-sys-color-primary text-md-sys-color-primary'
-                    : 'border-transparent bg-card-variant opacity-60'
+                    : 'bg-card-variant border-transparent opacity-60'
                 }`}
               >
                 <Bug className="h-4 w-4" /> Bug Report
@@ -181,7 +181,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-3 font-bold transition-all ${
                   type === 'idea'
                     ? 'bg-md-sys-color-tertiary/10 border-md-sys-color-tertiary text-md-sys-color-tertiary'
-                    : 'border-transparent bg-card-variant opacity-60'
+                    : 'bg-card-variant border-transparent opacity-60'
                 }`}
               >
                 <Lightbulb className="h-4 w-4" /> Idea / Idea
@@ -195,7 +195,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                   <div>
                     <label
                       htmlFor="feedback-actual"
-                      className="mb-2 block text-xs font-black uppercase tracking-widest text-md-sys-color-on-surface-variant"
+                      className="text-md-sys-color-on-surface-variant mb-2 block text-xs font-black uppercase tracking-widest"
                     >
                       What happened? (Actual)
                     </label>
@@ -205,13 +205,13 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                       value={actual}
                       onChange={(e) => setActual(e.target.value)}
                       placeholder="e.g., The search button didn't react when I clicked it."
-                      className="min-h-[80px] w-full rounded-xl border border-md-sys-color-outline bg-card-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+                      className="border-md-sys-color-outline bg-card-variant focus:ring-md-sys-color-primary min-h-[80px] w-full rounded-xl border p-4 text-sm outline-none focus:ring-2"
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="feedback-expected"
-                      className="mb-2 block text-xs font-black uppercase tracking-widest text-md-sys-color-on-surface-variant"
+                      className="text-md-sys-color-on-surface-variant mb-2 block text-xs font-black uppercase tracking-widest"
                     >
                       What did you expect?
                     </label>
@@ -221,7 +221,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                       value={expected}
                       onChange={(e) => setExpected(e.target.value)}
                       placeholder="e.g., I expected the search results to appear below the input."
-                      className="min-h-[80px] w-full rounded-xl border border-md-sys-color-outline bg-card-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-primary"
+                      className="border-md-sys-color-outline bg-card-variant focus:ring-md-sys-color-primary min-h-[80px] w-full rounded-xl border p-4 text-sm outline-none focus:ring-2"
                     />
                   </div>
                 </>
@@ -229,7 +229,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                 <div>
                   <label
                     htmlFor="feedback-idea"
-                    className="mb-2 block text-xs font-black uppercase tracking-widest text-md-sys-color-on-surface-variant"
+                    className="text-md-sys-color-on-surface-variant mb-2 block text-xs font-black uppercase tracking-widest"
                   >
                     Tell us about your idea
                   </label>
@@ -239,7 +239,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe the enhancement or new feature you'd like to see..."
-                    className="min-h-[160px] w-full rounded-xl border border-md-sys-color-outline bg-card-variant p-4 text-sm outline-none focus:ring-2 focus:ring-md-sys-color-tertiary"
+                    className="border-md-sys-color-outline bg-card-variant focus:ring-md-sys-color-tertiary min-h-[160px] w-full rounded-xl border p-4 text-sm outline-none focus:ring-2"
                   />
                 </div>
               )}
@@ -249,14 +249,14 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
             <div>
               <label
                 htmlFor="feedback-screenshot"
-                className="mb-2 block text-xs font-black uppercase tracking-widest text-md-sys-color-on-surface-variant"
+                className="text-md-sys-color-on-surface-variant mb-2 block text-xs font-black uppercase tracking-widest"
               >
                 Visual Context (Optional)
               </label>
               <div className="flex items-center gap-4">
                 <label
                   htmlFor="feedback-screenshot"
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-md-sys-color-outline px-4 py-2 text-sm font-bold transition-colors hover:bg-black/5"
+                  className="border-md-sys-color-outline flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold transition-colors hover:bg-black/5"
                 >
                   <ImageIcon className="h-4 w-4" />
                   {screenshot ? 'Change Screenshot' : 'Upload Screenshot'}
@@ -269,7 +269,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                   onChange={handleImageUpload}
                 />
                 {screenshot && (
-                  <div className="relative h-12 w-12 overflow-hidden rounded border border-md-sys-color-outline">
+                  <div className="border-md-sys-color-outline relative h-12 w-12 overflow-hidden rounded border">
                     <img src={screenshot} alt="Preview" className="h-full w-full object-cover" />
                     <button
                       onClick={() => setScreenshot(null)}
@@ -283,14 +283,14 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
             </div>
 
             {/* Footer / Submit */}
-            <div className="flex items-center justify-between border-t border-md-sys-color-outline pt-6">
+            <div className="border-md-sys-color-outline flex items-center justify-between border-t pt-6">
               <p className="max-w-[180px] text-[10px] italic leading-tight opacity-50">
                 Technical context (logs, state, OS) will be included automatically.
               </p>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 rounded-full bg-md-sys-color-primary px-8 py-3 font-bold text-md-sys-color-on-primary shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                className="bg-md-sys-color-primary text-md-sys-color-on-primary flex items-center gap-2 rounded-full px-8 py-3 font-bold shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-5 w-5 animate-spin" />

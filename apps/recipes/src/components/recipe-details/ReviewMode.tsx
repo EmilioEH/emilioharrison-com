@@ -28,19 +28,15 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   handleFinishCooking,
 }) => {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-8 space-y-8 p-6">
+    <div className="space-y-8 p-6 animate-in fade-in slide-in-from-bottom-8">
       <header className="text-center">
-        <h2 className="font-display text-4xl font-bold italic text-primary">
-          Chef's Kiss!
-        </h2>
-        <p className="mt-2 font-body text-lg text-foreground-variant">
-          How did it turn out?
-        </p>
+        <h2 className="font-display text-4xl font-bold italic text-primary">Chef's Kiss!</h2>
+        <p className="text-foreground-variant mt-2 font-body text-lg">How did it turn out?</p>
       </header>
 
       <div className="space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-foreground-variant">
+        <div className="space-y-2" data-testid="review-rating">
+          <span className="text-foreground-variant text-xs font-bold uppercase tracking-widest">
             Rating
           </span>
           <StarRating rating={rating} onRate={setRating} />
@@ -49,7 +45,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
         <div className="space-y-2">
           <label
             htmlFor="userNotes"
-            className="text-xs font-bold uppercase tracking-widest text-foreground-variant"
+            className="text-foreground-variant text-xs font-bold uppercase tracking-widest"
           >
             Cooking Notes
           </label>
@@ -64,7 +60,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
 
         <button
           onClick={() => setWouldMakeAgain(!wouldMakeAgain)}
-          className={`flex w-full items-center justify-between rounded-md border p-4 transition-colors ${wouldMakeAgain ? 'border-primary bg-primary-container text-primary-foreground-container' : 'border-border bg-card'}`}
+          className={`flex w-full items-center justify-between rounded-md border p-4 transition-colors ${wouldMakeAgain ? 'bg-primary-container text-primary-foreground-container border-primary' : 'border-border bg-card'}`}
         >
           <span className="font-bold">Would make again?</span>
           {wouldMakeAgain ? (
@@ -78,7 +74,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
       {/* Finished Meal Photo Capture */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-widest text-foreground-variant">
+          <span className="text-foreground-variant text-xs font-bold uppercase tracking-widest">
             Capture the Moment
           </span>
           {finishedImage && (
@@ -100,7 +96,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
             <div className="mb-2 rounded-full bg-card p-3 shadow-sm">
               <FolderInput className="h-6 w-6 text-primary" />
             </div>
-            <span className="text-sm font-medium text-foreground-variant">
+            <span className="text-foreground-variant text-sm font-medium">
               Add a photo of your masterpiece
             </span>
             <input
