@@ -213,7 +213,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           {/* Row 1: Tools & Filters */}
           <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto px-4 py-2">
             {/* Search Trigger */}
-            <button className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+            <button
+              onClick={onOpenFilters}
+              aria-label="Open search"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+            >
               <Search className="h-4 w-4" />
             </button>
 
