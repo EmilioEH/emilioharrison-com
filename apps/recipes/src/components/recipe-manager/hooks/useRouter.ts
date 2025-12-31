@@ -24,6 +24,11 @@ export function useRouter() {
       return { view: 'library', activeRecipeId: null, searchQuery: '' }
     }
 
+    // Disable browser's automatic scroll restoration to prevent fighting
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+
     const params = new URLSearchParams(window.location.search)
     return {
       view: (params.get('view') as ViewMode) || 'library',
