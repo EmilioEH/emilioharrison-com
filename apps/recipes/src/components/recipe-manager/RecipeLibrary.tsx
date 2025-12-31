@@ -58,7 +58,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     const scrollContainer = document.querySelector('main.overflow-y-auto')
 
     if (scrollContainer && cachedScroll > 0) {
-      scrollContainer.scrollTop = cachedScroll
+      scrollContainer.scrollTo({ top: cachedScroll, behavior: 'instant' })
     }
 
     // Save scroll on unmount
