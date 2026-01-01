@@ -190,14 +190,24 @@ export class FirebaseRestService {
   async setDocument(collection: string, id: string, data: any, _merge = false) {
     // Uses PATCH to update/create
     const token = await this.getAccessToken()
-    const url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}/${id}`
+    let url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}/${id}`
 
     const fields = this.toFirestoreFields(data)
 
-    // Construct updateMask if merging?
-    // For simpler set-replace behavior (standard set), we just send fields.
-    // Firestore REST PATCH updates fields specified. If we want to replace, we might need to be careful.
-    // For our app, "set" usually means "create or overwrite".
+    // Construct updateMask if merging
+    if (_merge) {
+      const params = new URLSearchParams()
+      // We must specify which fields to update to avoid replacing the document
+      Object.keys(data).forEach((key) => {
+        params.append('updateMask.fieldPaths', key)
+      })
+
+      // If there are fields to update, append to URL
+      const queryString = params.toString()
+      if (queryString) {
+        url += `?${queryString}`
+      }
+    }
 
     const res = await fetch(url, {
       method: 'PATCH',
