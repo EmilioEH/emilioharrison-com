@@ -384,7 +384,71 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       )}
 
       {/* Main Content Area */}
-      {searchQuery ? (
+      {/* Main Content Area */}
+      {isSelectionMode ? (
+        // COMPACT SELECTION VIEW
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col gap-1 p-4 pt-4"
+        >
+          {recipes.map((recipe) => {
+            const isSelected = selectedIds?.has(recipe.id)
+            const dateStr = new Date(
+              recipe.updatedAt || recipe.createdAt || new Date().toISOString(),
+            ).toLocaleDateString('en-US', {
+              month: '2-digit',
+              day: '2-digit',
+              year: 'numeric',
+            })
+
+            return (
+              <motion.div
+                variants={itemVariants}
+                key={recipe.id}
+                role="button"
+                onClick={() => onSelectRecipe(recipe)}
+                className={`flex items-center gap-4 rounded-lg border p-3 transition-colors ${
+                  isSelected
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-card hover:bg-accent/50'
+                }`}
+              >
+                {/* Checkbox */}
+                <div
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                    isSelected
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-muted-foreground/30'
+                  }`}
+                >
+                  {isSelected && (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-3.5 w-3.5"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-base font-medium text-foreground">
+                    {recipe.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{dateStr}</span>
+                </div>
+              </motion.div>
+            )
+          })}
+        </motion.div>
+      ) : searchQuery ? (
         // FLAT LIST VIEW (For Search)
         <motion.div
           variants={containerVariants}
