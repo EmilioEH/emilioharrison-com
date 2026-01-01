@@ -1,7 +1,15 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
 
-import { X, Settings, MessageSquare, Info, LayoutDashboard, FolderUp } from 'lucide-react'
+import {
+  X,
+  Settings,
+  MessageSquare,
+  Info,
+  LayoutDashboard,
+  FolderUp,
+  CheckSquare,
+} from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
 
@@ -100,6 +108,18 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   <span className="font-medium text-foreground">Feedback Dashboard</span>
                 </button>
               )}
+
+              <button
+                role="menuitem"
+                onClick={() => {
+                  closeBurgerMenu()
+                  window.dispatchEvent(new CustomEvent('toggle-selection-mode'))
+                }}
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <CheckSquare className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Select Recipes</span>
+              </button>
 
               <button
                 role="menuitem"

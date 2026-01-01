@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, ArrowLeft, Plus } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
@@ -106,6 +107,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
     useRecipeSelection()
   const [showBulkEdit, setShowBulkEdit] = useState(false)
+  const [isSearchMode, setIsSearchMode] = useState(false)
 
   const { saveRecipe, deleteRecipe, toggleFavorite, bulkUpdateRecipes, bulkDeleteRecipes } =
     useRecipeActions({
@@ -301,6 +303,16 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     }
   }
 
+  // Listen for Burger Menu events
+  useEffect(() => {
+    const handleToggleSelection = () => setIsSelectionMode((prev) => !prev)
+
+    window.addEventListener('toggle-selection-mode', handleToggleSelection)
+    return () => {
+      window.removeEventListener('toggle-selection-mode', handleToggleSelection)
+    }
+  }, [setIsSelectionMode])
+
   // --- RENDER ---
   if (loading) {
     return (
@@ -383,26 +395,30 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         />
 
         {/* Collapsible Header */}
-        <RecipeHeader
-          onGenerateList={handleGenerateList}
-          user={user}
-          scrollContainer={scrollContainer}
-        />
+        {/* Collapsible Header */}
+        <AnimatePresence>
+          {!isSearchMode && (
+            <motion.div
+              initial={{ height: 'auto', opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <RecipeHeader
+                onGenerateList={handleGenerateList}
+                user={user}
+                scrollContainer={scrollContainer}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <main ref={setScrollContainer} className="relative flex-1 overflow-y-auto scroll-smooth">
           {(view === 'library' || view === 'week') && (
             <div className="flex h-full flex-col pb-32">
               <div className="scrollbar-hide flex-1">
-                {!isSelectionMode && view === 'library' && recipes.length > 0 && (
-                  <div className="flex justify-end px-4 pt-2">
-                    <button
-                      onClick={() => setIsSelectionMode(true)}
-                      className="text-xs font-bold uppercase tracking-wider text-primary"
-                    >
-                      Select Recipes
-                    </button>
-                  </div>
-                )}
+                {!isSelectionMode && view === 'library' && recipes.length > 0 && null}
 
                 <RecipeLibrary
                   recipes={processedRecipes}
@@ -418,6 +434,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   isSelectionMode={isSelectionMode}
                   selectedIds={selectedIds}
                   onClearSearch={() => handleSearchChange('')}
+                  onSearchChange={handleSearchChange}
+                  searchQuery={searchQuery}
                   hasSearch={!!searchQuery}
                   scrollContainer={scrollContainer}
                   onOpenFilters={() => setFiltersOpen(true)}
@@ -427,6 +445,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                     (filters.cuisine?.length || 0) +
                     (filters.onlyFavorites ? 1 : 0)
                   }
+                  onSearchExpandedChange={setIsSearchMode}
                 />
               </div>
             </div>

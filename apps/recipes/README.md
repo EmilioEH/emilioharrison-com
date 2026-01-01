@@ -33,6 +33,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 
 - **Framework**: [Astro 5](https://astro.build/) (Islands Architecture for performance)
 - **UI Architecture**: React + [shadcn/ui](https://ui.shadcn.com/) (based on [TailwindCSS](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/))
+- **Animations**: [Framer Motion](https://www.framer.com/motion/) (Layout & Physics-based transitions)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
 - **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library)
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) (Host) + [Firebase Firestore](https://firebase.google.com/docs/firestore) (Data) + [Firebase Storage](https://firebase.google.com/docs/storage) (Images)
@@ -54,8 +55,9 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Shadcn/UI Migration**: Fully migrated the UI stack from a custom M3 token system to shadcn/ui. This includes standardized Buttons, Tabs, Sheets, Badges, and Dropdowns, improving accessibility (Radix UI) and maintainability.
 - **Recipe Library Refactor**: Removed complex virtualization in `RecipeLibrary` in favor of a clean, responsive CSS Grid with built-in list view support.
 - **Clean Architecture**: Removed legacy `tokens.css` and custom `md-sys-*` Tailwind extensions, moving to standard Tailwind utility patterns and shadcn/ui primitives.
-- **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein.
-  , now accessible from the bottom bar.
+- **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein, now accessible from the bottom bar.
+- **Staggered Animations**: Implemented physics-based staggered list animations using Framer Motion for a premium, app-like feel when searching or filtering.
+- **Enhanced Search UX**: Redesigned the search experience to focus on content. The header now elegantly slides away to maximize screen real estate when searching.
 
 ### 🤖 Agent Quick Reference
 
