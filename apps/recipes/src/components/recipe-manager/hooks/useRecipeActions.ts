@@ -48,7 +48,7 @@ export const useRecipeActions = ({
             return [savedRecipe, ...prev]
           })
 
-          await refreshRecipes(false)
+          // await refreshRecipes(false) -- REMOVED to prevent race condition with optimistic updates
           return { success: true, savedRecipe }
         } else {
           console.error('Failed to save recipe')

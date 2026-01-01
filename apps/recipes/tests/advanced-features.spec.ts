@@ -54,6 +54,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.goto('/protected/recipes')
 
     // 1. Create a test recipe
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
     const addBtn = page.getByRole('button', { name: 'Add Recipe' })
     await expect(addBtn).toBeVisible()
     await addBtn.click()
@@ -103,6 +104,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await page.goto('/protected/recipes')
 
     // 1. Create or use existing
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
     const addBtn = page.getByRole('button', { name: 'Add Recipe' })
     await expect(addBtn).toBeVisible()
     await addBtn.click()
@@ -139,6 +141,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     await login(page)
     await page.goto('/protected/recipes')
     // 1. Create
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
     const addBtn = page.getByRole('button', { name: 'Add Recipe' })
     await expect(addBtn).toBeVisible()
     await addBtn.click()

@@ -23,9 +23,10 @@ Use this workflow when the user wants to **visually interact** with the app in a
 
 // turbo
 
-1. Start the development server:
+1. Start the development server (restart if already active but unresponsive):
 
    ```bash
+   # If the server is already running but unresponsive, restart it.
    cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npm run dev
    ```
 

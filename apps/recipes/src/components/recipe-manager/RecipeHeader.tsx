@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ShoppingBag, LogOut, Menu } from 'lucide-react'
+import { Menu, Plus, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
 
 interface RecipeHeaderProps {
-  onGenerateList: () => void
   user?: string
   scrollContainer?: HTMLElement | null
+  onAddRecipe?: () => void
+  isPlanMode?: boolean
+  onTogglePlanMode?: () => void
 }
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
-  onGenerateList,
   user,
   scrollContainer,
+  onAddRecipe,
+  isPlanMode,
+  onTogglePlanMode,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isScrollingUp, setIsScrollingUp] = useState(false)
@@ -54,13 +58,19 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           }`}
         >
           <div className="flex h-full items-center justify-between px-4 text-[10px] font-black uppercase tracking-widest sm:text-xs">
-            <span>Welcome, {user}</span>
-            <a
-              href="/protected/recipes/logout"
-              className="flex items-center bg-foreground text-background hover:underline"
-            >
-              Log Out <LogOut className="ml-1 h-3 w-3" />
-            </a>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openBurgerMenu}
+                className="h-5 w-5 rounded-full text-background hover:bg-background/20 hover:text-white"
+                title="Menu"
+                aria-label="Menu"
+              >
+                <Menu className="h-3 w-3" />
+              </Button>
+              <span>Welcome, {user}</span>
+            </div>
           </div>
         </div>
       )}
@@ -78,27 +88,35 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onGenerateList}
-            className="h-9 w-9 rounded-full text-foreground"
-            title="Grocery List"
-            aria-label="Grocery List"
-          >
-            <ShoppingBag className="h-5 w-5" />
-          </Button>
+          {onTogglePlanMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onTogglePlanMode}
+              className={`h-9 w-9 rounded-full transition-colors ${
+                isPlanMode
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'text-foreground hover:bg-muted'
+              }`}
+              title={isPlanMode ? 'Exit Plan Mode' : 'Enter Plan Mode'}
+              aria-label={isPlanMode ? 'Exit Plan Mode' : 'Enter Plan Mode'}
+            >
+              <Calendar className="h-5 w-5" />
+            </Button>
+          )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openBurgerMenu}
-            className="h-9 w-9 rounded-full text-foreground"
-            title="Menu"
-            aria-label="Menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+          {onAddRecipe && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onAddRecipe}
+              className="h-9 w-9 rounded-full text-foreground"
+              title="Add Recipe"
+              aria-label="Add Recipe"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
     </header>

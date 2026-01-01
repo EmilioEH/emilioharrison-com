@@ -49,6 +49,7 @@ interface RecipeLibraryProps {
   onOpenFilters: () => void
   activeFilterCount: number
   onSearchExpandedChange?: (expanded: boolean) => void
+  isPlanMode?: boolean
 }
 
 declare global {
@@ -72,6 +73,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   onOpenFilters,
   activeFilterCount,
   onSearchExpandedChange,
+  isPlanMode,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
 
@@ -215,19 +217,51 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       role="button"
       tabIndex={0}
       data-testid={`recipe-card-${recipe.id}`}
-      className={`group flex w-full cursor-pointer gap-4 rounded-xl border border-transparent p-3 text-left transition-all hover:bg-accent/50 ${
+      className={`group relative flex w-full cursor-pointer gap-4 rounded-xl border border-transparent p-3 text-left transition-all hover:bg-accent/50 ${
         isSelectionMode && selectedIds?.has(recipe.id)
           ? 'border-primary/20 bg-accent'
           : 'hover:border-border hover:shadow-sm'
       }`}
-      onClick={() => onSelectRecipe(recipe)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
+      onClick={() => {
+        if (isPlanMode) {
+          onToggleThisWeek(recipe.id)
+        } else {
           onSelectRecipe(recipe)
         }
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          if (isPlanMode) {
+            onToggleThisWeek(recipe.id)
+          } else {
+            onSelectRecipe(recipe)
+          }
+        }
+      }}
     >
+      {/* Plan Mode Overlay */}
+      {isPlanMode && !recipe.thisWeek && (
+        <div className="absolute inset-0 z-10 rounded-xl bg-background/60 transition-colors" />
+      )}
+
+      {/* Plan Mode Checkmark (If Added) */}
+      {isPlanMode && recipe.thisWeek && (
+        <div className="absolute right-2 top-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm animate-in zoom-in">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-3.5 w-3.5"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      )}
+
       {/* Square Thumbnail */}
       <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
         {recipe.finishedImage || recipe.sourceImage ? (
@@ -289,6 +323,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               e.stopPropagation()
               onToggleThisWeek(recipe.id)
             }}
+            title={recipe.thisWeek ? 'Remove from This Week' : 'Add to This Week'}
+            aria-label={recipe.thisWeek ? 'Remove from This Week' : 'Add to This Week'}
             className={`flex h-8 items-center justify-center gap-1 rounded-full px-3 transition-all ${
               recipe.thisWeek
                 ? 'bg-primary text-primary-foreground shadow-sm'

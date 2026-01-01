@@ -58,6 +58,10 @@ test.describe('Authentication Flow', () => {
 
     // 1. Visit Protected Page
     await page.goto('/protected/recipes')
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
+
+    // Scroll up to ensure header is visible
+    await page.evaluate(() => window.scrollTo(0, 0))
     await expect(page.getByText('Welcome, TestUser')).toBeVisible()
 
     // 2. Click Logout

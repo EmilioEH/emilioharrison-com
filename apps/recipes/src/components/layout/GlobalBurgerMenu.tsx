@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   FolderUp,
   CheckSquare,
+  LogOut,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
@@ -130,6 +131,15 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <MessageSquare className="text-foreground-variant h-5 w-5" />
                 <span className="font-medium text-foreground">Send Feedback</span>
               </button>
+
+              <a
+                role="menuitem"
+                href="/protected/recipes/logout"
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <LogOut className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Log Out</span>
+              </a>
             </div>
 
             {/* Footer */}

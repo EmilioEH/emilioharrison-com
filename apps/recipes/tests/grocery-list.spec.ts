@@ -79,8 +79,8 @@ test.describe('Grocery List', () => {
     })
 
     // 3. Initial State: 2 recipes in "This Week"
-    // Click "Grocery List"
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    // Click "Grocery List" (Shop Tab)
+    await page.getByRole('tab', { name: /Shop/i }).click()
 
     // 4. Verify API was called
     await expect(async () => {
@@ -90,26 +90,18 @@ test.describe('Grocery List', () => {
     // Verify list is shown (new format shows amount + unit + name)
     await expect(page.getByText('beef', { exact: false })).toBeVisible()
 
-    // 5. Close grocery list by clicking back button (arrow-left icon in header)
-    await page
-      .locator('button')
-      .filter({ has: page.locator('.lucide-arrow-left') })
-      .first()
-      .click()
+    // 5. Close grocery list by clicking Library tab
+    await page.getByRole('tab', { name: /Library/i }).click()
 
     // 6. Click "Grocery List" AGAIN
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await page.getByRole('tab', { name: /Shop/i }).click()
 
     // 7. Verify API was NOT called again (cached)
     expect(apiCallCount).toBe(1)
 
     // 8. Change Selection
     // Go back
-    await page
-      .locator('button')
-      .filter({ has: page.locator('.lucide-arrow-left') })
-      .first()
-      .click()
+    await page.getByRole('tab', { name: /Library/i }).click()
 
     // Add a recipe to "This Week" (Recipe 3)
     // Find recipe 3 card.
@@ -162,7 +154,7 @@ test.describe('Grocery List', () => {
     await page.reload()
 
     // 9. Click "Grocery List"
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await page.getByRole('tab', { name: /Shop/i }).click()
 
     // 10. Verify API WAS called (count -> 2)
     // Actually, reload resets the client-side cache (useState), so it WOULD call 2.
@@ -196,39 +188,27 @@ test.describe('Grocery List', () => {
     await page.reload()
 
     // Call 1
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await page.getByRole('tab', { name: /Shop/i }).click()
     // Wait for list to appear to ensure API call started/finished
     await expect(page.getByText('beef', { exact: false })).toBeVisible()
     // expect(apiCallCount).toBe(1) // Flaky: sometimes reports 0 even if list loads
-    await page
-      .locator('button')
-      .filter({ has: page.locator('.lucide-arrow-left') })
-      .first()
-      .click()
+    await page.getByRole('tab', { name: /Library/i }).click()
 
     // Call 2 (Cached)
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await page.getByRole('tab', { name: /Shop/i }).click()
     expect(apiCallCount).toBe(1)
-    await page
-      .locator('button')
-      .filter({ has: page.locator('.lucide-arrow-left') })
-      .first()
-      .click()
+    await page.getByRole('tab', { name: /Library/i }).click()
 
     // Call 3 (Reload -> Persistent Cache)
     await page.reload()
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await page.getByRole('tab', { name: /Shop/i }).click()
     // Wait for list to appear (confirms data loaded)
     await expect(page.getByText('beef', { exact: false }).first()).toBeVisible()
     // API call count should still be 1 (loaded from localStorage)
     expect(apiCallCount).toBe(1)
 
     // Call 4 (Selection Change -> New Call)
-    await page
-      .locator('button')
-      .filter({ has: page.locator('.lucide-arrow-left') })
-      .first()
-      .click()
+    await page.getByRole('tab', { name: /Library/i }).click()
     // Toggle Recipe 3 (id: 3) to be included in "This Week"?
     // Wait, mock setup: Recipe 1 & 2 are This Week. Recipe 3 is NOT.
     // Let's add Recipe 3.
@@ -306,7 +286,7 @@ test.describe('Grocery List', () => {
 
     // Navigate and Click Grocery List
     await page.reload() // Refresh to clear state
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await page.getByRole('tab', { name: /Shop/i }).click()
 
     // 1. Verify "Eggs" (Single Source)
     // Should see "Eggs"

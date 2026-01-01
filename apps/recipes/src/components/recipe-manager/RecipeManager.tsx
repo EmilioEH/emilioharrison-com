@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, ArrowLeft, Plus } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 
 import { GroceryList } from './GroceryList'
 import { VarietyWarning } from './VarietyWarning'
@@ -28,7 +28,6 @@ import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 import { BottomControls } from './BottomControls'
 import { ResponsiveModal } from '../ui/ResponsiveModal'
-import { Fab } from '../ui/Fab'
 
 export type ViewMode =
   | 'library'
@@ -100,12 +99,27 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     (v: string) => setView(v as ViewMode),
   )
 
+  // Auto-generate grocery list when entering Shop tab
+  useEffect(() => {
+    if (view === 'grocery' && recipes.length > 0) {
+      handleGenerateList()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view])
+
   // Scroll Container Ref State
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
 
   // Hooks
-  const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
-    useRecipeSelection()
+  const {
+    isSelectionMode,
+    setIsSelectionMode,
+    isPlanMode,
+    togglePlanMode,
+    selectedIds,
+    toggleSelection,
+    clearSelection,
+  } = useRecipeSelection()
   const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [isSearchMode, setIsSearchMode] = useState(false)
 
@@ -406,9 +420,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               className="overflow-hidden"
             >
               <RecipeHeader
-                onGenerateList={handleGenerateList}
                 user={user}
                 scrollContainer={scrollContainer}
+                onAddRecipe={() => {
+                  setRecipe(null)
+                  setView('edit')
+                }}
+                isPlanMode={isPlanMode}
+                onTogglePlanMode={togglePlanMode}
               />
             </motion.div>
           )}
@@ -432,6 +451,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   }}
                   onToggleThisWeek={handleToggleThisWeek}
                   isSelectionMode={isSelectionMode}
+                  isPlanMode={isPlanMode}
+                  onTogglePlanMode={togglePlanMode}
                   selectedIds={selectedIds}
                   onClearSearch={() => handleSearchChange('')}
                   onSearchChange={handleSearchChange}
@@ -462,15 +483,17 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           )}
 
           {view === 'grocery' && (
-            <GroceryList
-              ingredients={groceryItems}
-              isLoading={isGenerating}
-              onClose={() => setView('library')}
-              recipes={targetRecipes}
-              onOpenRecipe={(recipe) => {
-                setRoute({ activeRecipeId: recipe.id, view: 'detail' })
-              }}
-            />
+            <div className="flex h-full flex-col pb-32">
+              <GroceryList
+                ingredients={groceryItems}
+                isLoading={isGenerating}
+                onClose={() => setView('library')}
+                recipes={targetRecipes}
+                onOpenRecipe={(recipe) => {
+                  setRoute({ activeRecipeId: recipe.id, view: 'detail' })
+                }}
+              />
+            </div>
           )}
         </main>
       </div>
@@ -481,19 +504,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           onClose={() => setShowBulkEdit(false)}
           onSave={handleBulkEdit}
         />
-      )}
-      {/* Primary Floating Action Button - Outside container for proper Safari fixed positioning */}
-      {(view === 'library' || view === 'week') && !isSelectionMode && (
-        <div className="fixed bottom-36 right-4 z-[60] transition-all duration-300">
-          <Fab
-            icon={Plus}
-            label="Add Recipe"
-            onClick={() => {
-              setRecipe(null)
-              setView('edit')
-            }}
-          />
-        </div>
       )}
 
       {/* Edit/Add Recipe Modal */}
@@ -541,11 +551,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       )}
 
       {/* Sticky Bottom Controls (Navigation Tabs) - Hide in Selection Mode */}
-      {(view === 'library' || view === 'week') && !isSelectionMode && (
+      {(view === 'library' || view === 'week' || view === 'grocery') && !isSelectionMode && (
         <BottomControls
           view={view}
           setView={(v) => setView(v)}
-          recipeCount={recipes.length}
           weekCount={recipes.filter((r) => r.thisWeek).length}
         />
       )}
