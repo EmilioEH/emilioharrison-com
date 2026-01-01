@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { ChefHat, ChevronRight, Search, SlidersHorizontal, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
@@ -17,7 +17,7 @@ const containerVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,

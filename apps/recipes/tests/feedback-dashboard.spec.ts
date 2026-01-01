@@ -8,8 +8,8 @@ test.describe('Feedback Dashboard', () => {
         {
           name: 'site_auth',
           value: 'true',
-          domain: 'localhost', path: '/',
-          domain: 'localhost', path: '/',
+          domain: 'localhost',
+          path: '/',
           expires: -1,
           httpOnly: false,
           secure: false,
@@ -18,8 +18,8 @@ test.describe('Feedback Dashboard', () => {
         {
           name: 'site_user',
           value: 'Emilio',
-          domain: 'localhost', path: '/',
-          domain: 'localhost', path: '/',
+          domain: 'localhost',
+          path: '/',
           expires: -1,
           httpOnly: false,
           secure: false,
@@ -28,8 +28,8 @@ test.describe('Feedback Dashboard', () => {
         {
           name: 'site_email',
           value: 'emilioeh1991@gmail.com', // Whitelisted Admin
-          domain: 'localhost', path: '/',
-          domain: 'localhost', path: '/',
+          domain: 'localhost',
+          path: '/',
           expires: -1,
           httpOnly: true,
           secure: false,
@@ -160,14 +160,14 @@ test.describe('Feedback Dashboard', () => {
       {
         name: 'site_user',
         value: 'OtherUser', // Not Emilio
-        domain: 'localhost', path: '/',
-        domain: 'localhost', path: '/',
+        domain: 'localhost',
+        path: '/',
       },
       {
         name: 'site_email',
         value: 'user@gmail.com', // Whitelisted but NOT Admin
-        domain: 'localhost', path: '/',
-        domain: 'localhost', path: '/',
+        domain: 'localhost',
+        path: '/',
       },
     ])
 

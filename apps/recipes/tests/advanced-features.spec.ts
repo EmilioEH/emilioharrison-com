@@ -6,20 +6,20 @@ const login = async (page: Page) => {
     {
       name: 'site_auth',
       value: 'true',
-      domain: 'localhost', path: '/',
-      domain: 'localhost', path: '/',
+      domain: 'localhost',
+      path: '/',
     },
     {
       name: 'site_user',
       value: 'TestUser',
-      domain: 'localhost', path: '/',
-      domain: 'localhost', path: '/',
+      domain: 'localhost',
+      path: '/',
     },
     {
       name: 'site_email',
       value: 'emilioeh1991@gmail.com',
-      domain: 'localhost', path: '/',
-      domain: 'localhost', path: '/',
+      domain: 'localhost',
+      path: '/',
     },
   ])
   page.on('console', (msg: ConsoleMessage) => console.log('BROWSER LOG:', msg.text()))
