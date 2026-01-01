@@ -4,9 +4,9 @@ test.describe('Recipe Organization', () => {
   test.beforeEach(async ({ page, context }) => {
     // Set auth cookies (simulates authenticated state)
     await context.addCookies([
-      { name: 'site_user', value: 'Test User', domain: '127.0.0.1', path: '/' },
-      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
-      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
+      { name: 'site_user', value: 'Test User', domain: 'localhost', path: '/' },
+      { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
     ])
 
     // Go to recipes page

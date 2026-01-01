@@ -4,9 +4,9 @@ test.describe('Recipe Metadata & Filtering', () => {
   test('should create recipe with metadata and filter by it', async ({ page, context }) => {
     // 0. Set Auth Cookies
     await context.addCookies([
-      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
-      { name: 'site_user', value: 'TestUser', domain: '127.0.0.1', path: '/' },
-      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
+      { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
+      { name: 'site_user', value: 'TestUser', domain: 'localhost', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
     ])
 
     // 1. Load Page with Mock Data

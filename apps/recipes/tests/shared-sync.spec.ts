@@ -8,8 +8,8 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_auth',
             value: 'true',
-            domain: '127.0.0.1',
-            path: '/',
+            domain: 'localhost', path: '/',
+            domain: 'localhost', path: '/',
             expires: -1,
             httpOnly: false,
             secure: false,
@@ -18,8 +18,8 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_user',
             value: name,
-            domain: '127.0.0.1',
-            path: '/',
+            domain: 'localhost', path: '/',
+            domain: 'localhost', path: '/',
             expires: -1,
             httpOnly: false,
             secure: false,
@@ -28,8 +28,8 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_email',
             value: 'emilioeh1991@gmail.com',
-            domain: '127.0.0.1',
-            path: '/',
+            domain: 'localhost', path: '/',
+            domain: 'localhost', path: '/',
             expires: -1,
             httpOnly: false,
             secure: false,

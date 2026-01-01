@@ -8,8 +8,8 @@ test.describe('Feedback System', () => {
         {
           name: 'site_auth',
           value: 'true',
-          domain: '127.0.0.1',
-          path: '/',
+          domain: 'localhost', path: '/',
+          domain: 'localhost', path: '/',
           expires: -1,
           httpOnly: false,
           secure: false,
@@ -18,8 +18,8 @@ test.describe('Feedback System', () => {
         {
           name: 'site_user',
           value: 'FeedbackTester',
-          domain: '127.0.0.1',
-          path: '/',
+          domain: 'localhost', path: '/',
+          domain: 'localhost', path: '/',
           expires: -1,
           httpOnly: false,
           secure: false,
@@ -28,8 +28,8 @@ test.describe('Feedback System', () => {
         {
           name: 'site_email',
           value: 'emilioeh1991@gmail.com',
-          domain: '127.0.0.1',
-          path: '/',
+          domain: 'localhost', path: '/',
+          domain: 'localhost', path: '/',
           expires: -1,
           httpOnly: false,
           secure: false,

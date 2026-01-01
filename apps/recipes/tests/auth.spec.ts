@@ -24,7 +24,7 @@ test.describe('Authentication Flow', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
     ])
@@ -39,19 +39,19 @@ test.describe('Authentication Flow', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
       {
         name: 'site_user',
         value: 'TestUser',
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
       {
         name: 'site_email',
         value: 'emilioeh1991@gmail.com', // Whitelisted
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
     ])
@@ -78,19 +78,19 @@ test.describe('Authentication Flow', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
       {
         name: 'site_user',
         value: 'UnauthorizedUser',
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
       {
         name: 'site_email',
         value: 'hacker@example.com', // Not in whitelist
-        domain: '127.0.0.1',
+        domain: 'localhost',
         path: '/',
       },
     ])

@@ -4,9 +4,9 @@ test.describe('Global Menu Visibility', () => {
   test('should be visible and clickable on recipe detail page', async ({ page, context }) => {
     // 0. Set Auth Cookies to bypass middleware
     await context.addCookies([
-      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
-      { name: 'site_user', value: 'TestUser', domain: '127.0.0.1', path: '/' },
-      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
+      { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
+      { name: 'site_user', value: 'TestUser', domain: 'localhost', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
     ])
 
     // 0. Mock Recipes API
