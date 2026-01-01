@@ -262,6 +262,10 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             <span>•</span>
             <span>{recipe.mealType}</span>
           </div>
+
+          {recipe.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{recipe.description}</p>
+          )}
         </div>
 
         {/* Footer / Actions */}

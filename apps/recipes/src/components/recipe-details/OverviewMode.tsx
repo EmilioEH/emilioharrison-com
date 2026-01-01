@@ -122,6 +122,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </a>
             )}
 
+            {recipe.description && (
+              <p className="mb-4 mt-2 text-base leading-relaxed text-muted-foreground">
+                {recipe.description}
+              </p>
+            )}
+
             <div className="text-foreground-variant mt-4 flex gap-4 border-y border-border/20 py-3 text-sm font-medium">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4 text-primary" />
