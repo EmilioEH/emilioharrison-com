@@ -452,7 +452,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   onToggleThisWeek={handleToggleThisWeek}
                   isSelectionMode={isSelectionMode}
                   isPlanMode={isPlanMode}
-                  onTogglePlanMode={togglePlanMode}
                   selectedIds={selectedIds}
                   onClearSearch={() => handleSearchChange('')}
                   onSearchChange={handleSearchChange}
