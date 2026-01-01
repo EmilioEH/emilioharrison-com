@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
-import { ChefHat, ChevronRight, Search, SlidersHorizontal, ArrowLeft } from 'lucide-react'
+import { motion, type Variants } from 'framer-motion'
+import { ChefHat, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
@@ -74,8 +74,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   onSearchExpandedChange,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
+
   const containerRef = useRef<HTMLDivElement>(null)
   const isProgrammaticScroll = useRef(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -87,64 +86,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const navRef = useRef<HTMLDivElement>(null)
 
-  // Sync expanded state with parent
-  useEffect(() => {
-    onSearchExpandedChange?.(isSearchExpanded)
-  }, [isSearchExpanded, onSearchExpandedChange])
-
-  // Sync expanded state with search query presence
-  useEffect(() => {
-    if (hasSearch) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsSearchExpanded(true)
-    }
-  }, [hasSearch])
-
-  // Focus input when expanded
-  useEffect(() => {
-    if (isSearchExpanded && searchInputRef.current) {
-      // Small delay to ensure render
-      setTimeout(() => searchInputRef.current?.focus(), 50)
-    }
-  }, [isSearchExpanded])
-
-  const handleExitSearch = () => {
-    setIsSearchExpanded(false)
-    if (onClearSearch) onClearSearch()
-  }
-
-  // Filter Logic
-  const filteredRecipes = React.useMemo(() => {
-    if (activeFilters.size === 0) return recipes
-
-    return recipes.filter((recipe) => {
-      if (activeFilters.has('Favorites') && !recipe.isFavorite) return false
-      if (activeFilters.has('This Week') && !recipe.thisWeek) return false
-      if (activeFilters.has('Under 30m') && recipe.cookTime + recipe.prepTime > 30) return false
-      if (
-        activeFilters.has('High Protein') &&
-        (!recipe.protein ||
-          !['beef', 'chicken', 'fish', 'pork'].includes(recipe.protein.toLowerCase()))
-      )
-        return false
-      return true
-    })
-  }, [recipes, activeFilters])
-
   // Use custom hook for complex grouping logic
-  const { groupedRecipes, getGroupTitle } = useRecipeGrouping(filteredRecipes, sort)
-
-  const toggleFilter = (filter: string) => {
-    setActiveFilters((prev) => {
-      const next = new Set(prev)
-      if (next.has(filter)) {
-        next.delete(filter)
-      } else {
-        next.add(filter)
-      }
-      return next
-    })
-  }
+  const { groupedRecipes, getGroupTitle } = useRecipeGrouping(recipes, sort)
 
   // Initialize active group if none exists
   useEffect(() => {
@@ -361,142 +304,68 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
   return (
     <div ref={containerRef} className="pb-24 animate-in fade-in">
-      {/* Sticky Header Block: Nav + Filters */}
+      {/* Sticky Header Block: Search & Filters */}
       {!isSelectionMode && (
-        <div className="sticky top-0 z-40 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all">
-          {/* Row 1: Tools & Filters */}
-          {/* Row 1: Tools & Filters */}
-          <div className="flex items-center gap-2 px-4 py-2">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {isSearchExpanded ? (
-                // EXPANDED SEARCH BAR
-                <motion.div
-                  key="expanded-search"
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
-                  className="flex w-full items-center gap-2"
+        <div className="sticky top-0 z-40 flex flex-col gap-2 bg-background/95 pb-2 pt-4 shadow-sm backdrop-blur transition-all">
+          <div className="flex items-center gap-2 px-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search recipes..."
+                value={searchQuery || ''}
+                onFocus={() => onSearchExpandedChange?.(true)}
+                onBlur={() => {
+                  if (!searchQuery) {
+                    onSearchExpandedChange?.(false)
+                  }
+                }}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                className="h-10 w-full rounded-full border border-border bg-secondary/50 pl-9 pr-8 text-sm shadow-sm transition-all focus:border-primary focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    onClearSearch?.()
+                    onSearchExpandedChange?.(false)
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <div className="relative flex-1">
-                    <button
-                      onClick={handleExitSearch}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                      aria-label="Exit search"
-                    >
-                      <ArrowLeft className="h-5 w-5" />
-                    </button>
-                    <motion.input
-                      layoutId="search-input"
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery || ''}
-                      onChange={(e) => onSearchChange?.(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          e.preventDefault()
-                          handleExitSearch()
-                        }
-                      }}
-                      className="h-12 w-full rounded-full border border-border bg-secondary/50 pl-12 pr-10 text-base shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={onClearSearch}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Filter Trigger (Moved to Right) */}
-                  <motion.button
-                    layout
-                    onClick={onOpenFilters}
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border transition-colors ${
-                      activeFilterCount > 0
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-secondary-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <SlidersHorizontal className="h-5 w-5" />
-                  </motion.button>
-                </motion.div>
-              ) : (
-                // DEFAULT HEADER (Collapsed Search)
-                <motion.div
-                  key="collapsed-header"
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
-                  className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto"
-                >
-                  {/* Search Trigger */}
-                  <motion.button
-                    layoutId="search-input"
-                    onClick={() => setIsSearchExpanded(true)}
-                    aria-label="Open search"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-sm"
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Search className="h-4 w-4" />
-                  </motion.button>
-
-                  {/* Filter Trigger */}
-                  <button
-                    onClick={onOpenFilters}
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-                      activeFilterCount > 0
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    {activeFilterCount > 0 && (
-                      <span className="absolute right-0 top-0 -mr-1 -mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground ring-2 ring-background">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </button>
-
-                  <div className="mx-1 h-6 w-px bg-border" />
-
-                  {/* Quick Filter Pills */}
-                  {['Favorites', 'This Week', 'Under 30m', 'High Protein'].map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => toggleFilter(filter)}
-                      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
-                        activeFilters.has(filter)
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border bg-background text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      {filter}
-                    </button>
-                  ))}
-                </motion.div>
+                  ×
+                </button>
               )}
-            </AnimatePresence>
+            </div>
+
+            <button
+              onClick={onOpenFilters}
+              className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border transition-colors ${
+                activeFilterCount > 0
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-muted'
+              }`}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-background">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Row 2: Category Nav (Hidden when searching) */}
-          {!isSearchExpanded && groupedRecipes.sortedKeys.length > 1 && (
+          {/* Category Nav - Scrollable */}
+          {!searchQuery && (
             <div
               ref={navRef}
-              className="scrollbar-hide flex items-center gap-2 overflow-x-auto px-4 pb-2"
+              className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto px-4 pb-1"
             >
               {groupedRecipes.sortedKeys.map((key) => (
                 <button
                   key={key}
                   data-group={key}
                   onClick={() => scrollToGroup(key)}
-                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-bold transition-all ${
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
                     activeGroup === key
                       ? 'bg-foreground text-background shadow-md'
                       : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -511,20 +380,18 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       )}
 
       {/* Main Content Area */}
-      {isSearchExpanded ? (
+      {searchQuery ? (
         // FLAT LIST VIEW (For Search)
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex flex-col gap-2 p-4"
+          className="flex flex-col gap-2 p-4 pt-0"
         >
-          {searchQuery && (
-            <p className="mb-2 text-sm font-medium text-muted-foreground">
-              Found {filteredRecipes.length} recipes
-            </p>
-          )}
-          {filteredRecipes.map(renderRecipeCard)}
+          <p className="mb-2 text-sm font-medium text-muted-foreground">
+            Found {recipes.length} recipes
+          </p>
+          {recipes.map(renderRecipeCard)}
         </motion.div>
       ) : (
         // ACCORDION GROUP VIEW (Default)
@@ -535,24 +402,22 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               groupRefs.current[key] = el
             }}
           >
-            {/* Group Header - Sticky below Nav & Filters (approx 100px) */}
-            <div
-              className={`sticky z-30 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-200 ${!isSelectionMode ? 'top-[105px]' : 'top-0'} `}
-            >
+            {/* Group Header */}
+            <div className="sticky top-[93px] z-30 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-200">
               <button
                 onClick={() => toggleGroup(key)}
-                className="flex w-full items-center justify-between px-4 py-4 transition-colors hover:bg-muted/50"
+                className="flex w-full items-center justify-between px-4 py-2 transition-colors hover:bg-muted/50"
               >
-                <div className="flex items-center gap-3">
-                  <h3 className="font-display text-xl font-bold text-foreground">
+                <div className="flex items-center gap-2">
+                  <h3 className="mb-0 font-display text-base font-bold text-foreground">
                     {getGroupTitle(key)}
                   </h3>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                     {groupedRecipes.groups[key].length}
                   </span>
                 </div>
                 <ChevronRight
-                  className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                  className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
                     openGroups[key] !== false ? 'rotate-90' : ''
                   }`}
                 />
@@ -565,7 +430,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="flex flex-col gap-2 p-4"
+                className="flex flex-col gap-1 p-4 pt-1"
               >
                 {groupedRecipes.groups[key].map(renderRecipeCard)}
               </motion.div>

@@ -66,9 +66,13 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
       )}
 
       {/* Main App Bar - Tightened & Integrated Menu */}
-      <div className="flex h-14 flex-none items-center justify-between px-4">
+      <div
+        className={`flex flex-none items-center justify-between overflow-hidden px-4 transition-all duration-300 ease-in-out ${
+          isScrolled && !isScrollingUp ? 'h-0 opacity-0' : 'h-14 opacity-100'
+        }`}
+      >
         <div className="flex items-center gap-3">
-          <h1 className="font-display text-xl font-bold tracking-tight text-foreground">
+          <h1 className="mb-0 font-display text-xl font-bold leading-none tracking-tight text-foreground">
             CHEFBOARD
           </h1>
         </div>
