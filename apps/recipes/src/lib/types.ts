@@ -13,6 +13,7 @@ export interface Recipe {
   ingredients: Ingredient[]
   steps: string[]
   notes?: string
+  description?: string
   // New metadata for organization
   protein?: string
   mealType?: string

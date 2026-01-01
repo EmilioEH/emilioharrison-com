@@ -51,6 +51,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     if (recipe.id) return recipe
     return {
       title: '',
+      description: '',
       servings: 2,
       prepTime: 15,
       cookTime: 15,
@@ -166,6 +167,22 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Grandma's Pancakes"
           className="placeholder-foreground-variant/30 w-full border-b border-border bg-transparent py-1 font-display text-xl font-medium outline-none focus:border-primary"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="description"
+          className="mb-1 block text-xs font-bold uppercase text-gray-400"
+        >
+          Description
+        </label>
+        <textarea
+          id="description"
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="A delicious homemade pancake recipe..."
+          className="bg-card-variant h-20 w-full resize-none rounded-sm border border-border p-2 text-sm font-medium outline-none"
         />
       </div>
 

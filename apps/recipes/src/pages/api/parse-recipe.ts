@@ -21,6 +21,7 @@ Return a strict JSON object matching the provided schema.
 
 Rules:
 1. Describe what you see in the image and infer the recipe (ingredients/steps) as best as possible.
+2. Generate a one-sentence "description" that makes the dish sound delicious.
 2. Use reasonable defaults if data is missing (e.g. 2 servings).
 3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
@@ -42,6 +43,7 @@ Return a strict JSON object matching the provided schema.
 
 Rules:
 1. Parse the text content to identify the recipe title, ingredients, and instructions.
+2. Generate a one-sentence "description" that makes the dish sound delicious.
 2. Use reasonable defaults if data is missing (e.g. 2 servings).
 3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
@@ -64,6 +66,7 @@ Return a strict JSON object matching the provided schema.
 Rules:
 1. Analyze the provided HTML content carefully.
 2. Prioritize extracting data from JSON-LD structured data (Recipe schema) if present in the HTML.
+3. Generate a one-sentence "description" that makes the dish sound delicious.
 3. If JSON-LD is missing or incomplete, parse the visible text content.
 4. Do not hallucinate ingredients or steps that are not present in the content.
 5. Use reasonable defaults if optional metadata is missing, but be accurate with Ingredients and Steps.
@@ -86,6 +89,7 @@ You are an expert Chef and Data Engineer. Your task is to NORMALIZE and ENRICH t
 The input is already structured data from the source website. Your job is not to guess, but to:
 1. Map the fields to our schema.
 2. Clean up HTML tags from descriptions or steps.
+3. Generate a one-sentence "description" that makes the dish sound delicious (if one is not already provided, or improve the existing one).
 3. **Normalize Ingredients**: This is critical. Parse the 'recipeIngredient' strings into 'structuredIngredients':
    - 'amount' (number)
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
@@ -300,6 +304,7 @@ function createRecipeSchema() {
     type: SchemaType.OBJECT,
     properties: {
       title: { type: SchemaType.STRING },
+      description: { type: SchemaType.STRING },
       servings: { type: SchemaType.NUMBER },
       prepTime: { type: SchemaType.NUMBER },
       cookTime: { type: SchemaType.NUMBER },
@@ -349,6 +354,6 @@ function createRecipeSchema() {
       difficulty: { type: SchemaType.STRING },
       cuisine: { type: SchemaType.STRING },
     },
-    required: ['title', 'ingredients', 'steps'],
+    required: ['title', 'ingredients', 'steps', 'description'],
   }
 }
