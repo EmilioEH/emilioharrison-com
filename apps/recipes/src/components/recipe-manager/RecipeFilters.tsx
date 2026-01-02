@@ -1,8 +1,7 @@
 import React from 'react'
-import { ArrowDownAZ, Clock, Calendar, Search, ChefHat, Star } from 'lucide-react'
+import { ArrowDownAZ, Clock, Calendar, ChefHat, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
 import type { Filters } from './hooks/useFilteredRecipes'
 
@@ -12,8 +11,8 @@ interface FilterSectionProps {
 }
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, children }) => (
-  <div className="mb-6">
-    <h3 className="text-foreground-variant mb-3 text-xs font-medium uppercase tracking-wider">
+  <div className="mb-4">
+    <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
       {title}
     </h3>
     <div className="flex flex-wrap gap-2">{children}</div>
@@ -56,8 +55,6 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
   setFilters,
   sort,
   setSort,
-  searchQuery,
-  setSearchQuery,
 }) => {
   const handleFilterToggle = (key: keyof Filters, value: string) => {
     setFilters((prev) => {
@@ -86,38 +83,26 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-6">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search recipes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
             {/* Sort */}
             <FilterSection title="Sort By">
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { id: 'protein', label: 'Protein', icon: ChefHat },
                   { id: 'mealType', label: 'Meal Type', icon: Star },
                   { id: 'dishType', label: 'Dish Type', icon: Star },
-                  { id: 'alpha', label: 'Alphabetical', icon: ArrowDownAZ },
-                  { id: 'recent', label: 'Most Recent', icon: Calendar },
-                  { id: 'time', label: 'Shortest Time', icon: Clock },
-                  { id: 'rating', label: 'Highest Rated', icon: Star },
+                  { id: 'alpha', label: 'A-Z', icon: ArrowDownAZ },
+                  { id: 'recent', label: 'Recent', icon: Calendar },
+                  { id: 'time', label: 'Time', icon: Clock },
+                  { id: 'rating', label: 'Rating', icon: Star },
                 ].map((opt) => (
                   <Button
                     key={opt.id}
                     variant={sort === opt.id ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSort(opt.id)}
-                    className="justify-start"
+                    className="justify-start text-xs"
                   >
-                    <opt.icon className="mr-2 h-4 w-4" />
+                    <opt.icon className="mr-1.5 h-3.5 w-3.5" />
                     {opt.label}
                   </Button>
                 ))}
@@ -135,7 +120,21 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
               />
             </FilterSection>
 
-            {/* Meal Type */}
+            {/* Protein - Priority 1 for variety */}
+            <FilterSection title="Protein">
+              {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
+                (p) => (
+                  <FilterChip
+                    key={p}
+                    label={p}
+                    active={filters.protein?.includes(p)}
+                    onClick={() => handleFilterToggle('protein', p)}
+                  />
+                ),
+              )}
+            </FilterSection>
+
+            {/* Meal Type - Priority 2 for planning */}
             <FilterSection title="Meal Type">
               {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
                 <FilterChip
@@ -143,6 +142,32 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                   label={t}
                   active={filters.mealType?.includes(t)}
                   onClick={() => handleFilterToggle('mealType', t)}
+                />
+              ))}
+            </FilterSection>
+
+            {/* Cuisine - Priority 3 for variety */}
+            <FilterSection title="Cuisine">
+              {['Italian', 'Mexican', 'Asian', 'American', 'Mediterranean', 'Vegetarian'].map(
+                (c) => (
+                  <FilterChip
+                    key={c}
+                    label={c}
+                    active={filters.cuisine?.includes(c)}
+                    onClick={() => handleFilterToggle('cuisine', c)}
+                  />
+                ),
+              )}
+            </FilterSection>
+
+            {/* Difficulty - Priority 4 for balancing easy vs complex */}
+            <FilterSection title="Difficulty">
+              {['Easy', 'Medium', 'Hard'].map((diff) => (
+                <FilterChip
+                  key={diff}
+                  label={diff}
+                  active={filters.difficulty?.includes(diff)}
+                  onClick={() => handleFilterToggle('difficulty', diff)}
                 />
               ))}
             </FilterSection>
@@ -157,20 +182,6 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                   onClick={() => handleFilterToggle('dishType', t)}
                 />
               ))}
-            </FilterSection>
-
-            {/* Protein */}
-            <FilterSection title="Protein">
-              {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
-                (p) => (
-                  <FilterChip
-                    key={p}
-                    label={p}
-                    active={filters.protein?.includes(p)}
-                    onClick={() => handleFilterToggle('protein', p)}
-                  />
-                ),
-              )}
             </FilterSection>
 
             {/* Dietary */}
@@ -219,38 +230,11 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
               ))}
             </FilterSection>
 
-            {/* Difficulty */}
-            <FilterSection title="Difficulty">
-              {['Easy', 'Medium', 'Hard'].map((diff) => (
-                <FilterChip
-                  key={diff}
-                  label={diff}
-                  active={filters.difficulty?.includes(diff)}
-                  onClick={() => handleFilterToggle('difficulty', diff)}
-                />
-              ))}
-            </FilterSection>
-
-            {/* Cuisine */}
-            <FilterSection title="Cuisine">
-              {['Italian', 'Mexican', 'Asian', 'American', 'Mediterranean', 'Vegetarian'].map(
-                (c) => (
-                  <FilterChip
-                    key={c}
-                    label={c}
-                    active={filters.cuisine?.includes(c)}
-                    onClick={() => handleFilterToggle('cuisine', c)}
-                  />
-                ),
-              )}
-            </FilterSection>
-
             <div className="pt-8 text-center text-xs text-muted-foreground">
               <button
                 onClick={() => {
                   setFilters({})
                   setSort('protein')
-                  setSearchQuery('')
                 }}
                 className="underline hover:text-primary"
               >

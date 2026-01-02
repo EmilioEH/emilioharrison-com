@@ -7,17 +7,20 @@ test.describe('Recipe Persistence', () => {
       {
         name: 'site_auth',
         value: 'true',
-        domain: 'localhost', path: '/',
+        domain: 'localhost',
+        path: '/',
       },
       {
         name: 'site_user',
         value: `ReproUser-${Date.now()}`,
-        domain: 'localhost', path: '/',
+        domain: 'localhost',
+        path: '/',
       },
       {
         name: 'site_email',
         value: 'emilioeh1991@gmail.com',
-        domain: 'localhost', path: '/',
+        domain: 'localhost',
+        path: '/',
       },
     ])
 

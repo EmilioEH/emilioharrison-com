@@ -18,7 +18,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
   const stars = [1, 2, 3, 4, 5]
 
-  const iconSize = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5'
+  const iconSize = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-8 w-8' : 'h-5 w-5'
 
   return (
     <div className="flex items-center" onMouseLeave={() => setHoverRating(0)}>
@@ -32,7 +32,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
             if (!readonly && onRate) onRate(star)
           }}
           onMouseEnter={() => !readonly && setHoverRating(star)}
-          className={`p-0.5 transition-all ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
+          className={`p-2 transition-all ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
           disabled={readonly}
           aria-label={`Rate ${star} stars`}
         >

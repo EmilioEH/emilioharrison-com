@@ -107,8 +107,11 @@ test.describe('Weekly Meal Planning', () => {
     const badgeSelector = 'span.bg-primary.text-primary-foreground'
     await expect(thisWeekTab.locator(badgeSelector)).toBeHidden()
 
-    // Toggle ID 1 (Chicken Curry)
-    await card.locator('button[title="Add to This Week"]').click()
+    // Toggle Plan Mode
+    await page.getByRole('button', { name: 'Enter Plan Mode' }).click()
+
+    // Toggle ID 1 (Chicken Curry) by clicking the card
+    await card.click()
 
     // Verify badge shows 1
     await expect(thisWeekTab.locator(badgeSelector)).toHaveText('1')
@@ -120,10 +123,11 @@ test.describe('Weekly Meal Planning', () => {
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeVisible()
     await expect(page.locator('[data-testid="recipe-card-2"]')).toBeHidden()
 
-    // Verify removing from week in Week View removes it from list
-    await page
-      .locator('[data-testid="recipe-card-1"] button[title="Remove from This Week"]')
-      .click()
+    // Toggle Plan Mode again to remove
+    await page.getByRole('button', { name: 'Enter Plan Mode' }).click()
+
+    // Toggle off ID 1
+    await page.locator('[data-testid="recipe-card-1"]').click()
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeHidden()
 
     // Badge should be hidden (0 items)
@@ -166,11 +170,14 @@ test.describe('Weekly Meal Planning', () => {
     // Wait for content to load
     await expect(page.locator('[data-testid="recipe-card-1"]')).toBeVisible()
 
-    await page.locator('[data-testid="recipe-card-1"] button[title="Add to This Week"]').click()
-    await page.locator('[data-testid="recipe-card-2"] button[title="Add to This Week"]').click()
-    await page.locator('[data-testid="recipe-card-3"] button[title="Add to This Week"]').click()
+    // Enter Plan Mode
+    await page.getByRole('button', { name: 'Enter Plan Mode' }).click()
 
-    await page.locator('[data-testid="recipe-card-5"] button[title="Add to This Week"]').click()
+    await page.locator('[data-testid="recipe-card-1"]').click()
+    await page.locator('[data-testid="recipe-card-2"]').click()
+    await page.locator('[data-testid="recipe-card-3"]').click()
+
+    await page.locator('[data-testid="recipe-card-5"]').click()
 
     await expect(page.getByText('Variety Check!')).toBeVisible()
     await expect(page.getByText("You've selected 2 Chicken recipes this week.")).toBeVisible()

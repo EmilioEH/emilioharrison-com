@@ -16,12 +16,16 @@ export const CookingMode: React.FC<CookingModeProps> = ({
   recipe,
   currentStepIdx,
   setCurrentStepIdx,
-  checkedSteps: _checkedSteps, // Added checkedSteps prop to interface and usage
+  checkedSteps,
   setCheckedSteps,
   setCookingStage,
 }) => {
   const step = recipe.steps[currentStepIdx]
   const progress = ((currentStepIdx + 1) / recipe.steps.length) * 100
+
+  const maxChecked = Math.max(-1, ...Object.keys(checkedSteps).map(Number))
+  const targetStep = Math.min(maxChecked + 1, recipe.steps.length - 1)
+  const showJump = currentStepIdx < targetStep
 
   // Optional: Use checkedSteps to show visual indicator or logic
   // For now, retaining it in interface to match usage if needed, or remove it.
@@ -41,17 +45,44 @@ export const CookingMode: React.FC<CookingModeProps> = ({
       </div>
 
       <div className="flex flex-1 flex-col justify-center text-center">
-        <span className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-primary">
+        <span className="mb-2 font-display text-sm font-medium uppercase tracking-widest text-primary">
           Step {currentStepIdx + 1} of {recipe.steps.length}
+        </span>
+        <span className="mb-8 font-body text-xs font-medium text-muted-foreground opacity-80">
+          Currently: {step.split(' ').slice(0, 5).join(' ')}...
         </span>
         <div className="mb-8 flex min-h-[12rem] items-center justify-center px-4">
           <p className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl">
-            {step}
+            {step
+              .split(
+                /(\d+(?:[/.]\d+)?\s*(?:cups?|tbsp|tsp|oz|lbs?|g|kg|ml|l|cloves?|slices?|pieces?|pinch(?:es)?|cans?|jars?|bottles?|large|medium|small)?\b)/gi,
+              )
+              .map((part, i) =>
+                // Simple heuristic: if it starts with a number, bold it.
+                // The regex captures the number+unit group.
+                /^\d/.test(part) ? (
+                  <strong key={i} className="text-primary">
+                    {part}
+                  </strong>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
+        {showJump && (
+          <div className="absolute bottom-24 right-6 z-10">
+            <button
+              onClick={() => setCurrentStepIdx(targetStep)}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 font-display text-sm font-bold text-primary-foreground shadow-lg transition-transform animate-in fade-in slide-in-from-bottom-2 active:scale-95"
+            >
+              Jump to Step {targetStep + 1} <ChevronLeft className="h-4 w-4 rotate-180" />
+            </button>
+          </div>
+        )}
         <button
           onClick={() => {
             setCheckedSteps((p) => ({ ...p, [currentStepIdx]: true }))

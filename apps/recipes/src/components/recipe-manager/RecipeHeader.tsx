@@ -58,19 +58,17 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           }`}
         >
           <div className="flex h-full items-center justify-between px-4 text-[10px] font-black uppercase tracking-widest sm:text-xs">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={openBurgerMenu}
-                className="h-5 w-5 rounded-full text-background hover:bg-background/20 hover:text-white"
-                title="Menu"
-                aria-label="Menu"
-              >
-                <Menu className="h-3 w-3" />
-              </Button>
-              <span>Welcome, {user}</span>
-            </div>
+            <span>Welcome, {user}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openBurgerMenu}
+              className="h-5 w-5 rounded-full text-background hover:bg-background/20 hover:text-white"
+              title="Menu"
+              aria-label="Menu"
+            >
+              <Menu className="h-3 w-3" />
+            </Button>
           </div>
         </div>
       )}
@@ -87,13 +85,12 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           </h1>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {onTogglePlanMode && (
             <Button
               variant="ghost"
-              size="icon"
               onClick={onTogglePlanMode}
-              className={`h-9 w-9 rounded-full transition-colors ${
+              className={`flex h-9 items-center gap-1.5 rounded-full px-3 transition-colors ${
                 isPlanMode
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'text-foreground hover:bg-muted'
@@ -101,20 +98,21 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               title={isPlanMode ? 'Exit Plan Mode' : 'Enter Plan Mode'}
               aria-label={isPlanMode ? 'Exit Plan Mode' : 'Enter Plan Mode'}
             >
-              <Calendar className="h-5 w-5" />
+              <Calendar className="h-4 w-4" />
+              <span className="text-xs font-bold">{isPlanMode ? 'Exit Plan' : 'Plan'}</span>
             </Button>
           )}
 
           {onAddRecipe && (
             <Button
               variant="ghost"
-              size="icon"
               onClick={onAddRecipe}
-              className="h-9 w-9 rounded-full text-foreground"
+              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
               title="Add Recipe"
               aria-label="Add Recipe"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
+              <span className="text-xs font-bold">Add</span>
             </Button>
           )}
         </div>

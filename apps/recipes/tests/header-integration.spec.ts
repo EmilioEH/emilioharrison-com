@@ -11,19 +11,16 @@ test('header layout and burger menu integration', async ({ page, context }) => {
   await page.goto('/protected/recipes')
 
   // 1. Verify Header Title
-  await expect(page.getByText('CHEFBOARD')).toBeVisible()
+  // 1. Verify Header Title
+  await page.waitForTimeout(1000)
+  await expect(page.locator('h1')).toContainText('CHEFBOARD')
 
   // 2. Verify Menu Button is integrated
-  // It should be inside the header, next to text-foreground buttons
   const menuButton = page.getByRole('button', { name: 'Menu' })
   await expect(menuButton).toBeVisible()
 
-  // 3. Verify Welcome Bar (should be visible initially and likely static now)
-  // Assuming a user is logged in (mocked or real). If not logged in, this might fail.
-  // We can try to match the locator logic from previous successful tests or just check for the element existence if user is present.
-  // If the test env doesn't auto-login, we might need to assume 'guest' or skip this check.
-  // But standard tests seem to assume logged in state based on other test files.
-  // Let's check for the element with welcome text pattern if possible.
+  // 3. Verify Welcome Bar
+  await expect(page.getByText('Welcome, TestUser')).toBeVisible()
 
   // 4. Click Menu and verify drawer opens
   await menuButton.click()

@@ -249,6 +249,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                     text={text}
                     isChecked={!!checkedIngredients[idx]}
                     onToggle={() => setCheckedIngredients((p) => ({ ...p, [idx]: !p[idx] }))}
+                    size="lg"
                   />
                 )
               })}

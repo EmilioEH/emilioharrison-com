@@ -37,7 +37,7 @@ export const MiseEnPlace: React.FC<MiseEnPlaceProps> = ({
                 text={text}
                 isChecked={!!checkedIngredients[idx]}
                 onToggle={() => setCheckedIngredients((p) => ({ ...p, [idx]: !p[idx] }))}
-                largeText={true}
+                size="xl"
               />
             )
           })}
