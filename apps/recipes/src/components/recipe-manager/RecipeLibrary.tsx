@@ -1,7 +1,6 @@
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ChefHat, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ChefHat, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
@@ -42,14 +41,11 @@ interface RecipeLibraryProps {
   isSelectionMode: boolean
   selectedIds: Set<string>
   onClearSearch?: () => void
-  onSearchChange?: (query: string) => void
+  // onSearchChange removed
   searchQuery?: string
   hasSearch?: boolean
   scrollContainer?: HTMLElement | null
-  // New Header Tools Props
-  onOpenFilters: () => void
-  activeFilterCount: number
-  onSearchExpandedChange?: (expanded: boolean) => void
+  // New Header Tools Props removed (onOpenFilters, activeFilterCount, onSearchExpandedChange, hideSearch)
 }
 
 declare global {
@@ -65,20 +61,13 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   sort,
   isSelectionMode,
   selectedIds,
-  onClearSearch,
-  onSearchChange,
-  searchQuery,
   hasSearch,
   scrollContainer,
-  onOpenFilters,
-  activeFilterCount,
-  onSearchExpandedChange,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isProgrammaticScroll = useRef(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Scrollspy & Tabs
   const [activeGroup, setActiveGroup] = useState<string>(() => {
@@ -204,7 +193,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             ? 'Try adjusting your search terms or filters.'
             : 'Get started by adding your first recipe!'}
         </p>
-        {hasSearch && onClearSearch && <Button onClick={onClearSearch}>Clear Search</Button>}
       </div>
     )
   }
@@ -337,78 +325,28 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
   return (
     <div ref={containerRef} className="pb-24 animate-in fade-in">
-      {/* Sticky Header Block: Search & Filters */}
-      {!isSelectionMode && (
-        <div className="sticky top-0 z-40 flex flex-col gap-2 bg-background/95 pb-2 pt-4 shadow-sm backdrop-blur transition-all">
-          <div className="flex items-center gap-2 px-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search recipes..."
-                value={searchQuery || ''}
-                onFocus={() => onSearchExpandedChange?.(true)}
-                onBlur={() => {
-                  if (!searchQuery) {
-                    onSearchExpandedChange?.(false)
-                  }
-                }}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                className="h-10 w-full rounded-full border border-border bg-secondary/50 pl-9 pr-8 text-sm shadow-sm transition-all focus:border-primary focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    onClearSearch?.()
-                    onSearchExpandedChange?.(false)
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={onOpenFilters}
-              className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border transition-colors ${
-                activeFilterCount > 0
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-muted'
-              }`}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {activeFilterCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-background">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
+      {/* Category Nav - Scrollable (Sticky) */}
+      {!isSelectionMode && !hasSearch && (
+        <div className="sticky top-0 z-40 bg-background/95 pb-2 pt-2 shadow-sm backdrop-blur transition-all">
+          <div
+            ref={navRef}
+            className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto px-4 pb-1"
+          >
+            {groupedRecipes.sortedKeys.map((key) => (
+              <button
+                key={key}
+                data-group={key}
+                onClick={() => scrollToGroup(key)}
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                  activeGroup === key
+                    ? 'bg-foreground text-background shadow-md'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                } `}
+              >
+                {getGroupTitle(key)}
+              </button>
+            ))}
           </div>
-
-          {/* Category Nav - Scrollable */}
-          {!searchQuery && (
-            <div
-              ref={navRef}
-              className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto px-4 pb-1"
-            >
-              {groupedRecipes.sortedKeys.map((key) => (
-                <button
-                  key={key}
-                  data-group={key}
-                  onClick={() => scrollToGroup(key)}
-                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
-                    activeGroup === key
-                      ? 'bg-foreground text-background shadow-md'
-                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  } `}
-                >
-                  {getGroupTitle(key)}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -477,7 +415,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             )
           })}
         </motion.div>
-      ) : searchQuery ? (
+      ) : hasSearch ? (
         // FLAT LIST VIEW (For Search)
         <motion.div
           variants={containerVariants}
@@ -500,7 +438,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             }}
           >
             {/* Group Header */}
-            <div className="sticky top-[93px] z-30 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-200">
+            <div className="sticky top-[52px] z-30 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-200">
               <button
                 onClick={() => toggleGroup(key)}
                 className="flex w-full items-center justify-between px-4 py-2 transition-colors hover:bg-muted/50"

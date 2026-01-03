@@ -26,6 +26,7 @@ import { useRouter } from './hooks/useRouter'
 import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
+import { RecipeControlBar } from './RecipeControlBar'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
@@ -390,16 +391,18 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         </div>
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
-        <RecipeFilters
-          isOpen={filtersOpen}
-          onClose={() => setFiltersOpen(false)}
-          filters={filters}
-          setFilters={setFilters}
-          sort={sort}
-          setSort={setSort}
-          searchQuery={searchQuery}
-          setSearchQuery={handleSearchChange}
-        />
+        {view !== 'week' && (
+          <RecipeFilters
+            isOpen={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            filters={filters}
+            setFilters={setFilters}
+            sort={sort}
+            setSort={setSort}
+            searchQuery={searchQuery}
+            setSearchQuery={handleSearchChange}
+          />
+        )}
 
         {/* Collapsible Header */}
         {/* Collapsible Header */}
@@ -419,10 +422,35 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   setRecipe(null)
                   setView('edit')
                 }}
+                onViewWeek={() => {
+                  if (view === 'week') {
+                    setView('library')
+                  } else {
+                    setView('week')
+                  }
+                }}
+                isWeekView={view === 'week'}
               />
             </motion.div>
           )}
         </AnimatePresence>
+
+        {view !== 'week' && !isSelectionMode && (
+          <RecipeControlBar
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            onClearSearch={() => handleSearchChange('')}
+            onOpenFilters={() => setFiltersOpen(true)}
+            activeFilterCount={
+              (filters.protein?.length || 0) +
+              (filters.difficulty?.length || 0) +
+              (filters.cuisine?.length || 0) +
+              (filters.onlyFavorites ? 1 : 0)
+            }
+            isSearchMode={isSearchMode}
+            onSearchExpandedChange={setIsSearchMode}
+          />
+        )}
 
         <main ref={setScrollContainer} className="relative flex-1 overflow-y-auto scroll-smooth">
           {(view === 'library' || view === 'week') && (
@@ -443,19 +471,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   onToggleThisWeek={handleToggleThisWeek}
                   isSelectionMode={isSelectionMode}
                   selectedIds={selectedIds}
-                  onClearSearch={() => handleSearchChange('')}
-                  onSearchChange={handleSearchChange}
-                  searchQuery={searchQuery}
                   hasSearch={!!searchQuery}
                   scrollContainer={scrollContainer}
-                  onOpenFilters={() => setFiltersOpen(true)}
-                  activeFilterCount={
-                    (filters.protein?.length || 0) +
-                    (filters.difficulty?.length || 0) +
-                    (filters.cuisine?.length || 0) +
-                    (filters.onlyFavorites ? 1 : 0)
-                  }
-                  onSearchExpandedChange={setIsSearchMode}
                 />
               </div>
             </div>

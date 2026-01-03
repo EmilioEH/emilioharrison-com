@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Menu, Plus } from 'lucide-react'
+import { Menu, Plus, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
 
@@ -7,12 +7,16 @@ interface RecipeHeaderProps {
   user?: string
   scrollContainer?: HTMLElement | null
   onAddRecipe?: () => void
+  onViewWeek?: () => void
+  isWeekView?: boolean
 }
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   user,
   scrollContainer,
   onAddRecipe,
+  onViewWeek,
+  isWeekView,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isScrollingUp, setIsScrollingUp] = useState(false)
@@ -82,6 +86,27 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {onViewWeek && (
+            <Button
+              variant={isWeekView ? 'default' : 'ghost'}
+              onClick={onViewWeek}
+              className={`flex h-9 items-center gap-1.5 rounded-full px-3 ${
+                isWeekView
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'text-foreground hover:bg-muted'
+              }`}
+              title="View Week"
+              aria-label="View Week"
+            >
+              <CalendarDays className="h-4 w-4" />
+              {isWeekView ? (
+                <span className="text-xs font-bold">Week</span>
+              ) : (
+                <span className="hidden text-xs font-bold sm:inline-block">View Week</span>
+              )}
+            </Button>
+          )}
+
           {onAddRecipe && (
             <Button
               variant="ghost"
