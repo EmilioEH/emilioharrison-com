@@ -28,7 +28,8 @@ interface FilterChipProps {
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <Badge
     variant={active ? 'active' : 'inactive'}
-    className="h-8 cursor-pointer rounded-full px-3 text-sm transition-all"
+    size="md"
+    className="cursor-pointer transition-all"
     onClick={onClick}
   >
     {label}
@@ -100,7 +101,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                     onClick={() => setSort(opt.id)}
                     className="justify-start text-xs"
                   >
-                    <opt.icon className="mr-1.5 h-3.5 w-3.5" />
+                    <opt.icon className="mr-1.5" />
                     {opt.label}
                   </Button>
                 ))}

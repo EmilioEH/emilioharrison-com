@@ -276,6 +276,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               <span>•</span>
               <Badge
                 variant="tag"
+                size="sm"
                 className={`uppercase ${
                   recipe.difficulty === 'Easy'
                     ? 'bg-green-500/10 text-green-600'
@@ -312,13 +313,14 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           {/* Status Badges - Inline on right */}
           <div className="flex items-center gap-1.5">
             {recipe.isFavorite && (
-              <Badge variant="tag" className="bg-red-500/10 text-red-500">
+              <Badge variant="tag" size="sm" className="bg-red-500/10 text-red-500">
                 Favorite
               </Badge>
             )}
 
             <Badge
               variant={recipe.thisWeek ? 'active' : 'inactive'}
+              size="md"
               className="cursor-pointer uppercase tracking-wider"
               onClick={(e) => {
                 e.stopPropagation()

@@ -98,12 +98,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           <div className="mb-6">
             <div className="mb-2 flex gap-2">
               {recipe.protein && (
-                <Badge variant="tag" className="uppercase">
+                <Badge variant="tag" size="sm" className="uppercase">
                   {recipe.protein}
                 </Badge>
               )}
               {recipe.difficulty && (
-                <Badge variant="tag" className="uppercase">
+                <Badge variant="tag" size="sm" className="uppercase">
                   {recipe.difficulty}
                 </Badge>
               )}
@@ -120,8 +120,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 asChild
               >
                 <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')}{' '}
-                  <ChevronRight className="h-3 w-3" />
+                  Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')} <ChevronRight />
                 </a>
               </Button>
             )}
@@ -242,7 +241,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 onClick={() => setCookingStage('pre')}
                 className="h-auto p-0 text-xs uppercase tracking-widest"
               >
-                Start Prepping <ChevronRight className="h-3 w-3" />
+                Start Prepping <ChevronRight />
               </Button>
             </h2>
             <div
@@ -276,7 +275,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 onClick={startCooking}
                 className="h-auto rounded-full px-3 py-1 text-xs uppercase tracking-widest"
               >
-                Cooking Mode <Play className="h-3 w-3 fill-current" />
+                Cooking Mode <Play className="fill-current" />
               </Button>
             </h2>
             <div className="space-y-4">

@@ -63,7 +63,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               title="Menu"
               aria-label="Menu"
             >
-              <Menu className="h-3 w-3" />
+              <Menu className="h-4 w-4" />
             </Button>
           </div>
         </div>

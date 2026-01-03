@@ -76,6 +76,12 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 - [Design System](docs/technical/design-system.md) – UI tokens and component styles (Migrated to shadcn/ui)
 - [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
 
+### Recent Updates (Jan 2026)
+
+- **Visual Hierarchy System**: Implemented a comprehensive monochromatic grayscale hierarchy using shadcn/ui design tokens. Added `active`, `inactive`, and `tag` variants to Badge component for clear visual distinction between primary, secondary, and tertiary elements. All interactive elements now follow consistent visual weight patterns (filled dark for high emphasis, bordered for medium, subtle for informational).
+- **Sizing Consistency**: Added proper size variants (`sm`, `md`, `lg`) to Badge component, matching Button's existing size system. All badges now use semantic size props instead of manual className overrides, creating predictable touch targets and visual rhythm.
+- **Icon Standardization**: Updated Button component with size-aware icon sizing (`[&_svg]:size-3.5` for sm, `size-4` for default, `size-5` for lg). Removed manual icon size overrides across all components. Icons now auto-scale with their containers for balanced, professional appearance.
+
 ### Recent Updates (Dec 2025)
 
 - **Mobile Navigation Overhaul**: Implemented a unified `BottomControls` component. Centralized search, week/library tabs, and grid/list view toggles into an ergonomic, floating bar at the bottom of the screen.
