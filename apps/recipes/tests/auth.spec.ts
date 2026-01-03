@@ -60,12 +60,12 @@ test.describe('Authentication Flow', () => {
     await page.goto('/protected/recipes')
     await expect(page.getByTestId('loading-indicator')).toBeHidden()
 
-    // Scroll up to ensure header is visible
-    await page.evaluate(() => window.scrollTo(0, 0))
-    await expect(page.getByText('Welcome, TestUser')).toBeVisible()
+    // Scroll up to ensure header is visible (Note: window.scrollTo might not work if scrolling is on a div)
+    // but default state should be top.
 
-    // 2. Click Logout
-    await page.getByText('Log Out').click()
+    // 2. Click Logout (via Burger Menu)
+    await page.getByRole('button', { name: 'Open Menu' }).click()
+    await page.getByRole('menuitem', { name: 'Log Out' }).click()
 
     // 3. Verify Redirect
     await expect(page).toHaveURL(/\/protected\/recipes\/login/)

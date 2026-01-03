@@ -2,6 +2,8 @@ import React, { useEffect } from 'react'
 import { Clock, Users, Flame, Star, ChevronRight, Play, Check } from 'lucide-react'
 import { StarRating } from '../ui/StarRating'
 import { CheckableItem } from './CheckableItem'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
 import type { Recipe } from '../../lib/types'
 import type { CookingStage } from './DetailHeader'
 
@@ -96,14 +98,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           <div className="mb-6">
             <div className="mb-2 flex gap-2">
               {recipe.protein && (
-                <span className="bg-md-sys-color-secondary-container text-md-sys-color-on-secondary-container rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wider">
+                <Badge variant="tag" className="uppercase">
                   {recipe.protein}
-                </span>
+                </Badge>
               )}
               {recipe.difficulty && (
-                <span className="bg-card-variant text-foreground-variant rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wider">
+                <Badge variant="tag" className="uppercase">
                   {recipe.difficulty}
-                </span>
+                </Badge>
               )}
             </div>
             <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-foreground">
@@ -111,15 +113,17 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </h1>
 
             {recipe.sourceUrl && (
-              <a
-                href={recipe.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mb-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+              <Button
+                variant="link"
+                size="sm"
+                className="mb-4 h-auto p-0 text-xs uppercase tracking-wider"
+                asChild
               >
-                Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')}{' '}
-                <ChevronRight className="h-3 w-3" />
-              </a>
+                <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer">
+                  Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')}{' '}
+                  <ChevronRight className="h-3 w-3" />
+                </a>
+              </Button>
             )}
 
             {recipe.description && (
@@ -178,12 +182,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </button>
             ) : (
               // Fallback button if auto failed or initial state before effect
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={handleEstimateCost}
-                className="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+                className="h-auto p-0 text-xs uppercase tracking-wider"
               >
                 Estimate Cost
-              </button>
+              </Button>
             )}
           </div>
 
@@ -230,12 +236,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   ({recipe.ingredients?.length || 0})
                 </span>
               </div>
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={() => setCookingStage('pre')}
-                className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-primary hover:underline"
+                className="h-auto p-0 text-xs uppercase tracking-widest"
               >
                 Start Prepping <ChevronRight className="h-3 w-3" />
-              </button>
+              </Button>
             </h2>
             <div
               className={`rounded-lg border border-dashed border-border p-2 ${cookingMode ? 'bg-md-sys-color-tertiary-container/20 border-md-sys-color-tertiary-container' : 'bg-card-variant/20'}`}
@@ -262,12 +270,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           <div className="mb-8">
             <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-foreground">
               Instructions
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={startCooking}
-                className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/20"
+                className="h-auto rounded-full px-3 py-1 text-xs uppercase tracking-widest"
               >
                 Cooking Mode <Play className="h-3 w-3 fill-current" />
-              </button>
+              </Button>
             </h2>
             <div className="space-y-4">
               {recipe.steps.map((step, idx) => (

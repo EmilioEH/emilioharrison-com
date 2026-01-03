@@ -26,7 +26,7 @@ import { useRouter } from './hooks/useRouter'
 import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
-import { BottomControls } from './BottomControls'
+
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
 export type ViewMode =
@@ -111,15 +111,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
 
   // Hooks
-  const {
-    isSelectionMode,
-    setIsSelectionMode,
-    isPlanMode,
-    togglePlanMode,
-    selectedIds,
-    toggleSelection,
-    clearSelection,
-  } = useRecipeSelection()
+  const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
+    useRecipeSelection()
   const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [isSearchMode, setIsSearchMode] = useState(false)
 
@@ -426,8 +419,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   setRecipe(null)
                   setView('edit')
                 }}
-                isPlanMode={isPlanMode}
-                onTogglePlanMode={togglePlanMode}
               />
             </motion.div>
           )}
@@ -451,7 +442,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   }}
                   onToggleThisWeek={handleToggleThisWeek}
                   isSelectionMode={isSelectionMode}
-                  isPlanMode={isPlanMode}
                   selectedIds={selectedIds}
                   onClearSearch={() => handleSearchChange('')}
                   onSearchChange={handleSearchChange}
@@ -547,15 +537,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Sticky Bottom Controls (Navigation Tabs) - Hide in Selection Mode */}
-      {(view === 'library' || view === 'week' || view === 'grocery') && !isSelectionMode && (
-        <BottomControls
-          view={view}
-          setView={(v) => setView(v)}
-          weekCount={recipes.filter((r) => r.thisWeek).length}
-        />
       )}
     </>
   )

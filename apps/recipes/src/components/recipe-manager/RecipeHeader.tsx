@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Menu, Plus, Calendar } from 'lucide-react'
+import { Menu, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
 
@@ -7,16 +7,12 @@ interface RecipeHeaderProps {
   user?: string
   scrollContainer?: HTMLElement | null
   onAddRecipe?: () => void
-  isPlanMode?: boolean
-  onTogglePlanMode?: () => void
 }
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   user,
   scrollContainer,
   onAddRecipe,
-  isPlanMode,
-  onTogglePlanMode,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isScrollingUp, setIsScrollingUp] = useState(false)
@@ -86,23 +82,6 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {onTogglePlanMode && (
-            <Button
-              variant="ghost"
-              onClick={onTogglePlanMode}
-              className={`flex h-9 items-center gap-1.5 rounded-full px-3 transition-colors ${
-                isPlanMode
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'text-foreground hover:bg-muted'
-              }`}
-              title={isPlanMode ? 'Exit Plan Mode' : 'Enter Plan Mode'}
-              aria-label={isPlanMode ? 'Exit Plan Mode' : 'Enter Plan Mode'}
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="text-xs font-bold">{isPlanMode ? 'Exit Plan' : 'Plan'}</span>
-            </Button>
-          )}
-
           {onAddRecipe && (
             <Button
               variant="ghost"

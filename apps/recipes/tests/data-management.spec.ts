@@ -58,9 +58,9 @@ test.describe('Data Management Features', () => {
 
     // 2. Enter Selection Mode (Button in Library view)
     // Need to make sure filtered list is not empty.
-    const selectBtn = page.getByRole('button', { name: 'Select Recipes' })
-    await expect(selectBtn).toBeVisible()
-    await selectBtn.click()
+    // 2. Enter Selection Mode (via Burger Menu)
+    await page.getByRole('button', { name: 'Open Menu' }).click()
+    await page.getByRole('menuitem', { name: 'Select Recipes' }).click()
 
     // 3. Select recipes
     // We can click the cards. In selection mode, clicking card -> toggle.

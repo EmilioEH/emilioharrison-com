@@ -14,6 +14,11 @@ const badgeVariants = cva(
         destructive:
           'border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80',
         outline: 'text-foreground',
+        // Hierarchy variants for active/inactive states and tags
+        active: 'border-transparent bg-foreground text-background font-bold hover:bg-foreground/90',
+        inactive:
+          'border-border bg-background text-muted-foreground font-medium hover:bg-accent hover:text-foreground',
+        tag: 'border-transparent bg-muted text-muted-foreground font-normal',
       },
     },
     defaultVariants: {

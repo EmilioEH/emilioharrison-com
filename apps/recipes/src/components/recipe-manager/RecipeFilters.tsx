@@ -27,10 +27,8 @@ interface FilterChipProps {
 
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <Badge
-    variant={active ? 'default' : 'outline'}
-    className={`h-8 cursor-pointer rounded-full px-3 text-sm font-medium transition-all hover:bg-secondary ${
-      !active ? 'text-muted-foreground hover:text-foreground' : ''
-    }`}
+    variant={active ? 'active' : 'inactive'}
+    className="h-8 cursor-pointer rounded-full px-3 text-sm transition-all"
     onClick={onClick}
   >
     {label}
@@ -230,16 +228,17 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
               ))}
             </FilterSection>
 
-            <div className="pt-8 text-center text-xs text-muted-foreground">
-              <button
+            <div className="pt-8 text-center">
+              <Button
+                variant="link"
+                size="sm"
                 onClick={() => {
                   setFilters({})
                   setSort('protein')
                 }}
-                className="underline hover:text-primary"
               >
                 Reset all filters
-              </button>
+              </Button>
             </div>
           </div>
         </div>

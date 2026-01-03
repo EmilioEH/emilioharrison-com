@@ -2,6 +2,7 @@ import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { ChefHat, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 
@@ -49,7 +50,6 @@ interface RecipeLibraryProps {
   onOpenFilters: () => void
   activeFilterCount: number
   onSearchExpandedChange?: (expanded: boolean) => void
-  isPlanMode?: boolean
 }
 
 declare global {
@@ -73,7 +73,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   onOpenFilters,
   activeFilterCount,
   onSearchExpandedChange,
-  isPlanMode,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
 
@@ -223,8 +222,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           : 'hover:border-border hover:shadow-sm'
       }`}
       onClick={() => {
-        if (isPlanMode) {
-          onToggleThisWeek(recipe.id)
+        if (isSelectionMode) {
+          onSelectRecipe(recipe)
         } else {
           onSelectRecipe(recipe)
         }
@@ -232,36 +231,14 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          if (isPlanMode) {
-            onToggleThisWeek(recipe.id)
+          if (isSelectionMode) {
+            onSelectRecipe(recipe)
           } else {
             onSelectRecipe(recipe)
           }
         }
       }}
     >
-      {/* Plan Mode Overlay */}
-      {isPlanMode && !recipe.thisWeek && (
-        <div className="absolute inset-0 z-10 rounded-xl bg-background/60 transition-colors" />
-      )}
-
-      {/* Plan Mode Checkmark (If Added) */}
-      {isPlanMode && recipe.thisWeek && (
-        <div className="absolute right-2 top-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm animate-in zoom-in">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-3.5 w-3.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-      )}
-
       {/* Square Thumbnail */}
       <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
         {recipe.finishedImage || recipe.sourceImage ? (
@@ -297,8 +274,9 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           {recipe.difficulty && (
             <>
               <span>•</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+              <Badge
+                variant="tag"
+                className={`uppercase ${
                   recipe.difficulty === 'Easy'
                     ? 'bg-green-500/10 text-green-600'
                     : recipe.difficulty === 'Medium'
@@ -307,7 +285,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 }`}
               >
                 {recipe.difficulty}
-              </span>
+              </Badge>
             </>
           )}
         </div>
@@ -334,15 +312,21 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           {/* Status Badges - Inline on right */}
           <div className="flex items-center gap-1.5">
             {recipe.isFavorite && (
-              <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-500">
+              <Badge variant="tag" className="bg-red-500/10 text-red-500">
                 Favorite
-              </span>
+              </Badge>
             )}
-            {recipe.thisWeek && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                This Week
-              </span>
-            )}
+
+            <Badge
+              variant={recipe.thisWeek ? 'active' : 'inactive'}
+              className="cursor-pointer uppercase tracking-wider"
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleThisWeek(recipe.id)
+              }}
+            >
+              {recipe.thisWeek ? 'Added to Week' : 'Add to Week'}
+            </Badge>
           </div>
         </div>
       </div>
