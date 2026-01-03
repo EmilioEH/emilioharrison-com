@@ -40,6 +40,35 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
 - **Testing**: [Vitest](https://vitest.dev/) (Unit) + [Playwright](https://playwright.dev/) (E2E) + [Stryker](https://stryker-mutator.io/) (Mutation)
 
+## 🧱 Architectural Patterns
+
+### 1. Custom SPA Router (vs Astro Routing)
+
+While Astro handles the initial load, the app functions as a **Single Page Application (SPA)** managed by `RecipeManager.tsx` and the `useRouter` hook.
+
+- **Do NOT create new Astro pages** for core app features (e.g., `src/pages/new-feature.astro`).
+- **Instead:** Add a new `ViewMode` to `RecipeManager.tsx` and render a conditional component.
+- **Why:** This preserves the "App-like" feel, state (e.g. scroll position), and offline capability.
+
+### 2. Hybrid AI Parsing Strategy
+
+We prioritize **deterministic data** over generative AI to save costs and latency.
+
+- The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_.
+- Only if JSON-LD is missing does it construct a prompt for Gemini.
+- **Agent Rule:** When modifying parsing logic, preserve this `extractJsonLd` priority. Do not blindly switch to "AI-only" parsing.
+
+### 3. Storage Proxy & Custom Auth
+
+- **Constraint:** Do **NOT** use the Firebase Client SDK (`firebase/storage`) in the browser.
+- **Pattern:** All file uploads must go through the `POST /api/uploads` endpoint.
+- **Why:** The app uses a custom `FirebaseRestService` on the server to handle authentication with a Service Account, avoiding complex CORS/Auth setup on the client.
+
+### 4. Scrollspy & Virtual Navigation
+
+- `RecipeLibrary.tsx` implements a manual "Scrollspy" to sync the sticky category header with the scroll position.
+- **Caution:** Refactoring the list view requires checking this scroll logic (`onScroll`, `scrollCache`) to ensure the "sticky header" experience breaks gracefully.
+
 ### Technical Documentation
 
 - [Gemini API Guide](docs/technical/gemini-api-guide.md) – AI integration patterns
@@ -57,7 +86,12 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Clean Architecture**: Removed legacy `tokens.css` and custom `md-sys-*` Tailwind extensions, moving to standard Tailwind utility patterns and shadcn/ui primitives.
 - **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein, now accessible from the bottom bar.
 - **Staggered Animations**: Implemented physics-based staggered list animations using Framer Motion for a premium, app-like feel when searching or filtering.
+- **Staggered Animations**: Implemented physics-based staggered list animations using Framer Motion for a premium, app-like feel when searching or filtering.
 - **Enhanced Search UX**: Redesigned the search experience to focus on content. The header now elegantly slides away to maximize screen real estate when searching.
+
+### Known Technical Debt
+
+- **Theming System**: The `themeInit.ts` logic is currently active code (runs on load) but has **no UI controls**. Agents should consider this "headless" or "zombie" code and avoid expanding it unless explicitly asked to build the Theme Switcher UI.
 
 ### 🤖 Agent Quick Reference
 
@@ -78,8 +112,9 @@ Key entry points for common tasks:
 **Conventions:**
 
 - React components use `.tsx` extension (TypeScript) and PascalCase naming
-- UI components are organized in `src/components/ui/` using shadcn/ui patterns
-- Nanostores in `src/lib/*Store.ts` manage global state
+- **Styling Rule**: Use `src/components/ui/` + Tailwind utility classes. **Do not** create custom CSS files or classes.
+- **State Rule**: Global state (User, Grocery) use Nanostores (`src/lib/*Store.ts`). Local UI state (Modal open/close) uses `useState`.
+- **UI Components**: Check `src/components/ui/` first before building new primitives.
 - All API routes return JSON with `{ success, data?, error? }` pattern
 - Run `npm run check:safety` before committing
 
@@ -158,9 +193,12 @@ The project uses aggressive **pre-push hooks** that run linting and type checks.
 1.  **Strict Linting**: We use a strict `no-unused-vars` rule.
     - **Always** prefix intentionally unused variables with an underscore (e.g., `_e`, `_recipe`).
     - **Never** leave incomplete functions or variables that are declared but unused.
-2.  **Type Safety**: Always run `npm run check:ts` after modifying `src/lib/` or `src/pages/api/`.
+2.  **Architecture Violation**:
+    - **Do NOT** create new pages in `src/pages/` for app features. Use `RecipeManager` views.
+    - **Do NOT** use `firebase/storage` client SDK. Use `api/uploads`.
+3.  **Type Safety**: Always run `npm run check:ts` after modifying `src/lib/` or `src/pages/api/`.
     - The **Firebase integration** ([firebase-rest.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/src/lib/firebase-rest.ts)) is custom. Do not assume standard `firebase-admin` methods (like `.file().save()`) work; check the class implementation.
-3.  **Self-Correction Loop**: Before declaring a task finished, **you MUST run**:
+4.  **Self-Correction Loop**: Before declaring a task finished, **you MUST run**:
     ```bash
     npm run check:quick
     ```
