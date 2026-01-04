@@ -1,11 +1,17 @@
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ChefHat, ChevronRight } from 'lucide-react'
+import { ChefHat, ChevronRight, MoreVertical } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
-import { allPlannedRecipes, getPlannedDatesForRecipe } from '../../lib/weekStore'
+import {
+  allPlannedRecipes,
+  getPlannedDatesForRecipe,
+  removeRecipeFromDay,
+} from '../../lib/weekStore'
+import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 
 // Animation Variants
 const containerVariants = {
@@ -48,6 +54,9 @@ interface RecipeLibraryProps {
   hasSearch?: boolean
   scrollContainer?: HTMLElement | null
   // New Header Tools Props removed (onOpenFilters, activeFilterCount, onSearchExpandedChange, hideSearch)
+  // Week management props
+  allowManagement?: boolean // show management menu for week context
+  currentWeekStart?: string // current week context for management
 }
 
 declare global {
@@ -65,8 +74,12 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   selectedIds,
   hasSearch,
   scrollContainer,
+  allowManagement = false,
+  currentWeekStart: _currentWeekStart,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  // Management UI state
+  const [managementRecipeId, setManagementRecipeId] = useState<string | null>(null)
   // Subscribe to all planned recipes to trigger re-renders when plans change
   useStore(allPlannedRecipes)
 
@@ -201,157 +214,183 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     )
   }
 
-  const renderRecipeCard = (recipe: Recipe) => (
-    <motion.div
-      variants={itemVariants}
-      key={recipe.id}
-      role="button"
-      tabIndex={0}
-      data-testid={`recipe-card-${recipe.id}`}
-      className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:bg-accent/50 ${
-        isSelectionMode && selectedIds?.has(recipe.id)
-          ? 'border-primary/20 bg-accent'
-          : 'hover:border-border hover:shadow-sm'
-      }`}
-      onClick={() => {
-        if (isSelectionMode) {
-          onSelectRecipe(recipe)
-        } else {
-          onSelectRecipe(recipe)
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
+  const renderRecipeCard = (recipe: Recipe) => {
+    // Calculate planned dates once for performance
+    const plannedDates = getPlannedDatesForRecipe(recipe.id)
+    const isPlanned = plannedDates.length > 0
+
+    return (
+      <motion.div
+        variants={itemVariants}
+        key={recipe.id}
+        role="button"
+        tabIndex={0}
+        data-testid={`recipe-card-${recipe.id}`}
+        className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:bg-accent/50 ${
+          isSelectionMode && selectedIds?.has(recipe.id)
+            ? 'border-primary/20 bg-accent'
+            : 'hover:border-border hover:shadow-sm'
+        }`}
+        onClick={() => {
           if (isSelectionMode) {
             onSelectRecipe(recipe)
           } else {
             onSelectRecipe(recipe)
           }
-        }
-      }}
-    >
-      {/* Square Thumbnail */}
-      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
-        {recipe.finishedImage || recipe.sourceImage ? (
-          <img
-            src={recipe.finishedImage || recipe.sourceImage}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            alt=""
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <ChefHat className="h-8 w-8 text-muted-foreground/50" />
-          </div>
-        )}
-      </div>
-
-      {/* Content Column */}
-      <div className="flex flex-1 flex-col justify-center">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="line-clamp-2 flex-1 font-display text-lg font-bold leading-tight text-foreground">
-            {recipe.title}
-          </h4>
-          {(recipe.rating ?? 0) > 0 && (
-            <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
-              <span>★</span> <span data-testid="recipe-rating">{recipe.rating}</span>
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            if (isSelectionMode) {
+              onSelectRecipe(recipe)
+            } else {
+              onSelectRecipe(recipe)
+            }
+          }
+        }}
+      >
+        {/* Square Thumbnail */}
+        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
+          {recipe.finishedImage || recipe.sourceImage ? (
+            <img
+              src={recipe.finishedImage || recipe.sourceImage}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              alt=""
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ChefHat className="h-8 w-8 text-muted-foreground/50" />
             </div>
           )}
         </div>
 
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-muted-foreground">
-          <span>{recipe.cookTime + recipe.prepTime} min</span>
-          <span>•</span>
-          <span>{recipe.servings} servings</span>
-          {recipe.difficulty && (
-            <>
-              <span>•</span>
-              <Badge
-                variant="tag"
-                size="sm"
-                className={`uppercase ${
-                  recipe.difficulty === 'Easy'
-                    ? 'bg-green-500/10 text-green-600'
-                    : recipe.difficulty === 'Medium'
-                      ? 'bg-yellow-500/10 text-yellow-600'
-                      : 'bg-red-500/10 text-red-600'
-                }`}
-              >
-                {recipe.difficulty}
-              </Badge>
-            </>
-          )}
-        </div>
-
-        <div className="mt-0.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs font-medium text-muted-foreground">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {recipe.protein ? (
-              <>
-                <span>{recipe.protein}</span>
-                {recipe.cuisine && (
-                  <>
-                    <span>•</span>
-                    <span>{recipe.cuisine}</span>
-                  </>
-                )}
-              </>
-            ) : recipe.cuisine ? (
-              <span>{recipe.cuisine}</span>
-            ) : (
-              <span>{recipe.mealType}</span>
+        {/* Content Column */}
+        <div className="flex flex-1 flex-col justify-center">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="line-clamp-2 flex-1 font-display text-lg font-bold leading-tight text-foreground">
+              {recipe.title}
+            </h4>
+            {(recipe.rating ?? 0) > 0 && (
+              <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
+                <span>★</span> <span data-testid="recipe-rating">{recipe.rating}</span>
+              </div>
             )}
           </div>
 
-          {/* Status Badges - Inline on right */}
-          <div className="flex items-center gap-1.5">
-            {/* Day Tags from all weeks */}
-            {(() => {
-              const plannedDates = getPlannedDatesForRecipe(recipe.id)
-              const maxVisible = 3
-              const visibleTags = plannedDates.slice(0, maxVisible)
-              const overflowCount = plannedDates.length - maxVisible
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-muted-foreground">
+            <span>{recipe.cookTime + recipe.prepTime} min</span>
+            <span>•</span>
+            <span>{recipe.servings} servings</span>
+            {recipe.difficulty && (
+              <>
+                <span>•</span>
+                <Badge
+                  variant="tag"
+                  size="sm"
+                  className={`uppercase ${
+                    recipe.difficulty === 'Easy'
+                      ? 'bg-green-500/10 text-green-600'
+                      : recipe.difficulty === 'Medium'
+                        ? 'bg-yellow-500/10 text-yellow-600'
+                        : 'bg-red-500/10 text-red-600'
+                  }`}
+                >
+                  {recipe.difficulty}
+                </Badge>
+              </>
+            )}
+          </div>
 
-              return (
+          <div className="mt-0.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs font-medium text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              {recipe.protein ? (
                 <>
-                  {visibleTags.map((p) => (
-                    <Badge
-                      key={`${p.weekStart}-${p.day}`}
-                      variant="tag"
-                      size="sm"
-                      className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
-                    >
-                      {p.label}
-                    </Badge>
-                  ))}
-                  {overflowCount > 0 && (
-                    <Badge
-                      variant="tag"
-                      size="sm"
-                      className="border-muted-foreground/20 bg-muted font-bold text-muted-foreground"
-                    >
-                      +{overflowCount}
-                    </Badge>
+                  <span>{recipe.protein}</span>
+                  {recipe.cuisine && (
+                    <>
+                      <span>•</span>
+                      <span>{recipe.cuisine}</span>
+                    </>
                   )}
                 </>
-              )
-            })()}
+              ) : recipe.cuisine ? (
+                <span>{recipe.cuisine}</span>
+              ) : (
+                <span>{recipe.mealType}</span>
+              )}
+            </div>
 
-            <Badge
-              variant="inactive"
-              size="md"
-              className="cursor-pointer uppercase tracking-wider hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleThisWeek(recipe.id)
-              }}
-            >
-              Add to Week
-            </Badge>
+            {/* Status Badges - Inline on right */}
+            <div className="flex items-center gap-1.5">
+              {/* Day Tags from all weeks */}
+              {(() => {
+                const plannedDates = getPlannedDatesForRecipe(recipe.id)
+                const maxVisible = 3
+                const visibleTags = plannedDates.slice(0, maxVisible)
+                const overflowCount = plannedDates.length - maxVisible
+
+                return (
+                  <>
+                    {visibleTags.map((p) => (
+                      <Badge
+                        key={`${p.weekStart}-${p.day}`}
+                        variant="tag"
+                        size="sm"
+                        className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
+                      >
+                        {p.label}
+                      </Badge>
+                    ))}
+                    {overflowCount > 0 && (
+                      <Badge
+                        variant="tag"
+                        size="sm"
+                        className="border-muted-foreground/20 bg-muted font-bold text-muted-foreground"
+                      >
+                        +{overflowCount}
+                      </Badge>
+                    )}
+                  </>
+                )
+              })()}
+
+              {/* Add to Week button - hidden in week management context */}
+              {!allowManagement && (
+                <Badge
+                  variant="inactive"
+                  size="md"
+                  className="cursor-pointer uppercase tracking-wider hover:bg-muted"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleThisWeek(recipe.id)
+                  }}
+                >
+                  Add to Week
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </motion.div>
-  )
+
+        {/* Management Menu Button - Right side of card */}
+        {allowManagement && !isSelectionMode && isPlanned && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation()
+              setManagementRecipeId(recipe.id)
+            }}
+            className="h-8 w-8 shrink-0 self-center rounded-full hover:bg-accent"
+            title="Manage recipe"
+            aria-label="Manage recipe"
+          >
+            <MoreVertical className="h-5 w-5" />
+          </Button>
+        )}
+      </motion.div>
+    )
+  }
 
   return (
     <div ref={containerRef} className="pb-24 animate-in fade-in">
@@ -503,6 +542,29 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           </div>
         ))
       )}
+
+      {/* Recipe Management Sheet */}
+      {allowManagement &&
+        managementRecipeId &&
+        (() => {
+          const selectedRecipe = recipes.find((r) => r.id === managementRecipeId)
+          if (!selectedRecipe) return null
+
+          const plannedDates = getPlannedDatesForRecipe(managementRecipeId)
+
+          return (
+            <RecipeManagementSheet
+              isOpen={true}
+              onClose={() => setManagementRecipeId(null)}
+              recipeId={managementRecipeId}
+              recipeTitle={selectedRecipe.title}
+              currentPlannedDays={plannedDates}
+              onRemove={(date) => {
+                removeRecipeFromDay(managementRecipeId, date)
+              }}
+            />
+          )
+        })()}
     </div>
   )
 }

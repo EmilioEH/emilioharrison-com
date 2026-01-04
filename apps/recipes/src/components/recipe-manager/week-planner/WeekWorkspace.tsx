@@ -334,6 +334,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             selectedIds={new Set()}
             hasSearch={false}
             scrollContainer={scrollContainer}
+            allowManagement={true}
+            currentWeekStart={activeWeekStart}
           />
         )}
 

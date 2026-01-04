@@ -20,9 +20,18 @@ interface DayPickerProps {
   onClose: () => void
   recipeId: string
   recipeTitle: string
+  mode?: 'add' | 'edit' // New: edit mode for moving recipes
+  startWithWeekPicker?: boolean // New: start with week picker view open
 }
 
-export const DayPicker: React.FC<DayPickerProps> = ({ isOpen, onClose, recipeId, recipeTitle }) => {
+export const DayPicker: React.FC<DayPickerProps> = ({
+  isOpen,
+  onClose,
+  recipeId,
+  recipeTitle,
+  mode = 'add',
+  startWithWeekPicker = false,
+}) => {
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
   const allRecipes = useStore(allPlannedRecipes)
@@ -34,9 +43,9 @@ export const DayPicker: React.FC<DayPickerProps> = ({ isOpen, onClose, recipeId,
   useEffect(() => {
     if (isOpen) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowWeekPicker(false)
+      setShowWeekPicker(startWithWeekPicker)
     }
-  }, [isOpen])
+  }, [isOpen, startWithWeekPicker])
 
   const plannedDays = currentRecipes.filter((p) => p.recipeId === recipeId).map((p) => p.day)
 
@@ -85,7 +94,11 @@ export const DayPicker: React.FC<DayPickerProps> = ({ isOpen, onClose, recipeId,
   })
 
   return (
-    <ResponsiveModal isOpen={isOpen} onClose={onClose} title={`Add "${recipeTitle}"`}>
+    <ResponsiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'edit' ? `Move "${recipeTitle}"` : `Add "${recipeTitle}"`}
+    >
       {showWeekPicker ? (
         // Week Picker View
         <div className="flex flex-col gap-2 pb-6">
