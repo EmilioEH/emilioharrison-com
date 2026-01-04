@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
-import { getCurrentWeekDays } from '../../../lib/date-helpers'
+import { format, addDays, parseISO } from 'date-fns'
+import { useStore } from '@nanostores/react'
+import { weekState, currentWeekRecipes } from '../../../lib/weekStore'
 import type { Recipe } from '../../../lib/types'
 
 // Predefined sort orders for grouping
@@ -40,11 +42,6 @@ const groupByTime: GroupKeyResolver = (recipe) => {
   return 'Over 1 Hour'
 }
 
-const groupByWeekDay: GroupKeyResolver = (recipe, groups) => {
-  const isValidDate = recipe.assignedDate && groups[recipe.assignedDate]
-  return isValidDate && recipe.assignedDate ? recipe.assignedDate : 'Unassigned'
-}
-
 const groupByCost: GroupKeyResolver = (recipe) => {
   const cost = recipe.estimatedCost
   if (cost === undefined || cost === null) return 'Unknown'
@@ -61,19 +58,47 @@ const GROUP_KEY_RESOLVERS: Record<string, GroupKeyResolver> = {
   alpha: groupByAlpha,
   recent: groupByRecent,
   time: groupByTime,
-  'week-day': groupByWeekDay,
+
   'cost-low': groupByCost,
   'cost-high': groupByCost,
 }
 
-// Helper to determine the group key for a recipe based on sort strategy
-const getGroupKey = (recipe: Recipe, sort: string, groups: Record<string, Recipe[]>): string => {
+// Updated Helper: Returns ARRAY of keys
+const getGroupKeys = (
+  recipe: Recipe,
+  sort: string,
+  groups: Record<string, Recipe[]>,
+  weekRecipes?: { recipeId: string; date: string }[],
+): string[] => {
+  if (sort === 'week-day') {
+    if (!weekRecipes) return ['Unassigned']
+    const planned = weekRecipes.filter((p) => p.recipeId === recipe.id)
+    if (planned.length === 0) return ['Unassigned']
+    // Return all dates this recipe is scheduled for
+    return planned.map((p) => p.date)
+  }
+
+  // Generic single-key resolvers
   const resolver = GROUP_KEY_RESOLVERS[sort]
-  return resolver ? resolver(recipe, groups) : 'Other'
+  return [resolver ? resolver(recipe, groups) : 'Other']
 }
 
 export function useRecipeGrouping(recipes: Recipe[], sort: string) {
-  const weekDays = useMemo(() => getCurrentWeekDays(), [])
+  const { activeWeekStart } = useStore(weekState)
+  const activeWeekPlanned = useStore(currentWeekRecipes)
+
+  const weekDays = useMemo(() => {
+    const start = parseISO(activeWeekStart)
+    return Array.from({ length: 7 }).map((_, i) => {
+      const date = addDays(start, i)
+      return {
+        date: format(date, 'yyyy-MM-dd'),
+        displayLabel: format(date, 'EEEE'), // Monday
+        shortLabel: format(date, 'EEE'), // Mon
+        dayOfMonth: format(date, 'd'), // 24
+      }
+    })
+  }, [activeWeekStart])
 
   const groupedRecipes = useMemo(() => {
     const groups: Record<string, Recipe[]> = {}
@@ -87,30 +112,66 @@ export function useRecipeGrouping(recipes: Recipe[], sort: string) {
     }
 
     recipes.forEach((recipe) => {
-      const groupKey = getGroupKey(recipe, sort, groups)
-      if (!groups[groupKey]) groups[groupKey] = []
-      groups[groupKey].push(recipe)
+      const groupKeys = getGroupKeys(recipe, sort, groups, activeWeekPlanned)
+
+      groupKeys.forEach((key) => {
+        // Verify key exists (important for week days)
+        if (sort === 'week-day' && key !== 'Unassigned' && !groups[key]) {
+          // This handles edge case where recipe might be planned for a day NOT in the current view
+          // (though activeWeekPlanned shouldn't allow that normally)
+          return
+        }
+        if (!groups[key]) groups[key] = []
+
+        // Avoid duplicates if logic returns same key twice? (Set logic handled upstream usually, but here is explicit list)
+        groups[key].push(recipe)
+      })
     })
 
     // Sort group keys using helper and predefined orders
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       // Special case: week-day has "Unassigned" first
       if (sort === 'week-day') {
-        if (a === 'Unassigned') return -1
-        if (b === 'Unassigned') return 1
+        if (a === 'Unassigned') return 1 // Move Unassigned to bottom? Or Top? User preference. Usually Top for "To Plan".
+        // Actually, if we are viewing the week, we want Days first likely?
+        // Let's keep Unassigned at the end or filtered out?
+        // If it's the "Plan" view, maybe we ONLY want to see assigned ones?
+        // But the previous "Added" logic implies we want to filter from library.
+        // Wait, 'week' view is THE PLAN. It should show Mon-Sun.
+        // It should NOT show "Unassigned" recipes from the whole library, that would be thousands.
+        // SO: We should filter out 'Unassigned' in the Week View IF the list passed in is "All Recipes".
+        // BUT RecipeManager logic I implemented says:
+        // const weekViewRecipes = ... recipes.filter(r => ids.has(r.id))
+        // So ONLY planned recipes are passed in.
+        // Thus 'Unassigned' should be empty, UNLESS there's a sync issue.
+
+        // Let's put Unassigned Last just in case.
+        if (a === 'Unassigned') return 1
+        if (b === 'Unassigned') return -1
+
         return a.localeCompare(b)
       }
+      // "Unassigned" at bottom
+      if (a === 'Unassigned') return 1
+      if (b === 'Unassigned') return -1
+
       // Use predefined order if available, otherwise alphabetical
       return sortByPredefinedOrder(a, b, SORT_ORDERS[sort])
     })
+
+    // Filter empty groups?
+    // For week view, we likely want to KEEP empty days visible.
+    // For others, maybe filter?
+    // Current logic keeps them.
+
     return { groups, sortedKeys }
-  }, [recipes, sort, weekDays])
+  }, [recipes, sort, weekDays, activeWeekPlanned])
 
   const getGroupTitle = (key: string) => {
     if (sort === 'week-day') {
-      if (key === 'Unassigned') return 'To Plan'
+      if (key === 'Unassigned') return 'Unschduled'
       const d = weekDays.find((wd) => wd.date === key)
-      return d ? d.displayLabel : key
+      return d ? `${d.displayLabel} (${d.dayOfMonth})` : key
     }
     return key
   }

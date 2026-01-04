@@ -4,6 +4,8 @@ import { ChefHat, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
+import { useStore } from '@nanostores/react'
+import { currentWeekRecipes } from '../../lib/weekStore'
 
 // Animation Variants
 const containerVariants = {
@@ -65,6 +67,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   scrollContainer,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const activeWeekRecipes = useStore(currentWeekRecipes)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isProgrammaticScroll = useRef(false)
@@ -300,22 +303,31 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
           {/* Status Badges - Inline on right */}
           <div className="flex items-center gap-1.5">
-            {recipe.isFavorite && (
-              <Badge variant="tag" size="sm" className="bg-red-500/10 text-red-500">
-                Favorite
-              </Badge>
-            )}
+            {/* Day Tags */}
+            {activeWeekRecipes
+              .filter((p) => p.recipeId === recipe.id)
+              .map((p) => p.day.slice(0, 3))
+              .map((day) => (
+                <Badge
+                  key={day}
+                  variant="tag"
+                  size="sm"
+                  className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
+                >
+                  {day}
+                </Badge>
+              ))}
 
             <Badge
-              variant={recipe.thisWeek ? 'active' : 'inactive'}
+              variant="inactive"
               size="md"
-              className="cursor-pointer uppercase tracking-wider"
+              className="cursor-pointer uppercase tracking-wider hover:bg-muted"
               onClick={(e) => {
                 e.stopPropagation()
                 onToggleThisWeek(recipe.id)
               }}
             >
-              {recipe.thisWeek ? 'Added to Week' : 'Add to Week'}
+              Add to Week
             </Badge>
           </div>
         </div>

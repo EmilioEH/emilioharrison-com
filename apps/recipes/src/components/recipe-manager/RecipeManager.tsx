@@ -22,11 +22,18 @@ import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
 import { useRouter } from './hooks/useRouter'
 
+import { checkAndRunRollover } from '../../lib/week-rollover'
+import { useStore } from '@nanostores/react'
+import { currentWeekRecipes } from '../../lib/weekStore'
+
 // --- Sub-Components ---
 import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 import { RecipeControlBar } from './RecipeControlBar'
+
+import { DayPicker } from './week-planner/DayPicker'
+import { CalendarPicker } from './week-planner/CalendarPicker'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
@@ -69,6 +76,17 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     return recipes.find((r) => r.id === activeRecipeId) || null
   }, [recipes, activeRecipeId])
 
+  // Filter Source List based on View
+  const activeWeekPlanned = useStore(currentWeekRecipes)
+
+  const sourceRecipes = useMemo(() => {
+    if (view === 'week') {
+      const ids = new Set(activeWeekPlanned.map((p) => p.recipeId))
+      return recipes.filter((r) => ids.has(r.id))
+    }
+    return recipes
+  }, [recipes, view, activeWeekPlanned])
+
   // Hooks
   const {
     filtersOpen,
@@ -80,7 +98,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     searchQuery,
     setSearchQuery,
     processedRecipes,
-  } = useFilteredRecipes(recipes, view)
+  } = useFilteredRecipes(sourceRecipes, view)
 
   // Sync Router Search to Filter Hook
   useEffect(() => {
@@ -128,6 +146,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   // Smart Suggestion State
   const [proteinWarning, setProteinWarning] = useState<ProteinWarning | null>(null)
 
+  // Meal Planner State
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [dayPickerRecipeId, setDayPickerRecipeId] = useState<string | null>(null)
+
+  const handleAddToWeek = (recipeId: string) => {
+    setDayPickerRecipeId(recipeId)
+  }
+
   // Listen for settings navigation from burger menu
   useEffect(() => {
     const handleNavigateToSettings = () => setView('settings')
@@ -147,6 +173,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
     }
   }, [setView])
+
+  // Run Rollover Check
+  useEffect(() => {
+    checkAndRunRollover()
+  }, [])
 
   const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
     const { success } = await saveRecipe(recipe)
@@ -181,30 +212,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
 
       setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
     }
-  }
-
-  const handleToggleThisWeek = (recipeId: string | undefined) => {
-    if (!recipeId) return
-    const recipe = recipes.find((r) => r.id === recipeId)
-    if (!recipe) return
-
-    const willBeInWeek = !recipe.thisWeek
-
-    // Smart Variety Logic
-    if (willBeInWeek && recipe.protein) {
-      const currentWeekRecipes = recipes.filter((r) => r.thisWeek)
-      if (currentWeekRecipes.length >= 3) {
-        const sameProteinCount = currentWeekRecipes.filter(
-          (r) => r.protein === recipe.protein,
-        ).length
-        if (sameProteinCount >= 1) {
-          setProteinWarning({ protein: recipe.protein, count: sameProteinCount + 1 })
-          setTimeout(() => setProteinWarning(null), 5000)
-        }
-      }
-    }
-
-    handleUpdateRecipe({ ...recipe, thisWeek: willBeInWeek })
   }
 
   const handleToggleFavorite = async (recipe: Recipe) => {
@@ -341,7 +348,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         onClose={() => setView('library')}
         onUpdate={handleUpdateRecipe}
         onDelete={(id) => handleDeleteRecipe(id)}
-        onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
+        onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
         onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
       />
     )
@@ -430,6 +437,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   }
                 }}
                 isWeekView={view === 'week'}
+                onOpenCalendar={() => setIsCalendarOpen(true)}
               />
             </motion.div>
           )}
@@ -468,7 +476,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                       setRoute({ activeRecipeId: r.id, view: 'detail' })
                     }
                   }}
-                  onToggleThisWeek={handleToggleThisWeek}
+                  onToggleThisWeek={(id) => handleAddToWeek(id)}
                   isSelectionMode={isSelectionMode}
                   selectedIds={selectedIds}
                   hasSearch={!!searchQuery}
@@ -483,7 +491,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               onClose={() => setView('library')}
               onUpdate={handleUpdateRecipe}
               onDelete={handleDeleteRecipe}
-              onToggleThisWeek={() => handleToggleThisWeek(selectedRecipe.id)}
+              onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
               onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
             />
           )}
@@ -525,6 +533,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           onDelete={handleDeleteRecipe}
         />
       </ResponsiveModal>
+
+      {/* Meal Planner Modals */}
+      <DayPicker
+        isOpen={!!dayPickerRecipeId}
+        onClose={() => setDayPickerRecipeId(null)}
+        recipeId={dayPickerRecipeId || ''}
+        recipeTitle={recipes.find((r) => r.id === dayPickerRecipeId)?.title || ''}
+      />
+      <CalendarPicker isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
 
       {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (

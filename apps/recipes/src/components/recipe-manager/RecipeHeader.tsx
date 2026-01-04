@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Menu, Plus, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
+import { WeekMiniBar } from './week-planner/WeekMiniBar'
 
 interface RecipeHeaderProps {
   user?: string
@@ -9,6 +10,7 @@ interface RecipeHeaderProps {
   onAddRecipe?: () => void
   onViewWeek?: () => void
   isWeekView?: boolean
+  onOpenCalendar?: () => void
 }
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
@@ -17,6 +19,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   onAddRecipe,
   onViewWeek,
   isWeekView,
+  onOpenCalendar,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isScrollingUp, setIsScrollingUp] = useState(false)
@@ -106,6 +109,8 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               )}
             </Button>
           )}
+
+          {onOpenCalendar && <WeekMiniBar onOpenCalendar={onOpenCalendar} />}
 
           {onAddRecipe && (
             <Button
