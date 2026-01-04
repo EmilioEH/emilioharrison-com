@@ -5,7 +5,7 @@ import { CookingContainer } from '../cooking-mode/CookingContainer'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
 import { Calendar, Play, Check } from 'lucide-react'
-import { CheckableItem } from '../recipe-details/CheckableItem'
+import { OverviewMode } from '../recipe-details/OverviewMode'
 
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
@@ -94,43 +94,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         cookingStage={'idle'}
         setCookingStage={() => {}}
       />
-
-      <div className="flex-1 overflow-y-auto pb-32">
-        <div className="mx-auto max-w-2xl space-y-8 p-6">
-          {/* Ingredients */}
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl font-bold">Ingredients</h2>
-            <div className="grid gap-2">
-              {recipe.ingredients.map((ing, idx) => {
-                const prep = ing.prep ? `, ${ing.prep}` : ''
-                const text = `${ing.amount} ${ing.name}${prep}`
-                const isChecked = session.checkedIngredients.includes(idx)
-                return (
-                  <CheckableItem
-                    key={idx}
-                    text={text}
-                    isChecked={isChecked}
-                    onToggle={() => cookingSessionActions.toggleIngredient(idx)}
-                  />
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl font-bold">Preparation</h2>
-            <ol className="relative z-0 list-outside list-decimal space-y-4 pl-5">
-              {recipe.steps.map((step, idx) => (
-                <li key={idx} className="pl-2">
-                  <span className="block leading-relaxed text-foreground/90">{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </div>
-
+      <OverviewMode
+        recipe={recipe}
+        startCooking={startCooking}
+        onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'save')}
+      />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">
         <div className="mx-auto flex max-w-md items-center gap-3">

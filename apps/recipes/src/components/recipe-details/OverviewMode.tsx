@@ -5,33 +5,25 @@ import { CheckableItem } from './CheckableItem'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import type { Recipe } from '../../lib/types'
-import type { CookingStage } from './DetailHeader'
+
+import { useStore } from '@nanostores/react'
+import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 
 interface OverviewModeProps {
   recipe: Recipe
-  cookingMode: boolean
-  checkedIngredients: Record<number, boolean>
-  setCheckedIngredients: React.Dispatch<React.SetStateAction<Record<number, boolean>>>
-  checkedSteps: Record<number, boolean>
-  setCheckedSteps: React.Dispatch<React.SetStateAction<Record<number, boolean>>>
-  setCookingStage: (stage: CookingStage) => void
-  handleRate: (rating: number) => void
   startCooking: () => void
-  onSaveCost: (cost: number) => void
+  onSaveCost?: (cost: number) => void
+  handleRate?: (rating: number) => void
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
-  cookingMode,
-  checkedIngredients,
-  setCheckedIngredients,
-  checkedSteps,
-  setCheckedSteps,
-  setCookingStage,
-  handleRate,
   startCooking,
-  onSaveCost,
+  onSaveCost = () => {},
+  handleRate = () => {},
 }) => {
+  const session = useStore($cookingSession)
+  const [checkedSteps, setCheckedSteps] = React.useState<Record<number, boolean>>({})
   // Initialize with persisted cost if available
   const [estimatedCost, setEstimatedCost] = React.useState<number | null>(
     recipe.estimatedCost || null,
@@ -83,16 +75,16 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   }, []) // Trigger once on mount
 
   return (
-    <div className={`flex-1 overflow-y-auto pb-20 ${cookingMode ? 'px-4' : ''}`}>
+    <div className={`flex-1 overflow-y-auto pb-20`}>
       <div className="relative">
-        {recipe.sourceImage && !cookingMode && (
+        {recipe.sourceImage && (
           <div className="h-64 w-full">
             <img src={recipe.sourceImage} className="h-full w-full object-cover" alt="Recipe" />
           </div>
         )}
 
         <div
-          className={`relative bg-card ${cookingMode ? 'pt-4' : 'rounded-t-md-xl shadow-md-3 -mt-6 border-t border-border p-6'}`}
+          className={`rounded-t-md-xl shadow-md-3 relative -mt-6 border-t border-border bg-card p-6`}
         >
           {/* Metadata Header */}
           <div className="mb-6">
@@ -235,27 +227,18 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   ({recipe.ingredients?.length || 0})
                 </span>
               </div>
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => setCookingStage('pre')}
-                className="h-auto p-0 text-xs uppercase tracking-widest"
-              >
-                Start Prepping <ChevronRight />
-              </Button>
             </h2>
-            <div
-              className={`rounded-lg border border-dashed border-border p-2 ${cookingMode ? 'bg-md-sys-color-tertiary-container/20 border-md-sys-color-tertiary-container' : 'bg-card-variant/20'}`}
-            >
+            <div className={`bg-card-variant/20 rounded-lg border border-dashed border-border p-2`}>
               {recipe.ingredients.map((ing, idx) => {
-                const prep = ing.prep ? `, ${ing.prep}` : '' // Fix this line to ensure proper text content
+                const prep = ing.prep ? `, ${ing.prep}` : ''
                 const text = `${ing.amount} ${ing.name}${prep}`
+                const isChecked = session.checkedIngredients.includes(idx)
                 return (
                   <CheckableItem
                     key={idx}
                     text={text}
-                    isChecked={!!checkedIngredients[idx]}
-                    onToggle={() => setCheckedIngredients((p) => ({ ...p, [idx]: !p[idx] }))}
+                    isChecked={isChecked}
+                    onToggle={() => cookingSessionActions.toggleIngredient(idx)}
                     size="lg"
                   />
                 )
@@ -288,7 +271,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   </div>
                   <button
                     onClick={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
-                    className={`text-left font-body text-foreground transition-opacity ${cookingMode ? 'text-lg leading-relaxed' : ''} ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
+                    className={`text-left font-body text-foreground transition-opacity ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
                   >
                     {step}
                   </button>

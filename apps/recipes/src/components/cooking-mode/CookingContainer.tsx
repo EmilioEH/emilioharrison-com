@@ -8,6 +8,7 @@ import { CookingIngredientsOverlay } from './CookingIngredientsOverlay'
 import { StepNavigator } from './StepNavigator'
 import { CookingOptionsMenu } from './CookingOptionsMenu'
 
+import { ActiveTimersHeader } from './ActiveTimersHeader'
 import { CookingReview } from './CookingReview'
 
 interface CookingContainerProps {
@@ -60,6 +61,9 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         onShowMenu={() => setShowMenu(true)}
         onShowNavigator={() => setShowNavigator(true)}
       />
+
+      {/* Persistent Condensed Timers */}
+      <ActiveTimersHeader />
 
       {/* Main Content Area */}
       <div className="relative flex-1 overflow-hidden">
