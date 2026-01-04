@@ -50,7 +50,7 @@ export const CookingOptionsMenu: React.FC<CookingOptionsMenuProps> = ({ isOpen, 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-popover p-4 text-popover-foreground shadow-xl"
+            className="fixed left-4 right-4 top-1/2 z-50 mx-auto max-w-sm -translate-y-1/2 rounded-2xl border bg-popover p-4 text-popover-foreground shadow-xl sm:left-1/2 sm:right-auto sm:-translate-x-1/2"
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold">Options</h2>
