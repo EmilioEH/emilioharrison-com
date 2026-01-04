@@ -3,7 +3,6 @@ import fs from 'fs'
 import path from 'path'
 
 test.describe('Data Management Features', () => {
-  // Bypass auth
   test.use({
     storageState: {
       cookies: [
@@ -42,6 +41,66 @@ test.describe('Data Management Features', () => {
     },
   })
 
+  // Mock Data Store
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockRecipes: any[] = []
+
+  test.beforeEach(async ({ page }) => {
+    // Reset mock data
+    mockRecipes = []
+
+    // Mock API Routes
+    await page.route('**/api/recipes*', async (route) => {
+      const method = route.request().method()
+      const url = route.request().url()
+
+      // GET List
+      if (method === 'GET' && !url.split('api/recipes/').pop()) {
+        await route.fulfill({ status: 200, json: { recipes: mockRecipes } })
+        return
+      }
+
+      // POST Create
+      if (method === 'POST' && url.endsWith('api/recipes')) {
+        const body = await route.request().postDataJSON()
+        const newRecipe = {
+          ...body,
+          id: body.id || `mock-${Date.now()}-${Math.random()}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        mockRecipes.push(newRecipe)
+        await route.fulfill({ status: 201, json: { success: true, id: newRecipe.id } })
+        return
+      }
+
+      // PUT Update
+      if (method === 'PUT') {
+        const id = url.split('/').pop()
+        const body = await route.request().postDataJSON()
+        const idx = mockRecipes.findIndex((r) => r.id === id)
+        if (idx !== -1) {
+          mockRecipes[idx] = { ...mockRecipes[idx], ...body, updatedAt: new Date().toISOString() }
+        }
+        await route.fulfill({ status: 200, json: { success: true } })
+        return
+      }
+
+      // DELETE
+      if (method === 'DELETE') {
+        const id = url.split('/').pop()
+        mockRecipes = mockRecipes.filter((r) => r.id !== id)
+        await route.fulfill({ status: 200, json: { success: true } })
+        return
+      }
+
+      // Fallback
+      await route.continue()
+    })
+
+    // Prepare at least one recipe if needed, but tests seem to create their own
+  })
+
   test('should allow bulk deleting recipes', async ({ page }) => {
     await page.goto('/protected/recipes')
 
@@ -52,18 +111,15 @@ test.describe('Data Management Features', () => {
       await page.getByLabel('Title').fill(`Bulk Delete ${i} ${timestamp}`)
       await page.getByLabel('Protein').selectOption('Chicken')
       await page.getByRole('button', { name: 'Save Recipe' }).click()
-      // Wait for library to show
+      // Wait for library to show (Save causes nav back to library)
       await page.getByRole('button', { name: 'Add Recipe' }).waitFor()
     }
 
-    // 2. Enter Selection Mode (Button in Library view)
-    // Need to make sure filtered list is not empty.
     // 2. Enter Selection Mode (via Burger Menu)
     await page.getByRole('button', { name: 'Open Menu' }).click()
     await page.getByRole('menuitem', { name: 'Select Recipes' }).click()
 
     // 3. Select recipes
-    // We can click the cards. In selection mode, clicking card -> toggle.
     await page
       .getByRole('button', { name: `Bulk Delete 1 ${timestamp}`, exact: false })
       .first()
@@ -80,7 +136,6 @@ test.describe('Data Management Features', () => {
     page.on('dialog', (dialog) => dialog.accept()) // Handle confirmation
     await page.getByRole('button', { name: 'Delete (2)' }).click()
 
-    // 6. Verify gone
     // 6. Verify gone
     await expect(page.getByText(`Bulk Delete 1 ${timestamp}`)).not.toBeVisible()
     await expect(page.getByText(`Bulk Delete 2 ${timestamp}`)).not.toBeVisible()

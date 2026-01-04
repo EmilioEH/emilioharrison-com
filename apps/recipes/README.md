@@ -25,7 +25,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Unified Navigation**: An integrated app header that houses the primary menu and grocery list actions, providing a clean and focused navigation experience.
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
-- **Recipe Cooking Mode**: A dedicated, focused view for cooking with pre-cooking checklists, step-by-step guidance, and post-cooking feedback (ratings and notes).
+- **Recipe Cooking Mode 2.0**: A completely redesigned cooking experience with "Smart Timers" (browser notifications), contextual ingredient overlays, step-by-step navigation, and a dedicated review flow to rate and capture photos of your creation.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu.
 - **Feedback Dashboard**: An integrated management interface (restricted to admins via `ADMIN_EMAILS`) to review, track, and resolve user feedback reports directly in the app.
 
@@ -81,6 +81,10 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 - **Visual Hierarchy System**: Implemented a comprehensive monochromatic grayscale hierarchy using shadcn/ui design tokens. Added `active`, `inactive`, and `tag` variants to Badge component for clear visual distinction between primary, secondary, and tertiary elements. All interactive elements now follow consistent visual weight patterns (filled dark for high emphasis, bordered for medium, subtle for informational).
 - **Sizing Consistency**: Added proper size variants (`sm`, `md`, `lg`) to Badge component, matching Button's existing size system. All badges now use semantic size props instead of manual className overrides, creating predictable touch targets and visual rhythm.
 - **Icon Standardization**: Updated Button component with size-aware icon sizing (`[&_svg]:size-3.5` for sm, `size-4` for default, `size-5` for lg). Removed manual icon size overrides across all components. Icons now auto-scale with their containers for balanced, professional appearance.
+- **E2E Test Hygiene**: Refactored critical integration tests (like `data-management.spec.ts`) to use **Network Mocking** via `page.route()`. This prevents automated tests from corrupting the production Firestore database with "ghost" data during CI/CD runs.
+- **Cooking Experience 2.0**: A major overhaul of the cooking flow. Features include a direct "Start Cooking" action (no more "Mise En Place" screen), persistent ingredient checkboxes, a global "Ingredient Overlay" drawer, "Smart Timers" with system notifications, contextual cooking tips (e.g., explaining "fold" or "simmer"), and a polished "Review & Capture" flow upon completion.
+- **Week View Workspace**: Transformed the week view into a persistent, sliding workspace. Users can now toggle between a "Plan" view (daily meals) and a "Grocery" view (shoppable list) directly within the workspace contexts.
+- **Dynamic Grocery & Cost Estimation**: The grocery list now mirrors the active week selection and includes real-time cost estimation. Users get an instant aggregate cost from known recipe data and can trigger an AI-powered "Refresh" to get accurate, up-to-date pricing benchmarks (e.g., HEB prices).
 
 ### Recent Updates (Dec 2025)
 
@@ -179,6 +183,9 @@ We use **two complementary testing approaches**:
 | **Browser Agent** | Visual verification        | During development; records proof that new UI changes work correctly |
 
 **Playwright** is the safety net that catches regressions automatically. Agents must run `npm run test:e2e` before completing any task.
+
+> [!NOTE]
+> Major functional tests (e.g., Data Management) use **Network Interception** to mock backend responses. This ensures tests are fast, reliable, and **do not write data** to the live production database.
 
 **Browser Agent** is for "show me it works" moments. When building or fixing visual features, agents should:
 
@@ -368,14 +375,19 @@ src/
 │ │ └── hooks/
 │ │ ├── useRecipes.ts # Recipe CRUD operations
 │ │ ├── useFilteredRecipes.ts # Filtering, sorting, search
-│ │ └── useGroceryListGenerator.ts # Grocery list with caching
-│ ├── recipe-details/ # Cooking mode sub-components (TypeScript)
+│ │ ├── useGroceryListGenerator.ts # Grocery list with caching
+│ ├── cooking-mode/ # NEW: Cooking Experience 2.0 Components
+│ │ ├── CookingContainer.tsx # Main orchestrator for cooking flow
+│ │ ├── CookingHeader.tsx # Header with progress and tools
+│ │ ├── CookingStepView.tsx # Step-by-step instruction view
+│ │ ├── CookingIngredientsOverlay.tsx # Slide-up ingredient checklist
+│ │ ├── CookingReview.tsx # Post-cooking rate/note/photo flow
+│ │ ├── StepNavigator.tsx # "Jump to Step" drawer
+│ │ └── TimerControl.tsx # Timer UI and management
+│ ├── recipe-details/ # Recipe display components
 │ │ ├── DetailHeader.tsx # Navigation and actions
-│ │ ├── MiseEnPlace.tsx # Pre-cooking ingredient checklist
-│ │ ├── CookingMode.tsx # Step-by-step instructions
-│ │ ├── ReviewMode.tsx # Post-cooking rating/notes
-│ │ ├── OverviewMode.tsx # Default recipe display
-│ │ └── CheckableItem.tsx # Reusable checkbox item
+│ │ ├── checkableItem.tsx # Reusable checkbox item
+│ │ └── OverviewMode.tsx # Default recipe display
 │ ├── ui/ # shadcn/ui components (button, tabs, input, dialog, etc.)
 │ └── layout/ # Global layout components
 │ ├── GlobalBurgerMenu.tsx # Slide-out settings/feedback menu
@@ -388,8 +400,13 @@ src/
 │ ├── firebase-server.ts # Firebase service initialization
 │ ├── firebase-rest.ts # Firebase REST API client
 │ ├── grocery-logic.ts # Deterministic grocery merging
-│ └── api-utils.ts # API helper functions
-├── pages/
+│ ├── api-utils.ts # API helper functions
+│ └── notifications.ts # Browser notification helpers
+├── services/
+│ └── timerManager.ts # Centralized timer logic with notifications
+├── stores/
+│ ├── cookingSession.ts # Nanostore for active cooking state
+│ ├── store.ts # Recipe list nanostore
 │ ├── index.astro # Main recipe app page
 │ └── api/
 │ ├── parse-recipe.ts # AI recipe extraction

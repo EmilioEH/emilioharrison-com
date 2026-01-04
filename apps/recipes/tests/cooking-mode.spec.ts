@@ -39,9 +39,28 @@ test.describe('Recipe Cooking Mode', () => {
     },
   })
 
+  // Pre-seed recipe to avoid flaky UI creation
+  const TEST_RECIPE = {
+    id: `recipe-test-${Date.now()}`,
+    title: 'COOK_TEST_PRESEEDED',
+    servings: 2,
+    prepTime: 10,
+    cookTime: 20,
+    ingredients: [
+      { name: 'Flour', amount: '1 cup', prep: 'sifted' },
+      { name: 'Eggs', amount: '2' },
+    ],
+    steps: ['Mix ingredients', 'Bake for 20 mins'],
+    // Optional fields to match type
+    notes: '',
+    description: 'Test recipe',
+    thisWeek: false,
+  }
+
   test.beforeEach(async ({ page }) => {
     // Mock user data to keep the test environment clean and isolated
-    let currentRecipes: any[] = []
+    let currentRecipes: any[] = [TEST_RECIPE]
+
     await page.route('**/api/recipes*', async (route) => {
       const method = route.request().method()
       if (method === 'GET') {
@@ -61,93 +80,69 @@ test.describe('Recipe Cooking Mode', () => {
     })
   })
 
-  // TODO: Fix test environment - 'Add Recipe' button interaction is flaky in automation despite correct selectors.
-  // Verified manually via browser walkthrough.
-  test.skip('should navigate through full cooking mode lifecycle', async ({ page }) => {
+  test('should navigate through new cooking mode flow (Phase 1)', async ({ page }) => {
+    // Setup wait for response BEFORE triggering navigation
+    // Relaxed URL check to catch any API call
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/recipes') && response.status() === 200,
+    )
+
     await page.goto('/protected/recipes')
 
-    // 1. Create a dummy recipe to test with
-    await page.getByRole('button', { name: 'Add Recipe' }).click()
+    // Wait for the API call to complete
+    await responsePromise
 
-    // Wait for modal
-    await expect(page.getByRole('heading', { name: 'New Recipe' })).toBeVisible()
+    // Wait for loading to finish
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
-    const testTitle = `COOK_TEST_${Date.now()}`
-    await page.getByLabel('Title').fill(testTitle)
-    await page.getByLabel('Ingredients (One per line)').fill('1 cup Flour\n2 Eggs')
-    await page.getByLabel('Instructions (One per line)').fill('Mix ingredients\nBake for 20 mins')
-    await page.getByRole('button', { name: 'Save Recipe' }).click()
-
-    // 2. Open the recipe
-    // Find the specific recipe card by its unique title heading
-    const recipeCard = page.getByText(testTitle).first()
-
-    // Ensure it's visible (should be open by default now)
+    // 1. Open the pre-seeded recipe
+    const recipeCard = page.getByText(TEST_RECIPE.title).first()
     await expect(recipeCard).toBeVisible()
     await page.waitForTimeout(500)
     await recipeCard.click()
 
-    // 3. Enter Cooking Mode (Starts with Pre-cooking)
-    // Wait for the detail view to be stable
-    await expect(page.getByRole('heading', { name: testTitle, exact: true })).toBeVisible()
-    await page.getByTitle('Cooking Mode (Keep Screen On)').click({ force: true })
-    await expect(page.getByText('Mise en Place')).toBeVisible()
-    await expect(page.getByText('1 cup Flour')).toBeVisible()
+    // Wait for detail view
+    await expect(page.getByRole('heading', { name: TEST_RECIPE.title, exact: true })).toBeVisible()
 
-    // 4. Mark ingredients as gathered
-    await page.getByText('1 cup Flour').click()
-    await page.getByText('2 Eggs').click()
-
-    // 5. Start Cooking (Step-by-step)
+    // 2. Start Cooking (Directly to Step 1)
     await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Verify we are in Cooking Mode
+    // Header check
     await expect(page.getByText('Step 1 of 2')).toBeVisible()
+
+    // Instruction check
     await expect(page.getByText('Mix ingredients')).toBeVisible()
 
-    // 6. Advance steps
+    // 3. Check Timer Existence
+    // Step 2 has "20 mins", so let's go to step 2 to see suggested timer
     await page.getByRole('button', { name: 'Next Step' }).click()
+
+    // Now on Step 2
     await expect(page.getByText('Step 2 of 2')).toBeVisible()
     await expect(page.getByText('Bake for 20 mins')).toBeVisible()
 
-    // 6b. Test "Jump to Step" feature
-    // Go back to previous step
-    await page.getByRole('button', { name: 'Previous' }).click()
-    await expect(page.getByText('Step 1 of 2')).toBeVisible()
-    // Verify Jump button appears
-    const jumpBtn = page.getByText('Jump to Step 2')
-    await expect(jumpBtn).toBeVisible()
-    await jumpBtn.click()
-    // Verify we are back on Step 2
-    await expect(page.getByText('Step 2 of 2')).toBeVisible()
+    // Check for Suggested Timer button
+    await expect(page.getByRole('button', { name: 'Start 20 Min Timer' })).toBeVisible()
 
-    // 7. Finish Cooking (Enters Review)
-    await page.getByRole('button', { name: 'Finish Cooking' }).click()
-    await expect(page.getByText("Chef's Kiss!")).toBeVisible()
+    // 4. Test Exit Flow
+    // Click Exit (X icon)
+    await page.getByLabel('Exit Cooking Mode').click()
 
-    // 8. Submit feedback
-    // Rate 4 stars
-    const stars = page.getByTestId('review-rating').locator('button')
-    await stars.nth(3).click() // 4th star
+    // Check Confirmation Dialog
+    await expect(page.getByText('Exit Cooking Mode?')).toBeVisible()
+    await expect(page.getByText("You're on Step 2 of 2")).toBeVisible()
 
-    await page
-      .getByPlaceholder('Added a pinch more salt next time...')
-      .fill('Delicious and fluffy!')
-    await page.getByRole('button', { name: 'Save Review & Finish' }).click()
+    // Click "Keep Cooking"
+    await page.getByRole('button', { name: 'Keep Cooking' }).click()
+    await expect(page.getByText('Exit Cooking Mode?')).not.toBeVisible()
 
-    // 9. Verify it's saved (returned to library)
-    await expect(page.getByText('CHEFBOARD')).toBeVisible()
+    // Click Exit again and Confirm
+    await page.getByLabel('Exit Cooking Mode').click()
+    await page.getByRole('button', { name: 'Save & Exit' }).click()
 
-    // Re-open and check notes/rating
-    await expect(page.getByText(testTitle).first()).toBeVisible()
-    await page.waitForTimeout(500)
-    await page.getByText(testTitle).first().click()
-
-    await expect(page.getByTestId('recipe-notes')).toContainText('Delicious and fluffy!', {
-      timeout: 10000,
-    })
-    // Check if 4 stars are visible in the preview section
-    const previewStars = page.locator(
-      '.mb-8.rounded-md-xl svg.lucide-star.fill-md-sys-color-tertiary',
-    )
-    await expect(previewStars).toHaveCount(4)
+    // Verify returned to Detail View or Library
+    await expect(page.getByRole('heading', { name: TEST_RECIPE.title, exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Start Cooking' })).toBeVisible()
   })
 })
