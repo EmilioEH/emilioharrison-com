@@ -1,5 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect } from 'react'
+import { useStore } from '@nanostores/react'
 import type { Recipe } from '../../../lib/types'
+import {
+  $recipes,
+  $recipesLoading,
+  $recipesInitialized,
+  recipeActions,
+} from '../../../lib/recipeStore'
 
 const getBaseUrl = (): string => {
   const base = import.meta.env.BASE_URL
@@ -7,35 +14,48 @@ const getBaseUrl = (): string => {
 }
 
 export const useRecipes = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const mounted = useRef<boolean>(true)
+  const recipes = useStore($recipes)
+  const loading = useStore($recipesLoading)
+  const initialized = useStore($recipesInitialized)
 
-  const refreshRecipes = async (showLoading = true): Promise<void> => {
-    // Only set loading true if explicitly requested and component is mounted
-    if (showLoading && mounted.current) setLoading(true)
+  const refreshRecipes = async (showLoading = false): Promise<void> => {
+    // If we are already initialized and not forcing loading, we can skip setting loading true
+    // But if explicit refresh is requested, we might want to show loading.
+    // However, for "background refresh" we might just want to update data.
+
+    // For this implementation, if showLoading is true, we set the global loading state
+    if (showLoading) $recipesLoading.set(true)
 
     try {
       const res = await fetch(`${getBaseUrl()}api/recipes`)
       if (res.ok) {
         const data = await res.json()
-        if (mounted.current) setRecipes((data.recipes as Recipe[]) || [])
+        recipeActions.setRecipes((data.recipes as Recipe[]) || [])
       }
     } catch (err) {
       console.error('Failed to load recipes', err)
-    } finally {
-      // Always clear loading state if it was set, provided component is mounted
-      if (showLoading && mounted.current) setLoading(false)
+      // If we failed and were loading, stop loading
+      if (showLoading) $recipesLoading.set(false)
     }
   }
 
+  // Initial fetch on mount (only if not already initialized)
   useEffect(() => {
-    mounted.current = true
-    refreshRecipes()
-    return () => {
-      mounted.current = false
+    if (!initialized) {
+      refreshRecipes(true)
     }
-  }, [])
+  }, [initialized])
+
+  // Adapter to match existing setRecipes signature (approximate)
+  // RecipeManager uses: setRecipes((prev) => ...) and setRecipes([...])
+  const setRecipes = (value: Recipe[] | ((prev: Recipe[]) => Recipe[])) => {
+    if (typeof value === 'function') {
+      const current = $recipes.get()
+      recipeActions.setRecipes(value(current))
+    } else {
+      recipeActions.setRecipes(value)
+    }
+  }
 
   return { recipes, setRecipes, loading, refreshRecipes, getBaseUrl }
 }

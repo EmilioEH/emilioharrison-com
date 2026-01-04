@@ -57,6 +57,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         session={session}
         totalSteps={session.recipe.steps.length}
         onExit={() => setShowExitConfirm(true)}
+        onMinimize={() => onClose()}
         onShowIngredients={() => setShowIngredients(true)}
         onShowMenu={() => setShowMenu(true)}
         onShowNavigator={() => setShowNavigator(true)}

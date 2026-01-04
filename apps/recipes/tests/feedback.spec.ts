@@ -60,6 +60,7 @@ test.describe('Feedback System', () => {
 
     await page.goto('/protected/recipes')
     // Wait for the app UI to stabilize
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
     await expect(page.getByRole('button', { name: 'Add Recipe' })).toBeVisible({ timeout: 15000 })
 
     // Mock the feedback API

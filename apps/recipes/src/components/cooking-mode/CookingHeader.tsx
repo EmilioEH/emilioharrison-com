@@ -1,11 +1,12 @@
 import React from 'react'
-import { X, MoreHorizontal, List } from 'lucide-react'
+import { X, MoreHorizontal, List, Minus } from 'lucide-react'
 import type { CookingSession } from '../../stores/cookingSession'
 
 interface CookingHeaderProps {
   session: CookingSession
   totalSteps: number
   onExit: () => void
+  onMinimize?: () => void
   onShowIngredients: () => void
   onShowMenu: () => void
   onShowNavigator: () => void
@@ -15,6 +16,7 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
   session,
   totalSteps,
   onExit,
+  onMinimize,
   onShowIngredients,
   onShowMenu,
   onShowNavigator,
@@ -25,14 +27,26 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
   return (
     <div className="safe-area-pt flex flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-        {/* Exit Button */}
-        <button
-          onClick={onExit}
-          className="-ml-2 p-2 text-muted-foreground transition-transform hover:text-foreground active:scale-95"
-          aria-label="Exit Cooking Mode"
-        >
-          <X className="h-6 w-6" />
-        </button>
+        {/* Left Actions */}
+        <div className="-ml-2 flex items-center gap-1">
+          <button
+            onClick={onExit}
+            className="p-2 text-muted-foreground transition-transform hover:text-foreground active:scale-95"
+            aria-label="Exit Cooking Mode"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          {onMinimize && (
+            <button
+              onClick={onMinimize}
+              className="p-2 text-muted-foreground transition-transform hover:text-foreground active:scale-95"
+              aria-label="Minimize"
+              title="Minimize (Keep Cooking)"
+            >
+              <Minus className="h-6 w-6" />
+            </button>
+          )}
+        </div>
 
         {/* Step Indicator */}
         <button

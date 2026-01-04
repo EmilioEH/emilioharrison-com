@@ -38,6 +38,8 @@ import { WeekContextBar } from './week-planner/WeekContextBar'
 import { WeekWorkspace } from './week-planner/WeekWorkspace'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
+import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
+import { $cookingSession } from '../../stores/cookingSession'
 
 export type ViewMode =
   | 'library'
@@ -567,6 +569,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       )}
 
       {/* Sticky Bottom Actions (Selection Mode) */}
+      {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (
         <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
           <span className="text-sm font-bold text-muted-foreground">
@@ -594,6 +597,18 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Global Cooking Status Indicator (Mini Player) */}
+      {view !== 'detail' && (
+        <CookingStatusIndicator
+          onResume={() => {
+            const session = $cookingSession.get()
+            if (session.recipeId) {
+              setRoute({ activeRecipeId: session.recipeId, view: 'detail' })
+            }
+          }}
+        />
       )}
     </>
   )

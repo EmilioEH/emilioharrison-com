@@ -31,7 +31,7 @@ interface WeekWorkspaceProps {
 }
 
 export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
-  recipes,
+  recipes: _recipes,
   allRecipes,
   onClose,
   onOpenCalendar,
@@ -326,7 +326,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'plan' && (
           <RecipeLibrary
-            recipes={recipes}
+            recipes={groceryRecipes}
             sort="week-day"
             onSelectRecipe={onSelectRecipe}
             onToggleThisWeek={() => {}}
