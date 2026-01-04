@@ -1,14 +1,9 @@
 import React from 'react'
-import { format, parseISO, addWeeks, isSameWeek } from 'date-fns'
+import { format, parseISO, addWeeks, isSameWeek, startOfWeek, addDays } from 'date-fns'
 import { useStore } from '@nanostores/react'
 import { Check } from 'lucide-react'
 
-import {
-  weekState,
-  distinctWeeks,
-  allPlannedRecipes,
-  switchWeekContext,
-} from '../../../lib/weekStore'
+import { weekState, allPlannedRecipes, switchWeekContext } from '../../../lib/weekStore'
 import { ResponsiveModal } from '../../ui/ResponsiveModal'
 
 interface CalendarPickerProps {
@@ -18,8 +13,16 @@ interface CalendarPickerProps {
 
 export const CalendarPicker: React.FC<CalendarPickerProps> = ({ isOpen, onClose }) => {
   const { activeWeekStart } = useStore(weekState)
-  const weeks = useStore(distinctWeeks)
   const allRecipes = useStore(allPlannedRecipes)
+
+  // Generate 8 weeks ahead from current week
+  const today = new Date()
+  const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 })
+
+  const weeks = Array.from({ length: 8 }, (_, i) => {
+    const weekStart = addWeeks(currentWeekStart, i)
+    return format(weekStart, 'yyyy-MM-dd')
+  })
 
   const handleSelectWeek = (weekStart: string) => {
     switchWeekContext(weekStart)
@@ -28,17 +31,19 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({ isOpen, onClose 
 
   const renderWeekItem = (weekStart: string) => {
     const startDate = parseISO(weekStart)
-
-    // Actually we want start + 6 days
+    const endDate = addDays(startDate, 6)
 
     const isSelected = weekStart === activeWeekStart
     const isThisWeek = isSameWeek(startDate, new Date(), { weekStartsOn: 1 })
+    const isNextWeek = isSameWeek(startDate, addWeeks(new Date(), 1), { weekStartsOn: 1 })
 
     // Count meals for this week
     const mealCount = allRecipes.filter((r) => r.weekStart === weekStart).length
 
-    let label = isThisWeek ? 'This Week' : 'Week of ' + format(startDate, 'MMM d')
-    if (isSameWeek(startDate, addWeeks(new Date(), 1), { weekStartsOn: 1 })) {
+    let label = 'Week of ' + format(startDate, 'MMM d')
+    if (isThisWeek) {
+      label = 'This Week'
+    } else if (isNextWeek) {
       label = 'Next Week'
     }
 
@@ -62,7 +67,7 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({ isOpen, onClose 
             </span>
           </div>
           <span className="ml-4.5 pl-0.5 text-xs text-muted-foreground">
-            {format(startDate, 'MMM d')} - {format(addWeeks(startDate, 1), 'MMM d')}
+            {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}
           </span>
         </div>
 
@@ -83,7 +88,7 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({ isOpen, onClose 
 
       <div className="rounded-lg bg-blue-500/10 p-4 text-xs text-blue-600">
         <p className="mb-1 font-bold">Tip: Week Rollover</p>
-        Currently active plans move to "Past Weeks" history every Monday at midnight.
+        Currently active plans move to &quot;Past Weeks&quot; history every Monday at midnight.
       </div>
     </ResponsiveModal>
   )

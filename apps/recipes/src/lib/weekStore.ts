@@ -176,3 +176,42 @@ export const getPlannedDays = (recipeId: string) => {
   const active = currentWeekRecipes.get()
   return active.filter((p) => p.recipeId === recipeId).map((p) => p.day)
 }
+
+/**
+ * Get all planned dates for a recipe across all weeks with formatted labels
+ * Returns array of { day, label, dateStr, isCurrentWeek, isNextWeek }
+ */
+export const getPlannedDatesForRecipe = (recipeId: string) => {
+  const today = new Date()
+  const thisWeekStart = format(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd')
+  const nextWeekStart = format(addWeeks(parseISO(thisWeekStart), 1), 'yyyy-MM-dd')
+
+  const allRecipes = allPlannedRecipes.get()
+  const planned = allRecipes.filter((p) => p.recipeId === recipeId)
+
+  return planned.map((p) => {
+    const dayAbbrev = p.day.slice(0, 3) // Mon, Tue, etc.
+    const isCurrentWeek = p.weekStart === thisWeekStart
+    const isNextWeek = p.weekStart === nextWeekStart
+
+    let label: string
+    if (isCurrentWeek) {
+      label = dayAbbrev // Just "Mon"
+    } else if (isNextWeek) {
+      label = `N: ${dayAbbrev}` // "N: Mon"
+    } else {
+      // Future week: show date like "Jan 20: Mon"
+      const weekDate = parseISO(p.weekStart)
+      label = `${format(weekDate, 'MMM d')}: ${dayAbbrev}`
+    }
+
+    return {
+      day: p.day,
+      label,
+      dateStr: p.date,
+      weekStart: p.weekStart,
+      isCurrentWeek,
+      isNextWeek,
+    }
+  })
+}

@@ -90,25 +90,25 @@ test.describe('Meal Planner Feature', () => {
     const card = page.locator('[data-testid="recipe-card-1"]')
     await expect(card).toBeVisible()
 
-    // The button text is "Add to Week"
+    // The button text is "Add to Week" (inside a Badge component)
     await card.getByText('Add to Week').click()
 
     // 2. Verify DayPicker Modal Opens
     const modal = page.locator('[role="dialog"]')
     await expect(modal).toBeVisible()
-    await expect(modal).toContainText('Plan for Week of')
+    // Modal title contains "Add" and body contains "Planning for"
+    await expect(modal).toContainText('Add')
 
     // 3. Select "Tuesday"
     // Find the Tuesday button. It usually contains "Tue" and the date.
-    // We can rely on text "Tue" and clicks.
     const tuesdayBtn = modal.locator('button', { hasText: 'Tue' })
     await tuesdayBtn.click()
 
     // 4. Verify Modal Closes (auto-close on add)
     await expect(modal).toBeHidden()
 
-    // 5. Verify Tag appears on Card
-    await expect(card.locator('span', { hasText: 'Tue' })).toBeVisible()
+    // 5. Verify Tag appears on Card (Badge component, text is "Tue")
+    await expect(card.getByText('Tue', { exact: true })).toBeVisible()
   })
 
   test('can switch weeks and verify persistence', async ({ page }) => {
@@ -117,12 +117,10 @@ test.describe('Meal Planner Feature', () => {
     // 1. Add to Monday of THIS week
     await card.getByText('Add to Week').click()
     await page.locator('[role="dialog"] button', { hasText: 'Mon' }).click()
-    await expect(card.locator('span', { hasText: 'Mon' })).toBeVisible()
+    await expect(card.getByText('Mon', { exact: true })).toBeVisible()
 
-    // 2. Open Calendar (WeekMiniBar calendar icon)
-    // The WeekMiniBar is visually in the RecipeHeader
-    // It has a Calendar icon button.
-    const calButton = page.locator('button:has(.lucide-calendar)') // Simple selector for icon
+    // 2. Open Calendar (WeekContextBar calendar icon at bottom)
+    const calButton = page.locator('button:has(.lucide-calendar)')
     await calButton.first().click()
 
     // 3. Verify Calendar Modal
@@ -130,46 +128,35 @@ test.describe('Meal Planner Feature', () => {
     await expect(calModal).toBeVisible()
     await expect(calModal).toContainText('Select Week')
 
-    // 4. Select "Next Week" (Assuming it's listed)
-    // The list uses "Week of MMM dd"
-    // We can just click the second item in the list (index 1), as index 0 is likely current week or past.
-    // Our store logic adds ThisWeek and NextWeek.
-    // Let's click the one that says "Week of" and is NOT the active one (which has checkmark?)
-    // Actually, distinctWeeks returns dates. The UI shows formatted dates.
-    // Let's just find a button that is NOT the current week.
-    // Or easier: Use the MiniBar "Next" button if available (WeekMiniBar has [This] [Next])
-
-    // Close modal to use MiniBar toggle for simplicity?
-    // Wait, test requirement said "Context Switcher".
-    // Let's close modal first.
+    // 4. Close modal to use bottom bar toggle
     await page.keyboard.press('Escape')
 
-    // Use [Next] button in MiniBar
-    await page.getByRole('button', { name: 'Next', exact: true }).click()
+    // 5. Use [Next] button in bottom WeekContextBar (aria-label is 'Next Week')
+    await page.getByLabel('Next Week').click()
 
-    // 5. Verify Tag is GONE (different week context)
-    await expect(card.locator('span', { hasText: 'Mon' })).toBeHidden()
+    // 6. Verify Tag format changes to "N: Mon" (Next week prefix)
+    await expect(card.getByText('N: Mon')).toBeVisible()
 
-    // 6. Add to Wednesday of NEXT week
+    // 7. Add to Wednesday of NEXT week
     await card.getByText('Add to Week').click()
     await page.locator('[role="dialog"] button', { hasText: 'Wed' }).click()
-    await expect(card.locator('span', { hasText: 'Wed' })).toBeVisible()
+    await expect(card.getByText('Wed', { exact: true })).toBeVisible()
 
-    // 7. Switch back to THIS week
-    await page.getByRole('button', { name: 'This', exact: true }).click()
+    // 8. Switch back to THIS week (aria-label is 'This Week')
+    await page.getByLabel('This Week').click()
 
-    // 8. Verify Mon is back, Wed is gone
-    await expect(card.locator('span', { hasText: 'Mon' })).toBeVisible()
-    await expect(card.locator('span', { hasText: 'Wed' })).toBeHidden()
+    // 9. Verify Mon is back (plain format), Wed shows N: prefix
+    await expect(card.getByText('Mon', { exact: true })).toBeVisible()
+    await expect(card.getByText('N: Wed')).toBeVisible()
   })
 
   test('week view groups recipes by day', async ({ page }) => {
     // 1. Add recipe to Monday
-    await page.locator('[data-testid="recipe-card-1"] span', { hasText: 'Add to Week' }).click()
+    await page.locator('[data-testid="recipe-card-1"]').getByText('Add to Week').click()
     await page.locator('button', { hasText: 'Mon' }).click()
 
-    // 2. Go to Week Tab
-    await page.getByRole('tab', { name: 'Plan' }).click()
+    // 2. Go to Week Tab (via View link in bottom bar)
+    await page.getByText('View', { exact: true }).click()
 
     // 3. Verify Grouping
     // Should see "Monday" header

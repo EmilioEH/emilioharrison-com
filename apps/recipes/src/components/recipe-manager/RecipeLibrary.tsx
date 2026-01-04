@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
-import { currentWeekRecipes } from '../../lib/weekStore'
+import { allPlannedRecipes, getPlannedDatesForRecipe } from '../../lib/weekStore'
 
 // Animation Variants
 const containerVariants = {
@@ -67,7 +67,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   scrollContainer,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
-  const activeWeekRecipes = useStore(currentWeekRecipes)
+  // Subscribe to all planned recipes to trigger re-renders when plans change
+  useStore(allPlannedRecipes)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isProgrammaticScroll = useRef(false)
@@ -303,20 +304,37 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
           {/* Status Badges - Inline on right */}
           <div className="flex items-center gap-1.5">
-            {/* Day Tags */}
-            {activeWeekRecipes
-              .filter((p) => p.recipeId === recipe.id)
-              .map((p) => p.day.slice(0, 3))
-              .map((day) => (
-                <Badge
-                  key={day}
-                  variant="tag"
-                  size="sm"
-                  className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
-                >
-                  {day}
-                </Badge>
-              ))}
+            {/* Day Tags from all weeks */}
+            {(() => {
+              const plannedDates = getPlannedDatesForRecipe(recipe.id)
+              const maxVisible = 3
+              const visibleTags = plannedDates.slice(0, maxVisible)
+              const overflowCount = plannedDates.length - maxVisible
+
+              return (
+                <>
+                  {visibleTags.map((p) => (
+                    <Badge
+                      key={`${p.weekStart}-${p.day}`}
+                      variant="tag"
+                      size="sm"
+                      className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
+                    >
+                      {p.label}
+                    </Badge>
+                  ))}
+                  {overflowCount > 0 && (
+                    <Badge
+                      variant="tag"
+                      size="sm"
+                      className="border-muted-foreground/20 bg-muted font-bold text-muted-foreground"
+                    >
+                      +{overflowCount}
+                    </Badge>
+                  )}
+                </>
+              )
+            })()}
 
             <Badge
               variant="inactive"

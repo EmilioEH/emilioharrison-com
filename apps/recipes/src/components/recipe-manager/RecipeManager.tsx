@@ -34,6 +34,7 @@ import { RecipeControlBar } from './RecipeControlBar'
 
 import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
+import { WeekContextBar } from './week-planner/WeekContextBar'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
@@ -437,7 +438,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   }
                 }}
                 isWeekView={view === 'week'}
-                onOpenCalendar={() => setIsCalendarOpen(true)}
               />
             </motion.div>
           )}
@@ -542,6 +542,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         recipeTitle={recipes.find((r) => r.id === dayPickerRecipeId)?.title || ''}
       />
       <CalendarPicker isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
+
+      {/* Week Context Bar (Sticky Bottom) */}
+      {(view === 'library' || view === 'grocery') && !isSelectionMode && (
+        <WeekContextBar
+          onOpenCalendar={() => setIsCalendarOpen(true)}
+          onViewWeek={() => setView('week')}
+        />
+      )}
 
       {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (
