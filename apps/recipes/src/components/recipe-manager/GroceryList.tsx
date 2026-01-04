@@ -19,6 +19,7 @@ interface GroceryListProps {
   onClose: () => void
   recipes?: Recipe[]
   onOpenRecipe?: (recipe: Recipe) => void
+  embedded?: boolean // Hide header when embedded in workspace
 }
 
 export const GroceryList: React.FC<GroceryListProps> = ({
@@ -27,6 +28,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   onClose,
   recipes = [],
   onOpenRecipe,
+  embedded = false,
 }) => {
   // 1. Merge & Categorize (Memoized)
   const categorizedList = useMemo(() => {
@@ -142,51 +144,55 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   } | null>(null)
 
   return (
-    <div className="flex h-full flex-col bg-card duration-300 animate-in slide-in-from-right-4">
-      {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className="hover:bg-card-variant -ml-2 rounded-full p-2 text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div>
-            <h2 className="font-display text-xl font-bold text-foreground">Grocery List</h2>
-            <p className="text-foreground-variant text-xs font-medium">
-              {totalCount} items &bull;{' '}
-              {Math.round(
-                (checkedCount /
-                  (categorizedList.reduce((acc, c) => acc + c.items.length, 0) || 1)) *
-                  100,
-              )}
-              % done
-            </p>
+    <div
+      className={`flex h-full flex-col bg-card ${embedded ? '' : 'duration-300 animate-in slide-in-from-right-4'}`}
+    >
+      {/* Header - hidden when embedded */}
+      {!embedded && (
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="hover:bg-card-variant -ml-2 rounded-full p-2 text-foreground"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h2 className="font-display text-xl font-bold text-foreground">Grocery List</h2>
+              <p className="text-foreground-variant text-xs font-medium">
+                {totalCount} items &bull;{' '}
+                {Math.round(
+                  (checkedCount /
+                    (categorizedList.reduce((acc, c) => acc + c.items.length, 0) || 1)) *
+                    100,
+                )}
+                % done
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={shareList}
+              className="hover:bg-card-variant rounded-full p-2 text-primary"
+              title="Share"
+            >
+              <Share className="h-5 w-5" />
+            </button>
+            <button
+              onClick={copyToClipboard}
+              className="hover:bg-card-variant rounded-full p-2 text-primary"
+              title="Copy"
+            >
+              <Copy className="h-5 w-5" />
+            </button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={shareList}
-            className="hover:bg-card-variant rounded-full p-2 text-primary"
-            title="Share"
-          >
-            <Share className="h-5 w-5" />
-          </button>
-          <button
-            onClick={copyToClipboard}
-            className="hover:bg-card-variant rounded-full p-2 text-primary"
-            title="Copy"
-          >
-            <Copy className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-20">
         {/* Recipe Sources Header - scrolls with content */}
-        {!isLoading && recipes.length > 0 && (
+        {!embedded && !isLoading && recipes.length > 0 && (
           <div className="bg-card-container -mx-4 -mt-4 mb-6 border-b border-border px-6 py-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Shopping for {recipes.length} Recipes

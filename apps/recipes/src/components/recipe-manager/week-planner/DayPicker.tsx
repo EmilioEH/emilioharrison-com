@@ -1,7 +1,7 @@
-import React from 'react'
-import { format, parseISO, addDays, isSameWeek, startOfWeek } from 'date-fns'
+import React, { useState, useEffect } from 'react'
+import { format, parseISO, addDays, isSameWeek, startOfWeek, addWeeks } from 'date-fns'
 import { useStore } from '@nanostores/react'
-import { Check, ChevronRight } from 'lucide-react'
+import { Check, Calendar } from 'lucide-react'
 
 import {
   weekState,
@@ -10,6 +10,7 @@ import {
   switchWeekContext,
   removeRecipeFromDay,
   DAYS_OF_WEEK,
+  allPlannedRecipes,
 } from '../../../lib/weekStore'
 import { ResponsiveModal } from '../../ui/ResponsiveModal'
 import { Button } from '../../ui/button'
@@ -24,11 +25,32 @@ interface DayPickerProps {
 export const DayPicker: React.FC<DayPickerProps> = ({ isOpen, onClose, recipeId, recipeTitle }) => {
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
+  const allRecipes = useStore(allPlannedRecipes)
+
+  // Local state for week picker modal
+  const [showWeekPicker, setShowWeekPicker] = useState(false)
+
+  // Reset week picker view when modal opens (but keep the active week from context bar)
+  useEffect(() => {
+    if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowWeekPicker(false)
+    }
+  }, [isOpen])
 
   const plannedDays = currentRecipes.filter((p) => p.recipeId === recipeId).map((p) => p.day)
 
   const activeDate = parseISO(activeWeekStart)
-  const isThisWeek = isSameWeek(activeDate, new Date(), { weekStartsOn: 1 })
+  const today = new Date()
+  const isThisWeek = isSameWeek(activeDate, today, { weekStartsOn: 1 })
+  const isNextWeek = isSameWeek(activeDate, addWeeks(today, 1), { weekStartsOn: 1 })
+
+  // Get week label
+  const getWeekLabel = () => {
+    if (isThisWeek) return 'This Week'
+    if (isNextWeek) return 'Next Week'
+    return `Week of ${format(activeDate, 'MMM d')}`
+  }
 
   const handleToggleDay = (day: (typeof DAYS_OF_WEEK)[number], dateStr: string) => {
     const isPlanned = plannedDays.includes(day)
@@ -41,23 +63,9 @@ export const DayPicker: React.FC<DayPickerProps> = ({ isOpen, onClose, recipeId,
     }
   }
 
-  const handleSwitchWeek = () => {
-    const today = new Date()
-    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 })
-
-    // Check if activeDate is basically the same as currentWeekStart
-    // (Using strings to avoid time Comparison issues)
-    const isActiveThisWeek =
-      format(activeDate, 'yyyy-MM-dd') === format(currentWeekStart, 'yyyy-MM-dd')
-
-    if (isActiveThisWeek) {
-      // Switch to Next Week
-      const nextWeek = addDays(currentWeekStart, 7)
-      switchWeekContext(format(nextWeek, 'yyyy-MM-dd'))
-    } else {
-      // Switch to This Week
-      switchWeekContext(format(currentWeekStart, 'yyyy-MM-dd'))
-    }
+  const handleSelectWeek = (weekStart: string) => {
+    switchWeekContext(weekStart)
+    setShowWeekPicker(false)
   }
 
   const daysList = DAYS_OF_WEEK.map((day, index) => {
@@ -69,61 +77,123 @@ export const DayPicker: React.FC<DayPickerProps> = ({ isOpen, onClose, recipeId,
     return { day, dateLabel, fullDate, isSelected }
   })
 
+  // Generate 8 weeks for picker
+  const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+  const weeks = Array.from({ length: 8 }, (_, i) => {
+    const weekStart = addWeeks(currentWeekStart, i)
+    return format(weekStart, 'yyyy-MM-dd')
+  })
+
   return (
     <ResponsiveModal isOpen={isOpen} onClose={onClose} title={`Add "${recipeTitle}"`}>
-      <div className="flex flex-col gap-4 pb-6">
-        {/* Context Switcher */}
-        <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-          <span className="text-sm font-medium">
-            Planning for{' '}
-            <span className="font-bold text-foreground">
-              {isThisWeek ? 'This Week' : 'Next Week'}
-            </span>
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSwitchWeek}
-            className="h-8 gap-1 text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80"
+      {showWeekPicker ? (
+        // Week Picker View
+        <div className="flex flex-col gap-2 pb-6">
+          <button
+            onClick={() => setShowWeekPicker(false)}
+            className="mb-2 self-start text-sm font-medium text-primary hover:text-primary/80"
           >
-            {isThisWeek ? 'Plan Next Week' : 'Back to This Week'}
-            <ChevronRight className="h-3 w-3" />
+            ← Back to days
+          </button>
+
+          {weeks.map((weekStart) => {
+            const startDate = parseISO(weekStart)
+            const endDate = addDays(startDate, 6)
+            const isSelected = weekStart === activeWeekStart
+            const weekIsThisWeek = isSameWeek(startDate, today, { weekStartsOn: 1 })
+            const weekIsNextWeek = isSameWeek(startDate, addWeeks(today, 1), { weekStartsOn: 1 })
+
+            // Count meals for this week
+            const mealCount = allRecipes.filter((r) => r.weekStart === weekStart).length
+
+            let label = `Week of ${format(startDate, 'MMM d')}`
+            if (weekIsThisWeek) label = 'This Week'
+            else if (weekIsNextWeek) label = 'Next Week'
+
+            return (
+              <button
+                key={weekStart}
+                onClick={() => handleSelectWeek(weekStart)}
+                className={`flex items-center justify-between rounded-lg border p-3 transition-all ${
+                  isSelected
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-card hover:bg-accent/50'
+                }`}
+              >
+                <div className="flex flex-col items-start gap-0.5">
+                  <span className={`font-bold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                    {label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    {mealCount} {mealCount === 1 ? 'meal' : 'meals'}
+                  </span>
+                  {isSelected && <Check className="h-4 w-4 text-primary" />}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        // Day Selection View (Default)
+        <div className="flex flex-col gap-4 pb-6">
+          {/* Week Info */}
+          <div className="rounded-lg bg-muted/50 p-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-bold text-foreground">{getWeekLabel()}</span>
+              <span className="text-xs text-muted-foreground">
+                {format(activeDate, 'MMM d')} - {format(addDays(activeDate, 6), 'MMM d')}
+              </span>
+            </div>
+          </div>
+
+          {/* Days List */}
+          <div className="flex flex-col gap-1">
+            {daysList.map((item) => (
+              <button
+                key={item.day}
+                onClick={() => handleToggleDay(item.day, item.fullDate)}
+                className={`flex items-center justify-between rounded-md p-3 transition-all ${
+                  item.isSelected
+                    ? 'bg-primary/10 font-bold text-primary'
+                    : 'text-foreground hover:bg-accent'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+                      item.isSelected
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-muted-foreground/30'
+                    }`}
+                  >
+                    {item.isSelected && <Check className="h-3 w-3" />}
+                  </div>
+                  <span>{item.dateLabel}</span>
+                </div>
+                {item.isSelected && <span className="text-xs">Added</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Pick Other Week - Secondary Button */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowWeekPicker(true)}
+            className="mx-auto gap-2 text-xs font-medium"
+            title="Pick a different week"
+            aria-label="Pick a different week"
+          >
+            <Calendar className="h-4 w-4" />
+            <span>Pick a different week</span>
           </Button>
         </div>
-
-        <div className="px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {format(activeDate, 'MMM d')} - {format(addDays(activeDate, 6), 'MMM d')}
-        </div>
-
-        {/* Days Grid/List */}
-        <div className="flex flex-col gap-1">
-          {daysList.map((item) => (
-            <button
-              key={item.day}
-              onClick={() => handleToggleDay(item.day, item.fullDate)}
-              className={`flex items-center justify-between rounded-md p-3 transition-all ${
-                item.isSelected
-                  ? 'bg-primary/10 font-bold text-primary'
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-                    item.isSelected
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-muted-foreground/30'
-                  }`}
-                >
-                  {item.isSelected && <Check className="h-3 w-3" />}
-                </div>
-                <span>{item.dateLabel}</span>
-              </div>
-              {item.isSelected && <span className="text-xs">Added</span>}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
     </ResponsiveModal>
   )
 }

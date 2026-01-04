@@ -85,41 +85,36 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          {onViewWeek && (
-            <Button
-              variant={isWeekView ? 'default' : 'ghost'}
-              onClick={onViewWeek}
-              className={`flex h-9 items-center gap-1.5 rounded-full px-3 ${
-                isWeekView
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'text-foreground hover:bg-muted'
-              }`}
-              title="View Week"
-              aria-label="View Week"
-            >
-              <CalendarDays className="h-4 w-4" />
-              {isWeekView ? (
-                <span className="text-xs font-bold">Week</span>
-              ) : (
+        {/* Hide buttons in week view - they're in the WeekSelectorHeader */}
+        {!isWeekView && (
+          <div className="flex items-center gap-2">
+            {onViewWeek && (
+              <Button
+                variant="ghost"
+                onClick={onViewWeek}
+                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
+                title="View Week"
+                aria-label="View Week"
+              >
+                <CalendarDays className="h-4 w-4" />
                 <span className="hidden text-xs font-bold sm:inline-block">View Week</span>
-              )}
-            </Button>
-          )}
+              </Button>
+            )}
 
-          {onAddRecipe && (
-            <Button
-              variant="ghost"
-              onClick={onAddRecipe}
-              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
-              title="Add Recipe"
-              aria-label="Add Recipe"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="text-xs font-bold">Add</span>
-            </Button>
-          )}
-        </div>
+            {onAddRecipe && (
+              <Button
+                variant="ghost"
+                onClick={onAddRecipe}
+                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
+                title="Add Recipe"
+                aria-label="Add Recipe"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-xs font-bold">Add</span>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </header>
   )

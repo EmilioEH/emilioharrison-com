@@ -35,6 +35,7 @@ import { RecipeControlBar } from './RecipeControlBar'
 import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
 import { WeekContextBar } from './week-planner/WeekContextBar'
+import { WeekWorkspace } from './week-planner/WeekWorkspace'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
@@ -461,14 +462,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         )}
 
         <main ref={setScrollContainer} className="relative flex-1 overflow-y-auto scroll-smooth">
-          {(view === 'library' || view === 'week') && (
+          {view === 'library' && (
             <div className="flex h-full flex-col pb-32">
               <div className="scrollbar-hide flex-1">
-                {!isSelectionMode && view === 'library' && recipes.length > 0 && null}
+                {!isSelectionMode && recipes.length > 0 && null}
 
                 <RecipeLibrary
                   recipes={processedRecipes}
-                  sort={view === 'week' ? 'week-day' : sort}
+                  sort={sort}
                   onSelectRecipe={(r) => {
                     if (isSelectionMode) {
                       toggleSelection(r.id)
@@ -485,6 +486,20 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               </div>
             </div>
           )}
+
+          {/* Week View with slide-up animation */}
+          <AnimatePresence>
+            {view === 'week' && (
+              <WeekWorkspace
+                recipes={processedRecipes}
+                allRecipes={recipes}
+                onClose={() => setView('library')}
+                onOpenCalendar={() => setIsCalendarOpen(true)}
+                onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
+                scrollContainer={scrollContainer}
+              />
+            )}
+          </AnimatePresence>
           {view === 'detail' && selectedRecipe && (
             <RecipeDetail
               recipe={selectedRecipe}

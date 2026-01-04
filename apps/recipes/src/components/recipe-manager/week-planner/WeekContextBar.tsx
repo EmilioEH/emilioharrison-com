@@ -53,7 +53,7 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
 
   return (
     <div className="pb-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgb(0,0,0,0.08)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-2xl flex-col gap-1 px-4 py-3">
+      <div className="mx-auto flex max-w-2xl flex-col px-4 py-3">
         {/* Top Row: Controls */}
         <div className="flex items-center justify-between gap-3">
           {/* Left: Week Toggles */}
@@ -61,7 +61,10 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
             {/* This/Next Toggle */}
             <div className="flex items-center rounded-lg bg-muted/50 p-1">
               <button
-                onClick={handleSetThisWeek}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSetThisWeek()
+                }}
                 className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
                   isThisWeek
                     ? 'bg-background text-foreground shadow-sm'
@@ -73,7 +76,10 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
                 {isThisWeek && <Check className="h-3 w-3" />}
               </button>
               <button
-                onClick={handleSetNextWeek}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSetNextWeek()
+                }}
                 className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
                   isNextWeek
                     ? 'bg-background text-foreground shadow-sm'
@@ -90,7 +96,10 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
             <Button
               variant="ghost"
               size="icon"
-              onClick={onOpenCalendar}
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenCalendar()
+              }}
               className="h-8 w-8 rounded-full"
               title="Select Week"
               aria-label="Select Week"
@@ -110,13 +119,20 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
           </button>
         </div>
 
-        {/* Bottom Row: Info */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        {/* Bottom Row: Clickable Info Area */}
+        <button
+          onClick={onViewWeek}
+          className="mt-1 flex w-full items-center justify-between rounded-md px-1 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
+          aria-label="View Week Plan"
+        >
           <span className="font-medium">{dateRangeLabel}</span>
-          <span>
-            <span className="font-bold text-foreground">{currentRecipes.length}</span> meals
-          </span>
-        </div>
+          <div className="flex items-center gap-1">
+            <span>
+              <span className="font-bold text-foreground">{currentRecipes.length}</span> meals
+            </span>
+            <ChevronRight className="h-3 w-3" />
+          </div>
+        </button>
       </div>
     </div>
   )
