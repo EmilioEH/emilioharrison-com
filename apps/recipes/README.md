@@ -25,7 +25,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Unified Navigation**: An integrated app header that houses the primary menu and grocery list actions, providing a clean and focused navigation experience.
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
-- **Recipe Cooking Mode 2.0**: A completely redesigned cooking experience with "Smart Timers" (browser notifications), contextual ingredient overlays, step-by-step navigation, and a dedicated review flow to rate and capture photos of your creation.
+- **Recipe Cooking Mode 2.0**: A completely redesigned cooking experience with "Smart Timers" (browser notifications), **vertical step-by-step navigation** (with previous/next previews), a dedicated **Step List** sheet for quick jumping, and a review flow to rate and capture photos of your creation.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu.
 - **Feedback Dashboard**: An integrated management interface (restricted to admins via `ADMIN_EMAILS`) to review, track, and resolve user feedback reports directly in the app.
 
@@ -64,7 +64,14 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 - **Pattern:** All file uploads must go through the `POST /api/uploads` endpoint.
 - **Why:** The app uses a custom `FirebaseRestService` on the server to handle authentication with a Service Account, avoiding complex CORS/Auth setup on the client.
 
-### 4. Scrollspy & Virtual Navigation
+### 4. Firestore Array Constraints
+
+Firestore does **NOT** support nested arrays (e.g., `number[][]`).
+
+- **Pattern**: When representing a matrix of data (like mapping ingredients to steps), use an array of objects: `Array<{ indices: number[] }>`.
+- **Why**: This ensures compatibility with Firestore's document model while allowing for complex relationship mappings.
+
+### 5. Scrollspy & Virtual Navigation
 
 - `RecipeLibrary.tsx` implements a manual "Scrollspy" to sync the sticky category header with the scroll position.
 - **Caution:** Refactoring the list view requires checking this scroll logic (`onScroll`, `scrollCache`) to ensure the "sticky header" experience breaks gracefully.
@@ -81,10 +88,17 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 - **Visual Hierarchy System**: Implemented a comprehensive monochromatic grayscale hierarchy using shadcn/ui design tokens. Added `active`, `inactive`, and `tag` variants to Badge component for clear visual distinction between primary, secondary, and tertiary elements. All interactive elements now follow consistent visual weight patterns (filled dark for high emphasis, bordered for medium, subtle for informational).
 - **Sizing Consistency**: Added proper size variants (`sm`, `md`, `lg`) to Badge component, matching Button's existing size system. All badges now use semantic size props instead of manual className overrides, creating predictable touch targets and visual rhythm.
 - **Icon Standardization**: Updated Button component with size-aware icon sizing (`[&_svg]:size-3.5` for sm, `size-4` for default, `size-5` for lg). Removed manual icon size overrides across all components. Icons now auto-scale with their containers for balanced, professional appearance.
-- **E2E Test Hygiene**: Refactored critical integration tests (like `data-management.spec.ts`) to use **Network Mocking** via `page.route()`. This prevents automated tests from corrupting the production Firestore database with "ghost" data during CI/CD runs.
-- **Cooking Experience 2.0**: A major overhaul of the cooking flow. Features include a direct "Start Cooking" action (no more "Mise En Place" screen), persistent ingredient checkboxes, a global "Ingredient Overlay" drawer, "Smart Timers" with system notifications, contextual cooking tips (e.g., explaining "fold" or "simmer"), and a polished "Review & Capture" flow upon completion.
+- **E2E Test Hygiene**: Refactored critical integration tests to use a centralized **Network Mocking** strategy via `tests/msw-setup.ts`. This provides shared mock data (`TEST_RECIPES`) and automated API interception, preventing tests from affecting production data while ensuring high reliability.
+- **Cooking Experience 2.0**: A major overhaul of the cooking flow. Features include a direct "Start Cooking" action (no more "Mise En Place" screen), persistent ingredient checkboxes, a global "Ingredient Overlay" drawer, "Smart Timers" with system notifications, **Instruction Preview Cards** (Previous/Next step previews), **Hybrid Ingredient Extraction** (using explicit mapping or heuristics), and a polished "Review & Capture" flow upon completion.
+- **Enhanced Cooking Navigation (Jan 2026)**: Added vertical step previews (Previous/Next) using shadcn/ui Cards for better context. Implemented a dedicated "Step List" (Sheet component) with jumping support. Updated header buttons with clearer labels for improved usability.
+- **Cooking Mode UX Polish**: Fixed a mobile responsiveness issue where the options menu was appearing off-screen. Implemented a responsive modal positioning pattern (`left-4 right-4 mx-auto ... sm:left-1/2`) that ensures full visibility and safe margins on small viewports while maintaining centered placement on desktop.
 - **Week View Workspace**: Transformed the week view into a persistent, sliding workspace. Users can now toggle between a "Plan" view (daily meals) and a "Grocery" view (shoppable list) directly within the workspace contexts.
-- **Dynamic Grocery & Cost Estimation**: The grocery list now mirrors the active week selection and includes real-time cost estimation. Users get an instant aggregate cost from known recipe data and can trigger an AI-powered "Refresh" to get accurate, up-to-date pricing benchmarks (e.g., HEB prices).
+
+> [!TIP]
+> **Agent Tip: Responsive Modals**
+> When building custom modals (centered via `fixed`), avoid hard-coded centering like `left-1/2 -translate-x-1/2` alone. Always use responsive padding/margins (e.g., `left-4 right-4 mx-auto`) to protect against overflow on small mobile screens. Revert to desktop centering at the `sm:` breakpoint.
+
+- **Robust Ingredient Mapping**: Transitioned from a purely heuristic text-matching approach to an **Explicit AI-Generated Mapping** system. Recipes now store a `stepIngredients` property (Firestore-compatible `Array<{ indices: number[] }>`) that explicitly links ingredients to the steps where they are used. Added a Gemini-powered migration script (`scripts/migrate-ingredient-mappings.ts`) with contextual understanding (handles pluralization, pronouns, and partial matches) to upgrade all existing recipes.
 
 ### Recent Updates (Dec 2025)
 
@@ -107,17 +121,17 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 
 Key entry points for common tasks:
 
-| Task                       | Primary Files                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                      |
-| **Add new metadata field** | `src/lib/types.ts` (Recipe interface) → `RecipeEditor.tsx` → `RecipeFilters.tsx`            |
-| **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                |
-| **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI) |
-| **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                       |
-| **Update global UI**       | `src/components/layout/` (GlobalBurgerMenu, GlobalFeedback)                                 |
-| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.tsx` & `scripts/resolve-feedback.ts`       |
-| **Add E2E test**           | Create `tests/<feature>.spec.ts` – use existing tests as templates                          |
-| **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                        |
+| Task                       | Primary Files                                                                                                                     |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                                                            |
+| **Add new metadata field** | `src/lib/types.ts` (Recipe interface) → `RecipeEditor.tsx` → `RecipeFilters.tsx`                                                  |
+| **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                                                      |
+| **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI)                                       |
+| **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                                                             |
+| **Update global UI**       | `src/components/layout/` (GlobalBurgerMenu, GlobalFeedback)                                                                       |
+| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.tsx` & `scripts/resolve-feedback.ts`                                             |
+| **Add E2E test**           | [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts) (API mocking & auth cookies) |
+| **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                                                              |
 
 **Conventions:**
 
@@ -186,6 +200,11 @@ We use **two complementary testing approaches**:
 
 > [!NOTE]
 > Major functional tests (e.g., Data Management) use **Network Interception** to mock backend responses. This ensures tests are fast, reliable, and **do not write data** to the live production database.
+
+> [!IMPORTANT]
+> **API Mocking**: Use the [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts) fixture for all API-related tests. It handles the `BASE_URL` logic and provides centralized mock data.
+>
+> **Auth Cookies**: When using custom `storageState`, always use domain `127.0.0.1` (not `localhost`) to match Playwright's default `baseURL`.
 
 **Browser Agent** is for "show me it works" moments. When building or fixing visual features, agents should:
 
@@ -359,74 +378,75 @@ The following bindings must be configured in the **Cloudflare Pages Dashboard** 
 
 src/
 ├── components/
-│ ├── recipe-manager/ # Core recipe management (TypeScript)
+│ ├── recipe-manager/ # Core recipe management
 │ │ ├── RecipeManager.tsx # Main orchestrator component
 │ │ ├── RecipeLibrary.tsx # Recipe grid/list with grouping
 │ │ ├── RecipeDetail.tsx # Individual recipe view
 │ │ ├── RecipeEditor.tsx # Edit/create recipe form with AI import
 │ │ ├── AiImporter.tsx # AI recipe parsing (photo/URL)
 │ │ ├── RecipeFilters.tsx # Filter panel (metadata, search)
-│ │ ├── RecipeHeader.tsx # Tightened app bar with menu trigger
+│ │ ├── RecipeHeader.tsx # App bar with menu trigger
 │ │ ├── BottomControls.tsx # Unified sticky bottom navigation
 │ │ ├── GroceryList.tsx # Grocery list with shopping mode
 │ │ ├── SettingsView.tsx # Settings and data management
-│ │ ├── FeedbackDashboard.jsx # Integrated feedback management UI
+│ │ ├── FeedbackDashboard.tsx # Integrated feedback management UI
+│ │ ├── BulkEditModal.tsx # Bulk update metadata
+│ │ ├── BulkRecipeImporter.tsx # Bulk markdown upload
+│ │ ├── RecipeControlBar.tsx # Actions for selected recipes
 │ │ ├── VarietyWarning.tsx # Protein variety alerts
 │ │ └── hooks/
 │ │ ├── useRecipes.ts # Recipe CRUD operations
 │ │ ├── useFilteredRecipes.ts # Filtering, sorting, search
-│ │ ├── useGroceryListGenerator.ts # Grocery list with caching
-│ ├── cooking-mode/ # NEW: Cooking Experience 2.0 Components
+│ │ └── useGroceryListGenerator.ts # Grocery list with caching
+│ ├── cooking-mode/ # Cooking Experience 2.0 Components
 │ │ ├── CookingContainer.tsx # Main orchestrator for cooking flow
 │ │ ├── CookingHeader.tsx # Header with progress and tools
 │ │ ├── CookingStepView.tsx # Step-by-step instruction view
 │ │ ├── CookingIngredientsOverlay.tsx # Slide-up ingredient checklist
+│ │ ├── CookingTimeline.tsx # NEW: Interactive horizontal progress roadmap
 │ │ ├── CookingReview.tsx # Post-cooking rate/note/photo flow
-│ │ ├── StepNavigator.tsx # "Jump to Step" drawer
+│ │ ├── CookingStepList.tsx # Full "Jump to Step" list (Sheet component)
+│ │ ├── ActiveTimersHeader.tsx # Condensed timers view
+│ │ ├── CookingOptionsMenu.tsx # Settings and tools menu
+│ │ ├── CookingStatusIndicator.tsx # Visual feedback for session
+│ │ ├── ExitConfirmation.tsx # End session dialog
 │ │ └── TimerControl.tsx # Timer UI and management
-│ ├── recipe-details/ # Recipe display components
-│ │ ├── DetailHeader.tsx # Navigation and actions
-│ │ ├── checkableItem.tsx # Reusable checkbox item
-│ │ └── OverviewMode.tsx # Default recipe display
 │ ├── ui/ # shadcn/ui components (button, tabs, input, dialog, etc.)
 │ └── layout/ # Global layout components
-│ ├── GlobalBurgerMenu.tsx # Slide-out settings/feedback menu
-│ └── GlobalFeedback.tsx # Feedback modal wrapper
-├── lib/ # Shared utilities
-│ ├── store.ts # Recipe list nanostore
-│ ├── burgerMenuStore.ts # Burger menu open/close state
-│ ├── feedbackStore.ts # Feedback modal state
-│ ├── types.ts # TypeScript interfaces (Recipe, Feedback)
-│ ├── firebase-server.ts # Firebase service initialization
-│ ├── firebase-rest.ts # Firebase REST API client
-│ ├── grocery-logic.ts # Deterministic grocery merging
-│ ├── api-utils.ts # API helper functions
-│ └── notifications.ts # Browser notification helpers
-├── services/
-│ └── timerManager.ts # Centralized timer logic with notifications
-├── stores/
-│ ├── cookingSession.ts # Nanostore for active cooking state
-│ ├── store.ts # Recipe list nanostore
-│ ├── index.astro # Main recipe app page
-│ └── api/
+├── pages/ # Astro File-based Routing
+│ ├── index.astro # Main recipe app entry
+│ ├── login.astro # Authentication page
+│ ├── logout.astro # Sign out handler
+│ └── api/ # Backend API endpoints
 │ ├── parse-recipe.ts # AI recipe extraction
 │ ├── generate-grocery-list.ts # AI grocery categorization
 │ ├── feedback.ts # Feedback submission
 │ ├── recipes/ # Recipe CRUD endpoints
-│ └── uploads/ # R2 image serving
+│ └── uploads/ # Image serving
+├── lib/ # Shared utilities & State
+│ ├── recipeStore.ts # Core recipe nanostore
+│ ├── weekStore.ts # Weekly planning nanostore
+│ ├── burgerMenuStore.ts # Global menu state
+│ ├── feedbackStore.ts # Feedback modal state
+│ ├── types.ts # TypeScript interfaces
+│ ├── firebase-server.ts # Firebase Service Account (Server)
+│ ├── firebase-client.ts # Firebase App (Client)
+│ ├── firebase-rest.ts # Custom Firestore REST client
+│ ├── grocery-logic.ts # Deterministic grocery merging
+│ └── notifications.ts # Browser notification helpers
+├── stores/
+│ └── cookingSession.ts # Active cooking state nanostore
 ├── layouts/
 │ ├── Layout.astro # Base HTML layout
-│ └── RecipeLayout.astro # Recipe app wrapper with global menus
+│ └── RecipeLayout.astro # App wrapper with global menus
 └── styles/ # Global CSS
 tests/ # Playwright E2E tests
-├── auth.spec.ts # Google Sign-In authentication flow
-├── recipe-manager.spec.ts # Core recipe management
+├── auth.spec.ts # Google Sign-In flow
+├── recipe-manager.spec.ts # Core management
 ├── cooking-mode.spec.ts # Cooking workflow
-├── grocery-list.spec.ts # Grocery list generation
+├── grocery-list.spec.ts # List generation
 ├── feedback.spec.ts # Feedback submission
-├── feedback-dashboard.spec.ts # Feedback management UI & Access Control
-├── weekly-planning.spec.ts # This Week feature
-├── metadata.spec.ts # Filtering and tagging
+├── msw-setup.ts # Centralized network mocking & auth
 └── ... # Additional test suites
 
 ```

@@ -16,7 +16,7 @@ You must **Auto-Run** these checks in the terminal (within the active workspace)
 -   **Duplicates:** `npx jscpd src/`.
 
 ## 3. User Journey Validation (Run before Finishing)
--   **Visual/Functional:** `npx playwright test`.
+-   **Visual/Functional:** `npx playwright test (always use domain `127.0.0.1` for auth cookies)`.
 -   **Rule:** If you build a new UI feature, you MUST write or update a Playwright test to verify it works as a user expects.
 
 ## 4. Performance & Security (Run when Adding Libraries)

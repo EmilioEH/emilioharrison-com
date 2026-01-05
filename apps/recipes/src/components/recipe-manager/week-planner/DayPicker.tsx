@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { format, parseISO, addDays, isSameWeek, startOfWeek, addWeeks } from 'date-fns'
 import { useStore } from '@nanostores/react'
-import { Check, Calendar } from 'lucide-react'
+import { Check, Calendar, ArrowLeft } from 'lucide-react'
 
 import {
   weekState,
@@ -104,9 +104,9 @@ export const DayPicker: React.FC<DayPickerProps> = ({
         <div className="flex flex-col gap-2 pb-6">
           <button
             onClick={() => setShowWeekPicker(false)}
-            className="mb-2 self-start text-sm font-medium text-primary hover:text-primary/80"
+            className="mb-2 flex items-center gap-1 self-start text-sm font-medium text-primary hover:text-primary/80"
           >
-            ← Back to days
+            <ArrowLeft className="h-4 w-4" /> Back to days
           </button>
 
           {weeks.map((weekStart) => {

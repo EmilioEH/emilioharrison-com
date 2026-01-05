@@ -39,3 +39,11 @@ Use this workflow to run automated end-to-end tests. This is the **primary way t
 
 - **Pass**: All green ticks. Proceed.
 - **Fail**: Read the error message. It usually tells you exactly what element was not found or what assertion failed. Fix the code, not the test (unless the feature changed correctly).
+
+## API Mocking & Auth
+
+If you are writing or debugging tests that fetch data:
+
+- Use the centralized mock data in [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts).
+- Ensure auth cookies in `test.use({ storageState: ... })` use domain `127.0.0.1` instead of `localhost`.
+- If a route is not being intercepted, check if the app is redirecting to `/login` because of a cookie domain mismatch.

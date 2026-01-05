@@ -134,6 +134,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
       ...formData,
       ingredients,
       steps,
+      stepIngredients: formData.stepIngredients, // Preserve mapping
       updatedAt: now,
       createdAt: formData.createdAt || now, // Ensure backfill
       versionHistory: newVersionHistory,

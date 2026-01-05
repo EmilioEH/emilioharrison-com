@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, TEST_RECIPES } from './msw-setup'
 
 test.describe('Recipe Cooking Mode', () => {
   test.use({
@@ -7,7 +7,7 @@ test.describe('Recipe Cooking Mode', () => {
         {
           name: 'site_auth',
           value: 'true',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -17,7 +17,7 @@ test.describe('Recipe Cooking Mode', () => {
         {
           name: 'site_user',
           value: 'TestUser',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -27,7 +27,7 @@ test.describe('Recipe Cooking Mode', () => {
         {
           name: 'site_email',
           value: 'emilioeh1991@gmail.com',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -39,102 +39,66 @@ test.describe('Recipe Cooking Mode', () => {
     },
   })
 
-  // Pre-seed recipe to avoid flaky UI creation
-  const TEST_RECIPE = {
-    id: `recipe-test-${Date.now()}`,
-    title: 'COOK_TEST_PRESEEDED',
-    servings: 2,
-    prepTime: 10,
-    cookTime: 20,
-    ingredients: [
-      { name: 'Flour', amount: '1 cup', prep: 'sifted' },
-      { name: 'Eggs', amount: '2' },
-    ],
-    steps: ['Mix ingredients', 'Bake for 20 mins'],
-    // Optional fields to match type
-    notes: '',
-    description: 'Test recipe',
-    thisWeek: false,
-  }
+  // Use the first test recipe from our centralized mock data
+  const RECIPE = TEST_RECIPES[0]
 
-  test.beforeEach(async ({ page }) => {
-    // Mock user data to keep the test environment clean and isolated
-    let currentRecipes: any[] = [TEST_RECIPE]
-
-    await page.route('**/api/recipes*', async (route) => {
-      const method = route.request().method()
-      if (method === 'GET') {
-        await route.fulfill({ json: { recipes: currentRecipes } })
-      } else if (method === 'POST') {
-        const body = await route.request().postDataJSON()
-        const newRecipe = { ...body, id: body.id || `recipe-${Date.now()}` }
-        currentRecipes.push(newRecipe)
-        await route.fulfill({ json: { success: true, id: newRecipe.id } })
-      } else if (method === 'PUT') {
-        const body = await route.request().postDataJSON()
-        currentRecipes = currentRecipes.map((r) => (r.id === body.id ? body : r))
-        await route.fulfill({ json: { success: true } })
-      } else {
-        await route.fulfill({ json: { success: true } })
-      }
-    })
-  })
-
-  // Skipped due to API mocking issues in current test environment
-  test.skip('should navigate through new cooking mode flow (Phase 1)', async ({ page }) => {
+  test('should navigate through cooking mode flow', async ({ page }) => {
     await page.goto('/protected/recipes')
 
     // Wait for loading to finish
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // 1. Open the pre-seeded recipe
-    const recipeCard = page.getByText(TEST_RECIPE.title).first()
+    const recipeCard = page.getByText(RECIPE.title).first()
     await expect(recipeCard).toBeVisible()
     await page.waitForTimeout(500)
     await recipeCard.click()
 
     // Wait for detail view
-    await expect(page.getByRole('heading', { name: TEST_RECIPE.title, exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
 
     // 2. Start Cooking (Directly to Step 1)
     await page.getByRole('button', { name: 'Start Cooking' }).click()
 
     // Verify we are in Cooking Mode
-    // Header check
     await expect(page.getByText('Step 1 of 2')).toBeVisible()
+    await expect(page.getByText(RECIPE.steps[0])).toBeVisible()
 
-    // Instruction check
-    await expect(page.getByText('Mix ingredients')).toBeVisible()
-
-    // 3. Check Timer Existence
-    // Step 2 has "20 mins", so let's go to step 2 to see suggested timer
+    // 3. Navigate to Step 2
     await page.getByRole('button', { name: 'Next Step' }).click()
-
-    // Now on Step 2
     await expect(page.getByText('Step 2 of 2')).toBeVisible()
-    await expect(page.getByText('Bake for 20 mins')).toBeVisible()
+    await expect(page.getByText(RECIPE.steps[1])).toBeVisible()
 
-    // Check for Suggested Timer button
+    // 4. Check for Suggested Timer button (step has "20 mins")
     await expect(page.getByRole('button', { name: 'Start 20 Min Timer' })).toBeVisible()
 
-    // 4. Test Exit Flow
-    // Click Exit (X icon)
-    await page.getByLabel('Exit Cooking Mode').click()
+    // 5. Test Timeline Navigation - click back to Step 1 using data-testid
+    await page.getByTestId('timeline-step-1').click()
 
-    // Check Confirmation Dialog
-    await expect(page.getByText('Exit Cooking Mode?')).toBeVisible()
+    // Should be back on Step 1
+    await expect(page.getByText('Step 1 of 2')).toBeVisible()
+    await expect(page.getByText(RECIPE.steps[0])).toBeVisible()
+
+    // Navigate back to step 2 for exit flow
+    await page.getByRole('button', { name: 'Next Step' }).click()
+
+    // 6. Test Exit Flow
+    await page.getByLabel('Exit Cooking Mode').click()
+    await expect(page.getByText('End Cooking Session?')).toBeVisible()
     await expect(page.getByText("You're on Step 2 of 2")).toBeVisible()
 
-    // Click "Keep Cooking"
+    // Keep Cooking
     await page.getByRole('button', { name: 'Keep Cooking' }).click()
-    await expect(page.getByText('Exit Cooking Mode?')).not.toBeVisible()
+    await expect(page.getByText('End Cooking Session?')).not.toBeVisible()
 
-    // Click Exit again and Confirm
+    // Exit for real
     await page.getByLabel('Exit Cooking Mode').click()
-    await page.getByRole('button', { name: 'Save & Exit' }).click()
+    await page.getByRole('button', { name: 'End Session' }).click()
 
-    // Verify returned to Detail View or Library
-    await expect(page.getByRole('heading', { name: TEST_RECIPE.title, exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Start Cooking' })).toBeVisible()
+    // Verify returned to Detail View (may take a moment)
+    await page.waitForTimeout(500)
+    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible({
+      timeout: 10000,
+    })
   })
 })

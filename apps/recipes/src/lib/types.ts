@@ -12,6 +12,7 @@ export interface Recipe {
   cookTime: number
   ingredients: Ingredient[]
   steps: string[]
+  stepIngredients?: Array<{ indices: number[] }> // Firestore-compatible: indices of ingredients used in each step
   notes?: string
   description?: string
   // New metadata for organization

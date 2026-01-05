@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ChefHat, ChevronRight, MoreVertical } from 'lucide-react'
+import { ChefHat, ChevronRight, MoreVertical, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { Recipe } from '../../lib/types'
@@ -272,7 +272,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             </h4>
             {(recipe.rating ?? 0) > 0 && (
               <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
-                <span>★</span> <span data-testid="recipe-rating">{recipe.rating}</span>
+                <Star className="h-3 w-3 fill-foreground" />{' '}
+                <span data-testid="recipe-rating">{recipe.rating}</span>
               </div>
             )}
           </div>

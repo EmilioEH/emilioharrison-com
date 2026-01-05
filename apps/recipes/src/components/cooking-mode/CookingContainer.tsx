@@ -5,7 +5,7 @@ import { CookingHeader } from './CookingHeader'
 import { CookingStepView } from './CookingStepView'
 import { ExitConfirmation } from './ExitConfirmation'
 import { CookingIngredientsOverlay } from './CookingIngredientsOverlay'
-import { StepNavigator } from './StepNavigator'
+import { CookingStepList } from './CookingStepList'
 import { CookingOptionsMenu } from './CookingOptionsMenu'
 
 import { ActiveTimersHeader } from './ActiveTimersHeader'
@@ -61,6 +61,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         onShowIngredients={() => setShowIngredients(true)}
         onShowMenu={() => setShowMenu(true)}
         onShowNavigator={() => setShowNavigator(true)}
+        onStepJump={(idx) => cookingSessionActions.goToStep(idx)}
       />
 
       {/* Persistent Condensed Timers */}
@@ -85,7 +86,13 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         onClose={() => setShowIngredients(false)}
       />
 
-      <StepNavigator isOpen={showNavigator} onClose={() => setShowNavigator(false)} />
+      <CookingStepList
+        recipe={session.recipe}
+        currentStepIdx={session.currentStepIdx}
+        isOpen={showNavigator}
+        onOpenChange={setShowNavigator}
+        onStepSelect={(idx) => cookingSessionActions.goToStep(idx)}
+      />
 
       <CookingOptionsMenu isOpen={showMenu} onClose={() => setShowMenu(false)} />
     </div>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
 
 interface RecipeControlBarProps {
   searchQuery: string
@@ -46,7 +46,7 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
               }}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              ×
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>

@@ -1,5 +1,15 @@
 import React, { useEffect } from 'react'
-import { Clock, Users, Flame, Star, ChevronRight, Play, Check } from 'lucide-react'
+import {
+  Clock,
+  Users,
+  Flame,
+  Star,
+  ChevronRight,
+  Play,
+  Check,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react'
 import { StarRating } from '../ui/StarRating'
 import { CheckableItem } from './CheckableItem'
 import { Badge } from '../ui/badge'
@@ -150,7 +160,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           <div className="mb-6 flex justify-end">
             {isEstimating ? (
               <div className="bg-card-variant/50 text-foreground-variant flex items-center gap-2 rounded-lg px-3 py-1 text-xs font-medium">
-                <span className="animate-spin">⟳</span> Estimating HEB Cost...
+                <Loader2 className="h-3 w-3 animate-spin" /> Estimating HEB Cost...
               </div>
             ) : estimateError ? (
               <button
@@ -158,7 +168,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
                 title={estimateError}
               >
-                ⚠️ Couldn't estimate cost
+                <AlertCircle className="h-4 w-4" /> Couldn't estimate cost
                 <span className="ml-1 text-[10px] uppercase opacity-70">Tap to retry</span>
               </button>
             ) : estimatedCost !== null ? (

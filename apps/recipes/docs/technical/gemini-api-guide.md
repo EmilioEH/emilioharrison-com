@@ -160,6 +160,31 @@ config: {
 
 ---
 
+### 8. Case Study: Step Ingredient Mapping
+
+When mapping ingredients to steps, use a flat object array to remain Firestore-compatible.
+
+```javascript
+const responseSchema = {
+  type: 'object',
+  properties: {
+    stepIngredients: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          indices: { type: 'array', items: { type: 'number' } },
+        },
+        required: ['indices'],
+      },
+    },
+  },
+  required: ['stepIngredients'],
+}
+```
+
+---
+
 ## Summary for Agents
 
 1.  **Always** use a schema for structured data.

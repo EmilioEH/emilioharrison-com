@@ -34,6 +34,7 @@ Rules:
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 `
 
 const TEXT_SYSTEM_PROMPT = `
@@ -56,6 +57,7 @@ Rules:
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of arrays. Each inner array should contain the 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 `
 
 const URL_SYSTEM_PROMPT = `
@@ -81,6 +83,7 @@ Rules:
     - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
     - 'name' (ingredient name without unit)
     - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+13. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 `
 
 const JSON_LD_SYSTEM_PROMPT = `
@@ -98,6 +101,7 @@ The input is already structured data from the source website. Your job is not to
 4. Map "Main Protein Source" to one of: ${PROTEIN_OPTIONS.join(', ')}.
 5. Infer "Meal Type", "Dish Type" based on the recipe title and context.
 6. **ENRICH** missing metadata: Infer Occasion, Dietary tags, and Equipment from the content if they are missing.
+7. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 `
 
 /**
@@ -335,6 +339,19 @@ function createRecipeSchema() {
         },
       },
       steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      stepIngredients: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            indices: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.NUMBER },
+            },
+          },
+          required: ['indices'],
+        },
+      },
       notes: { type: SchemaType.STRING, nullable: true },
       protein: {
         type: SchemaType.STRING,

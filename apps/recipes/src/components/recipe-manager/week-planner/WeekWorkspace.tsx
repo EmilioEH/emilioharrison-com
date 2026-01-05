@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   RefreshCw,
   AlertTriangle,
+  AlertCircle,
   Share,
   Copy,
 } from 'lucide-react'
@@ -427,7 +428,11 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 </div>
 
                 {/* Error State */}
-                {estimateError && <p className="mt-2 text-xs text-red-600">⚠️ {estimateError}</p>}
+                {estimateError && (
+                  <p className="mt-2 flex items-center gap-1 text-xs text-red-600">
+                    <AlertCircle className="h-3 w-3" /> {estimateError}
+                  </p>
+                )}
               </div>
             )}
 

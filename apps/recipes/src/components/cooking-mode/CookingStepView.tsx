@@ -1,25 +1,12 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { UtensilsCrossed } from 'lucide-react'
 import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 import { TimerControl } from './TimerControl'
 import { getIngredientsForStep } from '../../utils/ingredientParsing'
+import { Card, CardDescription } from '../ui/card'
 import type { Recipe } from '../../lib/types'
-import { Lightbulb } from 'lucide-react'
 
-// Simple heuristic for tips
-const getTipsForStep = (text: string): string | null => {
-  const lower = text.toLowerCase()
-  if (lower.includes('whisk')) return 'Tip: Whisk vigorously to incorporate air and remove lumps.'
-  if (lower.includes('fold')) return 'Tip: Fold gently with a spatula to keep the mixture airy.'
-  if (lower.includes('simmer')) return 'Tip: Simmer means gentle bubbles, not a rolling boil.'
-  if (lower.includes('sear'))
-    return 'Tip: Ensure the pan is very hot before adding meat to get a good crust.'
-  if (lower.includes('rest')) return 'Tip: Letting meat rest allows juices to redistribute.'
-  if (lower.includes('zest'))
-    return 'Tip: Only grate the colored part of the skin, avoid the white pith.'
-  return null
-}
 interface CookingStepViewProps {
   // We access recipe from store usually, but props can be safer for rendering
   recipe: Recipe
@@ -32,8 +19,11 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({ recipe, onFini
   const step = recipe.steps[stepIdx]
   const currentStepNum = stepIdx + 1
 
-  // Parse ingredients for this step
-  const stepIngredients = getIngredientsForStep(step, recipe.ingredients)
+  // Parse ingredients for this step: Check explicit mapping first, then fallback to heuristic
+  const stepIngredients =
+    recipe.stepIngredients && recipe.stepIngredients[stepIdx]
+      ? recipe.stepIngredients[stepIdx].indices.map((idx) => recipe.ingredients[idx])
+      : getIngredientsForStep(step, recipe.ingredients)
 
   // Simple heuristic for timer duration (MVP)
   // Looks for "X minutes" or "X mins" in the text
@@ -41,6 +31,8 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({ recipe, onFini
   const suggestedTimer = timerMatch ? parseInt(timerMatch[1]) : undefined
 
   const isLastStep = stepIdx === recipe.steps.length - 1
+  const prevStepText = stepIdx > 0 ? recipe.steps[stepIdx - 1] : null
+  const nextStepText = !isLastStep ? recipe.steps[stepIdx + 1] : null
 
   const handleNext = () => {
     cookingSessionActions.completeStep(stepIdx)
@@ -66,28 +58,49 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({ recipe, onFini
         <TimerControl stepNumber={currentStepNum} suggestedDuration={suggestedTimer} />
 
         {/* Main Instruction */}
-        <div className="flex min-h-[20vh] flex-col items-center justify-center gap-6">
-          <p className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-            {step}
-          </p>
+        {/* Main Instruction Area */}
+        <div className="flex min-h-[40vh] flex-col justify-center gap-8 py-4">
+          {/* Previous Step Preview */}
+          {prevStepText && (
+            <Card
+              onClick={handlePrev}
+              className="cursor-pointer border-dashed bg-muted/30 p-4 opacity-50 transition-all hover:opacity-80 hover:shadow-md"
+            >
+              <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Step {currentStepNum - 1}
+              </span>
+              <CardDescription className="line-clamp-2 text-sm">{prevStepText}</CardDescription>
+            </Card>
+          )}
 
-          {(() => {
-            const tip = getTipsForStep(step)
-            if (!tip) return null
-            return (
-              <div className="flex items-center gap-3 rounded-xl bg-yellow-500/10 px-4 py-3 text-yellow-700 dark:text-yellow-400">
-                <Lightbulb className="h-5 w-5 flex-shrink-0" />
-                <span className="text-sm font-medium">{tip}</span>
-              </div>
-            )
-          })()}
+          {/* Current Step */}
+          <div className="flex flex-col items-center gap-6 py-4 text-center">
+            <p className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+              {step}
+            </p>
+          </div>
+
+          {/* Next Step Preview */}
+          {nextStepText && (
+            <Card
+              onClick={handleNext}
+              className="cursor-pointer border-dashed bg-muted/30 p-4 opacity-50 transition-all hover:opacity-80 hover:shadow-md"
+            >
+              <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Step {currentStepNum + 1}
+              </span>
+              <CardDescription className="line-clamp-2 text-sm">{nextStepText}</CardDescription>
+            </Card>
+          )}
         </div>
 
         {/* Contextual Ingredients */}
         {stepIngredients.length > 0 && (
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <h4 className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              <span className="rounded-md bg-primary/20 p-1">🥘</span>
+              <span className="rounded-md bg-primary/20 p-1">
+                <UtensilsCrossed className="size-3.5 text-primary" />
+              </span>
               Ingredients Needed
             </h4>
             <ul className="space-y-3">
@@ -113,25 +126,16 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({ recipe, onFini
         <button
           onClick={handlePrev}
           disabled={stepIdx === 0}
-          className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-border text-foreground transition-all active:scale-95 disabled:border-transparent disabled:opacity-30"
-          aria-label="Previous Step"
+          className="flex h-14 min-w-[100px] items-center justify-center rounded-2xl border-2 border-border text-base font-bold text-foreground transition-all active:scale-95 disabled:border-transparent disabled:opacity-0"
         >
-          <ChevronLeft className="h-6 w-6" />
+          Previous
         </button>
 
         <button
           onClick={handleNext}
-          className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary font-display text-lg font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-95"
+          className="flex h-14 flex-1 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-95"
         >
-          {isLastStep ? (
-            <>
-              Finish Cooking <Check className="h-5 w-5 stroke-[3]" />
-            </>
-          ) : (
-            <>
-              Next Step <ChevronRight className="h-5 w-5 stroke-[3]" />
-            </>
-          )}
+          {isLastStep ? 'Finish Cooking' : 'Next Step'}
         </button>
       </div>
     </div>
