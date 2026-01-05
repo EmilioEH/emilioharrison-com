@@ -6,7 +6,7 @@
 
 import { initializeApp, cert } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
+import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import type { Recipe } from '../src/lib/types'
@@ -43,7 +43,7 @@ Be intelligent about matching:
 
 Return the mapping as an array where each element corresponds to a step and contains the indices of ingredients used.`
 
-const responseSchema = {
+const responseSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
     stepIngredients: {
