@@ -3,6 +3,7 @@ import { Save, Trash2 } from 'lucide-react'
 import { Stack, Inline, Cluster } from '@/components/ui/layout'
 import { AiImporter } from './AiImporter'
 import type { Recipe, Ingredient } from '../../lib/types'
+import { confirm } from '../../lib/dialogStore'
 
 interface RecipeEditorProps {
   recipe: Partial<Recipe>
@@ -126,7 +127,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           <textarea
             value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="bg-card-variant min-h-[80px] w-full rounded-lg border border-border p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="bg-card-variant min-h-[80px] w-full rounded-lg border border-border p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             placeholder="Brief description of the dish..."
           />
         </label>
@@ -142,7 +143,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           value={formData.sourceUrl || ''}
           onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
           placeholder="https://example.com/recipe"
-          className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium outline-none"
+          className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium outline-none"
         />
       </div>
 
@@ -160,13 +161,19 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
       )}
 
       <Stack spacing="sm">
-        <label htmlFor="sourceimage-url" className="mb-1 block text-xs font-bold uppercase text-gray-400">Source Image</label>
+        <label
+          htmlFor="sourceimage-url"
+          className="mb-1 block text-xs font-bold uppercase text-gray-400"
+        >
+          Source Image
+        </label>
         <div className="flex gap-2">
-          <input id="sourceimage-url"
+          <input
+            id="sourceimage-url"
             type="url"
             value={formData.sourceImage || ''}
             onChange={(e) => setFormData({ ...formData, sourceImage: e.target.value })}
-            className="bg-card-variant w-full rounded-lg border border-border p-2 text-sm"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base"
             placeholder="https://..."
           />
         </div>
@@ -181,7 +188,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             id="protein"
             value={formData.protein || ''}
             onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium"
           >
             <option value="">None</option>
             {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
@@ -209,7 +216,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
                 difficulty: e.target.value as 'Easy' | 'Medium' | 'Hard',
               })
             }
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium"
           >
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
@@ -230,7 +237,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             id="mealType"
             value={formData.mealType || ''}
             onChange={(e) => setFormData({ ...formData, mealType: e.target.value })}
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium"
           >
             <option value="">Select...</option>
             {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
@@ -251,7 +258,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             id="dishType"
             value={formData.dishType || ''}
             onChange={(e) => setFormData({ ...formData, dishType: e.target.value })}
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium"
           >
             <option value="">Select...</option>
             {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
@@ -281,7 +288,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               })
             }
             placeholder="Vegan, Gluten-Free..."
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium outline-none"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium outline-none"
           />
         </div>
         <div>
@@ -304,7 +311,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               })
             }
             placeholder="Air Fryer, Slow Cooker..."
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium outline-none"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium outline-none"
           />
         </div>
         <div>
@@ -327,7 +334,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               })
             }
             placeholder="Weeknight, Party..."
-            className="bg-card-variant w-full rounded-sm border border-border p-2 text-sm font-medium outline-none"
+            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base font-medium outline-none"
           />
         </div>
       </div>
@@ -367,7 +374,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           value={ingText}
           onChange={(e) => setIngText(e.target.value)}
           placeholder="2 cups Flour&#10;1 tsp Salt"
-          className="bg-card-variant min-h-[120px] w-full rounded-lg border border-border p-3 font-mono text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="bg-card-variant min-h-[120px] w-full rounded-lg border border-border p-3 font-mono text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -383,7 +390,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           value={stepText}
           onChange={(e) => setStepText(e.target.value)}
           placeholder="Mix dry ingredients.&#10;Add wet ingredients."
-          className="bg-card-variant min-h-[120px] w-full rounded-lg border border-border p-3 font-mono text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="bg-card-variant min-h-[120px] w-full rounded-lg border border-border p-3 font-mono text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -399,9 +406,11 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         {recipe.id && (
           <button
             onClick={() => {
-              if (confirm('Delete this recipe?')) {
-                onDelete(recipe.id!)
-              }
+              confirm('Delete this recipe?').then((confirmed) => {
+                if (confirmed) {
+                  onDelete(recipe.id!)
+                }
+              })
             }}
             className="bg-card-variant flex items-center justify-center rounded-full p-3 text-red-500 hover:bg-red-500/10"
           >

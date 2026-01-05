@@ -60,7 +60,7 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
               tabIndex={0}
               data-testid={`timeline-step-${stepNum}`}
               className={`relative flex flex-shrink-0 cursor-pointer items-center justify-center transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                isCurrent ? 'h-8 w-8' : 'h-6 w-6'
+                isCurrent ? 'h-11 w-11' : 'h-8 w-8'
               }`}
             >
               {/* Node Background */}
@@ -77,11 +77,11 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
               {/* Icon / Content */}
               <div className="relative z-10 flex items-center justify-center">
                 {isCompleted ? (
-                  <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} />
+                  <Check className="h-5 w-5 text-primary" strokeWidth={3} />
                 ) : isCurrent ? (
-                  <div className="h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+                  <div className="h-3 w-3 rounded-full bg-primary-foreground" />
                 ) : (
-                  <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                  <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
                 )}
               </div>
 

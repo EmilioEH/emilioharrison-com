@@ -33,10 +33,10 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
         <div className="-ml-2">
           <button
             onClick={onShowNavigator}
-            className="flex items-center gap-1.5 rounded-lg p-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:scale-95"
+            className="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-transparent p-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:scale-95"
             title="View All Steps"
           >
-            <List className="h-5 w-5" />
+            <List className="h-6 w-6" />
             Steps
           </button>
         </div>
@@ -51,10 +51,10 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
           {/* Ingredients with Label */}
           <button
             onClick={onShowIngredients}
-            className="flex items-center gap-1.5 rounded-lg p-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:scale-95"
+            className="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-transparent p-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:scale-95"
             title="Ingredients"
           >
-            <UtensilsCrossed className="h-5 w-5" />
+            <UtensilsCrossed className="h-6 w-6" />
             Ingredients
           </button>
 
@@ -63,28 +63,28 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
           {onMinimize && (
             <button
               onClick={onMinimize}
-              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
               aria-label="Minimize"
               title="Minimize (Keep Cooking)"
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-6 w-6" />
             </button>
           )}
 
           <button
             onClick={onShowMenu}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
             title="Options"
           >
-            <MoreHorizontal className="h-5 w-5" />
+            <MoreHorizontal className="h-6 w-6" />
           </button>
 
           <button
             onClick={onExit}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
             aria-label="Exit Cooking Mode"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         </div>
       </div>

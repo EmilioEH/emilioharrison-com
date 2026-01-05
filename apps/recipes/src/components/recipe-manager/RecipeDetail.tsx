@@ -7,6 +7,7 @@ import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
 import { Calendar, Play, Check } from 'lucide-react'
 import { OverviewMode } from '../recipe-details/OverviewMode'
+import { confirm } from '../../lib/dialogStore'
 
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
@@ -65,9 +66,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
   const handleAction = (action: HeaderAction) => {
     if (action === 'delete') {
-      if (confirm('Are you certain you want to delete this recipe?')) {
-        onDelete(recipe.id)
-      }
+      confirm('Are you certain you want to delete this recipe?').then((confirmed) => {
+        if (confirmed) {
+          onDelete(recipe.id)
+        }
+      })
     } else if (action === 'edit') {
       onUpdate({ ...recipe }, 'edit')
     } else if (action === 'addToWeek') {
@@ -107,7 +110,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
           {/* Secondary: Add to Week */}
           <button
             onClick={() => handleAction('addToWeek')}
-            className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 font-display text-sm font-bold uppercase tracking-wider transition-all active:scale-95 ${
+            className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 font-display text-base font-bold uppercase tracking-wider transition-all active:scale-95 ${
               recipe.thisWeek
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-border bg-card text-muted-foreground hover:border-primary/50'

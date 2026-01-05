@@ -52,11 +52,11 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         variant="ghost"
         size="icon"
         onClick={() => onAction('toggleFavorite')}
-        className={`rounded-full ${recipe.isFavorite ? 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600' : 'text-muted-foreground hover:text-red-500'}`}
+        className={`h-11 w-11 rounded-full ${recipe.isFavorite ? 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600' : 'text-muted-foreground hover:text-red-500'}`}
         aria-label={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
         title={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
       >
-        <Heart className={`h-5 w-5 ${recipe.isFavorite ? 'fill-red-500' : ''}`} />
+        <Heart className={`h-6 w-6 ${recipe.isFavorite ? 'fill-red-500' : ''}`} />
       </Button>
 
       <DetailHeaderActions

@@ -27,6 +27,7 @@ import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
 import { familyActions } from '../../lib/familyStore'
+import { alert, confirm } from '../../lib/dialogStore'
 
 // --- Sub-Components ---
 import { RecipeLibrary } from './RecipeLibrary'
@@ -268,7 +269,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       setView('library')
       setRecipe(null)
     } else {
-      alert('Failed to delete')
+      await alert('Failed to delete')
     }
   }
 
@@ -297,12 +298,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   // Selection Logic handled by hook
 
   const handleBulkDelete = async () => {
-    if (confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
+    if (await confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
       const success = await bulkDeleteRecipes(selectedIds)
       if (success) {
         clearSelection()
       } else {
-        alert('Some deletions failed')
+        await alert('Some deletions failed')
       }
     }
   }
@@ -313,7 +314,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       setShowBulkEdit(false)
       clearSelection()
     } else {
-      alert('Bulk update failed')
+      await alert('Bulk update failed')
     }
   }
 
@@ -335,7 +336,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const result = event.target?.result as string
         const imported = JSON.parse(result)
@@ -347,18 +348,18 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
 
           // Or maybe confirm overwrite? simple merge for now.
           setRecipes([...recipes, ...newRecipes])
-          alert(`Imported ${newRecipes.length} recipes.`)
+          await alert(`Imported ${newRecipes.length} recipes.`)
         }
       } catch (err) {
         console.error(err)
-        alert('Failed to parse JSON.')
+        await alert('Failed to parse JSON.')
       }
     }
     reader.readAsText(file)
   }
 
-  const handleDeleteAll = () => {
-    if (confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
+  const handleDeleteAll = async () => {
+    if (await confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
       setRecipes([])
       setView('library') // Close settings
     }
@@ -383,11 +384,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         }),
       )
       refreshRecipes()
-      alert(`Successfully imported ${recipes.length} recipes!`)
+      await alert(`Successfully imported ${recipes.length} recipes!`)
       setView('library')
     } catch (e) {
       console.error(e)
-      alert('Failed to save some recipes.')
+      await alert('Failed to save some recipes.')
     }
   }
 

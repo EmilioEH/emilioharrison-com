@@ -19,6 +19,7 @@ import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import { RecipeLibrary } from '../RecipeLibrary'
 import { GroceryList } from '../GroceryList'
+import { alert } from '../../../lib/dialogStore'
 import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 
 type WorkspaceTab = 'plan' | 'grocery'
@@ -206,7 +207,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const handleCopyGrocery = async () => {
     try {
       await navigator.clipboard.writeText(buildGroceryText())
-      alert('Copied to clipboard!')
+      await alert('Copied to clipboard!')
     } catch (err) {
       console.error('Failed to copy', err)
     }

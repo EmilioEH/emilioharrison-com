@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Recipe, ShoppableIngredient } from '../../../lib/types'
+import { alert } from '../../../lib/dialogStore'
 
 const getBaseUrl = (): string => {
   const base = import.meta.env.BASE_URL
@@ -106,7 +107,7 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
     // Validate recipes
     const validation = validateRecipesForGroceryList(recipes)
     if (!validation.valid) {
-      alert(validation.error)
+      await alert(validation.error)
       return
     }
 
@@ -171,9 +172,9 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
       )
       setGroceryItems(fallbackIngredients)
       if (fallbackIngredients.length === 0) {
-        alert('Could not generate grocery list. Please try again.')
+        await alert('Could not generate grocery list. Please try again.')
       } else {
-        alert('Could not reach AI. Showing ingredients without store-unit conversions.')
+        await alert('Could not reach AI. Showing ingredients without store-unit conversions.')
       }
     }
 

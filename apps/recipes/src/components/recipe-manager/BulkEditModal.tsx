@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, AlertCircle, Save } from 'lucide-react'
 import { Stack, Inline, Cluster } from '@/components/ui/layout'
+import { alert } from '../../lib/dialogStore'
 import { Badge } from '@/components/ui/badge'
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 import type { Recipe } from '../../lib/types'
@@ -64,7 +65,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({ selectedCount, onC
       onClose()
     } catch (e) {
       console.error(e)
-      alert('Failed to save bulk edits')
+      await alert('Failed to save bulk edits')
     } finally {
       setSaving(false)
     }

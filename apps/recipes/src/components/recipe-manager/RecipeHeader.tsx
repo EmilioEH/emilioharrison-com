@@ -63,11 +63,11 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               variant="ghost"
               size="icon"
               onClick={openBurgerMenu}
-              className="h-5 w-5 rounded-full text-background hover:bg-background/20 hover:text-white"
+              className="h-11 w-11 rounded-full text-background hover:bg-background/20 hover:text-white"
               title="Menu"
               aria-label="Menu"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -80,9 +80,14 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         }`}
       >
         <div className="flex items-center gap-3">
-          <h1 className="mb-0 font-display text-xl font-bold leading-none tracking-tight text-foreground">
+          <a
+            href="/protected/recipes"
+            className="mb-0 font-display text-xl font-bold leading-none tracking-tight text-foreground transition-opacity hover:opacity-70"
+            aria-label="Home"
+            title="Go to home"
+          >
             CHEFBOARD
-          </h1>
+          </a>
         </div>
 
         {/* Hide buttons in week view - they're in the WeekSelectorHeader */}
@@ -92,12 +97,12 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               <Button
                 variant="ghost"
                 onClick={onViewWeek}
-                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
+                className="flex h-11 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
                 title="View Week"
                 aria-label="View Week"
               >
-                <CalendarDays className="h-4 w-4" />
-                <span className="hidden text-xs font-bold sm:inline-block">View Week</span>
+                <CalendarDays className="h-5 w-5" />
+                <span className="hidden text-sm font-bold sm:inline-block">View Week</span>
               </Button>
             )}
 
@@ -105,12 +110,12 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               <Button
                 variant="ghost"
                 onClick={onAddRecipe}
-                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
+                className="flex h-11 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
                 title="Add Recipe"
                 aria-label="Add Recipe"
               >
-                <Plus className="h-4 w-4" />
-                <span className="text-xs font-bold">Add</span>
+                <Plus className="h-5 w-5" />
+                <span className="text-sm font-bold">Add</span>
               </Button>
             )}
           </div>

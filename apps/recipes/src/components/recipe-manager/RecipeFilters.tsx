@@ -13,7 +13,7 @@ interface FilterSectionProps {
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, children }) => (
   <div className="mb-4">
-    <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
       {title}
     </h3>
     <div className="flex flex-wrap gap-2">{children}</div>
@@ -30,7 +30,7 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <button onClick={onClick} className="focus:outline-none" aria-pressed={active}>
     <Badge
       variant={active ? 'active' : 'inactive'}
-      size="md"
+      size="lg"
       className="cursor-pointer transition-all"
     >
       {label}
@@ -99,9 +99,9 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                   <Button
                     key={opt.id}
                     variant={sort === opt.id ? 'default' : 'outline'}
-                    size="sm"
+                    size="default"
                     onClick={() => setSort(opt.id)}
-                    className="justify-start text-xs"
+                    className="justify-start text-sm"
                   >
                     <opt.icon className="mr-1.5" />
                     {opt.label}

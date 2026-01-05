@@ -26,7 +26,7 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
         size="icon"
         onClick={() => onAction('edit')}
         title="Edit Recipe"
-        className="rounded-full"
+        className="h-11 w-11 rounded-full"
       >
         <Edit2 className="h-5 w-5" />
       </Button>
@@ -36,7 +36,7 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full"
+            className="h-11 w-11 rounded-full"
             title="More Options"
             aria-label="More Options"
           >

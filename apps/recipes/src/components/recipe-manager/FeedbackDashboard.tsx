@@ -13,6 +13,7 @@ import {
   Square,
 } from 'lucide-react'
 import { Stack } from '@/components/ui/layout'
+import { alert, confirm } from '@/lib/dialogStore'
 
 interface FeedbackContext {
   user?: string
@@ -119,7 +120,7 @@ export default function FeedbackDashboard() {
       )
     } catch (err: unknown) {
       console.error('Failed to update status:', err)
-      alert('Failed to update status')
+      await alert('Failed to update status')
     }
   }
 
@@ -145,7 +146,7 @@ export default function FeedbackDashboard() {
 
   const handleBulkAction = async (action: 'fixed' | 'wont-fix' | 'delete' | 'open') => {
     if (selectedIds.size === 0) return
-    if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} items?`)) return
+    if (!(await confirm(`Are you sure you want to ${action} ${selectedIds.size} items?`))) return
 
     try {
       const baseUrl = import.meta.env.BASE_URL || ''
@@ -180,7 +181,7 @@ export default function FeedbackDashboard() {
       setIsSelectionMode(false)
     } catch (err) {
       console.error(err)
-      alert('Bulk action failed')
+      await alert('Bulk action failed')
     }
   }
 

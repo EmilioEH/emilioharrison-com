@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { BookOpen, X, Monitor } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { alert } from '@/lib/dialogStore'
 
 interface CookingOptionsMenuProps {
   isOpen: boolean
@@ -95,7 +96,7 @@ export const CookingOptionsMenu: React.FC<CookingOptionsMenuProps> = ({ isOpen, 
               <Button
                 variant="outline"
                 className="h-auto w-full justify-start gap-3 py-3"
-                onClick={() => alert('Help & Tips coming soon!')}
+                onClick={() => alert('Help & Tips coming soon!', 'Coming Soon')}
               >
                 <BookOpen className="h-5 w-5" />
                 <div className="text-left">

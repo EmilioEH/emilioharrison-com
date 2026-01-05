@@ -61,6 +61,9 @@ export const ResponsiveModal = React.forwardRef<HTMLDivElement, ResponsiveModalP
 
         {/* Modal Content */}
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? 'modal-title' : undefined}
           className={`relative z-50 flex flex-col bg-card shadow-xl transition-all duration-300 ease-out ${
             isMobile
               ? 'mt-auto h-[90vh] w-full rounded-t-[28px] animate-in slide-in-from-bottom'
@@ -84,7 +87,9 @@ export const ResponsiveModal = React.forwardRef<HTMLDivElement, ResponsiveModalP
 
           {/* Header */}
           <div className={`flex items-center justify-between px-6 ${isMobile ? 'pb-2' : 'py-6'}`}>
-            <h2 className="font-display text-xl font-bold text-foreground">{title}</h2>
+            <h2 id="modal-title" className="font-display text-xl font-bold text-foreground">
+              {title}
+            </h2>
             <button
               onClick={onClose}
               className="hover:bg-card-variant/50 rounded-full p-2 transition-colors"

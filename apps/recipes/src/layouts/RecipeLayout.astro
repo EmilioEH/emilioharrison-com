@@ -10,6 +10,7 @@ import '@fontsource/space-grotesk/600.css'
 import '@fontsource/space-grotesk/700.css'
 import GlobalFeedback from '../components/layout/GlobalFeedback'
 import GlobalBurgerMenu from '../components/layout/GlobalBurgerMenu'
+import GlobalDialogRoot from '../components/layout/GlobalDialogRoot'
 
 export interface Props {
   title: string
@@ -67,6 +68,7 @@ const user = Astro.cookies.get('site_user')?.value
 
     <GlobalBurgerMenu client:load user={user} />
     <GlobalFeedback client:load />
+    <GlobalDialogRoot client:load />
 
     <script>
       import '../lib/themeInit'
