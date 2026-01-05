@@ -2,7 +2,7 @@ import React from 'react'
 import { ChefHat, Calendar, ShoppingBag } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-import type { ViewMode } from './RecipeManager'
+import type { ViewMode } from './hooks/useRouter'
 
 interface BottomControlsProps {
   view: ViewMode

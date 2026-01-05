@@ -12,6 +12,7 @@ import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './BulkEditModal'
 import { BulkRecipeImporter } from './BulkRecipeImporter'
 import { FamilySetup } from './FamilySetup'
+import { FamilyManagementView } from './FamilyManagementView'
 import type { Recipe, FamilyRecipeData } from '../../lib/types'
 
 // --- Hooks ---
@@ -21,7 +22,7 @@ import { useGroceryListGenerator } from './hooks/useGroceryListGenerator'
 
 import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
-import { useRouter } from './hooks/useRouter'
+import { useRouter, type ViewMode } from './hooks/useRouter'
 
 import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
@@ -44,15 +45,7 @@ import { ResponsiveModal } from '../ui/ResponsiveModal'
 import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
 import { $cookingSession } from '../../stores/cookingSession'
 
-export type ViewMode =
-  | 'library'
-  | 'detail'
-  | 'edit'
-  | 'grocery'
-  | 'week'
-  | 'settings'
-  | 'feedback-dashboard'
-  | 'bulk-import'
+// ViewMode is now imported from useRouter
 
 interface ProteinWarning {
   protein: string
@@ -82,7 +75,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           familyActions.setMembers(data.members || [])
 
           // Show family setup if user has no family
-          if (!data.family) {
+          const shouldSkip =
+            typeof window !== 'undefined' &&
+            (window.location.search.includes('skip_setup') ||
+              document.cookie.includes('skip_family_setup=true'))
+          if (
+            !data.family &&
+            !shouldSkip &&
+            !(window as unknown as { isPlaywright: boolean }).isPlaywright
+          ) {
             setShowFamilySetup(true)
           }
         } else {
@@ -215,10 +216,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     const handleNavigateToSettings = () => setView('settings')
     const handleNavigateToFeedbackDashboard = () => setView('feedback-dashboard')
     const handleNavigateToBulkImport = () => setView('bulk-import')
+    const handleNavigateToFamilySettings = () => setView('family-settings')
 
     window.addEventListener('navigate-to-settings', handleNavigateToSettings)
     window.addEventListener('navigate-to-feedback-dashboard', handleNavigateToFeedbackDashboard)
     window.addEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
+    window.addEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
 
     return () => {
       window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
@@ -227,6 +230,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         handleNavigateToFeedbackDashboard,
       )
       window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
+      window.removeEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
     }
   }, [setView])
 
@@ -595,6 +599,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                 }}
               />
             </div>
+          )}
+          {view === 'family-settings' && (
+            <FamilyManagementView onClose={() => setView('library')} />
           )}
         </main>
       </div>

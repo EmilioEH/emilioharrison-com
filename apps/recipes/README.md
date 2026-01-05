@@ -239,21 +239,43 @@ npm run test:stryker
 
 Recipes are stored in Firestore, but user-specific data (ratings, notes, week plans) is now **family-scoped**.
 
-### Data Hierarchy
+### User-Specific vs. Family-Scoped Data
 
-1.  **Global Recipe**: The immutable recipe definition (steps, ingredients, image).
-2.  **Family Workspace**: A group of users (e.g., "Harrison Family") sharing a workspace.
-3.  **Family Recipe Data**: A subcollection `active_family_id/recipeData/{recipeId}` storing:
-    - **Notes:** Array of `{ text, author, date }`
-    - **Ratings:** Array of `{ rating, author, date }` (Aggregated for display)
-    - **Week Plan:** Shared week planning status `{ isPlanned, date, addedBy }`
-    - **Cooking History:** Log of cooking sessions
+The application distinguishes between data tied to an individual user and data shared across the entire family workspace:
+
+- **User-Specific (Private)**: Stored in `users/{userId}/...`
+  - **Favorites**: Favoriting a recipe is a personal preference and does not affect other family members' views.
+- **Family-Scoped (Shared)**: Stored in `families/{familyId}/recipeData/{recipeId}`
+  - **Notes**: All notes are shared and visible to the family.
+  - **Ratings**: Ratings are individual but aggregated into a family average.
+  - **Week Plan**: The meal plan is shared. If one member adds a recipe to "This Week," it appears for everyone.
+  - **Cooking History**: Shared timeline of cooking sessions.
 
 ### Usage
 
 - **Setup:** New users are prompted to create or join a family workspace.
 - **Sync:** All actions (rating, planning, noting) automatically sync to all family members in real-time (via optimistic UI and SWR).
 - **Attribution:** Changes are attributed to the specific family member who made them (e.g., "Planned by Emilio").
+
+### Family Management (Post-Setup)
+
+Users can manage their family workspace after the initial onboarding through a dedicated "Manage Family" interface.
+
+- **Access Level Control**:
+  - **Creator**: The user who created the family. Has full permissions and cannot be removed or demoted.
+  - **Admin**: Can rename the family, invite new members, promote/demote members to/from admin status, and remove members.
+  - **User**: Read-only access to the member list.
+- **Member Lifecycle**:
+  - **Invite**: Add new members by email. Note: Invited members must have already signed into the application at least once.
+  - **Promote**: Convert a "User" to an "Admin" to delegate management duties.
+  - **Remove**: Revoke a member's access to the shared family workspace. This clears their `familyId` and role, effectively moving them back to the onboarding flow.
+
+### Usage
+
+- **Entry Point**: Open the global burger menu (top right) and select **Manage Family**.
+- **Renaming**: Click the **Rename** button next to the family name (Admins only).
+- **Invitations**: Enter a member's email in the **Invite New Member** section.
+- **Management**: Use the role dropdown or the trash icon (Admins only) to manage existing members.
 
 ## 8. Validation Strategy
 

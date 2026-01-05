@@ -30,7 +30,7 @@ test.describe('Week View Synchronization', () => {
     })
 
     // 2. Go to app
-    await page.goto('/protected/recipes')
+    await page.goto('/protected/recipes?skip_setup=true')
 
     // 3. Create a recipe
     await page.getByRole('button', { name: 'Add Recipe' }).click()

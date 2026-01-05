@@ -64,11 +64,20 @@ export const AUTH_COOKIES = [
     secure: false,
     sameSite: 'Lax',
   },
+  {
+    name: 'skip_family_setup',
+    value: 'true',
+    domain: '127.0.0.1',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  },
 ] as const
 
 // The app uses BASE_URL which resolves to /protected/recipes/
 // So API calls go to /protected/recipes/api/...
-const API_PATTERN = /\/protected\/recipes\/api\/recipes/
 
 /**
  * Setup API mocking for a page.
@@ -77,14 +86,71 @@ const API_PATTERN = /\/protected\/recipes\/api\/recipes/
 export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES) {
   let mockRecipes = [...recipes]
 
-  // Log all requests to see what URLs are being called
-  page.on('request', (request) => {
-    console.log(`[REQ] ${request.method()} ${request.url()}`)
+  // Global fetch mock via init script to handle any variations in URL
+  await page.addInitScript(() => {
+    ;(window as unknown as { isPlaywright: boolean }).isPlaywright = true
+    const originalFetch = window.fetch
+    window.fetch = async (...args) => {
+      const url = typeof args[0] === 'string' ? args[0] : (args[0] as { url: string }).url
+      if (typeof url === 'string' && url.includes('families/current')) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            family: {
+              id: 'test-family-id',
+              name: 'Test Family',
+              members: ['TestUser'],
+              createdBy: 'TestUser',
+              createdAt: new Date().toISOString(),
+            },
+            members: [
+              {
+                id: 'TestUser',
+                email: 'emilioeh1991@gmail.com',
+                displayName: 'Emilio',
+                familyId: 'test-family-id',
+                role: 'creator',
+                joinedAt: new Date().toISOString(),
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+      if (typeof url === 'string' && url.includes('week/planned')) {
+        return new Response(JSON.stringify({ success: true, planned: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      return originalFetch(...args)
+    }
   })
 
-  await page.route(API_PATTERN, async (route) => {
+  // Recipes API Mock remains via page.route as it often needs state (mockRecipes)
+  await page.route('**/api/recipes/**', async (route) => {
     const method = route.request().method()
-    console.log(`[MOCK HIT] ${method} ${route.request().url()}`)
+    const url = route.request().url()
+
+    // Skip family-data which is more specialized
+    if (url.includes('/family-data')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          id: url.split('/').slice(-2, -1)[0],
+          notes: [],
+          ratings: [],
+          weekPlan: { isPlanned: false },
+          cookingHistory: [],
+        }),
+      })
+      return
+    }
 
     if (method === 'GET') {
       await route.fulfill({

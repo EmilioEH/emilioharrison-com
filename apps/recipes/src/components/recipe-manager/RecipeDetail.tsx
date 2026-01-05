@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
+import { computed } from 'nanostores'
 import { useStore } from '@nanostores/react'
 import { DetailHeader, type HeaderAction } from '../recipe-details/DetailHeader'
 import { Stack, Inline } from '../ui/layout'
@@ -7,6 +8,7 @@ import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
 import { Calendar, Play, Check } from 'lucide-react'
 import { OverviewMode } from '../recipe-details/OverviewMode'
+import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
 import { confirm } from '../../lib/dialogStore'
 
 // Wake Lock Helper
@@ -50,13 +52,13 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   const session = useStore($cookingSession)
   const isCooking = session.isActive && session.recipeId === recipe.id
 
-  // Feedback State - Removed unused local state as it is now handled in session or will be hydrated later.
-  // const [rating, setRating] = useState(recipe.rating || 0)
-  // const [userNotes, setUserNotes] = useState(recipe.userNotes || '')
-  // const [wouldMakeAgain, setWouldMakeAgain] = useState(recipe.wouldMakeAgain ?? true)
-  // const [finishedImage, setFinishedImage] = useState<string | null>(recipe.finishedImage || null)
-
-  // Local state for checkboxes removed, now using session.checkedIngredients
+  // Use weekStore to determine if planned (Family-scoped)
+  const isPlanned = useStore(
+    useMemo(
+      () => computed(allPlannedRecipes, () => isPlannedForActiveWeek(recipe.id)),
+      [recipe.id],
+    ),
+  )
 
   useWakeLock(isCooking)
 
@@ -74,7 +76,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     } else if (action === 'edit') {
       onUpdate({ ...recipe }, 'edit')
     } else if (action === 'addToWeek') {
-      onUpdate({ ...recipe, thisWeek: !recipe.thisWeek }, 'save')
+      onToggleThisWeek(recipe.id)
     } else if (action === 'move') {
       onUpdate({ ...recipe }, 'edit')
     } else if (action === 'toggleFavorite') {
@@ -111,12 +113,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
           <button
             onClick={() => handleAction('addToWeek')}
             className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 font-display text-base font-bold uppercase tracking-wider transition-all active:scale-95 ${
-              recipe.thisWeek
+              isPlanned
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-border bg-card text-muted-foreground hover:border-primary/50'
             }`}
           >
-            {recipe.thisWeek ? (
+            {isPlanned ? (
               <>
                 <Check className="h-4 w-4" /> Added
               </>

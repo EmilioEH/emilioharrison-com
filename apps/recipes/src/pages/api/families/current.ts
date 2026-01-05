@@ -141,12 +141,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // 3. Create or update user document
     // Note: We only have userId from cookies, not full user data
-    // The displayName will need to be updated when we integrate with Firebase Auth
     const newUser: User = {
       id: userId,
       email: '', // Will be populated from Firebase Auth
       displayName: 'User', // Will be populated from Firebase Auth
       familyId,
+      role: 'creator', // Assign creator role on creation
       joinedAt: now,
     }
 
@@ -175,5 +175,56 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       },
     )
+  }
+}
+
+/**
+ * PATCH /api/families/current
+ * Update family name
+ */
+export const PATCH: APIRoute = async ({ request, cookies }) => {
+  const userId = getAuthUser(cookies)
+
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
+  try {
+    const userDoc = await db.getDocument('users', userId)
+    if (!userDoc || !userDoc.familyId) {
+      return new Response(JSON.stringify({ success: false, error: 'No family found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Permission Check: only creator or admin
+    if (userDoc.role !== 'creator' && userDoc.role !== 'admin') {
+      return new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { name } = await request.json()
+    if (!name || typeof name !== 'string') {
+      return new Response(JSON.stringify({ success: false, error: 'Name is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    await db.updateDocument('families', userDoc.familyId, { name })
+
+    return new Response(JSON.stringify({ success: true, name }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (e) {
+    console.error('PATCH Family Error:', e)
+    return new Response(JSON.stringify({ success: false, error: (e as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 }

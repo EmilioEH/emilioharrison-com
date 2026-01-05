@@ -10,6 +10,7 @@ import {
   FolderUp,
   CheckSquare,
   LogOut,
+  UsersRound,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
@@ -40,6 +41,11 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const handleFeedbackDashboard = () => {
     closeBurgerMenu()
     window.dispatchEvent(new CustomEvent('navigate-to-feedback-dashboard'))
+  }
+
+  const handleManageFamily = () => {
+    closeBurgerMenu()
+    window.dispatchEvent(new CustomEvent('navigate-to-family-settings'))
   }
 
   return (
@@ -109,6 +115,15 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   <span className="font-medium text-foreground">Feedback Dashboard</span>
                 </button>
               )}
+
+              <button
+                role="menuitem"
+                onClick={handleManageFamily}
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <UsersRound className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Manage Family</span>
+              </button>
 
               <button
                 role="menuitem"

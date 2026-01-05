@@ -124,6 +124,7 @@ export interface User {
   email: string
   displayName: string
   photoURL?: string
+  role?: 'creator' | 'admin' | 'user'
   familyId?: string // Reference to family group
   joinedAt: string
 }

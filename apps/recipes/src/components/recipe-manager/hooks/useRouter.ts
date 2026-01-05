@@ -10,6 +10,7 @@ export type ViewMode =
   | 'settings'
   | 'feedback-dashboard'
   | 'bulk-import'
+  | 'family-settings'
 
 export interface RouteState {
   view: ViewMode

@@ -52,7 +52,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
 
   test('should allow favoriting a recipe and filtering by favorites', async ({ page }) => {
     await login(page)
-    await page.goto('/protected/recipes')
+    await page.goto('/protected/recipes?skip_setup=true')
 
     // 1. Create a test recipe
     await expect(page.getByTestId('loading-indicator')).toBeHidden()
@@ -102,7 +102,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
 
   test('should allow rating a recipe', async ({ page }) => {
     await login(page)
-    await page.goto('/protected/recipes')
+    await page.goto('/protected/recipes?skip_setup=true')
 
     // 1. Create or use existing
     await expect(page.getByTestId('loading-indicator')).toBeHidden()
@@ -140,7 +140,7 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
 
   test('should update modification date on edit', async ({ page }) => {
     await login(page)
-    await page.goto('/protected/recipes')
+    await page.goto('/protected/recipes?skip_setup=true')
     // 1. Create
     await expect(page.getByTestId('loading-indicator')).toBeHidden()
     const addBtn = page.getByRole('button', { name: 'Add Recipe' })
