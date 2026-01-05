@@ -76,6 +76,51 @@ Firestore does **NOT** support nested arrays (e.g., `number[][]`).
 - `RecipeLibrary.tsx` implements a manual "Scrollspy" to sync the sticky category header with the scroll position.
 - **Caution:** Refactoring the list view requires checking this scroll logic (`onScroll`, `scrollCache`) to ensure the "sticky header" experience breaks gracefully.
 
+### 6. Layout Primitives (Jan 2026)
+
+The application uses **semantic layout components** (`Stack`, `Inline`, `Cluster`) defined in `src/components/ui/layout.tsx` to ensure consistent spacing and improve maintainability.
+
+#### Why Layout Primitives?
+
+- **Before:** Spacing was hardcoded using Tailwind classes (`space-y-4`, `flex gap-2`), leading to inconsistency and difficulty making global design changes.
+- **After:** All layout spacing is controlled through a unified design token system with semantic component names.
+
+#### Available Primitives
+
+- **`<Stack>`**: Vertical layout with consistent spacing between children
+- **`<Inline>`**: Horizontal layout with flex properties (alignment, justify, wrapping)
+- **`<Cluster>`**: Horizontal layout with wrapping support for tag-like elements
+- **`<PageShell>`**: Full-page container with max-width and padding
+
+#### Spacing Scale
+
+All primitives use the `spacing` prop with a controlled scale:
+
+- `xs` = 2px (0.5rem)
+- `sm` = 8px (2rem)
+- `md` = 16px (4rem)
+- `lg` = 24px (6rem)
+- `xl` = 32px (8rem)
+- `2xl` = 48px (12rem)
+
+#### Usage Guidelines
+
+```tsx
+// ✅ Good: Use semantic primitives
+<Stack spacing="lg">
+  <h2>Title</h2>
+  <p>Content</p>
+</Stack>
+
+// ❌ Bad: Don't use hardcoded spacing
+<div className="space-y-6">
+  <h2>Title</h2>
+  <p>Content</p>
+</div>
+```
+
+**Agent Rule:** When creating or modifying UI components, use Layout Primitives for all spacing. Only fall back to manual Tailwind classes for one-off exceptions (e.g., negative margins for overlapping effects).
+
 ### Technical Documentation
 
 - [Gemini API Guide](docs/technical/gemini-api-guide.md) – AI integration patterns
@@ -85,6 +130,7 @@ Firestore does **NOT** support nested arrays (e.g., `number[][]`).
 
 ### Recent Updates (Jan 2026)
 
+- **Layout Primitives Refactor**: Completed a comprehensive refactoring of all application components to use semantic layout primitives (`Stack`, `Inline`, `Cluster`). Replaced hardcoded Tailwind spacing classes throughout 25+ components across five phases (Core Components, Recipe Manager, Week Planner, Cooking Mode, Recipe Details). This ensures consistent spacing, improves maintainability, and enables global design changes from a single source.
 - **Visual Hierarchy System**: Implemented a comprehensive monochromatic grayscale hierarchy using shadcn/ui design tokens. Added `active`, `inactive`, and `tag` variants to Badge component for clear visual distinction between primary, secondary, and tertiary elements. All interactive elements now follow consistent visual weight patterns (filled dark for high emphasis, bordered for medium, subtle for informational).
 - **Sizing Consistency**: Added proper size variants (`sm`, `md`, `lg`) to Badge component, matching Button's existing size system. All badges now use semantic size props instead of manual className overrides, creating predictable touch targets and visual rhythm.
 - **Icon Standardization**: Updated Button component with size-aware icon sizing (`[&_svg]:size-3.5` for sm, `size-4` for default, `size-5` for lg). Removed manual icon size overrides across all components. Icons now auto-scale with their containers for balanced, professional appearance.
@@ -413,6 +459,7 @@ src/
 │ │ ├── ExitConfirmation.tsx # End session dialog
 │ │ └── TimerControl.tsx # Timer UI and management
 │ ├── ui/ # shadcn/ui components (button, tabs, input, dialog, etc.)
+│ │ └── layout.tsx # Layout Primitives (Stack, Inline, Cluster, PageShell)
 │ └── layout/ # Global layout components
 ├── pages/ # Astro File-based Routing
 │ ├── index.astro # Main recipe app entry
