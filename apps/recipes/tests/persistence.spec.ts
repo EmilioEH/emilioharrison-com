@@ -27,7 +27,7 @@ test.describe('Recipe Persistence', () => {
     await page.goto('/protected/recipes')
 
     // Simulate persistence locally for this test session
-    let sessionRecipes: any[] = []
+    const sessionRecipes: unknown[] = []
     await page.route('**/api/recipes*', async (route) => {
       if (route.request().method() === 'GET') {
         // Handle both list and detail GET if needed, but here we just need the list

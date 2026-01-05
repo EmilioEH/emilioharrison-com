@@ -42,7 +42,7 @@ describe('API Tests', () => {
             candidates: [{ content: { parts: [{ text: JSON.stringify([]) }] } }],
           }),
         text: () => Promise.resolve(''),
-      } as any),
+      } as unknown as Response),
     )
   })
 
@@ -57,7 +57,9 @@ describe('API Tests', () => {
         body: JSON.stringify({}),
       })
       const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
-      const response = await parseRecipe({ request, locals } as any)
+      const response = await parseRecipe({ request, locals } as unknown as Parameters<
+        typeof parseRecipe
+      >[0])
       expect(response.status).toBe(400)
     })
 
@@ -67,7 +69,9 @@ describe('API Tests', () => {
         body: JSON.stringify({ url: 'https://example.com' }),
       })
       const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
-      const response = await parseRecipe({ request, locals } as any)
+      const response = await parseRecipe({ request, locals } as unknown as Parameters<
+        typeof parseRecipe
+      >[0])
       expect(response.status).toBe(200)
       const data = await response.json()
       expect(data.title).toBe('Mock Recipe')
@@ -81,7 +85,9 @@ describe('API Tests', () => {
         body: JSON.stringify({}), // Missing recipes
       })
       const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
-      const response = await generateGroceryList({ request, locals } as any)
+      const response = await generateGroceryList({ request, locals } as unknown as Parameters<
+        typeof generateGroceryList
+      >[0])
       // Current implementation returns 200 for missing recipes
       expect(response.status).toBe(200)
     })

@@ -20,7 +20,7 @@ test.describe('Cooking Mode Step Enhancements', () => {
   }
 
   test.beforeEach(async ({ page }) => {
-    let currentRecipes: any[] = [TEST_RECIPE]
+    const currentRecipes: unknown[] = [TEST_RECIPE]
 
     await page.route('**/api/recipes*', async (route) => {
       const method = route.request().method()

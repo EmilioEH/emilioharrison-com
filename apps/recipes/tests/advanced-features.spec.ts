@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { Page, ConsoleMessage } from '@playwright/test'
+import type { Recipe } from '../src/lib/types'
 
 const login = async (page: Page) => {
   await page.context().addCookies([
@@ -26,7 +27,7 @@ const login = async (page: Page) => {
 }
 
 test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
-  let currentRecipes: any[] = []
+  let currentRecipes: Recipe[] = []
 
   test.beforeEach(async ({ page }) => {
     currentRecipes = []
