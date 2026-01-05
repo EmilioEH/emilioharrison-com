@@ -1,0 +1,179 @@
+import type { APIRoute } from 'astro'
+import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
+import { db } from '../../../lib/firebase-server'
+import type { Family, User } from '../../../lib/types'
+
+/**
+ * GET /api/families/current
+ * Get the current user's family and its members
+ */
+export const GET: APIRoute = async ({ cookies }) => {
+  const userId = getAuthUser(cookies)
+
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
+  try {
+    // 1. Get user document to find their familyId
+    const userDoc = await db.getDocument('users', userId)
+
+    if (!userDoc || !userDoc.familyId) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          family: null,
+          members: [],
+          message: 'User has no family assigned',
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 2. Get family document
+    const familyDoc = await db.getDocument('families', userDoc.familyId)
+
+    if (!familyDoc) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Family not found',
+        }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 3. Get all family members
+    const memberPromises = (familyDoc.members as string[]).map((memberId) =>
+      db.getDocument('users', memberId),
+    )
+    const memberDocs = await Promise.all(memberPromises)
+    const members = memberDocs.filter((m) => m !== null) as User[]
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        family: familyDoc as Family,
+        members,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  } catch (e) {
+    console.error('GET Family Error:', e)
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: (e as Error).message,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  }
+}
+
+/**
+ * POST /api/families/current
+ * Create a new family for the current user
+ */
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const userId = getAuthUser(cookies)
+
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
+  try {
+    const body = await request.json()
+    const { name } = body
+
+    if (!name || typeof name !== 'string') {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Family name is required',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 1. Check if user already has a family
+    const existingUser = await db.getDocument('users', userId)
+    if (existingUser && existingUser.familyId) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'User already belongs to a family',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 2. Create family
+    const familyId = crypto.randomUUID()
+    const now = new Date().toISOString()
+
+    const newFamily: Family = {
+      id: familyId,
+      name,
+      members: [userId],
+      createdBy: userId,
+      createdAt: now,
+    }
+
+    await db.createDocument('families', familyId, newFamily)
+
+    // 3. Create or update user document
+    // Note: We only have userId from cookies, not full user data
+    // The displayName will need to be updated when we integrate with Firebase Auth
+    const newUser: User = {
+      id: userId,
+      email: '', // Will be populated from Firebase Auth
+      displayName: 'User', // Will be populated from Firebase Auth
+      familyId,
+      joinedAt: now,
+    }
+
+    await db.setDocument('users', userId, newUser)
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        family: newFamily,
+        user: newUser,
+      }),
+      {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  } catch (e) {
+    console.error('POST Family Error:', e)
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: (e as Error).message,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  }
+}

@@ -62,13 +62,13 @@ export const DayPicker: React.FC<DayPickerProps> = ({
     return `Week of ${format(activeDate, 'MMM d')}`
   }
 
-  const handleToggleDay = (day: (typeof DAYS_OF_WEEK)[number], dateStr: string) => {
+  const handleToggleDay = async (day: (typeof DAYS_OF_WEEK)[number]) => {
     const isPlanned = plannedDays.includes(day)
 
     if (isPlanned) {
-      removeRecipeFromDay(recipeId, dateStr)
+      await removeRecipeFromDay(recipeId)
     } else {
-      addRecipeToDay(recipeId, day)
+      await addRecipeToDay(recipeId, day)
       onClose()
     }
   }
@@ -170,7 +170,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
             {daysList.map((item) => (
               <button
                 key={item.day}
-                onClick={() => handleToggleDay(item.day, item.fullDate)}
+                onClick={() => handleToggleDay(item.day)}
                 className={`flex items-center justify-between rounded-md p-3 transition-all ${
                   item.isSelected
                     ? 'bg-primary/10 font-bold text-primary'

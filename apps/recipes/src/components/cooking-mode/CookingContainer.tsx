@@ -52,12 +52,46 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
     setIsReviewing(true)
   }
 
-  const handleReviewComplete = (data: { rating: number; notes: string; image: string | null }) => {
-    // TODO: Save data to recipe (via API or Store action)
-    // For Phase 3 MVP, we'll just log and close
-    console.log('Review Data:', data)
-    cookingSessionActions.endSession()
-    onClose()
+  const handleReviewComplete = async (data: {
+    rating: number
+    notes: string
+    image: string | null
+  }) => {
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+      if (!session.recipe) return
+      const recipeId = session.recipe.id
+
+      // 1. Save Rating (if changed)
+      if (data.rating > 0) {
+        await fetch(`${baseUrl}api/recipes/${recipeId}/rating`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating: data.rating }),
+        })
+      }
+
+      // 2. Save Note (if added)
+      if (data.notes.trim()) {
+        await fetch(`${baseUrl}api/recipes/${recipeId}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: data.notes }),
+        })
+      }
+
+      // 3. TODO: Save Image / Cooking History (Requires new endpoint)
+      if (data.image) {
+        console.log('Image saving to be implemented:', data.image)
+      }
+    } catch (error) {
+      console.error('Failed to save review data:', error)
+    } finally {
+      cookingSessionActions.endSession()
+      onClose()
+    }
   }
 
   if (isReviewing) {

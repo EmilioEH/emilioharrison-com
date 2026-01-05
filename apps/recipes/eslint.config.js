@@ -22,7 +22,7 @@ export default tseslint.config(
       jsxA11y.flatConfigs.recommended,
       prettyConfig, // Must be last to override other rules
     ],
-    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    files: ['src/**/*.{js,jsx,ts,tsx}', 'tests/**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,

@@ -114,7 +114,7 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
               htmlFor="review-notes"
               className="text-sm font-bold uppercase tracking-wider text-muted-foreground"
             >
-              Private Notes
+              Family Notes
             </label>
             <textarea
               id="review-notes"

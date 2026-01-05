@@ -11,7 +11,8 @@ import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './BulkEditModal'
 import { BulkRecipeImporter } from './BulkRecipeImporter'
-import type { Recipe } from '../../lib/types'
+import { FamilySetup } from './FamilySetup'
+import type { Recipe, FamilyRecipeData } from '../../lib/types'
 
 // --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
@@ -25,6 +26,7 @@ import { useRouter } from './hooks/useRouter'
 import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
+import { familyActions } from '../../lib/familyStore'
 
 // --- Sub-Components ---
 import { RecipeLibrary } from './RecipeLibrary'
@@ -63,6 +65,55 @@ interface RecipeManagerProps {
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   const { recipes, setRecipes, loading, refreshRecipes, getBaseUrl } = useRecipes()
+
+  // Family Sync State
+  const [showFamilySetup, setShowFamilySetup] = useState(false)
+
+  // Load family data on mount
+  useEffect(() => {
+    const loadFamilyData = async () => {
+      try {
+        const response = await fetch('/protected/recipes/api/families/current')
+        const data = await response.json()
+
+        if (data.success) {
+          familyActions.setFamily(data.family)
+          familyActions.setMembers(data.members || [])
+
+          // Show family setup if user has no family
+          if (!data.family) {
+            setShowFamilySetup(true)
+          }
+        } else {
+          familyActions.setFamily(null)
+        }
+      } catch (error) {
+        console.error('Failed to load family data:', error)
+        familyActions.setFamily(null)
+      }
+    }
+
+    if (!loading) {
+      loadFamilyData()
+
+      // Also load planned recipes to populate week view
+      const loadPlannedRecipes = async () => {
+        try {
+          const res = await fetch('/protected/recipes/api/week/planned')
+          const data = await res.json()
+          if (data.success && data.planned) {
+            // Batch update store with planned recipe data
+            data.planned.forEach((item: FamilyRecipeData) => {
+              familyActions.setRecipeFamilyData(item.id, item)
+            })
+          }
+        } catch (e) {
+          console.error('Failed to load planned recipes:', e)
+        }
+      }
+      loadPlannedRecipes()
+    }
+  }, [loading])
 
   // Use new Router Hook
   const {
@@ -629,6 +680,24 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           }}
         />
       )}
+
+      {/* Family Setup Modal */}
+      <FamilySetup
+        open={showFamilySetup}
+        onComplete={() => {
+          setShowFamilySetup(false)
+          // Reload family data after setup
+          fetch('/protected/recipes/api/families/current')
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success) {
+                familyActions.setFamily(data.family)
+                familyActions.setMembers(data.members || [])
+              }
+            })
+            .catch((err) => console.error('Failed to reload family:', err))
+        }}
+      />
     </>
   )
 }

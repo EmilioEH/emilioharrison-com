@@ -21,6 +21,8 @@ This directory (`/docs`) serves as the central knowledge base for the project. A
   - **Examples**: `cms-comparison.md`, `library-research.md`.
   - **Action**: Store findings here before making architectural decisions.
 
+> **Note**: For Family Sync (multi-user) features, refer to `docs/technical/family-sync-architecture.md`.
+
 - **`docs/guides/`**
   - **Purpose**: Instructions for users and developers.
   - **Examples**: `how-to-blog.md`, `setup-guide.md`.

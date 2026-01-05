@@ -107,6 +107,70 @@ export interface SafeLogEntry {
   timestamp: string
 }
 
+// --- Multi-User Family Sync Types ---
+
+/** Family/Household group for sharing recipe data */
+export interface Family {
+  id: string // auto-generated
+  name: string // "Harrison Family"
+  members: string[] // Array of Google Auth UIDs
+  createdBy: string // userId who created the group
+  createdAt: string // ISO date
+}
+
+/** User profile with family membership */
+export interface User {
+  id: string // Google Auth UID
+  email: string
+  displayName: string
+  photoURL?: string
+  familyId?: string // Reference to family group
+  joinedAt: string
+}
+
+/** A note added by a family member on a recipe */
+export interface RecipeNote {
+  userId: string
+  userName: string // Display name from Google Auth
+  text: string
+  createdAt: string
+}
+
+/** A rating given by a family member */
+export interface UserRating {
+  userId: string
+  userName: string
+  rating: number // 1-5
+  ratedAt: string
+}
+
+/** Cooking history entry for a family member */
+export interface CookingHistoryEntry {
+  userId: string
+  userName: string
+  cookedAt: string // ISO date
+  wouldMakeAgain?: boolean
+  finishedImage?: string // Base64 or URL
+}
+
+/** Week planning data (shared across family) */
+export interface WeekPlanData {
+  isPlanned: boolean
+  assignedDate?: string // YYYY-MM-DD
+  addedBy?: string // userId
+  addedByName?: string // userName
+  addedAt?: string // ISO date
+}
+
+/** Family-specific recipe data (notes, ratings, planning, history) */
+export interface FamilyRecipeData {
+  id: string // matches recipe ID
+  notes: RecipeNote[]
+  ratings: UserRating[]
+  weekPlan?: WeekPlanData
+  cookingHistory: CookingHistoryEntry[]
+}
+
 export interface ServiceAccount {
   type?: string
   project_id: string

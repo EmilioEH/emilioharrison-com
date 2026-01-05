@@ -354,6 +354,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                         variant="tag"
                         size="sm"
                         className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
+                        title={p.addedByName ? `Added by ${p.addedByName}` : 'Planned'}
                       >
                         {p.label}
                       </Badge>
@@ -564,8 +565,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               recipeId={managementRecipeId}
               recipeTitle={selectedRecipe.title}
               currentPlannedDays={plannedDates}
-              onRemove={(date) => {
-                removeRecipeFromDay(managementRecipeId, date)
+              onRemove={async () => {
+                await removeRecipeFromDay(managementRecipeId)
               }}
             />
           )

@@ -1,6 +1,7 @@
 import { computed } from 'nanostores'
 import { persistentMap } from '@nanostores/persistent'
 import { startOfWeek, addWeeks, format, parseISO, addDays } from 'date-fns'
+import { $recipeFamilyData, familyActions } from './familyStore'
 
 // --- Types ---
 
@@ -19,6 +20,8 @@ export interface PlannedRecipe {
   date: string // YYYY-MM-DD
   weekStart: string // YYYY-MM-DD (Monday)
   mealType?: string // Optional: Breakfast, Lunch, Dinner
+  addedBy?: string
+  addedByName?: string
 }
 
 export type WeekState = Record<string, string> & {
@@ -40,26 +43,34 @@ export const DAYS_OF_WEEK: DayOfWeek[] = [
 // --- Store ---
 
 // Persist the active week view (defaults to current week)
-// using a map to allow for potential future expansion of view settings
 export const weekState = persistentMap<WeekState>('weekState', {
   activeWeekStart: format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
 })
 
-// Persist planned recipes
-// Key: "recipeId_date" -> Value: JSON string of PlannedRecipe
-// We use a flat map for easier persistence, and computed stores to group by week
-export const plannedRecipesStore = persistentMap<Record<string, string | undefined>>(
-  'plannedRecipes',
-  {},
-)
-
 // --- Computed Helpers ---
 
-// Get all planned recipes as objects
-export const allPlannedRecipes = computed(plannedRecipesStore, (recipes) => {
-  return Object.values(recipes)
-    .filter((r): r is string => typeof r === 'string')
-    .map((r) => JSON.parse(r) as PlannedRecipe)
+// Get all planned recipes derived from the family data store
+export const allPlannedRecipes = computed($recipeFamilyData, (familyData) => {
+  const planned: PlannedRecipe[] = []
+
+  Object.values(familyData).forEach((data) => {
+    if (data.weekPlan?.isPlanned && data.weekPlan.assignedDate) {
+      const date = parseISO(data.weekPlan.assignedDate)
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 })
+      const dayIndex = (date.getDay() + 6) % 7 // Monday = 0
+
+      planned.push({
+        recipeId: data.id,
+        day: DAYS_OF_WEEK[dayIndex],
+        date: data.weekPlan.assignedDate,
+        weekStart: format(weekStart, 'yyyy-MM-dd'),
+        addedBy: data.weekPlan.addedBy,
+        addedByName: data.weekPlan.addedByName,
+      })
+    }
+  })
+
+  return planned
 })
 
 // Get recipes for the currently active week
@@ -94,65 +105,77 @@ export const switchWeekContext = (date?: Date | string) => {
   weekState.setKey('activeWeekStart', format(monday, 'yyyy-MM-dd'))
 }
 
+// API Helper
+const getBaseUrl = () => {
+  return import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`
+}
+
 /**
  * Add a recipe to a specific day in the CURRENTLY ACTIVE week
  */
-export const addRecipeToDay = (recipeId: string, day: DayOfWeek) => {
+export const addRecipeToDay = async (recipeId: string, day: DayOfWeek) => {
   const activeStart = weekState.get().activeWeekStart
   const dateOfStart = parseISO(activeStart)
   const dayIndex = DAYS_OF_WEEK.indexOf(day)
   const targetDate = addDays(dateOfStart, dayIndex)
   const dateStr = format(targetDate, 'yyyy-MM-dd')
 
-  const newPlan: PlannedRecipe = {
-    recipeId,
-    day,
-    date: dateStr,
-    weekStart: activeStart,
+  // Optimistic Update
+  // We can't easily optimistic update computed derived stores directly without complex logic,
+  // but we can assume the API call will be fast.
+  // For better UX, we could manually inject into $recipeFamilyData
+
+  // Call API
+  try {
+    const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        isPlanned: true,
+        assignedDate: dateStr,
+      }),
+    })
+
+    const data = await res.json()
+    if (data.success && data.data) {
+      familyActions.setRecipeFamilyData(recipeId, data.data)
+    }
+  } catch (error) {
+    console.error('Failed to add recipe to week:', error)
   }
-
-  // Key format: "recipeId_date" to allow same recipe on multiple days,
-  // but only once per day per recipe
-  const key = `${recipeId}_${dateStr}`
-
-  plannedRecipesStore.setKey(key, JSON.stringify(newPlan))
 }
 
 /**
  * Remove a recipe from a specific day
  */
-export const removeRecipeFromDay = (recipeId: string, date: string) => {
-  const key = `${recipeId}_${date}`
-  plannedRecipesStore.setKey(key, undefined)
-  // Actually for persistentMap, setting to undefined might not clear the key from storage depending on implementation.
-  // Let's use the provided way if possible, or just standard map manipulation.
-  // nanostores/persistent doesn't strictly support 'delete' in the setKey signature purely,
-  // but setting to undefined usually signals removal in many stores.
-  // Checks documentation: persistentMap doesn't delete keys easily.
-  // Workaround: We might need to copy, delete, and setAll if we want to truly remove,
-  // OR just filter them out in the computed.
-  // For now, let's assume setting to 'null' or empty string and filtering is safer if delete isn't supported.
-  // Wait, standard map.setKey(key, undefined) works in nanostores to delete.
-  plannedRecipesStore.setKey(key, undefined!)
+export const removeRecipeFromDay = async (recipeId: string) => {
+  try {
+    const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
+      method: 'DELETE',
+    })
+
+    if (res.ok) {
+      // Fetch fresh data or manually update store
+      const resData = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/family-data`)
+      const data = await resData.json()
+      if (data.success && data.data) {
+        familyActions.setRecipeFamilyData(recipeId, data.data)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to remove recipe from week:', error)
+  }
 }
 
 /**
  * Remove all planned instances of a recipe
  */
-export const unplanRecipe = (recipeId: string) => {
-  const current = plannedRecipesStore.get()
-  const updates: Record<string, undefined> = {}
-
-  Object.entries(current).forEach(([key]) => {
-    if (key.startsWith(`${recipeId}_`)) {
-      updates[key] = undefined
-    }
-  })
-
-  if (Object.keys(updates).length > 0) {
-    // Batch update if possible, or loop
-    Object.keys(updates).forEach((k) => plannedRecipesStore.setKey(k, undefined!))
-  }
+export const unplanRecipe = async (recipeId: string) => {
+  // Since backend only supports one instance, this is the same as removeRecipeFromDay logic
+  // but we don't need the date. DELETE endpoint handles it.
+  await removeRecipeFromDay(recipeId)
 }
 
 /**
@@ -212,6 +235,7 @@ export const getPlannedDatesForRecipe = (recipeId: string) => {
       weekStart: p.weekStart,
       isCurrentWeek,
       isNextWeek,
+      addedByName: p.addedByName,
     }
   })
 }

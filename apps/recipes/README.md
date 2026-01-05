@@ -139,6 +139,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Enhanced Cooking Navigation (Jan 2026)**: Added vertical step previews (Previous/Next) using shadcn/ui Cards for better context. Implemented a dedicated "Step List" (Sheet component) with jumping support. Updated header buttons with clearer labels for improved usability.
 - **Cooking Mode UX Polish**: Fixed a mobile responsiveness issue where the options menu was appearing off-screen. Implemented a responsive modal positioning pattern (`left-4 right-4 mx-auto ... sm:left-1/2`) that ensures full visibility and safe margins on small viewports while maintaining centered placement on desktop.
 - **Week View Workspace**: Transformed the week view into a persistent, sliding workspace. Users can now toggle between a "Plan" view (daily meals) and a "Grocery" view (shoppable list) directly within the workspace contexts.
+- **Full-Screen Image Viewer**: Tapping a recipe's header image now opens it in a full-screen overlay using a React Portal, ensuring proper z-index stacking. Press ESC or tap the close button to dismiss.
 
 > [!TIP]
 > **Agent Tip: Responsive Modals**
@@ -234,7 +235,47 @@ npm run test:stryker
 # Runs: Stryker mutation testing to verify test quality
 ```
 
-### 🔬 Testing Strategy: Playwright + Browser Agent
+## 7. Recipe Data & Family Sync
+
+Recipes are stored in Firestore, but user-specific data (ratings, notes, week plans) is now **family-scoped**.
+
+### Data Hierarchy
+
+1.  **Global Recipe**: The immutable recipe definition (steps, ingredients, image).
+2.  **Family Workspace**: A group of users (e.g., "Harrison Family") sharing a workspace.
+3.  **Family Recipe Data**: A subcollection `active_family_id/recipeData/{recipeId}` storing:
+    - **Notes:** Array of `{ text, author, date }`
+    - **Ratings:** Array of `{ rating, author, date }` (Aggregated for display)
+    - **Week Plan:** Shared week planning status `{ isPlanned, date, addedBy }`
+    - **Cooking History:** Log of cooking sessions
+
+### Usage
+
+- **Setup:** New users are prompted to create or join a family workspace.
+- **Sync:** All actions (rating, planning, noting) automatically sync to all family members in real-time (via optimistic UI and SWR).
+- **Attribution:** Changes are attributed to the specific family member who made them (e.g., "Planned by Emilio").
+
+## 8. Validation Strategy
+
+This project enforces strict quality gates using `00-agent-workflow.md`.
+
+### Core Checks
+
+Run these commands locally to verify your work:
+
+| Check             | Command                            | Purpose                                             |
+| :---------------- | :--------------------------------- | :-------------------------------------------------- |
+| **Lint**          | `npm run lint`                     | Catches syntax, A11y, and code style issues.        |
+| **Types**         | `npx tsc --noEmit`                 | Strict TypeScript validation.                       |
+| **Tests**         | `npx playwright test`              | End-to-End user journey validation.                 |
+| **Week Rollover** | `npx tsx src/lib/week-rollover.ts` | (Legacy) Manual trigger for week planning rollover. |
+
+### E2E Test Scenarios
+
+- **Cooking Mode:** Verifies the full cook flow, timers, and session completion.
+- **Family Sync:** Verifies multi-user data sharing by simulating multiple authenticated sessions.
+
+### 🔬 Legacy Testing Context (Playwright + Browser Agent)
 
 We use **two complementary testing approaches**:
 
