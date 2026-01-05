@@ -14,6 +14,7 @@ import { StarRating } from '../ui/StarRating'
 import { CheckableItem } from './CheckableItem'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
+import { Stack, Inline } from '../ui/layout'
 import type { Recipe } from '../../lib/types'
 
 import { useStore } from '@nanostores/react'
@@ -85,7 +86,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   }, []) // Trigger once on mount
 
   return (
-    <div className={`flex-1 overflow-y-auto pb-20`}>
+    <Stack spacing="none" className="flex-1 overflow-y-auto pb-20">
       <div className="relative">
         {recipe.sourceImage && (
           <div className="h-64 w-full">
@@ -98,7 +99,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         >
           {/* Metadata Header */}
           <div className="mb-6">
-            <div className="mb-2 flex gap-2">
+            <Inline spacing="sm" className="mb-2">
               {recipe.protein && (
                 <Badge variant="tag" size="sm" className="uppercase">
                   {recipe.protein}
@@ -109,7 +110,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   {recipe.difficulty}
                 </Badge>
               )}
-            </div>
+            </Inline>
             <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-foreground">
               {recipe.title}
             </h1>
@@ -133,35 +134,41 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </p>
             )}
 
-            <div className="text-foreground-variant mt-4 flex gap-4 border-y border-border/20 py-3 text-sm font-medium">
-              <div className="flex items-center gap-1">
+            <Inline
+              spacing="md"
+              className="text-foreground-variant mt-4 border-y border-border/20 py-3 text-sm font-medium"
+            >
+              <Inline spacing="xs">
                 <Clock className="h-4 w-4 text-primary" />
                 <span>{recipe.prepTime + recipe.cookTime}m</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </Inline>
+              <Inline spacing="xs">
                 <Users className="h-4 w-4 text-primary" />
                 <span>{recipe.servings} Servings</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </Inline>
+              <Inline spacing="xs">
                 <Flame className="h-4 w-4 text-primary" />
                 <span>{recipe.difficulty || 'Easy'}</span>
-              </div>
+              </Inline>
               {recipe.updatedAt && (
-                <div className="flex items-center gap-1 sm:ml-auto" title="Last Modified">
+                <Inline spacing="xs" className="sm:ml-auto">
                   <span className="text-xs opacity-70">
                     Updated {new Date(recipe.updatedAt).toLocaleDateString()}
                   </span>
-                </div>
+                </Inline>
               )}
-            </div>
+            </Inline>
           </div>
 
           {/* Cost Estimation (Auto) */}
           <div className="mb-6 flex justify-end">
             {isEstimating ? (
-              <div className="bg-card-variant/50 text-foreground-variant flex items-center gap-2 rounded-lg px-3 py-1 text-xs font-medium">
+              <Inline
+                spacing="xs"
+                className="bg-card-variant/50 text-foreground-variant rounded-lg px-3 py-1 text-xs font-medium"
+              >
                 <Loader2 className="h-3 w-3 animate-spin" /> Estimating HEB Cost...
-              </div>
+              </Inline>
             ) : estimateError ? (
               <button
                 onClick={handleEstimateCost}
@@ -197,21 +204,21 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           {/* Quick Stats or Previous Experience */}
           {(recipe.rating || recipe.userNotes) && (
             <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 rounded-md-xl mb-8 rounded-xl border p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex gap-0.5">
+              <Inline spacing="none" justify="between" className="mb-2">
+                <Inline spacing="xs">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
                       className={`h-4 w-4 ${s <= (recipe.rating || 0) ? 'fill-md-sys-color-tertiary text-md-sys-color-tertiary fill-yellow-400 text-yellow-400' : 'text-border'}`}
                     />
                   ))}
-                </div>
+                </Inline>
                 {recipe.lastCooked && (
                   <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
                     Last cooked: {new Date(recipe.lastCooked).toLocaleDateString()}
                   </span>
                 )}
-              </div>
+              </Inline>
               {recipe.userNotes && (
                 <p
                   className="text-md-sys-color-on-tertiary-container font-body text-sm italic"
@@ -223,21 +230,26 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </div>
           )}
 
-          <div className="mt-4 flex items-center justify-between">
+          <Inline spacing="none" justify="between" className="mt-4">
             <StarRating rating={recipe.rating || 0} onRate={handleRate} size="lg" />
             {/* Placeholder for future specific rating text or count */}
-          </div>
+          </Inline>
 
           {/* Ingredients */}
           <div className="mb-8">
-            <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-foreground">
-              <div className="flex items-center gap-2">
+            <Inline
+              as="h2"
+              spacing="none"
+              justify="between"
+              className="mb-4 font-display text-xl font-bold text-foreground"
+            >
+              <Inline spacing="sm">
                 Ingredients
                 <span className="text-foreground-variant font-body text-sm font-normal">
                   ({recipe.ingredients?.length || 0})
                 </span>
-              </div>
-            </h2>
+              </Inline>
+            </Inline>
             <div className={`bg-card-variant/20 rounded-lg border border-dashed border-border p-2`}>
               {recipe.ingredients.map((ing, idx) => {
                 const prep = ing.prep ? `, ${ing.prep}` : ''
@@ -260,7 +272,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
           {/* Steps */}
           <div className="mb-8">
-            <h2 className="mb-4 flex items-center justify-between font-display text-xl font-bold text-foreground">
+            <Inline
+              as="h2"
+              spacing="none"
+              justify="between"
+              className="mb-4 font-display text-xl font-bold text-foreground"
+            >
               Instructions
               <Button
                 variant="outline"
@@ -270,10 +287,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               >
                 Cooking Mode <Play className="fill-current" />
               </Button>
-            </h2>
-            <div className="space-y-4">
+            </Inline>
+            <Stack spacing="md">
               {recipe.steps.map((step, idx) => (
-                <div key={idx} className="flex gap-4">
+                <Inline key={idx} spacing="md" align="start">
                   <div
                     className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border font-bold transition-colors ${checkedSteps[idx] ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground'}`}
                   >
@@ -285,9 +302,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   >
                     {step}
                   </button>
-                </div>
+                </Inline>
               ))}
-            </div>
+            </Stack>
           </div>
 
           {recipe.notes && (
@@ -298,6 +315,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </Stack>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Inline } from '@/components/ui/layout'
 import type { Recipe } from '../../lib/types'
 import { DetailHeaderActions } from './DetailHeaderActions'
 import { HeaderBackButton, HeaderModeToggle } from './DetailHeaderComponents'
@@ -29,8 +30,10 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   cookingStage,
   setCookingStage,
 }) => (
-  <div
-    className={`sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
+  <Inline
+    spacing="none"
+    justify="between"
+    className={`sticky top-0 z-20 border-b border-border bg-background px-4 py-4 transition-all ${cookingMode ? 'py-2' : ''}`}
   >
     <HeaderBackButton
       cookingStage={cookingStage}
@@ -38,7 +41,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
       onClose={onClose}
     />
 
-    <div className="flex gap-2">
+    <Inline spacing="sm">
       <HeaderModeToggle
         cookingMode={cookingMode}
         setCookingMode={setCookingMode}
@@ -61,6 +64,6 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         onToggleThisWeek={onToggleThisWeek}
         isThisWeek={recipe.thisWeek}
       />
-    </div>
-  </div>
+    </Inline>
+  </Inline>
 )

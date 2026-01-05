@@ -8,6 +8,8 @@ interface AccordionGroupProps {
   isOpen: boolean
   onToggle: () => void
   viewMode: 'grid' | 'list'
+  stickyHeader?: boolean
+  stickyTop?: string | number
 }
 
 export const AccordionGroup: React.FC<AccordionGroupProps> = ({
@@ -17,24 +19,31 @@ export const AccordionGroup: React.FC<AccordionGroupProps> = ({
   isOpen,
   onToggle,
   viewMode,
+  stickyHeader = false,
+  stickyTop = 0,
 }) => (
   <div className="border-b border-border last:border-0">
-    <button
-      onClick={onToggle}
-      className="flex w-full items-center justify-between px-6 py-4 transition-colors hover:bg-primary/[0.04]"
+    <div
+      className={stickyHeader ? 'sticky z-30 bg-background/95 backdrop-blur-sm' : ''}
+      style={stickyHeader ? { top: stickyTop } : undefined}
     >
-      <div className="flex items-center gap-3">
-        <h3 className="font-display text-xl font-bold text-foreground">{title}</h3>
-        <span className="bg-primary-container text-primary-foreground-container rounded-full px-2 py-0.5 text-xs font-medium">
-          {count}
-        </span>
-      </div>
-      <ChevronDown
-        className={`text-foreground-variant h-5 w-5 transition-transform duration-200 ${
-          isOpen ? 'rotate-180' : ''
-        }`}
-      />
-    </button>
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-6 py-4 transition-colors hover:bg-primary/[0.04]"
+      >
+        <div className="flex items-center gap-3">
+          <h3 className="font-display text-xl font-bold text-foreground">{title}</h3>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {count}
+          </span>
+        </div>
+        <ChevronDown
+          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+    </div>
     <div
       className={`grid transition-all duration-200 ease-in-out ${
         isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'

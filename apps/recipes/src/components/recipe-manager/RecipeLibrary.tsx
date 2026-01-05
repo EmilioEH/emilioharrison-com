@@ -1,8 +1,9 @@
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ChefHat, ChevronRight, MoreVertical, Star } from 'lucide-react'
+import { ChefHat, MoreVertical, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { AccordionGroup } from '@/components/ui/AccordionGroup'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
@@ -176,6 +177,21 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [activeGroup, groupedRecipes, isSelectionMode, scrollContainer])
 
+  const stickyHeaderRef = useRef<HTMLDivElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+
+  useLayoutEffect(() => {
+    if (stickyHeaderRef.current) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setHeaderHeight(entry.borderBoxSize[0].blockSize)
+        }
+      })
+      resizeObserver.observe(stickyHeaderRef.current)
+      return () => resizeObserver.disconnect()
+    }
+  }, [])
+
   const toggleGroup = (groupName: string) => {
     setOpenGroups((prev) => ({
       ...prev,
@@ -189,8 +205,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     const container = scrollContainer || window.recipeScrollContainer
     if (el && container) {
       isProgrammaticScroll.current = true
-      // Scroll to element, accounting for Category Nav height (~60px)
-      const top = Math.max(0, el.offsetTop - 65)
+      // Scroll to element, accounting for dynamic header height
+      const top = Math.max(0, el.offsetTop - headerHeight - 10) // 10px buffer
       container.scrollTo({ top, behavior: 'smooth' })
 
       // Release lock after animation + margin
@@ -357,17 +373,22 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
               {/* Add to Week button - hidden in week management context */}
               {!allowManagement && (
-                <Badge
-                  variant="inactive"
-                  size="md"
-                  className="cursor-pointer uppercase tracking-wider hover:bg-muted"
+                <button
                   onClick={(e) => {
                     e.stopPropagation()
                     onToggleThisWeek(recipe.id)
                   }}
+                  className="focus:outline-none"
+                  aria-label="Add to Week"
                 >
-                  Add to Week
-                </Badge>
+                  <Badge
+                    variant="inactive"
+                    size="md"
+                    className="cursor-pointer uppercase tracking-wider hover:bg-muted"
+                  >
+                    Add to Week
+                  </Badge>
+                </button>
               )}
             </div>
           </div>
@@ -397,7 +418,10 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     <div ref={containerRef} className="pb-24 animate-in fade-in">
       {/* Category Nav - Scrollable (Sticky) */}
       {!isSelectionMode && !hasSearch && (
-        <div className="sticky top-0 z-40 bg-background/95 pb-2 pt-2 shadow-sm backdrop-blur transition-all">
+        <div
+          ref={stickyHeaderRef}
+          className="sticky top-0 z-40 bg-background/95 pb-2 pt-2 shadow-sm backdrop-blur transition-all"
+        >
           <div
             ref={navRef}
             className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto px-4 pb-1"
@@ -428,7 +452,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex flex-col gap-1 p-4 pt-4"
+          className="flex flex-wrap gap-4 p-4 pt-4"
         >
           {recipes.map((recipe) => {
             const isSelected = selectedIds?.has(recipe.id)
@@ -446,7 +470,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 key={recipe.id}
                 role="button"
                 onClick={() => onSelectRecipe(recipe)}
-                className={`flex items-center gap-4 rounded-lg border p-3 transition-colors ${
+                className={`flex w-full items-center gap-4 rounded-lg border p-3 transition-colors md:w-[calc(50%-8px)] lg:w-[calc(33.33%-11px)] ${
                   isSelected
                     ? 'border-primary bg-primary/5'
                     : 'border-border bg-card hover:bg-accent/50'
@@ -507,39 +531,19 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               groupRefs.current[key] = el
             }}
           >
-            {/* Group Header */}
-            <div className="sticky top-[52px] z-30 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-200">
-              <button
-                onClick={() => toggleGroup(key)}
-                className="flex w-full items-center justify-between px-4 py-2 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex items-center gap-2">
-                  <h3 className="mb-0 font-display text-base font-bold text-foreground">
-                    {getGroupTitle(key)}
-                  </h3>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                    {groupedRecipes.groups[key].length}
-                  </span>
-                </div>
-                <ChevronRight
-                  className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
-                    openGroups[key] !== false ? 'rotate-90' : ''
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Recipe List */}
-            {openGroups[key] !== false && (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="flex flex-col gap-1 p-4 pt-1"
-              >
+            <AccordionGroup
+              title={getGroupTitle(key)}
+              count={groupedRecipes.groups[key].length}
+              isOpen={openGroups[key] !== false}
+              onToggle={() => toggleGroup(key)}
+              viewMode="list"
+              stickyHeader
+              stickyTop={headerHeight}
+            >
+              <div className="flex flex-col gap-1">
                 {groupedRecipes.groups[key].map(renderRecipeCard)}
-              </motion.div>
-            )}
+              </div>
+            </AccordionGroup>
           </div>
         ))
       )}

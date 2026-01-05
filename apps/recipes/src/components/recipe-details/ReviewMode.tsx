@@ -1,6 +1,7 @@
 import React from 'react'
 import { CheckCircle2, FolderInput } from 'lucide-react'
 import { StarRating } from '../ui/StarRating'
+import { Stack, Inline } from '../ui/layout'
 
 interface ReviewModeProps {
   rating: number
@@ -28,21 +29,21 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   handleFinishCooking,
 }) => {
   return (
-    <div className="space-y-8 p-6 animate-in fade-in slide-in-from-bottom-8">
+    <Stack spacing="xl" className="p-6 animate-in fade-in slide-in-from-bottom-8">
       <header className="text-center">
         <h2 className="font-display text-4xl font-bold italic text-primary">Chef's Kiss!</h2>
         <p className="text-foreground-variant mt-2 font-body text-lg">How did it turn out?</p>
       </header>
 
-      <div className="space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="space-y-2" data-testid="review-rating">
+      <Stack spacing="lg" className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <Stack spacing="xs" data-testid="review-rating">
           <span className="text-foreground-variant text-xs font-bold uppercase tracking-widest">
             Rating
           </span>
           <StarRating rating={rating} onRate={setRating} />
-        </div>
+        </Stack>
 
-        <div className="space-y-2">
+        <Stack spacing="xs">
           <label
             htmlFor="userNotes"
             className="text-foreground-variant text-xs font-bold uppercase tracking-widest"
@@ -56,7 +57,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
             placeholder="Added a pinch more salt next time..."
             className="bg-card-variant/20 h-32 w-full rounded-md border border-border p-4 font-body text-lg outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
+        </Stack>
 
         <button
           onClick={() => setWouldMakeAgain(!wouldMakeAgain)}
@@ -69,11 +70,11 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
             <div className="h-6 w-6 rounded-full border-2 border-current" />
           )}
         </button>
-      </div>
+      </Stack>
 
       {/* Finished Meal Photo Capture */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+      <Stack spacing="md" className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <Inline spacing="none" justify="between" className="mb-4">
           <span className="text-foreground-variant text-xs font-bold uppercase tracking-widest">
             Capture the Moment
           </span>
@@ -85,7 +86,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
               Remove
             </button>
           )}
-        </div>
+        </Inline>
 
         {finishedImage ? (
           <div className="relative h-48 w-full overflow-hidden rounded-md border border-border">
@@ -107,7 +108,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
             />
           </label>
         )}
-      </div>
+      </Stack>
 
       <button
         onClick={handleFinishCooking}
@@ -115,6 +116,6 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
       >
         Save Review & Finish
       </button>
-    </div>
+    </Stack>
   )
 }

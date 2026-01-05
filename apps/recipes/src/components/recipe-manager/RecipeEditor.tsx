@@ -1,44 +1,15 @@
 import React, { useState } from 'react'
-import { Trash2, Save } from 'lucide-react'
+import { Save, Trash2 } from 'lucide-react'
+import { Stack, Inline, Cluster } from '@/components/ui/layout'
 import { AiImporter } from './AiImporter'
 import type { Recipe, Ingredient } from '../../lib/types'
 
-// AiImporter replaced the legacy QuickImport functionality
-
-interface RecipeTextEditorProps {
-  label: string
-  id: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  placeholder: string
-}
-
-const RecipeTextEditor: React.FC<RecipeTextEditorProps> = ({
-  label,
-  id,
-  value,
-  onChange,
-  placeholder,
-}) => (
-  <div>
-    <label htmlFor={id} className="mb-1 block text-xs font-bold uppercase text-gray-400">
-      {label}
-    </label>
-    <textarea
-      id={id}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="bg-card-variant h-32 w-full resize-y rounded-sm border border-border p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary"
-    />
-  </div>
-)
-
 interface RecipeEditorProps {
   recipe: Partial<Recipe>
-  onSave: (recipe: Partial<Recipe>) => Promise<void> | void
+  onSave: (recipe: Partial<Recipe>) => void
   onCancel: () => void
   onDelete: (id: string) => void
+  isEmbedded?: boolean
 }
 
 export const RecipeEditor: React.FC<RecipeEditorProps> = ({
@@ -46,32 +17,9 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   onSave,
   onCancel,
   onDelete,
+  isEmbedded = false,
 }) => {
-  const [formData, setFormData] = useState<Partial<Recipe>>(() => {
-    if (recipe.id) return recipe
-    return {
-      title: '',
-      description: '',
-      servings: 2,
-      prepTime: 15,
-      cookTime: 15,
-      ingredients: [],
-      steps: [],
-      notes: '',
-      protein: '',
-      mealType: '',
-      dishType: '',
-      equipment: [],
-      occasion: [],
-      dietary: [],
-      difficulty: 'Medium',
-      rating: 0,
-      isFavorite: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      versionHistory: [],
-    }
-  })
+  const [formData, setFormData] = useState<Partial<Recipe>>(recipe)
 
   // Initial load helpers
   const [ingText, setIngText] = useState(() => {
@@ -79,7 +27,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     return recipe.ingredients
       .map((i) => {
         const prepStr = i.prep ? ` (${i.prep})` : ''
-        return `${i.amount} ${i.name}${prepStr}`
+        return `${i.amount || ''} ${i.name}${prepStr}`.trim()
       })
       .join('\n')
   })
@@ -93,14 +41,13 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     }))
 
     if (parsed.ingredients) {
-      setIngText(
-        parsed.ingredients
-          .map((i) => {
-            const prepStr = i.prep ? ` (${i.prep})` : ''
-            return `${i.amount} ${i.name}${prepStr}`
-          })
-          .join('\n'),
-      )
+      const text = parsed.ingredients
+        .map((i) => {
+          const prepStr = i.prep ? ` (${i.prep})` : ''
+          return `${i.amount || ''} ${i.name}${prepStr}`.trim()
+        })
+        .join('\n')
+      setIngText(text)
     }
 
     if (parsed.steps) {
@@ -108,84 +55,82 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     }
   }
 
-  const handleInternalSave = async () => {
-    const ingredients: Ingredient[] = ingText
+  const parseIngredients = (text: string): Ingredient[] => {
+    return text
       .split('\n')
-      .filter((l) => l.trim())
+      .map((line) => line.trim())
+      .filter(Boolean)
       .map((line) => {
-        const parts = line.split(' ')
-        const amount = parts[0]
-        const name = parts.slice(1).join(' ')
-        return { name, amount, prep: '' }
+        // Regex to capture amount, name, and optional prep in parentheses
+        const match = line.match(
+          /^(?:(\d+\s*\S*(?:\s*\d+\/\d+)?)\s*)?([^(\n]*?)(?:\s*\(([^)]+)\))?$/,
+        )
+        if (match) {
+          const amount = match[1]?.trim() || ''
+          const name = match[2]?.trim() || ''
+          const prep = match[3]?.trim() || ''
+          return { amount, name, prep: prep || undefined }
+        }
+        return { name: line, amount: '', prep: undefined } // Fallback if regex fails
       })
-
-    const steps = stepText.split('\n').filter((l) => l.trim())
-
-    // Calculate changes for history
-    const now = new Date().toISOString()
-    const historyEntry = {
-      date: now,
-      changeType: recipe.id ? 'edit' : 'create',
-    } as const
-
-    const newVersionHistory = [...(formData.versionHistory || []), historyEntry]
-
-    await onSave({
-      ...formData,
-      ingredients,
-      steps,
-      stepIngredients: formData.stepIngredients, // Preserve mapping
-      updatedAt: now,
-      createdAt: formData.createdAt || now, // Ensure backfill
-      versionHistory: newVersionHistory,
-    })
   }
 
+  const handleInternalSave = () => {
+    const updatedFormData = {
+      ...formData,
+      ingredients: parseIngredients(ingText),
+      steps: stepText
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    }
+    onSave(updatedFormData)
+  }
+
+  const containerClasses = isEmbedded
+    ? 'space-y-4'
+    : 'bg-card animate-in slide-in-from-bottom-4 space-y-4 rounded-xl border border-border p-4 shadow-sm'
+
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm animate-in slide-in-from-bottom-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-display text-xl font-bold">
-          {recipe.id ? 'Edit Recipe' : 'New Recipe'}
-        </h2>
-        <button
-          onClick={onCancel}
-          className="bg-card-variant rounded-full p-1 px-3 text-sm font-medium"
-        >
-          Cancel
-        </button>
-      </div>
+    <Stack spacing="md" className={containerClasses}>
+      {!isEmbedded && (
+        <Inline justify="between" className="mb-2">
+          <h2 className="font-display text-xl font-bold">
+            {recipe.id ? 'Edit Recipe' : 'New Recipe'}
+          </h2>
+          <button
+            onClick={onCancel}
+            className="bg-card-variant rounded-full p-1 px-3 text-sm font-medium"
+          >
+            Cancel
+          </button>
+        </Inline>
+      )}
 
       {!recipe.id && <AiImporter onRecipeParsed={handleRecipeParsed} />}
 
-      <div>
-        <label htmlFor="title" className="mb-1 block text-xs font-bold uppercase text-gray-400">
-          Title
+      <Stack spacing="md">
+        <label className="block">
+          <span className="mb-1 block text-xs font-bold uppercase text-gray-400">Title</span>
+          <input
+            type="text"
+            value={formData.title || ''}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="bg-card-variant w-full rounded-lg border border-border p-3 font-display text-lg font-bold placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="e.g. Spicy Miso Ramen"
+          />
         </label>
-        <input
-          id="title"
-          type="text"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder="Grandma's Pancakes"
-          className="placeholder-foreground-variant/30 w-full border-b border-border bg-transparent py-1 font-display text-xl font-medium outline-none focus:border-primary"
-        />
-      </div>
 
-      <div>
-        <label
-          htmlFor="description"
-          className="mb-1 block text-xs font-bold uppercase text-gray-400"
-        >
-          Description
+        <label className="block">
+          <span className="mb-1 block text-xs font-bold uppercase text-gray-400">Description</span>
+          <textarea
+            value={formData.description || ''}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="bg-card-variant min-h-[80px] w-full rounded-lg border border-border p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Brief description of the dish..."
+          />
         </label>
-        <textarea
-          id="description"
-          value={formData.description || ''}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="A delicious homemade pancake recipe..."
-          className="bg-card-variant h-20 w-full resize-none rounded-sm border border-border p-2 text-sm font-medium outline-none"
-        />
-      </div>
+      </Stack>
 
       <div>
         <label htmlFor="sourceUrl" className="mb-1 block text-xs font-bold uppercase text-gray-400">
@@ -214,8 +159,21 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
+      <Stack spacing="sm">
+        <label htmlFor="sourceimage-url" className="mb-1 block text-xs font-bold uppercase text-gray-400">Source Image</label>
+        <div className="flex gap-2">
+          <input id="sourceimage-url"
+            type="url"
+            value={formData.sourceImage || ''}
+            onChange={(e) => setFormData({ ...formData, sourceImage: e.target.value })}
+            className="bg-card-variant w-full rounded-lg border border-border p-2 text-sm"
+            placeholder="https://..."
+          />
+        </div>
+      </Stack>
+
+      <Cluster spacing="md">
+        <div className="min-w-[45%] flex-1">
           <label htmlFor="protein" className="mb-1 block text-xs font-bold uppercase text-gray-400">
             Protein
           </label>
@@ -235,7 +193,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             )}
           </select>
         </div>
-        <div>
+        <div className="min-w-[45%] flex-1">
           <label
             htmlFor="difficulty"
             className="mb-1 block text-xs font-bold uppercase text-gray-400"
@@ -258,10 +216,10 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             <option value="Hard">Hard</option>
           </select>
         </div>
-      </div>
+      </Cluster>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
+      <Cluster spacing="md">
+        <div className="min-w-[45%] flex-1">
           <label
             htmlFor="mealType"
             className="mb-1 block text-xs font-bold uppercase text-gray-400"
@@ -282,7 +240,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             ))}
           </select>
         </div>
-        <div>
+        <div className="min-w-[45%] flex-1">
           <label
             htmlFor="dishType"
             className="mb-1 block text-xs font-bold uppercase text-gray-400"
@@ -303,9 +261,9 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             ))}
           </select>
         </div>
-      </div>
+      </Cluster>
 
-      <div className="space-y-2">
+      <div>
         <div>
           <label htmlFor="dietary" className="mb-1 block text-xs font-bold uppercase text-gray-400">
             Dietary Tags
@@ -374,9 +332,12 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <Cluster spacing="sm">
         {(['servings', 'prepTime', 'cookTime'] as const).map((k) => (
-          <div key={k} className="bg-card-variant rounded-sm border border-border p-2">
+          <div
+            key={k}
+            className="bg-card-variant min-w-[30%] flex-1 rounded-sm border border-border p-2"
+          >
             <label
               htmlFor={k}
               className="text-foreground-variant mb-1 block text-[10px] font-medium uppercase"
@@ -392,41 +353,62 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             />
           </div>
         ))}
+      </Cluster>
+
+      <div>
+        <label
+          htmlFor="ingredients-editor"
+          className="mb-1 block text-xs font-bold uppercase text-gray-400"
+        >
+          Ingredients (One per line)
+        </label>
+        <textarea
+          id="ingredients-editor"
+          value={ingText}
+          onChange={(e) => setIngText(e.target.value)}
+          placeholder="2 cups Flour&#10;1 tsp Salt"
+          className="bg-card-variant min-h-[120px] w-full rounded-lg border border-border p-3 font-mono text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        />
       </div>
 
-      <RecipeTextEditor
-        label="Ingredients (One per line)"
-        id="ingredients-editor"
-        value={ingText}
-        onChange={(e) => setIngText(e.target.value)}
-        placeholder="2 cups Flour&#10;1 tsp Salt"
-      />
+      <div>
+        <label
+          htmlFor="instructions-editor"
+          className="mb-1 block text-xs font-bold uppercase text-gray-400"
+        >
+          Instructions (One per line)
+        </label>
+        <textarea
+          id="instructions-editor"
+          value={stepText}
+          onChange={(e) => setStepText(e.target.value)}
+          placeholder="Mix dry ingredients.&#10;Add wet ingredients."
+          className="bg-card-variant min-h-[120px] w-full rounded-lg border border-border p-3 font-mono text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
 
-      <RecipeTextEditor
-        label="Instructions (One per line)"
-        id="instructions-editor"
-        value={stepText}
-        onChange={(e) => setStepText(e.target.value)}
-        placeholder="Mix dry ingredients.&#10;Add wet ingredients."
-      />
+      {/* Actions */}
+      <Inline spacing="sm" className="pt-4">
+        <button
+          onClick={handleInternalSave}
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-foreground py-3 font-bold text-background shadow-lg transition-transform hover:scale-[1.02]"
+        >
+          <Save className="h-4 w-4" /> Save Recipe
+        </button>
 
-      <div className="flex gap-2 pt-4">
         {recipe.id && (
           <button
-            onClick={() => onDelete(recipe.id!)}
-            className="border-md-sys-color-error-container bg-md-sys-color-error-container text-md-sys-color-on-error-container rounded-xl border p-3 font-medium"
-            title="Delete Recipe"
+            onClick={() => {
+              if (confirm('Delete this recipe?')) {
+                onDelete(recipe.id!)
+              }
+            }}
+            className="bg-card-variant flex items-center justify-center rounded-full p-3 text-red-500 hover:bg-red-500/10"
           >
             <Trash2 className="h-5 w-5" />
           </button>
         )}
-        <button
-          onClick={handleInternalSave}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-3 font-medium text-primary-foreground shadow-sm transition hover:shadow-md active:shadow-none"
-        >
-          <Save className="h-4 w-4" /> Save Recipe
-        </button>
-      </div>
-    </div>
+      </Inline>
+    </Stack>
   )
 }

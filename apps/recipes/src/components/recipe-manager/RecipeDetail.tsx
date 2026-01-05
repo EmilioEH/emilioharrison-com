@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useStore } from '@nanostores/react'
 import { DetailHeader, type HeaderAction } from '../recipe-details/DetailHeader'
+import { Stack, Inline } from '../ui/layout'
 import { CookingContainer } from '../cooking-mode/CookingContainer'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
@@ -83,7 +84,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-card animate-in slide-in-from-bottom-10">
+    <Stack spacing="none" className="fixed inset-0 z-50 bg-card animate-in slide-in-from-bottom-10">
       <DetailHeader
         recipe={recipe}
         onClose={onClose}
@@ -98,10 +99,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         recipe={recipe}
         startCooking={startCooking}
         onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'save')}
+        handleRate={(rating) => onUpdate({ ...recipe, rating }, 'save')}
       />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">
-        <div className="mx-auto flex max-w-md items-center gap-3">
+        <Inline spacing="md" justify="center" className="mx-auto max-w-md">
           {/* Secondary: Add to Week */}
           <button
             onClick={() => handleAction('addToWeek')}
@@ -130,8 +132,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             <span className="font-display text-lg font-bold">Start Cooking</span>
             <Play className="h-5 w-5 fill-current" />
           </button>
-        </div>
+        </Inline>
       </div>
-    </div>
+    </Stack>
   )
 }

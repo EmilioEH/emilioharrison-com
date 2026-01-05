@@ -16,6 +16,7 @@ import {
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
 import { Button } from '../../ui/button'
+import { Stack, Inline } from '../../ui/layout'
 import { RecipeLibrary } from '../RecipeLibrary'
 import { GroceryList } from '../GroceryList'
 import type { Recipe, ShoppableIngredient } from '../../../lib/types'
@@ -241,9 +242,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     >
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-2xl flex-col gap-2 px-4 py-3">
+        <Stack spacing="xs" className="mx-auto max-w-2xl px-4 py-3">
           {/* Controls Row: Back + Week Toggles + Calendar + Grocery */}
-          <div className="flex items-center justify-between gap-2">
+          <Inline spacing="xs" justify="between">
             {/* Left: Back Button */}
             <Button
               variant="ghost"
@@ -257,7 +258,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             </Button>
 
             {/* Center: Week Toggles + Calendar */}
-            <div className="flex items-center gap-2">
+            <Inline spacing="xs">
               <div className="flex items-center rounded-lg bg-muted/50 p-1">
                 <button
                   onClick={handleSetThisWeek}
@@ -296,7 +297,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               >
                 <Calendar className="h-4 w-4" />
               </Button>
-            </div>
+            </Inline>
 
             {/* Right: Grocery Button */}
             <Button
@@ -310,17 +311,17 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               <ShoppingCart className="h-4 w-4" />
               <span className="text-xs font-bold">Grocery</span>
             </Button>
-          </div>
+          </Inline>
 
           {/* Info Row */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <Inline spacing="sm" justify="between" className="text-xs text-muted-foreground">
             <span className="font-bold text-foreground">{dateRangeLabel}</span>
             <span>
               <span className="font-bold text-foreground">{currentRecipes.length}</span> meals
               planned
             </span>
-          </div>
-        </div>
+          </Inline>
+        </Stack>
       </div>
 
       {/* Content */}
@@ -345,8 +346,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             {/* Cost Estimate Banner */}
             {groceryRecipes.length > 0 && (
               <div className="border-b border-border bg-muted/30 px-4 py-3">
-                <div className="mx-auto flex max-w-2xl items-center justify-between">
-                  <div className="flex flex-col">
+                <Inline spacing="md" justify="between" className="mx-auto max-w-2xl">
+                  <Stack spacing="xs">
                     {/* Show AI cost if available, otherwise aggregate */}
                     {aiCost !== null ? (
                       <>
@@ -357,7 +358,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                       </>
                     ) : costEstimate.hasAnyData ? (
                       <>
-                        <div className="flex items-center gap-2">
+                        <Inline spacing="xs">
                           <span
                             className={`text-lg font-bold ${costEstimate.isComplete ? 'text-green-700' : 'text-amber-600'}`}
                           >
@@ -369,7 +370,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                               Incomplete
                             </span>
                           )}
-                        </div>
+                        </Inline>
                         <span className="text-xs text-muted-foreground">
                           From {costEstimate.hasEstimate}/{groceryRecipes.length} recipes
                         </span>
@@ -384,10 +385,10 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         </span>
                       </>
                     )}
-                  </div>
+                  </Stack>
 
                   {/* Actions: Share, Copy, Refresh */}
-                  <div className="flex items-center gap-1">
+                  <Inline spacing="xs">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -424,8 +425,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                             : 'Get Estimate'}
                       </span>
                     </Button>
-                  </div>
-                </div>
+                  </Inline>
+                </Inline>
 
                 {/* Error State */}
                 {estimateError && (

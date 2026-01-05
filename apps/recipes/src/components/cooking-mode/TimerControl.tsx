@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react'
 import { Play, Pause, Plus, X, Timer as TimerIcon } from 'lucide-react'
 import { $cookingSession } from '../../stores/cookingSession'
 import { TimerManager } from '../../services/timerManager'
+import { Stack, Inline } from '../ui/layout'
 
 interface TimerControlProps {
   stepNumber: number
@@ -26,30 +27,32 @@ export const TimerControl: React.FC<TimerControlProps> = ({ stepNumber, suggeste
   if (!hasTimers && !suggestedDuration) return null
 
   return (
-    <div className="my-4 flex flex-col gap-3">
+    <Stack spacing="sm" className="my-4">
       {/* Active Timers */}
       {stepTimers.map((timer) => (
-        <div
+        <Inline
           key={timer.id}
-          className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-4 animate-in fade-in slide-in-from-top-2"
+          spacing="md"
+          justify="between"
+          className="rounded-xl border border-primary/20 bg-primary/5 p-4 animate-in fade-in slide-in-from-top-2"
         >
-          <div className="flex items-center gap-3">
+          <Inline spacing="sm">
             <div
               className={`rounded-full p-2 ${timer.isRunning ? 'animate-pulse bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
             >
               <TimerIcon className="h-5 w-5" />
             </div>
-            <div>
+            <Stack spacing="xs">
               <div className="font-display text-2xl font-bold tabular-nums leading-none">
                 {formatTime(timer.remaining)}
               </div>
               <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {timer.label}
               </div>
-            </div>
-          </div>
+            </Stack>
+          </Inline>
 
-          <div className="flex items-center gap-2">
+          <Inline spacing="sm">
             {/* Toggle Play/Pause */}
             <button
               onClick={() =>
@@ -81,8 +84,8 @@ export const TimerControl: React.FC<TimerControlProps> = ({ stepNumber, suggeste
             >
               <X className="h-5 w-5" />
             </button>
-          </div>
-        </div>
+          </Inline>
+        </Inline>
       ))}
 
       {/* Suggested Timer Button */}
@@ -102,6 +105,6 @@ export const TimerControl: React.FC<TimerControlProps> = ({ stepNumber, suggeste
           Start {suggestedDuration} Min Timer
         </button>
       )}
-    </div>
+    </Stack>
   )
 }

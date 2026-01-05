@@ -4,6 +4,7 @@ import { Trash2, Calendar, MoveRight } from 'lucide-react'
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../ui/sheet'
 import { Button } from '../../ui/button'
+import { Stack } from '../../ui/layout'
 import { DayPicker } from './DayPicker'
 import type { DayOfWeek } from '../../../lib/weekStore'
 
@@ -69,12 +70,12 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
             <SheetDescription className="text-left">{recipeTitle}</SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6 flex flex-col gap-6">
+          <Stack spacing="lg" className="mt-6">
             {/* Current Assignments Section */}
             {currentPlannedDays.length > 0 && (
-              <div className="flex flex-col gap-3">
+              <Stack spacing="sm">
                 <h3 className="text-sm font-bold text-muted-foreground">CURRENTLY PLANNED</h3>
-                <div className="flex flex-col gap-2">
+                <Stack spacing="sm">
                   {currentPlannedDays.map((planned) => (
                     <div
                       key={`${planned.weekStart}-${planned.dateStr}`}
@@ -96,14 +97,14 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
                       </Button>
                     </div>
                   ))}
-                </div>
-              </div>
+                </Stack>
+              </Stack>
             )}
 
             {/* Actions Section */}
-            <div className="flex flex-col gap-3">
+            <Stack spacing="sm">
               <h3 className="text-sm font-bold text-muted-foreground">ACTIONS</h3>
-              <div className="flex flex-col gap-2">
+              <Stack spacing="sm">
                 <Button
                   variant="outline"
                   size="default"
@@ -126,9 +127,9 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
                   <Calendar className="h-4 w-4" />
                   <span className="font-bold">Move to Different Week</span>
                 </Button>
-              </div>
-            </div>
-          </div>
+              </Stack>
+            </Stack>
+          </Stack>
         </SheetContent>
       </Sheet>
 

@@ -3,6 +3,7 @@ import { ArrowDownAZ, Clock, Calendar, ChefHat, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
+import { Stack } from '@/components/ui/layout'
 import type { Filters } from './hooks/useFilteredRecipes'
 
 interface FilterSectionProps {
@@ -26,14 +27,15 @@ interface FilterChipProps {
 }
 
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
-  <Badge
-    variant={active ? 'active' : 'inactive'}
-    size="md"
-    className="cursor-pointer transition-all"
-    onClick={onClick}
-  >
-    {label}
-  </Badge>
+  <button onClick={onClick} className="focus:outline-none" aria-pressed={active}>
+    <Badge
+      variant={active ? 'active' : 'inactive'}
+      size="md"
+      className="cursor-pointer transition-all"
+    >
+      {label}
+    </Badge>
+  </button>
 )
 
 interface RecipeFiltersProps {
@@ -81,7 +83,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
+          <Stack spacing="lg">
             {/* Sort */}
             <FilterSection title="Sort By">
               <div className="grid grid-cols-2 gap-2">
@@ -241,7 +243,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                 Reset all filters
               </Button>
             </div>
-          </div>
+          </Stack>
         </div>
 
         <SheetFooter className="border-t p-4 sm:justify-center">

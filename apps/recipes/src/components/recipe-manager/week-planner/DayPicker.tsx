@@ -14,6 +14,7 @@ import {
 } from '../../../lib/weekStore'
 import { ResponsiveModal } from '../../ui/ResponsiveModal'
 import { Button } from '../../ui/button'
+import { Stack } from '../../ui/layout'
 
 interface DayPickerProps {
   isOpen: boolean
@@ -101,7 +102,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
     >
       {showWeekPicker ? (
         // Week Picker View
-        <div className="flex flex-col gap-2 pb-6">
+        <Stack spacing="sm" className="pb-6">
           <button
             onClick={() => setShowWeekPicker(false)}
             className="mb-2 flex items-center gap-1 self-start text-sm font-medium text-primary hover:text-primary/80"
@@ -133,14 +134,14 @@ export const DayPicker: React.FC<DayPickerProps> = ({
                     : 'border-border bg-card hover:bg-accent/50'
                 }`}
               >
-                <div className="flex flex-col items-start gap-0.5">
+                <Stack spacing="xs">
                   <span className={`font-bold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                     {label}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}
                   </span>
-                </div>
+                </Stack>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
                     {mealCount} {mealCount === 1 ? 'meal' : 'meals'}
@@ -150,22 +151,22 @@ export const DayPicker: React.FC<DayPickerProps> = ({
               </button>
             )
           })}
-        </div>
+        </Stack>
       ) : (
         // Day Selection View (Default)
-        <div className="flex flex-col gap-4 pb-6">
+        <Stack spacing="md" className="pb-6">
           {/* Week Info */}
           <div className="rounded-lg bg-muted/50 p-3">
-            <div className="flex flex-col gap-0.5">
+            <Stack spacing="xs">
               <span className="text-sm font-bold text-foreground">{getWeekLabel()}</span>
               <span className="text-xs text-muted-foreground">
                 {format(activeDate, 'MMM d')} - {format(addDays(activeDate, 6), 'MMM d')}
               </span>
-            </div>
+            </Stack>
           </div>
 
           {/* Days List */}
-          <div className="flex flex-col gap-1">
+          <Stack spacing="xs">
             {daysList.map((item) => (
               <button
                 key={item.day}
@@ -191,7 +192,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
                 {item.isSelected && <span className="text-xs">Added</span>}
               </button>
             ))}
-          </div>
+          </Stack>
 
           {/* Pick Other Week - Secondary Button */}
           <Button
@@ -205,7 +206,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
             <Calendar className="h-4 w-4" />
             <span>Pick a different week</span>
           </Button>
-        </div>
+        </Stack>
       )}
     </ResponsiveModal>
   )

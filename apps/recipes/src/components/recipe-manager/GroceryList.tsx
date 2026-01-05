@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react'
 import {
   Check,
   Trash2,
-  Share,
-  Copy,
   ArrowLeft,
   ShoppingBasket,
   ChevronRight,
   ChevronDown,
+  ListFilter,
   X,
+  CheckSquare,
 } from 'lucide-react'
+import { Stack, Inline } from '@/components/ui/layout'
 import { mergeShoppableIngredients, categorizeShoppableIngredients } from '../../lib/grocery-logic'
 import type { Recipe, ShoppableIngredient } from '../../lib/types'
 
@@ -83,53 +84,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   }
 
   // 4. Sharing
-  const copyToClipboard = async () => {
-    const text = categorizedList
-      .map((cat) => {
-        const items = cat.items
-          .filter((i) => !checkedItems.has(i.name))
-          .map(
-            (i) =>
-              `- ${i.purchaseAmount > 0 ? i.purchaseAmount + ' ' : ''}${i.purchaseUnit !== 'unit' ? i.purchaseUnit + ' ' : ''}${i.name}`,
-          )
-          .join('\n')
-        return `## ${cat.name}\n${items}`
-      })
-      .join('\n\n')
-
-    try {
-      await navigator.clipboard.writeText(text)
-      alert('Copied to clipboard!')
-    } catch (err) {
-      console.error('Failed to copy', err)
-    }
-  }
-
-  const shareList = async () => {
-    const text = categorizedList
-      .map((cat) =>
-        cat.items.map((i) => `- ${i.purchaseAmount} ${i.purchaseUnit} ${i.name}`).join('\n'),
-      )
-      .join('\n\n')
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'My Grocery List',
-          text: text,
-        })
-      } catch {
-        // ignore abort
-      }
-    } else {
-      copyToClipboard()
-    }
-  }
-
-  const totalCount = ingredients.length
-  const checkedCount = Array.from(checkedItems).filter((name) =>
-    categorizedList.some((cat) => cat.items.some((i) => i.name === name)),
-  ).length
 
   // Helper to find recipe by ID for navigation
   const findRecipeById = (id: string): Recipe | undefined => {
@@ -149,66 +103,57 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     >
       {/* Header - hidden when embedded */}
       {!embedded && (
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
-          <div className="flex items-center gap-3">
+        <Inline justify="between" className="px-4 pt-4">
+          <h2 className="font-display text-2xl font-bold">Grocery List</h2>
+          <Inline spacing="sm">
+            <button
+              onClick={() => console.log('Filters')}
+              className="bg-card-variant rounded-full p-2 text-muted-foreground hover:text-foreground"
+            >
+              <ListFilter className="h-5 w-5" />
+            </button>
             <button
               onClick={onClose}
-              className="hover:bg-card-variant -ml-2 rounded-full p-2 text-foreground"
+              className="bg-card-variant rounded-full p-2 text-muted-foreground hover:text-foreground"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <X className="h-5 w-5" />
             </button>
-            <div>
-              <h2 className="font-display text-xl font-bold text-foreground">Grocery List</h2>
-              <p className="text-foreground-variant text-xs font-medium">
-                {totalCount} items &bull;{' '}
-                {Math.round(
-                  (checkedCount /
-                    (categorizedList.reduce((acc, c) => acc + c.items.length, 0) || 1)) *
-                    100,
-                )}
-                % done
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={shareList}
-              className="hover:bg-card-variant rounded-full p-2 text-primary"
-              title="Share"
-            >
-              <Share className="h-5 w-5" />
-            </button>
-            <button
-              onClick={copyToClipboard}
-              className="hover:bg-card-variant rounded-full p-2 text-primary"
-              title="Copy"
-            >
-              <Copy className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+          </Inline>
+        </Inline>
       )}
 
       {/* Content */}
-      <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-20">
+      <Stack spacing="lg" className="flex-1 overflow-y-auto p-4 pb-20">
+        {/* Empty State */}
+        {ingredients.length === 0 && (
+          <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
+            <div className="bg-card-variant mb-4 rounded-full p-6">
+              <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
+            </div>
+            <h3 className="font-display text-lg font-bold">All clear!</h3>
+            <p className="max-w-xs text-sm text-muted-foreground">
+              You haven't added any recipes to your plan yet.
+            </p>
+          </div>
+        )}
         {/* Recipe Sources Header - scrolls with content */}
         {!embedded && !isLoading && recipes.length > 0 && (
           <div className="bg-card-container -mx-4 -mt-4 mb-6 border-b border-border px-6 py-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-foreground-variant text-base font-bold">
               Shopping for {recipes.length} Recipes
             </p>
-            <div className="flex flex-col gap-2">
+            <Stack spacing="sm">
               {recipes.map((recipe) => (
                 <button
                   key={recipe.id}
                   onClick={() => onOpenRecipe?.(recipe)}
-                  className="flex w-full items-center justify-between text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
+                  className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2 text-sm font-medium transition-colors hover:bg-background hover:text-primary"
                 >
-                  <span>{recipe.title}</span>
+                  <span className="truncate">{recipe.title}</span>
                   <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
                 </button>
               ))}
-            </div>
+            </Stack>
           </div>
         )}
         {isLoading ? (
@@ -321,23 +266,25 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                         {/* Expanded Source Details (Only if > 1 source) */}
                         {multipleSources && isExpanded && (
                           <div className="border-border-variant border-t bg-muted/30 px-4 py-3 pl-14">
-                            {item.sources.map((source, idx) => {
-                              const recipe = findRecipeById(source.recipeId)
-                              return (
-                                <div key={`${source.recipeId}-${idx}`} className="mb-2 last:mb-0">
-                                  <button
-                                    onClick={() => recipe && onOpenRecipe?.(recipe)}
-                                    className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-                                    disabled={!recipe}
-                                  >
-                                    {source.recipeTitle}
-                                  </button>
-                                  <p className="ml-4 text-xs text-muted-foreground">
-                                    {source.originalAmount}
-                                  </p>
-                                </div>
-                              )
-                            })}
+                            <Stack spacing="xs">
+                              {item.sources.map((source, idx) => {
+                                const recipe = findRecipeById(source.recipeId)
+                                return (
+                                  <div key={`${source.recipeId}-${idx}`} className="mb-2 last:mb-0">
+                                    <button
+                                      onClick={() => recipe && onOpenRecipe?.(recipe)}
+                                      className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                                      disabled={!recipe}
+                                    >
+                                      {source.recipeTitle}
+                                    </button>
+                                    <p className="ml-4 text-xs text-muted-foreground">
+                                      {source.originalAmount}
+                                    </p>
+                                  </div>
+                                )
+                              })}
+                            </Stack>
                           </div>
                         )}
                       </div>
@@ -347,7 +294,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
               </div>
             ))}
 
-            {categorizedList.length === 0 && (
+            {categorizedList.length === 0 && ingredients.length > 0 && (
               <div className="py-20 text-center opacity-50">
                 <ShoppingBasket className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                 <p>No ingredients found.</p>
@@ -355,14 +302,14 @@ export const GroceryList: React.FC<GroceryListProps> = ({
             )}
           </>
         )}
-      </div>
+      </Stack>
 
       {/* Floating Action / Footer */}
       {checkedItems.size > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
           <button
             onClick={clearChecked}
-            className="flex items-center gap-2 rounded-full bg-foreground px-6 py-3 font-medium text-background shadow-lg transition-transform hover:scale-105"
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-foreground px-6 py-3 font-medium text-background shadow-lg transition-transform hover:scale-105"
           >
             <Trash2 className="h-4 w-4" /> Uncheck All
           </button>

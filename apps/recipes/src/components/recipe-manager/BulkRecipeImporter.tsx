@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Loader2, ChefHat, FolderUp, FileText, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Stack } from '@/components/ui/layout'
 import type { Recipe } from '../../lib/types'
 import { processImage } from '../../lib/image-optimization'
 import { uploadImage, parseRecipe } from './importer/api'
@@ -141,8 +142,8 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto max-w-lg space-y-8">
-          <div className="space-y-2 text-center">
+        <Stack spacing="xl" className="mx-auto max-w-lg">
+          <Stack spacing="xs" className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
               <FolderUp className="h-8 w-8" />
             </div>
@@ -154,7 +155,7 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
                 We'll automatically match images in the same folder.
               </span>
             </p>
-          </div>
+          </Stack>
 
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Folder Upload (Desktop/Organized) */}
@@ -208,7 +209,7 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
           </div>
 
           {selectedFiles.length > 0 && (
-            <div className="bg-card-variant space-y-2 rounded-lg border border-border p-4">
+            <Stack spacing="xs" className="bg-card-variant rounded-lg border border-border p-4">
               <div className="flex items-center justify-between font-bold">
                 <span>{selectedFiles.length} files selected</span>
                 <button
@@ -221,11 +222,11 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
               <div className="text-foreground-variant text-xs">
                 {selectedFiles.filter((f) => f.name.endsWith('.md')).length} Markdown files found
               </div>
-            </div>
+            </Stack>
           )}
 
           {status === 'processing' && (
-            <div className="space-y-4 animate-in fade-in">
+            <Stack spacing="md" className="animate-in fade-in">
               <div className="bg-secondary-container h-2 w-full overflow-hidden rounded-full">
                 <div
                   className="h-full bg-primary transition-all duration-500"
@@ -240,14 +241,14 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
               <p className="text-foreground-variant animate-pulse text-center text-xs">
                 Asking Chef Gemini to read your notes...
               </p>
-            </div>
+            </Stack>
           )}
 
           {status === 'complete' && (
-            <div className="space-y-4 text-center animate-in fade-in zoom-in">
+            <Stack spacing="md" className="text-center animate-in fade-in zoom-in">
               {resultsIcon}
               <p className="text-lg font-bold text-green-600">Import Complete!</p>
-            </div>
+            </Stack>
           )}
 
           {errorMsg && (
@@ -255,7 +256,7 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
               {errorMsg}
             </div>
           )}
-        </div>
+        </Stack>
       </div>
 
       {/* Footer Actions */}

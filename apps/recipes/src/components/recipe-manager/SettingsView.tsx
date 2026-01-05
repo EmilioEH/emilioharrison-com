@@ -1,5 +1,6 @@
 import React from 'react'
 import { X, Download, Upload, Trash2 } from 'lucide-react'
+import { Stack } from '@/components/ui/layout'
 
 interface SettingsViewProps {
   onExport: () => void
@@ -22,12 +23,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </button>
     </div>
 
-    <div className="space-y-8">
+    <Stack spacing="xl">
       <section>
         <h3 className="text-foreground-variant mb-4 text-xs font-bold uppercase tracking-wider">
           Export & Import
         </h3>
-        <div className="flex flex-col gap-4">
+        <Stack spacing="md">
           <button
             onClick={onExport}
             className="hover:bg-card-variant flex items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors"
@@ -50,7 +51,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
             <input type="file" className="hidden" onChange={onImport} accept=".json" />
           </label>
-        </div>
+        </Stack>
       </section>
 
       <section className="border-t border-border pt-6">
@@ -64,6 +65,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <Trash2 className="h-5 w-5" /> Delete All Data
         </button>
       </section>
-    </div>
+    </Stack>
   </div>
 )

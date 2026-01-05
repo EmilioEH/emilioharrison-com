@@ -33,6 +33,39 @@ export const TEST_RECIPES: Recipe[] = [
 // Re-export expect
 export { expect }
 
+export const AUTH_COOKIES = [
+  {
+    name: 'site_auth',
+    value: 'true',
+    domain: '127.0.0.1',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  },
+  {
+    name: 'site_user',
+    value: 'TestUser',
+    domain: '127.0.0.1',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  },
+  {
+    name: 'site_email',
+    value: 'emilioeh1991@gmail.com',
+    domain: '127.0.0.1',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  },
+] as const
+
 // The app uses BASE_URL which resolves to /protected/recipes/
 // So API calls go to /protected/recipes/api/...
 const API_PATTERN = /\/protected\/recipes\/api\/recipes/

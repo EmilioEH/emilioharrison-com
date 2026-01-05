@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Check, Camera, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Stack, Cluster } from '@/components/ui/layout'
 import { useStore } from '@nanostores/react'
 import { $cookingSession } from '../../stores/cookingSession'
 
@@ -34,24 +35,24 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
   if (!recipe) return null
 
   return (
-    <div className="flex h-full flex-col bg-background duration-500 animate-in fade-in">
+    <Stack spacing="none" className="h-full bg-background duration-500 animate-in fade-in">
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-6 text-center">
+        <Stack spacing="lg" className="mx-auto mt-10 max-w-md items-center text-center">
           <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600">
             <Check className="h-10 w-10 stroke-[3]" />
           </div>
 
-          <div className="space-y-2">
+          <Stack spacing="xs">
             <h2 className="font-display text-3xl font-bold">All Done!</h2>
             <p className="text-muted-foreground">How did {recipe.title} turn out?</p>
-          </div>
+          </Stack>
 
           {/* Rating */}
-          <div className="flex w-full flex-col gap-2">
+          <Stack spacing="xs" className="w-full">
             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Rate this recipe
             </h3>
-            <div className="flex justify-center">
+            <Cluster justify="center">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
@@ -63,11 +64,11 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                   />
                 </button>
               ))}
-            </div>
-          </div>
+            </Cluster>
+          </Stack>
 
           {/* Photo */}
-          <div className="flex w-full flex-col gap-2">
+          <Stack spacing="xs" className="w-full">
             <label
               htmlFor="review-photo-upload"
               className="text-sm font-bold uppercase tracking-wider text-muted-foreground"
@@ -92,10 +93,10 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                   alt="Finished dish"
                 />
               ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Stack spacing="xs" className="items-center text-muted-foreground">
                   <Camera className="h-8 w-8" />
                   <span className="text-sm font-medium">Tap to snap</span>
-                </div>
+                </Stack>
               )}
               <input
                 id="review-photo-upload"
@@ -105,10 +106,10 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                 onChange={handleImageUpload}
               />
             </div>
-          </div>
+          </Stack>
 
           {/* Notes */}
-          <div className="flex w-full flex-col gap-2">
+          <Stack spacing="xs" className="w-full">
             <label
               htmlFor="review-notes"
               className="text-sm font-bold uppercase tracking-wider text-muted-foreground"
@@ -122,8 +123,8 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
               className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </div>
 
       {/* Footer */}
@@ -136,6 +137,6 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
           Complete Review
         </Button>
       </div>
-    </div>
+    </Stack>
   )
 }

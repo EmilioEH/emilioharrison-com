@@ -5,6 +5,7 @@ import type { Recipe } from '../../lib/types'
 import { processImage } from '../../lib/image-optimization'
 import { SourceToggle, type InputMode } from './importer/SourceToggle'
 import { PhotoUploader } from './importer/PhotoUploader'
+import { Stack } from '@/components/ui/layout'
 
 import { uploadImage, parseRecipe } from './importer/api'
 
@@ -99,7 +100,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     <div className="rounded-xl border border-border bg-card p-6 shadow-md">
       <SourceToggle mode={mode} setMode={setMode} />
 
-      <div className="space-y-6">
+      <Stack spacing="lg">
         {mode === 'photo' ? (
           <PhotoUploader
             imagePreview={imagePreview}
@@ -110,7 +111,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             handleFileChange={handleFileChange}
           />
         ) : (
-          <div className="space-y-2">
+          <Stack spacing="sm">
             <label
               htmlFor="url-input"
               className="text-foreground-variant text-sm font-medium uppercase tracking-wider"
@@ -128,7 +129,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             <p className="text-foreground-variant text-xs">
               We&apos;ll scrape the ingredients and instructions for you.
             </p>
-          </div>
+          </Stack>
         )}
 
         {errorMsg && (
@@ -159,7 +160,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               ? 'Consulting Chef Gemini...'
               : 'Process Recipe'}
         </Button>
-      </div>
+      </Stack>
     </div>
   )
 }

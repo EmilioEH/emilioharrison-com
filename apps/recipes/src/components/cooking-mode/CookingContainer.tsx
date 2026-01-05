@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStore } from '@nanostores/react'
 import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 import { CookingHeader } from './CookingHeader'
+import { Stack } from '../ui/layout'
 import { CookingStepView } from './CookingStepView'
 import { ExitConfirmation } from './ExitConfirmation'
 import { CookingIngredientsOverlay } from './CookingIngredientsOverlay'
@@ -25,6 +26,19 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
   // Local state to track if we are in review mode
   // The store keeps "isActive" true until we explicitly close everything
   const [isReviewing, setIsReviewing] = useState(false)
+
+  // Track navigation direction for animations
+  const [direction, setDirection] = useState(0)
+  const prevStepRef = React.useRef(session.currentStepIdx)
+
+  React.useEffect(() => {
+    if (session.currentStepIdx > prevStepRef.current) {
+      setDirection(1)
+    } else if (session.currentStepIdx < prevStepRef.current) {
+      setDirection(-1)
+    }
+    prevStepRef.current = session.currentStepIdx
+  }, [session.currentStepIdx])
 
   if (!session.isActive || !session.recipe) return null
 
@@ -51,7 +65,10 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background duration-300 animate-in slide-in-from-bottom">
+    <Stack
+      spacing="none"
+      className="fixed inset-0 z-50 bg-background duration-300 animate-in slide-in-from-bottom"
+    >
       {/* Header */}
       <CookingHeader
         session={session}
@@ -69,7 +86,11 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
 
       {/* Main Content Area */}
       <div className="relative flex-1 overflow-hidden">
-        <CookingStepView recipe={session.recipe} onFinish={handleFinishCooking} />
+        <CookingStepView
+          recipe={session.recipe}
+          onFinish={handleFinishCooking}
+          direction={direction}
+        />
       </div>
 
       {/* Overlays */}
@@ -95,6 +116,6 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       />
 
       <CookingOptionsMenu isOpen={showMenu} onClose={() => setShowMenu(false)} />
-    </div>
+    </Stack>
   )
 }

@@ -183,6 +183,24 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     checkAndRunRollover()
   }, [])
 
+  // Self-Correction: Clean up ghost recipes from week plan
+  // If a recipe is in the plan but not in the loaded recipes list, remove it.
+  useEffect(() => {
+    if (loading || recipes.length === 0) return
+
+    import('../../lib/weekStore').then(({ allPlannedRecipes, unplanRecipe }) => {
+      const allPlanned = allPlannedRecipes.get()
+      const recipeIds = new Set(recipes.map((r) => r.id))
+
+      allPlanned.forEach((p) => {
+        if (!recipeIds.has(p.recipeId)) {
+          console.warn(`[RecipeManager] Removing ghost recipe from plan: ${p.recipeId}`)
+          unplanRecipe(p.recipeId)
+        }
+      })
+    })
+  }, [loading, recipes])
+
   const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
     const { success } = await saveRecipe(recipe)
     if (success) {
@@ -548,6 +566,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           onSave={handleSaveRecipe}
           onCancel={() => setView('library')}
           onDelete={handleDeleteRecipe}
+          isEmbedded={true}
         />
       </ResponsiveModal>
 

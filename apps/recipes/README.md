@@ -110,8 +110,9 @@ Firestore does **NOT** support nested arrays (e.g., `number[][]`).
 - **Clean Architecture**: Removed legacy `tokens.css` and custom `md-sys-*` Tailwind extensions, moving to standard Tailwind utility patterns and shadcn/ui primitives.
 - **Recipe Bulk Editing**: Selecting multiple recipes allows for bulk updates to metadata fields like Meal Type, Cuisine, Difficulty, and Protein, now accessible from the bottom bar.
 - **Staggered Animations**: Implemented physics-based staggered list animations using Framer Motion for a premium, app-like feel when searching or filtering.
-- **Staggered Animations**: Implemented physics-based staggered list animations using Framer Motion for a premium, app-like feel when searching or filtering.
+
 - **Enhanced Search UX**: Redesigned the search experience to focus on content. The header now elegantly slides away to maximize screen real estate when searching.
+- **Cooking Mode Animations**: Implemented fluid, directional slide animations for step navigation and staggered entrance animations for ingredients using Framer Motion, enhancing spatial awareness and user delight.
 
 ### Known Technical Debt
 

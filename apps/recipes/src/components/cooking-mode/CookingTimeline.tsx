@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
 
 interface CookingTimelineProps {
@@ -43,8 +44,9 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
         return (
           <React.Fragment key={index}>
             {/* The Node */}
-            <div
-              ref={(el) => {
+            <motion.div
+              layout
+              ref={(el: HTMLDivElement | null) => {
                 nodeRefs.current[index] = el
               }}
               onClick={() => onStepClick(index)}
@@ -57,7 +59,7 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
               role="button"
               tabIndex={0}
               data-testid={`timeline-step-${stepNum}`}
-              className={`relative flex flex-shrink-0 cursor-pointer items-center justify-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+              className={`relative flex flex-shrink-0 cursor-pointer items-center justify-center transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                 isCurrent ? 'h-8 w-8' : 'h-6 w-6'
               }`}
             >
@@ -87,7 +89,7 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
               {isCurrent && (
                 <div className="absolute inset-0 z-0 animate-ping rounded-full bg-primary/30" />
               )}
-            </div>
+            </motion.div>
 
             {/* Connecting Line (unless last item) */}
             {!isLast && (

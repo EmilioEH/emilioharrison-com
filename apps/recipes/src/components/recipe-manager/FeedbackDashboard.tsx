@@ -12,6 +12,7 @@ import {
   CheckSquare,
   Square,
 } from 'lucide-react'
+import { Stack } from '@/components/ui/layout'
 
 interface FeedbackContext {
   user?: string
@@ -324,7 +325,7 @@ export default function FeedbackDashboard() {
           </div>
         )}
 
-        <div className="space-y-4">
+        <Stack spacing="md">
           {filteredFeedback.map((item) => {
             const isExpanded = expandedId === item.id
             const isBug = item.type === 'bug'
@@ -431,7 +432,7 @@ export default function FeedbackDashboard() {
                 {isExpanded && (
                   <div className="border-t border-gray-100 bg-gray-50/50 p-4">
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-4">
+                      <Stack spacing="md">
                         <div>
                           <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                             Description
@@ -485,9 +486,9 @@ export default function FeedbackDashboard() {
                             </button>
                           </div>
                         )}
-                      </div>
+                      </Stack>
 
-                      <div className="space-y-4">
+                      <Stack spacing="md">
                         {item.screenshot && (
                           <div>
                             <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -520,14 +521,14 @@ export default function FeedbackDashboard() {
                             </div>
                           </div>
                         )}
-                      </div>
+                      </Stack>
                     </div>
                   </div>
                 )}
               </div>
             )
           })}
-        </div>
+        </Stack>
       </div>
     </div>
   )

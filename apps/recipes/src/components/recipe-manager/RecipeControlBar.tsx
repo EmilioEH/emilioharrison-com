@@ -1,5 +1,5 @@
-import React from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Inline } from '../ui/layout'
 
 interface RecipeControlBarProps {
   searchQuery: string
@@ -20,8 +20,8 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
   onSearchExpandedChange,
 }) => {
   return (
-    <div className="flex flex-col gap-2 bg-background/95 pb-2 pt-4 shadow-sm backdrop-blur transition-all">
-      <div className="flex items-center gap-2 px-4">
+    <div className="bg-background/95 pb-2 pt-4 shadow-sm backdrop-blur transition-all">
+      <Inline spacing="sm" className="px-4">
         {/* Search Input */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -54,6 +54,8 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
         {/* Filter Button */}
         <button
           onClick={onOpenFilters}
+          title="Open Filters"
+          aria-label="Open Filters"
           className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border transition-colors ${
             activeFilterCount > 0
               ? 'bg-primary text-primary-foreground'
@@ -67,7 +69,7 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
             </span>
           )}
         </button>
-      </div>
+      </Inline>
     </div>
   )
 }

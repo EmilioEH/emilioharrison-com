@@ -96,9 +96,9 @@ test.describe('Recipe Manager', () => {
     await page.waitForTimeout(500)
 
     // Wait for Detail View content to be stable
-    // Use regex to allow for the count suffix like "(1)"
-    await expect(page.getByRole('heading', { name: /^Ingredients/ })).toBeVisible()
+    // Check title first to verify view is rendered
     await expect(page.getByRole('heading', { name: testTitle, exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /^Ingredients/ })).toBeVisible()
 
     // Close detail view (Back to Library)
     await page.getByRole('button', { name: 'Back to Library' }).click()

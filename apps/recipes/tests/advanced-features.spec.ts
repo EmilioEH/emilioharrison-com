@@ -6,19 +6,19 @@ const login = async (page: Page) => {
     {
       name: 'site_auth',
       value: 'true',
-      domain: 'localhost',
+      domain: '127.0.0.1',
       path: '/',
     },
     {
       name: 'site_user',
       value: 'TestUser',
-      domain: 'localhost',
+      domain: '127.0.0.1',
       path: '/',
     },
     {
       name: 'site_email',
       value: 'emilioeh1991@gmail.com',
-      domain: 'localhost',
+      domain: '127.0.0.1',
       path: '/',
     },
   ])

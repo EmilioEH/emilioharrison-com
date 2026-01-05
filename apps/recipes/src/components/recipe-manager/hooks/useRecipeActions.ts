@@ -70,6 +70,9 @@ export const useRecipeActions = ({
         const res = await fetch(`${getBaseUrl()}api/recipes/${id}`, { method: 'DELETE' })
         if (res.ok) {
           setRecipes((prev) => prev.filter((r) => r.id !== id))
+          // Unplan from week view
+          const { unplanRecipe } = await import('../../../lib/weekStore')
+          unplanRecipe(id)
           return true
         } else {
           return false
@@ -159,6 +162,12 @@ export const useRecipeActions = ({
     async (ids: Set<string>): Promise<boolean> => {
       // Optimistic Update
       setRecipes((prev) => prev.filter((r) => !ids.has(r.id)))
+
+      // Also unplan these recipes
+      // Dynamically import to avoid circular dependencies if any, or just import at top if safe.
+      // Since useRecipeActions is a hook, let's assume we can import weekStore at top.
+      const { unplanRecipe } = await import('../../../lib/weekStore')
+      ids.forEach((id) => unplanRecipe(id))
 
       try {
         await Promise.all(
