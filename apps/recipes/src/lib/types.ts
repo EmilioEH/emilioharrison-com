@@ -116,6 +116,7 @@ export interface Family {
   members: string[] // Array of Google Auth UIDs
   createdBy: string // userId who created the group
   createdAt: string // ISO date
+  lastUpdated?: string // ISO date - updated when week plans change (for sync optimization)
 }
 
 /** User profile with family membership */

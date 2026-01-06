@@ -101,6 +101,11 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
       weekPlan: newWeekPlan,
     })
 
+    // 4. Update family's lastUpdated for sync optimization (the "flag")
+    await db.updateDocument('families', userDoc.familyId, {
+      lastUpdated: new Date().toISOString(),
+    })
+
     // Fetch updated data
     familyData = await db.getDocument(`families/${userDoc.familyId}/recipeData`, recipeId)
 
@@ -174,6 +179,11 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
     // 2. Update week plan to not planned
     await db.updateDocument(`families/${userDoc.familyId}/recipeData`, recipeId, {
       weekPlan: { isPlanned: false },
+    })
+
+    // 3. Update family's lastUpdated for sync optimization
+    await db.updateDocument('families', userDoc.familyId, {
+      lastUpdated: new Date().toISOString(),
     })
 
     return new Response(

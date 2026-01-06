@@ -27,7 +27,7 @@ import { useRouter, type ViewMode } from './hooks/useRouter'
 import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
-import { familyActions } from '../../lib/familyStore'
+import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { alert, confirm } from '../../lib/dialogStore'
 
 // --- Sub-Components ---
@@ -62,6 +62,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
 
   // Family Sync State
   const [showFamilySetup, setShowFamilySetup] = useState(false)
+  const [showSyncNotification, setShowSyncNotification] = useState(false)
 
   // Load family data on mount
   useEffect(() => {
@@ -117,6 +118,46 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       loadPlannedRecipes()
     }
   }, [loading])
+
+  // Track last known family update timestamp for efficient sync
+  const [lastKnownUpdate, setLastKnownUpdate] = useState<string | null>(null)
+
+  // Background sync check for family changes (optimized with version stamp)
+  useEffect(() => {
+    if (loading) return
+
+    const family = $currentFamily.get()
+    if (!family) return
+
+    // Initialize with current family's lastUpdated
+    if (!lastKnownUpdate && family.lastUpdated) {
+      setLastKnownUpdate(family.lastUpdated)
+    }
+
+    const checkForUpdates = async () => {
+      try {
+        // Only fetch the family document (1 read) to check the "flag"
+        const res = await fetch('/protected/recipes/api/families/current')
+        const data = await res.json()
+
+        if (data.success && data.family?.lastUpdated) {
+          const serverTimestamp = data.family.lastUpdated
+          const localTimestamp = lastKnownUpdate
+
+          // If timestamps differ, there are changes
+          if (serverTimestamp !== localTimestamp) {
+            setShowSyncNotification(true)
+          }
+        }
+      } catch {
+        // Ignore errors silently
+      }
+    }
+
+    // Check every 30 seconds
+    const interval = setInterval(checkForUpdates, 30000)
+    return () => clearInterval(interval)
+  }, [loading, lastKnownUpdate])
 
   // Use new Router Hook
   const {
@@ -707,6 +748,56 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
             .catch((err) => console.error('Failed to reload family:', err))
         }}
       />
+
+      {/* Family Sync Notification Toast */}
+      <AnimatePresence>
+        {showSyncNotification && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 transform"
+          >
+            <div className="flex items-center gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-lg">
+              <span className="text-sm font-medium">Family updates available</span>
+              <button
+                onClick={async () => {
+                  setShowSyncNotification(false)
+                  // Reload week data and update timestamp
+                  try {
+                    // First get the new timestamp
+                    const familyRes = await fetch('/protected/recipes/api/families/current')
+                    const familyData = await familyRes.json()
+                    if (familyData.success && familyData.family?.lastUpdated) {
+                      setLastKnownUpdate(familyData.family.lastUpdated)
+                    }
+
+                    // Then fetch the full week data
+                    const res = await fetch('/protected/recipes/api/week/planned')
+                    const data = await res.json()
+                    if (data.success && data.planned) {
+                      data.planned.forEach((item: FamilyRecipeData) => {
+                        familyActions.setRecipeFamilyData(item.id, item)
+                      })
+                    }
+                  } catch (e) {
+                    console.error('Failed to refresh:', e)
+                  }
+                }}
+                className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold hover:bg-white/30"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => setShowSyncNotification(false)}
+                className="ml-1 text-white/70 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
