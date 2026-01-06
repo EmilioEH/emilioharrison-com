@@ -235,3 +235,77 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
     })
   }
 }
+
+/**
+ * DELETE /api/families/current
+ * Delete the current user's family (creator only)
+ */
+export const DELETE: APIRoute = async ({ cookies }) => {
+  const userId = getAuthUser(cookies)
+
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
+  try {
+    // 1. Get user document
+    const userDoc = await db.getDocument('users', userId)
+    if (!userDoc || !userDoc.familyId) {
+      return new Response(JSON.stringify({ success: false, error: 'No family found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // 2. Get family document and verify creator
+    const family = await db.getDocument('families', userDoc.familyId)
+    if (!family) {
+      return new Response(JSON.stringify({ success: false, error: 'Family not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (family.createdBy !== userId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Only the creator can delete the family' }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 3. Remove familyId from all members
+    const updatePromises = (family.members as string[]).map((memberId) =>
+      db.updateDocument('users', memberId, { familyId: null }),
+    )
+    await Promise.all(updatePromises)
+
+    // 4. Delete all family_recipes data
+    try {
+      const familyRecipes = await db.getCollection(`families/${userDoc.familyId}/family_recipes`)
+      const deleteRecipePromises = familyRecipes.map((doc: { id: string }) =>
+        db.deleteDocument(`families/${userDoc.familyId}/family_recipes`, doc.id),
+      )
+      await Promise.all(deleteRecipePromises)
+    } catch {
+      // If collection doesn't exist or is empty, that's fine
+      console.log('No family recipes to delete or collection not found')
+    }
+
+    // 5. Delete the family document
+    await db.deleteDocument('families', userDoc.familyId)
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (e) {
+    console.error('DELETE Family Error:', e)
+    return new Response(JSON.stringify({ success: false, error: (e as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}

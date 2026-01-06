@@ -116,6 +116,35 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
     }
   }
 
+  const handleDeleteFamily = async () => {
+    if (!family) return
+
+    const isConfirmed = await confirm(
+      `Are you sure you want to delete "${family.name}"? This will permanently delete all shared family data including notes, ratings, and meal plans. This action cannot be undone.`,
+    )
+    if (!isConfirmed) return
+
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/families/current', {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (data.success) {
+        familyActions.setFamily(null)
+        familyActions.setMembers([])
+        onClose()
+        alert('Family deleted successfully')
+      } else {
+        alert(data.error || 'Failed to delete family')
+      }
+    } catch {
+      alert('Error deleting family')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!family) return null
 
   return (
@@ -263,6 +292,43 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
               </Inline>
             </Stack>
           </section>
+
+          {/* Danger Zone - Only show for creator */}
+          {(() => {
+            // Get current user from members array by checking displayName against cookie
+            const currentUserName = document.cookie.match(/site_user=([^;]+)/)?.[1]
+            const currentUser = members.find((m) => m.displayName === currentUserName)
+            const isCreator = currentUser && family.createdBy === currentUser.id
+
+            if (!isCreator) return null
+
+            return (
+              <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 shadow-sm">
+                <Stack spacing="md">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-destructive">
+                    Danger Zone
+                  </h3>
+                  <Inline justify="between" align="center">
+                    <div>
+                      <div className="text-sm font-bold">Delete Family</div>
+                      <div className="text-xs text-muted-foreground">
+                        Permanently delete this family and all shared data
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteFamily}
+                      disabled={loading}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Family
+                    </Button>
+                  </Inline>
+                </Stack>
+              </section>
+            )
+          })()}
         </Stack>
       </div>
     </div>
