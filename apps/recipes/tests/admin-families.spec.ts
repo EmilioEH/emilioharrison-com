@@ -39,9 +39,7 @@ test.describe('Admin Family Management', () => {
     })
 
     // Add all required auth cookies
-    await page
-      .context()
-      .addCookies(AUTH_COOKIES as unknown as Parameters<typeof page.context.addCookies>[0])
+    await page.context().addCookies([...AUTH_COOKIES])
 
     await page.goto('/protected/recipes/library')
 
@@ -89,9 +87,7 @@ test.describe('Admin Family Management', () => {
     })
 
     // Add all required auth cookies
-    await page
-      .context()
-      .addCookies(AUTH_COOKIES as unknown as Parameters<typeof page.context.addCookies>[0])
+    await page.context().addCookies([...AUTH_COOKIES])
 
     await page.goto('/protected/recipes/library')
 
