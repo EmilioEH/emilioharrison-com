@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getEnv, getEmailList } from '../../../lib/env'
+import { db } from '../../../lib/firebase-server'
 
 export const POST: APIRoute = async (context) => {
   const { request, cookies } = context
@@ -42,6 +43,7 @@ export const POST: APIRoute = async (context) => {
 
     const data = await verifyRes.json()
     const user = data.users[0]
+    const userId = user.localId // Firebase Auth UID
 
     // Use email or provider ID as name since display name might be missing
     const name = user.displayName || user.email || 'Chef'
@@ -59,6 +61,29 @@ export const POST: APIRoute = async (context) => {
         }),
         { status: 403 },
       )
+    }
+
+    // Create or update user document in Firestore (enables family invites to find this user)
+    try {
+      const existingUser = await db.getDocument('users', userId)
+      if (existingUser) {
+        // Update existing user with latest email/displayName (in case they changed)
+        await db.updateDocument('users', userId, {
+          email: email || existingUser.email,
+          displayName: name,
+        })
+      } else {
+        // Create new user document
+        await db.setDocument('users', userId, {
+          id: userId,
+          email: email || '',
+          displayName: name,
+          joinedAt: new Date().toISOString(),
+        })
+      }
+    } catch (dbError) {
+      // Log but don't fail login if user doc creation fails
+      console.error('Failed to create/update user document:', dbError)
     }
 
     const cookieOptions = {
