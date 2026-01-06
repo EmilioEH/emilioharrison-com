@@ -277,6 +277,15 @@ Users can manage their family workspace after the initial onboarding through a d
 - **Invitations**: Enter a member's email in the **Invite New Member** section.
 - **Management**: Use the role dropdown or the trash icon (Admins only) to manage existing members.
 
+### Admin Access
+
+Designated site administrators (configured via `ADMIN_EMAILS`) possess "Super Admin" capabilities across all family workspaces.
+
+- **Global Visibility**: Admins can view a list of all active families and their metadata (ID, Member Count, Creator) via the **Admin Dashboard**.
+- **Management Overrides**: Admins can:
+  - Drill down into _any_ family's details.
+  - Manage members (update roles, remove users) for _any_ family, bypassing standard membership restrictions.
+
 ## 8. Validation Strategy
 
 This project enforces strict quality gates using `00-agent-workflow.md`.

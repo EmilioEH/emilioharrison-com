@@ -11,6 +11,7 @@ import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './BulkEditModal'
 import { BulkRecipeImporter } from './BulkRecipeImporter'
+import { AdminDashboard } from '../admin/AdminDashboard'
 import { FamilySetup } from './FamilySetup'
 import { FamilyManagementView } from './FamilyManagementView'
 import { InvitationModal } from './InvitationModal'
@@ -267,11 +268,13 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     const handleNavigateToFeedbackDashboard = () => setView('feedback-dashboard')
     const handleNavigateToBulkImport = () => setView('bulk-import')
     const handleNavigateToFamilySettings = () => setView('family-settings')
+    const handleNavigateToAdminDashboard = () => setView('admin-dashboard')
 
     window.addEventListener('navigate-to-settings', handleNavigateToSettings)
     window.addEventListener('navigate-to-feedback-dashboard', handleNavigateToFeedbackDashboard)
     window.addEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
     window.addEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
+    window.addEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
 
     return () => {
       window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
@@ -281,6 +284,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       )
       window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
       window.removeEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
+      window.removeEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
     }
   }, [setView])
 
@@ -561,6 +565,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         </div>
       </div>
     )
+  }
+
+  if (view === 'admin-dashboard') {
+    return <AdminDashboard onClose={() => setView('library')} />
   }
 
   return (

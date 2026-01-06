@@ -118,8 +118,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
           } else if (errorData.error) {
             errorMessage = `Error: ${errorData.error}`
           }
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_e) {
+        } catch {
           // If response isn't JSON, use status text
           errorMessage = `Error ${response.status}: ${response.statusText}`
         }

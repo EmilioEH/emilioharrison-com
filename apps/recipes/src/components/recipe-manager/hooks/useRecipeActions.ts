@@ -61,7 +61,7 @@ export const useRecipeActions = ({
         setIsSaving(false)
       }
     },
-    [recipes, setRecipes, refreshRecipes, getBaseUrl],
+    [recipes, setRecipes, getBaseUrl],
   )
 
   const deleteRecipe = useCallback(

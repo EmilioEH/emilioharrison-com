@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
+import { getEmailList } from '../../../lib/env'
 import { db } from '../../../lib/firebase-server'
 
 /**
@@ -15,15 +16,15 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
 
   try {
     const requesterDoc = await db.getDocument('users', userId)
-    if (!requesterDoc || !requesterDoc.familyId) {
-      return new Response(JSON.stringify({ success: false, error: 'No family found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
 
-    // Permission Check: only creator or admin
-    if (requesterDoc.role !== 'creator' && requesterDoc.role !== 'admin') {
+    // Permission Check: only creator or admin (in family or site admin)
+    const emailCookie = cookies.get('site_email')
+    const userEmail = emailCookie?.value || ''
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adminEmails = getEmailList({ cookies } as any, 'ADMIN_EMAILS')
+    const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
+
+    if (requesterDoc.role !== 'creator' && requesterDoc.role !== 'admin' && !isSiteAdmin) {
       return new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -41,18 +42,27 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
       )
     }
 
-    // Security: can't change creator's role
     const targetUserDoc = await db.getDocument('users', targetUserId)
-    if (!targetUserDoc || targetUserDoc.familyId !== requesterDoc.familyId) {
+    if (!targetUserDoc) {
+      return new Response(JSON.stringify({ success: false, error: 'Member not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Family Check: Must be in same family, unless site admin
+    if (!isSiteAdmin && targetUserDoc.familyId !== requesterDoc.familyId) {
       return new Response(
         JSON.stringify({ success: false, error: 'Member not found in your family' }),
         {
-          status: 404,
+          status: 404, // mask existence
           headers: { 'Content-Type': 'application/json' },
         },
       )
     }
 
+    // Security: can't change creator's role (even by admin? Maybe let admin do it? Let's stick to safe defaults)
+    // Actually, if creator leaves/demoted, family might break. Let's prevent it for now.
     if (targetUserDoc.role === 'creator') {
       return new Response(
         JSON.stringify({ success: false, error: 'Cannot change role of family creator' }),
@@ -91,15 +101,15 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
 
   try {
     const requesterDoc = await db.getDocument('users', userId)
-    if (!requesterDoc || !requesterDoc.familyId) {
-      return new Response(JSON.stringify({ success: false, error: 'No family found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
 
-    // Permission Check: only creator or admin
-    if (requesterDoc.role !== 'creator' && requesterDoc.role !== 'admin') {
+    // Permission Check
+    const emailCookie = cookies.get('site_email')
+    const userEmail = emailCookie?.value || ''
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adminEmails = getEmailList({ cookies } as any, 'ADMIN_EMAILS')
+    const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
+
+    if (requesterDoc.role !== 'creator' && requesterDoc.role !== 'admin' && !isSiteAdmin) {
       return new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -114,9 +124,16 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
       })
     }
 
-    // Security: can't remove creator
     const targetUserDoc = await db.getDocument('users', targetUserId)
-    if (!targetUserDoc || targetUserDoc.familyId !== requesterDoc.familyId) {
+    if (!targetUserDoc) {
+      return new Response(JSON.stringify({ success: false, error: 'User not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Family Check
+    if (!isSiteAdmin && targetUserDoc.familyId !== requesterDoc.familyId) {
       return new Response(
         JSON.stringify({ success: false, error: 'Member not found in your family' }),
         {
@@ -143,12 +160,16 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
     })
 
     // 2. Update family document members list
-    const familyDoc = await db.getDocument('families', requesterDoc.familyId)
-    if (familyDoc) {
-      const updatedMembers = (familyDoc.members as string[]).filter((id) => id !== targetUserId)
-      await db.updateDocument('families', requesterDoc.familyId, {
-        members: updatedMembers,
-      })
+    // Use targetUserDoc.familyId to find the family, since requester might be admin from outside
+    const familyIdToUpdate = targetUserDoc.familyId
+    if (familyIdToUpdate) {
+      const familyDoc = await db.getDocument('families', familyIdToUpdate)
+      if (familyDoc) {
+        const updatedMembers = (familyDoc.members as string[]).filter((id) => id !== targetUserId)
+        await db.updateDocument('families', familyIdToUpdate, {
+          members: updatedMembers,
+        })
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {

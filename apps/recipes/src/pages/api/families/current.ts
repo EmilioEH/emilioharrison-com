@@ -1,13 +1,14 @@
 import type { APIRoute } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
+import { getEmailList } from '../../../lib/env'
 import type { Family, User, PendingInvite } from '../../../lib/types'
 
 /**
  * GET /api/families/current
  * Get the current user's family and its members
  */
-export const GET: APIRoute = async ({ cookies }) => {
+export const GET: APIRoute = async ({ request, cookies }) => {
   const userId = getAuthUser(cookies)
 
   if (!userId) {
@@ -53,7 +54,39 @@ export const GET: APIRoute = async ({ cookies }) => {
     }
 
     // 4. Get family document
-    const familyDoc = await db.getDocument('families', userDoc.familyId)
+    // Admin Override: Allow fetching specific family via ?familyId=
+    const url = new URL(request.url)
+    const requestedFamilyId = url.searchParams.get('familyId')
+
+    // Check if user is admin
+    const emailCookie = cookies.get('site_email')
+    const cookieEmail = emailCookie?.value || ''
+    const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
+    const isAdmin = cookieEmail && adminEmails.includes(cookieEmail.toLowerCase())
+
+    const targetFamilyId = isAdmin && requestedFamilyId ? requestedFamilyId : userDoc.familyId
+
+    if (!targetFamilyId) {
+      // ... existing no-family response (lines 38-52) logic ...
+      if (!userDoc || !userDoc.familyId) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            family: null,
+            members: [],
+            incomingInvites: pendingInvites,
+            outgoingInvites: [],
+            message: 'User has no family assigned',
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+    }
+
+    const familyDoc = await db.getDocument('families', targetFamilyId)
 
     if (!familyDoc) {
       // Family ID exists but doc missing (orphaned)
@@ -243,8 +276,13 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
       })
     }
 
-    // Permission Check: only creator or admin
-    if (userDoc.role !== 'creator' && userDoc.role !== 'admin') {
+    // Permission Check: only creator or admin (role in family OR site admin)
+    const emailCookie = cookies.get('site_email')
+    const userEmail = emailCookie?.value || ''
+    const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
+    const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
+
+    if (userDoc.role !== 'creator' && userDoc.role !== 'admin' && !isSiteAdmin) {
       return new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -304,7 +342,12 @@ export const DELETE: APIRoute = async ({ cookies }) => {
       })
     }
 
-    if (family.createdBy !== userId) {
+    const emailCookie = cookies.get('site_email')
+    const userEmail = emailCookie?.value || ''
+    const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
+    const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
+
+    if (family.createdBy !== userId && !isSiteAdmin) {
       return new Response(
         JSON.stringify({ success: false, error: 'Only the creator can delete the family' }),
         {

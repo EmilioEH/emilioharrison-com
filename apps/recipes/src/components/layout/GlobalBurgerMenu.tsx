@@ -11,6 +11,7 @@ import {
   CheckSquare,
   LogOut,
   UsersRound,
+  ShieldAlert,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
@@ -106,14 +107,27 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               {/* Only show dashboard to Emilio */}
               {/* Only show dashboard to Emilio */}
               {props.user === 'Emilio' && (
-                <button
-                  role="menuitem"
-                  onClick={handleFeedbackDashboard}
-                  className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
-                >
-                  <LayoutDashboard className="text-foreground-variant h-5 w-5" />
-                  <span className="font-medium text-foreground">Feedback Dashboard</span>
-                </button>
+                <>
+                  <button
+                    role="menuitem"
+                    onClick={handleFeedbackDashboard}
+                    className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                  >
+                    <LayoutDashboard className="text-foreground-variant h-5 w-5" />
+                    <span className="font-medium text-foreground">Feedback Dashboard</span>
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      closeBurgerMenu()
+                      window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
+                    }}
+                    className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                  >
+                    <ShieldAlert className="text-foreground-variant h-5 w-5" />
+                    <span className="font-medium text-foreground">Admin Dashboard</span>
+                  </button>
+                </>
               )}
 
               <button

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { UserPlus, Shield, User, Trash2, ArrowLeft } from 'lucide-react'
+import { UserPlus, Shield, User, Trash2, ArrowLeft, LogOut } from 'lucide-react'
 import { useStore } from '@nanostores/react'
 import { $familyMembers, $currentUserId, familyActions } from '../../lib/familyStore'
 import { Stack, Inline } from '../ui/layout'
@@ -189,6 +189,33 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
       }
     } catch {
       alert('Error deleting family')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLeaveFamily = async () => {
+    const isConfirmed = await confirm(
+      'Are you sure you want to leave this family? You will lose access to all shared recipes and plans.',
+    )
+    if (!isConfirmed) return
+
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/families/leave', {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (data.success) {
+        familyActions.setFamily(null)
+        familyActions.setMembers([])
+        onClose()
+        await alert('You have left the family.')
+      } else {
+        await alert(data.error || 'Failed to leave family')
+      }
+    } catch {
+      await alert('Error leaving family')
     } finally {
       setLoading(false)
     }
@@ -404,31 +431,50 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
           {(() => {
             const isCreator = currentUserId && family.createdBy === currentUserId
 
-            if (!isCreator) return null
-
             return (
               <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 shadow-sm">
                 <Stack spacing="md">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-destructive">
                     Danger Zone
                   </h3>
-                  <Inline justify="between" align="center">
-                    <div>
-                      <div className="text-sm font-bold">Delete Family</div>
-                      <div className="text-xs text-muted-foreground">
-                        Permanently delete this family and all shared data
+
+                  {isCreator ? (
+                    <Inline justify="between" align="center">
+                      <div>
+                        <div className="text-sm font-bold">Delete Family</div>
+                        <div className="text-xs text-muted-foreground">
+                          Permanently delete this family and all shared data
+                        </div>
                       </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeleteFamily}
-                      disabled={loading}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Family
-                    </Button>
-                  </Inline>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteFamily}
+                        disabled={loading}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Family
+                      </Button>
+                    </Inline>
+                  ) : (
+                    <Inline justify="between" align="center">
+                      <div>
+                        <div className="text-sm font-bold">Leave Family</div>
+                        <div className="text-xs text-muted-foreground">
+                          Leave this family group. You will lose access to shared recipes.
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleLeaveFamily}
+                        disabled={loading}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Leave Family
+                      </Button>
+                    </Inline>
+                  )}
                 </Stack>
               </section>
             )
