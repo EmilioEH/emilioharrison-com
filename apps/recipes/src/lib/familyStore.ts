@@ -7,6 +7,9 @@ export const $currentFamily = atom<Family | null>(null)
 // Family members
 export const $familyMembers = atom<User[]>([])
 
+// Current user ID (for permission checks)
+export const $currentUserId = atom<string | null>(null)
+
 // Loading states
 export const $familyLoading = atom<boolean>(true)
 export const $familyInitialized = atom<boolean>(false)
@@ -23,6 +26,10 @@ export const familyActions = {
 
   setMembers: (members: User[]) => {
     $familyMembers.set(members)
+  },
+
+  setCurrentUserId: (userId: string | null) => {
+    $currentUserId.set(userId)
   },
 
   setRecipeFamilyData: (recipeId: string, data: FamilyRecipeData) => {
@@ -43,6 +50,7 @@ export const familyActions = {
   reset: () => {
     $currentFamily.set(null)
     $familyMembers.set([])
+    $currentUserId.set(null)
     $recipeFamilyData.set({})
     $familyLoading.set(true)
     $familyInitialized.set(false)

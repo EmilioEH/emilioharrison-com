@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
 import { UserPlus, Shield, User, Trash2, ArrowLeft } from 'lucide-react'
 import { useStore } from '@nanostores/react'
-import { $currentFamily, $familyMembers, familyActions } from '../../lib/familyStore'
+import {
+  $currentFamily,
+  $familyMembers,
+  $currentUserId,
+  familyActions,
+} from '../../lib/familyStore'
 import { Stack, Inline } from '../ui/layout'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -14,6 +19,7 @@ interface FamilyManagementViewProps {
 export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onClose }) => {
   const family = useStore($currentFamily)
   const members = useStore($familyMembers)
+  const currentUserId = useStore($currentUserId)
 
   const [isEditingName, setIsEditingName] = useState(false)
   const [newFamilyName, setNewFamilyName] = useState(family?.name || '')
@@ -295,10 +301,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
 
           {/* Danger Zone - Only show for creator */}
           {(() => {
-            // Get current user from members array by checking displayName against cookie
-            const currentUserName = document.cookie.match(/site_user=([^;]+)/)?.[1]
-            const currentUser = members.find((m) => m.displayName === currentUserName)
-            const isCreator = currentUser && family.createdBy === currentUser.id
+            const isCreator = currentUserId && family.createdBy === currentUserId
 
             if (!isCreator) return null
 

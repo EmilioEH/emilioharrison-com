@@ -61,6 +61,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         success: true,
         family: familyDoc as Family,
         members,
+        currentUserId: userId, // Include current user ID for permission checks
       }),
       {
         status: 200,

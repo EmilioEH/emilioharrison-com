@@ -73,6 +73,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         if (data.success) {
           familyActions.setFamily(data.family)
           familyActions.setMembers(data.members || [])
+          familyActions.setCurrentUserId(data.currentUserId || null)
 
           // Show family setup if user has no family
           const shouldSkip =
