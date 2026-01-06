@@ -140,10 +140,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     await db.createDocument('families', familyId, newFamily)
 
     // 3. Create or update user document
-    // Note: We only have userId from cookies, not full user data
+    // Read email from cookie (set during login)
+    const emailCookie = cookies.get('site_email')
+    const userEmail = emailCookie?.value || ''
+
+    if (!userEmail) {
+      console.warn('[Family] Creating user without email - invite functionality may not work')
+    }
+
     const newUser: User = {
       id: userId,
-      email: '', // Will be populated from Firebase Auth
+      email: userEmail,
       displayName: 'User', // Will be populated from Firebase Auth
       familyId,
       role: 'creator', // Assign creator role on creation
