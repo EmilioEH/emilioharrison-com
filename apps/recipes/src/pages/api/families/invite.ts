@@ -66,6 +66,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // 3. Find the invitee by email
     // Note: This is a simple implementation. In production, you'd want a users-by-email index
     const allUsers = await db.getCollection('users')
+    console.log(`[Invite] Fetched ${allUsers.length} users to search through.`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const invitee = allUsers.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
 

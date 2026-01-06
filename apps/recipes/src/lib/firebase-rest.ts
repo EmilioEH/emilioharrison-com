@@ -107,29 +107,63 @@ export class FirebaseRestService {
     direction: 'ASC' | 'DESC' = 'DESC',
   ) {
     const token = await this.getAccessToken()
-    let url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
+    const baseUrl = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
 
-    // Verify URL encoding for query parameters
-    if (orderByField) {
-      // API expects 'field direction', e.g. 'timestamp desc'
-      const dir = direction === 'DESC' ? 'desc' : 'asc'
-      const orderByValue = `${orderByField} ${dir}`
-      url += `?orderBy=${encodeURIComponent(orderByValue)}`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let allDocuments: any[] = []
+    let nextPageToken: string | undefined = undefined
+    let pageCount = 0
+    const MAX_PAGES = 50 // Safety limit ~1000-10000 docs depending on pageSize default
+
+    do {
+      let url = baseUrl
+      const params = new URLSearchParams()
+
+      if (orderByField) {
+        const dir = direction === 'DESC' ? 'desc' : 'asc'
+        const orderByValue = `${orderByField} ${dir}`
+        params.append('orderBy', orderByValue)
+      }
+
+      if (nextPageToken) {
+        params.append('pageToken', nextPageToken)
+      }
+
+      // Explicitly set page size to max allowed by standard to reduce round trips if possible,
+      // though Firestore REST default is often 20 or 300. Let's rely on default or set 300.
+      params.append('pageSize', '300')
+
+      const queryString = params.toString()
+      if (queryString) {
+        url += `?${queryString}`
+      }
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) {
+        // Handle 404 (empty collection often returns empty or 404 depending on structure)
+        if (res.status === 404) return []
+        throw new Error(`Firestore GET failed: ${res.statusText}`)
+      }
+
+      const data = await res.json()
+      if (data.documents && Array.isArray(data.documents)) {
+        allDocuments = allDocuments.concat(data.documents)
+      }
+
+      nextPageToken = data.nextPageToken
+      pageCount++
+    } while (nextPageToken && pageCount < MAX_PAGES)
+
+    if (nextPageToken) {
+      console.warn(
+        `getCollection hit safety limit of ${MAX_PAGES} pages. Some results may be missing.`,
+      )
     }
 
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) {
-      // Handle 404 (empty collection often returns empty or 404 depending on structure)
-      if (res.status === 404) return []
-      throw new Error(`Firestore GET failed: ${res.statusText}`)
-    }
-
-    const data = await res.json()
-    // Simplify structure
-    return (data.documents || []).map(this.mapFirestoreDoc.bind(this))
+    return allDocuments.map(this.mapFirestoreDoc.bind(this))
   }
 
   async getDocument(collection: string, id: string) {
