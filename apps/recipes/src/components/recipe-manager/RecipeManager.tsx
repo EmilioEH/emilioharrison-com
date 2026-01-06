@@ -13,6 +13,7 @@ import { BulkEditModal } from './BulkEditModal'
 import { BulkRecipeImporter } from './BulkRecipeImporter'
 import { FamilySetup } from './FamilySetup'
 import { FamilyManagementView } from './FamilyManagementView'
+import { InvitationModal } from './InvitationModal'
 import type { Recipe, FamilyRecipeData, PendingInvite } from '../../lib/types'
 
 // --- Hooks ---
@@ -63,7 +64,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   // Family Sync State
   const [showFamilySetup, setShowFamilySetup] = useState(false)
   const [showSyncNotification, setShowSyncNotification] = useState(false)
-  const [_pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
 
   // Load family data on mount
   useEffect(() => {
@@ -305,6 +306,52 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
       })
     })
   }, [loading, recipes])
+
+  const handleAcceptInvite = async (invite: PendingInvite) => {
+    try {
+      const res = await fetch('/protected/recipes/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId: invite.id, accept: true }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        // Reload family data
+        const familyRes = await fetch('/protected/recipes/api/families/current')
+        const familyData = await familyRes.json()
+        if (familyData.success) {
+          familyActions.setFamily(familyData.family)
+          familyActions.setMembers(familyData.members || [])
+          setPendingInvites([]) // Clear invites after joining
+          await alert(`Joined ${invite.familyName} successfully!`)
+        }
+      } else {
+        await alert(data.error || 'Failed to join family')
+      }
+    } catch (e) {
+      console.error(e)
+      await alert('An error occurred')
+    }
+  }
+
+  const handleDeclineInvite = async (invite: PendingInvite) => {
+    try {
+      const res = await fetch('/protected/recipes/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId: invite.id, accept: false }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id))
+      } else {
+        await alert(data.error || 'Failed to decline invitation')
+      }
+    } catch (e) {
+      console.error(e)
+      await alert('An error occurred')
+    }
+  }
 
   const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
     const { success } = await saveRecipe(recipe)
@@ -738,18 +785,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         />
       )}
 
-      {/* Invitation Modal - Disabled for now as we focus on sending invites */}
-      {/* {_pendingInvites.length > 0 && (
+      {/* Invitation Modal */}
+      {pendingInvites.length > 0 && (
         <InvitationModal
-          invite={_pendingInvites[0]}
-          onAccept={async (invite) => {
-             // ...
-          }}
-          onDecline={async (invite) => {
-             // ...
-          }}
+          invite={pendingInvites[0]}
+          onAccept={handleAcceptInvite}
+          onDecline={handleDeclineInvite}
         />
-      )} */}
+      )}
 
       {/* Family Setup Modal */}
       <FamilySetup

@@ -93,6 +93,36 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
     window.fetch = async (...args) => {
       const url = typeof args[0] === 'string' ? args[0] : (args[0] as { url: string }).url
       if (typeof url === 'string' && url.includes('families/current')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const scenario = (window as any).__TEST_SCENARIO__
+
+        if (scenario === 'pending-invite') {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              family: null,
+              members: [],
+              incomingInvites: [
+                {
+                  id: 'invite-123',
+                  email: 'emilioeh1991@gmail.com',
+                  familyId: 'family-abc',
+                  familyName: 'The Harrison Family',
+                  invitedBy: 'user-creator',
+                  invitedByName: 'Emilio',
+                  status: 'pending',
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+              outgoingInvites: [],
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
+
         return new Response(
           JSON.stringify({
             success: true,
