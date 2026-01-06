@@ -13,7 +13,7 @@ import { BulkEditModal } from './BulkEditModal'
 import { BulkRecipeImporter } from './BulkRecipeImporter'
 import { FamilySetup } from './FamilySetup'
 import { FamilyManagementView } from './FamilyManagementView'
-import type { Recipe, FamilyRecipeData } from '../../lib/types'
+import type { Recipe, FamilyRecipeData, PendingInvite } from '../../lib/types'
 
 // --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
@@ -63,6 +63,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   // Family Sync State
   const [showFamilySetup, setShowFamilySetup] = useState(false)
   const [showSyncNotification, setShowSyncNotification] = useState(false)
+  const [_pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
 
   // Load family data on mount
   useEffect(() => {
@@ -76,16 +77,20 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           familyActions.setMembers(data.members || [])
           familyActions.setCurrentUserId(data.currentUserId || null)
 
-          // Show family setup if user has no family
+          if (data.incomingInvites && Array.isArray(data.incomingInvites)) {
+            setPendingInvites(data.incomingInvites)
+          }
+
+          // Show family setup if user has no family AND no pending invites
           const shouldSkip =
             typeof window !== 'undefined' &&
             (window.location.search.includes('skip_setup') ||
-              document.cookie.includes('skip_family_setup=true'))
-          if (
-            !data.family &&
-            !shouldSkip &&
-            !(window as unknown as { isPlaywright: boolean }).isPlaywright
-          ) {
+              /(?:^|; )skip_family_setup=true(?:;|$)/.test(document.cookie))
+
+          const hasInvites = data.pendingInvites && data.pendingInvites.length > 0
+          const isPlaywright = (window as unknown as { isPlaywright: boolean }).isPlaywright
+
+          if (!data.family && !shouldSkip && !hasInvites && !isPlaywright) {
             setShowFamilySetup(true)
           }
         } else {
@@ -252,6 +257,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   const handleAddToWeek = (recipeId: string) => {
     setDayPickerRecipeId(recipeId)
   }
+
+  const family = useStore($currentFamily)
 
   // Listen for settings navigation from burger menu
   useEffect(() => {
@@ -643,7 +650,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
             </div>
           )}
           {view === 'family-settings' && (
-            <FamilyManagementView onClose={() => setView('library')} />
+            <FamilyManagementView onClose={() => setView('library')} family={family} />
           )}
         </main>
       </div>
@@ -730,6 +737,19 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           }}
         />
       )}
+
+      {/* Invitation Modal - Disabled for now as we focus on sending invites */}
+      {/* {_pendingInvites.length > 0 && (
+        <InvitationModal
+          invite={_pendingInvites[0]}
+          onAccept={async (invite) => {
+             // ...
+          }}
+          onDecline={async (invite) => {
+             // ...
+          }}
+        />
+      )} */}
 
       {/* Family Setup Modal */}
       <FamilySetup

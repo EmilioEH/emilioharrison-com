@@ -89,7 +89,9 @@ export function FamilySetup({ open, onComplete }: FamilySetupProps) {
   }
 
   const handleSkip = () => {
-    // Allow user to skip family setup for now
+    // Set a long-lived cookie (1 year) to persist the skip preference
+    const oneYear = 365 * 24 * 60 * 60
+    document.cookie = `skip_family_setup=true; path=/; max-age=${oneYear}; SameSite=Lax`
     onComplete()
   }
 

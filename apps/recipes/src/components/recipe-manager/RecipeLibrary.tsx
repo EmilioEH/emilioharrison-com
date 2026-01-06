@@ -357,6 +357,17 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                         title={p.addedByName ? `Added by ${p.addedByName}` : 'Planned'}
                       >
                         {p.label}
+                        {p.addedByName && (
+                          <span className="ml-1 opacity-70">
+                            (
+                            {p.addedByName
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .slice(0, 2)}
+                            )
+                          </span>
+                        )}
                       </Badge>
                     ))}
                     {overflowCount > 0 && (

@@ -146,6 +146,18 @@ export interface UserRating {
   ratedAt: string
 }
 
+/** Invitation for a user to join a family */
+export interface PendingInvite {
+  id: string
+  email: string
+  familyId: string
+  familyName: string
+  invitedBy: string // userId of inviter
+  invitedByName: string // displayName of inviter
+  status: 'pending'
+  createdAt: string
+}
+
 /** Cooking history entry for a family member */
 export interface CookingHistoryEntry {
   userId: string

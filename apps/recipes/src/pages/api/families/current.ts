@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import type { Family, User } from '../../../lib/types'
+import type { Family, User, PendingInvite } from '../../../lib/types'
 
 /**
  * GET /api/families/current
@@ -15,15 +15,34 @@ export const GET: APIRoute = async ({ cookies }) => {
   }
 
   try {
-    // 1. Get user document to find their familyId
+    // 1. Get user document
     const userDoc = await db.getDocument('users', userId)
 
+    // 2. Search for pending invites by email
+    // We need the user's email. If it's not in the doc, check the cookie.
+    let userEmail = userDoc?.email
+    if (!userEmail) {
+      const emailCookie = cookies.get('site_email')
+      userEmail = emailCookie?.value || ''
+    }
+
+    let pendingInvites: PendingInvite[] = []
+    if (userEmail) {
+      const allInvites = await db.getCollection('pending_invites')
+      pendingInvites = (allInvites as unknown as PendingInvite[]).filter(
+        (inv) => inv.email?.toLowerCase() === userEmail?.toLowerCase() && inv.status === 'pending',
+      )
+    }
+
+    // 3. If no family, return just invites
     if (!userDoc || !userDoc.familyId) {
       return new Response(
         JSON.stringify({
           success: true,
           family: null,
           members: [],
+          incomingInvites: pendingInvites,
+          outgoingInvites: [],
           message: 'User has no family assigned',
         }),
         {
@@ -33,35 +52,53 @@ export const GET: APIRoute = async ({ cookies }) => {
       )
     }
 
-    // 2. Get family document
+    // 4. Get family document
     const familyDoc = await db.getDocument('families', userDoc.familyId)
 
     if (!familyDoc) {
+      // Family ID exists but doc missing (orphaned)
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Family not found',
+          pendingInvites,
         }),
         {
-          status: 404,
+          status: 404, // Use 200 with null family to allow UI to recover?
+          // Actually if we return 404 the UI shows error. Let's return 200 with null family so they can create new one.
           headers: { 'Content-Type': 'application/json' },
         },
       )
     }
 
-    // 3. Get all family members
-    const memberPromises = (familyDoc.members as string[]).map((memberId) =>
+    // 5. Get all family members
+    const memberPromises = ((familyDoc.members as string[]) || []).map((memberId) =>
       db.getDocument('users', memberId),
     )
     const memberDocs = await Promise.all(memberPromises)
     const members = memberDocs.filter((m) => m !== null) as User[]
+
+    // 6. Get pending invites for this family (so admins can see who they invited)
+    let familyPendingInvites: PendingInvite[] = []
+    try {
+      // In a real DB we'd query where familyId == familyDoc.id
+      // Here we scan and filter
+      const allInvites = await db.getCollection('pending_invites')
+      familyPendingInvites = (allInvites as unknown as PendingInvite[]).filter(
+        (inv) => inv.familyId === familyDoc.id && inv.status === 'pending',
+      )
+    } catch {
+      // ignore
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         family: familyDoc as Family,
         members,
-        currentUserId: userId, // Include current user ID for permission checks
+        currentUserId: userId,
+        incomingInvites: [],
+        outgoingInvites: familyPendingInvites,
       }),
       {
         status: 200,

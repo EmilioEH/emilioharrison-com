@@ -1,23 +1,23 @@
 import React, { useState } from 'react'
 import { UserPlus, Shield, User, Trash2, ArrowLeft } from 'lucide-react'
 import { useStore } from '@nanostores/react'
-import {
-  $currentFamily,
-  $familyMembers,
-  $currentUserId,
-  familyActions,
-} from '../../lib/familyStore'
+import { $familyMembers, $currentUserId, familyActions } from '../../lib/familyStore'
 import { Stack, Inline } from '../ui/layout'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { confirm, alert } from '../../lib/dialogStore'
+import { FamilySetup } from './FamilySetup'
+import type { PendingInvite } from '../../lib/types'
+
+import type { Family } from '../../lib/types'
 
 interface FamilyManagementViewProps {
   onClose: () => void
+  family: Family | null
 }
 
-export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onClose }) => {
-  const family = useStore($currentFamily)
+export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onClose, family }) => {
+  // const family = useStore($currentFamily) // Use prop instead
   const members = useStore($familyMembers)
   const currentUserId = useStore($currentUserId)
 
@@ -25,6 +25,49 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
   const [newFamilyName, setNewFamilyName] = useState(family?.name || '')
   const [inviteEmail, setInviteEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
+
+  // Load pending invites when component mounts or updates
+  React.useEffect(() => {
+    const loadInvites = async () => {
+      try {
+        const res = await fetch('/api/families/current')
+        const data = await res.json()
+        if (data.success) {
+          if (data.outgoingInvites) {
+            setPendingInvites(data.outgoingInvites)
+          } else if (data.pendingInvites) {
+            // Fallback
+            setPendingInvites(data.pendingInvites)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load invites', e)
+      }
+    }
+    loadInvites()
+  }, [family])
+
+  const handleRevokeInvite = async (inviteId: string) => {
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/families/invite', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId))
+      } else {
+        await alert(data.error || 'Failed to revoke invitation')
+      }
+    } catch {
+      await alert('Error revoking invitation')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleUpdateName = async () => {
     if (!newFamilyName.trim()) return
@@ -53,7 +96,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
     if (!inviteEmail.trim()) return
     setLoading(true)
     try {
-      const res = await fetch('/protected/recipes/api/families/invite', {
+      const res = await fetch('/api/families/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail }),
@@ -63,7 +106,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
         alert(`${inviteEmail} has been invited!`)
         setInviteEmail('')
         // Refresh members
-        const fresh = await fetch('/protected/recipes/api/families/current').then((r) => r.json())
+        const fresh = await fetch('/api/families/current').then((r) => r.json())
         if (fresh.success) familyActions.setMembers(fresh.members)
       } else {
         alert(data.error || 'Failed to invite member')
@@ -83,7 +126,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
 
     setLoading(true)
     try {
-      const res = await fetch('/protected/recipes/api/families/members', {
+      const res = await fetch('/api/families/members', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetUserId }),
@@ -151,7 +194,30 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
     }
   }
 
-  if (!family) return null
+  if (!family) {
+    return (
+      <div className="absolute inset-0 z-50 flex flex-col bg-card animate-in slide-in-from-right">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <Inline spacing="md" align="center">
+            <button onClick={onClose} className="hover:bg-card-variant -ml-2 rounded-full p-2">
+              <ArrowLeft className="h-6 w-6" />
+            </button>
+            <h2 className="font-display text-2xl font-bold text-foreground">Create Family</h2>
+          </Inline>
+        </div>
+        <div className="flex-1 p-6">
+          <FamilySetup
+            open={true}
+            onComplete={() => {
+              // Refresh data after creation
+              window.location.reload()
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-card animate-in slide-in-from-right">
@@ -272,6 +338,41 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
               </Stack>
             </Stack>
           </section>
+
+          {/* Pending Invites Section */}
+          {pendingInvites.length > 0 && (
+            <section className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+              <Stack spacing="md">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Pending Invitations
+                </h3>
+                <Stack spacing="sm" className="divide-y divide-border">
+                  {pendingInvites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between py-2 first:pt-0 last:pb-0"
+                    >
+                      <div className="text-sm">
+                        <div className="font-bold">{invite.email}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Sent {new Date(invite.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive/90"
+                        onClick={() => handleRevokeInvite(invite.id)}
+                        disabled={loading}
+                      >
+                        Revoke
+                      </Button>
+                    </div>
+                  ))}
+                </Stack>
+              </Stack>
+            </section>
+          )}
 
           {/* Invite Section */}
           <section className="rounded-2xl border border-border bg-background p-6 shadow-sm">

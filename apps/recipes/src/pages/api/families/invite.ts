@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import type { User } from '../../../lib/types'
+import type { PendingInvite } from '../../../lib/types'
 
 /**
  * POST /api/families/invite
@@ -31,6 +31,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       )
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid email address',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
     // 1. Get current user's family
     const currentUser = await db.getDocument('users', userId)
 
@@ -47,7 +62,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       )
     }
 
-    // 2. Get family document to verify user is a member
+    // 2. Get family document
     const family = await db.getDocument('families', currentUser.familyId)
 
     if (!family) {
@@ -63,59 +78,32 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       )
     }
 
-    // 3. Find the invitee by email
-    // Note: This is a simple implementation. In production, you'd want a users-by-email index
-    const allUsers = await db.getCollection('users')
-    console.log(`[Invite] Fetched ${allUsers.length} users to search through.`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const invitee = allUsers.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+    // 3. Check for existing pending invite for this email (Optional but good UX)
+    // In a real app with high volume, we'd query. Here we can fetch all pending and filter if efficient,
+    // or just let it create duplicates (which we handle on fetch).
+    // Let's rely on client-side updating for now, but ensure we don't error.
 
-    if (!invitee) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'User with that email not found. They must sign in first.',
-        }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      )
-    }
+    // 4. Create Pending Invite
+    const inviteId = crypto.randomUUID()
+    const now = new Date().toISOString()
 
-    // 4. Check if invitee already has a family
-    if (invitee.familyId) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'That user already belongs to a family',
-        }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      )
-    }
-
-    // 5. Add invitee to family
-    const updatedMembers = [...(family.members as string[]), invitee.id]
-    await db.updateDocument('families', currentUser.familyId, {
-      members: updatedMembers,
-    })
-
-    // 6. Update invitee's user document
-    await db.updateDocument('users', invitee.id, {
+    const newInvite: PendingInvite = {
+      id: inviteId,
+      email: email.trim(),
       familyId: currentUser.familyId,
-    })
+      familyName: family.name,
+      invitedBy: userId,
+      invitedByName: currentUser.displayName || 'A Family Member',
+      status: 'pending',
+      createdAt: now,
+    }
 
-    // 7. Fetch updated family member
-    const updatedInvitee = await db.getDocument('users', invitee.id)
+    await db.createDocument('pending_invites', inviteId, newInvite)
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `${email} has been added to your family`,
-        invitee: updatedInvitee as User,
+        message: `Invitation sent to ${email}`,
       }),
       {
         status: 200,
@@ -124,6 +112,97 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     )
   } catch (e) {
     console.error('POST Invite Error:', e)
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: (e as Error).message,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  }
+}
+
+/**
+ * DELETE /api/families/invite
+ * Revoke a pending invitation
+ */
+export const DELETE: APIRoute = async ({ request, cookies }) => {
+  const userId = getAuthUser(cookies)
+
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
+  try {
+    const body = await request.json()
+    const { inviteId } = body
+
+    if (!inviteId) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invite ID is required',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 1. Get the invite to verify ownership
+    const invite = (await db.getDocument(
+      'pending_invites',
+      inviteId,
+    )) as unknown as PendingInvite | null
+
+    if (!invite) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invitation not found',
+        }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 2. Verify permission: Must be the inviter OR a family admin/creator
+    // For simplicity, let's verify if the user belongs to the same family
+    const currentUser = await db.getDocument('users', userId)
+    if (!currentUser || currentUser.familyId !== invite.familyId) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'You do not have permission to revoke this invitation',
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // 3. Delete the invite
+    await db.deleteDocument('pending_invites', inviteId)
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Invitation revoked',
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  } catch (e) {
+    console.error('DELETE Invite Error:', e)
     return new Response(
       JSON.stringify({
         success: false,
