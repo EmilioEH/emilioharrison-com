@@ -1,19 +1,26 @@
-import { test, expect } from './msw-setup'
+import { test, expect, AUTH_COOKIES } from './msw-setup'
 
 test.describe('Admin Family Management', () => {
-  // Override the site_email cookie to simulate an admin
-  // note: mock setup usually respects this if we inject it correctly
-
   test('Non-admin cannot access admin dashboard API', async ({ page }) => {
-    // Normal user login
-    await page.goto('/protected/recipes/library')
+    // Add non-admin auth cookies (different email from ADMIN_EMAILS)
+    await page.context().addCookies([
+      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'site_user', value: 'NonAdminUser', domain: '127.0.0.1', path: '/' },
+      { name: 'site_email', value: 'nonadmin@test.com', domain: '127.0.0.1', path: '/' },
+      { name: 'skip_family_setup', value: 'true', domain: '127.0.0.1', path: '/' },
+    ])
 
-    const response = await page.request.get('/protected/recipes/api/admin/families')
-    expect(response.status()).toBe(403)
+    // Navigate to app first to establish context
+    await page.goto('/protected/recipes')
+
+    // Make API request from within the page context to ensure cookies are sent
+    const status = await page.evaluate(async () => {
+      const response = await fetch('/protected/recipes/api/admin/families')
+      return response.status
+    })
+
+    expect(status).toBe(403)
   })
-
-  // We need a way to mock the ADMIN_EMAILS env or the server response for this test.
-  // Since we rely on msw-setup, we can mock the API response directly to verify the UI.
 
   test('Admin can view family dashboard', async ({ page }) => {
     // Mock the admin families API
@@ -31,12 +38,17 @@ test.describe('Admin Family Management', () => {
       })
     })
 
+    // Add all required auth cookies
+    await page
+      .context()
+      .addCookies(AUTH_COOKIES as unknown as Parameters<typeof page.context.addCookies>[0])
+
     await page.goto('/protected/recipes/library')
 
     // Wait for app to hydrate/load
     await expect(page.locator('input[placeholder="Search recipes..."]')).toBeVisible()
 
-    // Evaluate script to trigger navigation (since menu is hidden for non-Emilio usually)
+    // Navigate to admin dashboard
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
     })
@@ -76,7 +88,16 @@ test.describe('Admin Family Management', () => {
       })
     })
 
+    // Add all required auth cookies
+    await page
+      .context()
+      .addCookies(AUTH_COOKIES as unknown as Parameters<typeof page.context.addCookies>[0])
+
     await page.goto('/protected/recipes/library')
+
+    // Wait for app to hydrate
+    await expect(page.locator('input[placeholder="Search recipes..."]')).toBeVisible()
+
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
     })

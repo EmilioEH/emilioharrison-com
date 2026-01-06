@@ -31,7 +31,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
   React.useEffect(() => {
     const loadInvites = async () => {
       try {
-        const res = await fetch('/api/families/current')
+        const res = await fetch('/protected/recipes/api/families/current')
         const data = await res.json()
         if (data.success) {
           if (data.outgoingInvites) {
@@ -96,7 +96,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
     if (!inviteEmail.trim()) return
     setLoading(true)
     try {
-      const res = await fetch('/api/families/invite', {
+      const res = await fetch('/protected/recipes/api/families/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail }),
@@ -106,7 +106,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
         alert(`${inviteEmail} has been invited!`)
         setInviteEmail('')
         // Refresh members
-        const fresh = await fetch('/api/families/current').then((r) => r.json())
+        const fresh = await fetch('/protected/recipes/api/families/current').then((r) => r.json())
         if (fresh.success) familyActions.setMembers(fresh.members)
       } else {
         alert(data.error || 'Failed to invite member')
@@ -126,7 +126,7 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
 
     setLoading(true)
     try {
-      const res = await fetch('/api/families/members', {
+      const res = await fetch('/protected/recipes/api/families/members', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetUserId }),

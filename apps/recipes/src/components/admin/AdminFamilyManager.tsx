@@ -20,7 +20,7 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
     setIsLoading(true)
     try {
       // Use the familyId override we added to existing API
-      const res = await fetch(`/api/families/current?familyId=${familyId}`)
+      const res = await fetch(`/protected/recipes/api/families/current?familyId=${familyId}`)
       const data = await res.json()
 
       if (data.success) {
@@ -61,7 +61,7 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
     if (!newRole || !['admin', 'user'].includes(newRole)) return
 
     try {
-      const res = await fetch('/api/families/members', {
+      const res = await fetch('/protected/recipes/api/families/members', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetUserId: userId, role: newRole }),
@@ -81,7 +81,7 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
     if (!(await confirm('Remove this member?'))) return
 
     try {
-      const res = await fetch('/api/families/members', {
+      const res = await fetch('/protected/recipes/api/families/members', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetUserId: userId }),
