@@ -5,6 +5,7 @@ import {
   $recipes,
   $recipesLoading,
   $recipesInitialized,
+  $recipesError,
   recipeActions,
 } from '../../../lib/recipeStore'
 
@@ -36,8 +37,8 @@ export const useRecipes = () => {
       }
     } catch (err) {
       console.error('Failed to load recipes', err)
-      // If we failed and were loading, stop loading
-      if (showLoading) $recipesLoading.set(false)
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      recipeActions.setError(message)
     }
   }
 
@@ -59,5 +60,7 @@ export const useRecipes = () => {
     }
   }
 
-  return { recipes, setRecipes, loading, refreshRecipes, getBaseUrl }
+  const error = useStore($recipesError)
+
+  return { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl }
 }
