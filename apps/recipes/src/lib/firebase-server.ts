@@ -30,11 +30,13 @@ const getServiceAccount = async (context?: any): Promise<ServiceAccount> => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const modules = import.meta.glob('../../firebase-service-account.json', { eager: true }) as any
-    const key = '../../firebase-service-account.json'
 
-    if (modules[key]) {
+    // Find first matching module
+    const foundModule = Object.values(modules)[0]
+
+    if (foundModule) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      cachedServiceAccount = (modules[key] as any).default as unknown as ServiceAccount
+      cachedServiceAccount = (foundModule as any).default as unknown as ServiceAccount
       return cachedServiceAccount
     }
   } catch (e) {
