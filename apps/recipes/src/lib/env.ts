@@ -14,6 +14,7 @@ export function getEnv(context: any, key: string): string {
   if (key === 'ALLOWED_EMAILS') return import.meta.env.ALLOWED_EMAILS || ''
   if (key === 'ADMIN_EMAILS') return import.meta.env.ADMIN_EMAILS || ''
   if (key === 'PUBLIC_FIREBASE_API_KEY') return import.meta.env.PUBLIC_FIREBASE_API_KEY || ''
+  if (key === 'FIREBASE_SERVICE_ACCOUNT') return import.meta.env.FIREBASE_SERVICE_ACCOUNT || ''
 
   // 4. Dynamic check as last resort
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
