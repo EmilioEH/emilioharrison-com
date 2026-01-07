@@ -31,6 +31,8 @@ export const useRecipes = () => {
       if (res.ok) {
         const data = await res.json()
         recipeActions.setRecipes((data.recipes as Recipe[]) || [])
+      } else {
+        throw new Error(`Failed to fetch recipes: ${res.status} ${res.statusText}`)
       }
     } catch (err) {
       console.error('Failed to load recipes', err)
