@@ -12,10 +12,12 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const key = `${Date.now()}-${file.name}`
-  const projectId = bucket.projectId
-  const bucketName = `${projectId}.firebasestorage.app`
 
   try {
+    // Use async getProjectId() to ensure db is initialized
+    const projectId = await bucket.getProjectId()
+    const bucketName = `${projectId}.firebasestorage.app`
+
     const buffer = await file.arrayBuffer()
     await bucket.uploadFile(bucketName, key, buffer, file.type)
 
