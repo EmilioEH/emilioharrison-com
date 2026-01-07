@@ -28,15 +28,10 @@ const getServiceAccount = async (context?: any): Promise<ServiceAccount> => {
 
   // 2. Fallback to local file (Development)
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const modules = import.meta.glob('../../firebase-service-account.json', { eager: true }) as any
-
-    // Find first matching module
-    const foundModule = Object.values(modules)[0]
-
-    if (foundModule) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      cachedServiceAccount = (foundModule as any).default as unknown as ServiceAccount
+    // Use dynamic import for JSON file (works with Vite's JSON handling)
+    const serviceAccountModule = await import('../../firebase-service-account.json')
+    if (serviceAccountModule.default) {
+      cachedServiceAccount = serviceAccountModule.default as unknown as ServiceAccount
       return cachedServiceAccount
     }
   } catch (e) {
