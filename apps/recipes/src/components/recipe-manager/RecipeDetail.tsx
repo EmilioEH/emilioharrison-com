@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { computed } from 'nanostores'
 import { useStore } from '@nanostores/react'
 import { DetailHeader, type HeaderAction } from '../recipe-details/DetailHeader'
 import { Stack, Inline } from '../ui/layout'
 import { CookingContainer } from '../cooking-mode/CookingContainer'
+import { ShareRecipeDialog } from './ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
 import { Calendar, Play, Check } from 'lucide-react'
@@ -51,6 +52,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 }) => {
   const session = useStore($cookingSession)
   const isCooking = session.isActive && session.recipeId === recipe.id
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -81,6 +83,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       onUpdate({ ...recipe }, 'edit')
     } else if (action === 'toggleFavorite') {
       if (onToggleFavorite) onToggleFavorite()
+    } else if (action === 'share') {
+      setShareDialogOpen(true)
     }
   }
 
@@ -139,6 +143,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
           </button>
         </Inline>
       </div>
+
+      {/* Share Recipe Dialog */}
+      <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
     </Stack>
   )
 }

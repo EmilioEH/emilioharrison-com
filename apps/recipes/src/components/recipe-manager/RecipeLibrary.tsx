@@ -58,6 +58,7 @@ interface RecipeLibraryProps {
   // Week management props
   allowManagement?: boolean // show management menu for week context
   currentWeekStart?: string // current week context for management
+  onShare?: (recipe: Recipe) => void
 }
 
 declare global {
@@ -77,6 +78,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   scrollContainer,
   allowManagement = false,
   currentWeekStart: _currentWeekStart,
+  onShare,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   // Management UI state
@@ -579,6 +581,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               onRemove={async () => {
                 await removeRecipeFromDay(managementRecipeId)
               }}
+              onShare={onShare ? () => onShare(selectedRecipe) : undefined}
             />
           )
         })()}

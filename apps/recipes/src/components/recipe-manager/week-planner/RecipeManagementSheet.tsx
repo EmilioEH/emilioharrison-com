@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Trash2, Calendar, MoveRight } from 'lucide-react'
+import { Trash2, Calendar, MoveRight, Share2 } from 'lucide-react'
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../ui/sheet'
 import { Button } from '../../ui/button'
@@ -21,6 +21,7 @@ interface RecipeManagementSheetProps {
   recipeTitle: string
   currentPlannedDays: PlannedDayInfo[]
   onRemove: (date: string) => void
+  onShare?: () => void
 }
 
 export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
@@ -30,6 +31,7 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
   recipeTitle,
   currentPlannedDays,
   onRemove,
+  onShare,
 }) => {
   const [showDayPicker, setShowDayPicker] = useState(false)
   const [showWeekPicker, setShowWeekPicker] = useState(false)
@@ -127,6 +129,22 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
                   <Calendar className="h-4 w-4" />
                   <span className="font-bold">Move to Different Week</span>
                 </Button>
+                {onShare && (
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => {
+                      onShare()
+                      onClose()
+                    }}
+                    className="w-full justify-start gap-2"
+                    title="Share recipe"
+                    aria-label="Share recipe"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span className="font-bold">Share Recipe</span>
+                  </Button>
+                )}
               </Stack>
             </Stack>
           </Stack>

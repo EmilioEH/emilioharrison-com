@@ -37,6 +37,7 @@ import { RecipeLibrary } from './RecipeLibrary'
 import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 import { RecipeControlBar } from './RecipeControlBar'
+import { ShareRecipeDialog } from './ShareRecipeDialog'
 
 import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
@@ -255,6 +256,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   // Meal Planner State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [dayPickerRecipeId, setDayPickerRecipeId] = useState<string | null>(null)
+
+  // Share State
+  const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null)
 
   const handleAddToWeek = (recipeId: string) => {
     setDayPickerRecipeId(recipeId)
@@ -662,6 +666,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                   selectedIds={selectedIds}
                   hasSearch={!!searchQuery}
                   scrollContainer={scrollContainer}
+                  onShare={(recipe) => setShareRecipe(recipe)}
                 />
               </div>
             </div>
@@ -677,6 +682,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
                 onOpenCalendar={() => setIsCalendarOpen(true)}
                 onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                 scrollContainer={scrollContainer}
+                onShare={(recipe) => setShareRecipe(recipe)}
               />
             )}
           </AnimatePresence>
@@ -869,6 +875,13 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Share Recipe Dialog */}
+      <ShareRecipeDialog
+        recipe={shareRecipe}
+        open={!!shareRecipe}
+        onOpenChange={(open: boolean) => !open && setShareRecipe(null)}
+      />
     </>
   )
 }

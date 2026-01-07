@@ -1,15 +1,16 @@
 import React from 'react'
-import { Calendar, Edit2, FolderInput, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Calendar, Edit2, FolderInput, MoreHorizontal, Share2, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 
 interface DetailHeaderActionsProps {
-  onAction: (action: 'delete' | 'edit' | 'addToWeek' | 'move') => void
+  onAction: (action: 'delete' | 'edit' | 'addToWeek' | 'move' | 'share') => void
   onToggleThisWeek?: () => void
   isThisWeek: boolean | undefined
 }
@@ -57,6 +58,11 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
             <FolderInput className="mr-2 h-4 w-4" />
             Move Folder
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAction('share')}>
+            <Share2 className="mr-2 h-4 w-4" />
+            Share Recipe
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => onAction('delete')}
             className="text-destructive focus:text-destructive"

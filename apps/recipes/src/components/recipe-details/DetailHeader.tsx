@@ -7,7 +7,14 @@ import { DetailHeaderActions } from './DetailHeaderActions'
 import { HeaderBackButton, HeaderModeToggle } from './DetailHeaderComponents'
 
 export type CookingStage = 'idle' | 'pre' | 'during' | 'post'
-export type HeaderAction = 'delete' | 'edit' | 'addToWeek' | 'move' | 'toggleFavorite' | 'rate'
+export type HeaderAction =
+  | 'delete'
+  | 'edit'
+  | 'addToWeek'
+  | 'move'
+  | 'toggleFavorite'
+  | 'rate'
+  | 'share'
 
 interface DetailHeaderProps {
   recipe: Recipe
