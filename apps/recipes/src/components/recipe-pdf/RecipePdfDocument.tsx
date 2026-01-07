@@ -1,31 +1,13 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import type { Recipe, FamilyRecipeData } from '../../lib/types'
 import type { ShareOptions } from '../../lib/share-recipe'
 
-// Register default font (system fonts aren't available in react-pdf)
-Font.register({
-  family: 'Inter',
-  fonts: [
-    {
-      src: 'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZg.ttf',
-      fontWeight: 400,
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fMZg.ttf',
-      fontWeight: 600,
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZg.ttf',
-      fontWeight: 700,
-    },
-  ],
-})
-
+// Using Helvetica (built-in) to avoid external font loading issues
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    fontFamily: 'Inter',
+    fontFamily: 'Helvetica',
     fontSize: 11,
     lineHeight: 1.5,
     color: '#1a1a1a',
@@ -35,7 +17,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 700,
+    fontFamily: 'Helvetica-Bold',
     marginBottom: 8,
     color: '#0f172a',
   },
@@ -69,7 +51,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#475569',
     fontSize: 10,
-    fontStyle: 'italic',
   },
   ratingSection: {
     flexDirection: 'row',
@@ -82,7 +63,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    fontWeight: 600,
+    fontFamily: 'Helvetica-Bold',
     color: '#854d0e',
   },
   recipeImage: {
@@ -97,7 +78,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: 700,
+    fontFamily: 'Helvetica-Bold',
     marginBottom: 10,
     color: '#0f172a',
     borderBottomWidth: 1,
@@ -117,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   ingredientAmount: {
-    fontWeight: 600,
+    fontFamily: 'Helvetica-Bold',
     marginRight: 4,
   },
   step: {
@@ -131,7 +112,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
     color: '#ffffff',
     fontSize: 10,
-    fontWeight: 700,
+    fontFamily: 'Helvetica-Bold',
     textAlign: 'center',
     paddingTop: 5,
     marginRight: 10,
@@ -151,7 +132,7 @@ const styles = StyleSheet.create({
   },
   noteAuthor: {
     fontSize: 9,
-    fontWeight: 600,
+    fontFamily: 'Helvetica-Bold',
     color: '#3b82f6',
     marginBottom: 4,
   },

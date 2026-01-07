@@ -3,6 +3,7 @@ import react from '@astrojs/react'
 import tailwind from '@astrojs/tailwind'
 import cloudflare from '@astrojs/cloudflare'
 import markdoc from '@astrojs/markdoc'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,7 +16,15 @@ export default defineConfig({
     },
   }),
   vite: {
-    plugins: [],
+    plugins: [
+      nodePolyfills({
+        include: ['buffer', 'process', 'stream'],
+        globals: {
+          Buffer: true,
+          process: true,
+        },
+      }),
+    ],
     build: {
       rollupOptions: {
         output: {
