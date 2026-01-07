@@ -69,8 +69,13 @@ async function getDb(context?: any): Promise<FirebaseRestService> {
   return _dbInstance
 }
 
+// Extended interface for the proxy that includes async getProjectId
+interface FirebaseDbProxy extends FirebaseRestService {
+  getProjectId(): Promise<string>
+}
+
 // Export a Proxy for 'db' that auto-initializes
-export const db = new Proxy({} as FirebaseRestService, {
+export const db = new Proxy({} as FirebaseDbProxy, {
   get(target, prop) {
     // If it's a method, return an async wrapper
     if (
@@ -84,11 +89,16 @@ export const db = new Proxy({} as FirebaseRestService, {
         'uploadFile',
         'downloadFile',
         'getFileMetadata',
+        'getProjectId', // New: async accessor for projectId
       ].includes(prop as string)
     ) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return async (...args: any[]) => {
         const instance = await getDb()
+        // Special case: getProjectId returns projectId from instance
+        if (prop === 'getProjectId') {
+          return instance.projectId
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (instance as any)[prop](...args)
       }

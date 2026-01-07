@@ -14,9 +14,8 @@ export const GET: APIRoute = async ({ params }) => {
     // Using hardcoded default from firebase-server init logic which constructed it
     // But REST service needs explicit bucket name or we add it to the service class
 
-    // Hack: We didn't store the bucket name in the service instance properly or expose it?
-    // Let's assume the project ID based bucket: PROJECT_ID.firebasestorage.app
-    const projectId = bucket.projectId
+    // Use async getProjectId() to ensure db is initialized before accessing
+    const projectId = await bucket.getProjectId()
     const bucketName = `${projectId}.firebasestorage.app`
 
     const file = await bucket.downloadFile(bucketName, key)
