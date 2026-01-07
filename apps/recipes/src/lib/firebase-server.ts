@@ -1,6 +1,7 @@
 import { FirebaseRestService } from './firebase-rest'
 import type { ServiceAccount } from './types'
 import { getEnv } from './env'
+import { getRequestContext } from './request-context'
 
 // Cache the service account
 let cachedServiceAccount: ServiceAccount | null = null
@@ -10,8 +11,12 @@ let cachedServiceAccount: ServiceAccount | null = null
 const getServiceAccount = async (context?: any): Promise<ServiceAccount> => {
   if (cachedServiceAccount) return cachedServiceAccount
 
+  // Use the provided context, or fall back to the request context store
+  // (set by middleware for Cloudflare runtime env access)
+  const effectiveContext = context ?? getRequestContext()
+
   // 1. Try Environment Variable (Production/CI)
-  const envVar = getEnv(context, 'FIREBASE_SERVICE_ACCOUNT')
+  const envVar = getEnv(effectiveContext, 'FIREBASE_SERVICE_ACCOUNT')
 
   if (envVar) {
     try {

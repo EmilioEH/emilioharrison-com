@@ -2,6 +2,7 @@ import { defineMiddleware } from 'astro:middleware'
 import type { APIContext } from 'astro'
 import { getEmailList } from './lib/env'
 import { isProtectedRoute, isLoginPage, isPublicApiRoute, getLoginUrl } from './lib/routes'
+import { setRequestContext } from './lib/request-context'
 
 /** Creates a 401 JSON response for API routes */
 const createUnauthorizedApiResponse = (message: string) =>
@@ -39,6 +40,10 @@ const isEmailAuthorized = (context: APIContext): boolean => {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Store the request context for modules that need access to Cloudflare runtime env
+  // (like firebase-server.ts which needs FIREBASE_SERVICE_ACCOUNT)
+  setRequestContext(context)
+
   const { url } = context
   const pathname = url.pathname
 
