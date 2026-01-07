@@ -28,19 +28,11 @@ const getServiceAccount = async (context?: any): Promise<ServiceAccount> => {
 
   // 2. Fallback to local file (Development only - file won't exist in production)
   try {
-    // Use import.meta.glob with eager:false to avoid build failure when file doesn't exist
-    const modules = import.meta.glob('../../firebase-service-account.json') as Record<
-      string,
-      () => Promise<{ default: ServiceAccount }>
-    >
-    const loaders = Object.values(modules)
-
-    if (loaders.length > 0) {
-      const module = await loaders[0]()
-      if (module.default) {
-        cachedServiceAccount = module.default as unknown as ServiceAccount
-        return cachedServiceAccount
-      }
+    // Use dynamic import for JSON file (works with Vite's JSON handling)
+    const serviceAccountModule = await import('../../firebase-service-account.json')
+    if (serviceAccountModule.default) {
+      cachedServiceAccount = serviceAccountModule.default as unknown as ServiceAccount
+      return cachedServiceAccount
     }
   } catch (e) {
     console.warn('Local service account file check failed or empty.', e)
