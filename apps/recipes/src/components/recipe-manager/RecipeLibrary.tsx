@@ -269,9 +269,9 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       >
         {/* Square Thumbnail */}
         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
-          {recipe.finishedImage || recipe.sourceImage ? (
+          {recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage ? (
             <img
-              src={recipe.finishedImage || recipe.sourceImage}
+              src={recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               alt=""
             />

@@ -1,6 +1,5 @@
 import React from 'react'
 import { X, MoreHorizontal, List, Minus, UtensilsCrossed } from 'lucide-react'
-import { CookingTimeline } from './CookingTimeline'
 import type { CookingSession } from '../../stores/cookingSession'
 
 interface CookingHeaderProps {
@@ -22,7 +21,6 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
   onShowIngredients,
   onShowMenu,
   onShowNavigator,
-  onStepJump,
 }) => {
   const currentStepNum = session.currentStepIdx + 1
 
@@ -48,14 +46,14 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
 
         {/* Right Actions */}
         <div className="-mr-2 flex items-center">
-          {/* Ingredients with Label */}
+          {/* Ingredients with Label - Mobile Only */}
           <button
             onClick={onShowIngredients}
-            className="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-transparent p-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:scale-95"
+            className="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-transparent p-2 text-sm font-medium text-foreground transition-colors hover:bg-muted active:scale-95 md:hidden"
             title="Ingredients"
           >
             <UtensilsCrossed className="h-6 w-6" />
-            Ingredients
+            <span className="sr-only sm:not-sr-only">Ingredients</span>
           </button>
 
           <div className="mx-1 h-4 w-px bg-border/50" />
@@ -87,15 +85,6 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
             <X className="h-6 w-6" />
           </button>
         </div>
-      </div>
-
-      {/* Timeline Progress */}
-      <div className="border-b border-border/50 bg-background/50 backdrop-blur-sm">
-        <CookingTimeline
-          currentStep={currentStepNum}
-          totalSteps={totalSteps}
-          onStepClick={onStepJump}
-        />
       </div>
     </div>
   )

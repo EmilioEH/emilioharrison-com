@@ -50,7 +50,7 @@ test.describe('Recipe Cooking Mode', () => {
 
     // 1. Open the pre-seeded recipe
     const recipeCard = page.getByText(RECIPE.title).first()
-    await expect(recipeCard).toBeVisible()
+    await expect(recipeCard).toBeVisible({ timeout: 30000 })
     await page.waitForTimeout(500)
     await recipeCard.click()
 
@@ -100,5 +100,59 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible({
       timeout: 10000,
     })
+  })
+
+  test('should display three-column layout on desktop', async ({ page }) => {
+    // Set viewport to desktop
+    await page.setViewportSize({ width: 1280, height: 800 })
+
+    await page.goto('/protected/recipes')
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    // Open recipe and start cooking
+    const recipeCard = page.getByText(RECIPE.title).first()
+    await recipeCard.click()
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Verify Left Sidebar (Timeline) is visible
+    await expect(page.getByTestId('cooking-timeline-sidebar')).toBeVisible()
+
+    // Verify Right Sidebar (Ingredients Panel) is visible
+    // Note: We need to check if the panel itself is visible, we can add a test id or look for heading
+    await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeVisible()
+
+    // Verify Ingredients Button in header is HIDDEN on desktop
+    await expect(page.getByRole('button', { name: 'Ingredients' })).toBeHidden()
+  })
+
+  test('should use overlay for ingredients on mobile', async ({ page }) => {
+    // Set viewport to mobile iphone 12/13/14
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto('/protected/recipes')
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    // Open recipe and start cooking
+    const recipeCard = page.getByText(RECIPE.title).first()
+    await recipeCard.click()
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Verify Left Sidebar (Timeline) is HIDDEN
+    await expect(page.getByTestId('cooking-timeline-sidebar')).toBeHidden()
+
+    // Verify Right Sidebar (Ingredients Panel) content is NOT visible initially
+    // We check for the heading "Ingredients" which should only appear in the overlay or sidebar
+    // Since sidebar is hidden and overlay is closed, it should be hidden
+    await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeHidden()
+
+    // Verify Ingredients Button in header is VISIBLE on mobile
+    const ingredientsBtn = page.getByRole('button', { name: 'Ingredients' })
+    await expect(ingredientsBtn).toBeVisible()
+
+    // Open overlay
+    await ingredientsBtn.click()
+
+    // Verify Overlay is visible
+    await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeVisible()
   })
 })

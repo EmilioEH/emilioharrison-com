@@ -65,24 +65,106 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
             <X className="h-6 w-6" />
           </button>
 
-          {/* Image Container */}
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="relative max-h-[90vh] max-w-[90vw] p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={imageUrl}
-              alt={alt}
-              className="h-auto max-h-[90vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
-            />
-          </motion.div>
+          {/* Image Container with Zoom */}
+          <ZoomableImage src={imageUrl} alt={alt} onClose={onClose} />
         </motion.div>
       )}
     </AnimatePresence>,
     document.body,
+  )
+}
+
+// Internal Zoomable Image Component
+const ZoomableImage = ({
+  src,
+  alt,
+  onClose,
+}: {
+  src: string
+  alt: string
+  onClose: () => void
+}) => {
+  const [scale, setScale] = React.useState(1)
+  const [position, setPosition] = React.useState({ x: 0, y: 0 })
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = React.useState(false)
+  const startPos = React.useRef({ x: 0, y: 0 })
+
+  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation() // Prevent closing
+    if (scale > 1) {
+      // Reset
+      setScale(1)
+      setPosition({ x: 0, y: 0 })
+    } else {
+      // Zoom in
+      setScale(2.5)
+      // Optional: Zoom towards click position (simplified to center for now)
+      setPosition({ x: 0, y: 0 })
+    }
+  }
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (scale > 1) {
+      setIsDragging(true)
+      startPos.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      }
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (isDragging && scale > 1) {
+      e.preventDefault()
+      setPosition({
+        x: e.clientX - startPos.current.x,
+        y: e.clientY - startPos.current.y,
+      })
+    }
+  }
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false)
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
+  return (
+    <motion.div
+      initial={{ scale: 0.9 }}
+      animate={{ scale: 1 }}
+      exit={{ scale: 0.9 }}
+      transition={{ duration: 0.2 }}
+      className="relative flex h-full w-full items-center justify-center overflow-hidden"
+      onClick={onClose} // Background click closes
+    >
+      <div
+        className="relative flex h-full w-full touch-none items-center justify-center"
+        ref={containerRef}
+        onDoubleClick={handleDoubleTap}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <div
+          role="presentation"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <img
+            src={src}
+            alt={alt}
+            draggable={false}
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              cursor: scale > 1 ? 'grab' : 'zoom-in',
+              transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+            }}
+            className="max-h-[100dvh] max-w-[100dvw] select-none object-contain shadow-2xl"
+          />
+        </div>
+      </div>
+    </motion.div>
   )
 }

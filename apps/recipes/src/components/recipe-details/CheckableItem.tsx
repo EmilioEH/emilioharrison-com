@@ -6,6 +6,7 @@ interface CheckableItemProps {
   isChecked?: boolean
   onToggle: () => void
   size?: 'base' | 'lg' | 'xl'
+  className?: string
 }
 
 export const CheckableItem: React.FC<CheckableItemProps> = ({
@@ -13,6 +14,7 @@ export const CheckableItem: React.FC<CheckableItemProps> = ({
   isChecked = false,
   onToggle,
   size = 'base',
+  className = '',
 }) => {
   const getCheckboxSize = () => {
     switch (size) {
@@ -39,7 +41,7 @@ export const CheckableItem: React.FC<CheckableItemProps> = ({
   return (
     <button
       onClick={onToggle}
-      className={`flex w-full items-start gap-4 p-3 text-left transition-all ${isChecked ? 'opacity-40 grayscale' : ''}`}
+      className={`flex w-full items-start gap-4 p-3 text-left transition-all ${isChecked ? 'opacity-40 grayscale' : ''} ${className}`}
     >
       <div
         className={`mt-0.5 flex items-center justify-center rounded-sm border transition-colors ${isChecked ? 'border-primary bg-primary' : 'border-primary bg-transparent'} ${getCheckboxSize()}`}

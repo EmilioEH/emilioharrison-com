@@ -21,6 +21,9 @@ export function getCloudflareEnv(locals: App.Locals): any {
  */
 export function getAuthUser(cookies: AstroCookies): string | null {
   const userCookie = cookies.get('site_user')
+  if (!userCookie) {
+    console.log('[Auth] site_user cookie missing. Available:', cookies.keys())
+  }
   return userCookie?.value || null
 }
 

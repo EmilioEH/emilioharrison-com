@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   Clock,
   Users,
@@ -17,6 +17,7 @@ import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Stack, Inline } from '../ui/layout'
 import { ImageViewer } from '../ui/ImageViewer'
+import { Carousel } from '../ui/Carousel'
 import type { Recipe, FamilyRecipeData } from '../../lib/types'
 import { Textarea } from '../ui/textarea'
 
@@ -39,6 +40,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const session = useStore($cookingSession)
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({})
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
+  const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
 
   // Family Sync State
   const [familyData, setFamilyData] = useState<FamilyRecipeData | null>(null)
@@ -178,31 +180,110 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Trigger once on mount
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAddPhotoTrigger = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      // 1. Optimize
+      // Dynamically import to avoid server-side issues if any (though this is client component)
+      const { processImage } = await import('../../lib/image-optimization')
+      const optimizedFile = await processImage(file)
+
+      // 2. Upload
+      const formData = new FormData()
+      formData.append('file', optimizedFile)
+
+      const uploadRes = await fetch('api/uploads', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!uploadRes.ok) throw new Error('Upload failed')
+
+      const { url } = await uploadRes.json()
+
+      // 3. Update Recipe
+      const currentImages = recipe.images || []
+      const newImages = [url, ...currentImages]
+
+      // If no images existed before, and there was a sourceImage/finishedImage, should we preserve them?
+      // The plan said: "Existing sourceImage will be treated as a fallback... When a new photo is added... added to front".
+      // But if we start using `images` array, we should probably migrate the old one into it if it's the first time.
+      if (currentImages.length === 0 && (recipe.sourceImage || recipe.finishedImage)) {
+        const legacy = recipe.sourceImage || recipe.finishedImage
+        if (legacy && !newImages.includes(legacy)) {
+          newImages.push(legacy)
+        }
+      }
+
+      // Optimistic Update
+      // We can't easily update props, but we can force a reload or just rely on parent to pass new data?
+      // Actually checking `OverviewMode` props: it receives `recipe`.
+      // We should probably call an onUpdate prop if it existed, but it doesn't.
+      // We'll trust the API update and maybe reload or similar?
+      // For now, let's just do the API call. The user might need to refresh or we wait for SWR/store update.
+      // Wait, `recipe` comes from parent.
+
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      await fetch(`${baseUrl}api/recipes/${recipe.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...recipe, images: newImages }),
+      })
+
+      // Reload to show changes (simplest for now without full store refactor)
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to upload photo:', error)
+      alert('Failed to upload photo. Please try again.')
+    }
+  }
+
+  // Construct images list
+  // Prefer recipe.images. If empty, fallback to sourceImage/finishedImage as single item array
+  const displayImages = recipe.images?.length
+    ? recipe.images
+    : ([recipe.finishedImage || recipe.sourceImage].filter(Boolean) as string[])
+
   return (
     <Stack spacing="none" className="flex-1 overflow-y-auto pb-20">
       <div className="relative">
-        {recipe.sourceImage && (
-          <button
-            onClick={() => setImageViewerOpen(true)}
-            className="group relative h-64 w-full cursor-pointer overflow-hidden transition-transform hover:scale-[1.02]"
-            aria-label="View image full-screen"
-          >
-            <img
-              src={recipe.sourceImage}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              alt="Recipe"
-            />
-            {/* Overlay hint on hover */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/20 group-hover:opacity-100">
-              <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-foreground shadow-lg">
-                Tap to view full-screen
-              </span>
-            </div>
-          </button>
-        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handlePhotoUpload}
+        />
+
+        <div className="relative w-full">
+          <Carousel
+            images={displayImages}
+            onImageClick={(src) => {
+              // Only open viewer if there is an image
+              if (src) setImageViewerOpen(true)
+              // Note: ImageViewer needs a specific URL, but here we just open it.
+              // logic below usually takes `recipe.sourceImage`. We need to update that too.
+              // Let's store the clicked image in state.
+              setActiveViewerImage(src)
+            }}
+            onAddPhoto={handleAddPhotoTrigger}
+            className="w-full"
+          />
+        </div>
 
         <div
-          className={`rounded-t-md-xl shadow-md-3 relative -mt-6 border-t border-border bg-card p-6`}
+          className={`rounded-t-md-xl shadow-md-3 relative z-10 -mt-6 border-t border-border bg-card p-6`}
         >
           {/* Metadata Header */}
           <div className="mb-6">
@@ -528,10 +609,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       </div>
 
       {/* Image Viewer Modal */}
-      {recipe.sourceImage && (
+      {activeViewerImage && (
         <ImageViewer
           isOpen={imageViewerOpen}
-          imageUrl={recipe.sourceImage}
+          imageUrl={activeViewerImage}
           onClose={() => setImageViewerOpen(false)}
           alt={recipe.title}
         />

@@ -6,7 +6,6 @@ import { $cookingSession, cookingSessionActions } from '../../stores/cookingSess
 import { TimerControl } from './TimerControl'
 import { Stack, Inline } from '../ui/layout'
 import { getIngredientsForStep } from '../../utils/ingredientParsing'
-import { Card, CardDescription } from '../ui/card'
 import type { Recipe } from '../../lib/types'
 
 interface CookingStepViewProps {
@@ -19,15 +18,15 @@ interface CookingStepViewProps {
 // Animation variants
 const slideVariants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? '100%' : '-100%',
+    y: direction > 0 ? '100%' : '-100%',
     opacity: 0,
   }),
   center: {
-    x: 0,
+    y: 0,
     opacity: 1,
   },
   exit: (direction: number) => ({
-    x: direction < 0 ? '100%' : '-100%',
+    y: direction < 0 ? '100%' : '-100%',
     opacity: 0,
   }),
 }
@@ -64,13 +63,28 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
       ? recipe.stepIngredients[stepIdx].indices.map((idx) => recipe.ingredients[idx])
       : getIngredientsForStep(step, recipe.ingredients)
 
-  // Simple heuristic for timer duration
-  const timerMatch = step.match(/(\d+)\s*(?:minutes|mins|min)/i)
-  const suggestedTimer = timerMatch ? parseInt(timerMatch[1]) : undefined
-
   const isLastStep = stepIdx === recipe.steps.length - 1
   const prevStepText = stepIdx > 0 ? recipe.steps[stepIdx - 1] : null
   const nextStepText = !isLastStep ? recipe.steps[stepIdx + 1] : null
+
+  // Smart timer parsing: "3-5 minutes" -> 4, "10 mins" -> 10
+  const parseTimer = (text: string): number | undefined => {
+    // Match range: "3 to 5 minutes", "3-5 mins"
+    const rangeMatch = text.match(/(\d+)\s*(?:-|to)\s*(\d+)\s*(?:minutes|mins|min)/i)
+    if (rangeMatch) {
+      const min = parseInt(rangeMatch[1])
+      const max = parseInt(rangeMatch[2])
+      return Math.round((min + max) / 2)
+    }
+    // Match single: "10 minutes"
+    const singleMatch = text.match(/(\d+)\s*(?:minutes|mins|min)/i)
+    if (singleMatch) {
+      return parseInt(singleMatch[1])
+    }
+    return undefined
+  }
+
+  const suggestedTimer = parseTimer(step)
 
   const handleNext = () => {
     cookingSessionActions.completeStep(stepIdx)
@@ -89,98 +103,107 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
   }
 
   return (
-    <AnimatePresence mode="wait" custom={direction} initial={false}>
-      <motion.div
-        key={stepIdx}
-        custom={direction}
-        variants={slideVariants}
-        initial="enter"
-        animate="center"
-        exit="exit"
-        transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
-        className="flex h-full flex-col overflow-y-auto pb-24"
-      >
-        <Stack spacing="lg" className="flex-1 p-6">
-          {/* Timer Controls */}
-          <TimerControl stepNumber={currentStepNum} suggestedDuration={suggestedTimer} />
+    <div className="flex h-full flex-col">
+      <div className="relative flex-1 overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
+          <motion.div
+            key={stepIdx}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 1 }}
+            className="absolute inset-0 flex flex-col overflow-y-auto pb-6"
+          >
+            <Stack spacing="lg" className="flex-1 p-6">
+              {/* Timer Controls */}
+              <TimerControl stepNumber={currentStepNum} suggestedDuration={suggestedTimer} />
 
-          {/* Main Instruction Area */}
-          <div className="flex flex-1 flex-col justify-center py-4">
-            <Stack spacing="xl" className="w-full">
-              {/* Previous Step Preview */}
-              {prevStepText && (
-                <Card
-                  onClick={handlePrev}
-                  className="cursor-pointer border-dashed bg-muted/30 p-4 opacity-50 transition-all hover:opacity-80 hover:shadow-md"
+              {/* Main Instruction Area */}
+              <div className="flex flex-1 flex-col justify-center py-4">
+                <Stack spacing="xl" className="w-full">
+                  {/* Previous Step Preview */}
+                  {prevStepText && (
+                    <button
+                      type="button"
+                      onClick={handlePrev}
+                      className="group w-full cursor-pointer rounded-xl border border-dashed border-border/50 bg-muted/20 p-4 text-left transition-all hover:bg-muted/40 active:scale-95"
+                    >
+                      <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary">
+                        Previous: Step {currentStepNum - 1}
+                      </span>
+                      <p className="line-clamp-1 text-sm text-muted-foreground opacity-60">
+                        {prevStepText}
+                      </p>
+                    </button>
+                  )}
+
+                  {/* Current Step */}
+                  <Stack spacing="lg" className="items-center py-4 text-center">
+                    <p className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+                      {step}
+                    </p>
+                  </Stack>
+
+                  {/* Next Step Preview */}
+                  {nextStepText && (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="group w-full cursor-pointer rounded-xl border border-dashed border-border/50 bg-muted/20 p-4 text-left transition-all hover:bg-muted/40 active:scale-95"
+                    >
+                      <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary">
+                        Next: Step {currentStepNum + 1}
+                      </span>
+                      <p className="line-clamp-1 text-sm text-muted-foreground opacity-60">
+                        {nextStepText}
+                      </p>
+                    </button>
+                  )}
+                </Stack>
+              </div>
+
+              {/* Contextual Ingredients */}
+              {stepIngredients.length > 0 && (
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="rounded-2xl border border-border bg-card p-5 shadow-sm"
                 >
-                  <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    Step {currentStepNum - 1}
-                  </span>
-                  <CardDescription className="line-clamp-2 text-sm">{prevStepText}</CardDescription>
-                </Card>
-              )}
-
-              {/* Current Step */}
-              <Stack spacing="lg" className="items-center py-4 text-center">
-                <p className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-                  {step}
-                </p>
-              </Stack>
-
-              {/* Next Step Preview */}
-              {nextStepText && (
-                <Card
-                  onClick={handleNext}
-                  className="cursor-pointer border-dashed bg-muted/30 p-4 opacity-50 transition-all hover:opacity-80 hover:shadow-md"
-                >
-                  <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    Step {currentStepNum + 1}
-                  </span>
-                  <CardDescription className="line-clamp-2 text-sm">{nextStepText}</CardDescription>
-                </Card>
+                  <h4 className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <span className="rounded-md bg-primary/20 p-1">
+                      <UtensilsCrossed className="size-3.5 text-primary" />
+                    </span>
+                    Ingredients Needed
+                  </h4>
+                  <Stack as="ul" spacing="sm">
+                    {stepIngredients.map((ing, i) => (
+                      <motion.li key={i} variants={itemVariants} className="flex items-start gap-3">
+                        <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                        <span className="text-lg font-medium">
+                          <b className="text-foreground">{ing.amount}</b>{' '}
+                          <span className="text-muted-foreground">{ing.name}</span>
+                          {ing.prep && (
+                            <span className="italic text-muted-foreground opacity-70">
+                              , {ing.prep}
+                            </span>
+                          )}
+                        </span>
+                      </motion.li>
+                    ))}
+                  </Stack>
+                </motion.div>
               )}
             </Stack>
-          </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-          {/* Contextual Ingredients */}
-          {stepIngredients.length > 0 && (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="rounded-2xl border border-border bg-card p-5 shadow-sm"
-            >
-              <h4 className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                <span className="rounded-md bg-primary/20 p-1">
-                  <UtensilsCrossed className="size-3.5 text-primary" />
-                </span>
-                Ingredients Needed
-              </h4>
-              <Stack as="ul" spacing="sm">
-                {stepIngredients.map((ing, i) => (
-                  <motion.li key={i} variants={itemVariants} className="flex items-start gap-3">
-                    <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                    <span className="text-lg font-medium">
-                      <b className="text-foreground">{ing.amount}</b>{' '}
-                      <span className="text-muted-foreground">{ing.name}</span>
-                      {ing.prep && (
-                        <span className="italic text-muted-foreground opacity-70">
-                          , {ing.prep}
-                        </span>
-                      )}
-                    </span>
-                  </motion.li>
-                ))}
-              </Stack>
-            </motion.div>
-          )}
-        </Stack>
-
-        {/* Sticky Navigation Footer */}
-        <Inline
-          spacing="md"
-          className="safe-area-pb fixed bottom-0 left-0 right-0 z-10 border-t border-border bg-background/80 p-4 backdrop-blur-xl"
-        >
+      {/* Static Navigation Footer */}
+      <div className="safe-area-pb z-10 border-t border-border bg-background/80 p-4 backdrop-blur-xl">
+        <Inline spacing="md">
           <button
             onClick={handlePrev}
             disabled={stepIdx === 0}
@@ -196,7 +219,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
             {isLastStep ? 'Finish Cooking' : 'Next Step'}
           </button>
         </Inline>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </div>
   )
 }

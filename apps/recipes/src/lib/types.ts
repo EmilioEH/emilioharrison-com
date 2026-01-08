@@ -53,6 +53,7 @@ export interface Recipe {
   lastCooked?: string // ISO date
   assignedDate?: string // YYYY-MM-DD
   finishedImage?: string // Base64 or URL
+  images?: string[] // Array of all recipe images (first one is primary)
 }
 
 export interface StructuredIngredient {

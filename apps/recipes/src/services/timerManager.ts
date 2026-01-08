@@ -115,21 +115,39 @@ class TimerManagerService {
   }
 
   private playAlarmSound() {
-    // Simple beep or browser notification logic
-    // For MVP, we'll try standard Audio if available, or just console
     try {
       const AudioCtor =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       if (AudioCtor) {
         const ctx = new AudioCtor()
+
+        // Create an oscillator for the beep
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
+
         osc.connect(gain)
         gain.connect(ctx.destination)
-        osc.start()
-        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1)
-        osc.stop(ctx.currentTime + 1)
+
+        // Modern "digital" double beep
+        osc.type = 'sine'
+
+        // Sequence: Beep-pause-beep
+        const now = ctx.currentTime
+
+        // First beep
+        osc.frequency.setValueAtTime(880, now) // A5
+        gain.gain.setValueAtTime(0.1, now)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1)
+
+        // Second beep
+        osc.frequency.setValueAtTime(880, now + 0.15)
+        gain.gain.setValueAtTime(0.1, now + 0.15)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3)
+
+        // Start and stop
+        osc.start(now)
+        osc.stop(now + 0.5)
       }
     } catch {
       console.log('Timer finished! (Audio API not supported or blocked)')

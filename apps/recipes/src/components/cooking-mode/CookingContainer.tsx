@@ -6,6 +6,8 @@ import { Stack } from '../ui/layout'
 import { CookingStepView } from './CookingStepView'
 import { ExitConfirmation } from './ExitConfirmation'
 import { CookingIngredientsOverlay } from './CookingIngredientsOverlay'
+import { IngredientsPanel } from './IngredientsPanel'
+import { CookingTimeline } from './CookingTimeline'
 import { CookingStepList } from './CookingStepList'
 import { CookingOptionsMenu } from './CookingOptionsMenu'
 
@@ -118,13 +120,39 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       {/* Persistent Condensed Timers */}
       <ActiveTimersHeader />
 
-      {/* Main Content Area */}
-      <div className="relative flex-1 overflow-hidden">
-        <CookingStepView
-          recipe={session.recipe}
-          onFinish={handleFinishCooking}
-          direction={direction}
-        />
+      {/* Main Content Area - Responsive Layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Timeline (Desktop Only) */}
+        <aside className="hidden h-full flex-col border-r border-border md:flex">
+          <CookingTimeline
+            currentStep={session.currentStepIdx + 1}
+            totalSteps={session.recipe.steps.length}
+            onStepClick={(idx) => cookingSessionActions.goToStep(idx)}
+          />
+        </aside>
+
+        {/* Center - Step View */}
+        <main className="relative flex flex-1 flex-col overflow-hidden">
+          {/* Mobile Timeline (Top) */}
+          <div className="border-b border-border md:hidden">
+            <CookingTimeline
+              currentStep={session.currentStepIdx + 1}
+              totalSteps={session.recipe.steps.length}
+              onStepClick={(idx) => cookingSessionActions.goToStep(idx)}
+            />
+          </div>
+
+          <CookingStepView
+            recipe={session.recipe}
+            onFinish={handleFinishCooking}
+            direction={direction}
+          />
+        </main>
+
+        {/* Right Sidebar - Ingredients (Desktop Only) */}
+        <aside className="hidden h-full w-80 flex-col border-l border-border md:flex lg:w-96">
+          <IngredientsPanel />
+        </aside>
       </div>
 
       {/* Overlays */}
@@ -136,6 +164,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         totalSteps={session.recipe.steps.length}
       />
 
+      {/* Mobile Ingredients Overlay */}
       <CookingIngredientsOverlay
         isOpen={showIngredients}
         onClose={() => setShowIngredients(false)}
