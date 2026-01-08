@@ -66,7 +66,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
           </button>
 
           {/* Image Container with Zoom */}
-          <ZoomableImage src={imageUrl} alt={alt} onClose={onClose} />
+          <ZoomableImage src={imageUrl} alt={alt} />
         </motion.div>
       )}
     </AnimatePresence>,
@@ -75,32 +75,25 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
 }
 
 // Internal Zoomable Image Component
-const ZoomableImage = ({
-  src,
-  alt,
-  onClose,
-}: {
-  src: string
-  alt: string
-  onClose: () => void
-}) => {
+const ZoomableImage = ({ src, alt }: { src: string; alt: string }) => {
   const [scale, setScale] = React.useState(1)
   const [position, setPosition] = React.useState({ x: 0, y: 0 })
   const containerRef = React.useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = React.useState(false)
   const startPos = React.useRef({ x: 0, y: 0 })
+  const lastScale = React.useRef(1)
+  const lastDist = React.useRef<number | null>(null)
 
   const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation() // Prevent closing
+    e.stopPropagation()
     if (scale > 1) {
-      // Reset
       setScale(1)
       setPosition({ x: 0, y: 0 })
+      lastScale.current = 1
     } else {
-      // Zoom in
       setScale(2.5)
-      // Optional: Zoom towards click position (simplified to center for now)
       setPosition({ x: 0, y: 0 })
+      lastScale.current = 2.5
     }
   }
 
@@ -130,6 +123,41 @@ const ZoomableImage = ({
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
 
+  // Touch handlers for pinch-to-zoom
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      )
+      lastDist.current = dist
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastDist.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      )
+
+      const delta = dist / lastDist.current
+      const newScale = Math.min(Math.max(lastScale.current * delta, 1), 5)
+
+      setScale(newScale)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    lastDist.current = null
+    lastScale.current = scale
+    if (scale < 1) {
+      setScale(1)
+      lastScale.current = 1
+      setPosition({ x: 0, y: 0 })
+    }
+  }
+
   return (
     <motion.div
       initial={{ scale: 0.9 }}
@@ -137,7 +165,6 @@ const ZoomableImage = ({
       exit={{ scale: 0.9 }}
       transition={{ duration: 0.2 }}
       className="relative flex h-full w-full items-center justify-center overflow-hidden"
-      onClick={onClose} // Background click closes
     >
       <div
         className="relative flex h-full w-full touch-none items-center justify-center"
@@ -146,12 +173,16 @@ const ZoomableImage = ({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div
           role="presentation"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
+          {}
           <img
             src={src}
             alt={alt}
@@ -159,7 +190,7 @@ const ZoomableImage = ({
             style={{
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
               cursor: scale > 1 ? 'grab' : 'zoom-in',
-              transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+              transition: isDragging ? 'none' : 'transform 0.1s linear',
             }}
             className="max-h-[100dvh] max-w-[100dvw] select-none object-contain shadow-2xl"
           />

@@ -77,7 +77,8 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
         userAgent: navigator.userAgent,
         user: user || 'Unknown',
         appState: JSON.stringify(appState),
-        domSnapshot: document.documentElement.outerHTML,
+        // Note: domSnapshot removed - it exceeded Firestore's 1MB limit.
+        // The screenshot provides visual context for debugging.
         windowSize: {
           width: String(window.innerWidth),
           height: String(window.innerHeight),

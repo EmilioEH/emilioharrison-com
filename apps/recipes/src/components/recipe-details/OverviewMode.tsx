@@ -200,12 +200,20 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       const formData = new FormData()
       formData.append('file', optimizedFile)
 
-      const uploadRes = await fetch('api/uploads', {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      const uploadRes = await fetch(`${baseUrl}api/uploads`, {
         method: 'POST',
         body: formData,
       })
 
-      if (!uploadRes.ok) throw new Error('Upload failed')
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}))
+        console.error('Server Upload Error:', errData)
+        throw new Error(errData.error || 'Upload failed')
+      }
 
       const { url } = await uploadRes.json()
 
@@ -231,10 +239,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       // For now, let's just do the API call. The user might need to refresh or we wait for SWR/store update.
       // Wait, `recipe` comes from parent.
 
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
       await fetch(`${baseUrl}api/recipes/${recipe.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -245,7 +249,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       window.location.reload()
     } catch (error) {
       console.error('Failed to upload photo:', error)
-      alert('Failed to upload photo. Please try again.')
+      alert(`Failed to upload photo: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
