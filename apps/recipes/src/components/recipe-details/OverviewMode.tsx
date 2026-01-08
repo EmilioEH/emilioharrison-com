@@ -215,11 +215,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         throw new Error(errData.error || 'Upload failed')
       }
 
-      const { url } = await uploadRes.json()
+      const { key } = await uploadRes.json()
+      // Construct full URL with baseUrl (aligned with importer/api.ts pattern)
+      const uploadedUrl = `${baseUrl}api/uploads/${key}`
 
       // 3. Update Recipe
       const currentImages = recipe.images || []
-      const newImages = [url, ...currentImages]
+      const newImages = [uploadedUrl, ...currentImages]
 
       // If no images existed before, and there was a sourceImage/finishedImage, should we preserve them?
       // The plan said: "Existing sourceImage will be treated as a fallback... When a new photo is added... added to front".
