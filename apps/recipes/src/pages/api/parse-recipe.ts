@@ -14,6 +14,35 @@ const PROTEIN_OPTIONS = [
   'Other',
 ]
 
+// Shared prompt sections for redesign features (ingredient grouping + structured steps)
+const INGREDIENT_GROUPING_RULES = `
+**INGREDIENT GROUPING (REQUIRED)**:
+- ALWAYS organize ingredients into logical groups, even if the source has no explicit sections.
+- Analyze the steps to understand how ingredients are used together.
+- Common patterns:
+  • "FOR THE [COMPONENT]" - Ingredients blended/mixed together early (curry paste, marinade, dressing)
+  • "THE PROTEIN" - Main protein + its direct seasonings
+  • "AROMATICS" or "BASE" - Onions, garlic, ginger used for sautéing
+  • "TO FINISH" - Fresh herbs, citrus, garnishes added at the end
+- Use SHORT, ALL-CAPS headers (2-4 words max).
+- Every ingredient must belong to exactly one group.
+- Order groups chronologically by when they're used in the recipe.
+- Populate 'ingredientGroups' with startIndex and endIndex for each group.
+`
+
+const STRUCTURED_STEPS_RULES = `
+**STRUCTURED STEPS (REQUIRED)**:
+- For each instruction step, generate:
+  • title: Short, action-focused name (2-4 words, e.g., "Sear the Shrimp", "Blend the Base")
+  • text: The full instruction text (keep as-is from source)
+  • tip: Extract any pro-tips, warnings, or "Chef's notes" embedded in the text (null if none)
+- Tip extraction examples:
+  • "Don't overcrowd the pan!" → tip
+  • "If too thick, add water 1 tbsp at a time" → tip
+  • "Pro tip: ..." → tip
+- Populate 'structuredSteps' array with these objects.
+`
+
 const IMAGE_SYSTEM_PROMPT = `
 You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided image.
 
@@ -35,6 +64,8 @@ Rules:
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_GROUPING_RULES}
+${STRUCTURED_STEPS_RULES}
 `
 
 const TEXT_SYSTEM_PROMPT = `
@@ -58,6 +89,8 @@ Rules:
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of arrays. Each inner array should contain the 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_GROUPING_RULES}
+${STRUCTURED_STEPS_RULES}
 `
 
 const URL_SYSTEM_PROMPT = `
@@ -84,6 +117,8 @@ Rules:
     - 'name' (ingredient name without unit)
     - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 13. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_GROUPING_RULES}
+${STRUCTURED_STEPS_RULES}
 `
 
 const JSON_LD_SYSTEM_PROMPT = `
@@ -102,6 +137,8 @@ The input is already structured data from the source website. Your job is not to
 5. Infer "Meal Type", "Dish Type" based on the recipe title and context.
 6. **ENRICH** missing metadata: Infer Occasion, Dietary tags, and Equipment from the content if they are missing.
 7. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_GROUPING_RULES}
+${STRUCTURED_STEPS_RULES}
 `
 
 /**
@@ -352,6 +389,30 @@ function createRecipeSchema() {
           required: ['indices'],
         },
       },
+      ingredientGroups: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            header: { type: SchemaType.STRING },
+            startIndex: { type: SchemaType.NUMBER },
+            endIndex: { type: SchemaType.NUMBER },
+          },
+          required: ['header', 'startIndex', 'endIndex'],
+        },
+      },
+      structuredSteps: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            title: { type: SchemaType.STRING, nullable: true },
+            text: { type: SchemaType.STRING },
+            tip: { type: SchemaType.STRING, nullable: true },
+          },
+          required: ['text'],
+        },
+      },
       notes: { type: SchemaType.STRING, nullable: true },
       protein: {
         type: SchemaType.STRING,
@@ -371,6 +432,13 @@ function createRecipeSchema() {
       difficulty: { type: SchemaType.STRING },
       cuisine: { type: SchemaType.STRING },
     },
-    required: ['title', 'ingredients', 'steps', 'description'],
+    required: [
+      'title',
+      'ingredients',
+      'steps',
+      'structuredSteps',
+      'ingredientGroups',
+      'description',
+    ],
   }
 }

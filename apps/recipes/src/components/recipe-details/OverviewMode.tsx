@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 import {
   Clock,
   Users,
@@ -6,19 +6,27 @@ import {
   Star,
   ChevronRight,
   Play,
-  Check,
   AlertCircle,
-  Loader2,
   MessageSquarePlus,
+  DollarSign,
+  Loader2,
 } from 'lucide-react'
 import { StarRating } from '../ui/StarRating'
 import { CheckableItem } from './CheckableItem'
+import { MetadataCard } from './MetadataCard'
+import { InstructionCard } from './InstructionCard'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Stack, Inline } from '../ui/layout'
 import { ImageViewer } from '../ui/ImageViewer'
 import { Carousel } from '../ui/Carousel'
-import type { Recipe, FamilyRecipeData } from '../../lib/types'
+import type {
+  Recipe,
+  FamilyRecipeData,
+  IngredientGroup,
+  StructuredStep,
+  Ingredient,
+} from '../../lib/types'
 import { Textarea } from '../ui/textarea'
 
 import { useStore } from '@nanostores/react'
@@ -54,6 +62,17 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [isEstimating, setIsEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
 
+  // Lazy-loaded enhanced recipe data (ingredient groups + structured steps)
+  const [enhancedData, setEnhancedData] = useState<{
+    ingredientGroups: IngredientGroup[]
+    structuredSteps: StructuredStep[]
+  } | null>(
+    recipe.ingredientGroups && recipe.structuredSteps
+      ? { ingredientGroups: recipe.ingredientGroups, structuredSteps: recipe.structuredSteps }
+      : null,
+  )
+  const [isEnhancing, setIsEnhancing] = useState(false)
+
   // Load family data on mount
   useEffect(() => {
     const loadFamilyData = async () => {
@@ -77,6 +96,36 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
     loadFamilyData()
   }, [recipe.id])
+
+  // Lazy-load enhanced data (ingredient groups + structured steps) if not present
+  useEffect(() => {
+    // Skip if already loaded or currently enhancing
+    if (enhancedData || isEnhancing) return
+
+    const loadEnhancedData = async () => {
+      setIsEnhancing(true)
+      try {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+
+        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/enhance`, {
+          method: 'POST',
+        })
+
+        const data = await res.json()
+        if (data.success && data.data) {
+          setEnhancedData(data.data)
+        }
+      } catch (error) {
+        console.error('Failed to load enhanced data:', error)
+      } finally {
+        setIsEnhancing(false)
+      }
+    }
+
+    loadEnhancedData()
+  }, [recipe.id, enhancedData, isEnhancing])
 
   // Handle rating with family API
   const handleFamilyRate = async (rating: number) => {
@@ -261,6 +310,34 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     ? recipe.images
     : ([recipe.finishedImage || recipe.sourceImage].filter(Boolean) as string[])
 
+  // Memoized ingredient groups with fallback to flat list
+  const displayGroups = useMemo((): Array<{
+    header: string | null
+    items: Ingredient[]
+    startIndex: number
+  }> => {
+    const groups = enhancedData?.ingredientGroups
+    if (groups?.length) {
+      return groups.map((group: IngredientGroup) => ({
+        header: group.header,
+        items: recipe.ingredients.slice(group.startIndex, group.endIndex + 1),
+        startIndex: group.startIndex,
+      }))
+    }
+    // Fallback: single ungrouped list
+    return [{ header: null, items: recipe.ingredients, startIndex: 0 }]
+  }, [enhancedData?.ingredientGroups, recipe.ingredients])
+
+  // Memoized structured steps with fallback to plain text
+  const displaySteps = useMemo((): StructuredStep[] => {
+    const steps = enhancedData?.structuredSteps
+    if (steps?.length) {
+      return steps
+    }
+    // Fallback: wrap plain strings as StructuredStep
+    return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
+  }, [enhancedData?.structuredSteps, recipe.steps])
+
   return (
     <Stack spacing="none" className="flex-1 overflow-y-auto pb-20">
       <div className="relative">
@@ -323,47 +400,31 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             )}
 
             {recipe.description && (
-              <p className="mb-4 mt-2 text-base leading-relaxed text-muted-foreground">
+              <p className="mb-4 mt-2 text-base italic leading-relaxed text-muted-foreground">
                 {recipe.description}
               </p>
             )}
 
-            <Inline
-              spacing="md"
-              className="text-foreground-variant mt-4 border-y border-border/20 py-3 text-sm font-medium"
-            >
-              <Inline spacing="xs">
-                <Clock className="h-4 w-4 text-primary" />
-                <span>{recipe.prepTime + recipe.cookTime}m</span>
-              </Inline>
-              <Inline spacing="xs">
-                <Users className="h-4 w-4 text-primary" />
-                <span>{recipe.servings} Servings</span>
-              </Inline>
-              <Inline spacing="xs">
-                <Flame className="h-4 w-4 text-primary" />
-                <span>{recipe.difficulty || 'Easy'}</span>
-              </Inline>
-              {recipe.updatedAt && (
-                <Inline spacing="xs" className="sm:ml-auto">
-                  <span className="text-xs opacity-70">
-                    Updated {new Date(recipe.updatedAt).toLocaleDateString()}
-                  </span>
-                </Inline>
-              )}
-            </Inline>
+            {/* Metadata Cards Grid */}
+            <div className="my-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <MetadataCard
+                icon={Clock}
+                label="TOTAL"
+                value={`${recipe.prepTime + recipe.cookTime}m`}
+              />
+              <MetadataCard icon={Users} label="SERVES" value={recipe.servings} />
+              <MetadataCard icon={Flame} label="LEVEL" value={recipe.difficulty || 'Easy'} />
+              <MetadataCard
+                icon={DollarSign}
+                label="COST"
+                value={isEstimating ? '...' : estimatedCost ? `$${estimatedCost.toFixed(2)}` : '—'}
+              />
+            </div>
           </div>
 
-          {/* Cost Estimation (Auto) */}
-          <div className="mb-6 flex justify-end">
-            {isEstimating ? (
-              <Inline
-                spacing="xs"
-                className="bg-card-variant/50 text-foreground-variant rounded-lg px-3 py-1 text-xs font-medium"
-              >
-                <Loader2 className="h-3 w-3 animate-spin" /> Estimating HEB Cost...
-              </Inline>
-            ) : estimateError ? (
+          {/* Cost Estimation Error (only shown if failed) */}
+          {estimateError && (
+            <div className="mb-6 flex justify-end">
               <button
                 onClick={handleEstimateCost}
                 className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
@@ -372,28 +433,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 <AlertCircle className="h-4 w-4" /> Couldn't estimate cost
                 <span className="ml-1 text-[10px] uppercase opacity-70">Tap to retry</span>
               </button>
-            ) : estimatedCost !== null ? (
-              <button
-                className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100"
-                onClick={handleEstimateCost}
-                title="Click to refresh cost"
-                aria-label={`Estimated cost is ${estimatedCost.toFixed(2)} dollars. Click to refresh.`}
-              >
-                Est. Total: ${estimatedCost.toFixed(2)}
-                <span className="ml-1 text-[10px] uppercase opacity-70">(HEB)</span>
-              </button>
-            ) : (
-              // Fallback button if auto failed or initial state before effect
-              <Button
-                variant="link"
-                size="sm"
-                onClick={handleEstimateCost}
-                className="h-auto p-0 text-xs uppercase tracking-wider"
-              >
-                Estimate Cost
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Quick Stats or Previous Experience */}
           {(recipe.rating || recipe.userNotes) && (
@@ -546,26 +587,39 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 <span className="text-foreground-variant font-body text-sm font-normal">
                   ({recipe.ingredients?.length || 0})
                 </span>
+                {isEnhancing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </Inline>
             </Inline>
-            <div className={`bg-card-variant/20 rounded-lg border border-dashed border-border p-2`}>
-              {recipe.ingredients.map((ing, idx) => {
-                const prep = ing.prep ? `, ${ing.prep}` : ''
-                const text = `${ing.amount} ${ing.name}${prep}`
-                const isChecked = session.checkedIngredients.includes(idx)
-                return (
-                  <CheckableItem
-                    key={idx}
-                    text={text}
-                    isChecked={isChecked}
-                    onToggle={() => cookingSessionActions.toggleIngredient(idx)}
-                    size="lg"
-                  />
-                )
-              })}
-            </div>
 
-            {/* Estimate Cost Section - Moved to Header */}
+            {/* Grouped Ingredients Display */}
+            <Stack spacing="lg">
+              {displayGroups.map((group, gIdx) => (
+                <div key={gIdx}>
+                  {group.header && (
+                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                      • {group.header}
+                    </h3>
+                  )}
+                  <div className="rounded-lg border border-dashed border-border bg-card/50 p-2">
+                    {group.items.map((ing, idx) => {
+                      const prep = ing.prep ? `, ${ing.prep}` : ''
+                      const text = `${ing.amount} ${ing.name}${prep}`
+                      const globalIdx = group.startIndex + idx
+                      const isChecked = session.checkedIngredients.includes(globalIdx)
+                      return (
+                        <CheckableItem
+                          key={idx}
+                          text={text}
+                          isChecked={isChecked}
+                          onToggle={() => cookingSessionActions.toggleIngredient(globalIdx)}
+                          size="lg"
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </Stack>
           </div>
 
           {/* Steps */}
@@ -586,21 +640,17 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 Cooking Mode <Play className="fill-current" />
               </Button>
             </Inline>
-            <Stack spacing="md">
-              {recipe.steps.map((step, idx) => (
-                <Inline key={idx} spacing="md" align="start">
-                  <div
-                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border font-bold transition-colors ${checkedSteps[idx] ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground'}`}
-                  >
-                    {checkedSteps[idx] ? <Check className="h-4 w-4" /> : idx + 1}
-                  </div>
-                  <button
-                    onClick={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
-                    className={`text-left font-body text-foreground transition-opacity ${checkedSteps[idx] ? 'line-through opacity-50' : ''}`}
-                  >
-                    {step}
-                  </button>
-                </Inline>
+            <Stack spacing="lg">
+              {displaySteps.map((step, idx) => (
+                <InstructionCard
+                  key={idx}
+                  stepNumber={idx + 1}
+                  title={step.title}
+                  text={step.text}
+                  tip={step.tip}
+                  isChecked={checkedSteps[idx]}
+                  onToggle={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
+                />
               ))}
             </Stack>
           </div>

@@ -1,0 +1,196 @@
+import type { APIRoute } from 'astro'
+import { Type as SchemaType } from '@google/genai'
+import { initGeminiClient, serverErrorResponse } from '../../../../lib/api-helpers'
+import { FirebaseRestService } from '../../../../lib/firebase-rest'
+import type {
+  Recipe,
+  IngredientGroup,
+  StructuredStep,
+  ServiceAccount,
+  Ingredient,
+} from '../../../../lib/types'
+
+const ENHANCE_SYSTEM_PROMPT = `
+You are a cooking expert analyzing a recipe to enhance its structure for display.
+
+Given the recipe's title, ingredients, and steps, generate:
+
+1. INGREDIENT GROUPS:
+   - Organize ALL ingredients into logical cooking-phase groups
+   - Use short, all-caps headers (e.g., "FOR THE SAUCE", "THE PROTEIN", "TO FINISH")
+   - Every ingredient must belong to exactly one group
+   - Order groups chronologically by usage in the recipe
+   - Common patterns:
+     • "FOR THE [COMPONENT]" - Ingredients blended/mixed together early
+     • "THE PROTEIN" - Main protein + its direct seasonings
+     • "AROMATICS" or "BASE" - Onions, garlic, ginger for sautéing
+     • "TO FINISH" - Fresh herbs, citrus, garnishes added at the end
+
+2. STRUCTURED STEPS:
+   - For each step, create:
+     • title: Short action name (2-4 words, e.g., "Sear the Shrimp")
+     • text: The original instruction (keep as-is)
+     • tip: Extract any pro-tips or warnings (null if none)
+
+Return JSON matching the schema.
+`
+
+const responseSchema = {
+  type: SchemaType.OBJECT as const,
+  properties: {
+    ingredientGroups: {
+      type: SchemaType.ARRAY as const,
+      items: {
+        type: SchemaType.OBJECT as const,
+        properties: {
+          header: { type: SchemaType.STRING as const },
+          startIndex: { type: SchemaType.NUMBER as const },
+          endIndex: { type: SchemaType.NUMBER as const },
+        },
+        required: ['header', 'startIndex', 'endIndex'] as const,
+      },
+    },
+    structuredSteps: {
+      type: SchemaType.ARRAY as const,
+      items: {
+        type: SchemaType.OBJECT as const,
+        properties: {
+          title: { type: SchemaType.STRING as const, nullable: true },
+          text: { type: SchemaType.STRING as const },
+          tip: { type: SchemaType.STRING as const, nullable: true },
+        },
+        required: ['text'] as const,
+      },
+    },
+  },
+  required: ['ingredientGroups', 'structuredSteps'] as const,
+}
+
+export const POST: APIRoute = async ({ params, locals }) => {
+  const recipeId = params.id
+
+  if (!recipeId) {
+    return new Response(JSON.stringify({ error: 'Recipe ID required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  let client
+  try {
+    client = initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key configuration')
+  }
+
+  try {
+    // Construct Service Account from Env
+    const serviceAccount: ServiceAccount = {
+      project_id: process.env.FIREBASE_PROJECT_ID || '',
+      client_email: process.env.FIREBASE_CLIENT_EMAIL || '',
+      private_key: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+      token_uri: 'https://oauth2.googleapis.com/token',
+    }
+
+    // Fetch the recipe from Firestore
+    const firebase = new FirebaseRestService(serviceAccount)
+    const recipe = (await firebase.getDocument('recipes', recipeId)) as Recipe | null
+
+    if (!recipe) {
+      return new Response(JSON.stringify({ error: 'Recipe not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // If already enhanced, return existing data
+    if (recipe.ingredientGroups?.length && recipe.structuredSteps?.length) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            ingredientGroups: recipe.ingredientGroups,
+            structuredSteps: recipe.structuredSteps,
+          },
+          cached: true,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // Build prompt with recipe data
+    const ingredientsList = recipe.ingredients
+      .map((ing: Ingredient, idx: number) =>
+        `${idx}: ${ing.amount || ''} ${ing.name}${ing.prep ? ` (${ing.prep})` : ''}`.trim(),
+      )
+      .join('\n')
+
+    const stepsList = recipe.steps
+      .map((step: string, idx: number) => `Step ${idx + 1}: ${step}`)
+      .join('\n')
+
+    const prompt = `Recipe: ${recipe.title}
+
+INGREDIENTS (with 0-based indices):
+${ingredientsList}
+
+STEPS:
+${stepsList}
+
+Generate ingredientGroups (using startIndex/endIndex to reference ingredients) and structuredSteps.`
+
+    // Call Gemini
+    const response = await client.models.generateContent({
+      model: 'gemini-2.0-flash',
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema,
+      },
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: ENHANCE_SYSTEM_PROMPT }, { text: prompt }],
+        },
+      ],
+    })
+
+    const resultText = response.text
+    if (!resultText) {
+      throw new Error('No content generated by Gemini')
+    }
+
+    const enhancedData = JSON.parse(resultText) as {
+      ingredientGroups: IngredientGroup[]
+      structuredSteps: StructuredStep[]
+    }
+
+    // Save to Firestore for caching
+    await firebase.updateDocument('recipes', recipeId, {
+      ingredientGroups: enhancedData.ingredientGroups,
+      structuredSteps: enhancedData.structuredSteps,
+      updatedAt: new Date().toISOString(),
+    })
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: enhancedData,
+        cached: false,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  } catch (error: unknown) {
+    console.error('Enhance Error:', error)
+    const message = error instanceof Error ? error.message : 'Failed to enhance recipe'
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}

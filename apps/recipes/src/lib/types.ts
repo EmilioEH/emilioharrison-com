@@ -4,6 +4,20 @@ export interface Ingredient {
   prep?: string
 }
 
+/** Logical grouping of ingredients by cooking phase (e.g., "FOR THE CURRY PASTE") */
+export interface IngredientGroup {
+  header: string // "FOR THE CURRY PASTE"
+  startIndex: number // First ingredient index (0-based)
+  endIndex: number // Last ingredient index (inclusive)
+}
+
+/** Enhanced step with title and optional tip for redesigned instruction cards */
+export interface StructuredStep {
+  title?: string // "Blend the Base" (2-4 words)
+  text: string // Full instruction text
+  tip?: string // Optional pro-tip or warning
+}
+
 export interface Recipe {
   id: string
   title: string
@@ -13,6 +27,9 @@ export interface Recipe {
   ingredients: Ingredient[]
   steps: string[]
   stepIngredients?: Array<{ indices: number[] }> // Firestore-compatible: indices of ingredients used in each step
+  // Enhanced recipe structure (lazy-migrated via AI)
+  ingredientGroups?: IngredientGroup[] // AI-generated ingredient groupings by cooking phase
+  structuredSteps?: StructuredStep[] // AI-generated step titles and tips
   notes?: string
   description?: string
   // New metadata for organization
