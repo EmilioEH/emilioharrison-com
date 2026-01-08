@@ -48,6 +48,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 While Astro handles the initial load, the app functions as a **Single Page Application (SPA)** managed by `RecipeManager.tsx` and the `useRouter` hook.
 
 - **Do NOT create new Astro pages** for core app features (e.g., `src/pages/new-feature.astro`).
+- **SPA Fallback:** `src/pages/[...path].astro` ensures deep links (e.g. `/protected/recipes/123`) load the SPA entry point (`RecipeManager`).
 - **Instead:** Add a new `ViewMode` to `RecipeManager.tsx` and render a conditional component.
 - **Why:** This preserves the "App-like" feel, state (e.g. scroll position), and offline capability.
 
@@ -536,6 +537,7 @@ src/
 │ └── layout/ # Global layout components
 ├── pages/ # Astro File-based Routing
 │ ├── index.astro # Main recipe app entry
+│ ├── [...path].astro # Catch-all handler for SPA deep links
 │ ├── login.astro # Authentication page
 │ ├── logout.astro # Sign out handler
 │ └── api/ # Backend API endpoints
