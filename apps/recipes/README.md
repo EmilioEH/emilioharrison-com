@@ -8,7 +8,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 ## 🚀 Core Features
 
 - **PWA Experience**: Installable on mobile with offline support.
-- **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes.
+- **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes. Supports **multi-image upload** and a **zoomable photo carousel**.
 - **Rich Metadata Tagging**: Organize recipes by Meal Type (Breakfast, Dinner, etc.), Dish Type (Main, Side, etc.), Dietary restrictions (Vegan, Keto), required Equipment (Air Fryer, Slow Cooker), and Occasion (Weeknight, Party).
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
@@ -26,7 +26,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Unified Navigation**: An integrated app header that houses the primary menu and grocery list actions, providing a clean and focused navigation experience.
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
-- **Recipe Cooking Mode 2.0**: A completely redesigned cooking experience with "Smart Timers" (browser notifications), **vertical step-by-step navigation** (with previous/next previews), a dedicated **Step List** sheet for quick jumping, and a review flow to rate and capture photos of your creation.
+- **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** to capture photos of your creation.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu.
 - **Feedback Dashboard**: An integrated management interface (restricted to admins via `ADMIN_EMAILS`) to review, track, and resolve user feedback reports directly in the app.
 
