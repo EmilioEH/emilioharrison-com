@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
     const buffer = await file.arrayBuffer()
     await bucket.uploadFile(bucketName, key, buffer, file.type)
 
-    return new Response(JSON.stringify({ key, url: `api/uploads/${key}` }), {
+    return new Response(JSON.stringify({ key, url: `/api/uploads/${key}` }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

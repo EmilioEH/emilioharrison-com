@@ -32,6 +32,15 @@ export const Carousel: React.FC<CarouselProps> = ({
 
   const hasImages = images.length > 0
 
+  // Normalize URLs that may be missing the leading slash (legacy data fix)
+  const normalizeUrl = (url: string): string => {
+    if (!url || typeof url !== 'string') return ''
+    if (url.startsWith('api/uploads/')) {
+      return `/${url}`
+    }
+    return url
+  }
+
   return (
     <div className={`group relative ${className}`}>
       {/* Scroll Container */}
@@ -41,24 +50,27 @@ export const Carousel: React.FC<CarouselProps> = ({
         className="scrollbar-hide flex aspect-video w-full touch-pan-x snap-x snap-mandatory overflow-x-auto bg-muted/30"
       >
         {hasImages ? (
-          images.map((src, index) => (
-            <div
-              key={`${src}-${index}`}
-              className="relative h-full w-full flex-shrink-0 snap-center"
-            >
-              <button
-                onClick={() => onImageClick?.(src)}
-                className="block h-full w-full cursor-zoom-in"
-                aria-label={`View photo ${index + 1}`}
+          images.map((src, index) => {
+            const normalizedSrc = normalizeUrl(src)
+            return (
+              <div
+                key={`${src}-${index}`}
+                className="relative h-full w-full flex-shrink-0 snap-center"
               >
-                <img
-                  src={src}
-                  alt={`Recipe view ${index + 1}`}
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            </div>
-          ))
+                <button
+                  onClick={() => onImageClick?.(normalizedSrc)}
+                  className="block h-full w-full cursor-zoom-in"
+                  aria-label={`View photo ${index + 1}`}
+                >
+                  <img
+                    src={normalizedSrc}
+                    alt={`Recipe view ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              </div>
+            )
+          })
         ) : (
           <div className="flex h-full w-full flex-shrink-0 snap-center flex-col items-center justify-center gap-2 bg-muted/50 text-muted-foreground">
             <ImageIcon className="h-12 w-12 opacity-50" />
