@@ -99,3 +99,83 @@ export const GET: APIRoute = async ({ params, cookies }) => {
     )
   }
 }
+
+/**
+ * PATCH /api/recipes/[id]/family-data
+ * Update family-specific data (difficulty, ingredient/step notes)
+ */
+export const PATCH: APIRoute = async ({ params, request, cookies }) => {
+  const userId = getAuthUser(cookies)
+  const recipeId = params.id
+
+  if (!userId) return unauthorizedResponse()
+  if (!recipeId) {
+    return new Response(JSON.stringify({ success: false, error: 'Recipe ID required' }), {
+      status: 400,
+    })
+  }
+
+  try {
+    const userDoc = await db.getDocument('users', userId)
+    if (!userDoc?.familyId) {
+      return new Response(JSON.stringify({ success: false, error: 'Must join a family first' }), {
+        status: 400,
+      })
+    }
+
+    const body = await request.json()
+    const { difficulty, ingredientNotes, stepNotes } = body
+
+    // Get existing data or create default
+    let familyData = await db.getDocument(`families/${userDoc.familyId}/recipeData`, recipeId)
+    if (!familyData) {
+      familyData = {
+        id: recipeId,
+        notes: [],
+        ratings: [],
+        weekPlan: { isPlanned: false },
+        cookingHistory: [],
+        difficultyRatings: {},
+        ingredientNotes: {},
+        stepNotes: {},
+      }
+      await db.createDocument(`families/${userDoc.familyId}/recipeData`, recipeId, familyData)
+    }
+
+    // Merge Updates
+    const updates: Partial<FamilyRecipeData> = {}
+
+    // 1. Difficulty
+    if (typeof difficulty === 'number') {
+      updates.difficultyRatings = {
+        ...(familyData.difficultyRatings || {}),
+        [userId]: difficulty,
+      }
+    }
+
+    // 2. Ingredient Notes (Merge)
+    if (ingredientNotes) {
+      updates.ingredientNotes = {
+        ...(familyData.ingredientNotes || {}),
+        ...ingredientNotes,
+      }
+    }
+
+    // 3. Step Notes (Merge)
+    if (stepNotes) {
+      updates.stepNotes = {
+        ...(familyData.stepNotes || {}),
+        ...stepNotes,
+      }
+    }
+
+    await db.updateDocument(`families/${userDoc.familyId}/recipeData`, recipeId, updates)
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 })
+  } catch (e) {
+    console.error('PATCH Family Data Error:', e)
+    return new Response(JSON.stringify({ success: false, error: (e as Error).message }), {
+      status: 500,
+    })
+  }
+}

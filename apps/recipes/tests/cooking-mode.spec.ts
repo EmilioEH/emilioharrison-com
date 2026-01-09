@@ -164,4 +164,54 @@ test.describe('Recipe Cooking Mode', () => {
     // Verify Overlay is visible
     await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeVisible()
   })
+
+  test('should complete cooking and submit review', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    const recipeCard = page.getByText(RECIPE.title).first()
+    await recipeCard.click()
+
+    // Start Cooking
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Skip to last step
+    // We can use the timeline sidebar to jump (if desktop) or just click next until end?
+    // Let's use internal state manipulation or just click through.
+    // Total steps: Prep (1) + Instructions (2) = 3.
+    // We are at Prep.
+    await page.getByRole('button', { name: 'Start Cooking' }).click() // to Step 2
+    await page.getByRole('button', { name: 'Next Step' }).click() // to Step 3 (Final)
+
+    // Verify "Finish Cooking" is visible
+    await expect(page.getByRole('button', { name: 'Finish Cooking' })).toBeVisible()
+    await page.getByRole('button', { name: 'Finish Cooking' }).click()
+
+    // Expect Review Screen
+    await expect(page.getByText('All Done!')).toBeVisible()
+    await expect(page.getByText('Difficulty')).toBeVisible()
+
+    // Check that "Complete Review" is disabled initially
+    await expect(page.getByRole('button', { name: 'Select Difficulty' })).toBeDisabled()
+
+    // Select Difficulty (Easy)
+    await page.getByRole('button', { name: 'Easy' }).click()
+
+    // Button should be enabled now
+    await expect(page.getByRole('button', { name: 'Complete Review' })).toBeEnabled()
+
+    // Add a note to an ingredient
+    const ingredientNote = page.getByPlaceholder('Add specific note...').first()
+    await ingredientNote.fill('Used extra garlic')
+
+    // Add a note to a step
+    const stepNote = page.getByPlaceholder('Notes for step 1...').first()
+    await stepNote.fill('Step went well')
+
+    // Submit
+    await page.getByRole('button', { name: 'Complete Review' }).click()
+
+    // Verify returned to Detail View (Recipe Title visible)
+    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
+  })
 })

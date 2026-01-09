@@ -202,6 +202,10 @@ export interface FamilyRecipeData {
   ratings: UserRating[]
   weekPlan?: WeekPlanData
   cookingHistory: CookingHistoryEntry[]
+  // Enhanced Review Data
+  ingredientNotes?: Record<number, string> // index -> note
+  stepNotes?: Record<number, string> // index -> note
+  difficultyRatings?: Record<string, number> // userId -> difficulty (1=Easy, 2=Medium, 3=Hard)
 }
 
 export interface ServiceAccount {
