@@ -16,47 +16,54 @@ interface CookingStepViewProps {
 }
 
 // Carousel position variants - using pixel-based offsets for consistent spacing
-const PREVIEW_CARD_HEIGHT = 80 // Approximate height of preview cards
-const GAP = 24 // Space between cards
+
+const getVariantForOffset = (offset: number) => {
+  if (offset === 0) return 'center'
+  if (offset === -1) return 'top'
+  if (offset === 1) return 'bottom'
+  if (offset < -1) return 'hiddenTop'
+  if (offset > 1) return 'hiddenBottom'
+  return 'hidden'
+}
 
 const carouselVariants = {
-  previous: {
-    y: -(PREVIEW_CARD_HEIGHT + GAP + 60), // Position above current
-    scale: 1,
-    opacity: 0.6,
-    zIndex: 1,
-  },
-  current: {
-    y: 0,
+  center: {
+    y: '-50%',
     scale: 1,
     opacity: 1,
     zIndex: 10,
+    display: 'block',
   },
-  next: {
-    y: PREVIEW_CARD_HEIGHT + GAP + 60, // Position below current
+  top: {
+    y: 'calc(-50% - 250px)', // Gap (24) + Height (approx 200) + Extra
     scale: 1,
     opacity: 0.6,
     zIndex: 1,
+    display: 'block',
   },
-  exitUp: {
-    y: -(PREVIEW_CARD_HEIGHT * 2 + GAP * 2 + 100),
+  bottom: {
+    y: 'calc(-50% + 250px)',
+    scale: 1,
+    opacity: 0.6,
+    zIndex: 1,
+    display: 'block',
+  },
+  hiddenTop: {
+    y: 'calc(-50% - 500px)',
     opacity: 0,
     zIndex: 0,
+    transitionEnd: { display: 'none' },
   },
-  exitDown: {
-    y: PREVIEW_CARD_HEIGHT * 2 + GAP * 2 + 100,
+  hiddenBottom: {
+    y: 'calc(-50% + 500px)',
     opacity: 0,
     zIndex: 0,
+    transitionEnd: { display: 'none' },
   },
-  enterFromTop: {
-    y: -(PREVIEW_CARD_HEIGHT * 2 + GAP * 2 + 100),
+  hidden: {
     opacity: 0,
     zIndex: 0,
-  },
-  enterFromBottom: {
-    y: PREVIEW_CARD_HEIGHT * 2 + GAP * 2 + 100,
-    opacity: 0,
-    zIndex: 0,
+    display: 'none',
   },
 }
 
@@ -238,13 +245,9 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
   }
 
   // INSTRUCTION STEPS with Carousel
-  const instructionIdx = stepIdx - 1
-  const step = recipe.steps[instructionIdx]
-
-  if (!step) return null
-
-  const isLastStep = instructionIdx === recipe.steps.length - 1
-  const isFirstInstruction = instructionIdx === 0
+  // We offset instructionIdx so that 0 matches the first instruction (which is step 1 in the global session)
+  const currentInstructionIdx = stepIdx - 1
+  const isLastStep = currentInstructionIdx === recipe.steps.length - 1
 
   // Navigation handlers
   const handleNext = () => {
@@ -260,24 +263,13 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
     cookingSessionActions.goToStep(stepIdx - 1)
   }
 
-  // Determine which cards to show
-  const prevStepText = isFirstInstruction ? 'Prep Ingredients' : recipe.steps[instructionIdx - 1]
-  const nextStep = isLastStep ? null : recipe.steps[instructionIdx + 1]
-
-  // Calculate positions for animation
-  const getInitialPosition = (pos: 'previous' | 'current' | 'next') => {
-    if (direction > 0) {
-      // Moving forward: new cards enter from bottom
-      if (pos === 'previous') return 'current'
-      if (pos === 'current') return 'next'
-      if (pos === 'next') return 'enterFromBottom'
-    } else if (direction < 0) {
-      // Moving backward: new cards enter from top
-      if (pos === 'previous') return 'enterFromTop'
-      if (pos === 'current') return 'previous'
-      if (pos === 'next') return 'current'
+  // Jump handler (for preview cards)
+  const handleJumpTo = (targetStepIdx: number) => {
+    if (targetStepIdx === 0) {
+      cookingSessionActions.goToStep(0)
+    } else {
+      cookingSessionActions.goToStep(targetStepIdx)
     }
-    return pos
   }
 
   return (
@@ -285,64 +277,89 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
       {/* Carousel Container */}
       <div className="relative flex-1 overflow-hidden">
         <div className="absolute inset-0 flex flex-col items-center justify-center overflow-y-auto p-6">
-          <div className="relative flex w-full max-w-2xl flex-col items-center">
-            <AnimatePresence mode="sync" initial={false}>
-              {/* Previous Step Preview */}
-              <motion.div
-                key={`prev-${stepIdx}`}
-                initial={getInitialPosition('previous')}
-                animate="previous"
-                exit="exitUp"
-                variants={carouselVariants}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="absolute w-full"
-              >
-                <PreviewCard
-                  stepText={prevStepText}
-                  stepNumber={stepIdx - 1}
-                  label="Previous"
-                  onClick={handlePrev}
-                />
-              </motion.div>
+          <div className="relative flex h-full w-full max-w-2xl flex-col items-center">
+            {/* Render ALL steps (or windowed subset) but keep them in DOM with stable keys */},
+            {/* Render ALL steps (or windowed subset) but keep them in DOM with stable keys */}
+            {recipe.steps.map((stepText, idx) => {
+              const offset = idx - currentInstructionIdx
+              const variantName = getVariantForOffset(offset)
 
-              {/* Current Step - Main Content */}
-              <motion.div
-                key={`current-${stepIdx}`}
-                initial={getInitialPosition('current')}
-                animate="current"
-                exit={direction > 0 ? 'exitUp' : 'exitDown'}
-                variants={carouselVariants}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="w-full"
-              >
-                <CurrentStepContent
-                  stepText={step}
-                  stepNumber={stepIdx}
-                  recipe={recipe}
-                  instructionIdx={instructionIdx}
-                />
-              </motion.div>
+              // Global Step Index for this instruction (instruction 0 is step 1)
+              const thisStepIdx = idx + 1
 
-              {/* Next Step Preview */}
-              {nextStep && (
+              return (
                 <motion.div
-                  key={`next-${stepIdx}`}
-                  initial={getInitialPosition('next')}
-                  animate="next"
-                  exit="exitDown"
+                  key={`step-${idx}`} // STABLE KEY
+                  animate={variantName}
+                  initial={false} // Important: animate from current state not initial
                   variants={carouselVariants}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="absolute w-full"
+                  className="absolute top-1/2 w-full"
+                  style={{
+                    pointerEvents: offset === 0 ? 'auto' : 'none', // Only current card is interactive
+                  }}
                 >
-                  <PreviewCard
-                    stepText={nextStep}
-                    stepNumber={stepIdx + 1}
-                    label="Next"
-                    onClick={handleNext}
-                  />
+                  {/* 
+                                Content Switching Logic:
+                                - offset -1 (Top): Show Preview Card for THIS step
+                                - offset 0 (Center): Show Full Content for THIS step
+                                - offset 1 (Bottom): Show Preview Card for THIS step
+                            */}
+
+                  {/* CASE 1: Top Card (Previous) */}
+                  {offset === -1 && (
+                    <div className="pointer-events-auto">
+                      <PreviewCard
+                        stepText={stepText}
+                        stepNumber={thisStepIdx}
+                        label="Previous"
+                        onClick={() => handleJumpTo(thisStepIdx)}
+                      />
+                    </div>
+                  )}
+
+                  {/* CASE 2: Prep Card (Special Case: If we are at first instruction, show Prep as previous) */}
+                  {currentInstructionIdx === 0 && offset === 0 && (
+                    <motion.div
+                      className="absolute left-0 top-0 w-full"
+                      animate="top"
+                      variants={carouselVariants}
+                    >
+                      <div className="pointer-events-auto">
+                        <PreviewCard
+                          stepText="Prep Ingredients"
+                          stepNumber={0}
+                          label="Previous"
+                          onClick={() => handleJumpTo(0)}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* CASE 3: Center Card (Current) */}
+                  {offset === 0 && (
+                    <CurrentStepContent
+                      stepText={stepText}
+                      stepNumber={thisStepIdx}
+                      recipe={recipe}
+                      instructionIdx={idx}
+                    />
+                  )}
+
+                  {/* CASE 4: Bottom Card (Next) */}
+                  {offset === 1 && (
+                    <div className="pointer-events-auto">
+                      <PreviewCard
+                        stepText={stepText}
+                        stepNumber={thisStepIdx}
+                        label="Next"
+                        onClick={() => handleJumpTo(thisStepIdx)}
+                      />
+                    </div>
+                  )}
                 </motion.div>
-              )}
-            </AnimatePresence>
+              )
+            })}
           </div>
         </div>
       </div>
