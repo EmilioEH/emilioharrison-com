@@ -123,13 +123,34 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     // Ensure detail view is open
     await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
-    // 3. Rate it 5 stars
+    // 3. Rate it 5 stars via Cooking Mode (since direct rating is removed)
+    // Start Cooking
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // In Prep Step (Step 0)
+    // Since this is a new empty recipe, it has 0 instructions.
+    // Clicking "Start Cooking" (next) should go straight to Review.
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Verify Review Screen
+    await expect(page.getByText('All Done!')).toBeVisible()
+
+    // Rate 5 stars
     await page.getByRole('button', { name: 'Rate 5 stars' }).click()
 
-    // Allow state to settle
+    // Complete Review
+    await page.getByRole('button', { name: 'Complete Review' }).click()
+
+    // Allow state to settle and navigation back
     await page.waitForTimeout(1000)
 
     // 4. Close detail
+    // After satisfying review, it might return to detail or close overlay?
+    // CookingContainer.onClose calls onClose prop.
+    // RecipeDetail passes onClose={() => setCookingMode(false)}.
+    // So we are back in RecipeDetail.
+    await expect(page.getByRole('heading', { name: title })).toBeVisible()
+
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 5. Verify rating on card - need to locate the full card, not just the title text

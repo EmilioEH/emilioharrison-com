@@ -35,6 +35,7 @@ const STRUCTURED_STEPS_RULES = `
 - For each instruction step, generate:
   • title: Short, action-focused name (2-4 words, e.g., "Sear the Shrimp", "Blend the Base")
   • text: The full instruction text (keep as-is from source)
+  • highlightedText: The original instruction with key cooking action verbs wrapped in **bold** markdown (e.g., "**Whisk** the eggs until fluffy", "**Add** the onions and **sauté**")
   • tip: Extract any pro-tips, warnings, or "Chef's notes" embedded in the text (null if none)
 - Tip extraction examples:
   • "Don't overcrowd the pan!" → tip
@@ -220,7 +221,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const response = await client.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       config: {
         responseMimeType: 'application/json',
         responseSchema: schema,
@@ -408,9 +409,10 @@ function createRecipeSchema() {
           properties: {
             title: { type: SchemaType.STRING, nullable: true },
             text: { type: SchemaType.STRING },
+            highlightedText: { type: SchemaType.STRING },
             tip: { type: SchemaType.STRING, nullable: true },
           },
-          required: ['text'],
+          required: ['text', 'highlightedText'],
         },
       },
       notes: { type: SchemaType.STRING, nullable: true },

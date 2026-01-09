@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Inline } from '@/components/ui/layout'
 import type { Recipe } from '../../lib/types'
 import { DetailHeaderActions } from './DetailHeaderActions'
-import { HeaderBackButton, HeaderModeToggle } from './DetailHeaderComponents'
+import { HeaderBackButton } from './DetailHeaderComponents'
 
 export type CookingStage = 'idle' | 'pre' | 'during' | 'post'
 export type HeaderAction =
@@ -32,7 +32,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   onClose,
   onAction,
   cookingMode,
-  setCookingMode,
+  // setCookingMode, // Unused
   onToggleThisWeek,
   cookingStage,
   setCookingStage,
@@ -49,12 +49,6 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
     />
 
     <Inline spacing="sm">
-      <HeaderModeToggle
-        cookingMode={cookingMode}
-        setCookingMode={setCookingMode}
-        setCookingStage={setCookingStage}
-      />
-
       <Button
         variant="ghost"
         size="icon"

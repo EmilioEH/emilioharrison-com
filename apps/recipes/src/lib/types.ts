@@ -15,6 +15,7 @@ export interface IngredientGroup {
 export interface StructuredStep {
   title?: string // "Blend the Base" (2-4 words)
   text: string // Full instruction text
+  highlightedText?: string // "Blend the **Base**" (markdown bolding of verbs)
   tip?: string // Optional pro-tip or warning
 }
 

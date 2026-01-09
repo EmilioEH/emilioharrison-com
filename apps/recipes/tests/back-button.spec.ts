@@ -17,6 +17,7 @@ test.describe('Back Button Navigation', () => {
 
     // 3. Go to protected app
     await page.goto('/protected/recipes')
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
     await expect(page.getByText('CHEFBOARD')).toBeVisible()
 
     // 4. Press Back

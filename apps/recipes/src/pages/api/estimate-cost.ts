@@ -73,7 +73,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .join('\n')
 
     const response = await client.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       config: {
         responseMimeType: 'application/json',
         responseSchema: schema,

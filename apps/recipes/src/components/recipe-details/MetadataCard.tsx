@@ -12,7 +12,7 @@ interface MetadataCardProps {
  * Used in a 4-column grid on the recipe detail view.
  */
 export const MetadataCard: React.FC<MetadataCardProps> = ({ icon: Icon, label, value }) => (
-  <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card p-4 text-center shadow-sm transition-colors hover:bg-muted/50">
+  <div className="flex flex-col items-center gap-1 p-2 text-center">
     <Icon className="h-5 w-5 text-muted-foreground" />
     <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
       {label}

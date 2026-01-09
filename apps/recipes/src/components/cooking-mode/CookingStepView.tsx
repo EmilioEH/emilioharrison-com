@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { UtensilsCrossed } from 'lucide-react'
 import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 import { TimerControl } from './TimerControl'
+import { PrepStep } from './PrepStep'
 import { Stack, Inline } from '../ui/layout'
 import { getIngredientsForStep } from '../../utils/ingredientParsing'
 import type { Recipe } from '../../lib/types'
@@ -54,29 +55,79 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
 }) => {
   const session = useStore($cookingSession)
   const stepIdx = session.currentStepIdx
-  const step = recipe.steps[stepIdx]
-  const currentStepNum = stepIdx + 1
+
+  // STEP 0: PREP
+  if (stepIdx === 0) {
+    const handleNext = () => {
+      cookingSessionActions.completeStep(0)
+      if (recipe.steps.length === 0) {
+        if (onFinish) onFinish()
+      } else {
+        cookingSessionActions.goToStep(1)
+      }
+    }
+
+    return (
+      <div className="flex h-full flex-col">
+        <div className="relative flex-1 overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            <motion.div
+              key="prep"
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 1 }}
+              className="absolute inset-0 flex flex-col"
+            >
+              <PrepStep recipe={recipe} onNext={handleNext} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    )
+  }
+
+  // INSTRUCTION STEPS (Indices 1..N)
+  // Shift index back by 1 to access recipe data
+  const instructionIdx = stepIdx - 1
+  const step = recipe.steps[instructionIdx]
+  const currentStepNum = stepIdx // Display as Step 1 (Index 1) matches logic? No, if visual Step 1 is Index 1...
+  // Wait, if Prep is Step 0.
+  // Then Step 1 is "Index 1".
+  // Recipe instruction #0 is at Index 1.
+  // Display "Step 1" makes sense.
+  // But logic needs instruction[instructionIdx].
+
+  // Boundary check to fail gracefully if step is undefined (e.g. at end)
+  if (!step) {
+    // If we are at stepIdx = recipe.steps.length + 1? No we capped at length.
+    // If recipe has 3 steps. max index is 3.
+    // 0=Prep. 1=Inst0. 2=Inst1. 3=Inst2.
+    // So instructionIdx = 3-1 = 2 (valid).
+    // Works.
+  }
 
   // Parse ingredients for this step
   const stepIngredients =
-    recipe.stepIngredients && recipe.stepIngredients[stepIdx]
-      ? recipe.stepIngredients[stepIdx].indices.map((idx) => recipe.ingredients[idx])
+    recipe.stepIngredients && recipe.stepIngredients[instructionIdx]
+      ? recipe.stepIngredients[instructionIdx].indices.map((idx) => recipe.ingredients[idx])
       : getIngredientsForStep(step, recipe.ingredients)
 
-  const isLastStep = stepIdx === recipe.steps.length - 1
-  const prevStepText = stepIdx > 0 ? recipe.steps[stepIdx - 1] : null
-  const nextStepText = !isLastStep ? recipe.steps[stepIdx + 1] : null
+  const isLastStep = instructionIdx === recipe.steps.length - 1
+  const prevStepText = instructionIdx > 0 ? recipe.steps[instructionIdx - 1] : 'Prep Ingredients'
+  const nextStepText = !isLastStep ? recipe.steps[instructionIdx + 1] : null
 
-  // Smart timer parsing: "3-5 minutes" -> 4, "10 mins" -> 10
+  // Smart timer parsing
   const parseTimer = (text: string): number | undefined => {
-    // Match range: "3 to 5 minutes", "3-5 mins"
+    // ... (keep regex logic)
     const rangeMatch = text.match(/(\d+)\s*(?:-|to)\s*(\d+)\s*(?:minutes|mins|min)/i)
     if (rangeMatch) {
       const min = parseInt(rangeMatch[1])
       const max = parseInt(rangeMatch[2])
       return Math.round((min + max) / 2)
     }
-    // Match single: "10 minutes"
     const singleMatch = text.match(/(\d+)\s*(?:minutes|mins|min)/i)
     if (singleMatch) {
       return parseInt(singleMatch[1])
@@ -97,9 +148,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
   }
 
   const handlePrev = () => {
-    if (stepIdx > 0) {
-      cookingSessionActions.goToStep(stepIdx - 1)
-    }
+    cookingSessionActions.goToStep(stepIdx - 1) // Logic works, goes to 0 (Prep) if needed
   }
 
   return (

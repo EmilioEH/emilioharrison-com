@@ -7,7 +7,7 @@ import { CookingContainer } from '../cooking-mode/CookingContainer'
 import { ShareRecipeDialog } from './ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
-import { Calendar, Play, Check } from 'lucide-react'
+import { Play, Check, ListPlus } from 'lucide-react'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
 import { confirm } from '../../lib/dialogStore'
@@ -108,12 +108,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         recipe={recipe}
         startCooking={startCooking}
         onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'save')}
-        handleRate={(rating) => onUpdate({ ...recipe, rating }, 'save')}
       />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">
         <Inline spacing="md" justify="center" className="mx-auto max-w-md">
-          {/* Secondary: Add to Week */}
+          {/* Secondary: Add to List (Mapped to Week functionality for now) */}
           <button
             onClick={() => handleAction('addToWeek')}
             className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 font-display text-base font-bold uppercase tracking-wider transition-all active:scale-95 ${
@@ -128,7 +127,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
               </>
             ) : (
               <>
-                <Calendar className="h-4 w-4" /> Add to Week
+                <ListPlus className="h-4 w-4" /> Add to List
               </>
             )}
           </button>
@@ -136,7 +135,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
           {/* Primary: Start Cooking */}
           <button
             onClick={startCooking}
-            className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-95"
+            className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-xl bg-foreground text-background shadow-lg transition-all hover:bg-foreground/90 active:scale-95"
           >
             <span className="font-display text-lg font-bold">Start Cooking</span>
             <Play className="h-5 w-5 fill-current" />

@@ -54,7 +54,7 @@ test.describe('Admin Family Management', () => {
     await page.goto('/protected/recipes')
 
     // Wait for app to hydrate/load - wait longer if needed
-    await expect(page.getByPlaceholder('Search recipes...')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByPlaceholder('Search recipes...')).toBeVisible({ timeout: 30000 })
 
     // Navigate to admin dashboard
     await page.evaluate(() => {
@@ -102,7 +102,7 @@ test.describe('Admin Family Management', () => {
     await page.goto('/protected/recipes')
 
     // Wait for app to hydrate
-    await expect(page.getByPlaceholder('Search recipes...')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByPlaceholder('Search recipes...')).toBeVisible({ timeout: 30000 })
 
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))

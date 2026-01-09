@@ -18,6 +18,11 @@ export const TEST_RECIPES: Recipe[] = [
       { name: 'Eggs', amount: '2' },
     ],
     steps: ['Mix ingredients', 'Bake for 20 mins'],
+    ingredientGroups: [{ header: 'MAIN', startIndex: 0, endIndex: 1 }],
+    structuredSteps: [
+      { text: 'Mix ingredients', title: 'Mix', highlightedText: '**Mix** ingredients' },
+      { text: 'Bake for 20 mins', title: 'Bake', highlightedText: '**Bake** for 20 mins' },
+    ],
     notes: '',
     description: 'Test recipe for E2E',
     thisWeek: false,

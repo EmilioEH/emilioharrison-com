@@ -58,6 +58,8 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                   key={star}
                   onClick={() => setRating(star)}
                   className="p-2 transition-transform active:scale-95"
+                  aria-label={`Rate ${star} stars`}
+                  type="button"
                 >
                   <Star
                     className={`h-8 w-8 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`}

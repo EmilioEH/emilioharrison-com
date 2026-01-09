@@ -108,7 +108,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       {/* Header */}
       <CookingHeader
         session={session}
-        totalSteps={session.recipe.steps.length}
+        totalSteps={session.recipe.steps.length + 1}
         onExit={() => setShowExitConfirm(true)}
         onMinimize={() => onClose()}
         onShowIngredients={() => setShowIngredients(true)}
@@ -126,7 +126,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         <aside className="hidden h-full flex-col border-r border-border md:flex">
           <CookingTimeline
             currentStep={session.currentStepIdx + 1}
-            totalSteps={session.recipe.steps.length}
+            totalSteps={session.recipe.steps.length + 1}
             onStepClick={(idx) => cookingSessionActions.goToStep(idx)}
           />
         </aside>
@@ -137,7 +137,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
           <div className="border-b border-border md:hidden">
             <CookingTimeline
               currentStep={session.currentStepIdx + 1}
-              totalSteps={session.recipe.steps.length}
+              totalSteps={session.recipe.steps.length + 1}
               onStepClick={(idx) => cookingSessionActions.goToStep(idx)}
             />
           </div>
@@ -161,7 +161,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         onCancel={() => setShowExitConfirm(false)}
         onConfirm={handleExitConfirm}
         stepNumber={session.currentStepIdx + 1}
-        totalSteps={session.recipe.steps.length}
+        totalSteps={session.recipe.steps.length + 1}
       />
 
       {/* Mobile Ingredients Overlay */}

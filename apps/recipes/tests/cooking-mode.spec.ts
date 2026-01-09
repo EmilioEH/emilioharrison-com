@@ -57,35 +57,44 @@ test.describe('Recipe Cooking Mode', () => {
     // Wait for detail view
     await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
 
-    // 2. Start Cooking (Directly to Step 1)
+    // 2. Start Cooking (Directly to Step 1: Prep)
     await page.getByRole('button', { name: 'Start Cooking' }).click()
 
-    // Verify we are in Cooking Mode
-    await expect(page.getByText('Step 1 of 2')).toBeVisible()
+    // Verify we are in Cooking Mode - Step 1 is now Prep
+    await expect(page.getByText('Prep Ingredients')).toBeVisible()
+    // Total steps = 2 + 1 (Prep) = 3
+    await expect(page.getByText('Step 1 of 3')).toBeVisible()
+
+    // 3. Navigate to Step 2 (First Instruction)
+    await page.getByRole('button', { name: 'Start Cooking' }).click() // Prep step has "Start Cooking" button to next
+    await expect(page.getByText('Step 2 of 3')).toBeVisible()
     await expect(page.getByText(RECIPE.steps[0])).toBeVisible()
 
-    // 3. Navigate to Step 2
+    // 4. Navigate to Step 3 (Second Instruction)
     await page.getByRole('button', { name: 'Next Step' }).click()
-    await expect(page.getByText('Step 2 of 2')).toBeVisible()
+    await expect(page.getByText('Step 3 of 3')).toBeVisible()
     await expect(page.getByText(RECIPE.steps[1])).toBeVisible()
 
-    // 4. Check for Suggested Timer button (step has "20 mins")
+    // 5. Check for Suggested Timer button (step has "20 mins")
     await expect(page.getByRole('button', { name: 'Start 20 Min Timer' })).toBeVisible()
 
-    // 5. Test Timeline Navigation - click back to Step 1 using data-testid
+    // 6. Test Timeline Navigation - click back to Step 1 (Prep) using data-testid
+    // Note: data-testid usually 'timeline-step-X'. If step index is 0, is it step-1?
+    // Timeline component logic: currentStep={session.currentStepIdx + 1}.
+    // So Prep is step-1.
     await page.getByTestId('timeline-step-1').click()
 
-    // Should be back on Step 1
-    await expect(page.getByText('Step 1 of 2')).toBeVisible()
-    await expect(page.getByText(RECIPE.steps[0])).toBeVisible()
+    // Should be back on Prep
+    await expect(page.getByText('Prep Ingredients')).toBeVisible()
 
-    // Navigate back to step 2 for exit flow
-    await page.getByRole('button', { name: 'Next Step' }).click()
+    // Navigate back to last step (3) for exit flow
+    await page.getByTestId('timeline-step-3').click()
+    await expect(page.getByText('Step 3 of 3')).toBeVisible()
 
-    // 6. Test Exit Flow
+    // 7. Test Exit Flow
     await page.getByLabel('Exit Cooking Mode').click()
     await expect(page.getByText('End Cooking Session?')).toBeVisible()
-    await expect(page.getByText("You're on Step 2 of 2")).toBeVisible()
+    await expect(page.getByText("You're on Step 3 of 3")).toBeVisible()
 
     // Keep Cooking
     await page.getByRole('button', { name: 'Keep Cooking' }).click()
@@ -95,7 +104,7 @@ test.describe('Recipe Cooking Mode', () => {
     await page.getByLabel('Exit Cooking Mode').click()
     await page.getByRole('button', { name: 'End Session' }).click()
 
-    // Verify returned to Detail View (may take a moment)
+    // Verify returned to Detail View
     await page.waitForTimeout(500)
     await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible({
       timeout: 10000,

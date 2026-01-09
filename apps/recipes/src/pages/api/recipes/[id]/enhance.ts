@@ -1,14 +1,8 @@
 import type { APIRoute } from 'astro'
 import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../../../lib/api-helpers'
-import { FirebaseRestService } from '../../../../lib/firebase-rest'
-import type {
-  Recipe,
-  IngredientGroup,
-  StructuredStep,
-  ServiceAccount,
-  Ingredient,
-} from '../../../../lib/types'
+import { db } from '../../../../lib/firebase-server'
+import type { Recipe, IngredientGroup, StructuredStep, Ingredient } from '../../../../lib/types'
 
 const ENHANCE_SYSTEM_PROMPT = `
 You are a cooking expert analyzing a recipe to enhance its structure for display.
@@ -30,6 +24,7 @@ Given the recipe's title, ingredients, and steps, generate:
    - For each step, create:
      • title: Short action name (2-4 words, e.g., "Sear the Shrimp")
      • text: The original instruction (keep as-is)
+     • highlightedText: The original instruction with key cooking action verbs wrapped in **bold** markdown (e.g., "**Whisk** the eggs until fluffy", "**Add** the onions and **sauté**")
      • tip: Extract any pro-tips or warnings (null if none)
 
 Return JSON matching the schema.
@@ -57,9 +52,10 @@ const responseSchema = {
         properties: {
           title: { type: SchemaType.STRING as const, nullable: true },
           text: { type: SchemaType.STRING as const },
+          highlightedText: { type: SchemaType.STRING as const },
           tip: { type: SchemaType.STRING as const, nullable: true },
         },
-        required: ['text'] as const,
+        required: ['text', 'highlightedText'] as const,
       },
     },
   },
@@ -84,17 +80,8 @@ export const POST: APIRoute = async ({ params, locals }) => {
   }
 
   try {
-    // Construct Service Account from Env
-    const serviceAccount: ServiceAccount = {
-      project_id: process.env.FIREBASE_PROJECT_ID || '',
-      client_email: process.env.FIREBASE_CLIENT_EMAIL || '',
-      private_key: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-      token_uri: 'https://oauth2.googleapis.com/token',
-    }
-
-    // Fetch the recipe from Firestore
-    const firebase = new FirebaseRestService(serviceAccount)
-    const recipe = (await firebase.getDocument('recipes', recipeId)) as Recipe | null
+    // Fetch the recipe from Firestore using the shared db proxy
+    const recipe = (await db.getDocument('recipes', recipeId)) as Recipe | null
 
     if (!recipe) {
       return new Response(JSON.stringify({ error: 'Recipe not found' }), {
@@ -144,7 +131,7 @@ Generate ingredientGroups (using startIndex/endIndex to reference ingredients) a
 
     // Call Gemini
     const response = await client.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       config: {
         responseMimeType: 'application/json',
         responseSchema,
@@ -168,7 +155,7 @@ Generate ingredientGroups (using startIndex/endIndex to reference ingredients) a
     }
 
     // Save to Firestore for caching
-    await firebase.updateDocument('recipes', recipeId, {
+    await db.updateDocument('recipes', recipeId, {
       ingredientGroups: enhancedData.ingredientGroups,
       structuredSteps: enhancedData.structuredSteps,
       updatedAt: new Date().toISOString(),

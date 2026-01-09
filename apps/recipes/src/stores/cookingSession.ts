@@ -56,7 +56,7 @@ export const cookingSessionActions = {
     const session = $cookingSession.get()
     if (!session.isActive || !session.recipe) return
 
-    const safeIdx = Math.max(0, Math.min(stepIdx, session.recipe.steps.length - 1))
+    const safeIdx = Math.max(0, Math.min(stepIdx, session.recipe.steps.length))
 
     $cookingSession.setKey('currentStepIdx', safeIdx)
     if (safeIdx > session.maxStepReached) {

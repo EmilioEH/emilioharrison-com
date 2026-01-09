@@ -3,16 +3,14 @@ import {
   Clock,
   Users,
   Flame,
-  Star,
   ChevronRight,
   Play,
-  AlertCircle,
-  MessageSquarePlus,
   DollarSign,
   Loader2,
+  AlertCircle,
 } from 'lucide-react'
-import { StarRating } from '../ui/StarRating'
-import { CheckableItem } from './CheckableItem'
+import { CookingHistorySummary } from './CookingHistorySummary'
+import { IngredientRow } from './IngredientRow'
 import { MetadataCard } from './MetadataCard'
 import { InstructionCard } from './InstructionCard'
 import { Badge } from '../ui/badge'
@@ -27,35 +25,24 @@ import type {
   StructuredStep,
   Ingredient,
 } from '../../lib/types'
-import { Textarea } from '../ui/textarea'
-
-import { useStore } from '@nanostores/react'
-import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 
 interface OverviewModeProps {
   recipe: Recipe
   startCooking: () => void
   onSaveCost?: (cost: number) => void
-  handleRate?: (rating: number) => void
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
   startCooking,
   onSaveCost = () => {},
-  handleRate = () => {},
 }) => {
-  const session = useStore($cookingSession)
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({})
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
 
   // Family Sync State
   const [familyData, setFamilyData] = useState<FamilyRecipeData | null>(null)
-  const [isLoadingFamily, setIsLoadingFamily] = useState(true)
-  const [newNote, setNewNote] = useState('')
-  const [isAddingNote, setIsAddingNote] = useState(false)
-  const [showNoteInput, setShowNoteInput] = useState(false)
 
   // Initialize with persisted cost if available
   const [estimatedCost, setEstimatedCost] = useState<number | null>(recipe.estimatedCost || null)
@@ -72,6 +59,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       : null,
   )
   const [isEnhancing, setIsEnhancing] = useState(false)
+  const [enhanceFailed, setEnhanceFailed] = useState(false)
 
   // Load family data on mount
   useEffect(() => {
@@ -89,8 +77,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         }
       } catch (error) {
         console.error('Failed to load family data:', error)
-      } finally {
-        setIsLoadingFamily(false)
       }
     }
 
@@ -99,8 +85,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
   // Lazy-load enhanced data (ingredient groups + structured steps) if not present
   useEffect(() => {
-    // Skip if already loaded or currently enhancing
-    if (enhancedData || isEnhancing) return
+    // Skip if already loaded, currently enhancing, or previously failed
+    if (enhancedData || isEnhancing || enhanceFailed) return
 
     const loadEnhancedData = async () => {
       setIsEnhancing(true)
@@ -116,70 +102,21 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         const data = await res.json()
         if (data.success && data.data) {
           setEnhancedData(data.data)
+        } else {
+          // Server returned an error response - don't retry
+          setEnhanceFailed(true)
         }
       } catch (error) {
         console.error('Failed to load enhanced data:', error)
+        setEnhanceFailed(true)
       } finally {
         setIsEnhancing(false)
       }
     }
 
     loadEnhancedData()
-  }, [recipe.id, enhancedData, isEnhancing])
-
-  // Handle rating with family API
-  const handleFamilyRate = async (rating: number) => {
-    try {
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/rating`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating }),
-      })
-
-      const data = await res.json()
-      if (data.success && data.data) {
-        setFamilyData(data.data)
-      }
-    } catch (error) {
-      console.error('Failed to save rating:', error)
-    }
-
-    // Also call the original handler for backwards compatibility
-    handleRate(rating)
-  }
-
-  // Handle adding a note
-  const handleAddNote = async () => {
-    if (!newNote.trim()) return
-
-    setIsAddingNote(true)
-    try {
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newNote }),
-      })
-
-      const data = await res.json()
-      if (data.success && data.data) {
-        setFamilyData(data.data)
-        setNewNote('')
-        setShowNoteInput(false)
-      }
-    } catch (error) {
-      console.error('Failed to add note:', error)
-    } finally {
-      setIsAddingNote(false)
-    }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipe.id])
 
   // Calculate average rating from family
   const averageRating = familyData?.ratings?.length
@@ -406,19 +343,29 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             )}
 
             {/* Metadata Cards Grid */}
-            <div className="my-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-              <MetadataCard
-                icon={Clock}
-                label="TOTAL"
-                value={`${recipe.prepTime + recipe.cookTime}m`}
-              />
-              <MetadataCard icon={Users} label="SERVES" value={recipe.servings} />
-              <MetadataCard icon={Flame} label="LEVEL" value={recipe.difficulty || 'Easy'} />
-              <MetadataCard
-                icon={DollarSign}
-                label="COST"
-                value={isEstimating ? '...' : estimatedCost ? `$${estimatedCost.toFixed(2)}` : '—'}
-              />
+            <div className="my-6 flex items-center justify-between divide-x divide-border">
+              <div className="flex-1">
+                <MetadataCard
+                  icon={Clock}
+                  label="TOTAL"
+                  value={`${recipe.prepTime + recipe.cookTime}m`}
+                />
+              </div>
+              <div className="flex-1">
+                <MetadataCard icon={Users} label="SERVES" value={recipe.servings} />
+              </div>
+              <div className="flex-1">
+                <MetadataCard icon={Flame} label="LEVEL" value={recipe.difficulty || 'Easy'} />
+              </div>
+              <div className="flex-1">
+                <MetadataCard
+                  icon={DollarSign}
+                  label="COST"
+                  value={
+                    isEstimating ? '...' : estimatedCost ? `$${estimatedCost.toFixed(2)}` : '—'
+                  }
+                />
+              </div>
             </div>
           </div>
 
@@ -436,143 +383,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </div>
           )}
 
-          {/* Quick Stats or Previous Experience */}
-          {(recipe.rating || recipe.userNotes) && (
-            <div className="bg-md-sys-color-tertiary-container/30 border-md-sys-color-tertiary/20 rounded-md-xl mb-8 rounded-xl border p-4">
-              <Inline spacing="none" justify="between" className="mb-2">
-                <Inline spacing="xs">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star
-                      key={s}
-                      className={`h-4 w-4 ${s <= (recipe.rating || 0) ? 'fill-md-sys-color-tertiary text-md-sys-color-tertiary fill-yellow-400 text-yellow-400' : 'text-border'}`}
-                    />
-                  ))}
-                </Inline>
-                {recipe.lastCooked && (
-                  <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
-                    Last cooked: {new Date(recipe.lastCooked).toLocaleDateString()}
-                  </span>
-                )}
-              </Inline>
-              {recipe.userNotes && (
-                <p
-                  className="text-md-sys-color-on-tertiary-container font-body text-sm italic"
-                  data-testid="recipe-notes"
-                >
-                  "{recipe.userNotes}"
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Family Notes and Ratings */}
-          {!isLoadingFamily &&
-            familyData &&
-            (familyData.notes.length > 0 || familyData.ratings.length > 0) && (
-              <div className="bg-tertiary/5 mb-6 rounded-xl border border-border/20 p-4">
-                {/* Family Ratings */}
-                {familyData.ratings.length > 0 && (
-                  <div className="mb-4">
-                    <Inline spacing="xs" className="mb-2">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          className={`h-4 w-4 ${s <= Math.round(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-border'}`}
-                        />
-                      ))}
-                      <span className="text-xs text-muted-foreground">
-                        ({averageRating.toFixed(1)} from {familyData.ratings.length}{' '}
-                        {familyData.ratings.length === 1 ? 'rating' : 'ratings'})
-                      </span>
-                    </Inline>
-                    <div className="mt-2 space-y-1">
-                      {familyData.ratings.map((rating, idx) => (
-                        <div key={idx} className="text-xs text-muted-foreground">
-                          <strong>{rating.userName}:</strong> {rating.rating}/5 stars
-                          {' · '}
-                          <span className="opacity-70">
-                            {new Date(rating.ratedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Family Notes */}
-                {familyData.notes.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold text-foreground">Family Notes</h3>
-                    <Stack spacing="sm">
-                      {familyData.notes.map((note, idx) => (
-                        <div key={idx} className="rounded-lg bg-card/50 p-3 text-sm">
-                          <div className="mb-1 flex items-center justify-between">
-                            <strong className="text-xs font-semibold text-foreground">
-                              {note.userName}
-                            </strong>
-                            <span className="text-[10px] text-muted-foreground">
-                              {new Date(note.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-sm italic text-muted-foreground">"{note.text}"</p>
-                        </div>
-                      ))}
-                    </Stack>
-                  </div>
-                )}
-              </div>
-            )}
-
-          {/* Add Note Section */}
-          <div className="mb-6">
-            {!showNoteInput ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowNoteInput(true)}
-                className="w-full"
-              >
-                <MessageSquarePlus className="h-4 w-4" /> Add a Note
-              </Button>
-            ) : (
-              <div className="rounded-lg border border-border bg-card/50 p-3">
-                <Textarea
-                  placeholder="Share your thoughts about this recipe..."
-                  value={newNote}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setNewNote(e.target.value)
-                  }
-                  className="mb-2"
-                  rows={3}
-                />
-                <Inline spacing="sm" justify="end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setShowNoteInput(false)
-                      setNewNote('')
-                    }}
-                    disabled={isAddingNote}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleAddNote}
-                    disabled={!newNote.trim() || isAddingNote}
-                  >
-                    {isAddingNote ? 'Saving...' : 'Save Note'}
-                  </Button>
-                </Inline>
-              </div>
-            )}
-          </div>
-
-          <Inline spacing="none" justify="between" className="mt-4">
-            <StarRating rating={Math.round(averageRating)} onRate={handleFamilyRate} size="lg" />
-            {/* Placeholder for future specific rating text or count */}
-          </Inline>
+          {/* Cooking History Summary */}
+          <CookingHistorySummary
+            averageRating={averageRating}
+            totalRatings={familyData?.ratings?.length || (recipe.rating ? 1 : 0)}
+            lastCooked={recipe.lastCooked}
+            familyData={familyData}
+          />
 
           {/* Ingredients */}
           <div className="mb-8">
@@ -600,23 +417,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                       • {group.header}
                     </h3>
                   )}
-                  <div className="rounded-lg border border-dashed border-border bg-card/50 p-2">
-                    {group.items.map((ing, idx) => {
-                      const prep = ing.prep ? `, ${ing.prep}` : ''
-                      const text = `${ing.amount} ${ing.name}${prep}`
-                      const globalIdx = group.startIndex + idx
-                      const isChecked = session.checkedIngredients.includes(globalIdx)
-                      return (
-                        <CheckableItem
-                          key={idx}
-                          text={text}
-                          isChecked={isChecked}
-                          onToggle={() => cookingSessionActions.toggleIngredient(globalIdx)}
-                          size="lg"
-                        />
-                      )
-                    })}
-                  </div>
+                  <Stack spacing="xs">
+                    {group.items.map((ing, idx) => (
+                      <IngredientRow key={idx} ingredient={ing} />
+                    ))}
+                  </Stack>
                 </div>
               ))}
             </Stack>
@@ -647,6 +452,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   stepNumber={idx + 1}
                   title={step.title}
                   text={step.text}
+                  highlightedText={step.highlightedText}
                   tip={step.tip}
                   isChecked={checkedSteps[idx]}
                   onToggle={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
