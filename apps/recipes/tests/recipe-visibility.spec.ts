@@ -24,15 +24,6 @@ test.describe('Recipe Visibility (API Integration)', () => {
       },
     })
 
-    if (!createRes.ok()) {
-      const text = await createRes.text()
-      fs.writeFileSync(
-        'test_error.txt',
-        `Creates Failed: ${createRes.status()} ${createRes.statusText()}\n${text}`,
-      )
-      console.log('Create Failed:', text)
-    }
-
     expect(createRes.ok()).toBeTruthy()
     const data = await createRes.json()
     recipeIdA = data.id

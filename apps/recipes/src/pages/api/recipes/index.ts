@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const userId = getAuthUser(cookies)
 
   if (!userId) {
-    return unauthorizedResponse()
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
   }
 
   try {

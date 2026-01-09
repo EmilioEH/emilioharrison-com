@@ -105,7 +105,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
     // BUT we need to keep the ID and maybe some other fields if they aren't in the snapshot?
     // For now, assume snapshot is full recipe
     const restored = { ...version.data, id: recipe.id } // Ensure ID is stable
-    setFormData(restored)
+    setFormData(restored as Recipe)
     setHistoryOpen(false)
   }
 
