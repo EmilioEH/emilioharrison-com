@@ -25,11 +25,12 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onAction('edit')}
-        title="Edit Recipe"
+        onClick={() => onAction('share')}
+        title="Share Recipe"
+        aria-label="Share Recipe"
         className="h-11 w-11 rounded-full"
       >
-        <Edit2 className="h-5 w-5" />
+        <Share2 className="h-5 w-5" />
       </Button>
 
       <DropdownMenu>
@@ -58,9 +59,9 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
             <FolderInput className="mr-2 h-4 w-4" />
             Move Folder
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAction('share')}>
-            <Share2 className="mr-2 h-4 w-4" />
-            Share Recipe
+          <DropdownMenuItem onClick={() => onAction('edit')}>
+            <Edit2 className="mr-2 h-4 w-4" />
+            Edit Recipe
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

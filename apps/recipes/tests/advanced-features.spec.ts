@@ -188,8 +188,8 @@ test.describe('Advanced Features: Ratings, Favorites, and Editing', () => {
     // 4. Edit
     const moreBtn = page.getByRole('button', { name: 'More Options' })
     await expect(moreBtn).toBeVisible()
-    await moreBtn.hover()
-    await page.getByRole('button', { name: 'Edit Recipe' }).click()
+    await moreBtn.click()
+    await page.getByRole('menuitem', { name: 'Edit Recipe' }).click()
 
     // Change title
     const newTitle = title + ' Edited'

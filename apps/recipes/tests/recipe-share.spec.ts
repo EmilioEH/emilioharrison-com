@@ -177,15 +177,10 @@ test.describe('Recipe Share Feature', () => {
     // 3. Wait for details to load
     await expect(page.getByRole('heading', { name: 'Shareable Test Recipe' })).toBeVisible()
 
-    // 4. Open the More Options menu
-    const moreOptionsButton = page.getByLabel('More Options')
-    await expect(moreOptionsButton).toBeVisible()
-    await moreOptionsButton.click()
-
-    // 5. Click Share Recipe option from the dropdown menu
-    const shareOption = page.getByRole('menuitem', { name: 'Share Recipe' })
-    await expect(shareOption).toBeVisible()
-    await shareOption.click()
+    // 4. Click Share Recipe button directly
+    const shareBtn = page.getByRole('button', { name: 'Share Recipe' })
+    await expect(shareBtn).toBeVisible()
+    await shareBtn.click()
 
     // 6. Verify Share Dialog opens with heading
     const shareDialog = page.getByRole('dialog')
@@ -209,8 +204,8 @@ test.describe('Recipe Share Feature', () => {
     await expect(page.getByRole('heading', { name: 'Shareable Test Recipe' })).toBeVisible()
 
     // Open More Options menu and click Share
-    await page.getByLabel('More Options').click()
-    await page.getByRole('menuitem', { name: 'Share Recipe' }).click()
+    // Click Share directly
+    await page.getByRole('button', { name: 'Share Recipe' }).click()
 
     // Wait for dialog
     const dialog = page.getByRole('dialog')
@@ -237,8 +232,8 @@ test.describe('Recipe Share Feature', () => {
     await expect(page.getByRole('heading', { name: 'Shareable Test Recipe' })).toBeVisible()
 
     // Open More Options menu and click Share
-    await page.getByLabel('More Options').click()
-    await page.getByRole('menuitem', { name: 'Share Recipe' }).click()
+    // Click Share
+    await page.getByRole('button', { name: 'Share Recipe' }).click()
 
     // Wait for dialog
     await expect(page.getByRole('dialog')).toBeVisible()
@@ -262,8 +257,8 @@ test.describe('Recipe Share Feature', () => {
     await expect(page.getByRole('heading', { name: 'Shareable Test Recipe' })).toBeVisible()
 
     // Open More Options menu and click Share
-    await page.getByLabel('More Options').click()
-    await page.getByRole('menuitem', { name: 'Share Recipe' }).click()
+    // Click Share
+    await page.getByRole('button', { name: 'Share Recipe' }).click()
 
     // Wait for dialog
     const dialog = page.getByRole('dialog')
