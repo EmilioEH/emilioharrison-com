@@ -102,8 +102,14 @@ export const POST: APIRoute = async (context) => {
       cookies.set('site_email', email, cookieOptions)
     }
 
-    // User identity (not httpOnly so client can read "Welcome, Name")
-    cookies.set('site_user', name, {
+    // User identity (site_user should be ID for backend logic)
+    cookies.set('site_user', userId, {
+      ...cookieOptions,
+      httpOnly: false,
+    })
+
+    // Optional: Store display name in a separate cookie if frontend needs it
+    cookies.set('site_username', name, {
       ...cookieOptions,
       httpOnly: false,
     })

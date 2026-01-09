@@ -247,6 +247,14 @@ Recipes are stored in Firestore, but user-specific data (ratings, notes, week pl
 
 The application distinguishes between data tied to an individual user and data shared across the entire family workspace:
 
+### User-Specific vs. Family-Scoped Data
+
+The application distinguishes between data tied to an individual user and data shared across the entire family workspace:
+
+- **Visibility (Creator-Centric):**
+  - **Shared Solitude**: You see recipes created by **you** and your **family members**.
+  - **Strict Isolation**: Recipes created by users _outside_ your family are strictly invisible.
+  - **Legacy Compatibility**: Recipes created before Jan 2026 (without an owner) are visible to everyone.
 - **User-Specific (Private)**: Stored in `users/{userId}/...`
   - **Favorites**: Favoriting a recipe is a personal preference and does not affect other family members' views.
 - **Family-Scoped (Shared)**: Stored in `families/{familyId}/recipeData/{recipeId}`

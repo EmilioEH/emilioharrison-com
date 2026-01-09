@@ -50,6 +50,12 @@ export const GET: APIRoute = async ({ cookies }) => {
       }
     })
 
+    // Debug Visibility
+    console.log('--- GET /api/recipes DEBUG ---')
+    console.log('User ID:', userId)
+    console.log('Allowed Creators:', Array.from(allowedCreators))
+    console.log('Total Recipes Fetched:', recipes.length)
+
     const validRecipes = recipes.filter(isRecipe).filter((recipe) => {
       // Filter Logic: Creator-Centric
       // 1. Legacy recipes (no createdBy) are PUBLIC/VISIBLE TO ALL
@@ -58,14 +64,11 @@ export const GET: APIRoute = async ({ cookies }) => {
       // 2. Modern recipes: Must be created by me OR a family member
       if (recipe.createdBy && allowedCreators.has(recipe.createdBy)) return true
 
-      // 3. Otherwise hidden
       return false
     })
 
-    if (validRecipes.length < recipes.length) {
-      // useful log for debugging visibility
-      // console.log(`Filtered: ${recipes.length} total -> ${validRecipes.length} visible`)
-    }
+    console.log('Visible Recipes:', validRecipes.length)
+    console.log('------------------------------')
 
     return new Response(JSON.stringify({ recipes: validRecipes }), {
       status: 200,
