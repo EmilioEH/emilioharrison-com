@@ -254,6 +254,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
       <div className="safe-area-pb z-10 border-t border-border bg-background/80 p-4 backdrop-blur-xl">
         <Inline spacing="md">
           <button
+            type="button"
             onClick={handlePrev}
             disabled={stepIdx === 0}
             className="flex h-14 min-w-[100px] items-center justify-center rounded-2xl border-2 border-border text-base font-bold text-foreground transition-all active:scale-95 disabled:border-transparent disabled:opacity-0"

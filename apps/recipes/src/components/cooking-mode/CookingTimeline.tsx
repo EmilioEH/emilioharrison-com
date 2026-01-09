@@ -36,11 +36,13 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
     >
       <div className="flex min-w-full flex-row items-center gap-1 px-4 py-3 md:min-h-full md:min-w-0 md:flex-col md:px-0 md:py-0">
         {Array.from({ length: totalSteps }).map((_, index) => {
-          const stepNum = index + 1
+          // Use 0-based step numbering: 0 = Prep, 1..N = instruction steps
+          const stepNum = index
           // Status: 'completed' | 'current' | 'upcoming'
-          const isCompleted = stepNum < currentStep
-          const isCurrent = stepNum === currentStep
-          const isLast = stepNum === totalSteps
+          // currentStep is 1-based from container, so adjust comparison
+          const isCompleted = index < currentStep - 1
+          const isCurrent = index === currentStep - 1
+          const isLast = index === totalSteps - 1
 
           return (
             <React.Fragment key={index}>
