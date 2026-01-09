@@ -58,6 +58,8 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
     difficulty: number
     ingredientNotes: Record<number, string>
     stepNotes: Record<number, string>
+    ingredientEdits: Record<number, string>
+    stepEdits: Record<number, string>
   }) => {
     try {
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
@@ -66,11 +68,70 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       if (!session.recipe) return
       const recipeId = session.recipe.id
 
+      // 1. Save Notes & Difficulty (Family Data)
       await fetch(`${baseUrl}api/recipes/${recipeId}/family-data`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          difficulty: data.difficulty,
+          ingredientNotes: data.ingredientNotes,
+          stepNotes: data.stepNotes,
+        }),
       })
+
+      // 2. Save Recipe Edits (If any)
+      const hasIngredientEdits = Object.keys(data.ingredientEdits).length > 0
+      const hasStepEdits = Object.keys(data.stepEdits).length > 0
+
+      if (hasIngredientEdits || hasStepEdits) {
+        // Construct new recipe data
+        const currentIngredients = [...session.recipe.ingredients]
+        const currentSteps = [...session.recipe.steps]
+
+        // Apply Ingredient Edits
+        Object.entries(data.ingredientEdits).forEach(([key, value]) => {
+          const idx = parseInt(key)
+          if (idx >= 0 && idx < currentIngredients.length) {
+            // Simple parsing logic: Split first number/fraction as amount, rest as name
+            // Regex: Start with digits/dots/slashes/spaces (amount), capture rest (name)
+            const match = value.match(/^([\d./\s]+)(.*)$/)
+            if (match) {
+              currentIngredients[idx] = {
+                ...currentIngredients[idx],
+                amount: match[1].trim(),
+                name: match[2].trim(),
+              }
+            } else {
+              // Fallback: entire string as name, empty amount? Or keep old amount?
+              // Let's assume user edited the whole line.
+              // We will put everything in name and leave amount empty for now,
+              // logic can be improved with a better parser later.
+              currentIngredients[idx] = {
+                ...currentIngredients[idx],
+                amount: '',
+                name: value.trim(),
+              }
+            }
+          }
+        })
+
+        // Apply Step Edits
+        Object.entries(data.stepEdits).forEach(([key, value]) => {
+          const idx = parseInt(key)
+          if (idx >= 0 && idx < currentSteps.length) {
+            currentSteps[idx] = value
+          }
+        })
+
+        await fetch(`${baseUrl}api/recipes/${recipeId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ingredients: currentIngredients,
+            steps: currentSteps,
+          }),
+        })
+      }
     } catch (error) {
       console.error('Failed to save review data:', error)
     } finally {

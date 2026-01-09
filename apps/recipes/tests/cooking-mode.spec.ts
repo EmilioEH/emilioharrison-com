@@ -199,14 +199,14 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByRole('button', { name: 'Complete Review' })).toBeEnabled()
 
     // Open Ingredient Notes Accordion
-    await page.getByRole('button', { name: 'Ingredient Notes' }).click()
+    await page.getByRole('button', { name: 'Ingredients' }).click()
 
     // Add a note to an ingredient
     const ingredientNote = page.getByPlaceholder('Add note...').first()
     await ingredientNote.fill('Used extra garlic')
 
     // Open Step Notes Accordion
-    await page.getByRole('button', { name: 'Step Notes' }).click()
+    await page.getByRole('button', { name: 'Instructions' }).click()
 
     // Add a note to a step
     const stepNote = page.getByPlaceholder('Add note...').last() // last one is step notes
@@ -216,6 +216,90 @@ test.describe('Recipe Cooking Mode', () => {
     await page.getByRole('button', { name: 'Complete Review' }).click()
 
     // Verify returned to Detail View (Recipe Title visible)
+    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
+  })
+
+  test('should allow editing ingredients and steps in review', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await expect(page.getByText(RECIPE.title).first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    const recipeCard = page.getByText(RECIPE.title).first()
+    await recipeCard.click()
+
+    // Start Cooking
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Skip to last step
+    await page.getByRole('button', { name: 'Start Cooking' }).click() // to Step 2
+    await page.getByRole('button', { name: 'Next Step' }).click() // to Step 3 (Final)
+
+    // Finish Cooking
+    await page.getByRole('button', { name: 'Finish Cooking' }).click()
+
+    // Expect Review Screen
+    await expect(page.getByText('All Done!')).toBeVisible()
+
+    // Select Difficulty
+    await page.getByRole('button', { name: 'Easy' }).click()
+
+    // Open Ingredients Accordion
+    await page.getByRole('button', { name: 'Ingredients' }).click()
+
+    // Edit an ingredient
+    // Find the first pencil icon
+    const firstIngredientPencil = page.locator('button:has(svg.lucide-pencil)').first()
+    await firstIngredientPencil.click()
+
+    // Input should be visible
+    const editInput = page.locator('input[value]').first()
+    await expect(editInput).toBeVisible()
+
+    // Change value
+    await editInput.fill('2 cups Sugar')
+
+    // Save (Check button)
+    const saveButton = page.locator('button:has(svg.lucide-check)').first()
+    await saveButton.click()
+
+    // Verify UI updated
+    await expect(page.getByText('2 cups Sugar')).toBeVisible()
+
+    // Open Instructions Accordion
+    await page.getByRole('button', { name: 'Instructions' }).click()
+
+    // Edit a step
+    // Find the first pencil icon in steps (which is likely the 2nd group of pencils if ingredients are open, but let's be specific)
+    // We can scope to the instructions section if needed, but let's try finding by index or text
+    const firstStepText = RECIPE.steps[0]
+    await expect(page.getByText(firstStepText)).toBeVisible()
+
+    // Find pencil relative to step text
+    const stepPencil = page
+      .locator('div')
+      .filter({ hasText: firstStepText })
+      .getByRole('button')
+      .filter({ has: page.locator('svg.lucide-pencil') })
+      .first()
+    await stepPencil.click()
+
+    // Textarea should be visible
+    const editTextarea = page.locator('textarea').first() // It's a textarea for steps
+    await expect(editTextarea).toBeVisible()
+
+    // Change value
+    await editTextarea.fill('Mix well for 5 minutes')
+
+    // Save change
+    await page.getByRole('button', { name: 'Save Change' }).click()
+
+    // Verify UI updated
+    await expect(page.getByText('Mix well for 5 minutes')).toBeVisible()
+
+    // Submit Review
+    await page.getByRole('button', { name: 'Complete Review' }).click()
+
+    // Verify returned to Detail View
     await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
   })
 })
