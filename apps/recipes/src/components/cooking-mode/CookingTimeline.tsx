@@ -34,7 +34,7 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
       ref={scrollContainerRef}
       className="no-scrollbar flex w-full scroll-smooth bg-muted/5 transition-all md:h-full md:w-20 md:flex-col md:overflow-y-auto md:border-r md:border-border md:bg-muted/10 md:py-6"
     >
-      <div className="flex min-w-full flex-row items-center gap-1 px-4 py-3 md:min-h-full md:min-w-0 md:flex-col md:px-0 md:py-0">
+      <div className="flex w-full flex-row items-center gap-1 px-4 py-3 md:min-h-full md:w-auto md:flex-col md:px-0 md:py-0">
         {Array.from({ length: totalSteps }).map((_, index) => {
           // Use 0-based step numbering: 0 = Prep, 1..N = instruction steps
           const stepNum = index
