@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
-import { Check, Flame, MessageSquare, ChevronDown, Pencil, X, Plus } from 'lucide-react'
+import { Check, Flame, MessageSquare, ChevronDown, Pencil, X, Plus, FileEdit } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Stack } from '../ui/layout'
+import { Card, CardHeader, CardContent } from '../ui/card'
+import { Input } from '../ui/input'
+import { Stack, Inline } from '../ui/layout'
 import { useStore } from '@nanostores/react'
 import { $cookingSession } from '../../stores/cookingSession'
 import { cn } from '@/lib/utils'
@@ -46,14 +48,21 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
     {
       value: 1,
       label: 'Easy',
-      color: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200',
+      variant: 'outline' as const,
+      accentClass: 'border-green-500/20 hover:bg-green-50/50 hover:border-green-500/40',
     },
     {
       value: 2,
       label: 'Medium',
-      color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200',
+      variant: 'outline' as const,
+      accentClass: 'border-yellow-500/20 hover:bg-yellow-50/50 hover:border-yellow-500/40',
     },
-    { value: 3, label: 'Hard', color: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' },
+    {
+      value: 3,
+      label: 'Hard',
+      variant: 'outline' as const,
+      accentClass: 'border-red-500/20 hover:bg-red-50/50 hover:border-red-500/40',
+    },
   ]
 
   // Ingredient Edit Handlers
@@ -91,61 +100,69 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
   return (
     <Stack spacing="none" className="h-full bg-background duration-500 animate-in fade-in">
       <div className="flex-1 overflow-y-auto p-6">
-        <Stack spacing="lg" className="mx-auto max-w-lg pb-10">
-          <div className="flex flex-col items-center pt-8 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Check className="h-8 w-8 stroke-[3]" />
+        <Stack spacing="xl" className="mx-auto max-w-lg pb-10">
+          <Stack spacing="md" className="items-center pt-8 text-center">
+            <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Check className="h-10 w-10 stroke-[3]" />
             </div>
-            <h2 className="font-display text-3xl font-bold">All Done!</h2>
-            <p className="text-muted-foreground">Record your experience for next time.</p>
-          </div>
+            <h2 className="font-display text-3xl font-bold text-foreground">All Done!</h2>
+            <p className="text-base text-muted-foreground">Record your experience for next time.</p>
+          </Stack>
 
           {/* Difficulty Rating */}
-          <section>
-            <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
-              <Flame className="h-4 w-4" /> Difficulty
-            </h3>
+          <Stack spacing="md" as="section">
+            <Inline spacing="sm" className="font-display text-xl font-bold text-foreground">
+              <Flame className="h-5 w-5" />
+              <span>Difficulty</span>
+            </Inline>
             <div className="grid grid-cols-3 gap-3">
               {difficultyLevels.map((level) => (
                 <button
                   key={level.value}
                   onClick={() => setDifficulty(level.value)}
                   className={cn(
-                    'flex flex-col items-center justify-center rounded-xl border-2 py-4 transition-all active:scale-95',
+                    'flex flex-col items-center justify-center rounded-lg border-2 py-4 transition-all duration-200 active:scale-95',
                     difficulty === level.value
-                      ? cn(level.color, 'border-current ring-2 ring-primary ring-offset-2')
-                      : 'border-transparent bg-muted/30 text-muted-foreground hover:bg-muted/50',
+                      ? 'scale-105 border-primary bg-primary/5 shadow-sm ring-2 ring-primary ring-offset-2'
+                      : cn('border-border bg-card', level.accentClass),
                   )}
                 >
-                  <span className="text-lg font-bold">{level.label}</span>
+                  <span className="text-base font-semibold">{level.label}</span>
                 </button>
               ))}
             </div>
-          </section>
+          </Stack>
 
-          <div className="text-center font-medium text-muted-foreground">
-            Need to make a note or an edit?
-          </div>
+          <Inline
+            spacing="sm"
+            justify="center"
+            className="font-display text-base font-semibold text-foreground"
+          >
+            <FileEdit className="h-4 w-4" />
+            <span>Need to make a note or an edit?</span>
+          </Inline>
 
           {/* Ingredient Notes & Edits Accordion */}
-          <section className="rounded-xl border border-border bg-card">
-            <button
+          <Card>
+            <CardHeader
+              className="cursor-pointer p-4 transition-colors hover:bg-muted/20"
               onClick={() => setIngredientsOpen(!ingredientsOpen)}
-              className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/30"
             >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                  Ingredients
-                </h3>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-muted-foreground transition-transform duration-200',
-                  ingredientsOpen && 'rotate-180',
-                )}
-              />
-            </button>
+              <Inline justify="between" spacing="none">
+                <Inline spacing="sm">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                    Ingredients
+                  </h3>
+                </Inline>
+                <ChevronDown
+                  className={cn(
+                    'h-5 w-5 text-muted-foreground transition-transform duration-200',
+                    ingredientsOpen && 'rotate-180',
+                  )}
+                />
+              </Inline>
+            </CardHeader>
             <div
               className={cn(
                 'grid transition-all duration-200 ease-in-out',
@@ -153,11 +170,11 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
               )}
             >
               <div className="overflow-hidden">
-                <div className="border-t border-border p-4">
+                <CardContent className="border-t border-border p-4">
                   <Stack spacing="md">
                     {recipe.ingredients.map((ing, idx) => {
                       const displayText = ingredientEdits[idx] || `${ing.amount} ${ing.name}`.trim()
-                      const hasNote = !!ingredientNotes[idx]
+                      const hasNote = idx in ingredientNotes
                       const isEditing = editingIngredient === idx
 
                       return (
@@ -166,28 +183,30 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                           className="group border-b border-border/50 pb-3 last:border-0 last:pb-0"
                         >
                           {isEditing ? (
-                            <div className="flex gap-2">
-                              <input
-                                // eslint-disable-next-line jsx-a11y/no-autofocus
-                                autoFocus
-                                value={tempEditText}
-                                onChange={(e) => setTempEditText(e.target.value)}
-                                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') saveIngredientEdit(idx)
-                                  if (e.key === 'Escape') cancelIngredientEdit()
-                                }}
-                              />
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => saveIngredientEdit(idx)}
-                              >
-                                <Check className="h-4 w-4 text-green-600" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={cancelIngredientEdit}>
-                                <X className="h-4 w-4 text-muted-foreground" />
-                              </Button>
+                            <div className="rounded-md bg-muted/20 p-2">
+                              <Inline spacing="sm">
+                                <Input
+                                  // eslint-disable-next-line jsx-a11y/no-autofocus
+                                  autoFocus
+                                  value={tempEditText}
+                                  onChange={(e) => setTempEditText(e.target.value)}
+                                  className="flex-1"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') saveIngredientEdit(idx)
+                                    if (e.key === 'Escape') cancelIngredientEdit()
+                                  }}
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => saveIngredientEdit(idx)}
+                                >
+                                  <Check className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={cancelIngredientEdit}>
+                                  <X className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </Inline>
                             </div>
                           ) : (
                             <div className="flex items-start justify-between gap-4">
@@ -218,12 +237,14 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                                   className="w-full rounded-md border-0 bg-transparent p-0 text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus-visible:ring-0"
                                 />
                               ) : (
-                                <button
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={() => setIngredientNotes((p) => ({ ...p, [idx]: '' }))}
-                                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
+                                  className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
                                 >
                                   <Plus className="h-3 w-3" /> Add Note
-                                </button>
+                                </Button>
                               )}
                             </div>
                           )}
@@ -231,30 +252,32 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                       )
                     })}
                   </Stack>
-                </div>
+                </CardContent>
               </div>
             </div>
-          </section>
+          </Card>
 
           {/* Step Notes & Edits Accordion */}
-          <section className="rounded-xl border border-border bg-card">
-            <button
+          <Card>
+            <CardHeader
+              className="cursor-pointer p-4 transition-colors hover:bg-muted/20"
               onClick={() => setStepsOpen(!stepsOpen)}
-              className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/30"
             >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                  Instructions
-                </h3>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-muted-foreground transition-transform duration-200',
-                  stepsOpen && 'rotate-180',
-                )}
-              />
-            </button>
+              <Inline justify="between" spacing="none">
+                <Inline spacing="sm">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                    Instructions
+                  </h3>
+                </Inline>
+                <ChevronDown
+                  className={cn(
+                    'h-5 w-5 text-muted-foreground transition-transform duration-200',
+                    stepsOpen && 'rotate-180',
+                  )}
+                />
+              </Inline>
+            </CardHeader>
             <div
               className={cn(
                 'grid transition-all duration-200 ease-in-out',
@@ -262,33 +285,33 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
               )}
             >
               <div className="overflow-hidden">
-                <div className="border-t border-border p-4">
+                <CardContent className="border-t border-border p-4">
                   <Stack spacing="xl">
                     {recipe.steps.map((step, idx) => {
                       const displayText = stepEdits[idx] || step
-                      const hasNote = !!stepNotes[idx]
+                      const hasNote = idx in stepNotes
                       const isEditing = editingStep === idx
 
                       return (
                         <div key={idx} className="group">
                           {isEditing ? (
-                            <div className="flex flex-col gap-2">
+                            <Stack spacing="sm" className="rounded-md bg-muted/20 p-3">
                               <textarea
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                                 value={tempEditText}
                                 onChange={(e) => setTempEditText(e.target.value)}
-                                className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                               />
-                              <div className="flex justify-end gap-2">
+                              <Inline justify="end" spacing="sm">
                                 <Button size="sm" variant="ghost" onClick={cancelStepEdit}>
                                   Cancel
                                 </Button>
                                 <Button size="sm" onClick={() => saveStepEdit(idx)}>
                                   Save Change
                                 </Button>
-                              </div>
-                            </div>
+                              </Inline>
+                            </Stack>
                           ) : (
                             <div className="mb-2 flex gap-3">
                               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
@@ -317,12 +340,14 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                                       className="w-full rounded-md border border-input/50 bg-muted/20 p-2 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                     />
                                   ) : (
-                                    <button
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
                                       onClick={() => setStepNotes((p) => ({ ...p, [idx]: '' }))}
-                                      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
+                                      className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
                                     >
                                       <Plus className="h-3 w-3" /> Add Note
-                                    </button>
+                                    </Button>
                                   )}
                                 </div>
                               </div>
@@ -332,10 +357,10 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
                       )
                     })}
                   </Stack>
-                </div>
+                </CardContent>
               </div>
             </div>
-          </section>
+          </Card>
         </Stack>
       </div>
 
@@ -343,7 +368,7 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
       <div className="safe-area-pb border-t border-border bg-background p-4">
         <Button
           size="lg"
-          className="h-14 w-full rounded-xl text-lg font-bold shadow-lg shadow-primary/20"
+          className="h-14 w-full rounded-xl text-lg font-bold shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={handleSubmit}
           disabled={difficulty === 0}
         >
