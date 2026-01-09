@@ -302,4 +302,32 @@ test.describe('Recipe Cooking Mode', () => {
     // Verify returned to Detail View
     await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
   })
+
+  test('should allow skipping review', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await expect(page.getByText(RECIPE.title).first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    const recipeCard = page.getByText(RECIPE.title).first()
+    await recipeCard.click()
+
+    // Start Cooking
+    await page.getByRole('button', { name: 'Start Cooking' }).click()
+
+    // Skip to last step
+    await page.getByRole('button', { name: 'Start Cooking' }).click() // to Step 2
+    await page.getByRole('button', { name: 'Next Step' }).click() // to Step 3 (Final)
+
+    // Finish Cooking
+    await page.getByRole('button', { name: 'Finish Cooking' }).click()
+
+    // Expect Review Screen
+    await expect(page.getByText('All Done!')).toBeVisible()
+
+    // Click Skip
+    await page.getByRole('button', { name: 'Skip' }).click()
+
+    // Verify returned to Detail View
+    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
+  })
 })

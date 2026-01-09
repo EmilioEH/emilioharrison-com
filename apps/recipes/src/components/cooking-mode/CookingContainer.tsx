@@ -142,8 +142,15 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
     }
   }
 
+  const handleSkip = () => {
+    cookingSessionActions.endSession()
+    onClose()
+    // Refresh to clear state/redirect if needed
+    window.location.reload()
+  }
+
   if (isReviewing) {
-    return <CookingReview onComplete={handleReviewComplete} />
+    return <CookingReview onComplete={handleReviewComplete} onSkip={handleSkip} />
   }
 
   return (

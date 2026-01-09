@@ -16,9 +16,10 @@ interface CookingReviewProps {
     ingredientEdits: Record<number, string>
     stepEdits: Record<number, string>
   }) => void
+  onSkip?: () => void
 }
 
-export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
+export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip }) => {
   const session = useStore($cookingSession)
   const recipe = session.recipe
 
@@ -366,14 +367,26 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
 
       {/* Footer */}
       <div className="safe-area-pb border-t border-border bg-background p-4">
-        <Button
-          size="lg"
-          className="h-14 w-full rounded-xl text-lg font-bold shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={handleSubmit}
-          disabled={difficulty === 0}
-        >
-          {difficulty === 0 ? 'Select Difficulty' : 'Complete Review'}
-        </Button>
+        <Stack spacing="sm">
+          <Button
+            size="lg"
+            className="h-14 w-full rounded-xl text-lg font-bold shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={handleSubmit}
+            disabled={difficulty === 0}
+          >
+            {difficulty === 0 ? 'Select Difficulty' : 'Complete Review'}
+          </Button>
+          {onSkip && (
+            <Button
+              variant="ghost"
+              size="lg"
+              className="h-12 w-full text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              onClick={onSkip}
+            >
+              Skip
+            </Button>
+          )}
+        </Stack>
       </div>
     </Stack>
   )
