@@ -25,8 +25,25 @@ export const PUT: APIRoute = async ({ request, cookies, params }) => {
       return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
     }
 
-    // Update recipe
-    await db.updateDocument('recipes', id, updateData)
+    // Handle Versioning
+    // 1. Create a snapshot of the CURRENT (old) state
+    const versionSnapshot = {
+      timestamp: now,
+      userId: user || 'anonymous',
+      changeType: 'edit',
+      data: doc, // The full existing document
+    }
+
+    // 2. Append to existing versions (or create new array)
+    // We only keep the last 10 versions to avoid doc bloat
+    const currentVersions = (doc.versions as unknown[]) || []
+    const updatedVersions = [versionSnapshot, ...currentVersions].slice(0, 10)
+
+    // Update recipe with new data AND the new versions array
+    await db.updateDocument('recipes', id, {
+      ...updateData,
+      versions: updatedVersions,
+    })
 
     // Handle favorites parity
     if (user && typeof recipeData.isFavorite === 'boolean') {

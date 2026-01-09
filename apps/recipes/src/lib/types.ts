@@ -21,6 +21,9 @@ export interface StructuredStep {
 
 export interface Recipe {
   id: string
+  // Enhanced Visibility
+  createdBy?: string // userId (optional for legacy recipes)
+  familyId?: string // familyId (optional, assists with indexing)
   title: string
   servings: number
   prepTime: number
@@ -72,6 +75,17 @@ export interface Recipe {
   assignedDate?: string // YYYY-MM-DD
   finishedImage?: string // Base64 or URL
   images?: string[] // Array of all recipe images (first one is primary)
+
+  // Version History (Full Snapshots)
+  versions?: RecipeVersion[]
+}
+
+export interface RecipeVersion {
+  timestamp: string // ISO Date
+  userId?: string
+  userName?: string
+  changeType: 'edit' | 'restore' | 'import'
+  data: Partial<Recipe> // Snapshot of recipe data
 }
 
 export interface StructuredIngredient {

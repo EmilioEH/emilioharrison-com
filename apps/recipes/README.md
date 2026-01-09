@@ -143,6 +143,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Cooking Review Enhancements**: Added support for **inline editing** of ingredients and steps directly from the review screen. Changes are automatically persisted to the shared recipe, and the system handles amount/name parsing for ingredients.
 - **Week View Workspace**: Transformed the week view into a persistent, sliding workspace. Users can now toggle between a "Plan" view (daily meals) and a "Grocery" view (shoppable list) directly within the workspace contexts.
 - **Full-Screen Image Viewer**: Tapping a recipe's header image now opens it in a full-screen overlay using a React Portal, ensuring proper z-index stacking. Press ESC or tap the close button to dismiss.
+- **Recipe Edit Mode & Version History**: Introduced a comprehensive Edit Mode allowing users to modify ingredients, steps, metadata, and photos directly. Includes a **Version History** system that archives previous states of the recipe on every save, allowing users to view and restore past versions.
 
 > [!TIP]
 > **Agent Tip: Responsive Modals**

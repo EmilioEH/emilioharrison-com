@@ -8,6 +8,7 @@ import { ShareRecipeDialog } from './ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
 import { Play, Check, ListPlus } from 'lucide-react'
+import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
 import { confirm } from '../../lib/dialogStore'
@@ -51,8 +52,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   onToggleFavorite,
 }) => {
   const session = useStore($cookingSession)
+
+  // ... imports
+
   const isCooking = session.isActive && session.recipeId === recipe.id
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -68,6 +73,30 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     cookingSessionActions.startSession(recipe)
   }
 
+  const handleSaveRecipe = async (updated: Recipe) => {
+    // 1. Persist to API
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`
+
+    const res = await fetch(`${baseUrl}api/recipes/${updated.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    })
+
+    if (!res.ok) {
+      alert('Failed to save recipe')
+      return
+    }
+
+    // 2. Update list in parent
+    onUpdate(updated, 'save')
+
+    // 3. Exit edit mode
+    setIsEditing(false)
+  }
+
   const handleAction = (action: HeaderAction) => {
     if (action === 'delete') {
       confirm('Are you certain you want to delete this recipe?').then((confirmed) => {
@@ -76,7 +105,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         }
       })
     } else if (action === 'edit') {
-      onUpdate({ ...recipe }, 'edit')
+      setIsEditing(true)
     } else if (action === 'addToWeek') {
       onToggleThisWeek(recipe.id)
     } else if (action === 'move') {
@@ -90,6 +119,21 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
   if (isCooking) {
     return <CookingContainer onClose={onClose} />
+  }
+
+  if (isEditing) {
+    return (
+      <Stack
+        spacing="none"
+        className="fixed inset-0 z-50 bg-background animate-in slide-in-from-bottom-10"
+      >
+        <EditRecipeView
+          recipe={recipe}
+          onSave={handleSaveRecipe}
+          onCancel={() => setIsEditing(false)}
+        />
+      </Stack>
+    )
   }
 
   return (

@@ -1,25 +1,43 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { isRecipe } from '../../../lib/type-guards'
+import { getAuthUser } from '../../../lib/api-helpers'
 
 export const GET: APIRoute = async ({ cookies }) => {
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
+  const userId = getAuthUser(cookies)
 
   try {
-    // 1. Fetch all recipes
+    // 1. Determine Allowed Creators (Me + Family)
+    const allowedCreators = new Set<string>()
+
+    if (userId) {
+      allowedCreators.add(userId)
+
+      // Fetch user to get family context
+      const userDoc = await db.getDocument('users', userId)
+      if (userDoc?.familyId) {
+        const familyDoc = await db.getDocument('families', userDoc.familyId)
+        // Add all family members to allowed creators
+        if (familyDoc?.members && Array.isArray(familyDoc.members)) {
+          familyDoc.members.forEach((memberId: string) => allowedCreators.add(memberId))
+        }
+      }
+    }
+
+    // 2. Fetch all recipes
     // REST API doesn't support complex ordering as easily in simple list, but basic orderBy works
     const rawRecipes = await db.getCollection('recipes', 'updatedAt', 'DESC')
 
-    // 2. If user is logged in, attach `isFavorite` status
+    // 3. If user is logged in, attach `isFavorite` status
     let favIds = new Set<string>()
-    if (user) {
+    if (userId) {
       // NOTE: Subcollections in REST are just /documents/users/ID/favorites
-      const favDocs = await db.getCollection(`users/${user}/favorites`)
+      const favDocs = await db.getCollection(`users/${userId}/favorites`)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       favIds = new Set(favDocs.map((d: any) => d.id))
     }
 
+    // 4. Map & Filter
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const recipes = rawRecipes.map((doc: any) => {
       // doc already mapped by service
@@ -32,10 +50,21 @@ export const GET: APIRoute = async ({ cookies }) => {
       }
     })
 
-    const validRecipes = recipes.filter(isRecipe)
+    const validRecipes = recipes.filter(isRecipe).filter((recipe) => {
+      // Filter Logic: Creator-Centric
+      // 1. Legacy recipes (no createdBy) are PUBLIC/VISIBLE TO ALL
+      if (!recipe.createdBy) return true
+
+      // 2. Modern recipes: Must be created by me OR a family member
+      if (recipe.createdBy && allowedCreators.has(recipe.createdBy)) return true
+
+      // 3. Otherwise hidden
+      return false
+    })
 
     if (validRecipes.length < recipes.length) {
-      console.warn(`Filtered out ${recipes.length - validRecipes.length} invalid recipes`)
+      // useful log for debugging visibility
+      // console.log(`Filtered: ${recipes.length} total -> ${validRecipes.length} visible`)
     }
 
     return new Response(JSON.stringify({ recipes: validRecipes }), {
@@ -56,17 +85,27 @@ export const GET: APIRoute = async ({ cookies }) => {
 }
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
+  const userId = getAuthUser(cookies)
+
+  if (!userId) {
+    return unauthorizedResponse()
+  }
 
   try {
     const recipeData = await request.json()
     const id = recipeData.id || crypto.randomUUID()
     const now = new Date().toISOString()
 
+    // 1. Get User Context for Ownership
+    const userDoc = await db.getDocument('users', userId)
+    const familyId = userDoc?.familyId || null
+
     const newRecipe = {
       ...recipeData,
       id,
+      // Enforce Ownership
+      createdBy: userId,
+      familyId: familyId, // Optional, but saves lookup later
       createdAt: now,
       updatedAt: now,
       isFavorite: false,
@@ -75,8 +114,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Parallel writes instead of batch
     await db.createDocument('recipes', id, newRecipe)
 
-    if (recipeData.isFavorite && user) {
-      await db.createDocument(`users/${user}/favorites`, id, { createdAt: now })
+    if (recipeData.isFavorite) {
+      await db.createDocument(`users/${userId}/favorites`, id, { createdAt: now })
     }
 
     return new Response(JSON.stringify({ success: true, id }), {
