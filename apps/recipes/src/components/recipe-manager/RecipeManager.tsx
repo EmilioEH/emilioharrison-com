@@ -61,6 +61,13 @@ interface RecipeManagerProps {
 
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
+  const [currentUser, setCurrentUser] = useState(user)
+
+  // Sync prop changes
+  useEffect(() => {
+    if (user) setCurrentUser(user)
+  }, [user])
+
   const { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl } = useRecipes()
 
   // Family Sync State
@@ -473,6 +480,28 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
     }
   }
 
+  const handleUpdateProfile = async (displayName: string) => {
+    try {
+      const res = await fetch('/protected/recipes/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName }),
+      })
+      if (res.ok) {
+        setCurrentUser(displayName)
+        await alert('Profile updated successfully!')
+        return true
+      } else {
+        await alert('Failed to update profile')
+        return false
+      }
+    } catch (e) {
+      console.error(e)
+      await alert('An error occurred')
+      return false
+    }
+  }
+
   const handleBulkImportSave = async (recipes: Recipe[]) => {
     try {
       await Promise.all(
@@ -561,6 +590,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
         onExport={handleExport}
         onImport={handleImport}
         onDeleteAccount={handleDeleteAll}
+        currentName={currentUser}
+        onUpdateProfile={handleUpdateProfile}
       />
     )
   }
@@ -627,7 +658,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
               className="overflow-hidden"
             >
               <RecipeHeader
-                user={user}
+                user={currentUser}
                 scrollContainer={scrollContainer}
                 onAddRecipe={() => {
                   setRecipe(null)

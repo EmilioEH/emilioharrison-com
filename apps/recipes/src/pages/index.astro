@@ -1,9 +1,23 @@
 ---
 import RecipeLayout from '../layouts/RecipeLayout.astro'
 import RecipeManagerClient from '../components/recipe-manager/RecipeManager.jsx'
-const user = Astro.cookies.get('site_user')?.value
+import { db } from '../lib/firebase-server'
+
+const userId = Astro.cookies.get('site_user')?.value
+let displayName = userId
+
+if (userId) {
+  try {
+    const userDoc = await db.getDocument('users', userId)
+    if (userDoc && typeof userDoc.displayName === 'string') {
+      displayName = userDoc.displayName
+    }
+  } catch (e) {
+    // Ignore errors (profile strictly optional)
+  }
+}
 ---
 
 <RecipeLayout title="My Recipes">
-  <RecipeManagerClient client:only="react" user={user} />
+  <RecipeManagerClient client:only="react" user={displayName || userId} />
 </RecipeLayout>
