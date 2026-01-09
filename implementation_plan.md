@@ -1,29 +1,35 @@
-# Implementation Plan - Commit and Sync Changes
-
-This task involves finalizing, verifying, and committing several fixes and improvements made to the Recipe App.
+# Implementation Plan - Stage, Commit, and Sync Changes
 
 ## User Story
 
-As a Developer, I want to ensure my recent fixes for photo uploads, feedback submissions, and image viewing are clean, verified, and synchronized with the remote repository so that the application remains stable and up-to-date.
+"As Emilio (UX Researcher), I want to be able to stage, commit, and sync my changes for the vertical carousel animation in the cooking mode, so that my work is safely backed up and available to other collaborators, while ensuring the code meets all quality standards."
+
+## Quality Gate Tools
+
+- **Safety Checks:**
+  - `npm run lint` (ESLint + SonarJS + A11y)
+  - `npx tsc --noEmit` (TypeScript validation)
+  - `npx astro check` (Astro-specific checks)
+  - `npm run format` (Prettier formatting)
+- **User Journey Validation:**
+  - `npx playwright test apps/recipes/tests/cooking-mode.spec.ts` (Verify cooking mode functionality)
 
 ## Proposed Changes
 
-### Core
+### 1. Verification & Safety
 
-- **Photo Upload Fix**: Updated `OverviewMode.tsx` to use correct `BASE_URL` for API calls and improved error reporting.
-- **Feedback Fix**: Removed `domSnapshot` from `FeedbackModal.jsx` to stay within Firestore's 1MB document limit.
-- **Touchscreen Zoom**: Implemented pinch-to-zoom in `ImageViewer.tsx` for better mobile usability.
+- Run linting and type checks to ensure the `CookingStepView.tsx` modifications are valid.
+- Run formatting to ensure code style consistency.
+- Run Playwright tests to ensure the cooking mode functionality is preserved.
 
-## Quality Gate Checklist
+### 2. Git Operations
 
-- [ ] **Linting**: `npm run lint`
-- [ ] **Types**: `npx tsc --noEmit` and `npx astro check`
-- [ ] **Formatting**: `npm run format`
-- [ ] **Tests**: `npx playwright test` (if applicable/vibe check)
+- Stage the changes: `git add apps/recipes/src/components/cooking-mode/CookingStepView.tsx`.
+- Commit the changes with a descriptive message: `feat(cooking): implement vertical carousel animation for recipe steps`.
+- Sync changes: `git pull --rebase` and `git push`.
 
 ## Verification Plan
 
-1. Run lint and type checks to ensure no regressions.
-2. Run local tests to verify the fixes.
-3. Commit with a descriptive message.
-4. Push to origin.
+- [ ] Safety checks pass (Lint, Types, Format).
+- [ ] Playwright tests for cooking mode pass.
+- [ ] Git sync completed successfully.
