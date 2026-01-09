@@ -104,8 +104,7 @@ test.describe('Recipe Cooking Mode', () => {
     await page.getByLabel('Exit Cooking Mode').click()
     await page.getByRole('button', { name: 'End Session' }).click()
 
-    // Verify returned to Detail View
-    await page.waitForTimeout(500)
+    // Verify returned to Detail View (wait for URL change or header)
     await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible({
       timeout: 10000,
     })
@@ -116,6 +115,8 @@ test.describe('Recipe Cooking Mode', () => {
     await page.setViewportSize({ width: 1280, height: 800 })
 
     await page.goto('/protected/recipes')
+    // Wait for the specific recipe to appear (with retries/timeout)
+    await expect(page.getByText(RECIPE.title).first()).toBeVisible({ timeout: 15000 })
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // Open recipe and start cooking
@@ -127,7 +128,6 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByTestId('cooking-timeline-sidebar')).toBeVisible()
 
     // Verify Right Sidebar (Ingredients Panel) is visible
-    // Note: We need to check if the panel itself is visible, we can add a test id or look for heading
     await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeVisible()
 
     // Verify Ingredients Button in header is HIDDEN on desktop
@@ -139,6 +139,8 @@ test.describe('Recipe Cooking Mode', () => {
     await page.setViewportSize({ width: 390, height: 844 })
 
     await page.goto('/protected/recipes')
+    // Wait for the specific recipe to appear
+    await expect(page.getByText(RECIPE.title).first()).toBeVisible({ timeout: 15000 })
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // Open recipe and start cooking
@@ -150,8 +152,6 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByTestId('cooking-timeline-sidebar')).toBeHidden()
 
     // Verify Right Sidebar (Ingredients Panel) content is NOT visible initially
-    // We check for the heading "Ingredients" which should only appear in the overlay or sidebar
-    // Since sidebar is hidden and overlay is closed, it should be hidden
     await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeHidden()
 
     // Verify Ingredients Button in header is VISIBLE on mobile
@@ -167,6 +167,8 @@ test.describe('Recipe Cooking Mode', () => {
 
   test('should complete cooking and submit review', async ({ page }) => {
     await page.goto('/protected/recipes')
+    // Wait for the specific recipe to appear
+    await expect(page.getByText(RECIPE.title).first()).toBeVisible({ timeout: 15000 })
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     const recipeCard = page.getByText(RECIPE.title).first()
@@ -176,10 +178,6 @@ test.describe('Recipe Cooking Mode', () => {
     await page.getByRole('button', { name: 'Start Cooking' }).click()
 
     // Skip to last step
-    // We can use the timeline sidebar to jump (if desktop) or just click next until end?
-    // Let's use internal state manipulation or just click through.
-    // Total steps: Prep (1) + Instructions (2) = 3.
-    // We are at Prep.
     await page.getByRole('button', { name: 'Start Cooking' }).click() // to Step 2
     await page.getByRole('button', { name: 'Next Step' }).click() // to Step 3 (Final)
 
@@ -200,12 +198,18 @@ test.describe('Recipe Cooking Mode', () => {
     // Button should be enabled now
     await expect(page.getByRole('button', { name: 'Complete Review' })).toBeEnabled()
 
+    // Open Ingredient Notes Accordion
+    await page.getByRole('button', { name: 'Ingredient Notes' }).click()
+
     // Add a note to an ingredient
-    const ingredientNote = page.getByPlaceholder('Add specific note...').first()
+    const ingredientNote = page.getByPlaceholder('Add note...').first()
     await ingredientNote.fill('Used extra garlic')
 
+    // Open Step Notes Accordion
+    await page.getByRole('button', { name: 'Step Notes' }).click()
+
     // Add a note to a step
-    const stepNote = page.getByPlaceholder('Notes for step 1...').first()
+    const stepNote = page.getByPlaceholder('Add note...').last() // last one is step notes
     await stepNote.fill('Step went well')
 
     // Submit

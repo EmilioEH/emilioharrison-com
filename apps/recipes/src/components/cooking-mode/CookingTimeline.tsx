@@ -20,19 +20,34 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
   // Auto-scroll to the active step when it changes
   useEffect(() => {
     const activeNode = nodeRefs.current[currentStep - 1]
-    if (activeNode && scrollContainerRef.current) {
-      activeNode.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest',
-      })
+    const container = scrollContainerRef.current
+    if (activeNode && container) {
+      // Calculate scroll position to center the active node
+      // On mobile (horizontal): use scrollLeft
+      // On desktop (vertical): use scrollTop
+      const isMobile = window.innerWidth < 768
+      if (isMobile) {
+        const nodeCenter = activeNode.offsetLeft + activeNode.offsetWidth / 2
+        const containerCenter = container.clientWidth / 2
+        container.scrollTo({
+          left: nodeCenter - containerCenter,
+          behavior: 'smooth',
+        })
+      } else {
+        const nodeCenter = activeNode.offsetTop + activeNode.offsetHeight / 2
+        const containerCenter = container.clientHeight / 2
+        container.scrollTo({
+          top: nodeCenter - containerCenter,
+          behavior: 'smooth',
+        })
+      }
     }
   }, [currentStep])
 
   return (
     <div
       ref={scrollContainerRef}
-      className="no-scrollbar flex w-full scroll-smooth bg-muted/5 transition-all md:h-full md:w-20 md:flex-col md:overflow-y-auto md:border-r md:border-border md:bg-muted/10 md:py-6"
+      className="no-scrollbar flex w-full overflow-x-auto scroll-smooth bg-muted/5 transition-all md:h-full md:w-20 md:flex-col md:overflow-y-auto md:overflow-x-hidden md:border-r md:border-border md:bg-muted/10 md:py-6"
     >
       <div className="flex w-full flex-row items-center gap-1 px-4 py-3 md:min-h-full md:w-auto md:flex-col md:px-0 md:py-0">
         {Array.from({ length: totalSteps }).map((_, index) => {

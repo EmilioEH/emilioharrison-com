@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Check, Flame, MessageSquare } from 'lucide-react'
+import { Check, Flame, MessageSquare, ChevronDown } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Stack } from '../ui/layout'
 import { useStore } from '@nanostores/react'
@@ -21,6 +21,8 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
   const [difficulty, setDifficulty] = useState<number>(0)
   const [ingredientNotes, setIngredientNotes] = useState<Record<number, string>>({})
   const [stepNotes, setStepNotes] = useState<Record<number, string>>({})
+  const [ingredientsOpen, setIngredientsOpen] = useState(false)
+  const [stepsOpen, setStepsOpen] = useState(false)
 
   const handleSubmit = () => {
     onComplete({ difficulty, ingredientNotes, stepNotes })
@@ -77,54 +79,108 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete }) => {
             </div>
           </section>
 
-          {/* Ingredient Notes */}
-          <section>
-            <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
-              <MessageSquare className="h-4 w-4" /> Ingredient Notes
-            </h3>
-            <div className="rounded-xl border border-border bg-card p-4">
-              <Stack spacing="md">
-                {recipe.ingredients.map((ing, idx) => (
-                  <div key={idx} className="group">
-                    <p className="mb-1 text-sm font-medium leading-none">
-                      {ing.amount} {ing.name}
-                    </p>
-                    <textarea
-                      placeholder="Add specific note..."
-                      value={ingredientNotes[idx] || ''}
-                      onChange={(e) => setIngredientNotes((p) => ({ ...p, [idx]: e.target.value }))}
-                      className="min-h-[60px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    />
-                  </div>
-                ))}
-              </Stack>
+          {/* Ingredient Notes Accordion */}
+          <section className="rounded-xl border border-border bg-card">
+            <button
+              onClick={() => setIngredientsOpen(!ingredientsOpen)}
+              className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/30"
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                  Ingredient Notes
+                </h3>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'h-5 w-5 text-muted-foreground transition-transform duration-200',
+                  ingredientsOpen && 'rotate-180',
+                )}
+              />
+            </button>
+            <div
+              className={cn(
+                'grid transition-all duration-200 ease-in-out',
+                ingredientsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="border-t border-border p-4">
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Only add notes if you need to adjust quantities or substitutions for next time.
+                  </p>
+                  <Stack spacing="md">
+                    {recipe.ingredients.map((ing, idx) => (
+                      <div key={idx} className="group">
+                        <p className="mb-1 text-sm font-medium leading-none">
+                          {ing.amount} {ing.name}
+                        </p>
+                        <textarea
+                          placeholder="Add note..."
+                          value={ingredientNotes[idx] || ''}
+                          onChange={(e) =>
+                            setIngredientNotes((p) => ({ ...p, [idx]: e.target.value }))
+                          }
+                          className="min-h-[60px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                      </div>
+                    ))}
+                  </Stack>
+                </div>
+              </div>
             </div>
           </section>
 
-          {/* Step Notes */}
-          <section>
-            <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
-              <MessageSquare className="h-4 w-4" /> Step Notes
-            </h3>
-            <div className="rounded-xl border border-border bg-card p-4">
-              <Stack spacing="xl">
-                {recipe.steps.map((step, idx) => (
-                  <div key={idx} className="group">
-                    <div className="mb-2 flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                        {idx + 1}
-                      </span>
-                      <p className="line-clamp-2 text-sm text-foreground/80">{step}</p>
-                    </div>
-                    <textarea
-                      placeholder={`Notes for step ${idx + 1}...`}
-                      value={stepNotes[idx] || ''}
-                      onChange={(e) => setStepNotes((p) => ({ ...p, [idx]: e.target.value }))}
-                      className="min-h-[60px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    />
-                  </div>
-                ))}
-              </Stack>
+          {/* Step Notes Accordion */}
+          <section className="rounded-xl border border-border bg-card">
+            <button
+              onClick={() => setStepsOpen(!stepsOpen)}
+              className="flex w-full items-center justify-between p-4 transition-colors hover:bg-muted/30"
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                  Step Notes
+                </h3>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'h-5 w-5 text-muted-foreground transition-transform duration-200',
+                  stepsOpen && 'rotate-180',
+                )}
+              />
+            </button>
+            <div
+              className={cn(
+                'grid transition-all duration-200 ease-in-out',
+                stepsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="border-t border-border p-4">
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Only add notes if a step needs clarification or took longer than expected.
+                  </p>
+                  <Stack spacing="xl">
+                    {recipe.steps.map((step, idx) => (
+                      <div key={idx} className="group">
+                        <div className="mb-2 flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                            {idx + 1}
+                          </span>
+                          <p className="line-clamp-2 text-sm text-foreground/80">{step}</p>
+                        </div>
+                        <textarea
+                          placeholder={`Add note...`}
+                          value={stepNotes[idx] || ''}
+                          onChange={(e) => setStepNotes((p) => ({ ...p, [idx]: e.target.value }))}
+                          className="min-h-[60px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                      </div>
+                    ))}
+                  </Stack>
+                </div>
+              </div>
             </div>
           </section>
         </Stack>
