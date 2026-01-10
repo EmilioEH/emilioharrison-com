@@ -121,6 +121,7 @@ export const POST: APIRoute = async (context) => {
           displayName: name,
           joinedAt: new Date().toISOString(),
           status: status, // Persist the determined status
+          hasOnboarded: false,
         })
       }
     } catch (dbError) {

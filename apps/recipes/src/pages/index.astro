@@ -7,6 +7,7 @@ import { getEmailList } from '../lib/env'
 const userId = Astro.cookies.get('site_user')?.value
 let displayName = userId
 let isAdmin = false
+let hasOnboarded = false
 
 if (userId) {
   try {
@@ -21,6 +22,13 @@ if (userId) {
           isAdmin = true
         }
       }
+      if (typeof userDoc.hasOnboarded === 'boolean') {
+        hasOnboarded = userDoc.hasOnboarded
+      } else {
+        // If the field is missing (existing user), treat as onboarded
+        // to avoid disrupting them.
+        hasOnboarded = true
+      }
     }
   } catch (e) {
     // Ignore errors (profile strictly optional)
@@ -29,5 +37,5 @@ if (userId) {
 ---
 
 <RecipeLayout title="My Recipes" isAdmin={isAdmin}>
-  <RecipeManagerClient client:only="react" user={displayName || userId} isAdmin={isAdmin} />
+  <RecipeManagerClient client:only="react" user={displayName || userId} isAdmin={isAdmin} hasOnboarded={hasOnboarded} />
 </RecipeLayout>

@@ -58,16 +58,21 @@ interface ProteinWarning {
 interface RecipeManagerProps {
   user?: string
   isAdmin?: boolean
+  hasOnboarded?: boolean
 }
 
 // --- MAIN COMPONENT ---
-const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
+const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
   const [currentUser, setCurrentUser] = useState(user)
 
   // Sync prop changes
   useEffect(() => {
     if (user) setCurrentUser(user)
   }, [user])
+
+  useEffect(() => {
+    console.log('User has onboarded:', hasOnboarded)
+  }, [hasOnboarded])
 
   const { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl } = useRecipes()
 
