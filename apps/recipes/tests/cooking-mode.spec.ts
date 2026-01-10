@@ -152,7 +152,7 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByTestId('cooking-timeline-sidebar')).toBeHidden()
 
     // Verify Right Sidebar (Ingredients Panel) content is NOT visible initially
-    await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeHidden()
+    await expect(page.getByRole('heading', { name: 'Ingredients', exact: true })).toBeHidden()
 
     // Verify Ingredients Button in header is VISIBLE on mobile
     const ingredientsBtn = page.getByRole('button', { name: 'Ingredients' })
