@@ -113,6 +113,44 @@ const getBaseUrl = () => {
 }
 
 /**
+ * Toggle a recipe's planned status for a specific date (YYYY-MM-DD)
+ * This bypasses the activeWeekStart context to allow scheduling on any calendar date.
+ */
+export const toggleRecipePlannedDate = async (
+  recipeId: string,
+  dateStr: string,
+  shouldPlan: boolean,
+) => {
+  const method = shouldPlan ? 'POST' : 'DELETE'
+  const body = shouldPlan
+    ? JSON.stringify({
+        isPlanned: true,
+        assignedDate: dateStr,
+      })
+    : undefined
+
+  try {
+    const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
+      method,
+      headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+      body,
+    })
+
+    if (res.ok) {
+      // Fetch fresh data for this recipe to update the UI
+      const resData = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/family-data`)
+      const data = await resData.json()
+
+      if (data.success && data.data) {
+        familyActions.setRecipeFamilyData(recipeId, data.data)
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to toggle recipe plan for ${dateStr}:`, error)
+  }
+}
+
+/**
  * Add a recipe to a specific day in the CURRENTLY ACTIVE week
  */
 export const addRecipeToDay = async (recipeId: string, day: DayOfWeek) => {

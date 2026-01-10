@@ -173,7 +173,6 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
           recipeId={recipeId}
           recipeTitle={recipeTitle}
           mode="edit"
-          startWithWeekPicker
         />
       )}
     </>
