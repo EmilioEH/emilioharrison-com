@@ -1,5 +1,10 @@
 import { useState, useMemo } from 'react'
+import * as FuseModule from 'fuse.js'
 import type { Recipe } from '../../../lib/types'
+
+// Robust import for Fuse.js (handles ESM/CJS interop issues)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Fuse = (FuseModule as any).default || FuseModule
 
 export interface Filters {
   protein?: string[]
@@ -39,6 +44,20 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
   const [sort, setSort] = useState<string>('protein')
   const [searchQuery, setSearchQuery] = useState<string>('')
 
+  // Initialize Fuse.js for fuzzy search
+  const fuse = useMemo(() => {
+    if (!recipes || recipes.length === 0) return null
+    return new Fuse(recipes, {
+      keys: [
+        { name: 'title', weight: 0.7 },
+        { name: 'ingredients.name', weight: 0.3 },
+      ],
+      threshold: 0.4, // Sensitivity: 0.0 = exact, 1.0 = match anything
+      includeScore: true,
+      ignoreLocation: true, // Search anywhere in the string
+    })
+  }, [recipes])
+
   const processedRecipes = useMemo(() => {
     let result = [...recipes]
 
@@ -49,12 +68,10 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
 
     // Search
     if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter(
-        (r) =>
-          r.title?.toLowerCase().includes(q) ||
-          r.ingredients?.some((i) => i.name.toLowerCase().includes(q)),
-      )
+      if (!fuse) return []
+      const searchResults = fuse.search(searchQuery)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result = searchResults.map((r: any) => r.item)
     }
 
     // Filter using helper to reduce cognitive complexity
@@ -112,7 +129,7 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
     })
 
     return result
-  }, [recipes, searchQuery, filters, sort, view])
+  }, [recipes, searchQuery, filters, sort, view, fuse])
 
   return {
     filtersOpen,

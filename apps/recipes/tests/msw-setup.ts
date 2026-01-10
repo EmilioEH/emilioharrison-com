@@ -9,6 +9,7 @@ import type { Recipe } from '../src/lib/types'
 export const TEST_RECIPES: Recipe[] = [
   {
     id: 'test-recipe-001',
+    createdBy: 'TestUser',
     title: 'E2E Test Recipe',
     servings: 2,
     prepTime: 10,
@@ -166,7 +167,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
   })
 
   // Recipes API Mock remains via page.route as it often needs state (mockRecipes)
-  await page.route('**/api/recipes/**', async (route) => {
+  await page.route('**/api/recipes*', async (route) => {
     const method = route.request().method()
     const url = route.request().url()
 
