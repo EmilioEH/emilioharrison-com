@@ -23,7 +23,12 @@ export const GET: APIRoute = async (context) => {
     // Let's assume we get all and filter in memory for now OR check wrapper capabilities.
     // The wrapper `firebase-server.ts` likely just wraps fetch.
 
-    const allUsers = await db.getCollection('users')
+    // Parallel fetch for aggregation data
+    const [allUsers, allRecipes, allFamilies] = await Promise.all([
+      db.getCollection('users'),
+      db.getCollection('recipes'),
+      db.getCollection('families'),
+    ])
 
     let filtered = allUsers
     if (status) {
@@ -31,7 +36,32 @@ export const GET: APIRoute = async (context) => {
       filtered = allUsers.filter((u: any) => u.status === status)
     }
 
-    return new Response(JSON.stringify({ success: true, users: filtered }), { status: 200 })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const usersWithStats = filtered.map((u: any) => {
+      // 1. Recipes Added
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recipesAdded = allRecipes.filter((r: any) => r.createdBy === u.id).length
+
+      // 2. Recipes Cooked
+      let recipesCooked = 0
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      allFamilies.forEach((f: any) => {
+        if (f.cookingHistory) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          recipesCooked += f.cookingHistory.filter((h: any) => h.userId === u.id).length
+        }
+      })
+
+      return {
+        ...u,
+        stats: {
+          recipesAdded,
+          recipesCooked,
+        },
+      }
+    })
+
+    return new Response(JSON.stringify({ success: true, users: usersWithStats }), { status: 200 })
   } catch {
     // If collection doesn't exist yet, return empty
     return new Response(JSON.stringify({ success: true, users: [] }), { status: 200 })

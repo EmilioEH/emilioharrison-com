@@ -53,8 +53,13 @@ export const POST: APIRoute = async (context) => {
       redeemedCode: code, // Audit trail
     })
 
-    // 4. Consume Code (Delete it)
-    await db.deleteDocument('invites', code)
+    // 4. Consume Code (Mark as accepted)
+    await db.updateDocument('invites', code, {
+      status: 'accepted',
+      acceptedBy: userId,
+      acceptedByName: name,
+      acceptedAt: new Date().toISOString(),
+    })
 
     return new Response(JSON.stringify({ success: true }), { status: 200 })
   } catch (error) {

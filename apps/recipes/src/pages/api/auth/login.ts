@@ -88,6 +88,8 @@ export const POST: APIRoute = async (context) => {
 
     if (!isAllowed && email) {
       const normalizedEmail = email.toLowerCase()
+      // Note: We need to find the invite where email matches AND status is pending
+      // Since our key is btoa(email), we can look it up directly.
       const inviteId = btoa(normalizedEmail)
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
@@ -96,7 +98,9 @@ export const POST: APIRoute = async (context) => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const invite: any = await db.getDocument('pending_invites', inviteId)
-        if (invite) {
+
+        // Ensure invite exists and is pending
+        if (invite && invite.status !== 'accepted') {
           console.log(`Auto-approving invited user: ${email} for family ${invite.familyId}`)
           isAllowed = true
           status = 'approved'
@@ -118,11 +122,15 @@ export const POST: APIRoute = async (context) => {
             // Proceed anyway, they have the familyId on their user doc so it should benefit from creator-centric visibility
           }
 
-          // 2. Delete the invite (it's consumed)
+          // 2. Mark invite as accepted (Persist history)
           try {
-            await db.deleteDocument('pending_invites', inviteId)
+            await db.updateDocument('pending_invites', inviteId, {
+              status: 'accepted',
+              acceptedBy: userId,
+              acceptedAt: new Date().toISOString(),
+            })
           } catch (delErr) {
-            console.warn('Failed to delete consumed invite:', delErr)
+            console.warn('Failed to update invite status:', delErr)
           }
         }
       } catch {

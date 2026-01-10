@@ -1,77 +1,86 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { Users, Search, MoreHorizontal, ShieldAlert, LogOut } from 'lucide-react'
-import { Stack, Inline } from '@/components/ui/layout'
-import { alert } from '../../lib/dialogStore'
-import { Badge } from '@/components/ui/badge'
-import type { Family } from '../../lib/types'
-import { AdminFamilyManager } from './AdminFamilyManager'
-import { AccessRequestsDashboard } from './AccessRequestsDashboard'
-import { auth } from '../../lib/firebase-client'
+import React, { useState, useEffect } from 'react'
+import { ShieldAlert, LogOut } from 'lucide-react'
+import { Inline } from '@/components/ui/layout'
 
-interface AdminDashboardProps {
-  onClose: () => void
+interface AdminUser {
+  id: string
+  email: string
+  displayName: string
+  status: string
+  joinedAt: string
+  stats?: {
+    recipesAdded: number
+    recipesCooked: number
+  }
+  familyId?: string
 }
 
-interface FamilySummary extends Family {
-  memberCount: number
+interface InviteCode {
+  code: string
+  createdBy: string
+  createdByName: string
+  createdAt: string
+  status?: string // 'pending' | 'accepted'
+  acceptedBy?: string
+  acceptedByName?: string
+  acceptedAt?: string
+}
+
+interface FamilyInvite {
+  id: string
+  email: string
+  familyId: string
+  invitedByName: string
+  status?: string // 'pending' | 'accepted'
+  acceptedBy?: string
+  acceptedAt?: string
+  createdAt: string
+}
+
+interface AdminDashboardProps {
+  onClose?: () => void
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-  const [families, setFamilies] = useState<FamilySummary[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null)
-
-  // Dashboard Tabs
-  const [view, setView] = useState<'families' | 'access'>('families')
-
-  const fetchFamilies = useCallback(async () => {
-    try {
-      const token = await auth.currentUser?.getIdToken()
-      const res = await fetch('/protected/recipes/api/admin/families', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.status === 403) {
-        throw new Error('Unauthorized: Admin access required')
-      }
-      const data = await res.json()
-      if (data.success) {
-        setFamilies(data.families)
-      } else {
-        throw new Error(data.error)
-      }
-    } catch (e) {
-      console.error(e)
-      await alert((e as Error).message)
-      onClose()
-    } finally {
-      setIsLoading(false)
-    }
-  }, [onClose])
+  const [activeTab, setActiveTab] = useState<'users' | 'codes' | 'invites'>('users')
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [codes, setCodes] = useState<InviteCode[]>([])
+  const [invites, setInvites] = useState<FamilyInvite[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (view === 'families') {
-      fetchFamilies()
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const [usersRes, codesRes, invitesRes] = await Promise.all([
+        fetch('/protected/recipes/api/admin/users'),
+        fetch('/protected/recipes/api/admin/access-codes'),
+        fetch('/protected/recipes/api/admin/invites'),
+      ])
+
+      const usersData = await usersRes.json()
+      const codesData = await codesRes.json()
+      const invitesData = await invitesRes.json()
+
+      if (usersData.success) setUsers(usersData.users)
+      if (codesData.success) setCodes(codesData.invites || [])
+      if (invitesData.success) setInvites(invitesData.invites)
+    } catch (e) {
+      console.error('Failed to fetch admin data', e)
+    } finally {
+      setLoading(false)
     }
-  }, [fetchFamilies, view])
-
-  const filteredFamilies = families.filter(
-    (f) =>
-      f.name.toLowerCase().includes(search.toLowerCase()) ||
-      f.id.toLowerCase().includes(search.toLowerCase()),
-  )
-
-  if (selectedFamilyId) {
-    return (
-      <AdminFamilyManager
-        familyId={selectedFamilyId}
-        onBack={() => {
-          setSelectedFamilyId(null)
-          fetchFamilies() // Refresh list on return
-        }}
-      />
-    )
   }
+
+  const formatDate = (isoString?: string) => {
+    if (!isoString) return '-'
+    return new Date(isoString).toLocaleDateString()
+  }
+
+  if (loading) return <div className="p-8 text-center">Loading Admin Data...</div>
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -82,97 +91,209 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             <ShieldAlert className="h-6 w-6 text-orange-600" />
             <h1 className="text-lg font-bold">Admin Dashboard</h1>
           </Inline>
-          <button onClick={onClose} className="rounded-full p-2 hover:bg-muted">
-            <LogOut className="h-5 w-5" />
-          </button>
+          {onClose && (
+            <button onClick={onClose} className="rounded-full p-2 hover:bg-muted">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </Inline>
       </div>
 
       {/* Tab Navigation */}
       <div className="flex border-b border-border bg-card px-4">
         <button
-          onClick={() => setView('families')}
+          onClick={() => setActiveTab('users')}
           className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-            view === 'families'
+            activeTab === 'users'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
-          Manage Families
+          Users ({users.length})
         </button>
         <button
-          onClick={() => setView('access')}
-          className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-            view === 'access'
+          onClick={() => setActiveTab('codes')}
+          className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'codes'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
-          Access & Invites
+          Access Codes ({codes.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('invites')}
+          className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'invites'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Family Invites ({invites.length})
         </button>
       </div>
 
-      {view === 'access' ? (
-        <AccessRequestsDashboard />
-      ) : (
-        <>
-          {/* Toolbar */}
-          <div className="bg-card p-4 shadow-sm">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search families by name or ID..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
-          </div>
-
-          {/* List */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {isLoading ? (
-              <div className="flex h-40 items-center justify-center text-muted-foreground">
-                Loading...
-              </div>
-            ) : (
-              <Stack spacing="sm">
-                <div className="flex justify-between px-2 text-xs font-bold uppercase text-muted-foreground">
-                  <span>Family</span>
-                  <span>Members</span>
-                </div>
-                {filteredFamilies.map((family) => (
-                  <div
-                    key={family.id}
-                    role="button"
-                    tabIndex={0}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    onClick={() => setSelectedFamilyId(family.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        setSelectedFamilyId(family.id)
-                      }
-                    }}
-                  >
-                    <Stack spacing="xs">
-                      <span className="font-bold">{family.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{family.id}</span>
-                    </Stack>
-                    <Inline spacing="md" align="center">
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <Users size={12} />
-                        {family.memberCount}
-                      </Badge>
-                      <MoreHorizontal size={16} className="text-muted-foreground" />
-                    </Inline>
-                  </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        {activeTab === 'users' && (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Joined
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Stats
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                      <div className="text-sm text-gray-500">{user.email}</div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                          user.status === 'approved'
+                            ? 'bg-green-100 text-green-800'
+                            : user.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      {formatDate(user.joinedAt)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      <div>Added: {user.stats?.recipesAdded || 0}</div>
+                      <div>Cooked: {user.stats?.recipesCooked || 0}</div>
+                    </td>
+                  </tr>
                 ))}
-              </Stack>
-            )}
+              </tbody>
+            </table>
           </div>
-        </>
-      )}
+        )}
+
+        {activeTab === 'codes' && (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Code
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Created By
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Accepted By
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {codes.map((code) => (
+                  <tr key={code.code}>
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-900">
+                      {code.code}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                          code.status === 'accepted'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {code.status || 'pending'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      <div>{code.createdByName}</div>
+                      <div className="text-xs">{formatDate(code.createdAt)}</div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      {code.acceptedBy ? (
+                        <>
+                          <div>{code.acceptedByName || 'User'}</div>
+                          <div className="text-xs">{formatDate(code.acceptedAt)}</div>
+                        </>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'invites' && (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Invited Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Invited By
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Accepted At
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {invites.map((invite) => (
+                  <tr key={invite.id}>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                      {invite.email}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                          invite.status === 'accepted'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {invite.status || 'pending'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      <div>{invite.invitedByName}</div>
+                      <div className="text-xs">{formatDate(invite.createdAt)}</div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      {invite.acceptedAt ? formatDate(invite.acceptedAt) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

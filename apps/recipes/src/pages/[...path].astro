@@ -1,9 +1,39 @@
 ---
 import RecipeLayout from '../layouts/RecipeLayout.astro'
 import RecipeManagerClient from '../components/recipe-manager/RecipeManager.jsx'
-const user = Astro.cookies.get('site_user')?.value
+import { db } from '../lib/firebase-server'
+import { getEmailList } from '../lib/env'
+
+const userId = Astro.cookies.get('site_user')?.value
+let displayName = userId
+let isAdmin = false
+let hasOnboarded = false
+
+if (userId) {
+  try {
+    const userDoc = await db.getDocument('users', userId)
+    if (userDoc) {
+      if (typeof userDoc.displayName === 'string') {
+        displayName = userDoc.displayName
+      }
+      if (typeof userDoc.email === 'string') {
+        const adminEmails = getEmailList(Astro, 'ADMIN_EMAILS')
+        if (adminEmails.includes(userDoc.email.toLowerCase())) {
+          isAdmin = true
+        }
+      }
+      if (typeof userDoc.hasOnboarded === 'boolean') {
+        hasOnboarded = userDoc.hasOnboarded
+      } else {
+        hasOnboarded = true
+      }
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+}
 ---
 
-<RecipeLayout title="My Recipes">
-  <RecipeManagerClient client:only="react" user={user} />
+<RecipeLayout title="My Recipes" isAdmin={isAdmin}>
+  <RecipeManagerClient client:only="react" user={displayName || userId} isAdmin={isAdmin} hasOnboarded={hasOnboarded} />
 </RecipeLayout>

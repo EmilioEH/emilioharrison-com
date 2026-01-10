@@ -43,6 +43,7 @@ export const POST: APIRoute = async (context) => {
       createdByUserId: userId,
       createdByName: user.displayName || 'User',
       createdAt: new Date().toISOString(),
+      status: 'pending',
     })
 
     return new Response(JSON.stringify({ success: true, code }), { status: 200 })
