@@ -31,7 +31,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
 - **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **inline editing** of ingredients and steps.
-- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu.
+- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via a persistent **Floating Action Button (FAB)** or the global burger menu. Supports a global **keyboard shortcut** (`Cmd/Ctrl + Shift + F`) for instant reporting.
 - **Admin Dashboard**: A centralized interface (restricted to admins via `ADMIN_EMAILS` check) to:
   - **Manage Access**: Approve pending requests and generate/revoke invite codes.
   - **Manage Families**: View family statistics and manage memberships.
@@ -158,6 +158,7 @@ All primitives use the `spacing` prop with a controlled scale:
 > **Agent Tip: Responsive Modals**
 > When building custom modals (centered via `fixed`), avoid hard-coded centering like `left-1/2 -translate-x-1/2` alone. Always use responsive padding/margins (e.g., `left-4 right-4 mx-auto`) to protect against overflow on small mobile screens. Revert to desktop centering at the `sm:` breakpoint.
 
+- **Quick Feedback Entry Points**: Implemented a persistent "Feedback" FAB and a global keyboard shortcut (`Cmd/Ctrl + Shift + F`) to streamline user reporting during beta testing. Integrated into the global layout for seamless access across all app views.
 - **Robust Ingredient Mapping**: Transitioned from a purely heuristic text-matching approach to an **Explicit AI-Generated Mapping** system. Recipes now store a `stepIngredients` property (Firestore-compatible `Array<{ indices: number[] }>`) that explicitly links ingredients to the steps where they are used. Added a Gemini-powered migration script (`scripts/migrate-ingredient-mappings.ts`) with contextual understanding (handles pluralization, pronouns, and partial matches) to upgrade all existing recipes.
 - **Login Access Restore (Jan 2026)**: Fixed an issue where unauthenticated users were unable to use "Request Access" or "Access Code" features because the API endpoints were blocked by the authentication middleware. Added `/api/auth/request-access` and `/api/auth/redeem-code` to permitted public routes, ensuring new users can always submit requests or join via invite.
 

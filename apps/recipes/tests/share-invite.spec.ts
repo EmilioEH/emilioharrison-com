@@ -11,7 +11,6 @@ test.describe('Invite Sharing', () => {
   test.skip('can generate and share activation code', async ({ page }) => {
     // Mock navigator.share
     await page.addInitScript(() => {
-      // @ts-expect-error - navigator.share is read-only in some environments
       navigator.share = async (data: ShareData) => {
         // @ts-expect-error - window.__shareData is a test helper
         window.__shareData = data
