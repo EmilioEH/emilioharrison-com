@@ -4,7 +4,7 @@ import { InstallInstructions } from './InstallInstructions'
 import { WelcomeTutorial } from './WelcomeTutorial'
 
 interface OnboardingFlowProps {
-  onComplete: () => void
+  onComplete: () => void | Promise<void>
 }
 
 type OnboardingStep = 'check-device' | 'install-instructions' | 'tutorial'
