@@ -3,14 +3,12 @@ import { db } from '../../../lib/firebase-server'
 import { getAuthUser, unauthorizedResponse, serverErrorResponse } from '../../../lib/api-helpers'
 
 export const POST: APIRoute = async ({ cookies }) => {
-  const userId = getAuthUser(cookies)
-  if (!userId) return unauthorizedResponse()
+  const user = getAuthUser(cookies)
+  if (!user) return unauthorizedResponse()
 
   try {
-    // Update Firestore to mark user as onboarded
-    await db.updateDocument('users', userId, {
-      hasOnboarded: true,
-    })
+    // Update Firestore users collection
+    await db.setDocument('users', user, { hasOnboarded: true }, true)
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

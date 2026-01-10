@@ -12,6 +12,7 @@ import {
   LogOut,
   UsersRound,
   ShieldAlert,
+  GraduationCap,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
@@ -126,6 +127,17 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   >
                     <ShieldAlert className="text-foreground-variant h-5 w-5" />
                     <span className="font-medium text-foreground">Admin Dashboard</span>
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      closeBurgerMenu()
+                      window.location.href = '/protected/recipes?force_onboarding=true'
+                    }}
+                    className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                  >
+                    <GraduationCap className="text-foreground-variant h-5 w-5" />
+                    <span className="font-medium text-foreground">Onboarding (Demo)</span>
                   </button>
                 </>
               )}

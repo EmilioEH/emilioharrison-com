@@ -61,9 +61,12 @@ interface RecipeManagerProps {
   hasOnboarded?: boolean
 }
 
+// --- Onboarding ---
+
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
   const [currentUser, setCurrentUser] = useState(user)
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(hasOnboarded)
 
   // Sync prop changes
   useEffect(() => {
@@ -71,8 +74,39 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [user])
 
   useEffect(() => {
-    console.log('User has onboarded:', hasOnboarded)
+    setIsOnboardingComplete(hasOnboarded)
+
+    // TEST HELPER: Allow forcing onboarding flow via URL.
+    // This enables E2E tests to verify the UI without manipulating server-side DB state.
+    const force =
+      typeof window !== 'undefined' && window.location.search.includes('force_onboarding=true')
+
+    if (force) {
+      setIsOnboardingComplete(false)
+    }
   }, [hasOnboarded])
+
+  const handleOnboardingComplete = async () => {
+    try {
+      const res = await fetch('/protected/recipes/api/user/onboarding', {
+        method: 'POST',
+      })
+      if (res.ok) {
+        setIsOnboardingComplete(true)
+      } else {
+        console.error('Failed to update onboarding status')
+        // Optimistically allow them in anyway to avoid blocking
+        setIsOnboardingComplete(true)
+      }
+    } catch (e) {
+      console.error('Error completing onboarding:', e)
+      setIsOnboardingComplete(true)
+    }
+  }
+
+  // We cannot early return here because of Rules of Hooks.
+  // Instead, we will conditionally render in the return statement.
+  const showOnboarding = isOnboardingComplete === false
 
   const { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl } = useRecipes()
 
@@ -546,6 +580,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [setIsSelectionMode])
 
   // --- RENDER ---
+  // --- EARLY RENDER: ONBOARDING ---
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />
+  }
+
   if (loading) {
     return (
       <div
@@ -637,10 +676,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   return (
     <>
       <div className="shadow-md-3 relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col bg-card text-foreground">
-        {/* Toast Warning */}
-        <div data-testid="debug-view" style={{ display: 'none' }}>
-          {view}
-        </div>
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
         {view !== 'week' && (
