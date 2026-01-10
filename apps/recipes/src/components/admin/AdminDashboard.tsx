@@ -28,7 +28,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const fetchFamilies = useCallback(async () => {
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch('/api/admin/families', {
+      const res = await fetch('/protected/recipes/api/admin/families', {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.status === 403) {
