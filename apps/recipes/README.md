@@ -36,7 +36,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **UI Architecture**: React + [shadcn/ui](https://ui.shadcn.com/) (based on [TailwindCSS](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/))
 - **Animations**: [Framer Motion](https://www.framer.com/motion/) (Layout & Physics-based transitions)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
-- **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library) - **Matches titles and ingredients** with support for typos and partial phrases.
+- **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library) - **Matches titles and ingredients** with support for typos and partial phrases. Includes **match highlighting** for better visibility.
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) (Host) + [Firebase Firestore](https://firebase.google.com/docs/firestore) (Data) + [Firebase Storage](https://firebase.google.com/docs/storage) (Images)
 - **Content**: [Markdoc](https://markdoc.dev/) + Markdown
 - **Testing**: [Vitest](https://vitest.dev/) (Unit) + [Playwright](https://playwright.dev/) (E2E) + [Stryker](https://stryker-mutator.io/) (Mutation)

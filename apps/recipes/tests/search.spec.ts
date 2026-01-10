@@ -38,4 +38,29 @@ test.describe('Fuzzy Search', () => {
 
     await expect(page.getByText('E2E Test Recipe')).toBeVisible()
   })
+  test('highlights search term in results', async ({ page }) => {
+    await page.goto('http://127.0.0.1:9002/protected/recipes')
+
+    // Workaround: Create a recipe manually since mock data seems missing in test env
+    // Click Add
+    await page.getByRole('button', { name: 'Add' }).click()
+    // Fill Title
+    await page.getByPlaceholder('Recipe Title').fill('Highlighter Test Recipe')
+    // Click Save
+    await page.getByRole('button', { name: 'Save Recipe' }).click()
+
+    // Wait for load
+    await expect(page.getByText('Highlighter Test Recipe')).toBeVisible()
+
+    // Search for "Highlighter"
+    const searchInput = page.getByPlaceholder('Search recipes...')
+    await searchInput.fill('Highlighter')
+
+    // Check for highlight class on the "Highlighter" text part
+    // The HighlightedText component uses "bg-yellow-200/50" (or similar).
+    const highlightedSpan = page
+      .locator('span.bg-yellow-200\\/50')
+      .getByText('Highlighter', { exact: true })
+    await expect(highlightedSpan).toBeVisible()
+  })
 })

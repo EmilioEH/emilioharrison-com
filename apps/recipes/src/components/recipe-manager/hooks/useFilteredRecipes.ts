@@ -54,6 +54,7 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       ],
       threshold: 0.4, // Sensitivity: 0.0 = exact, 1.0 = match anything
       includeScore: true,
+      includeMatches: true,
       ignoreLocation: true, // Search anywhere in the string
     })
   }, [recipes])
@@ -71,7 +72,10 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       if (!fuse) return []
       const searchResults = fuse.search(searchQuery)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      result = searchResults.map((r: any) => r.item)
+      result = searchResults.map((r: any) => ({
+        ...r.item,
+        matches: r.matches,
+      }))
     }
 
     // Filter using helper to reduce cognitive complexity

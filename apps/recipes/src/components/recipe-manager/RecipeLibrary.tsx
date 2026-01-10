@@ -4,6 +4,7 @@ import { ChefHat, MoreVertical, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AccordionGroup } from '@/components/ui/AccordionGroup'
+import { HighlightedText } from '../ui/HighlightedText'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
@@ -43,7 +44,7 @@ const itemVariants: Variants = {
 const scrollCache: Record<string, string | number> = {}
 
 interface RecipeLibraryProps {
-  recipes: Recipe[]
+  recipes: (Recipe & { matches?: { indices: [number, number][]; key?: string }[] })[]
   onSelectRecipe: (recipe: Recipe) => void
   onToggleThisWeek: (id: string) => void
   sort: string
@@ -232,10 +233,18 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     )
   }
 
-  const renderRecipeCard = (recipe: Recipe) => {
+  const renderRecipeCard = (
+    recipe: Recipe & { matches?: { indices: [number, number][]; key?: string }[] },
+  ) => {
     // Calculate planned dates once for performance
     const plannedDates = getPlannedDatesForRecipe(recipe.id)
     const isPlanned = plannedDates.length > 0
+
+    const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
+
+    const ingredientMatches = recipe.matches?.filter(
+      (m) => m.key === 'ingredients.name' || m.key === 'ingredients',
+    ) // Fuse might normalize keys
 
     return (
       <motion.div
@@ -286,7 +295,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
         <div className="flex flex-1 flex-col justify-center">
           <div className="flex items-start justify-between gap-2">
             <h4 className="line-clamp-2 flex-1 font-display text-lg font-bold leading-tight text-foreground">
-              {recipe.title}
+              <HighlightedText text={recipe.title} matches={titleMatches} />
             </h4>
             {(recipe.rating ?? 0) > 0 && (
               <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
@@ -295,6 +304,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               </div>
             )}
           </div>
+
+          {/* Ingredient Match Snippet */}
+          {ingredientMatches && ingredientMatches.length > 0 && (
+            <div className="mb-1 text-xs italic text-muted-foreground/80">Matches ingredient</div>
+          )}
 
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-muted-foreground">
             <span>{recipe.cookTime + recipe.prepTime} min</span>
