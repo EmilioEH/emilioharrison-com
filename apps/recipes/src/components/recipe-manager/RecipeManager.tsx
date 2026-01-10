@@ -62,6 +62,7 @@ interface RecipeManagerProps {
 }
 
 // --- Onboarding ---
+import { OnboardingFlow } from '../onboarding/OnboardingFlow'
 
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
