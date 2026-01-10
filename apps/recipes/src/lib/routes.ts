@@ -8,6 +8,8 @@ export const APP_BASE_URL = import.meta.env.BASE_URL || '/'
 const PUBLIC_API_ROUTES = [
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/auth/request-access', // Access request for new users
+  '/api/auth/redeem-code', // Invite code redemption for new users
   '/api/feedback', // Public feedback submission
 ]
 

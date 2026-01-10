@@ -153,6 +153,7 @@ All primitives use the `spacing` prop with a controlled scale:
 > When building custom modals (centered via `fixed`), avoid hard-coded centering like `left-1/2 -translate-x-1/2` alone. Always use responsive padding/margins (e.g., `left-4 right-4 mx-auto`) to protect against overflow on small mobile screens. Revert to desktop centering at the `sm:` breakpoint.
 
 - **Robust Ingredient Mapping**: Transitioned from a purely heuristic text-matching approach to an **Explicit AI-Generated Mapping** system. Recipes now store a `stepIngredients` property (Firestore-compatible `Array<{ indices: number[] }>`) that explicitly links ingredients to the steps where they are used. Added a Gemini-powered migration script (`scripts/migrate-ingredient-mappings.ts`) with contextual understanding (handles pluralization, pronouns, and partial matches) to upgrade all existing recipes.
+- **Login Access Restore (Jan 2026)**: Fixed an issue where unauthenticated users were unable to use "Request Access" or "Access Code" features because the API endpoints were blocked by the authentication middleware. Added `/api/auth/request-access` and `/api/auth/redeem-code` to permitted public routes, ensuring new users can always submit requests or join via invite.
 
 ### Recent Updates (Dec 2025)
 
