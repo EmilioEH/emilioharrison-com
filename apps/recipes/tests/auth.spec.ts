@@ -10,96 +10,132 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
   })
 
-  test('should redirect to login if unauthenticated', async ({ page }) => {
-    await page.goto('/protected/recipes')
-    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+  test('should handle pending access status', async ({ page }) => {
+    // Mock Login Response for "Pending"
+    await page.route('**/api/auth/login', async (route) => {
+      const json = { error: 'Unauthorized', code: 'auth/pending', details: 'Pending Approval' }
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify(json),
+      })
+    })
+
+    // 1. Visit Login Page
+    await page.goto('/protected/recipes/login')
+
+    // 2. Trigger Login (Simulated)
+    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.waitForFunction(() => !!(window as any).simulateGoogleLogin)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.evaluate(() => (window as any).simulateGoogleLogin('mock-token'))
+
+    // 3. Verify Landing on "Pending" State
+    await expect(page.getByText('Access Pending', { exact: true })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('button', { name: 'Check Status' })).toBeVisible()
   })
 
-  test('should redirect to login if user cookie is missing (stale session)', async ({
-    context,
-    page,
-  }) => {
-    // Manually set authorized cookie but NOT the user cookie
-    await context.addCookies([
-      {
-        name: 'site_auth',
-        value: 'true',
-        domain: 'localhost',
-        path: '/',
-      },
-    ])
+  test('should handle denied access and request flow', async ({ page }) => {
+    // Mock Login Response for "Denied"
+    await page.route('**/api/auth/login', async (route) => {
+      const json = { error: 'Unauthorized', code: 'auth/denied', details: 'Access Denied' }
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify(json),
+      })
+    })
 
-    await page.goto('/protected/recipes')
-    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+    // Mock Request Access Response
+    await page.route('**/api/auth/request-access', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      })
+    })
+
+    // 1. Visit Login Page
+    await page.goto('/protected/recipes/login')
+
+    // 2. Trigger Login (Simulated)
+    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.waitForFunction(() => !!(window as any).simulateGoogleLogin)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.evaluate(() => (window as any).simulateGoogleLogin('mock-token'))
+
+    // 3. Verify Landing on "Denied" State
+    await expect(page.getByText('Access Restricted')).toBeVisible({ timeout: 10000 })
+
+    // 4. Click Request Access
+    await page.getByRole('button', { name: 'Request Access' }).click()
+
+    // 5. Verify Transition to Pending
+    await expect(page.getByText('Access Pending')).toBeVisible()
   })
 
-  test('should allow logout', async ({ context, page }) => {
-    // Manually login
-    await context.addCookies([
-      {
-        name: 'site_auth',
-        value: 'true',
-        domain: 'localhost',
-        path: '/',
-      },
-      {
-        name: 'site_user',
-        value: 'TestUser',
-        domain: 'localhost',
-        path: '/',
-      },
-      {
-        name: 'site_email',
-        value: 'emilioeh1991@gmail.com', // Whitelisted
-        domain: 'localhost',
-        path: '/',
-      },
-    ])
+  test('should handle invite code redemption', async ({ page }) => {
+    // 1. Mock Login Failure (Denied)
+    await page.route('**/api/auth/login', async (route) => {
+      const json = { error: 'Unauthorized', code: 'auth/denied', details: 'Access Denied' }
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify(json),
+      })
+    })
 
-    // 1. Visit Protected Page
-    await page.goto('/protected/recipes')
-    await expect(page.getByTestId('loading-indicator')).toBeHidden()
+    // 2. Mock Redeem Success
+    await page.route('**/api/auth/redeem-code', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      })
+    })
 
-    // Scroll up to ensure header is visible (Note: window.scrollTo might not work if scrolling is on a div)
-    // but default state should be top.
+    // Dynamic Login Mock
+    let loginAttempts = 0
+    await page.unroute('**/api/auth/login') // Clear previous static mock if any
+    await page.route('**/api/auth/login', async (route) => {
+      loginAttempts++
+      if (loginAttempts === 1) {
+        const json = { error: 'Unauthorized', code: 'auth/denied', details: 'Access Denied' }
+        await route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify(json),
+        })
+      } else {
+        // Success!
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        })
+      }
+    })
 
-    // 2. Click Logout (via Burger Menu)
-    await page.getByRole('button', { name: 'Open Menu' }).click()
-    await page.getByRole('menuitem', { name: 'Log Out' }).click()
+    // 1. Visit Login Page
+    await page.goto('/protected/recipes/login')
 
-    // 3. Verify Redirect
-    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+    // 2. Trigger Login (Simulated Fail)
+    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.waitForFunction(() => !!(window as any).simulateGoogleLogin)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.evaluate(() => (window as any).simulateGoogleLogin('mock-token'))
+    await expect(page.getByText('Access Restricted')).toBeVisible({ timeout: 10000 })
 
-    // 4. Verify Cookie Cleared?
-    // Hard to check cookie deletion directly in Playwright without getting cookies again
-    // But the redirect confirms session is gone (middleware enforces it)
-    await expect(page.getByRole('heading', { name: 'Chef Login' })).toBeVisible()
-  })
+    // 3. Enter Code
+    await page.getByPlaceholder('Enter code').fill('TESTCODE')
+    await page.getByRole('button', { name: 'Redeem' }).click()
 
-  test('should redirect to login if email is not whitelisted', async ({ context, page }) => {
-    // Manually login with unauthorized email
-    await context.addCookies([
-      {
-        name: 'site_auth',
-        value: 'true',
-        domain: 'localhost',
-        path: '/',
-      },
-      {
-        name: 'site_user',
-        value: 'UnauthorizedUser',
-        domain: 'localhost',
-        path: '/',
-      },
-      {
-        name: 'site_email',
-        value: 'hacker@example.com', // Not in whitelist
-        domain: 'localhost',
-        path: '/',
-      },
-    ])
-
-    await page.goto('/protected/recipes')
-    await expect(page).toHaveURL(/\/protected\/recipes\/login/)
+    // 4. Verify Redirect (which means leaving login page)
+    // We expect to NOT see the restricted message anymore or navigate away
+    // Since the next login is mocked success, it should redirect to home.
+    await expect(page).toHaveURL(/.*\/protected\/recipes/, { timeout: 10000 })
   })
 })

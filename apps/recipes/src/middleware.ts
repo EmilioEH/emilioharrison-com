@@ -1,6 +1,5 @@
 import { defineMiddleware } from 'astro:middleware'
 import type { APIContext } from 'astro'
-import { getEmailList } from './lib/env'
 import { isProtectedRoute, isLoginPage, isPublicApiRoute, getLoginUrl } from './lib/routes'
 import { setRequestContext } from './lib/request-context'
 
@@ -29,16 +28,6 @@ const isAuthenticated = (context: APIContext): boolean => {
   return authCookie?.value === 'true' && !!userCookie?.value
 }
 
-/** Validates user email against whitelist */
-const isEmailAuthorized = (context: APIContext): boolean => {
-  const allowedEmails = getEmailList(context, 'ALLOWED_EMAILS')
-  if (allowedEmails.length === 0) return true // No whitelist = all allowed
-
-  const emailCookie = context.cookies.get('site_email')
-  const userEmail = emailCookie?.value?.toLowerCase()
-  return !!userEmail && allowedEmails.includes(userEmail)
-}
-
 export const onRequest = defineMiddleware(async (context, next) => {
   // Store the request context for modules that need access to Cloudflare runtime env
   // (like firebase-server.ts which needs FIREBASE_SERVICE_ACCOUNT)
@@ -62,10 +51,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return handleUnauthorized(context, 'Unauthorized')
   }
 
-  // Check email authorization
-  if (!isEmailAuthorized(context)) {
-    return handleUnauthorized(context, 'Unauthorized email')
-  }
+  // Legacy isEmailAuthorized check removed.
+  // Access control is now handled at login time via API/Firestore logic.
+  // If the user has valid cookies, they are assumed to be authorized.
 
   return next()
 })

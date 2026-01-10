@@ -13,16 +13,8 @@ let isAllowed = false
 const allowedEmailsEnv = getEnv(Astro, 'ALLOWED_EMAILS')
 
 if (auth?.value === 'true' && user?.value) {
-  // Check if email is allowed
-  if (allowedEmailsEnv) {
-    const allowedEmails = allowedEmailsEnv.split(',').map((e: string) => e.trim().toLowerCase())
-    if (email?.value && allowedEmails.includes(email.value.toLowerCase())) {
-      isAllowed = true
-    }
-  } else {
-    // No whitelist configured, allow all
-    isAllowed = true
-  }
+  // If cookies are present, we assume the user was authorized by the login API.
+  isAllowed = true
 }
 
 if (isAllowed) {

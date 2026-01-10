@@ -1,24 +1,51 @@
 import { useState } from 'react'
 import { auth, googleProvider } from '../../lib/firebase-client'
 import { signInWithPopup } from 'firebase/auth'
+import { AlertCircle, ArrowRight, Key } from 'lucide-react'
 
 export const GoogleSignInButton = () => {
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'pending_approval' | 'denied'>('idle')
+  const [tempToken, setTempToken] = useState<string | null>(null)
+
+  // Invite Code State
+  const [inviteCode, setInviteCode] = useState('')
+  const [redeemLoading, setRedeemLoading] = useState(false)
+  const [requestLoading, setRequestLoading] = useState(false)
+
+  // Test Helper
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(window as any).simulateGoogleLogin = (token: string) => {
+        setTempToken(token)
+        attemptLogin(token)
+      }
+    }
+  })
 
   const handleGoogleLogin = async () => {
-    setLoading(true)
+    setStatus('loading')
     setError('')
     try {
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
+      setTempToken(idToken)
 
-      // Verify token with backend
+      await attemptLogin(idToken)
+    } catch (e: unknown) {
+      console.error(e)
+      const errorMsg = e instanceof Error ? e.message : 'Something went wrong'
+      setError(errorMsg)
+      setStatus('idle')
+    }
+  }
+
+  const attemptLogin = async (idToken: string) => {
+    try {
       const response = await fetch('/protected/recipes/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       })
 
@@ -26,28 +53,148 @@ export const GoogleSignInButton = () => {
         window.location.replace('/protected/recipes')
       } else {
         const data = await response.json()
-        const errorMsg = data.error || 'Login failed'
+        const errorMsg = data.details || data.error || 'Login failed'
         setError(errorMsg)
 
-        // Log the detailed error
-        console.error('Backend Login Failed', {
-          status: response.status,
-          error: data.error,
-          details: data.details,
-        })
+        if (data.code === 'auth/pending') {
+          setStatus('pending_approval')
+        } else if (data.code === 'auth/denied') {
+          setStatus('denied')
+        } else {
+          setStatus('idle')
+        }
       }
-    } catch (e: unknown) {
-      console.error(e)
-      const errorMsg = e instanceof Error ? e.message : 'Something went wrong'
-      setError(errorMsg)
-
-      console.error('Client Login Exception', {
-        error: errorMsg,
-        stack: e instanceof Error ? e.stack : undefined,
-      })
-    } finally {
-      setLoading(false)
+    } catch {
+      console.error('Connection failed')
+      setError('Connection failed')
+      setStatus('idle')
     }
+  }
+
+  const handleRequestAccess = async () => {
+    if (!tempToken) return
+    setRequestLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/auth/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: tempToken }),
+      })
+      if (res.ok) {
+        setStatus('pending_approval')
+        setError('Access requested successfully. Pending approval.')
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Failed to request access')
+      }
+    } catch {
+      setError('Failed to request access')
+    } finally {
+      setRequestLoading(false)
+    }
+  }
+
+  const handleRedeemCode = async () => {
+    if (!tempToken || !inviteCode.trim()) return
+    setRedeemLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/auth/redeem-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: tempToken, code: inviteCode.trim() }),
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        // Retry login immediately
+        await attemptLogin(tempToken)
+      } else {
+        setError(data.error || 'Invalid code')
+      }
+    } catch {
+      setError('Failed to redeem code')
+    } finally {
+      setRedeemLoading(false)
+    }
+  }
+
+  if (status === 'pending_approval') {
+    return (
+      <div className="flex flex-col items-center gap-4 text-center animate-in fade-in">
+        <div className="rounded-full bg-amber-100 p-4 text-amber-600">
+          <AlertCircle className="h-8 w-8" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-gray-800">Access Pending</h3>
+          <p className="max-w-xs text-gray-600">
+            Your request has been sent to the administrator. You will be able to log in once
+            approved.
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 text-sm text-blue-600 hover:underline"
+        >
+          Check Status
+        </button>
+      </div>
+    )
+  }
+
+  if (status === 'denied') {
+    return (
+      <div className="flex w-full flex-col gap-6 animate-in fade-in">
+        <div className="text-center">
+          <h3 className="text-lg font-bold text-gray-800">Access Restricted</h3>
+          <p className="mb-4 text-sm text-gray-600">{error}</p>
+
+          <button
+            onClick={handleRequestAccess}
+            disabled={requestLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700"
+          >
+            {requestLoading ? 'Sending...' : 'Request Access'}
+            {!requestLoading && <ArrowRight className="h-4 w-4" />}
+          </button>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-gray-500">Or redeem invite</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Enter code"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            onClick={handleRedeemCode}
+            disabled={redeemLoading || !inviteCode}
+            className="rounded-lg bg-gray-800 px-4 font-bold text-white transition-colors hover:bg-gray-900 disabled:opacity-50"
+          >
+            {redeemLoading ? '...' : 'Redeem'}
+          </button>
+        </div>
+
+        <button
+          onClick={() => setStatus('idle')}
+          className="text-center text-xs text-gray-400 hover:text-gray-600"
+        >
+          Back to Login
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -56,10 +203,10 @@ export const GoogleSignInButton = () => {
 
       <button
         onClick={handleGoogleLogin}
-        disabled={loading}
+        disabled={status === 'loading'}
         className="group flex w-full items-center justify-center gap-3 rounded-full bg-white px-6 py-4 text-lg font-bold text-gray-700 shadow-md transition-all hover:bg-gray-50 hover:shadow-lg active:scale-95 disabled:opacity-70 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
       >
-        {loading ? (
+        {status === 'loading' ? (
           <span className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></span>
         ) : (
           <svg className="h-6 w-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

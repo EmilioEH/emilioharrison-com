@@ -18,7 +18,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Source Attribution**: Grocery items perform "double duty"—displaying the aggregate store unit while allowing users to tap tags (e.g., `[RECIPE A]`) to see exactly how much is needed for each dish.
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
-- **Privacy First**: Secure dashboard protected by Google Sign-In authentication. Only authenticated users can access the recipe collection.
+- **Robust Access Control**: Secure dashboard protected by Google Sign-In. Supports **Request Access** flow with admin approval and **Invite Codes** for instant family access.
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to convert chopped/diced/sliced ingredients into whole purchasable produce (e.g., "1 cup chopped onion" → "1 medium onion") and organizes them by aisle.
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
@@ -28,7 +28,10 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
 - **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **inline editing** of ingredients and steps.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via the global burger menu.
-- **Feedback Dashboard**: An integrated management interface (restricted to admins via `ADMIN_EMAILS`) to review, track, and resolve user feedback reports directly in the app.
+- **Admin Dashboard**: A centralized interface (restricted to admins) to:
+  - **Manage Access**: Approve pending requests and generate/revoke invite codes.
+  - **Manage Families**: View family statistics and manage memberships.
+  - **Feedback**: Review, track, and resolve user feedback reports.
 
 ## 🛠 Tech Stack
 
@@ -423,11 +426,11 @@ npm run feedback:resolve <id> fixed --remote
    PUBLIC_FIREBASE_APP_ID=your_app_id
 
    # Email Whitelists (comma-separated)
+   # Users in ALLOWED_EMAILS are automatically approved and considered admins upon login (Bootstrapping).
    ALLOWED_EMAILS=user1@gmail.com,user2@gmail.com
-   ADMIN_EMAILS=admin@gmail.com
    ```
 
-   > **Production Note**: These variables must also be set in **Cloudflare Pages Environment Variables**. The `PUBLIC_` prefixed variables are safe to expose as they only identify the Firebase project.
+   > **Production Note**: These variables must also be set in **Cloudflare Pages Environment Variables**.
 
 3. **Development**:
    The recommended way to run the app locally is using the **`/run-local`** workflow:

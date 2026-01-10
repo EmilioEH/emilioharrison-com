@@ -50,14 +50,55 @@ export const POST: APIRoute = async (context) => {
     const email = user.email
 
     // Validate email against whitelist (only if whitelist is configured)
+    // Validate email against whitelist (only if whitelist is configured)
     const allowedEmails = getEmailList(context, 'ALLOWED_EMAILS')
 
-    if (allowedEmails.length > 0 && (!email || !allowedEmails.includes(email.toLowerCase()))) {
-      console.error(`Login blocked for unauthorized email: ${email}`)
+    // Check if user is in the legacy allowed list (Super Admin / Legacy Access)
+    const isWhitelisted =
+      allowedEmails.length > 0 && email && allowedEmails.includes(email.toLowerCase())
+
+    // Fetch existing user to check status
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let userDoc: any = null
+    try {
+      userDoc = await db.getDocument('users', userId)
+    } catch {
+      // Ignore if not found
+    }
+
+    // Access Control Logic
+    // 1. If whitelisted -> Always Allow (and auto-approve if needed)
+    // 2. If existing user -> Check status ('approved')
+    // 3. If new user -> Deny (must request access)
+
+    let isAllowed = false
+    let status = userDoc?.status || 'pending'
+
+    if (isWhitelisted) {
+      isAllowed = true
+      status = 'approved' // Auto-approve whitelisted users
+    } else if (userDoc && userDoc.status === 'approved') {
+      isAllowed = true
+    }
+
+    if (!isAllowed) {
+      console.error(`Login blocked. Email: ${email}, Status: ${status}`)
+
+      // Determine error details based on state
+      let errorDetails = 'Access denied.'
+      if (status === 'pending') {
+        errorDetails = 'Your access request is pending approval.'
+      } else if (status === 'rejected') {
+        errorDetails = 'Your access request has been denied.'
+      } else {
+        errorDetails = 'You do not have access to this application.'
+      }
+
       return new Response(
         JSON.stringify({
           error: 'Unauthorized',
-          details: 'Your email is not on the allowed list.',
+          details: errorDetails,
+          code: status === 'pending' ? 'auth/pending' : 'auth/denied',
         }),
         { status: 403 },
       )
@@ -79,6 +120,7 @@ export const POST: APIRoute = async (context) => {
           email: email || '',
           displayName: name,
           joinedAt: new Date().toISOString(),
+          status: status, // Persist the determined status
         })
       }
     } catch (dbError) {

@@ -5,6 +5,7 @@ import { alert } from '../../lib/dialogStore'
 import { Badge } from '@/components/ui/badge'
 import type { Family } from '../../lib/types'
 import { AdminFamilyManager } from './AdminFamilyManager'
+import { AccessRequestsDashboard } from './AccessRequestsDashboard'
 
 interface AdminDashboardProps {
   onClose: () => void
@@ -19,6 +20,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null)
+
+  // Dashboard Tabs
+  const [view, setView] = useState<'families' | 'access'>('families')
 
   const fetchFamilies = useCallback(async () => {
     try {
@@ -42,8 +46,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   }, [onClose])
 
   useEffect(() => {
-    fetchFamilies()
-  }, [fetchFamilies])
+    if (view === 'families') {
+      fetchFamilies()
+    }
+  }, [fetchFamilies, view])
 
   const filteredFamilies = families.filter(
     (f) =>
@@ -78,61 +84,91 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         </Inline>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-card p-4 shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search families by name or ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex border-b border-border bg-card px-4">
+        <button
+          onClick={() => setView('families')}
+          className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            view === 'families'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Manage Families
+        </button>
+        <button
+          onClick={() => setView('access')}
+          className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            view === 'access'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Access & Invites
+        </button>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {isLoading ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
-            Loading...
-          </div>
-        ) : (
-          <Stack spacing="sm">
-            <div className="flex justify-between px-2 text-xs font-bold uppercase text-muted-foreground">
-              <span>Family</span>
-              <span>Members</span>
+      {view === 'access' ? (
+        <AccessRequestsDashboard />
+      ) : (
+        <>
+          {/* Toolbar */}
+          <div className="bg-card p-4 shadow-sm">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search families by name or ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
             </div>
-            {filteredFamilies.map((family) => (
-              <div
-                key={family.id}
-                role="button"
-                tabIndex={0}
-                className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                onClick={() => setSelectedFamilyId(family.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setSelectedFamilyId(family.id)
-                  }
-                }}
-              >
-                <Stack spacing="xs">
-                  <span className="font-bold">{family.name}</span>
-                  <span className="font-mono text-xs text-muted-foreground">{family.id}</span>
-                </Stack>
-                <Inline spacing="md" align="center">
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    <Users size={12} />
-                    {family.memberCount}
-                  </Badge>
-                  <MoreHorizontal size={16} className="text-muted-foreground" />
-                </Inline>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {isLoading ? (
+              <div className="flex h-40 items-center justify-center text-muted-foreground">
+                Loading...
               </div>
-            ))}
-          </Stack>
-        )}
-      </div>
+            ) : (
+              <Stack spacing="sm">
+                <div className="flex justify-between px-2 text-xs font-bold uppercase text-muted-foreground">
+                  <span>Family</span>
+                  <span>Members</span>
+                </div>
+                {filteredFamilies.map((family) => (
+                  <div
+                    key={family.id}
+                    role="button"
+                    tabIndex={0}
+                    className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-4 hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onClick={() => setSelectedFamilyId(family.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        setSelectedFamilyId(family.id)
+                      }
+                    }}
+                  >
+                    <Stack spacing="xs">
+                      <span className="font-bold">{family.name}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{family.id}</span>
+                    </Stack>
+                    <Inline spacing="md" align="center">
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Users size={12} />
+                        {family.memberCount}
+                      </Badge>
+                      <MoreHorizontal size={16} className="text-muted-foreground" />
+                    </Inline>
+                  </div>
+                ))}
+              </Stack>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

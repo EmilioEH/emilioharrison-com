@@ -161,6 +161,7 @@ export interface User {
   role?: 'creator' | 'admin' | 'user'
   familyId?: string // Reference to family group
   joinedAt: string
+  status?: 'pending' | 'approved' | 'rejected'
 }
 
 /** A note added by a family member on a recipe */
