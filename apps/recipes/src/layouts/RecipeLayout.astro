@@ -14,9 +14,10 @@ import GlobalDialogRoot from '../components/layout/GlobalDialogRoot'
 
 export interface Props {
   title: string
+  isAdmin?: boolean
 }
 
-const { title } = Astro.props
+const { title, isAdmin } = Astro.props
 const user = Astro.cookies.get('site_user')?.value
 ---
 
@@ -66,7 +67,7 @@ const user = Astro.cookies.get('site_user')?.value
       <slot />
     </div>
 
-    <GlobalBurgerMenu client:load user={user} />
+    <GlobalBurgerMenu client:load user={user} isAdmin={isAdmin} />
     <GlobalFeedback client:load />
     <GlobalDialogRoot client:load />
 

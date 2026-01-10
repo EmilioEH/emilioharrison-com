@@ -7,9 +7,9 @@ test.describe('Menu UX & Navigation', () => {
       { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
       { name: 'site_user', value: 'TestUser', domain: 'localhost', path: '/' },
       { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
-      { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
-      { name: 'site_user', value: 'TestUser', domain: 'localhost', path: '/' },
-      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
+      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'site_user', value: 'TestUser', domain: '127.0.0.1', path: '/' },
+      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
     ])
     await page.goto('/protected/recipes')
     // Wait for recipes to load

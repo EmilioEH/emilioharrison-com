@@ -1,16 +1,13 @@
 ---
 import RecipeLayout from '../layouts/RecipeLayout.astro'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
-import { getEnv } from '../lib/env'
 
 // Server-side redirect if already logged in?
 // The middleware usually handles protection, but we can double check.
 const auth = Astro.cookies.get('site_auth')
 const user = Astro.cookies.get('site_user')
-const email = Astro.cookies.get('site_email')
 
 let isAllowed = false
-const allowedEmailsEnv = getEnv(Astro, 'ALLOWED_EMAILS')
 
 if (auth?.value === 'true' && user?.value) {
   // If cookies are present, we assume the user was authorized by the login API.

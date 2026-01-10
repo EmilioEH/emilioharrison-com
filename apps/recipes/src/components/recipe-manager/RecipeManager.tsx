@@ -57,10 +57,11 @@ interface ProteinWarning {
 
 interface RecipeManagerProps {
   user?: string
+  isAdmin?: boolean
 }
 
 // --- MAIN COMPONENT ---
-const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
+const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
   const [currentUser, setCurrentUser] = useState(user)
 
   // Sync prop changes
@@ -621,6 +622,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user }) => {
   }
 
   if (view === 'admin-dashboard') {
+    if (!isAdmin) {
+      setView('library')
+      return null
+    }
     return <AdminDashboard onClose={() => setView('library')} />
   }
 

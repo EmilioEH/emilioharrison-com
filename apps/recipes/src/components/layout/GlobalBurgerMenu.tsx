@@ -18,6 +18,7 @@ import { openFeedbackModal } from '../../lib/feedbackStore'
 
 interface GlobalBurgerMenuProps {
   user?: string
+  isAdmin?: boolean
 }
 
 const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
@@ -104,9 +105,8 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <span className="font-medium text-foreground">Settings</span>
               </button>
 
-              {/* Only show dashboard to Emilio */}
-              {/* Only show dashboard to Emilio */}
-              {props.user === 'Emilio' && (
+              {/* Admin Dashboard Link */}
+              {props.isAdmin && (
                 <>
                   <button
                     role="menuitem"
