@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
-import { X, Download, Upload, Trash2, User, Save, Loader2 } from 'lucide-react'
+import { X, Download, Upload, Trash2, User, Save, Loader2, Key, Share, Copy } from 'lucide-react'
 import { Stack } from '@/components/ui/layout'
+import { shareInvite } from '../../lib/share-invite'
+import { alert } from '../../lib/dialogStore'
 
 interface SettingsViewProps {
   onExport: () => void
@@ -81,6 +83,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         <section>
           <h3 className="text-foreground-variant mb-4 text-xs font-bold uppercase tracking-wider">
+            Invite Friends
+          </h3>
+          <div className="bg-surface rounded-lg border border-border p-4">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="bg-secondary-container text-secondary-on-container rounded-full p-3">
+                <Key className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-lg font-bold">Activation Code</div>
+                <div className="text-xs opacity-70">
+                  Generate a code to let a friend create an account
+                </div>
+              </div>
+            </div>
+
+            <InviteCodeGenerator />
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-foreground-variant mb-4 text-xs font-bold uppercase tracking-wider">
             Data Management
           </h3>
           <Stack spacing="md">
@@ -122,5 +145,89 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </section>
       </Stack>
     </div>
+  )
+}
+
+const InviteCodeGenerator: React.FC = () => {
+  const [loading, setLoading] = useState(false)
+  const [code, setCode] = useState<string | null>(null)
+
+  const generateCode = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/admin/access-codes', {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCode(data.code)
+      } else {
+        alert(data.error || 'Failed to generate code')
+      }
+    } catch {
+      alert('Error generating code')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleShare = async () => {
+    if (!code) return
+    await shareInvite({
+      type: 'activation-code',
+      code,
+    })
+  }
+
+  const handleCopy = () => {
+    if (!code) return
+    navigator.clipboard.writeText(code)
+    alert('Code copied to clipboard!')
+  }
+
+  if (code) {
+    return (
+      <div className="animate-in fade-in zoom-in">
+        <div className="mb-4 rounded bg-muted/50 p-4 text-center">
+          <div className="mb-1 text-sm text-muted-foreground">Your Activation Code</div>
+          <div className="font-mono text-3xl font-bold tracking-widest text-primary">{code}</div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleShare}
+            className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+          >
+            <Share className="h-4 w-4" /> Share
+          </button>
+          <button
+            onClick={handleCopy}
+            className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-bold hover:bg-accent hover:text-accent-foreground"
+          >
+            <Copy className="h-4 w-4" /> Copy
+          </button>
+          <button
+            onClick={() => setCode(null)}
+            className="inline-flex h-10 items-center justify-center px-4 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={generateCode}
+      disabled={loading}
+      className="inline-flex h-10 w-full items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50"
+    >
+      {loading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Key className="mr-2 h-4 w-4" />
+      )}
+      Generate New Code
+    </button>
   )
 }

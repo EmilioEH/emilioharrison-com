@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { verifyAdmin } from '../../../lib/auth-admin'
+import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 
 export const GET: APIRoute = async (context) => {
   const { request } = context
@@ -19,20 +20,28 @@ export const GET: APIRoute = async (context) => {
 }
 
 export const POST: APIRoute = async (context) => {
-  const { request } = context
-  const admin = await verifyAdmin(request, context)
+  const { cookies } = context
 
-  if (!admin) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 })
+  // Allow any authorized user to generate a code
+  const userId = getAuthUser(cookies)
+  if (!userId) {
+    return unauthorizedResponse()
   }
 
   try {
+    const user = await db.getDocument('users', userId)
+    if (!user) {
+      return unauthorizedResponse()
+    }
+
     // Generate a simple 6-char code
     const code = Math.random().toString(36).substring(2, 8).toUpperCase()
 
     await db.setDocument('invites', code, {
       code,
-      createdBy: admin.email,
+      createdBy: user.email || 'Unknown',
+      createdByUserId: userId,
+      createdByName: user.displayName || 'User',
       createdAt: new Date().toISOString(),
     })
 

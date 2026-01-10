@@ -19,6 +19,9 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Robust Access Control**: Secure dashboard protected by Google Sign-In. Supports **Request Access** flow with admin approval and **Invite Codes** for instant family access.
+- **Invite Friends**: Authorized users can generate activation codes to instantly grant access to new users. Supports native sharing and clipboard copy.
+- **Native Invite Sharing**: Use the Web Share API to share family invitations and activation codes directly from the app to messaging platforms.
+- **Auto-Authorization**: Invited family members are automatically approved and added to the family workspace upon their first login, bypassing the manual request flow.
 - **Beta Tester Onboarding**: A dedicated flow for new users that ensures mobile-first usage (blocks desktop), guides "Add to Home Screen" installation, and provides a **welcome tutorial with interactive demos** showing how each feature works (AI recipe parsing, weekly planning, cooking mode navigation, and family sharing).
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to convert chopped/diced/sliced ingredients into whole purchasable produce (e.g., "1 cup chopped onion" → "1 medium onion") and organizes them by aisle.
@@ -148,6 +151,8 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Week View Workspace**: Transformed the week view into a persistent, sliding workspace. Users can now toggle between a "Plan" view (daily meals) and a "Grocery" view (shoppable list) directly within the workspace contexts.
 - **Full-Screen Image Viewer**: Tapping a recipe's header image now opens it in a full-screen overlay using a React Portal, ensuring proper z-index stacking. Press ESC or tap the close button to dismiss.
 - **Recipe Edit Mode & Version History**: Introduced a comprehensive Edit Mode allowing users to modify ingredients, steps, metadata, and photos directly. Includes a **Version History** system that archives previous states of the recipe on every save, allowing users to view and restore past versions.
+- **Invite Sharing & Auto-Auth (Jan 2026)**: Implemented native sharing for activation codes and family invites using the Web Share API. Added an "Invite Friends" section in Settings for authorized users to generate codes. Enhanced the login flow to automatically authorize and enroll users if they have a pending family invitation.
+- **Deterministic Invitation IDs**: Migrated to base64-encoded email IDs for pending invitations, enabling O(1) lookups during the login process for a seamless "invite-to-approve" experience.
 
 > [!TIP]
 > **Agent Tip: Responsive Modals**

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { CheckCircle, XCircle, Clock, Key, Plus, Trash2, Copy, User } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Key, Plus, Trash2, Copy, User, Share } from 'lucide-react'
 import { Stack } from '@/components/ui/layout'
 import { alert, confirm } from '../../lib/dialogStore'
 import { auth } from '../../lib/firebase-client'
+import { shareInvite } from '../../lib/share-invite'
 
 interface PendingUser {
   id: string
@@ -137,6 +138,13 @@ export const AccessRequestsDashboard: React.FC = () => {
     alert('Code copied to clipboard!')
   }
 
+  const handleShareCode = async (code: string) => {
+    await shareInvite({
+      type: 'activation-code',
+      code,
+    })
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Tabs */}
@@ -262,6 +270,14 @@ export const AccessRequestsDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => handleShareCode(code.code)}
+                        className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        title="Share Code"
+                      >
+                        <Share className="h-5 w-5" />
+                      </button>
+
                       <button
                         onClick={() => copyToClipboard(code.code)}
                         className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"

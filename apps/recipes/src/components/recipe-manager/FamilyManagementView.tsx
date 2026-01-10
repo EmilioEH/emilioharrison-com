@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { UserPlus, Shield, User, Trash2, ArrowLeft, LogOut } from 'lucide-react'
+import { UserPlus, Shield, User, Trash2, ArrowLeft, LogOut, Share } from 'lucide-react'
 import { useStore } from '@nanostores/react'
 import { $familyMembers, $currentUserId, familyActions } from '../../lib/familyStore'
 import { Stack, Inline } from '../ui/layout'
@@ -7,6 +7,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { confirm, alert } from '../../lib/dialogStore'
 import { FamilySetup } from './FamilySetup'
+import { shareInvite } from '../../lib/share-invite'
 import type { PendingInvite } from '../../lib/types'
 
 import type { Family } from '../../lib/types'
@@ -221,6 +222,16 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
     }
   }
 
+  const handleShareInvite = async (invite: PendingInvite) => {
+    if (!family) return
+    await shareInvite({
+      type: 'family-invite',
+      familyName: family.name,
+      inviterName: invite.invitedByName,
+      invitedEmail: invite.email,
+    })
+  }
+
   if (!family) {
     return (
       <div className="absolute inset-0 z-50 flex flex-col bg-card animate-in slide-in-from-right">
@@ -385,15 +396,28 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
                           Sent {new Date(invite.createdAt).toLocaleDateString()}
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive/90"
-                        onClick={() => handleRevokeInvite(invite.id)}
-                        disabled={loading}
-                      >
-                        Revoke
-                      </Button>
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground"
+                          onClick={() => handleShareInvite(invite)}
+                          disabled={loading}
+                          title="Share Invitation"
+                        >
+                          <Share className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive/90"
+                          onClick={() => handleRevokeInvite(invite.id)}
+                          disabled={loading}
+                        >
+                          Revoke
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </Stack>

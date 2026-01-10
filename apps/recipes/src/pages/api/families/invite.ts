@@ -83,13 +83,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // or just let it create duplicates (which we handle on fetch).
     // Let's rely on client-side updating for now, but ensure we don't error.
 
-    // 4. Create Pending Invite
-    const inviteId = crypto.randomUUID()
+    // 4. Create Pending Invite (Deterministic ID for easy lookup)
+    const normalizedEmail = email.trim().toLowerCase()
+    const inviteId = btoa(normalizedEmail)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
     const now = new Date().toISOString()
 
     const newInvite: PendingInvite = {
       id: inviteId,
-      email: email.trim(),
+      email: normalizedEmail,
       familyId: currentUser.familyId,
       familyName: family.name,
       invitedBy: userId,
@@ -98,7 +102,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       createdAt: now,
     }
 
-    await db.createDocument('pending_invites', inviteId, newInvite)
+    await db.setDocument('pending_invites', inviteId, newInvite)
 
     return new Response(
       JSON.stringify({

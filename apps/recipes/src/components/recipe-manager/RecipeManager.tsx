@@ -82,8 +82,13 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     const force =
       typeof window !== 'undefined' && window.location.search.includes('force_onboarding=true')
 
+    const skip =
+      typeof window !== 'undefined' && window.location.search.includes('skip_onboarding=true')
+
     if (force) {
       setIsOnboardingComplete(false)
+    } else if (skip) {
+      setIsOnboardingComplete(true)
     }
   }, [hasOnboarded])
 
