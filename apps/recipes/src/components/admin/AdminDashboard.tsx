@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import type { Family } from '../../lib/types'
 import { AdminFamilyManager } from './AdminFamilyManager'
 import { AccessRequestsDashboard } from './AccessRequestsDashboard'
+import { auth } from '../../lib/firebase-client'
 
 interface AdminDashboardProps {
   onClose: () => void
@@ -26,7 +27,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   const fetchFamilies = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/families')
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch('/api/admin/families', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       if (res.status === 403) {
         throw new Error('Unauthorized: Admin access required')
       }

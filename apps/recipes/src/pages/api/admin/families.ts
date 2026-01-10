@@ -1,27 +1,17 @@
 import type { APIRoute } from 'astro'
-import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import { getEmailList } from '../../../lib/env'
 import type { Family } from '../../../lib/types'
+import { verifyAdmin } from '../../../lib/auth-admin'
 
 /**
  * GET /api/admin/families
  * Get all families (Admin only)
  */
 export const GET: APIRoute = async (context) => {
-  const { cookies } = context
-  const userId = getAuthUser(cookies)
+  const { request } = context
+  const admin = await verifyAdmin(request, context)
 
-  if (!userId) {
-    return unauthorizedResponse()
-  }
-
-  // 1. Admin Verification
-  const emailCookie = cookies.get('site_email')
-  const email = emailCookie?.value
-  const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
-
-  if (!email || adminEmails.length === 0 || !adminEmails.includes(email.toLowerCase())) {
+  if (!admin) {
     return new Response(JSON.stringify({ error: 'Unauthorized: Admin access required' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
