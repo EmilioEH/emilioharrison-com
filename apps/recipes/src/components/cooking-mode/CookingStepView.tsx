@@ -157,14 +157,25 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
 
   const suggestedTimer = parseTimer(stepText)
 
+  // Determine font size based on length
+  const getFontSize = (text: string) => {
+    const len = text.length
+    if (len < 100) return 'text-3xl md:text-4xl text-center'
+    if (len < 200) return 'text-2xl md:text-3xl text-center'
+    if (len < 350) return 'text-xl md:text-2xl text-center'
+    return 'text-lg md:text-xl text-left' // Left align very long text for readability
+  }
+
+  const fontSizeClass = getFontSize(stepText)
+
   return (
     <Stack spacing="lg" className="w-full">
       {/* Timer Controls */}
       <TimerControl stepNumber={stepNumber} suggestedDuration={suggestedTimer} />
 
       {/* Current Step - Plain Text */}
-      <Stack spacing="lg" className="items-center py-4 text-center">
-        <p className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+      <Stack spacing="lg" className="items-center py-4">
+        <p className={`font-display font-bold leading-tight text-foreground ${fontSizeClass}`}>
           {stepText}
         </p>
       </Stack>
