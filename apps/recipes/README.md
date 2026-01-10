@@ -19,7 +19,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Privacy First**: Secure dashboard protected by Google Sign-In authentication. Only authenticated users can access the recipe collection.
-- **Interactive Calendar Schedule**: Plan your meals with a flexible month-view calendar. Schedule recipes for any date, view your cooking plan at a glance, and easily move meals around. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
+- **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to convert chopped/diced/sliced ingredients into whole purchasable produce (e.g., "1 cup chopped onion" → "1 medium onion") and organizes them by aisle.
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
 - **Install as App**: Add Chefboard to your home screen on iOS and Android for a native app experience with custom icon and name.
