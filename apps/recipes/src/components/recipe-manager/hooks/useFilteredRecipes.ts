@@ -75,6 +75,7 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       result = searchResults.map((r: any) => ({
         ...r.item,
         matches: r.matches,
+        score: r.score,
       }))
     }
 
@@ -100,6 +101,13 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
 
     // Sort
     result.sort((a, b) => {
+      // FIX: If searching and using default sort (protein), preserve Fuse.js relevance order
+      if (searchQuery && sort === 'protein') {
+        const scoreA = (a as Recipe & { score?: number }).score ?? 1
+        const scoreB = (b as Recipe & { score?: number }).score ?? 1
+        return scoreA - scoreB
+      }
+
       if (sort === 'protein') {
         const pA = a.protein || 'Other'
         const pB = b.protein || 'Other'
