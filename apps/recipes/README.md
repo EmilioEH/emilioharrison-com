@@ -31,7 +31,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
 - **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **inline editing** of ingredients and steps.
-- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via a persistent **Floating Action Button (FAB)** or the global burger menu. Supports a global **keyboard shortcut** (`Cmd/Ctrl + Shift + F`) for instant reporting.
+- **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via a persistent **Floating Action Button (FAB)** or the global burger menu. Supports a global **keyboard shortcut** (`Cmd/Ctrl + Shift + F`) for instant reporting. Supports **Long Press** interaction to minimize the button into a ghost state for a distraction-free experience.
 - **Admin Dashboard**: A centralized interface (restricted to admins via `ADMIN_EMAILS` check) to:
   - **Users**: View all users, their access status, and activity stats (Recipes Added/Cooked).
   - **Access Codes**: Generate new codes and track redemption history (who accepted and when).
