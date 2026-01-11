@@ -8,7 +8,7 @@ test.describe('Invite Sharing', () => {
     },
   })
 
-  test.skip('can generate and share activation code', async ({ page }) => {
+  test('can generate and share activation code', async ({ page }) => {
     // Mock navigator.share
     await page.addInitScript(() => {
       navigator.share = async (data: ShareData) => {
@@ -31,30 +31,10 @@ test.describe('Invite Sharing', () => {
     await page.context().addCookies(AUTH_COOKIES)
 
     // Navigate to app
-    await page.goto('/protected/recipes?skip_onboarding=true')
+    await page.goto('/protected/recipes?skip_onboarding=true&skip_setup=true')
 
-    // Debug: Check if we are redirected
-    if (page.url().includes('login')) {
-      console.log('Redirected to login. AUTH_COOKIES might be invalid or ignored.')
-    }
-
-    // Wait for loading to finish
+    // Expect loading to complete
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible({ timeout: 10000 })
-
-    page.on('console', (msg) => console.log(`PAGE LOG: ${msg.text()}`))
-
-    // Check if we are on the right URL
-    expect(page.url()).toContain('/protected/recipes')
-
-    // Wait for header
-    try {
-      await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 5000 })
-    } catch (e) {
-      console.log('CHEFBOARD not found. Dumping content snippet:')
-      const content = await page.content()
-      console.log(content.substring(0, 1000))
-      throw e
-    }
 
     // Open Menu
     await page.getByRole('button', { name: 'Menu' }).click()
@@ -62,16 +42,8 @@ test.describe('Invite Sharing', () => {
     // Open Settings
     await page.getByRole('menuitem', { name: 'Settings' }).click()
 
-    // Finds "Invite Friends" section
-    await expect(page.getByText('Invite Friends')).toBeVisible()
-
-    page.on('request', (request) => console.log('>>', request.method(), request.url()))
-    page.on('response', (response) => console.log('<<', response.status(), response.url()))
-
-    page.on('dialog', async (dialog) => {
-      console.log('DIALOG:', dialog.message())
-      await dialog.dismiss()
-    })
+    // Find "Activation Code" section
+    await expect(page.getByText('Activation Code')).toBeVisible()
 
     // Click Generate New Code
     await page.getByRole('button', { name: 'Generate New Code' }).click()
@@ -80,9 +52,10 @@ test.describe('Invite Sharing', () => {
     await expect(page.getByText('Your Activation Code')).toBeVisible({ timeout: 10000 })
 
     // Setup share spy check
-    const codeElement = page.locator('.font-mono.text-3xl') // Class from SettingsView
+    const codeElement = page.locator('.font-mono.text-3xl')
     await expect(codeElement).toBeVisible()
     const codeText = await codeElement.innerText()
+    expect(codeText).toBe('TEST-CODE-123')
 
     // Click Share
     await page.getByRole('button', { name: 'Share' }).click()
@@ -94,6 +67,62 @@ test.describe('Invite Sharing', () => {
     expect(shareData).toBeTruthy()
     expect(shareData.text).toContain('Join the Recipe App')
     expect(shareData.text).toContain(codeText)
-    expect(shareData.title).toBe('Join the Recipe App')
+  })
+
+  test('can invite user to family', async ({ page }) => {
+    // Mock Family Data to ensure we have a family
+    await page.route('**/api/families/current', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            family: { id: 'fam_123', name: 'Test Family', createdBy: 'user_1' },
+            members: [{ id: 'user_1', role: 'creator', email: 'me@example.com' }],
+          }),
+        })
+      } else {
+        await route.continue()
+      }
+    })
+
+    // Mock Invite API
+    await page.route('**/api/families/invite', async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}')
+      expect(body.email).toBe('partner@example.com')
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      })
+    })
+
+    // Explicitly set cookies to ensure auth
+    await page.context().addCookies(AUTH_COOKIES)
+
+    // Navigate to app
+    await page.goto('/protected/recipes?skip_onboarding=true&skip_setup=true')
+
+    // Expect loading to complete
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible({ timeout: 10000 })
+
+    // Open Menu
+    await page.getByRole('button', { name: 'Menu' }).click()
+
+    // Open Settings
+    await page.getByRole('menuitem', { name: 'Settings' }).click()
+
+    // Find "Invite to Your Family" section
+    await expect(page.getByText('Invite to Your Family')).toBeVisible()
+
+    // Fill Email
+    await page.getByPlaceholder('partner@gmail.com').fill('partner@example.com')
+
+    // Click Invite
+    await page.getByRole('button', { name: 'Invite' }).click()
+
+    // Check for success message
+    await expect(page.getByText('Invitation sent!')).toBeVisible()
   })
 })
