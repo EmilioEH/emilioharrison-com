@@ -698,7 +698,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   return (
     <>
-      <div className="shadow-md-3 relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col bg-card text-foreground">
+      <div className="shadow-md-3 relative mx-auto flex h-full w-full max-w-2xl flex-col bg-card text-foreground">
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
         {view !== 'week' && (

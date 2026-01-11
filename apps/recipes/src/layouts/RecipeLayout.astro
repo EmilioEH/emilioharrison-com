@@ -62,9 +62,11 @@ const user = Astro.cookies.get('site_user')?.value
       logger.init()
     </script>
   </head>
-  <body class="bg-paper text-ink min-h-full overflow-x-hidden font-sans antialiased">
-    <div class="flex min-h-full flex-col">
-      <slot />
+  <body class="bg-paper text-ink h-[100dvh] overflow-hidden font-sans antialiased">
+    <div class="flex h-full flex-col">
+      <main class="flex-1 overflow-y-auto scroll-smooth">
+        <slot />
+      </main>
       <GlobalFeedback client:load />
     </div>
 
