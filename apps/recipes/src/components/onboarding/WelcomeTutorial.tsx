@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { ChefHat, Calendar, Users, Utensils, ChevronRight } from 'lucide-react'
+import { ChefHat, Calendar, Users, Utensils, ChevronLeft, ChevronRight } from 'lucide-react'
 import { OnboardingDemo } from './OnboardingDemo'
 
 interface WelcomeTutorialProps {
@@ -58,7 +58,14 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
   ]
 
   const currentStep = steps[step]
+  const isFirstStep = step === 0
   const isLastStep = step === steps.length - 1
+
+  const handlePrevious = () => {
+    if (!isFirstStep) {
+      setStep((prev) => prev - 1)
+    }
+  }
 
   const handleNext = () => {
     if (isLastStep) {
@@ -70,6 +77,7 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
 
   return (
     <div className="flex h-full flex-col bg-background">
+      {/* Main Content - Centered */}
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 text-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -78,7 +86,7 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="flex w-full max-w-xs flex-col items-center gap-4"
+            className="flex w-full max-w-xs flex-col items-center gap-6"
           >
             {/* Icon */}
             <div
@@ -95,25 +103,38 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
 
             {/* Interactive Demo */}
             <OnboardingDemo demoType={currentStep.demoType} />
+
+            {/* Step Indicator - Below Content */}
+            <div className="flex justify-center gap-2 pt-4">
+              {steps.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                    i === step ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="bg-card p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      {/* Bottom Navigation - Pinned */}
+      <div className="border-t bg-card p-4">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-1">
-            {steps.map((_, i) => (
-              <div
-                key={i}
-                className={`h-2 w-2 rounded-full transition-colors ${
-                  i === step ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-            ))}
-          </div>
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={handlePrevious}
+            disabled={isFirstStep}
+            className="rounded-full"
+          >
+            <ChevronLeft />
+            Previous
+          </Button>
           <Button onClick={handleNext} size="lg" className="rounded-full px-8">
             {isLastStep ? 'Get Started' : 'Next'}
-            {!isLastStep && <ChevronRight className="ml-2 h-4 w-4" />}
+            {!isLastStep && <ChevronRight />}
           </Button>
         </div>
       </div>

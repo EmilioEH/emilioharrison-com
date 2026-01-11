@@ -8,7 +8,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 ## 🚀 Core Features
 
 - **PWA Experience**: Installable on mobile with offline support.
-- **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes. Supports **multi-image upload** and a **zoomable photo carousel**.
+- **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes. Supports **multi-image upload** (including auto-converting HEIC/HEIF) and a **zoomable photo carousel**.
 - **Rich Metadata Tagging**: Organize recipes by Meal Type (Breakfast, Dinner, etc.), Dish Type (Main, Side, etc.), Dietary restrictions (Vegan, Keto), required Equipment (Air Fryer, Slow Cooker), and Occasion (Weeknight, Party).
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
@@ -161,6 +161,8 @@ All primitives use the `spacing` prop with a controlled scale:
 
 - **Quick Feedback Entry Points**: Implemented a persistent "Feedback" FAB and a global keyboard shortcut (`Cmd/Ctrl + Shift + F`) to streamline user reporting during beta testing. Integrated into the global layout for seamless access across all app views.
 - **Robust Ingredient Mapping**: Transitioned from a purely heuristic text-matching approach to an **Explicit AI-Generated Mapping** system. Recipes now store a `stepIngredients` property (Firestore-compatible `Array<{ indices: number[] }>`) that explicitly links ingredients to the steps where they are used. Added a Gemini-powered migration script (`scripts/migrate-ingredient-mappings.ts`) with contextual understanding (handles pluralization, pronouns, and partial matches) to upgrade all existing recipes.
+- **Onboarding UX Polish (Jan 2026)**: Refactored the interactive onboarding tutorial with a centered content layout and refined bottom-pinned navigation. Added a "Previous" button for better step traversal and improved the visual hierarchy of the step indicators.
+- **SSR Stability Fix**: Converted browser-only libraries (like `heic2any`) and image processing utilities to dynamic imports. This prevents critical server-side rendering crashes in preview/production environments while maintaining full image optimization capabilities on the client.
 - **Login Access Restore (Jan 2026)**: Fixed an issue where unauthenticated users were unable to use "Request Access" or "Access Code" features because the API endpoints were blocked by the authentication middleware. Added `/api/auth/request-access` and `/api/auth/redeem-code` to permitted public routes, ensuring new users can always submit requests or join via invite.
 
 ### Recent Updates (Dec 2025)

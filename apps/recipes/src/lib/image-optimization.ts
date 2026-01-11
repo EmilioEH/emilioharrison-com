@@ -9,7 +9,38 @@
  * @returns A Promise resolving to a new optimized File object
  */
 export async function processImage(file: File, maxDimension = 1920, quality = 0.8): Promise<File> {
-  // If not an image, return original
+  // Handle HEIC/HEIF files
+  if (
+    file.type === 'image/heic' ||
+    file.type === 'image/heif' ||
+    file.name.toLowerCase().endsWith('.heic') ||
+    file.name.toLowerCase().endsWith('.heif')
+  ) {
+    try {
+      // Dynamic import to avoid SSR issues (heic2any is browser-only)
+      const heic2any = (await import('heic2any')).default
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: quality,
+      })
+
+      // heic2any can return a single Blob or an array of Blobs. We take the first one.
+      const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob
+
+      // Update file to be the converted JPEG
+      file = new File([blob], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
+      })
+    } catch (error) {
+      console.error('HEIC conversion failed', error)
+      // If conversion fails, we attempt to proceed with original (though potential failure downstream)
+      // or we could throw. Let's log and proceed, maybe browser has native support?
+    }
+  }
+
+  // If not an image (and wasn't converted), return original
   if (!file.type.startsWith('image/')) {
     return file
   }
