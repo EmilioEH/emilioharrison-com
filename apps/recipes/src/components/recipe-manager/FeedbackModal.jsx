@@ -13,13 +13,26 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
   const [expected, setExpected] = useState('')
   const [actual, setActual] = useState('')
   const [screenshot, setScreenshot] = useState(null)
+  const [isCapturing, setIsCapturing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const modalRef = useRef(null)
 
+  // Clear screenshot when modal closes to prevent stale screenshots
   useEffect(() => {
-    if (isOpen && !screenshot) {
-      const capture = async () => {
+    if (!isOpen) {
+      setScreenshot(null)
+      setIsCapturing(false)
+    }
+  }, [isOpen])
+
+  // Deferred screenshot capture to avoid blocking the modal animation
+  useEffect(() => {
+    if (isOpen && !screenshot && !isCapturing) {
+      setIsCapturing(true)
+
+      // Defer capture by 500ms to let the modal animation complete
+      const timeoutId = setTimeout(async () => {
         try {
           const canvas = await html2canvas(document.body, {
             ignoreElements: (element) => {
@@ -30,12 +43,14 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
           setScreenshot(canvas.toDataURL('image/png'))
         } catch (err) {
           console.error('Auto-screenshot failed:', err)
+        } finally {
+          setIsCapturing(false)
         }
-      }
-      // Small delay to ensure render stability?
-      requestAnimationFrame(() => capture())
+      }, 500)
+
+      return () => clearTimeout(timeoutId)
     }
-  }, [isOpen, screenshot])
+  }, [isOpen, screenshot, isCapturing])
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
@@ -281,7 +296,12 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
                 accept="image/*"
                 onChange={handleImageUpload}
               />
-              {screenshot && (
+              {isCapturing && (
+                <div className="border-md-sys-color-outline flex h-12 w-12 items-center justify-center rounded border bg-muted">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {screenshot && !isCapturing && (
                 <div className="border-md-sys-color-outline relative h-12 w-12 overflow-hidden rounded border">
                   <img src={screenshot} alt="Preview" className="h-full w-full object-cover" />
                   <button
