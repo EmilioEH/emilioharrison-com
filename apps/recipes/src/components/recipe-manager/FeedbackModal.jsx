@@ -34,15 +34,23 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
       // Defer capture by 500ms to let the modal animation complete
       const timeoutId = setTimeout(async () => {
         try {
-          const canvas = await html2canvas(document.body, {
+          // Race html2canvas against a 10-second timeout
+          const capturePromise = html2canvas(document.body, {
             ignoreElements: (element) => {
               // Ignore the modal itself to capture the app state behind it
               return element === modalRef.current
             },
           })
+
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Screenshot capture timed out')), 10000),
+          )
+
+          const canvas = await Promise.race([capturePromise, timeoutPromise])
           setScreenshot(canvas.toDataURL('image/png'))
         } catch (err) {
-          console.error('Auto-screenshot failed:', err)
+          console.warn('Auto-screenshot failed or timed out:', err.message || err)
+          // Don't show error to user - they can still manually upload a screenshot
         } finally {
           setIsCapturing(false)
         }
