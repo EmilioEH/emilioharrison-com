@@ -8,7 +8,7 @@ test.describe('Feedback System', () => {
         {
           name: 'site_auth',
           value: 'true',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -18,7 +18,7 @@ test.describe('Feedback System', () => {
         {
           name: 'site_user',
           value: 'FeedbackTester',
-          domain: 'localhost',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -28,7 +28,17 @@ test.describe('Feedback System', () => {
         {
           name: 'site_email',
           value: 'emilioeh1991@gmail.com',
-          domain: 'localhost',
+          domain: '127.0.0.1',
+          path: '/',
+          expires: -1,
+          httpOnly: false,
+          secure: false,
+          sameSite: 'Lax',
+        },
+        {
+          name: 'skip_family_setup',
+          value: 'true',
+          domain: '127.0.0.1',
           path: '/',
           expires: -1,
           httpOnly: false,
@@ -41,6 +51,11 @@ test.describe('Feedback System', () => {
   })
 
   test.beforeEach(async ({ page }) => {
+    // Mock Playwright detection to skip family setup
+    await page.addInitScript(() => {
+      ;(window as unknown as { isPlaywright: boolean }).isPlaywright = true
+    })
+
     // Mock user data to keep the page light and stable
     await page.route('**/api/recipes*', async (route) => {
       await route.fulfill({
@@ -58,10 +73,28 @@ test.describe('Feedback System', () => {
       })
     })
 
-    await page.goto('/protected/recipes')
-    // Wait for the app UI to stabilize
-    await expect(page.getByTestId('loading-indicator')).toBeHidden()
-    await expect(page.getByRole('button', { name: 'Add Recipe' })).toBeVisible({ timeout: 15000 })
+    // Mock families API
+    await page.route('**/api/families/current*', async (route) => {
+      await route.fulfill({
+        json: {
+          success: true,
+          family: {
+            id: 'test-family',
+            name: 'Test Family',
+            members: ['FeedbackTester'],
+            createdBy: 'FeedbackTester',
+          },
+          members: [],
+        },
+      })
+    })
+
+    // Mock week/planned API
+    await page.route('**/api/week/planned*', async (route) => {
+      await route.fulfill({
+        json: { success: true, planned: [] },
+      })
+    })
 
     // Mock the feedback API
     await page.route('**/api/feedback', async (route) => {
@@ -76,6 +109,11 @@ test.describe('Feedback System', () => {
         await route.continue()
       }
     })
+
+    await page.goto('/protected/recipes?skip_onboarding=true')
+    // Wait for the app UI to stabilize
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
+    await expect(page.getByRole('button', { name: 'Add Recipe' })).toBeVisible({ timeout: 15000 })
   })
 
   // Helper to open feedback modal regardless of viewport

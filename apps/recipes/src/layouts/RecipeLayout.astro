@@ -63,12 +63,12 @@ const user = Astro.cookies.get('site_user')?.value
     </script>
   </head>
   <body class="bg-paper text-ink min-h-full overflow-x-hidden font-sans antialiased">
-    <div class="flex min-h-full flex-col pb-8">
+    <div class="flex min-h-full flex-col">
       <slot />
+      <GlobalFeedback client:load />
     </div>
 
     <GlobalBurgerMenu client:load user={user} isAdmin={isAdmin} />
-    <GlobalFeedback client:load />
     <GlobalDialogRoot client:load />
 
     <script>
