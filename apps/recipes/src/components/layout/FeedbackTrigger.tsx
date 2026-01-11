@@ -16,6 +16,10 @@ export const FeedbackTrigger = () => {
     return false
   })
 
+  const [isPressing, setIsPressing] = React.useState(false)
+  const pressTimerRef = React.useRef<NodeJS.Timeout | null>(null)
+  const ignoreClickRef = React.useRef(false)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + Shift + F
@@ -34,7 +38,7 @@ export const FeedbackTrigger = () => {
     setIsPressing(true)
     pressTimerRef.current = setTimeout(() => {
       // Long press action
-      setIsMinimized((prev) => {
+      setIsMinimized((prev: boolean) => {
         const newState = !prev
         localStorage.setItem('feedback_fab_minimized', JSON.stringify(newState))
         return newState
