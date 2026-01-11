@@ -4,6 +4,39 @@ import { openFeedbackModal } from '../../lib/feedbackStore'
 import { Button } from '@/components/ui/button'
 
 export const FeedbackFooter = () => {
+  const [isVisible, setIsVisible] = React.useState(true)
+  const lastScrollY = React.useRef(0)
+
+  useEffect(() => {
+    // 1. Identify the scroll container (RecipeLayout uses <main>)
+    const scrollContainer = document.querySelector('main') || window
+
+    const handleScroll = () => {
+      // Get current scroll position
+      const currentScrollY =
+        scrollContainer instanceof Window ? window.scrollY : scrollContainer.scrollTop
+
+      // Determine direction
+      // Hide on scroll down (if moved more than 10px and not at top)
+      if (currentScrollY > lastScrollY.current && currentScrollY > 20) {
+        setIsVisible(false)
+      }
+      // Show on scroll up
+      else if (currentScrollY < lastScrollY.current) {
+        setIsVisible(true)
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    // Attach listener
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + Shift + F
@@ -21,7 +54,11 @@ export const FeedbackFooter = () => {
   }, [])
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-8 w-full shrink-0 items-center justify-between bg-foreground px-4 text-[10px] font-black uppercase tracking-widest text-background">
+    <div
+      className={`fixed bottom-0 left-0 right-0 z-50 flex h-8 w-full shrink-0 items-center justify-between bg-foreground px-4 text-[10px] font-black uppercase tracking-widest text-background transition-transform duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0' : 'translate-y-full'
+      }`}
+    >
       <div className="flex items-center gap-2">
         <span className="opacity-90">Beta Preview</span>
       </div>

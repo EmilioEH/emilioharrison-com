@@ -33,7 +33,7 @@ export const PrepStep: React.FC<PrepStepProps> = ({ recipe, onNext }) => {
   }, [recipe])
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-background px-6 py-8">
+    <div className="flex h-full flex-col overflow-y-auto bg-background px-6 py-8 pb-14">
       <div className="mx-auto w-full max-w-2xl">
         <Stack spacing="lg">
           <div>

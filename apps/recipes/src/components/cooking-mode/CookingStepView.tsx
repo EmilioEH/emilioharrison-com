@@ -376,7 +376,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
       </div>
 
       {/* Static Navigation Footer */}
-      <div className="safe-area-pb z-10 border-t border-border bg-background/80 p-4 backdrop-blur-xl">
+      <div className="safe-area-pb z-10 border-t border-border bg-background/80 p-4 pb-12 backdrop-blur-xl">
         <Inline spacing="md">
           <button
             type="button"

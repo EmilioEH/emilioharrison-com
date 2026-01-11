@@ -366,7 +366,7 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
       </div>
 
       {/* Footer */}
-      <div className="safe-area-pb border-t border-border bg-background p-4">
+      <div className="safe-area-pb border-t border-border bg-background p-4 pb-12">
         <Stack spacing="sm">
           <Button
             size="lg"
