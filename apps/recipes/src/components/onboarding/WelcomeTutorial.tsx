@@ -76,7 +76,7 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
   }
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex min-h-[100dvh] flex-col bg-background">
       {/* Main Content - Centered */}
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 text-center">
         <AnimatePresence mode="wait">
