@@ -18,39 +18,36 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
   const [isSuccess, setIsSuccess] = useState(false)
   const modalRef = useRef(null)
 
-  // Clear screenshot when modal closes to prevent stale screenshots
+  // Track if we've already started capturing to prevent re-triggering
+  const captureAttemptedRef = useRef(false)
+
+  // Clear screenshot and reset capture flag when modal closes
   useEffect(() => {
     if (!isOpen) {
       setScreenshot(null)
       setIsCapturing(false)
+      captureAttemptedRef.current = false
     }
   }, [isOpen])
 
   // Deferred screenshot capture to avoid blocking the modal animation
   useEffect(() => {
-    if (isOpen && !screenshot && !isCapturing) {
+    if (isOpen && !screenshot && !captureAttemptedRef.current) {
+      captureAttemptedRef.current = true
       setIsCapturing(true)
 
       // Defer capture by 500ms to let the modal animation complete
       const timeoutId = setTimeout(async () => {
         try {
-          // Race html2canvas against a 10-second timeout
-          const capturePromise = html2canvas(document.body, {
+          const canvas = await html2canvas(document.body, {
             ignoreElements: (element) => {
               // Ignore the modal itself to capture the app state behind it
               return element === modalRef.current
             },
           })
-
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Screenshot capture timed out')), 10000),
-          )
-
-          const canvas = await Promise.race([capturePromise, timeoutPromise])
           setScreenshot(canvas.toDataURL('image/png'))
         } catch (err) {
-          console.warn('Auto-screenshot failed or timed out:', err.message || err)
-          // Don't show error to user - they can still manually upload a screenshot
+          console.error('Auto-screenshot failed:', err)
         } finally {
           setIsCapturing(false)
         }
@@ -58,7 +55,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
 
       return () => clearTimeout(timeoutId)
     }
-  }, [isOpen, screenshot, isCapturing])
+  }, [isOpen, screenshot])
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
