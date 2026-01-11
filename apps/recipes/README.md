@@ -19,7 +19,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Robust Access Control**: Secure dashboard protected by Google Sign-In. Supports **Request Access** flow with admin approval and **Invite Codes** for instant family access.
-- **Invite Others**: A dedicated section in Settings allowing users to **invite others to their family workspace** or **generate activation codes** for new accounts. Supports native sharing and clipboard copy.
+- **Invite Others**: A dedicated menu item allowing users to **invite others to their family workspace** or **generate activation codes** for new accounts. Supports native sharing and clipboard copy.
 - **Native Invite Sharing**: Use the Web Share API to share family invitations and activation codes directly from the app to messaging platforms.
 - **Auto-Authorization**: Invited family members are automatically approved and added to the family workspace upon their first login, bypassing the manual request flow.
 - **Beta Tester Onboarding**: A dedicated flow for new users that ensures mobile-first usage (blocks desktop), guides "Add to Home Screen" installation, and provides a **welcome tutorial with interactive demos** showing how each feature works (AI recipe parsing, weekly planning, cooking mode navigation, and family sharing).

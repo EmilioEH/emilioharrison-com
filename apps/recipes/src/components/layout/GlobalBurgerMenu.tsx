@@ -13,6 +13,7 @@ import {
   UsersRound,
   ShieldAlert,
   GraduationCap,
+  UserPlus,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
@@ -149,6 +150,18 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               >
                 <UsersRound className="text-foreground-variant h-5 w-5" />
                 <span className="font-medium text-foreground">Manage Family</span>
+              </button>
+
+              <button
+                role="menuitem"
+                onClick={() => {
+                  closeBurgerMenu()
+                  window.dispatchEvent(new CustomEvent('navigate-to-invite'))
+                }}
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <UserPlus className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Invite</span>
               </button>
 
               <button

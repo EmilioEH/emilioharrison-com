@@ -50,6 +50,8 @@ import { $cookingSession } from '../../stores/cookingSession'
 
 // ViewMode is now imported from useRouter
 
+import { InviteView } from './InviteView'
+
 interface ProteinWarning {
   protein: string
   count: number
@@ -350,6 +352,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     window.addEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
     window.addEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
 
+    const handleNavigateToInvite = () => setView('invite')
+    window.addEventListener('navigate-to-invite', handleNavigateToInvite)
+
     return () => {
       window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
       window.removeEventListener(
@@ -359,6 +364,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
       window.removeEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
       window.removeEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
+      window.removeEventListener('navigate-to-invite', handleNavigateToInvite)
     }
   }, [setView])
 
@@ -694,6 +700,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       return null
     }
     return <AdminDashboard onClose={() => setView('library')} />
+  }
+
+  if (view === 'invite') {
+    return <InviteView onClose={() => setView('library')} />
   }
 
   return (

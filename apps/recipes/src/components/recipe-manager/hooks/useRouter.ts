@@ -12,6 +12,7 @@ export type ViewMode =
   | 'bulk-import'
   | 'family-settings'
   | 'admin-dashboard'
+  | 'invite'
 
 export interface RouteState {
   view: ViewMode
