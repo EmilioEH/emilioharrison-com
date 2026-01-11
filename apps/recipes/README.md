@@ -534,6 +534,7 @@ src/
 │ │ ├── BottomControls.tsx # Unified sticky bottom navigation
 │ │ ├── GroceryList.tsx # Grocery list with shopping mode
 │ │ ├── SettingsView.tsx # Settings and data management
+│ │ ├── FamilyManagementView.tsx # Family member management and invites
 │ │ ├── FeedbackDashboard.tsx # Integrated feedback management UI
 │ │ ├── BulkEditModal.tsx # Bulk update metadata
 │ │ ├── BulkRecipeImporter.tsx # Bulk markdown upload
