@@ -120,7 +120,7 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
       </div>
 
       {/* Bottom Navigation - Pinned */}
-      <div className="border-t bg-card p-4">
+      <div className="border-t bg-card p-4 pb-12">
         <div className="flex items-center justify-between gap-4">
           <Button
             variant="ghost"

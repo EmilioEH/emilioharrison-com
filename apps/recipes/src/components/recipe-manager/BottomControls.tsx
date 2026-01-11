@@ -15,7 +15,7 @@ export const BottomControls: React.FC<BottomControlsProps> = ({ view, setView, w
   const currentTab = view === 'week' ? 'week' : view === 'grocery' ? 'grocery' : 'library'
 
   return (
-    <div className="pb-safe fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-border bg-background/80 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl transition-all duration-300">
+    <div className="pb-safe fixed bottom-8 left-0 right-0 z-50 flex flex-col border-t border-border bg-background/80 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl transition-all duration-300">
       {/* Top Row: Tabs */}
       <div className="w-full px-4 pb-3 pt-3">
         <Tabs value={currentTab} onValueChange={(v) => setView(v as ViewMode)} className="w-full">

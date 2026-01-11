@@ -52,7 +52,7 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
   }, [])
 
   return (
-    <div className="pb-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgb(0,0,0,0.08)] backdrop-blur-xl">
+    <div className="pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgb(0,0,0,0.08)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-2xl flex-col px-4 py-3">
         {/* Top Row: Controls */}
         <div className="flex items-center justify-between gap-3">

@@ -876,7 +876,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       {/* Sticky Bottom Actions (Selection Mode) */}
       {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-8 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
           <span className="text-sm font-bold text-muted-foreground">
             {selectedIds.size} selected
           </span>
