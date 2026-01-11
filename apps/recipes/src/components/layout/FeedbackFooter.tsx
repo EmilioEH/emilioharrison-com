@@ -21,7 +21,7 @@ export const FeedbackFooter = () => {
   }, [])
 
   return (
-    <div className="mt-auto flex h-8 shrink-0 items-center justify-between bg-foreground px-4 text-[10px] font-black uppercase tracking-widest text-background">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-8 w-full shrink-0 items-center justify-between bg-foreground px-4 text-[10px] font-black uppercase tracking-widest text-background">
       <div className="flex items-center gap-2">
         <span className="opacity-90">Beta Preview</span>
       </div>

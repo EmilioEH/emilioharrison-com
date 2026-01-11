@@ -764,7 +764,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
         <main ref={setScrollContainer} className="relative flex-1 overflow-y-auto scroll-smooth">
           {view === 'library' && (
-            <div className="flex h-full flex-col pb-32">
+            <div className="flex h-full flex-col">
               <div className="scrollbar-hide flex-1">
                 {!isSelectionMode && recipes.length > 0 && null}
 
@@ -815,7 +815,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           )}
 
           {view === 'grocery' && (
-            <div className="flex h-full flex-col pb-32">
+            <div className="flex h-full flex-col">
               <GroceryList
                 ingredients={groceryItems}
                 isLoading={isGenerating}
