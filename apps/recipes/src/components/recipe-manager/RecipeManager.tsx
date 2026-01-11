@@ -289,6 +289,23 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   // Scroll Container Ref State
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
 
+  // Broadcast scroll events for global components (like FeedbackFooter)
+  useEffect(() => {
+    if (!scrollContainer) return
+
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement
+      window.dispatchEvent(
+        new CustomEvent('recipe-scroll', {
+          detail: { scrollTop: target.scrollTop },
+        }),
+      )
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+  }, [scrollContainer])
+
   // Hooks
   const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
     useRecipeSelection()

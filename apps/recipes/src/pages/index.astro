@@ -37,5 +37,10 @@ if (userId) {
 ---
 
 <RecipeLayout title="My Recipes" isAdmin={isAdmin}>
-  <RecipeManagerClient client:only="react" user={displayName || userId} isAdmin={isAdmin} hasOnboarded={hasOnboarded} />
+  <RecipeManagerClient
+    client:only="react"
+    user={displayName || userId}
+    isAdmin={isAdmin}
+    hasOnboarded={hasOnboarded}
+  />
 </RecipeLayout>

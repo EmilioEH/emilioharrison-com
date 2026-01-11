@@ -2,7 +2,7 @@ import React from 'react'
 import { useStore } from '@nanostores/react'
 import { isFeedbackModalOpen, closeFeedbackModal } from '../../lib/feedbackStore'
 import { FeedbackModal } from '../recipe-manager/FeedbackModal'
-import { FeedbackTrigger } from './FeedbackTrigger'
+import { FeedbackFooter } from './FeedbackFooter'
 
 const GlobalFeedback = () => {
   const isOpen = useStore(isFeedbackModalOpen)
@@ -16,7 +16,7 @@ const GlobalFeedback = () => {
 
   return (
     <>
-      <FeedbackTrigger />
+      <FeedbackFooter />
       <FeedbackModal
         isOpen={isOpen}
         onClose={closeFeedbackModal}
