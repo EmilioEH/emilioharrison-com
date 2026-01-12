@@ -18,7 +18,7 @@ import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/w
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import { RecipeLibrary } from '../RecipeLibrary'
-import { GroceryList } from '../GroceryList'
+import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
 import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 

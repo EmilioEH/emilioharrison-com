@@ -21,15 +21,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Stack, Inline } from '@/components/ui/layout'
 import { pdf } from '@react-pdf/renderer'
-import { RecipePdfDocument } from '../recipe-pdf/RecipePdfDocument'
+import { RecipePdfDocument } from '../../recipe-pdf/RecipePdfDocument'
 import {
   shareRecipeText,
   shareRecipePdf,
   defaultShareOptions,
   type ShareOptions,
-} from '../../lib/share-recipe'
-import { alert } from '../../lib/dialogStore'
-import type { Recipe, FamilyRecipeData } from '../../lib/types'
+} from '../../../lib/share-recipe'
+import { alert } from '../../../lib/dialogStore'
+import type { Recipe, FamilyRecipeData } from '../../../lib/types'
 
 interface ShareRecipeDialogProps {
   recipe: Recipe | null

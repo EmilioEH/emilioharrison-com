@@ -1,18 +1,25 @@
 import { useState, useRef, useEffect } from 'react'
 import html2canvas from 'html2canvas'
 import { X, Send, Bug, Lightbulb, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react'
-import { processImage } from '../../lib/image-optimization'
-import { ResponsiveModal } from '../ui/ResponsiveModal'
+import { processImage } from '../../../lib/image-optimization'
+import { ResponsiveModal } from '../../ui/ResponsiveModal'
 
 // Simple log catcher: in a real app, this might be a sophisticated hook/context
-import { logger } from '../../lib/logger'
+import { logger } from '../../../lib/logger'
 
-export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
+interface FeedbackModalProps {
+  isOpen: boolean
+  onClose: () => void
+  appState: Record<string, unknown>
+  user: string | null
+}
+
+export const FeedbackModal = ({ isOpen, onClose, appState, user }: FeedbackModalProps) => {
   const [type, setType] = useState('bug') // 'bug' | 'idea'
   const [description, setDescription] = useState('')
   const [expected, setExpected] = useState('')
   const [actual, setActual] = useState('')
-  const [screenshot, setScreenshot] = useState(null)
+  const [screenshot, setScreenshot] = useState<string | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -40,7 +47,7 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
       const timeoutId = setTimeout(async () => {
         try {
           const canvas = await html2canvas(document.body, {
-            ignoreElements: (element) => {
+            ignoreElements: (element: Element) => {
               // Ignore the modal itself to capture the app state behind it
               return element === modalRef.current
             },
@@ -57,14 +64,14 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
     }
   }, [isOpen, screenshot])
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0]
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (file) {
       try {
         const optimizedFile = await processImage(file)
         const reader = new FileReader()
         reader.onloadend = () => {
-          setScreenshot(reader.result)
+          setScreenshot(reader.result as string)
         }
         reader.readAsDataURL(optimizedFile)
       } catch (err) {
@@ -72,14 +79,14 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
         // Fallback
         const reader = new FileReader()
         reader.onloadend = () => {
-          setScreenshot(reader.result)
+          setScreenshot(reader.result as string)
         }
         reader.readAsDataURL(file)
       }
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
@@ -147,9 +154,8 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }) => {
       }
     } catch (error) {
       console.error('Feedback Error:', error)
-      alert(
-        `A technical error occurred: ${error.message || error}\n\nMake sure ad-blockers are disabled.`,
-      )
+      const msg = error instanceof Error ? error.message : String(error)
+      alert(`A technical error occurred: ${msg}\n\nMake sure ad-blockers are disabled.`)
     } finally {
       setIsSubmitting(false)
     }

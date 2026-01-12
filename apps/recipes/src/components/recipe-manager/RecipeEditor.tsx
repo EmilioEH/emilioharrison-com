@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Save, Trash2 } from 'lucide-react'
 import { Stack, Inline, Cluster } from '@/components/ui/layout'
-import { AiImporter } from './AiImporter'
+import { AiImporter } from './importer/AiImporter'
 import type { Recipe, Ingredient } from '../../lib/types'
 import { confirm } from '../../lib/dialogStore'
 

@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { Loader2, ChefHat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { Recipe } from '../../lib/types'
-import { processImage } from '../../lib/image-optimization'
-import { SourceToggle, type InputMode } from './importer/SourceToggle'
-import { PhotoUploader } from './importer/PhotoUploader'
+import type { Recipe } from '../../../lib/types'
+import { processImage } from '../../../lib/image-optimization'
+import { SourceToggle, type InputMode } from './SourceToggle'
+import { PhotoUploader } from './PhotoUploader'
 import { Stack } from '@/components/ui/layout'
 
-import { uploadImage, parseRecipe } from './importer/api'
+import { uploadImage, parseRecipe } from './api'
 
 type Status = 'idle' | 'processing' | 'error'
 

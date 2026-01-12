@@ -1,4 +1,4 @@
-import type { Recipe } from '../../lib/types'
+import type { Recipe } from '../../../lib/types'
 
 export const generateGroceryList = async (recipes: Recipe[]): Promise<string> => {
   if (!recipes || recipes.length === 0) return '# Grocery List\n\nNo recipes selected.'

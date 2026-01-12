@@ -63,16 +63,6 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         >
           <div className="flex h-full items-center justify-between px-4 text-[10px] font-black uppercase tracking-widest sm:text-xs">
             <span>Welcome, {user}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={openBurgerMenu}
-              className="h-11 w-11 rounded-full text-background hover:bg-background/20 hover:text-white"
-              title="Menu"
-              aria-label="Menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
           </div>
         </div>
       )}
@@ -82,6 +72,17 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         className={`flex h-14 flex-none items-center justify-between overflow-hidden px-4 opacity-100 transition-all duration-300 ease-in-out`}
       >
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openBurgerMenu}
+            className="h-10 w-10 text-foreground hover:bg-muted"
+            title="Menu"
+            aria-label="Menu"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+
           <a
             href="/protected/recipes"
             className="mb-0 font-display text-xl font-bold leading-none tracking-tight text-foreground transition-opacity hover:opacity-70"

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { generateGroceryList } from './grocery-utils'
-import type { Recipe } from '../../lib/types'
+import type { Recipe } from '../../../lib/types'
 
 describe('grocery-utils', () => {
   it('should return empty message when no recipes', async () => {

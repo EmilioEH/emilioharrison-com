@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { X, UserPlus, Key, Share, Copy, Loader2 } from 'lucide-react'
 import { Stack } from '@/components/ui/layout'
-import { shareInvite } from '../../lib/share-invite'
-import { alert } from '../../lib/dialogStore'
+import { shareInvite } from '../../../lib/share-invite'
+import { alert } from '../../../lib/dialogStore'
 import { useStore } from '@nanostores/react'
-import { $currentFamily } from '../../lib/familyStore'
+import { $currentFamily } from '../../../lib/familyStore'
 
 interface InviteViewProps {
   onClose: () => void

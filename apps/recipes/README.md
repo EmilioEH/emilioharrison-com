@@ -257,6 +257,17 @@ npm run test:stryker
 # Runs: Stryker mutation testing to verify test quality
 ```
 
+### 🧱 Testing with Build Flags
+
+To ensure reliable E2E tests, we use a special build flag to bypass server-side database checks for the `TestUser`.
+
+```bash
+npm run build:test
+# Runs: PUBLIC_TEST_MODE=true astro build
+```
+
+This is **required** before running E2E tests (handled automatically by `playwright.config.ts` when running `npm run test:e2e`). If running tests manually against a local server, ensure you use this build or set `PUBLIC_TEST_MODE=true` in `.dev.vars`.
+
 ## 7. Recipe Data & Family Sync
 
 Recipes are stored in Firestore, but user-specific data (ratings, notes, week plans) is now **family-scoped**.

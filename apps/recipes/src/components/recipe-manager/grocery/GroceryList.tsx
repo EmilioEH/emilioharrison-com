@@ -11,9 +11,12 @@ import {
   CheckSquare,
 } from 'lucide-react'
 import { Stack, Inline } from '@/components/ui/layout'
-import { mergeShoppableIngredients, categorizeShoppableIngredients } from '../../lib/grocery-logic'
-import { confirm } from '../../lib/dialogStore'
-import type { Recipe, ShoppableIngredient } from '../../lib/types'
+import {
+  mergeShoppableIngredients,
+  categorizeShoppableIngredients,
+} from '../../../lib/grocery-logic'
+import { confirm } from '../../../lib/dialogStore'
+import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 
 interface GroceryListProps {
   ingredients: ShoppableIngredient[]

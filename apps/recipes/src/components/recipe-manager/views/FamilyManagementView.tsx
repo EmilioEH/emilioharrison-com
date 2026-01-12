@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
 import { UserPlus, Shield, User, Trash2, ArrowLeft, LogOut, Share } from 'lucide-react'
 import { useStore } from '@nanostores/react'
-import { $familyMembers, $currentUserId, familyActions } from '../../lib/familyStore'
-import { Stack, Inline } from '../ui/layout'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { confirm, alert } from '../../lib/dialogStore'
-import { FamilySetup } from './FamilySetup'
-import { shareInvite } from '../../lib/share-invite'
-import type { PendingInvite } from '../../lib/types'
+import { $familyMembers, $currentUserId, familyActions } from '../../../lib/familyStore'
+import { Stack, Inline } from '../../ui/layout'
+import { Button } from '../../ui/button'
+import { Input } from '../../ui/input'
+import { confirm, alert } from '../../../lib/dialogStore'
+import { FamilySetup } from '../FamilySetup'
+import { shareInvite } from '../../../lib/share-invite'
+import type { PendingInvite } from '../../../lib/types'
 
-import type { Family } from '../../lib/types'
+import type { Family } from '../../../lib/types'
 
 interface FamilyManagementViewProps {
   onClose: () => void

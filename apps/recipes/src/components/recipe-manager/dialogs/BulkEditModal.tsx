@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { X, AlertCircle, Save } from 'lucide-react'
 import { Stack, Inline, Cluster } from '@/components/ui/layout'
-import { alert } from '../../lib/dialogStore'
+import { alert } from '../../../lib/dialogStore'
 import { Badge } from '@/components/ui/badge'
-import { ResponsiveModal } from '../ui/ResponsiveModal'
-import type { Recipe } from '../../lib/types'
+import { ResponsiveModal } from '../../ui/ResponsiveModal'
+import type { Recipe } from '../../../lib/types'
 
 interface BulkEditModalProps {
   selectedCount: number

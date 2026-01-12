@@ -6,10 +6,10 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-} from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Stack, Inline } from '../ui/layout'
-import type { PendingInvite } from '../../lib/types'
+} from '../../ui/dialog'
+import { Button } from '../../ui/button'
+import { Stack, Inline } from '../../ui/layout'
+import type { PendingInvite } from '../../../lib/types'
 
 interface InvitationModalProps {
   invite: PendingInvite

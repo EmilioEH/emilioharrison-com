@@ -68,7 +68,7 @@ export default defineConfig({
   timeout: 45 * 1000,
   globalTimeout: 5 * 60 * 1000, // Hard limit of 5 minutes for the entire test run
   webServer: {
-    command: 'npm run build && npm run preview:wrangler',
+    command: 'npm run build:test && npm run preview:wrangler',
     url: 'http://127.0.0.1:8788/protected/recipes/login',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { Loader2, ChefHat, FolderUp, FileText, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Stack } from '@/components/ui/layout'
-import type { Recipe } from '../../lib/types'
-import { processImage } from '../../lib/image-optimization'
-import { uploadImage, parseRecipe } from './importer/api'
+import type { Recipe } from '../../../lib/types'
+import { processImage } from '../../../lib/image-optimization'
+import { uploadImage, parseRecipe } from './api'
 
 interface BulkRecipeImporterProps {
   onRecipesParsed: (recipes: Recipe[]) => void
