@@ -54,7 +54,7 @@ interface RecipeLibraryProps {
   // onSearchChange removed
   searchQuery?: string
   hasSearch?: boolean
-  scrollContainer?: HTMLElement | null
+  scrollContainer?: HTMLElement | Window | null
   // New Header Tools Props removed (onOpenFilters, activeFilterCount, onSearchExpandedChange, hideSearch)
   // Week management props
   allowManagement?: boolean // show management menu for week context
@@ -138,7 +138,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
     const handleScroll = () => {
       // Cache Scroll
-      const currentScroll = container.scrollTop
+      const currentScroll = container instanceof Window ? window.scrollY : container.scrollTop
       scrollCache['library'] = currentScroll
 
       // Scrollspy Logic

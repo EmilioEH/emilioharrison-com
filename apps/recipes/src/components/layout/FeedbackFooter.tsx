@@ -8,13 +8,9 @@ export const FeedbackFooter = () => {
   const lastScrollY = React.useRef(0)
 
   useEffect(() => {
-    // 1. Identify the scroll container (RecipeLayout uses <main>)
-    const scrollContainer = document.querySelector('main') || window
-
     const handleScroll = () => {
       // Get current scroll position
-      const currentScrollY =
-        scrollContainer instanceof Window ? window.scrollY : scrollContainer.scrollTop
+      const currentScrollY = window.scrollY
 
       // Determine direction
       // Hide on scroll down (if moved more than 10px and not at top)
@@ -30,10 +26,10 @@ export const FeedbackFooter = () => {
     }
 
     // Attach listener
-    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [])
 

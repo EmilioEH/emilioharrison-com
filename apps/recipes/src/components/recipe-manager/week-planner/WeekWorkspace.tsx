@@ -30,7 +30,7 @@ interface WeekWorkspaceProps {
   onClose: () => void
   onOpenCalendar: () => void
   onSelectRecipe: (recipe: Recipe) => void
-  scrollContainer: HTMLElement | null
+  scrollContainer: HTMLElement | Window | null
   onShare?: (recipe: Recipe) => void
 }
 

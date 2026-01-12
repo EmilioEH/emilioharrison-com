@@ -165,6 +165,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **SSR Stability Fix**: Converted browser-only libraries (like `heic2any`) and image processing utilities to dynamic imports. This prevents critical server-side rendering crashes in preview/production environments while maintaining full image optimization capabilities on the client.
 - **Login Access Restore (Jan 2026)**: Fixed an issue where unauthenticated users were unable to use "Request Access" or "Access Code" features because the API endpoints were blocked by the authentication middleware. Added `/api/auth/request-access` and `/api/auth/redeem-code` to permitted public routes, ensuring new users can always submit requests or join via invite.
 - **Pending User Activation (Jan 2026)**: Enabled the "Redeem Invite" flow for users in the `pending_approval` state, allowing them to enter an activation code and bypass the waitlist immediately without needing admin intervention.
+- **Pull-to-Refresh Restoration**: Restored native browser pull-to-refresh functionality by moving the main scroll container back to the `body` tag. Updated all scroll-aware components (Header, Footer) to track window scroll events.
 
 ### Recent Updates (Dec 2025)
 

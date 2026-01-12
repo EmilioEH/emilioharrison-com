@@ -5,7 +5,7 @@ import { openBurgerMenu } from '../../lib/burgerMenuStore'
 
 interface RecipeHeaderProps {
   user?: string
-  scrollContainer?: HTMLElement | null
+  scrollContainer?: HTMLElement | Window | null
   onAddRecipe?: () => void
   onViewWeek?: () => void
   isWeekView?: boolean
@@ -19,42 +19,33 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   isWeekView,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [isScrollingUp, setIsScrollingUp] = useState(false)
   const lastScrollTop = useRef(0)
 
   useEffect(() => {
-    if (!scrollContainer) return
+    // If no container provided, default to window if available
+    const target = scrollContainer || (typeof window !== 'undefined' ? window : null)
+    if (!target) return
+
     const handleScroll = () => {
-      const currentScroll = scrollContainer.scrollTop
+      const currentScroll = target instanceof Window ? window.scrollY : target.scrollTop
       setIsScrolled(currentScroll > 20)
-
-      // Reveal on scroll up
-      if (currentScroll < lastScrollTop.current && currentScroll > 50) {
-        setIsScrollingUp(true)
-      } else if (currentScroll > lastScrollTop.current || currentScroll <= 20) {
-        setIsScrollingUp(false)
-      }
-
       lastScrollTop.current = currentScroll
     }
-    scrollContainer.addEventListener('scroll', handleScroll)
-    // Initial check
-    handleScroll()
 
-    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+    target.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => target.removeEventListener('scroll', handleScroll)
   }, [scrollContainer])
 
   return (
     <header
-      className={`sticky top-0 z-50 flex flex-col justify-end border-b border-border shadow-md backdrop-blur-md transition-all duration-300 ease-in-out ${
-        isScrolled ? 'bg-background/95 shadow-md' : 'bg-background/80'
-      }`}
+      className={`relative flex flex-col justify-end border-b border-border bg-background/95 shadow-md backdrop-blur-md transition-all duration-300 ease-in-out`}
     >
-      {/* Static Welcome Bar - Tightened */}
+      {/* Static Welcome Bar */}
       {user && (
         <div
           className={`w-full overflow-hidden bg-foreground text-background transition-all duration-300 ease-in-out ${
-            isScrolled && !isScrollingUp ? 'h-0 opacity-0' : 'h-7 opacity-100'
+            isScrolled ? 'h-0 opacity-0' : 'h-7 opacity-100'
           }`}
         >
           <div className="flex h-full items-center justify-between px-4 text-[10px] font-black uppercase tracking-widest sm:text-xs">
@@ -75,9 +66,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
 
       {/* Main App Bar - Tightened & Integrated Menu */}
       <div
-        className={`flex flex-none items-center justify-between overflow-hidden px-4 transition-all duration-300 ease-in-out ${
-          isScrolled && !isScrollingUp ? 'h-0 opacity-0' : 'h-14 opacity-100'
-        }`}
+        className={`flex h-14 flex-none items-center justify-between overflow-hidden px-4 opacity-100 transition-all duration-300 ease-in-out`}
       >
         <div className="flex items-center gap-3">
           <a

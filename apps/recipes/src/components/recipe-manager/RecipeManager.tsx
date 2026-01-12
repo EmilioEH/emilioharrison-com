@@ -289,23 +289,34 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [view])
 
   // Scroll Container Ref State
-  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | Window | null>(null)
+
+  useEffect(() => {
+    // If we are strictly client side, default to window
+    if (typeof window !== 'undefined' && !scrollContainer) {
+      setScrollContainer(window)
+    }
+  }, [])
 
   // Broadcast scroll events for global components (like FeedbackFooter)
   useEffect(() => {
-    if (!scrollContainer) return
+    const target = scrollContainer || (typeof window !== 'undefined' ? window : null)
+    if (!target) return
 
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement
+    const handleScroll = () => {
+      // If target is window, use window.scrollY
+      const scrollTop =
+        target instanceof Window ? window.scrollY : (target as HTMLElement).scrollTop
+
       window.dispatchEvent(
         new CustomEvent('recipe-scroll', {
-          detail: { scrollTop: target.scrollTop },
+          detail: { scrollTop },
         }),
       )
     }
 
-    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
-    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+    target.addEventListener('scroll', handleScroll, { passive: true })
+    return () => target.removeEventListener('scroll', handleScroll)
   }, [scrollContainer])
 
   // Hooks
@@ -708,7 +719,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   return (
     <>
-      <div className="shadow-md-3 relative mx-auto flex h-full w-full max-w-2xl flex-col bg-card text-foreground">
+      <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground">
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
         {view !== 'week' && (
@@ -733,7 +744,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="overflow-hidden"
+              className=""
             >
               <RecipeHeader
                 user={currentUser}
@@ -772,7 +783,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           />
         )}
 
-        <main ref={setScrollContainer} className="relative flex-1 overflow-y-auto scroll-smooth">
+        <main className="relative flex-1 scroll-smooth pb-32">
           {view === 'library' && (
             <div className="flex h-full flex-col">
               <div className="scrollbar-hide flex-1">
