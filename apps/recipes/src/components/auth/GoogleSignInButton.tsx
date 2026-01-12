@@ -1,27 +1,67 @@
 import { useState, useEffect } from 'react'
 import { auth, googleProvider } from '../../lib/firebase-client'
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { signInWithPopup, getRedirectResult } from 'firebase/auth'
 import { AlertCircle, ArrowRight, Key } from 'lucide-react'
+
+// Simple mobile detection check
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false
+  const ua = navigator.userAgent.toLowerCase()
+  return /iphone|ipad|ipod|android|mobile/.test(ua)
+}
+
+const isStandalone = () => {
+  if (typeof window === 'undefined') return false
+  return (
+    (window.navigator as Navigator & { standalone?: boolean }).standalone ||
+    window.matchMedia('(display-mode: standalone)').matches
+  )
+}
 
 export const GoogleSignInButton = () => {
   const [error, setError] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'pending_approval' | 'denied'>('idle')
+  const [status, setStatus] = useState<
+    'idle' | 'loading' | 'pending_approval' | 'denied' | 'checking_redirect'
+  >('idle')
   const [tempToken, setTempToken] = useState<string | null>(null)
-  const [isInAppBrowser, setIsInAppBrowser] = useState(false)
 
-  // Handle Redirect Result (for Mobile)
+  // Invite Code State
+  const [inviteCode, setInviteCode] = useState('')
+  const [redeemLoading, setRedeemLoading] = useState(false)
+  const [requestLoading, setRequestLoading] = useState(false)
+
+  // Test Helper & Redirect Result Handling
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(window as any).simulateGoogleLogin = (token: string) => {
+        setTempToken(token)
+        attemptLogin(token)
+      }
+    }
+
+    // Check for redirect result (mobile flow)
     const checkRedirect = async () => {
+      // Only show "checking" if we are on a mobile device and might be returning from a redirect
+      const isMobile = isMobileDevice()
+      if (isMobile) setStatus('checking_redirect')
+
       try {
+        console.log('[Auth] Checking getRedirectResult...')
         const result = await getRedirectResult(auth)
+
         if (result) {
+          console.log('[Auth] Redirect result found for:', result.user.email)
           setStatus('loading')
           const idToken = await result.user.getIdToken()
           setTempToken(idToken)
           await attemptLogin(idToken)
+        } else {
+          console.log('[Auth] No redirect result found.')
+          if (isMobile) setStatus('idle')
         }
-      } catch (e) {
-        console.error(e)
+      } catch (e: unknown) {
+        console.error('[Auth] Redirect login error:', e)
         const errorMsg = e instanceof Error ? e.message : 'Login failed'
         setError(errorMsg)
         setStatus('idle')
@@ -30,59 +70,58 @@ export const GoogleSignInButton = () => {
     checkRedirect()
   }, [])
 
-  // Detect In-App Browser
-  useEffect(() => {
-    if (typeof navigator === 'undefined') return
-    const ua = navigator.userAgent || navigator.vendor
-    // Simple heuristic for in-app browsers (FB, Instagram, Line, etc.)
-    // Note: iOS Messages app also behaves like an in-app browser but doesn't always have a distinct UA.
-    // However, if we see generic typical in-app tokens, we warn.
-    const isInApp = /(FBAN|FBAV|Instagram|Line|Twitter|LinkedIn|Slack)/i.test(ua)
-    setIsInAppBrowser(isInApp)
-  }, [])
-
-  // Invite Code State
-  const [inviteCode, setInviteCode] = useState('')
-  const [redeemLoading, setRedeemLoading] = useState(false)
-  const [requestLoading, setRequestLoading] = useState(false)
-
-  // Test Helper
-  useState(() => {
-    if (typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(window as any).simulateGoogleLogin = (token: string) => {
-        setTempToken(token)
-        attemptLogin(token)
-      }
-    }
-  })
-
   const handleGoogleLogin = async () => {
     setStatus('loading')
     setError('')
+
+    // Check if we are in a restricted environment (In-App Browser)
+    const isMobile = isMobileDevice()
+    const standalone = isStandalone()
+    console.log('[Auth] Attempting Login. Mobile:', isMobile, 'Standalone:', standalone)
+
     try {
-      // Check for mobile/touch environment to prefer redirect
-      const isMobile =
-        typeof navigator !== 'undefined' &&
-        (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent,
-        ) ||
-          (navigator.maxTouchPoints && navigator.maxTouchPoints > 0))
-
-      if (isMobile) {
-        // Use Redirect for Mobile to avoid popup blockers and webview issues
-        await signInWithRedirect(auth, googleProvider)
-        // processing pauses here as page redirects
-      } else {
-        // Desktop: Use Popup
-        const result = await signInWithPopup(auth, googleProvider)
-        const idToken = await result.user.getIdToken()
-        setTempToken(idToken)
-
-        await attemptLogin(idToken)
-      }
+      // Primary: signInWithPopup
+      // This is generally more reliable on iOS Safari IF it's a direct user click.
+      // Firebase will try to open a popup, and if blocked, will often show an
+      // internal redirect handler IF it's configured for it.
+      console.log('[Auth] Attempting signInWithPopup')
+      const result = await signInWithPopup(auth, googleProvider)
+      const idToken = await result.user.getIdToken()
+      setTempToken(idToken)
+      await attemptLogin(idToken)
     } catch (e: unknown) {
-      console.error(e)
+      console.error('[Auth] Login error:', e)
+      const firebaseError = e as { code?: string; message?: string }
+
+      // If it's a blocked popup or a "missing initial state" style error,
+      // we suggest opening in Safari or provide guidance.
+      if (
+        firebaseError.code === 'auth/popup-blocked' ||
+        firebaseError.code === 'auth/cancelled-popup-request'
+      ) {
+        setError(
+          'Sign-in popup blocked. Please tap again, or open this page directly in Safari if the problem persists.',
+        )
+        setStatus('idle')
+        return
+      }
+
+      // If we are on mobile and popup failed (but not a cancel), we can TRY redirect
+      // as a fallback if the user is in a context that supports it.
+      if (isMobile && firebaseError.code === 'auth/popup-closed-by-user') {
+        setStatus('idle')
+        return
+      }
+
+      // Special case: Missing initial state error handler
+      if (firebaseError.message?.includes('missing initial state')) {
+        setError(
+          'Login failed due to browser restrictions. Please try opening this link directly in Safari or Chrome instead of via text message.',
+        )
+        setStatus('idle')
+        return
+      }
+
       const errorMsg = e instanceof Error ? e.message : 'Something went wrong'
       setError(errorMsg)
       setStatus('idle')
@@ -280,13 +319,6 @@ export const GoogleSignInButton = () => {
   return (
     <div className="flex flex-col gap-4">
       {error && <div className="mb-4 rounded-md bg-red-100 p-3 text-sm text-red-700">{error}</div>}
-
-      {isInAppBrowser && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          <strong>Tip:</strong> For the best experience, open this page in Safari or Chrome. In-app
-          browsers may have trouble with Google Sign In.
-        </div>
-      )}
 
       <button
         onClick={handleGoogleLogin}

@@ -165,9 +165,9 @@ All primitives use the `spacing` prop with a controlled scale:
 - **SSR Stability Fix**: Converted browser-only libraries (like `heic2any`) and image processing utilities to dynamic imports. This prevents critical server-side rendering crashes in preview/production environments while maintaining full image optimization capabilities on the client.
 - **Login Access Restore (Jan 2026)**: Fixed an issue where unauthenticated users were unable to use "Request Access" or "Access Code" features because the API endpoints were blocked by the authentication middleware. Added `/api/auth/request-access` and `/api/auth/redeem-code` to permitted public routes, ensuring new users can always submit requests or join via invite.
 - **Pending User Activation (Jan 2026)**: Enabled the "Redeem Invite" flow for users in the `pending_approval` state, allowing them to enter an activation code and bypass the waitlist immediately without needing admin intervention.
-- **iOS Auth Fix (Jan 2026)**: Resolved "missing initial state" errors on iOS by switching to `signInWithRedirect` for mobile users and adding `getRedirectResult` handling. Also added in-app browser detection to warn users about potential compatibility issues with standard webviews.
 - **Pull-to-Refresh Restoration**: Restored native browser pull-to-refresh functionality by moving the main scroll container back to the `body` tag. Updated all scroll-aware components (Header, Footer) to track window scroll events.
 - **Scroll-Aware Week Bar**: The **Week Context Bar** (bottom navigation) now intelligently slides out of view when scrolling down and reappears when scrolling up, coordinating perfectly with the Beta Feedback Footer to maximize screen real estate.
+- **Robust Mobile Login Resiliency (Jan 2026)**: Implemented an improved authentication flow for mobile devices that prioritizes stable `signInWithPopup` over redirects. Added specific detection and user-friendly guidance for the "Missing Initial State" error common in iOS in-app browsers (e.g., opening links from SMS/WhatsApp), ensuring users are never left with a blank white screen and are guided to Safari when necessary.
 
 ### Recent Updates (Dec 2025)
 
@@ -256,17 +256,6 @@ npm run test:e2e:fast
 npm run test:stryker
 # Runs: Stryker mutation testing to verify test quality
 ```
-
-### 🧱 Testing with Build Flags
-
-To ensure reliable E2E tests, we use a special build flag to bypass server-side database checks for the `TestUser`.
-
-```bash
-npm run build:test
-# Runs: PUBLIC_TEST_MODE=true astro build
-```
-
-This is **required** before running E2E tests (handled automatically by `playwright.config.ts` when running `npm run test:e2e`). If running tests manually against a local server, ensure you use this build or set `PUBLIC_TEST_MODE=true` in `.dev.vars`.
 
 ## 7. Recipe Data & Family Sync
 
