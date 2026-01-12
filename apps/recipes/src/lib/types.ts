@@ -85,7 +85,8 @@ export interface RecipeVersion {
   userId?: string
   userName?: string
   changeType: 'edit' | 'restore' | 'import'
-  data: Partial<Recipe> // Snapshot of recipe data
+  // Break recursion: A snapshot doesn't need to contain nested history
+  data: Omit<Partial<Recipe>, 'versions'>
 }
 
 export interface StructuredIngredient {
