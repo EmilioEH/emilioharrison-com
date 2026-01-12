@@ -677,7 +677,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         onExport={handleExport}
         onImport={handleImport}
         onDeleteAccount={handleDeleteAll}
-        currentName={currentUser}
+        currentName={currentUser ?? undefined}
         onUpdateProfile={handleUpdateProfile}
       />
     )
@@ -749,7 +749,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               className=""
             >
               <RecipeHeader
-                user={currentUser}
+                user={currentUser ?? undefined}
                 scrollContainer={scrollContainer}
                 onAddRecipe={() => {
                   setRecipe(null)

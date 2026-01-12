@@ -51,7 +51,8 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }: FeedbackModal
               // Ignore the modal itself to capture the app state behind it
               return element === modalRef.current
             },
-          })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
           setScreenshot(canvas.toDataURL('image/png'))
         } catch (err) {
           console.error('Auto-screenshot failed:', err)
