@@ -166,6 +166,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Login Access Restore (Jan 2026)**: Fixed an issue where unauthenticated users were unable to use "Request Access" or "Access Code" features because the API endpoints were blocked by the authentication middleware. Added `/api/auth/request-access` and `/api/auth/redeem-code` to permitted public routes, ensuring new users can always submit requests or join via invite.
 - **Pending User Activation (Jan 2026)**: Enabled the "Redeem Invite" flow for users in the `pending_approval` state, allowing them to enter an activation code and bypass the waitlist immediately without needing admin intervention.
 - **Pull-to-Refresh Restoration**: Restored native browser pull-to-refresh functionality by moving the main scroll container back to the `body` tag. Updated all scroll-aware components (Header, Footer) to track window scroll events.
+- **Scroll-Aware Week Bar**: The **Week Context Bar** (bottom navigation) now intelligently slides out of view when scrolling down and reappears when scrolling up, coordinating perfectly with the Beta Feedback Footer to maximize screen real estate.
 
 ### Recent Updates (Dec 2025)
 

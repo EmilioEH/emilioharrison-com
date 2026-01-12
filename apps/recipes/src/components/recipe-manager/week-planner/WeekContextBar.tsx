@@ -51,8 +51,44 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Scroll-aware logic to sync with FeedbackFooter
+  const [isFooterVisible, setIsFooterVisible] = React.useState(true)
+  const lastScrollY = React.useRef(0)
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+
+      // Sync with FeedbackFooter logic:
+      // Hide footer (means this bar should slide down) on scroll down
+      if (currentScrollY > lastScrollY.current && currentScrollY > 20) {
+        setIsFooterVisible(false)
+      }
+      // Show footer (this bar slides up back to position) on scroll up
+      else if (currentScrollY < lastScrollY.current) {
+        setIsFooterVisible(true)
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
-    <div className="pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgb(0,0,0,0.08)] backdrop-blur-xl">
+    <div
+      className={`pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgb(0,0,0,0.08)] backdrop-blur-xl transition-transform duration-300 ease-in-out ${
+        isFooterVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-8'
+      }`}
+      style={{
+        // On mobile, the footer is 32px (h-8). This bar is bottom-8 (32px).
+        // When footer hides (translate-y-full), this should move down by 32px to sit at bottom-0.
+        // Tailwind 'translate-y-8' is 2rem (32px).
+        // Using style for cleaner conditional override if needed, but class is fine.
+        transform: isFooterVisible ? 'translateY(0)' : 'translateY(2rem)',
+      }}
+    >
       <div className="mx-auto flex max-w-2xl flex-col px-4 py-3">
         {/* Top Row: Controls */}
         <div className="flex items-center justify-between gap-3">
