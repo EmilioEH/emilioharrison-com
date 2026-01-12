@@ -721,9 +721,39 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   return (
     <>
-      <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground">
-        <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
+      <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
+      {/* Full-width Header Shell */}
+      <AnimatePresence>
+        {!isSearchMode && (
+          <motion.div
+            initial={{ height: 'auto', opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="w-full"
+          >
+            <RecipeHeader
+              user={currentUser ?? undefined}
+              scrollContainer={scrollContainer}
+              onAddRecipe={() => {
+                setRecipe(null)
+                setView('edit')
+              }}
+              onViewWeek={() => {
+                if (view === 'week') {
+                  setView('library')
+                } else {
+                  setView('week')
+                }
+              }}
+              isWeekView={view === 'week'}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground">
         {view !== 'week' && (
           <RecipeFilters
             isOpen={filtersOpen}
@@ -736,37 +766,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             setSearchQuery={handleSearchChange}
           />
         )}
-
-        {/* Collapsible Header */}
-        {/* Collapsible Header */}
-        <AnimatePresence>
-          {!isSearchMode && (
-            <motion.div
-              initial={{ height: 'auto', opacity: 1 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className=""
-            >
-              <RecipeHeader
-                user={currentUser ?? undefined}
-                scrollContainer={scrollContainer}
-                onAddRecipe={() => {
-                  setRecipe(null)
-                  setView('edit')
-                }}
-                onViewWeek={() => {
-                  if (view === 'week') {
-                    setView('library')
-                  } else {
-                    setView('week')
-                  }
-                }}
-                isWeekView={view === 'week'}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {view !== 'week' && !isSelectionMode && (
           <RecipeControlBar
