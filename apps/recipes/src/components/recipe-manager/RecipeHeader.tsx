@@ -18,6 +18,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   onViewWeek,
   isWeekView,
 }) => {
+  const [isVisible, setIsVisible] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
   const lastScrollTop = useRef(0)
 
@@ -28,7 +29,17 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
 
     const handleScroll = () => {
       const currentScroll = target instanceof Window ? window.scrollY : target.scrollTop
+
+      // Welcome Bar Logic (Collapse if > 20px)
       setIsScrolled(currentScroll > 20)
+
+      // Main Header Visibility Logic (Hide on scroll down, Show on scroll up)
+      if (currentScroll > lastScrollTop.current && currentScroll > 50) {
+        setIsVisible(false)
+      } else if (currentScroll < lastScrollTop.current) {
+        setIsVisible(true)
+      }
+
       lastScrollTop.current = currentScroll
     }
 
@@ -39,7 +50,9 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
 
   return (
     <header
-      className={`relative flex flex-col justify-end border-b border-border bg-background/95 shadow-md backdrop-blur-md transition-all duration-300 ease-in-out`}
+      className={`sticky top-0 z-40 flex flex-col justify-end border-b border-border bg-background/95 shadow-md backdrop-blur-md transition-all duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
     >
       {/* Static Welcome Bar */}
       {user && (
