@@ -1,12 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { auth, googleProvider } from '../../lib/firebase-client'
-import { signInWithPopup } from 'firebase/auth'
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 import { AlertCircle, ArrowRight, Key } from 'lucide-react'
 
 export const GoogleSignInButton = () => {
   const [error, setError] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'pending_approval' | 'denied'>('idle')
   const [tempToken, setTempToken] = useState<string | null>(null)
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false)
+
+  // Handle Redirect Result (for Mobile)
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          setStatus('loading')
+          const idToken = await result.user.getIdToken()
+          setTempToken(idToken)
+          await attemptLogin(idToken)
+        }
+      } catch (e) {
+        console.error(e)
+        const errorMsg = e instanceof Error ? e.message : 'Login failed'
+        setError(errorMsg)
+        setStatus('idle')
+      }
+    }
+    checkRedirect()
+  }, [])
+
+  // Detect In-App Browser
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    const ua = navigator.userAgent || navigator.vendor
+    // Simple heuristic for in-app browsers (FB, Instagram, Line, etc.)
+    // Note: iOS Messages app also behaves like an in-app browser but doesn't always have a distinct UA.
+    // However, if we see generic typical in-app tokens, we warn.
+    const isInApp = /(FBAN|FBAV|Instagram|Line|Twitter|LinkedIn|Slack)/i.test(ua)
+    setIsInAppBrowser(isInApp)
+  }, [])
 
   // Invite Code State
   const [inviteCode, setInviteCode] = useState('')
@@ -28,11 +61,26 @@ export const GoogleSignInButton = () => {
     setStatus('loading')
     setError('')
     try {
-      const result = await signInWithPopup(auth, googleProvider)
-      const idToken = await result.user.getIdToken()
-      setTempToken(idToken)
+      // Check for mobile/touch environment to prefer redirect
+      const isMobile =
+        typeof navigator !== 'undefined' &&
+        (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        ) ||
+          (navigator.maxTouchPoints && navigator.maxTouchPoints > 0))
 
-      await attemptLogin(idToken)
+      if (isMobile) {
+        // Use Redirect for Mobile to avoid popup blockers and webview issues
+        await signInWithRedirect(auth, googleProvider)
+        // processing pauses here as page redirects
+      } else {
+        // Desktop: Use Popup
+        const result = await signInWithPopup(auth, googleProvider)
+        const idToken = await result.user.getIdToken()
+        setTempToken(idToken)
+
+        await attemptLogin(idToken)
+      }
     } catch (e: unknown) {
       console.error(e)
       const errorMsg = e instanceof Error ? e.message : 'Something went wrong'
@@ -232,6 +280,13 @@ export const GoogleSignInButton = () => {
   return (
     <div className="flex flex-col gap-4">
       {error && <div className="mb-4 rounded-md bg-red-100 p-3 text-sm text-red-700">{error}</div>}
+
+      {isInAppBrowser && (
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <strong>Tip:</strong> For the best experience, open this page in Safari or Chrome. In-app
+          browsers may have trouble with Google Sign In.
+        </div>
+      )}
 
       <button
         onClick={handleGoogleLogin}
