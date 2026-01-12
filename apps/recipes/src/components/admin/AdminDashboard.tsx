@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ShieldAlert, LogOut, Trash2, Ban, CheckCircle } from 'lucide-react'
+import { ShieldAlert, LogOut, Trash2, Ban, CheckCircle, LogIn } from 'lucide-react'
 import { Inline } from '@/components/ui/layout'
 
 interface AdminUser {
@@ -72,6 +72,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       console.error('Failed to fetch admin data', e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleImpersonate = async (user: AdminUser) => {
+    if (!window.confirm(`Login as ${user.displayName}? You will see the app exactly as they do.`))
+      return
+
+    try {
+      const res = await fetch('/protected/recipes/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        // Hard reload to refresh server-side cookies/session and return to app
+        window.location.href = '/protected/recipes'
+      } else {
+        alert(data.error || 'Failed to impersonate')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error starting impersonation')
     }
   }
 
@@ -297,6 +320,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleImpersonate(user)}
+                          className="rounded p-1 text-blue-600 hover:bg-blue-50"
+                          title="Login as User"
+                        >
+                          <LogIn className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => handleToggleUserStatus(user)}
                           className={`rounded p-1 ${

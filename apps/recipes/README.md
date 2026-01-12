@@ -18,6 +18,14 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Source Attribution**: Grocery items perform "double duty"—displaying the aggregate store unit while allowing users to tap tags (e.g., `[RECIPE A]`) to see exactly how much is needed for each dish.
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
+- **Waitlist/Access Control**:
+  - "Invite Only" mode active.
+  - `ALLOWED_EMAILS` env var controls whitelist.
+  - Admins can manage access codes and invites.
+- **Admin Impersonation**:
+  - Admins can "Login As" any user from the Admin Dashboard.
+  - Useful for debugging user-specific issues.
+  - Persistent banner shows when impersonating, with a "Stop Impersonating" button.
 - **Robust Access Control**: Secure dashboard protected by Google Sign-In. Supports **Request Access** flow with admin approval and **Invite Codes** for instant family access.
 - **Invite Others**: A dedicated menu item allowing users to **invite others to their family workspace** or **generate activation codes** for new accounts. Supports native sharing and clipboard copy.
 - **Native Invite Sharing**: Use the Web Share API to share family invitations and activation codes directly from the app to messaging platforms.
