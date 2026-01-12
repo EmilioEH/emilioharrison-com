@@ -148,6 +148,8 @@ All primitives use the `spacing` prop with a controlled scale:
 
 ### Recent Updates (Jan 2026)
 
+- **Testing Infrastructure Hardening**: Expanded the automated testing strategy with a new **Integration Testing Layer** (`tests/integration/`) to verify complex server-side logic (like grocery list merging) that is mocked in E2E tests. Increased unit test coverage for core utilities (`date-helpers`, `type-guards`).
+
 - **Login API & Manager Cleanup**: Refactored the authentication flow and consolidated `RecipeManager` logic. This fix improved E2E test stability and resolved issues with the burger menu visibility and state.
 - **Performance Optimization**: Removed `@tanstack/react-virtual` from the recipe library in favor of a clean, responsive native CSS Grid. This simplifies the component tree and improves scroll performance by utilizing native browser rendering.
 
@@ -249,9 +251,11 @@ npm run check:hygiene
 
 ### Testing & Validation
 
+### Testing & Validation
+
 ```bash
 npm run test:unit
-# Runs: Vitest unit tests
+# Runs: All unit and integration tests (Vitest)
 ```
 
 ```bash
@@ -268,6 +272,12 @@ npm run test:e2e:fast
 npm run test:stryker
 # Runs: Stryker mutation testing to verify test quality
 ```
+
+#### Test Strategy (Tiers)
+
+1. **Unit**: Isolated tests for utility functions (e.g. `src/lib/date-helpers.test.ts`).
+2. **Integration**: Service-layer tests for business logic not covered by E2E mocks (e.g. `tests/integration/`).
+3. **E2E**: Full user journey tests with mocked backend for stability.
 
 ## 7. Recipe Data & Family Sync
 
