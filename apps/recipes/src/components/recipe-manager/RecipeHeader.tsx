@@ -61,7 +61,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
             isScrolled ? 'h-0 opacity-0' : 'h-10 opacity-100'
           }`}
         >
-          <div className="mx-auto flex h-full max-w-2xl items-center justify-between px-4">
+          <div className="mx-auto flex h-full max-w-2xl items-center justify-between px-4 text-[10px] font-black uppercase tracking-widest sm:text-xs">
             <span>Welcome, {user}</span>
             <button
               onClick={openBurgerMenu}
