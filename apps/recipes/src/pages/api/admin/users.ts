@@ -92,3 +92,25 @@ export const PUT: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500 })
   }
 }
+
+export const DELETE: APIRoute = async (context) => {
+  const { request } = context
+  const admin = await verifyAdmin(request, context)
+
+  if (!admin) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 })
+  }
+
+  try {
+    const { userId } = await request.json()
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Missing userId' }), { status: 400 })
+    }
+
+    await db.deleteDocument('users', userId)
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 })
+  } catch (e) {
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500 })
+  }
+}

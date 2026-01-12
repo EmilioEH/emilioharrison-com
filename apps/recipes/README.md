@@ -33,9 +33,9 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **inline editing** of ingredients and steps.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via a persistent **Beta Footer Bar** fixed at the bottom of the viewport. Supports a global **keyboard shortcut** (`Cmd/Ctrl + Shift + F`) for instant reporting. The footer is **scroll-aware** (hides on scroll down, appears on scroll up) and intelligently stacked to never obscure content.
 - **Admin Dashboard**: A centralized interface (restricted to admins via `ADMIN_EMAILS` check) to:
-  - **Users**: View all users, their access status, and activity stats (Recipes Added/Cooked).
-  - **Access Codes**: Generate new codes and track redemption history (who accepted and when).
-  - **Family Invites**: Monitor pending family invitations and their acceptance status.
+  - **Users**: View all users, manage their access status (Disable/Enable), and remove users/spam accounts.
+  - **Access Codes**: Generate new codes, track redemption history, and disable unwanted codes.
+  - **Family Invites**: Monitor pending family invitations and revoke them if necessary.
   - **Feedback**: Review, track, and resolve user feedback reports.
 
 ## 🛠 Tech Stack

@@ -82,6 +82,38 @@ test.describe('Admin Dashboard', () => {
       })
     })
 
+    // Mock Delete/Patch endpoints
+    await page.route('**/api/admin/users', async (route) => {
+      const method = route.request().method()
+      if (method === 'DELETE') {
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+      } else if (method === 'PUT') {
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+      } else {
+        await route.continue()
+      }
+    })
+
+    await page.route('**/api/admin/access-codes', async (route) => {
+      const method = route.request().method()
+      if (method === 'DELETE') {
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+      } else if (method === 'PATCH') {
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+      } else {
+        await route.continue() // Fallback to previous mock if GET/POST
+      }
+    })
+
+    await page.route('**/api/admin/invites', async (route) => {
+      const method = route.request().method()
+      if (method === 'DELETE') {
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+      } else {
+        await route.continue()
+      }
+    })
+
     await page.goto('/protected/recipes')
   })
 
@@ -115,5 +147,55 @@ test.describe('Admin Dashboard', () => {
     await page.getByText('Family Invites').click()
     await expect(page.getByText('invitee@example.com')).toBeVisible()
     await expect(page.getByText('pending')).toBeVisible()
+  })
+
+  test('should handle user actions', async ({ page }) => {
+    // Wait for hydration
+    // Wait for hydration/rendering
+    await page.waitForTimeout(3000)
+
+    await page.getByRole('button', { name: /menu/i }).click()
+    await page.getByText('Admin Dashboard').click()
+
+    // Mock Dialog
+    page.on('dialog', (dialog) => dialog.accept())
+
+    // Test Delete User
+    const deleteBtn = page.locator('button[title="Delete User"]').first()
+    await deleteBtn.click()
+    // In a real e2e with mock, we assume success removes the row locally.
+    // Our mock implementation updates local state on success.
+    await expect(page.getByText('emilioeh1991@gmail.com')).not.toBeVisible()
+
+    // Test Toggle Status (on second user since first is gone)
+    const toggleBtn = page.locator('button[title="Enable User"]').first() // 'status' was pending, so it should be "Enable" button?
+    // Wait, User2 status is 'pending', logic says:
+    // user.status === 'approved' ? 'Disable User' : 'Enable User'
+    // So for pending, it is 'Enable User'.
+    await toggleBtn.click()
+    // It should flip to approved locally
+    await expect(page.locator('button[title="Disable User"]').first()).toBeVisible()
+  })
+
+  test('should handle code and invite actions', async ({ page }) => {
+    // Wait for hydration
+    // Wait for hydration/rendering
+    await page.waitForTimeout(3000)
+
+    await page.getByRole('button', { name: /menu/i }).click()
+    await page.getByText('Admin Dashboard').click()
+    page.on('dialog', (dialog) => dialog.accept())
+
+    // Codes
+    await page.getByText('Access Codes').click()
+    const deleteCodeBtn = page.locator('button[title="Delete Code"]').first()
+    await deleteCodeBtn.click()
+    await expect(page.getByText('TEST12')).not.toBeVisible()
+
+    // Invites
+    await page.getByText('Family Invites').click()
+    const deleteInviteBtn = page.locator('button[title="Revoke Invite"]').first()
+    await deleteInviteBtn.click()
+    await expect(page.getByText('invitee@example.com')).not.toBeVisible()
   })
 })

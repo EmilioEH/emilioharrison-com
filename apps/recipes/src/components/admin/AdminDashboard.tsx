@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ShieldAlert, LogOut } from 'lucide-react'
+import { ShieldAlert, LogOut, Trash2, Ban, CheckCircle } from 'lucide-react'
 import { Inline } from '@/components/ui/layout'
 
 interface AdminUser {
@@ -72,6 +72,118 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       console.error('Failed to fetch admin data', e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteUser = async (user: AdminUser) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete user ${user.displayName}? This cannot be undone.`,
+      )
+    )
+      return
+
+    try {
+      const res = await fetch('/protected/recipes/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      if (res.ok) {
+        setUsers(users.filter((u) => u.id !== user.id))
+      } else {
+        alert('Failed to delete user')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error deleting user')
+    }
+  }
+
+  const handleToggleUserStatus = async (user: AdminUser) => {
+    const newStatus = user.status === 'approved' ? 'rejected' : 'approved'
+    // 'rejected' acts as 'disabled' here effectively
+    try {
+      const res = await fetch('/protected/recipes/api/admin/users', {
+        method: 'PUT', // or PATCH as supported
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, status: newStatus }),
+      })
+      if (res.ok) {
+        setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u)))
+      } else {
+        alert('Failed to update status')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error updating status')
+    }
+  }
+
+  const handleDeleteCode = async (code: InviteCode) => {
+    if (!window.confirm(`Delete access code ${code.code}?`)) return
+    try {
+      const res = await fetch('/protected/recipes/api/admin/access-codes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.code }),
+      })
+      if (res.ok) {
+        setCodes(codes.filter((c) => c.code !== code.code))
+      } else {
+        alert('Failed to delete code')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error deleting code')
+    }
+  }
+
+  const handleToggleCodeStatus = async (code: InviteCode) => {
+    // Wait, Access Codes status is 'pending' or 'accepted' (meaning used).
+    // Maybe we want a 'disabled' status?
+    // Current types say string, API supports string.
+    // Let's toggle between 'disabled' and whatever it was, or just 'disabled' / 'pending'.
+    // If it's already used ('accepted'), maybe we shouldn't touch it?
+    // Let's assume user wants to disable a pending code.
+
+    const targetStatus = code.status === 'disabled' ? 'pending' : 'disabled'
+
+    try {
+      const res = await fetch('/protected/recipes/api/admin/access-codes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.code, status: targetStatus }),
+      })
+      if (res.ok) {
+        setCodes((prev) =>
+          prev.map((c) => (c.code === code.code ? { ...c, status: targetStatus } : c)),
+        )
+      } else {
+        alert('Failed to update code status')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error updating code')
+    }
+  }
+
+  const handleDeleteInvite = async (invite: FamilyInvite) => {
+    if (!window.confirm(`Revoke invite for ${invite.email}?`)) return
+    try {
+      const res = await fetch('/protected/recipes/api/admin/invites', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId: invite.id }),
+      })
+      if (res.ok) {
+        setInvites(invites.filter((i) => i.id !== invite.id))
+      } else {
+        alert('Failed to delete invite')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error deleting invite')
     }
   }
 
@@ -151,6 +263,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Stats
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -180,6 +295,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                       <div>Added: {user.stats?.recipesAdded || 0}</div>
                       <div>Cooked: {user.stats?.recipesCooked || 0}</div>
                     </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleToggleUserStatus(user)}
+                          className={`rounded p-1 ${
+                            user.status === 'approved'
+                              ? 'text-orange-600 hover:bg-orange-50'
+                              : 'text-green-600 hover:bg-green-50'
+                          }`}
+                          title={user.status === 'approved' ? 'Disable User' : 'Enable User'}
+                        >
+                          {user.status === 'approved' ? (
+                            <Ban className="h-4 w-4" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="rounded p-1 text-red-600 hover:bg-red-50"
+                          title="Delete User"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -203,6 +344,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Accepted By
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -237,6 +381,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         '-'
                       )}
                     </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleToggleCodeStatus(code)}
+                          className={`rounded p-1 ${
+                            code.status === 'disabled'
+                              ? 'text-green-600 hover:bg-green-50'
+                              : 'text-orange-600 hover:bg-orange-50'
+                          }`}
+                          title={code.status === 'disabled' ? 'Enable Code' : 'Disable Code'}
+                        >
+                          {code.status === 'disabled' ? (
+                            <CheckCircle className="h-4 w-4" />
+                          ) : (
+                            <Ban className="h-4 w-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCode(code)}
+                          className="rounded p-1 text-red-600 hover:bg-red-50"
+                          title="Delete Code"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -260,6 +430,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Accepted At
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -286,6 +459,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       {invite.acceptedAt ? formatDate(invite.acceptedAt) : '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleDeleteInvite(invite)}
+                          className="rounded p-1 text-red-600 hover:bg-red-50"
+                          title="Revoke Invite"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -68,3 +68,24 @@ export const DELETE: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500 })
   }
 }
+
+export const PATCH: APIRoute = async (context) => {
+  const { request } = context
+  const admin = await verifyAdmin(request, context)
+
+  if (!admin) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 })
+  }
+
+  try {
+    const { code, status } = await request.json()
+    if (!code || !status) {
+      return new Response(JSON.stringify({ error: 'Missing code or status' }), { status: 400 })
+    }
+
+    await db.updateDocument('invites', code, { status })
+    return new Response(JSON.stringify({ success: true }), { status: 200 })
+  } catch (e) {
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500 })
+  }
+}
