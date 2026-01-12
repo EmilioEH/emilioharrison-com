@@ -81,7 +81,7 @@ Firestore does **NOT** support nested arrays (e.g., `number[][]`).
 - **Pattern**: When representing a matrix of data (like mapping ingredients to steps), use an array of objects: `Array<{ indices: number[] }>`.
 - **Why**: This ensures compatibility with Firestore's document model while allowing for complex relationship mappings.
 
-### 5. Scrollspy & Virtual Navigation
+### 5. Scrollspy Navigation
 
 - `RecipeLibrary.tsx` implements a manual "Scrollspy" to sync the sticky category header with the scroll position.
 - **Caution:** Refactoring the list view requires checking this scroll logic (`onScroll`, `scrollCache`) to ensure the "sticky header" experience breaks gracefully.
@@ -139,6 +139,9 @@ All primitives use the `spacing` prop with a controlled scale:
 - [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
 
 ### Recent Updates (Jan 2026)
+
+- **Login API & Manager Cleanup**: Refactored the authentication flow and consolidated `RecipeManager` logic. This fix improved E2E test stability and resolved issues with the burger menu visibility and state.
+- **Performance Optimization**: Removed `@tanstack/react-virtual` from the recipe library in favor of a clean, responsive native CSS Grid. This simplifies the component tree and improves scroll performance by utilizing native browser rendering.
 
 - **Layout Primitives Refactor**: Completed a comprehensive refactoring of all application components to use semantic layout primitives (`Stack`, `Inline`, `Cluster`). Replaced hardcoded Tailwind spacing classes throughout 25+ components across five phases (Core Components, Recipe Manager, Week Planner, Cooking Mode, Recipe Details). This ensures consistent spacing, improves maintainability, and enables global design changes from a single source.
 - **Visual Hierarchy System**: Implemented a comprehensive monochromatic grayscale hierarchy using shadcn/ui design tokens. Added `active`, `inactive`, and `tag` variants to Badge component for clear visual distinction between primary, secondary, and tertiary elements. All interactive elements now follow consistent visual weight patterns (filled dark for high emphasis, bordered for medium, subtle for informational).
