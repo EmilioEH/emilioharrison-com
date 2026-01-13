@@ -113,8 +113,9 @@ export function PushNotificationManager() {
       setIsInitializing(true)
       try {
         if ('serviceWorker' in navigator) {
-          // Don't throw here, just check if ready. If not, we can't be subscribed.
-          const registration = await ensureServiceWorkerReady().catch(() => null)
+          // Use getRegistration() for a lightweight check.
+          // We don't need to force registration or wait for 'ready' just to see if we are subscribed.
+          const registration = await navigator.serviceWorker.getRegistration()
           if (registration) {
             const subscription = await registration.pushManager.getSubscription()
             setIsSubscribed(!!subscription)
