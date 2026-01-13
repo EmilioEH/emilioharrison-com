@@ -285,26 +285,26 @@ export function PushNotificationManager() {
             {isInitializing ? 'Initializing...' : 'Enable Notifications'}
           </Button>
         ) : (
-          <div className="flex w-full gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={sendTestNotification}
-              disabled={isLoading}
-              className="flex-1 gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
-            >
-              <Bell className="size-4" />
-              Test
-            </Button>
+          <div className="flex w-full flex-col gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={unsubscribe}
               disabled={isLoading}
-              className="gap-2 text-red-500 hover:bg-red-50 hover:text-red-600"
+              className="w-full gap-2 text-red-500 hover:bg-red-50 hover:text-red-600"
             >
               <BellOff className="size-4" />
               Disable
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={sendTestNotification}
+              disabled={isLoading}
+              className="w-full gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+            >
+              <Bell className="size-4" />
+              Test Notification
             </Button>
           </div>
         )}
