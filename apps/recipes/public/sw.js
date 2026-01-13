@@ -1,6 +1,5 @@
 const CACHE_NAME = 'chefboard-v1'
 const urlsToCache = [
-  '/protected/recipes/',
   '/protected/recipes/manifest.json',
   '/protected/recipes/icon-192.png',
   '/protected/recipes/icon-512.png',
