@@ -108,6 +108,33 @@ export function PushNotificationManager() {
     return null
   }
 
+  // Gracefully handle missing configuration
+  if (!PUBLIC_VAPID_KEY) {
+    return (
+      <Stack
+        spacing="md"
+        className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20"
+      >
+        <Inline align="center" justify="between">
+          <Stack spacing="xs">
+            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-500">
+              Push Notifications Unavailable
+            </h3>
+            <p className="text-xs text-yellow-700 dark:text-yellow-600">
+              System configuration is incomplete (Missing VAPID Key).
+            </p>
+          </Stack>
+          <Badge
+            variant="outline"
+            className="border-yellow-200 text-yellow-700 dark:border-yellow-800 dark:text-yellow-600"
+          >
+            System Error
+          </Badge>
+        </Inline>
+      </Stack>
+    )
+  }
+
   return (
     <Stack spacing="md" className="rounded-lg border bg-white/50 p-4 dark:bg-black/20">
       <Inline align="center" justify="between">
