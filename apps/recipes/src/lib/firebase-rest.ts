@@ -116,44 +116,18 @@ export class FirebaseRestService {
     const MAX_PAGES = 50 // Safety limit ~1000-10000 docs depending on pageSize default
 
     do {
-      let url = baseUrl
-      const params = new URLSearchParams()
+      const result = await this.fetchCollectionPage(
+        baseUrl,
+        token,
+        orderByField,
+        direction,
+        nextPageToken,
+      )
 
-      if (orderByField) {
-        const dir = direction === 'DESC' ? 'desc' : 'asc'
-        const orderByValue = `${orderByField} ${dir}`
-        params.append('orderBy', orderByValue)
-      }
+      if (result === null) return [] // 404 - empty collection
 
-      if (nextPageToken) {
-        params.append('pageToken', nextPageToken)
-      }
-
-      // Explicitly set page size to max allowed by standard to reduce round trips if possible,
-      // though Firestore REST default is often 20 or 300. Let's rely on default or set 300.
-      params.append('pageSize', '300')
-
-      const queryString = params.toString()
-      if (queryString) {
-        url += `?${queryString}`
-      }
-
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!res.ok) {
-        // Handle 404 (empty collection often returns empty or 404 depending on structure)
-        if (res.status === 404) return []
-        throw new Error(`Firestore GET failed: ${res.statusText}`)
-      }
-
-      const data = await res.json()
-      if (data.documents && Array.isArray(data.documents)) {
-        allDocuments = allDocuments.concat(data.documents)
-      }
-
-      nextPageToken = data.nextPageToken
+      allDocuments = allDocuments.concat(result.documents)
+      nextPageToken = result.nextPageToken
       pageCount++
     } while (nextPageToken && pageCount < MAX_PAGES)
 
@@ -164,6 +138,45 @@ export class FirebaseRestService {
     }
 
     return allDocuments.map(this.mapFirestoreDoc.bind(this))
+  }
+
+  /** Helper to fetch a single page of collection results */
+  private async fetchCollectionPage(
+    baseUrl: string,
+    token: string,
+    orderByField?: string,
+    direction: 'ASC' | 'DESC' = 'DESC',
+    pageToken?: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<{ documents: any[]; nextPageToken?: string } | null> {
+    const params = new URLSearchParams()
+
+    if (orderByField) {
+      const dir = direction === 'DESC' ? 'desc' : 'asc'
+      params.append('orderBy', `${orderByField} ${dir}`)
+    }
+
+    if (pageToken) {
+      params.append('pageToken', pageToken)
+    }
+
+    params.append('pageSize', '300')
+
+    const queryString = params.toString()
+    const url = queryString ? `${baseUrl}?${queryString}` : baseUrl
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Firestore GET failed: ${res.statusText}`)
+
+    const data = await res.json()
+    return {
+      documents: data.documents && Array.isArray(data.documents) ? data.documents : [],
+      nextPageToken: data.nextPageToken,
+    }
   }
 
   async getDocument(collection: string, id: string) {

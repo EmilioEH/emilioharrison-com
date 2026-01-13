@@ -297,6 +297,8 @@ const PlanWeekDemo: React.FC = () => {
     runCycle()
 
     return () => timeoutIds.forEach(clearTimeout)
+    // groceryList is a constant defined inside PlanWeekDemo that never changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

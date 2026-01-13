@@ -111,8 +111,8 @@ test.describe('Admin Family Management', () => {
     await page.getByText('Harrison Family').click()
 
     await expect(page.getByText('Members')).toBeVisible()
-    await expect(page.getByText('Emilio')).toBeVisible()
-    await expect(page.getByText('John')).toBeVisible()
+    await expect(page.getByText('Emilio', { exact: true })).toBeVisible()
+    await expect(page.getByText('John', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Delete Family' })).toBeVisible()
   })
 })

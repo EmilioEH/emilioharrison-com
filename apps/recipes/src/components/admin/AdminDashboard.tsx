@@ -37,13 +37,24 @@ interface FamilyInvite {
   createdAt: string
 }
 
+interface AdminFamily {
+  id: string
+  name: string
+  memberCount: number
+  createdBy: string
+}
+
 interface AdminDashboardProps {
   onClose?: () => void
 }
 
+import { AdminFamilyManager } from './AdminFamilyManager'
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'codes' | 'invites'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'families' | 'codes' | 'invites'>('families')
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [families, setFamilies] = useState<AdminFamily[]>([])
+  const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null)
   const [codes, setCodes] = useState<InviteCode[]>([])
   const [invites, setInvites] = useState<FamilyInvite[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,17 +66,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [usersRes, codesRes, invitesRes] = await Promise.all([
+      const [usersRes, familiesRes, codesRes, invitesRes] = await Promise.all([
         fetch('/protected/recipes/api/admin/users'),
+        fetch('/protected/recipes/api/admin/families'),
         fetch('/protected/recipes/api/admin/access-codes'),
         fetch('/protected/recipes/api/admin/invites'),
       ])
 
       const usersData = await usersRes.json()
+      const familiesData = await familiesRes.json()
       const codesData = await codesRes.json()
       const invitesData = await invitesRes.json()
 
       if (usersData.success) setUsers(usersData.users)
+      if (familiesData.success) setFamilies(familiesData.families)
       if (codesData.success) setCodes(codesData.invites || [])
       if (invitesData.success) setInvites(invitesData.invites)
     } catch (e) {
@@ -247,6 +261,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           Users ({users.length})
         </button>
         <button
+          onClick={() => setActiveTab('families')}
+          className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'families'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Families ({families.length})
+        </button>
+        <button
           onClick={() => setActiveTab('codes')}
           className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'codes'
@@ -350,6 +374,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'families' && (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Family
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Member Count
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {families.map((family) => (
+                  <tr key={family.id} className="cursor-pointer hover:bg-gray-50">
+                    <td
+                      className="whitespace-nowrap px-6 py-4"
+                      onClick={() => {
+                        setSelectedFamilyId(family.id)
+                      }}
+                    >
+                      <div className="text-sm font-medium text-gray-900">{family.name}</div>
+                    </td>
+                    <td
+                      className="whitespace-nowrap px-6 py-4 text-sm text-gray-500"
+                      onClick={() => setSelectedFamilyId(family.id)}
+                    >
+                      {family.memberCount}
+                    </td>
+                    <td
+                      className="whitespace-nowrap px-6 py-4 font-mono text-xs text-gray-400"
+                      onClick={() => setSelectedFamilyId(family.id)}
+                    >
+                      {family.id}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                      <button
+                        className="text-blue-600 hover:text-blue-900"
+                        onClick={() => setSelectedFamilyId(family.id)}
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -508,6 +589,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           </div>
         )}
       </div>
+
+      {selectedFamilyId && (
+        <div className="fixed inset-0 z-[100] bg-white">
+          <AdminFamilyManager
+            familyId={selectedFamilyId}
+            onBack={() => setSelectedFamilyId(null)}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -12,7 +12,6 @@ let hasOnboarded = false
 if (userId) {
   const isTestMode = import.meta.env.PUBLIC_TEST_MODE === 'true'
 
-
   // BYPASS: In Test Mode, trust the TestUser completely to avoid "Split Brain" issues
   // between Client Mocks (MSW) and Server Real DB (Firestore)
   if (isTestMode && (userId === 'TestUser' || userId === 'test_user')) {

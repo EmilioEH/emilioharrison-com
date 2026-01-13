@@ -98,7 +98,11 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
     const originalFetch = window.fetch
     window.fetch = async (...args) => {
       const url = typeof args[0] === 'string' ? args[0] : (args[0] as { url: string }).url
-      if (typeof url === 'string' && url.includes('families/current')) {
+      if (
+        typeof url === 'string' &&
+        url.includes('families/current') &&
+        !url.includes('familyId=')
+      ) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const scenario = (window as any).__TEST_SCENARIO__
 

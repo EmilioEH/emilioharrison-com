@@ -99,46 +99,42 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       return true
     })
 
-    // Sort
-    result.sort((a, b) => {
-      // FIX: If searching and using default sort (protein), preserve Fuse.js relevance order
-      if (searchQuery && sort === 'protein') {
-        const scoreA = (a as Recipe & { score?: number }).score ?? 1
-        const scoreB = (b as Recipe & { score?: number }).score ?? 1
-        return scoreA - scoreB
-      }
-
-      if (sort === 'protein') {
+    // Sort using extracted comparators to reduce cognitive complexity
+    const sortComparators: Record<
+      string,
+      (a: Recipe & { score?: number }, b: Recipe & { score?: number }) => number
+    > = {
+      protein: (a, b) => {
+        // If searching, preserve Fuse.js relevance order
+        if (searchQuery) {
+          return (a.score ?? 1) - (b.score ?? 1)
+        }
         const pA = a.protein || 'Other'
         const pB = b.protein || 'Other'
-        if (pA === pB) return a.title.localeCompare(b.title)
-        return pA.localeCompare(pB)
-      }
-      if (sort === 'alpha') return a.title.localeCompare(b.title)
-      if (sort === 'recent') return parseInt(b.id) - parseInt(a.id)
-      if (sort === 'time') return a.prepTime + a.cookTime - (b.prepTime + b.cookTime)
-      if (sort === 'rating') {
+        return pA === pB ? a.title.localeCompare(b.title) : pA.localeCompare(pB)
+      },
+      alpha: (a, b) => a.title.localeCompare(b.title),
+      recent: (a, b) => parseInt(b.id) - parseInt(a.id),
+      time: (a, b) => a.prepTime + a.cookTime - (b.prepTime + b.cookTime),
+      rating: (a, b) => {
         const rA = a.rating || 0
         const rB = b.rating || 0
-        if (rA === rB) return a.title.localeCompare(b.title)
-        return rB - rA
-      }
-      if (sort === 'cost-low') {
-        // Unknown cost goes last
+        return rA === rB ? a.title.localeCompare(b.title) : rB - rA
+      },
+      'cost-low': (a, b) => {
         const cA = a.estimatedCost ?? Infinity
         const cB = b.estimatedCost ?? Infinity
-        if (cA === cB) return a.title.localeCompare(b.title)
-        return cA - cB
-      }
-      if (sort === 'cost-high') {
-        // Unknown cost goes last
+        return cA === cB ? a.title.localeCompare(b.title) : cA - cB
+      },
+      'cost-high': (a, b) => {
         const cA = a.estimatedCost ?? -1
         const cB = b.estimatedCost ?? -1
-        if (cA === cB) return a.title.localeCompare(b.title)
-        return cB - cA
-      }
-      return 0
-    })
+        return cA === cB ? a.title.localeCompare(b.title) : cB - cA
+      },
+    }
+
+    const comparator = sortComparators[sort] || (() => 0)
+    result.sort(comparator)
 
     return result
   }, [recipes, searchQuery, filters, sort, view, fuse])

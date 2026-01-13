@@ -7,6 +7,48 @@ import {
   getUserStatus,
 } from '../../../lib/auth-login'
 
+/** Check if user is whitelisted or already approved */
+async function checkAccessStatus(
+  email: string | undefined,
+  userId: string,
+  allowedEmails: string[],
+): Promise<{ isAllowed: boolean; status: string }> {
+  const isWhitelisted =
+    allowedEmails.length > 0 && email && allowedEmails.includes(email.toLowerCase())
+
+  let status = await getUserStatus(userId)
+  let isAllowed = false
+
+  if (isWhitelisted) {
+    isAllowed = true
+    status = 'approved'
+  } else if (status === 'approved') {
+    isAllowed = true
+  }
+
+  return { isAllowed, status }
+}
+
+/** Get appropriate error message based on status */
+function getAccessDeniedMessage(status: string): string {
+  if (status === 'pending') return 'Your access request is pending approval.'
+  if (status === 'rejected') return 'Your access request has been denied.'
+  return 'You do not have access to this application.'
+}
+
+/** Create access denied response */
+function createAccessDeniedResponse(email: string | undefined, status: string): Response {
+  console.error(`Login blocked. Email: ${email}, Status: ${status}`)
+  return new Response(
+    JSON.stringify({
+      error: 'Unauthorized',
+      details: getAccessDeniedMessage(status),
+      code: status === 'pending' ? 'auth/pending' : 'auth/denied',
+    }),
+    { status: 403 },
+  )
+}
+
 export const POST: APIRoute = async (context) => {
   const { request, cookies } = context
   try {
@@ -34,18 +76,7 @@ export const POST: APIRoute = async (context) => {
 
     // 2. Access Control & Status Check
     const allowedEmails = getEmailList(context, 'ALLOWED_EMAILS')
-    const isWhitelisted =
-      allowedEmails.length > 0 && email && allowedEmails.includes(email.toLowerCase())
-
-    let status = await getUserStatus(userId)
-    let isAllowed = false
-
-    if (isWhitelisted) {
-      isAllowed = true
-      status = 'approved'
-    } else if (status === 'approved') {
-      isAllowed = true
-    }
+    let { isAllowed, status } = await checkAccessStatus(email, userId, allowedEmails)
 
     // 3. Auto-authorization via Pending Invites
     let familyIdToJoin: string | null = null
@@ -58,20 +89,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     if (!isAllowed) {
-      console.error(`Login blocked. Email: ${email}, Status: ${status}`)
-      let errorDetails = 'Access denied.'
-      if (status === 'pending') errorDetails = 'Your access request is pending approval.'
-      else if (status === 'rejected') errorDetails = 'Your access request has been denied.'
-      else errorDetails = 'You do not have access to this application.'
-
-      return new Response(
-        JSON.stringify({
-          error: 'Unauthorized',
-          details: errorDetails,
-          code: status === 'pending' ? 'auth/pending' : 'auth/denied',
-        }),
-        { status: 403 },
-      )
+      return createAccessDeniedResponse(email, status)
     }
 
     // 4. Update User Record

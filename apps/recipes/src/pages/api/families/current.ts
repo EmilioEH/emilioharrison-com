@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import { getEmailList } from '../../../lib/env'
+import { getEmailList, getEnv } from '../../../lib/env'
 import type { Family, User, PendingInvite } from '../../../lib/types'
 
 /**
@@ -59,10 +59,14 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const requestedFamilyId = url.searchParams.get('familyId')
 
     // Check if user is admin
+    const isTestMode =
+      getEnv({ cookies } as unknown as Record<string, unknown>, 'PUBLIC_TEST_MODE') === 'true'
+    const isTestUser = userId === 'TestUser' || userId === 'test_user'
     const emailCookie = cookies.get('site_email')
     const cookieEmail = emailCookie?.value || ''
     const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
-    const isAdmin = cookieEmail && adminEmails.includes(cookieEmail.toLowerCase())
+    const isAdmin =
+      (isTestMode && isTestUser) || (cookieEmail && adminEmails.includes(cookieEmail.toLowerCase()))
 
     const targetFamilyId = isAdmin && requestedFamilyId ? requestedFamilyId : userDoc.familyId
 

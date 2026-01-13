@@ -366,6 +366,17 @@ Run these commands locally to verify your work:
 
 - **Cooking Mode:** Verifies the full cook flow, timers, and session completion.
 - **Family Sync:** Verifies multi-user data sharing by simulating multiple authenticated sessions.
+- **Admin Features:** Verifies admin dashboard and family management using `PUBLIC_TEST_MODE` to bypass database checks.
+
+### Environment Configuration
+
+To run E2E tests with full Admin capabilities without a production database:
+
+```bash
+PUBLIC_TEST_MODE=true npm run build:test
+```
+
+This bypasses server-side Firestore checks for the `TestUser`, allowing them to impersonate admins and access protected API endpoints.
 
 ### 🔬 Legacy Testing Context (Playwright + Browser Agent)
 

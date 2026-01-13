@@ -15,12 +15,13 @@ import {
 } from 'lucide-react'
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
+import { buildGroceryItems, calculateCostEstimate } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import { RecipeLibrary } from '../RecipeLibrary'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
-import type { Recipe, ShoppableIngredient } from '../../../lib/types'
+import type { Recipe } from '../../../lib/types'
 
 type WorkspaceTab = 'plan' | 'grocery'
 
@@ -65,101 +66,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return allRecipes.filter((r) => plannedRecipeIds.includes(r.id))
   }, [currentRecipes, allRecipes])
 
-  const groceryItems = useMemo((): ShoppableIngredient[] => {
-    // Use structuredIngredients for proper categorization, fall back to basic ingredients
-    const ingredientMap = new Map<string, ShoppableIngredient>()
-
-    for (const recipe of groceryRecipes) {
-      // Prefer structuredIngredients for proper categories and units
-      if (recipe.structuredIngredients && recipe.structuredIngredients.length > 0) {
-        for (const ing of recipe.structuredIngredients) {
-          const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`
-
-          if (ingredientMap.has(key)) {
-            const existing = ingredientMap.get(key)!
-            existing.purchaseAmount += ing.amount
-            if (!existing.sources.some((s) => s.recipeId === recipe.id)) {
-              existing.sources.push({
-                recipeId: recipe.id,
-                recipeTitle: recipe.title,
-                originalAmount: `${ing.amount} ${ing.unit}`,
-              })
-            }
-          } else {
-            ingredientMap.set(key, {
-              name: ing.name,
-              purchaseAmount: ing.amount,
-              purchaseUnit: ing.unit,
-              category: ing.category || 'Other',
-              sources: [
-                {
-                  recipeId: recipe.id,
-                  recipeTitle: recipe.title,
-                  originalAmount: `${ing.amount} ${ing.unit}`,
-                },
-              ],
-            })
-          }
-        }
-      } else if (recipe.ingredients) {
-        // Fallback for recipes without structuredIngredients
-        for (const ing of recipe.ingredients) {
-          const key = `${ing.name.toLowerCase()}|basic`
-
-          if (ingredientMap.has(key)) {
-            const existing = ingredientMap.get(key)!
-            if (!existing.sources.some((s) => s.recipeId === recipe.id)) {
-              existing.sources.push({
-                recipeId: recipe.id,
-                recipeTitle: recipe.title,
-                originalAmount: ing.amount ? `${ing.amount} ${ing.name}` : ing.name,
-              })
-            }
-          } else {
-            ingredientMap.set(key, {
-              name: ing.name?.toLowerCase() || 'unknown',
-              purchaseAmount: 1,
-              purchaseUnit: 'unit',
-              category: 'Other',
-              sources: [
-                {
-                  recipeId: recipe.id,
-                  recipeTitle: recipe.title,
-                  originalAmount: ing.amount ? `${ing.amount} ${ing.name}` : ing.name,
-                },
-              ],
-            })
-          }
-        }
-      }
-    }
-
-    return Array.from(ingredientMap.values())
-  }, [groceryRecipes])
-
-  // Cost Estimation (Aggregate from recipes)
-  const costEstimate = useMemo(() => {
-    let total = 0
-    let hasEstimate = 0
-    let missingEstimate = 0
-
-    for (const recipe of groceryRecipes) {
-      if (typeof recipe.estimatedCost === 'number' && recipe.estimatedCost > 0) {
-        total += recipe.estimatedCost
-        hasEstimate++
-      } else {
-        missingEstimate++
-      }
-    }
-
-    return {
-      total,
-      hasEstimate,
-      missingEstimate,
-      isComplete: missingEstimate === 0 && groceryRecipes.length > 0,
-      hasAnyData: hasEstimate > 0,
-    }
-  }, [groceryRecipes])
+  // Use extracted utilities to reduce component complexity
+  const groceryItems = useMemo(() => buildGroceryItems(groceryRecipes), [groceryRecipes])
+  const costEstimate = useMemo(() => calculateCostEstimate(groceryRecipes), [groceryRecipes])
 
   // AI-based cost refresh
   const [aiCost, setAiCost] = useState<number | null>(null)

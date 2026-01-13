@@ -48,6 +48,9 @@ function getAverageRating(familyData?: FamilyRecipeData): number | null {
 /**
  * Build recipe content as plain text
  */
+/**
+ * Build recipe content as plain text
+ */
 export function buildRecipeText(
   recipe: Recipe,
   familyData?: FamilyRecipeData,
@@ -56,122 +59,130 @@ export function buildRecipeText(
   const opts = { ...defaultShareOptions, ...options }
   const lines: string[] = []
 
-  // Title
-  lines.push(`# ${recipe.title}`)
-  lines.push('')
+  addRecipeTitleAndBasicInfo(lines, recipe)
+  addRecipeMetadata(lines, recipe)
 
-  // Basic info
+  if (recipe.description) {
+    lines.push(recipe.description, '')
+  }
+
+  if (opts.includeRatings) {
+    addRecipeRatings(lines, recipe, familyData)
+  }
+
+  addRecipeIngredients(lines, recipe)
+  addRecipeInstructions(lines, recipe)
+
+  if (opts.includeNotes) {
+    addRecipeNotes(lines, recipe, familyData)
+  }
+
+  if (opts.includeCookingHistory) {
+    addRecipeCookingHistory(lines, familyData)
+  }
+
+  if (recipe.sourceUrl) {
+    lines.push('---', `Source: ${recipe.sourceUrl}`)
+  }
+
+  return lines.join('\n')
+}
+
+/** Helper to add title and basic info (servings, times) */
+function addRecipeTitleAndBasicInfo(lines: string[], recipe: Recipe) {
+  lines.push(`# ${recipe.title}`, '')
+
   const infoItems: string[] = []
   if (recipe.servings) infoItems.push(`Servings: ${recipe.servings}`)
   if (recipe.prepTime) infoItems.push(`Prep: ${formatTime(recipe.prepTime)}`)
   if (recipe.cookTime) infoItems.push(`Cook: ${formatTime(recipe.cookTime)}`)
+
   const totalTime = (recipe.prepTime || 0) + (recipe.cookTime || 0)
   if (totalTime) infoItems.push(`Total: ${formatTime(totalTime)}`)
-  if (infoItems.length > 0) {
-    lines.push(infoItems.join(' | '))
-    lines.push('')
-  }
 
-  // Metadata
-  const metadata: string[] = []
-  metadata.push(formatMetadata('Cuisine', recipe.cuisine))
-  metadata.push(formatMetadata('Difficulty', recipe.difficulty))
-  metadata.push(formatMetadata('Meal Type', recipe.mealType))
-  metadata.push(formatMetadata('Dish Type', recipe.dishType))
-  metadata.push(formatMetadata('Protein', recipe.protein))
+  if (infoItems.length > 0) {
+    lines.push(infoItems.join(' | '), '')
+  }
+}
+
+/** Helper to add metadata line (cuisine, difficulty, etc) */
+function addRecipeMetadata(lines: string[], recipe: Recipe) {
+  const metadata: string[] = [
+    formatMetadata('Cuisine', recipe.cuisine),
+    formatMetadata('Difficulty', recipe.difficulty),
+    formatMetadata('Meal Type', recipe.mealType),
+    formatMetadata('Dish Type', recipe.dishType),
+    formatMetadata('Protein', recipe.protein),
+  ]
+
   if (recipe.dietary?.length) metadata.push(`Dietary: ${recipe.dietary.join(', ')}`)
   if (recipe.equipment?.length) metadata.push(`Equipment: ${recipe.equipment.join(', ')}`)
   if (recipe.occasion?.length) metadata.push(`Occasion: ${recipe.occasion.join(', ')}`)
 
   const validMetadata = metadata.filter(Boolean)
   if (validMetadata.length > 0) {
-    lines.push(validMetadata.join(' • '))
-    lines.push('')
+    lines.push(validMetadata.join(' • '), '')
   }
+}
 
-  // Description
-  if (recipe.description) {
-    lines.push(recipe.description)
-    lines.push('')
+/** Helper to add ratings section */
+function addRecipeRatings(lines: string[], recipe: Recipe, familyData?: FamilyRecipeData) {
+  const avgRating = getAverageRating(familyData)
+  if (avgRating !== null) {
+    lines.push(`⭐ Rating: ${avgRating}/5 (${familyData!.ratings.length} ratings)`, '')
+  } else if (recipe.rating) {
+    lines.push(`⭐ Rating: ${recipe.rating}/5`, '')
   }
+}
 
-  // Rating (if enabled)
-  if (opts.includeRatings) {
-    const avgRating = getAverageRating(familyData)
-    if (avgRating !== null) {
-      lines.push(`⭐ Rating: ${avgRating}/5 (${familyData!.ratings.length} ratings)`)
-      lines.push('')
-    } else if (recipe.rating) {
-      lines.push(`⭐ Rating: ${recipe.rating}/5`)
-      lines.push('')
-    }
-  }
-
-  // Ingredients
-  lines.push('## Ingredients')
-  lines.push('')
+/** Helper to add ingredients section */
+function addRecipeIngredients(lines: string[], recipe: Recipe) {
+  lines.push('## Ingredients', '')
   for (const ing of recipe.ingredients) {
     const prep = ing.prep ? `, ${ing.prep}` : ''
     lines.push(`• ${ing.amount} ${ing.name}${prep}`)
   }
   lines.push('')
+}
 
-  // Steps
-  lines.push('## Instructions')
-  lines.push('')
+/** Helper to add instructions section */
+function addRecipeInstructions(lines: string[], recipe: Recipe) {
+  lines.push('## Instructions', '')
   recipe.steps.forEach((step, index) => {
-    lines.push(`${index + 1}. ${step}`)
-    lines.push('')
+    lines.push(`${index + 1}. ${step}`, '')
   })
+}
 
-  // Notes (if enabled)
-  if (opts.includeNotes) {
-    const allNotes: string[] = []
+/** Helper to add notes section */
+function addRecipeNotes(lines: string[], recipe: Recipe, familyData?: FamilyRecipeData) {
+  const allNotes: string[] = []
+  if (recipe.notes) allNotes.push(recipe.notes)
+  if (recipe.userNotes) allNotes.push(recipe.userNotes)
 
-    // Recipe-level notes
-    if (recipe.notes) {
-      allNotes.push(recipe.notes)
-    }
-    if (recipe.userNotes) {
-      allNotes.push(recipe.userNotes)
-    }
-
-    // Family notes
-    if (familyData?.notes?.length) {
-      for (const note of familyData.notes) {
-        allNotes.push(`${note.userName}: ${note.text}`)
-      }
-    }
-
-    if (allNotes.length > 0) {
-      lines.push('## Notes')
-      lines.push('')
-      allNotes.forEach((note) => {
-        lines.push(`• ${note}`)
-      })
-      lines.push('')
+  if (familyData?.notes?.length) {
+    for (const note of familyData.notes) {
+      allNotes.push(`${note.userName}: ${note.text}`)
     }
   }
 
-  // Cooking history (if enabled)
-  if (opts.includeCookingHistory && familyData?.cookingHistory?.length) {
-    lines.push('## Cooking History')
-    lines.push('')
-    for (const entry of familyData.cookingHistory.slice(0, 5)) {
-      const date = new Date(entry.cookedAt).toLocaleDateString()
-      const reaction = entry.wouldMakeAgain ? '👍' : entry.wouldMakeAgain === false ? '👎' : ''
-      lines.push(`• ${date} - ${entry.userName} ${reaction}`)
-    }
+  if (allNotes.length > 0) {
+    lines.push('## Notes', '')
+    allNotes.forEach((note) => lines.push(`• ${note}`))
     lines.push('')
   }
+}
 
-  // Source URL
-  if (recipe.sourceUrl) {
-    lines.push('---')
-    lines.push(`Source: ${recipe.sourceUrl}`)
+/** Helper to add cooking history section */
+function addRecipeCookingHistory(lines: string[], familyData?: FamilyRecipeData) {
+  if (!familyData?.cookingHistory?.length) return
+
+  lines.push('## Cooking History', '')
+  for (const entry of familyData.cookingHistory.slice(0, 5)) {
+    const date = new Date(entry.cookedAt).toLocaleDateString()
+    const reaction = entry.wouldMakeAgain ? '👍' : entry.wouldMakeAgain === false ? '👎' : ''
+    lines.push(`• ${date} - ${entry.userName} ${reaction}`)
   }
-
-  return lines.join('\n')
+  lines.push('')
 }
 
 /**

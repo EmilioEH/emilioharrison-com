@@ -30,8 +30,7 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
       } else {
         throw new Error(data.error || 'Failed to load family')
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
       await alert('Failed to load family details')
       onBack()
     } finally {
@@ -110,7 +109,9 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
               <ArrowLeft size={20} />
             </button>
             <div className="flex-1">
-              <h2 className="text-xl font-bold">{family.name}</h2>
+              <h2 data-testid="family-name-heading" className="text-xl font-bold">
+                {family.name}
+              </h2>
               <p className="font-mono text-xs text-muted-foreground">{family.id}</p>
             </div>
             <button
@@ -127,7 +128,12 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
         <Stack spacing="lg">
           {/* Members Section */}
           <Stack spacing="md">
-            <h3 className="text-sm font-bold uppercase text-muted-foreground">Members</h3>
+            <h3
+              data-testid="members-heading"
+              className="text-sm font-bold uppercase text-muted-foreground"
+            >
+              Members
+            </h3>
             <div className="divide-y divide-border rounded-lg border border-border bg-card">
               {members.map((member) => (
                 <div key={member.id} className="flex items-center justify-between p-4">
@@ -140,7 +146,9 @@ export const AdminFamilyManager: React.FC<AdminFamilyManagerProps> = ({ familyId
                       </div>
                     )}
                     <Stack spacing="xs">
-                      <span className="font-medium">{member.displayName || 'Unknown'}</span>
+                      <span data-testid="member-name" className="font-medium">
+                        {member.displayName || 'Unknown'}
+                      </span>
                       <span className="text-xs text-muted-foreground">{member.email}</span>
                     </Stack>
                   </Inline>

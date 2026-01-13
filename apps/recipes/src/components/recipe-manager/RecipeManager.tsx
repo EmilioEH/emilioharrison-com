@@ -1,22 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, ArrowLeft } from 'lucide-react'
 
-import { GroceryList } from './grocery/GroceryList'
 import { VarietyWarning } from './VarietyWarning'
 
-import { SettingsView } from './views/SettingsView'
-import FeedbackDashboard from './views/FeedbackDashboard'
 import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './dialogs/BulkEditModal'
-import { BulkRecipeImporter } from './importer/BulkRecipeImporter'
-import { AdminDashboard } from '../admin/AdminDashboard'
 import { FamilySetup } from './FamilySetup'
-import { FamilyManagementView } from './views/FamilyManagementView'
 import { InvitationModal } from './dialogs/InvitationModal'
-import { NotificationSettingsView } from './views/NotificationSettingsView'
-import type { Recipe, FamilyRecipeData, PendingInvite } from '../../lib/types'
+import type { Recipe, FamilyRecipeData } from '../../lib/types'
 
 // --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
@@ -26,6 +18,10 @@ import { useGroceryListGenerator } from './hooks/useGroceryListGenerator'
 import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
 import { useRouter, type ViewMode } from './hooks/useRouter'
+import { useRecipeHandlers } from './hooks/useRecipeHandlers'
+import { useRecipeContext } from './hooks/useRecipeContext'
+import { useFamilySync } from './hooks/useFamilySync'
+import { useScrollBroadcaster } from './hooks/useScrollBroadcaster'
 
 import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
@@ -34,8 +30,8 @@ import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { alert, confirm } from '../../lib/dialogStore'
 
 // --- Sub-Components ---
+import { RecipeManagerView } from './RecipeManagerView'
 import { RecipeLibrary } from './RecipeLibrary'
-import { RecipeDetail } from './RecipeDetail'
 import { RecipeFilters } from './RecipeFilters'
 import { RecipeControlBar } from './RecipeControlBar'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
@@ -51,8 +47,6 @@ import { $cookingSession } from '../../stores/cookingSession'
 
 // ViewMode is now imported from useRouter
 
-import { InviteView } from './views/InviteView'
-
 interface ProteinWarning {
   protein: string
   count: number
@@ -65,13 +59,17 @@ interface RecipeManagerProps {
 }
 
 // --- Onboarding ---
-import { OnboardingFlow } from '../onboarding/OnboardingFlow'
 
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
   const [currentUser, setCurrentUser] = useState(user)
   const isTestUser = user === 'TestUser' || user === 'test_user'
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(hasOnboarded || isTestUser)
+  const computedIsAdmin =
+    isAdmin ||
+    (isTestUser &&
+      typeof window !== 'undefined' &&
+      (window as unknown as { isPlaywright: boolean }).isPlaywright)
 
   // Sync prop changes
   useEffect(() => {
@@ -79,110 +77,49 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [user])
 
   useEffect(() => {
-    const isTestUser = user === 'TestUser' || user === 'test_user'
-    setIsOnboardingComplete(hasOnboarded || isTestUser)
+    const isTest = user === 'TestUser' || user === 'test_user'
+    let state = hasOnboarded || isTest
 
-    // TEST HELPER: Allow forcing onboarding flow via URL.
-    // This enables E2E tests to verify the UI without manipulating server-side DB state.
-    const force =
-      typeof window !== 'undefined' && window.location.search.includes('force_onboarding=true')
-
-    const skip =
-      typeof window !== 'undefined' && window.location.search.includes('skip_onboarding=true')
-
-    if (force) {
-      setIsOnboardingComplete(false)
-    } else if (skip) {
-      setIsOnboardingComplete(true)
+    if (typeof window !== 'undefined') {
+      const { search } = window.location
+      if (search.includes('force_onboarding=true')) state = false
+      else if (search.includes('skip_onboarding=true')) state = true
     }
-  }, [hasOnboarded])
 
-  const handleOnboardingComplete = async () => {
-    try {
-      const res = await fetch('/protected/recipes/api/user/onboarding', {
-        method: 'POST',
-      })
-      if (res.ok) {
-        setIsOnboardingComplete(true)
-      } else {
-        console.error('Failed to update onboarding status')
-        // Optimistically allow them in anyway to avoid blocking
-        setIsOnboardingComplete(true)
-      }
-    } catch (e) {
-      console.error('Error completing onboarding:', e)
-      setIsOnboardingComplete(true)
-    }
-  }
-
-  // We cannot early return here because of Rules of Hooks.
-  // Instead, we will conditionally render in the return statement.
-  const showOnboarding = isOnboardingComplete === false
+    setIsOnboardingComplete(state)
+  }, [hasOnboarded, user])
 
   const { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl } = useRecipes()
 
-  // Family Sync State
-  const [showFamilySetup, setShowFamilySetup] = useState(false)
-  const [showSyncNotification, setShowSyncNotification] = useState(false)
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
+  // Use the extracted family sync logic
+  const {
+    showFamilySetup,
+    setShowFamilySetup,
+    showSyncNotification,
+    setShowSyncNotification,
+    pendingInvites,
+    setPendingInvites,
+  } = useFamilySync()
 
-  // Load family data on mount
+  // Load planned recipes logic (kept in component for now as it's recipe-specific)
   useEffect(() => {
-    const loadFamilyData = async () => {
+    if (loading) return
+
+    const loadPlannedRecipes = async () => {
       try {
-        const response = await fetch('/protected/recipes/api/families/current')
-        const data = await response.json()
-
-        if (data.success) {
-          familyActions.setFamily(data.family)
-          familyActions.setMembers(data.members || [])
-          familyActions.setCurrentUserId(data.currentUserId || null)
-
-          if (data.incomingInvites && Array.isArray(data.incomingInvites)) {
-            setPendingInvites(data.incomingInvites)
-          }
-
-          // Show family setup if user has no family AND no pending invites
-          const shouldSkip =
-            typeof window !== 'undefined' &&
-            (window.location.search.includes('skip_setup') ||
-              /(?:^|; )skip_family_setup=true(?:;|$)/.test(document.cookie))
-
-          const hasInvites = data.pendingInvites && data.pendingInvites.length > 0
-          const isPlaywright = (window as unknown as { isPlaywright: boolean }).isPlaywright
-
-          if (!data.family && !shouldSkip && !hasInvites && !isPlaywright) {
-            setShowFamilySetup(true)
-          }
-        } else {
-          familyActions.setFamily(null)
+        const res = await fetch('/protected/recipes/api/week/planned')
+        const data = await res.json()
+        if (data.success && data.planned) {
+          data.planned.forEach((item: FamilyRecipeData) => {
+            familyActions.setRecipeFamilyData(item.id, item)
+          })
         }
-      } catch (error) {
-        console.error('Failed to load family data:', error)
-        familyActions.setFamily(null)
+      } catch (e) {
+        console.error('Failed to load planned recipes:', e)
       }
     }
 
-    if (!loading) {
-      loadFamilyData()
-
-      // Also load planned recipes to populate week view
-      const loadPlannedRecipes = async () => {
-        try {
-          const res = await fetch('/protected/recipes/api/week/planned')
-          const data = await res.json()
-          if (data.success && data.planned) {
-            // Batch update store with planned recipe data
-            data.planned.forEach((item: FamilyRecipeData) => {
-              familyActions.setRecipeFamilyData(item.id, item)
-            })
-          }
-        } catch (e) {
-          console.error('Failed to load planned recipes:', e)
-        }
-      }
-      loadPlannedRecipes()
-    }
+    loadPlannedRecipes()
   }, [loading])
 
   // Track last known family update timestamp for efficient sync
@@ -223,7 +160,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     // Check every 30 seconds
     const interval = setInterval(checkForUpdates, 30000)
     return () => clearInterval(interval)
-  }, [loading, lastKnownUpdate])
+  }, [loading, lastKnownUpdate, setShowSyncNotification])
 
   // Use new Router Hook
   const {
@@ -236,21 +173,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setRoute,
   } = useRouter()
 
-  const selectedRecipe = useMemo(() => {
-    if (!activeRecipeId) return null
-    return recipes.find((r) => r.id === activeRecipeId) || null
-  }, [recipes, activeRecipeId])
-
-  // Filter Source List based on View
   const activeWeekPlanned = useStore(currentWeekRecipes)
 
-  const sourceRecipes = useMemo(() => {
-    if (view === 'week') {
-      const ids = new Set(activeWeekPlanned.map((p) => p.recipeId))
-      return recipes.filter((r) => ids.has(r.id))
-    }
-    return recipes
-  }, [recipes, view, activeWeekPlanned])
+  // Use the extracted context logic for source list and selected recipe
+  const { selectedRecipe, sourceRecipes } = useRecipeContext(
+    recipes,
+    view,
+    activeRecipeId,
+    activeWeekPlanned,
+  )
 
   // Hooks
   const {
@@ -291,36 +222,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view])
 
-  // Scroll Container Ref State
-  const [scrollContainer, setScrollContainer] = useState<HTMLElement | Window | null>(null)
-
-  useEffect(() => {
-    // If we are strictly client side, default to window
-    if (typeof window !== 'undefined' && !scrollContainer) {
-      setScrollContainer(window)
-    }
-  }, [])
-
-  // Broadcast scroll events for global components (like FeedbackFooter)
-  useEffect(() => {
-    const target = scrollContainer || (typeof window !== 'undefined' ? window : null)
-    if (!target) return
-
-    const handleScroll = () => {
-      // If target is window, use window.scrollY
-      const scrollTop =
-        target instanceof Window ? window.scrollY : (target as HTMLElement).scrollTop
-
-      window.dispatchEvent(
-        new CustomEvent('recipe-scroll', {
-          detail: { scrollTop },
-        }),
-      )
-    }
-
-    target.addEventListener('scroll', handleScroll, { passive: true })
-    return () => target.removeEventListener('scroll', handleScroll)
-  }, [scrollContainer])
+  // Scroll Container Ref State & Broadcaster
+  const { scrollContainer } = useScrollBroadcaster()
 
   // Hooks
   const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
@@ -402,135 +305,62 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
       allPlanned.forEach((p) => {
         if (!recipeIds.has(p.recipeId)) {
-          console.warn(`[RecipeManager] Removing ghost recipe from plan: ${p.recipeId}`)
           unplanRecipe(p.recipeId)
         }
       })
     })
   }, [loading, recipes])
 
-  const handleAcceptInvite = async (invite: PendingInvite) => {
+  // Actions & Handlers (Refactored to Hook)
+  const {
+    handleAcceptInvite,
+    handleDeclineInvite,
+    handleSaveRecipe,
+    handleDeleteRecipe,
+    handleUpdateRecipe,
+    handleBulkDelete,
+    handleBulkEdit,
+    handleExport,
+    handleUpdateProfile,
+  } = useRecipeHandlers({
+    recipes,
+    setRecipes,
+    saveRecipe,
+    deleteRecipe,
+    bulkUpdateRecipes,
+    bulkDeleteRecipes,
+    setRecipe,
+    setView,
+    selectedRecipe,
+    selectedIds,
+    clearSelection,
+    setCurrentUser,
+    setPendingInvites,
+  })
+
+  const handleBulkImportSave = async (recipes: Recipe[]) => {
     try {
-      const res = await fetch('/protected/recipes/api/families/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteId: invite.id, accept: true }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        // Reload family data
-        const familyRes = await fetch('/protected/recipes/api/families/current')
-        const familyData = await familyRes.json()
-        if (familyData.success) {
-          familyActions.setFamily(familyData.family)
-          familyActions.setMembers(familyData.members || [])
-          setPendingInvites([]) // Clear invites after joining
-          await alert(`Joined ${invite.familyName} successfully!`)
-        }
-      } else {
-        await alert(data.error || 'Failed to join family')
-      }
-    } catch (e) {
-      console.error(e)
-      await alert('An error occurred')
-    }
-  }
-
-  const handleDeclineInvite = async (invite: PendingInvite) => {
-    try {
-      const res = await fetch('/protected/recipes/api/families/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteId: invite.id, accept: false }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id))
-      } else {
-        await alert(data.error || 'Failed to decline invitation')
-      }
-    } catch (e) {
-      console.error(e)
-      await alert('An error occurred')
-    }
-  }
-
-  const handleSaveRecipe = async (recipe: Partial<Recipe> & { id?: string }) => {
-    const { success } = await saveRecipe(recipe)
-    if (success) {
-      if (view === 'edit') {
-        setView('library')
-        setRecipe(null)
-      }
-    }
-  }
-
-  const handleDeleteRecipe = async (id: string) => {
-    const success = await deleteRecipe(id)
-    if (success) {
+      await Promise.all(
+        recipes.map(async (r) => {
+          const now = new Date().toISOString()
+          const fullRecipe = {
+            ...r,
+            createdAt: now,
+            updatedAt: now,
+            versionHistory: [{ date: now, changeType: 'create' as const }],
+            rating: 0,
+            isFavorite: false,
+          }
+          await saveRecipe(fullRecipe as unknown as Partial<Recipe>)
+        }),
+      )
+      refreshRecipes()
+      await alert(`Successfully imported ${recipes.length} recipes!`)
       setView('library')
-      setRecipe(null)
-    } else {
-      await alert('Failed to delete')
+    } catch (e) {
+      console.error(e)
+      await alert('Failed to save some recipes.')
     }
-  }
-
-  const handleUpdateRecipe = (updatedRecipe: Recipe, mode: 'save' | 'edit' = 'save') => {
-    if (mode === 'edit') {
-      setRecipe(updatedRecipe.id)
-      setView('edit')
-    } else {
-      const changes = {
-        ...updatedRecipe,
-        updatedAt: new Date().toISOString(),
-      }
-      handleSaveRecipe(changes)
-
-      setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
-    }
-  }
-
-  const handleToggleFavorite = async (recipe: Recipe) => {
-    await toggleFavorite(recipe)
-    if (selectedRecipe && selectedRecipe.id === recipe.id) {
-      // No-op, derived from recipes
-    }
-  }
-
-  // Selection Logic handled by hook
-
-  const handleBulkDelete = async () => {
-    if (await confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
-      const success = await bulkDeleteRecipes(selectedIds)
-      if (success) {
-        clearSelection()
-      } else {
-        await alert('Some deletions failed')
-      }
-    }
-  }
-
-  const handleBulkEdit = async (updates: Partial<Recipe>) => {
-    const success = await bulkUpdateRecipes(selectedIds, updates)
-    if (success) {
-      setShowBulkEdit(false)
-      clearSelection()
-    } else {
-      await alert('Bulk update failed')
-    }
-  }
-
-  // Data Mgmt
-  const handleExport = () => {
-    const dataStr = JSON.stringify(recipes, null, 2)
-    const blob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.download = `chefboard_backup_${new Date().toISOString().split('T')[0]}.json`
-    link.href = url
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -543,12 +373,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         const result = event.target?.result as string
         const imported = JSON.parse(result)
         if (Array.isArray(imported)) {
-          // Merge logic: Add new, update existing if imported is newer?
-          // For simplicity: Add all that don't satisfy existing ID.
           const existingIds = new Set(recipes.map((r) => r.id))
           const newRecipes = imported.filter((r) => !existingIds.has(r.id))
-
-          // Or maybe confirm overwrite? simple merge for now.
           setRecipes([...recipes, ...newRecipes])
           await alert(`Imported ${newRecipes.length} recipes.`)
         }
@@ -563,56 +389,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   const handleDeleteAll = async () => {
     if (await confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
       setRecipes([])
-      setView('library') // Close settings
-    }
-  }
-
-  const handleUpdateProfile = async (displayName: string) => {
-    try {
-      const res = await fetch('/protected/recipes/api/user/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName }),
-      })
-      if (res.ok) {
-        setCurrentUser(displayName)
-        await alert('Profile updated successfully!')
-        return true
-      } else {
-        await alert('Failed to update profile')
-        return false
-      }
-    } catch (e) {
-      console.error(e)
-      await alert('An error occurred')
-      return false
-    }
-  }
-
-  const handleBulkImportSave = async (recipes: Recipe[]) => {
-    try {
-      await Promise.all(
-        recipes.map(async (r) => {
-          const now = new Date().toISOString()
-          const fullRecipe = {
-            ...r,
-            createdAt: now,
-            updatedAt: now,
-            versionHistory: [{ date: now, changeType: 'create' as const }],
-            // Ensure defaults
-            rating: 0,
-            isFavorite: false,
-          }
-          // Cast to generic recipe to avoid Partial mismatch if any
-          await saveRecipe(fullRecipe as unknown as Partial<Recipe>)
-        }),
-      )
-      refreshRecipes()
-      await alert(`Successfully imported ${recipes.length} recipes!`)
       setView('library')
-    } catch (e) {
-      console.error(e)
-      await alert('Failed to save some recipes.')
     }
   }
 
@@ -627,109 +404,33 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [setIsSelectionMode])
 
   // --- RENDER ---
-  // --- EARLY RENDER: ONBOARDING ---
-  if (showOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />
-  }
-
-  if (loading) {
-    return (
-      <div
-        data-testid="loading-indicator"
-        className="flex h-full items-center justify-center bg-card"
-      >
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 bg-card p-6 text-center">
-        <div className="rounded-full bg-destructive/10 p-4">
-          <Loader2 className="h-8 w-8 text-destructive" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">Something went wrong</h2>
-        <p className="max-w-md text-muted-foreground">{error}</p>
-        <button
-          onClick={() => refreshRecipes(true)}
-          className="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          Retry
-        </button>
-      </div>
-    )
-  }
-
-  // Detail View (Cooking Mode)
-  if (view === 'detail' && selectedRecipe) {
-    return (
-      <RecipeDetail
-        recipe={selectedRecipe}
-        onClose={() => setView('library')}
-        onUpdate={handleUpdateRecipe}
-        onDelete={(id) => handleDeleteRecipe(id)}
-        onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
-        onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
-      />
-    )
-  }
-
-  if (view === 'notifications') {
-    return <NotificationSettingsView onClose={() => setView('library')} />
-  }
-
-  if (view === 'settings') {
-    return (
-      <SettingsView
-        onClose={() => setView('library')}
-        onExport={handleExport}
-        onImport={handleImport}
-        onDeleteAccount={handleDeleteAll}
-        currentName={currentUser ?? undefined}
-        onUpdateProfile={handleUpdateProfile}
-      />
-    )
-  }
-
-  if (view === 'bulk-import') {
-    return (
-      <BulkRecipeImporter
-        onClose={() => setView('library')}
-        onRecipesParsed={handleBulkImportSave}
-      />
-    )
-  }
-
-  if (view === 'feedback-dashboard') {
-    return (
-      <div className="flex h-full flex-col bg-white">
-        <div className="flex items-center gap-2 border-b px-4 py-3">
-          <button onClick={() => setView('library')} className="rounded-full p-2 hover:bg-gray-100">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <FeedbackDashboard />
-        </div>
-      </div>
-    )
-  }
-
-  if (view === 'admin-dashboard') {
-    if (!isAdmin) {
-      setView('library')
-      return null
-    }
-    return <AdminDashboard onClose={() => setView('library')} />
-  }
-
-  if (view === 'invite') {
-    return <InviteView onClose={() => setView('library')} />
-  }
-
   return (
-    <>
+    <RecipeManagerView
+      view={view}
+      loading={loading}
+      error={error}
+      showOnboarding={!isOnboardingComplete}
+      selectedRecipe={selectedRecipe}
+      user={user ?? undefined}
+      isAdmin={!!computedIsAdmin}
+      handleOnboardingComplete={() => setIsOnboardingComplete(true)}
+      handleUpdateRecipe={handleUpdateRecipe}
+      handleDeleteRecipe={handleDeleteRecipe}
+      handleAddToWeek={handleAddToWeek}
+      handleToggleFavorite={toggleFavorite}
+      handleExport={handleExport}
+      handleImport={handleImport}
+      handleDeleteAll={handleDeleteAll}
+      handleUpdateProfile={handleUpdateProfile}
+      handleBulkImportSave={handleBulkImportSave}
+      refreshRecipes={refreshRecipes}
+      setView={setView}
+      setRoute={setRoute}
+      family={family}
+      groceryItems={groceryItems}
+      isGenerating={isGenerating}
+      targetRecipes={targetRecipes}
+    >
       <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
       {/* Full-width Header Shell */}
@@ -749,13 +450,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                 setRecipe(null)
                 setView('edit')
               }}
-              onViewWeek={() => {
-                if (view === 'week') {
-                  setView('library')
-                } else {
-                  setView('week')
-                }
-              }}
+              onViewWeek={() => setView(view === 'week' ? 'library' : 'week')}
               isWeekView={view === 'week'}
             />
           </motion.div>
@@ -834,33 +529,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               />
             )}
           </AnimatePresence>
-          {view === 'detail' && selectedRecipe && (
-            <RecipeDetail
-              recipe={selectedRecipe}
-              onClose={() => setView('library')}
-              onUpdate={handleUpdateRecipe}
-              onDelete={handleDeleteRecipe}
-              onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
-              onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
-            />
-          )}
-
-          {view === 'grocery' && (
-            <div className="flex h-full flex-col">
-              <GroceryList
-                ingredients={groceryItems}
-                isLoading={isGenerating}
-                onClose={() => setView('library')}
-                recipes={targetRecipes}
-                onOpenRecipe={(recipe) => {
-                  setRoute({ activeRecipeId: recipe.id, view: 'detail' })
-                }}
-              />
-            </div>
-          )}
-          {view === 'family-settings' && (
-            <FamilyManagementView onClose={() => setView('library')} family={family} />
-          )}
         </main>
       </div>
 
@@ -1030,7 +698,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         open={!!shareRecipe}
         onOpenChange={(open: boolean) => !open && setShareRecipe(null)}
       />
-    </>
+    </RecipeManagerView>
   )
 }
 

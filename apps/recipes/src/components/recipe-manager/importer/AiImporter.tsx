@@ -1,14 +1,13 @@
 import React, { useState } from 'react'
+import type { Recipe } from '../../../lib/types'
 import { Loader2, ChefHat, Info, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { Recipe } from '../../../lib/types'
 import { processImage } from '../../../lib/image-optimization'
+import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
 import { Stack, Cluster } from '@/components/ui/layout'
-
-import { uploadImage, parseRecipe } from './api'
-type Status = 'idle' | 'processing' | 'error'
+import { uploadImage } from './api'
 
 interface AiImporterProps {
   onRecipeParsed: (recipe: Recipe) => void
@@ -16,19 +15,30 @@ interface AiImporterProps {
 
 export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
   const [mode, setMode] = useState<InputMode>('photo')
-  const [url, setUrl] = useState('')
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [imageData, setImageData] = useState<string | null>(null) // Base64 data for AI
-  const [status, setStatus] = useState<Status>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [internalIsUploading, setInternalIsUploading] = useState(false)
+  const {
+    url,
+    setUrl,
+    imagePreview,
+    setImagePreview,
+    imageData,
+    setImageData,
+    status,
+    errorMsg,
+    setErrorMsg,
+    dishName,
+    setDishName,
+    cuisine,
+    setCuisine,
+    knownIngredients,
+    setKnownIngredients,
+    dietaryNotes,
+    setDietaryNotes,
+    tasteProfile,
+    setTasteProfile,
+    handleProcess,
+  } = useAiImporter({ onRecipeParsed, mode })
 
-  // Context fields for Dish Photo mode
-  const [dishName, setDishName] = useState('')
-  const [cuisine, setCuisine] = useState('')
-  const [knownIngredients, setKnownIngredients] = useState('')
-  const [dietaryNotes, setDietaryNotes] = useState('')
-  const [tasteProfile, setTasteProfile] = useState('')
+  const [internalIsUploading, setInternalIsUploading] = useState(false)
   const [isContextOpen, setIsContextOpen] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,62 +74,6 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
       setErrorMsg(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setInternalIsUploading(false)
-    }
-  }
-
-  const handleProcess = async () => {
-    setStatus('processing')
-    setErrorMsg('')
-    try {
-      const payload: {
-        url?: string
-        image?: string
-        mode?: 'parse' | 'infer'
-        dishName?: string
-        cuisine?: string
-        knownIngredients?: string
-        dietaryNotes?: string
-        tasteProfile?: string
-      } = {}
-
-      if (mode === 'url') {
-        if (!url) throw new Error('Please enter a URL')
-        payload.url = url
-      } else {
-        if (!imageData) throw new Error('Please select an image')
-        if (imageData.length > 1024 * 1024 * 4) {
-          throw new Error('The image is too large. Please try a smaller photo.')
-        }
-        payload.image = imageData
-
-        if (mode === 'dish-photo') {
-          payload.mode = 'infer'
-          if (dishName) payload.dishName = dishName
-          if (cuisine) payload.cuisine = cuisine
-          if (knownIngredients) payload.knownIngredients = knownIngredients
-          if (dietaryNotes) payload.dietaryNotes = dietaryNotes
-          if (tasteProfile) payload.tasteProfile = tasteProfile
-        }
-      }
-
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const data = await parseRecipe(payload, baseUrl)
-
-      const recipeWithSource = {
-        ...(data as object),
-        sourceImage: mode === 'photo' || mode === 'dish-photo' ? imagePreview : undefined,
-        creationMethod: mode === 'dish-photo' ? 'ai-infer' : 'ai-parse',
-      } as Recipe
-
-      onRecipeParsed(recipeWithSource)
-      setStatus('idle')
-    } catch (err: unknown) {
-      console.error(err)
-      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
-      setStatus('error')
     }
   }
 
