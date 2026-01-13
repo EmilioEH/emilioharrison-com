@@ -4,7 +4,6 @@ const urlsToCache = [
   '/protected/recipes/manifest.json',
   '/protected/recipes/icon-192.png',
   '/protected/recipes/icon-512.png',
-  '/protected/recipes/favicon.svg',
 ]
 
 self.addEventListener('install', (event) => {
