@@ -168,7 +168,7 @@ export function PushNotificationManager() {
       setPermission('granted')
 
       // Test Notification
-      new Notification('Notifications Enabled', {
+      registration.showNotification('Notifications Enabled', {
         body: 'You will now receive alerts for new feedback.',
         icon: '/protected/recipes/icon-192.png',
       })
