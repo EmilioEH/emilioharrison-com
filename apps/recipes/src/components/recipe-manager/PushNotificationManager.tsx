@@ -188,6 +188,22 @@ export function PushNotificationManager() {
     }
   }
 
+  const sendTestNotification = async () => {
+    setIsLoading(true)
+    try {
+      const registration = await ensureServiceWorkerReady()
+      await registration.showNotification('Test Notification', {
+        body: 'This is what your alerts will look like.',
+        icon: '/protected/recipes/icon-192.png',
+      })
+    } catch (err) {
+      console.error('Test notification failed:', err)
+      setError('Failed to send test notification')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const unsubscribe = async () => {
     setIsLoading(true)
     try {
@@ -269,20 +285,28 @@ export function PushNotificationManager() {
             {isInitializing ? 'Initializing...' : 'Enable Notifications'}
           </Button>
         ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={unsubscribe}
-            disabled={isLoading}
-            className="w-full gap-2 text-red-500 hover:bg-red-50 hover:text-red-600"
-          >
-            {isLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
+          <div className="flex w-full gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={sendTestNotification}
+              disabled={isLoading}
+              className="flex-1 gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+            >
+              <Bell className="size-4" />
+              Test
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={unsubscribe}
+              disabled={isLoading}
+              className="gap-2 text-red-500 hover:bg-red-50 hover:text-red-600"
+            >
               <BellOff className="size-4" />
-            )}
-            Disable
-          </Button>
+              Disable
+            </Button>
+          </div>
         )}
       </Inline>
 
