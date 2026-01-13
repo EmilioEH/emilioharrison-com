@@ -48,10 +48,10 @@ export function PushNotificationManager() {
       throw new Error('Service Worker not supported')
     }
 
-    // 1. naive check
+    // 1. naive check with slightly longer timeout (5s) for mobile
     const readyRegistration = await withTimeout(
       navigator.serviceWorker.ready,
-      3000,
+      5000,
       'SW_READY_TIMEOUT',
     ).catch(() => null)
 
@@ -59,10 +59,20 @@ export function PushNotificationManager() {
       return readyRegistration
     }
 
-    // 2. Manual check if ready promise timed out or wasn't fully active
-    const registration = await navigator.serviceWorker.getRegistration()
+    // 2. Manual check if ready promise timed out
+    let registration = await navigator.serviceWorker.getRegistration()
+
+    // 3. FALLBACK: Self-Healing Registration
+    // If no registration exists, we shouldn't just fail. We should try to register it.
     if (!registration) {
-      throw new Error('No Service Worker registered. reload page.')
+      console.log('No SW found, attempting self-registration...')
+      try {
+        registration = await navigator.serviceWorker.register('/protected/recipes/sw.js')
+        console.log('Self-registration successful:', registration)
+      } catch (regError) {
+        console.error('Self-registration failed:', regError)
+        throw new Error('Could not register Service Worker')
+      }
     }
 
     // If active, we are good
@@ -74,7 +84,12 @@ export function PushNotificationManager() {
     return new Promise((resolve, reject) => {
       const serviceWorker = registration.installing || registration.waiting
       if (!serviceWorker) {
-        // Should be impossible if registration exists but not active
+        // Theoretically possible if it became active *just now* or failed.
+        // Let's do one final check.
+        if (registration.active) {
+          resolve(registration)
+          return
+        }
         reject(new Error('Service Worker stuck in unknown state'))
         return
       }
