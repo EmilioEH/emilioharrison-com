@@ -97,7 +97,8 @@ async function uploadToStorage(
   return data
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  const { request } = context
   // Feedback submissions are allowed from any user, including unauthenticated users
   // The user info is captured in the client-side context object
   try {
@@ -150,6 +151,38 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     await db.createDocument('feedback', String(id), newFeedback)
+
+    // Notify Admin via Push
+    try {
+      if (context.locals.runtime?.ctx?.waitUntil) {
+        context.locals.runtime.ctx.waitUntil(
+          (async () => {
+            const { sendPushNotification } = await import('../../lib/push-notifications')
+            const subscriptions = await db.getCollection('push_subscriptions')
+
+            const payload = JSON.stringify({
+              title: 'New Feedback Received!',
+              body: `From: ${feedback.type || 'User'}\n${feedback.description?.substring(0, 50)}...`,
+              url: `/protected/recipes/admin`,
+            })
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const notifications = subscriptions.map((sub: any) =>
+              sendPushNotification(sub, payload, context.locals.runtime.env).then((res) => {
+                if (!res.success && res.status === 'gone') {
+                  // Cleanup dead subscription
+                  return db.deleteDocument('push_subscriptions', sub.id)
+                }
+              }),
+            )
+
+            await Promise.all(notifications)
+          })(),
+        )
+      }
+    } catch (notificationErr) {
+      console.error('Notification Trigger Failed:', notificationErr)
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

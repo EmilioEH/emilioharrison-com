@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, Download, Upload, Trash2, User, Save, Loader2 } from 'lucide-react'
 import { Stack } from '@/components/ui/layout'
+import { PushNotificationManager } from '../PushNotificationManager'
 
 interface SettingsViewProps {
   onExport: () => void
@@ -77,6 +78,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             </div>
           </div>
+        </section>
+
+        <section>
+          <PushNotificationManager />
         </section>
 
         <section>

@@ -45,6 +45,8 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
   - **Access Codes**: Generate new codes, track redemption history, and disable unwanted codes.
   - **Family Invites**: Monitor pending family invitations and revoke them if necessary.
   - **Feedback**: Review, track, and resolve user feedback reports.
+  - **Push Notifications**: Native PWA push notifications alert admins immediately when new feedback is submitted. Supported on Android, Windows, macOS, and iOS (requires "Add to Home Screen").
+- **Push Notifications**: Native PWA push notifications alert admins immediately when new feedback is submitted. Supported on Android, Windows, macOS, and iOS (requires "Add to Home Screen").
 
 ## 🛠 Tech Stack
 
@@ -465,6 +467,12 @@ npm run feedback:resolve <id> fixed --remote
    # Email Whitelists (comma-separated)
    # Users in ALLOWED_EMAILS are automatically approved and considered admins upon login (Bootstrapping).
    ALLOWED_EMAILS=user1@gmail.com,user2@gmail.com
+
+   # PWA Push Notifications (VAPID)
+   # Generated via `npx web-push generate-vapid-keys`
+   PUBLIC_VAPID_KEY=your_public_key
+   VAPID_PRIVATE_KEY=your_private_key
+   VAPID_SUBJECT=mailto:your_email@example.com
    ```
 
    > **Production Note**: These variables must also be set in **Cloudflare Pages Environment Variables**.
