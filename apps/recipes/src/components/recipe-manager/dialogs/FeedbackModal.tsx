@@ -55,6 +55,10 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }: FeedbackModal
               // Ignore the modal itself to capture the app state behind it
               return element === modalRef.current
             },
+            // Constrain capture to visible viewport to avoid exceeding canvas limits
+            windowHeight: window.innerHeight,
+            height: window.innerHeight,
+            y: window.scrollY,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any)
           setScreenshot(canvas.toDataURL('image/png'))

@@ -159,6 +159,7 @@ All primitives use the `spacing` prop with a controlled scale:
 
 ### Recent Updates (Jan 2026)
 
+- **Feedback Screenshot Fix**: Resolved an issue where feedback screenshots failed to capture on long pages. Constrained `html2canvas` to the visible viewport to prevent illegally large canvases (30k+ pixels) from producing empty data URLs.
 - **Testing Infrastructure Hardening**: Expanded the automated testing strategy with a new **Integration Testing Layer** (`tests/integration/`) to verify complex server-side logic (like grocery list merging) that is mocked in E2E tests. Increased unit test coverage for core utilities (`date-helpers`, `type-guards`).
 
 - **Login API & Manager Cleanup**: Refactored the authentication flow and consolidated `RecipeManager` logic. This fix improved E2E test stability and resolved issues with the burger menu visibility and state.
