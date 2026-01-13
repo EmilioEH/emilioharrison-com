@@ -32,7 +32,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Store in a subcollection for efficient retrieval by user
-    await db.createDocument(`users/${userId}/push_subscriptions`, id, docData)
+    // Use setDocument for UPSERT behavior (create if missing, update if exists)
+    await db.setDocument(`users/${userId}/push_subscriptions`, id, docData)
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
