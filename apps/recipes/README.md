@@ -194,6 +194,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **UI Polishing & Alignment (Jan 2026)**: Relocated the burger menu to the top-right of the black User Bar. Expanded the App Header to the full browser width (consistent with the footer) while maintaining centered content spacing. Standardized internal padding across the User Bar, Header, and Footer to ensure perfectly straight vertical left-alignment for the "Welcome", "CHEFBOARD", and "Beta Preview" elements.
 - **Robust Mobile Login Resiliency (Jan 2026)**: Implemented an improved authentication flow for mobile devices that prioritizes stable `signInWithPopup` over redirects. Added specific detection and user-friendly guidance for the "Missing Initial State" error common in iOS in-app browsers (e.g., opening links from SMS/WhatsApp), ensuring users are never left with a blank white screen and are guided to Safari when necessary.
 - **Service Worker Stability (Jan 2026)**: Fixed a critical bug where push notification subscriptions failed because the Service Worker attempted to precache a redirected dynamic route (`/protected/recipes/`). Removed the dynamic route from `urlsToCache` to ensure reliable installation and activation.
+- **Service Worker Immediate Activation (Jan 2026)**: Fixed persistent "Service Worker not ready" errors on mobile devices by adding `skipWaiting()` and `clients.claim()` lifecycle calls. The SW now activates instantly instead of waiting 10+ seconds, ensuring push notification subscriptions succeed immediately.
 
 ### Recent Updates (Dec 2025)
 
