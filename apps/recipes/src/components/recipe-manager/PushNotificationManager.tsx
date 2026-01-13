@@ -114,8 +114,14 @@ export function PushNotificationManager() {
       try {
         if ('serviceWorker' in navigator) {
           // Use getRegistration() for a lightweight check.
-          // We don't need to force registration or wait for 'ready' just to see if we are subscribed.
-          const registration = await navigator.serviceWorker.getRegistration()
+          // Explicitly check our expected scope to avoid ambiguity
+          let registration = await navigator.serviceWorker.getRegistration('/protected/recipes/')
+
+          if (!registration) {
+            // Fallback to default (current page) lookup
+            registration = await navigator.serviceWorker.getRegistration()
+          }
+
           if (registration) {
             const subscription = await registration.pushManager.getSubscription()
             setIsSubscribed(!!subscription)
