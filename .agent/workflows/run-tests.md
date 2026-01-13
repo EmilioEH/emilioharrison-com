@@ -1,49 +1,64 @@
 ---
-description: Run automated Playwright E2E tests to verify features and prevent regressions
+description: Run Unit, Integration, and E2E tests to verify code quality and features.
 ---
 
-# Run Playwright Tests
+This workflow defines the standard verification process. You must match the test type to the scope of your changes.
 
-Use this workflow to run automated end-to-end tests. This is the **primary way to verify** that code changes didn't break existing functionality.
+# Test Strategy Selector
 
-## When to use
+| Scope of Change   | Component Example                     | Recommended Test Command                |
+| :---------------- | :------------------------------------ | :-------------------------------------- |
+| **Utility Logic** | `date-helpers.ts`, `grocery-logic.ts` | `npm run test:unit`                     |
+| **Backend Logic** | `src/pages/api/`, Database Queries    | `npm run test:unit` (server-only tests) |
+| **UI Components** | `Button.tsx`, `RecipeCard.tsx`        | Browser Agent (Manual) or E2E           |
+| **User Flow**     | "Cooking Mode", "Auth", "Feedback"    | `npm run test:e2e`                      |
 
-- After refactoring code
-- Before submitting changes
-- When you need to verify "User Journeys" (e.g. Auth, feedback, cooking mode)
+# Steps
 
-## Steps
+## 1. Quick Verification (Unit & Integration)
 
 // turbo
+Run this for _every_ change to ensure you haven't broken core logic.
 
-1. Run all tests (Headless):
+```bash
+cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npm run test:unit
+```
 
-   ```bash
-   cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npm run test:e2e
-   ```
+## 2. Deep Verification (E2E)
 
-2. (Optional) Run specific test file:
-   If you only changed one feature (e.g. feedback), run only that spec to save time:
+// turbo
+Run this before asking for review on feature work.
 
-   ```bash
-   cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npx playwright test tests/feedback.spec.ts
-   ```
+```bash
+cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npm run test:e2e
+```
 
-3. (Optional) Debug mode:
-   If tests fail, you can run them with the UI to see what's happening (requires browser subagent, but usually `test:e2e` is sufficient for agents):
-   ```bash
-   npx playwright test --ui
-   ```
+### Optimizing E2E
 
-## Interpreting Results
+If checking a specific feature, run only that spec:
 
-- **Pass**: All green ticks. Proceed.
-- **Fail**: Read the error message. It usually tells you exactly what element was not found or what assertion failed. Fix the code, not the test (unless the feature changed correctly).
+```bash
+# Example: Testing only the feedback flow
+force_color_prompt=true npx playwright test tests/feedback.spec.ts
+```
 
-## API Mocking & Auth
+## 3. Debugging Failures
 
-If you are writing or debugging tests that fetch data:
+### Unit Test Failures
 
-- Use the centralized mock data in [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts).
-- Ensure auth cookies in `test.use({ storageState: ... })` use domain `127.0.0.1` instead of `localhost`.
-- If a route is not being intercepted, check if the app is redirecting to `/login` because of a cookie domain mismatch.
+- **Watch Mode**: `npx vitest` to run tests instantly on save.
+- **Trace**: Check the stack trace. Valid logic changes often require updating the test expectation.
+
+### E2E Failures
+
+- **UI Mode**: Use `npx playwright test --ui` to see the browser.
+- **Common Issues**:
+  - **Timeouts**: The element wasn't visible within 10s.
+  - **Auth**: Ensure `domain: 127.0.0.1` is used for cookies.
+  - **Mocks**: Check `tests/msw-setup.ts` if your API call isn't returning mock data.
+
+# Quality Gate
+
+Before calling `notify_user` to finish a task, you should be able to say:
+
+> "I have verified all logic with `npm run test:unit` and preserved the User Journey with `npm run test:e2e`."
