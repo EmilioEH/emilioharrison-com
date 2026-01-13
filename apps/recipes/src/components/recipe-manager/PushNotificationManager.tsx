@@ -37,22 +37,88 @@ export function PushNotificationManager() {
   const [_permission, setPermission] = useState<NotificationPermission>('default')
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  /**
+   * Robustly waits for the Service Worker to be active.
+   */
+  const ensureServiceWorkerReady = async (): Promise<ServiceWorkerRegistration> => {
+    if (!('serviceWorker' in navigator)) {
+      throw new Error('Service Worker not supported')
+    }
+
+    // 1. naive check
+    const readyRegistration = await withTimeout(
+      navigator.serviceWorker.ready,
+      3000,
+      'SW_READY_TIMEOUT',
+    ).catch(() => null)
+
+    if (readyRegistration && readyRegistration.active) {
+      return readyRegistration
+    }
+
+    // 2. Manual check if ready promise timed out or wasn't fully active
+    const registration = await navigator.serviceWorker.getRegistration()
+    if (!registration) {
+      throw new Error('No Service Worker registered. reload page.')
+    }
+
+    // If active, we are good
+    if (registration.active) {
+      return registration
+    }
+
+    // If waiting or installing, we must wait
+    return new Promise((resolve, reject) => {
+      const serviceWorker = registration.installing || registration.waiting
+      if (!serviceWorker) {
+        // Should be impossible if registration exists but not active
+        reject(new Error('Service Worker stuck in unknown state'))
+        return
+      }
+
+      const timeout = setTimeout(() => {
+        reject(new Error('Service Worker activation timed out'))
+      }, 5000)
+
+      serviceWorker.addEventListener('statechange', (e) => {
+        const target = e.target as ServiceWorker
+        if (target.state === 'activated') {
+          clearTimeout(timeout)
+          resolve(registration)
+        }
+      })
+    })
+  }
+
   useEffect(() => {
+    const checkSubscription = async () => {
+      setIsInitializing(true)
+      try {
+        if ('serviceWorker' in navigator) {
+          // Don't throw here, just check if ready. If not, we can't be subscribed.
+          const registration = await ensureServiceWorkerReady().catch(() => null)
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription()
+            setIsSubscribed(!!subscription)
+          }
+        }
+      } catch (e) {
+        console.warn('SW check failed during init:', e)
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setPermission(Notification.permission)
       checkSubscription()
+    } else {
+      setIsInitializing(false)
     }
   }, [])
-
-  const checkSubscription = async () => {
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.getSubscription()
-      setIsSubscribed(!!subscription)
-    }
-  }
 
   const subscribe = async () => {
     setIsLoading(true)
@@ -62,11 +128,7 @@ export function PushNotificationManager() {
         throw new Error('Missing VAPID Configuration on Client')
       }
 
-      const registration = await withTimeout(
-        navigator.serviceWorker.ready,
-        10000,
-        'Service Worker not ready. Please refresh the page and try again.',
-      )
+      const registration = await ensureServiceWorkerReady()
 
       // Subscribe
       const subscription = await registration.pushManager.subscribe({
@@ -171,9 +233,18 @@ export function PushNotificationManager() {
 
       <Inline>
         {!isSubscribed ? (
-          <Button size="sm" onClick={subscribe} disabled={isLoading} className="w-full gap-2">
-            {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Bell className="size-4" />}
-            Enable Notifications
+          <Button
+            size="sm"
+            onClick={subscribe}
+            disabled={isLoading || isInitializing}
+            className="w-full gap-2"
+          >
+            {isLoading || isInitializing ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Bell className="size-4" />
+            )}
+            {isInitializing ? 'Initializing...' : 'Enable Notifications'}
           </Button>
         ) : (
           <Button
