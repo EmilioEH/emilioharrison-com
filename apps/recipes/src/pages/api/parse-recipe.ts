@@ -44,6 +44,35 @@ const STRUCTURED_STEPS_RULES = `
 - Populate 'structuredSteps' array with these objects.
 `
 
+const DISH_INFERENCE_SYSTEM_PROMPT = `
+You are an expert Chef and Recipe Developer. Your task is to analyze a photograph of a finished dish and generate a plausible recipe to recreate it.
+
+Context Provided (if available):
+- Dish Name: {dishName}
+- Cuisine: {cuisine}
+- Known Ingredients: {knownIngredients}
+- Dietary Notes: {dietaryNotes}
+- Taste Profile: {tasteProfile}
+
+Rules:
+1. **Visual Analysis**: Identify visible ingredients, cooking techniques (grilled, fried, baked), and presentation style.
+2. **Contextual Inference**: If a dish name or cuisine is provided, prioritize ingredients and techniques typical of that regional/cultural tradition.
+3. **Ingredient Estimation**: Provide reasonable quantities based on visual proportions. Acknowledge uncertainty where the photo is ambiguous.
+4. **Step Generation**: Create logical cooking instructions that would yield the visual result. Include common techniques (searing, simmering, garnishing).
+5. **Metadata Inference**: Determine Protein, Meal Type, Dish Type, Equipment, and Dietary tags based on visual cues and context.
+6. **Honesty**: If the image is unclear or incomplete, note this in the recipe description (e.g., "Estimated based on visual appearance").
+7. **Main Protein Source**: Identify and map strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+8. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+   - 'amount' (number)
+   - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
+   - 'name' (ingredient name without unit)
+   - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
+9. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+
+${INGREDIENT_GROUPING_RULES}
+${STRUCTURED_STEPS_RULES}
+`
+
 const IMAGE_SYSTEM_PROMPT = `
 You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided image.
 
@@ -179,6 +208,18 @@ function extractJsonLd(html: string): unknown | null {
   return null
 }
 
+interface ParseRequestBody {
+  url?: string
+  image?: string
+  text?: string
+  mode?: 'parse' | 'infer'
+  dishName?: string
+  cuisine?: string
+  knownIngredients?: string
+  dietaryNotes?: string
+  tasteProfile?: string
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
   let client
   try {
@@ -188,7 +229,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const { url, image, text } = await request.json()
+    const body: ParseRequestBody = await request.json()
+    const { url, image, text, mode = 'parse' } = body
 
     if (!url && !image && !text) {
       return new Response(JSON.stringify({ error: 'No input provided' }), {
@@ -204,10 +246,35 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } else if (text) {
       processedInput = processTextInput(text, image)
     } else {
-      processedInput = processImageInput(image)
+      processedInput = processImageInput(image!)
     }
 
-    const { prompt, contentPart, sourceInfo } = processedInput
+    const { contentPart, sourceInfo } = processedInput
+    let { prompt } = processedInput
+
+    // Determine the prompt to use
+    if (mode === 'infer' && image) {
+      // Switch to inference prompt
+      let inferencePrompt = DISH_INFERENCE_SYSTEM_PROMPT
+
+      // Inject user context
+      inferencePrompt = inferencePrompt.replace('{dishName}', body.dishName || 'Not provided')
+      inferencePrompt = inferencePrompt.replace('{cuisine}', body.cuisine || 'Not provided')
+      inferencePrompt = inferencePrompt.replace(
+        '{knownIngredients}',
+        body.knownIngredients || 'Not provided',
+      )
+      inferencePrompt = inferencePrompt.replace(
+        '{dietaryNotes}',
+        body.dietaryNotes || 'Not provided',
+      )
+      inferencePrompt = inferencePrompt.replace(
+        '{tasteProfile}',
+        body.tasteProfile || 'Not provided',
+      )
+
+      prompt = inferencePrompt
+    }
 
     const schema = createRecipeSchema()
 
@@ -326,7 +393,7 @@ function processImageInput(image: string): ProcessedInput {
     throw new Error('Invalid image data: missing base64 content')
   }
 
-  console.log(`[parse-recipe] Image mimeType: ${mimeType}, data length: ${base64Data.length}`)
+  // console.log(`[parse-recipe] Image mimeType: ${mimeType}, data length: ${base64Data.length}`)
 
   return {
     prompt: IMAGE_SYSTEM_PROMPT,

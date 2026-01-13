@@ -110,6 +110,15 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
 
       {!recipe.id && <AiImporter onRecipeParsed={handleRecipeParsed} />}
 
+      {formData.creationMethod === 'ai-infer' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+          <p className="font-bold">✨ AI-Inferred Recipe</p>
+          <p className="text-xs opacity-90">
+            This recipe was reverse-engineered from a photo. Ingredients and amounts are estimates.
+          </p>
+        </div>
+      )}
+
       <Stack spacing="md">
         <label className="block">
           <span className="mb-1 block text-xs font-bold uppercase text-gray-400">Title</span>

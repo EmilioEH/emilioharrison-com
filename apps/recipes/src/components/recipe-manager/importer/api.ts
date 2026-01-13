@@ -20,7 +20,17 @@ export async function uploadImage(file: File, baseUrl: string): Promise<string |
 }
 
 export async function parseRecipe(
-  payload: { url?: string; image?: string; text?: string },
+  payload: {
+    url?: string
+    image?: string
+    text?: string
+    mode?: 'parse' | 'infer'
+    dishName?: string
+    cuisine?: string
+    knownIngredients?: string
+    dietaryNotes?: string
+    tasteProfile?: string
+  },
   baseUrl: string,
 ): Promise<unknown> {
   const res = await fetch(`${baseUrl}api/parse-recipe`, {

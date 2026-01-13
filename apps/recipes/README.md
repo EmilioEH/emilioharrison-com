@@ -13,7 +13,11 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
 - **Share Recipes**: Share any recipe as plain text (clipboard/native share) or as a professionally styled PDF. Customizable export includes recipe photo, notes, ratings, and cooking history. Uses Web Share API on mobile for seamless sharing.
-- **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor. Use AI-powered photo/URL import, **bulk upload markdown files**, or manually enter recipe details—all from one streamlined interface.
+- **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor with three modes:
+  - **Scan**: Upload a photo of a written recipe card for AI parsing.
+  - **Dish (Experimental)**: Upload a photo of a finished dish. Gemini will **reverse-engineer** the recipe, inferring likely ingredients and steps based on the visual cues and optional context (Cuisine, Taste Profile) you provide.
+  - **URL**: Paste a link to import from a website.
+  - **Import**: Bulk upload markdown files or manually enter details from one streamlined interface.
 - **Smart Shoppable Grocery Lists**: Generate categorized grocery lists that intelligently convert recipe units (e.g., "4 cloves garlic") into store-friendly purchasable units (e.g., "1 head garlic").
 - **Source Attribution**: Grocery items perform "double duty"—displaying the aggregate store unit while allowing users to tap tags (e.g., `[RECIPE A]`) to see exactly how much is needed for each dish.
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.

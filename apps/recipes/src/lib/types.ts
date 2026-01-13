@@ -62,6 +62,7 @@ export interface Recipe {
   isFavorite?: boolean
   createdAt?: string // ISO Date
   updatedAt?: string // ISO Date
+  creationMethod?: 'manual' | 'ai-parse' | 'ai-infer'
   // Optional: keep track of simplified history
   versionHistory?: {
     date: string

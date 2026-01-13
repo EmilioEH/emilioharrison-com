@@ -21,6 +21,18 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray
 }
 
+/**
+ * Wraps a promise with a timeout to prevent infinite waiting.
+ * This is critical for navigator.serviceWorker.ready which can hang
+ * indefinitely if the Service Worker fails to install/activate.
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMessage)), timeoutMs)),
+  ])
+}
+
 export function PushNotificationManager() {
   const [_permission, setPermission] = useState<NotificationPermission>('default')
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -50,7 +62,11 @@ export function PushNotificationManager() {
         throw new Error('Missing VAPID Configuration on Client')
       }
 
-      const registration = await navigator.serviceWorker.ready
+      const registration = await withTimeout(
+        navigator.serviceWorker.ready,
+        10000,
+        'Service Worker not ready. Please refresh the page and try again.',
+      )
 
       // Subscribe
       const subscription = await registration.pushManager.subscribe({
