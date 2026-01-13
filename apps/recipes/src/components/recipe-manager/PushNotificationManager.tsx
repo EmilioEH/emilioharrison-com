@@ -301,7 +301,7 @@ export function PushNotificationManager() {
               variant="outline"
               onClick={sendTestNotification}
               disabled={isLoading}
-              className="w-full gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+              className="w-full gap-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900"
             >
               <Bell className="size-4" />
               Test Notification
