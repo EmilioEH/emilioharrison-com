@@ -34,7 +34,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Invite Others**: A dedicated menu item allowing users to **invite others to their family workspace** or **generate activation codes** for new accounts. Supports native sharing and clipboard copy.
 - **Native Invite Sharing**: Use the Web Share API to share family invitations and activation codes directly from the app to messaging platforms.
 - **Auto-Authorization**: Invited family members are automatically approved and added to the family workspace upon their first login, bypassing the manual request flow.
-- **Beta Tester Onboarding**: A dedicated flow for new users that ensures mobile-first usage (blocks desktop), guides "Add to Home Screen" installation, and provides a **welcome tutorial with interactive demos** showing how each feature works (AI recipe parsing, weekly planning, cooking mode navigation, and family sharing).
+- **Beta Tester Onboarding**: A dedicated flow for new users that ensures mobile-first usage (blocks desktop), guides "Add to Home Screen" installation, and provides a **welcome tutorial with interactive demos** showcasing **Multi-Mode AI Import** (URL, Scan, Dish Photo), **Smart Grocery Lists**, Cooking Mode, and Family Sync.
 - **Weekly Meal Planning**: Tag recipes for "This Week" to organize your cooking schedule. The system intelligently warns you if you're selecting too many recipes with the same protein to ensure variety.
 - **Hybrid AI Grocery Generator**: Combine recipes into a consolidated, categorized shopping list. Uses AI to convert chopped/diced/sliced ingredients into whole purchasable produce (e.g., "1 cup chopped onion" → "1 medium onion") and organizes them by aisle.
 - **Interactive Shopping Mode**: Check off items as you shop, copy to clipboard, or share via native sheet. Optimizes your trip by grouping items (Produce, Dairy, etc.).
@@ -219,7 +219,7 @@ Key entry points for common tasks:
 | Task                       | Primary Files                                                                                                                     |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                                                            |
-| **Add new metadata field** | `src/lib/types.ts` (Recipe interface) → `RecipeEditor.tsx` → `RecipeFilters.tsx`                                                  |
+| **Add new metadata field** | Use slash command: `/add-metadata` (Covers Types, UI, AI, and Filtering)                                                          |
 | **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                                                      |
 | **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI)                                       |
 | **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                                                             |
@@ -264,20 +264,17 @@ npm run check:hygiene
 
 ### Testing & Validation
 
-```bash
-npm run test:unit
-# Runs: All unit and integration tests (Vitest)
-```
+For a comprehensive guide on which test to run and how to debug, see the **[/run-tests](file:///Users/emilioharrison/Code/emilioharrison-com/.agent/workflows/run-tests.md)** workflow.
 
 ```bash
-npm run test:e2e
-# Runs: Playwright E2E tests (all browsers)
+/run-tests # Auto-runs Unit and E2E checks
 ```
 
-```bash
-npm run test:e2e:fast
-# Runs: Playwright E2E tests (Chromium only, faster)
-```
+**Quick Reference:**
+
+- **Unit**: `npm run test:unit` (Logic/Utils)
+- **E2E**: `npm run test:e2e` (User Features)
+- **Fast E2E**: `npm run test:e2e:fast` (Chromium only)
 
 ```bash
 npm run test:stryker

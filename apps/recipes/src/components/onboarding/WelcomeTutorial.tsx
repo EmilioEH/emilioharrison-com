@@ -29,7 +29,7 @@ export const WelcomeTutorial: React.FC<WelcomeTutorialProps> = ({ onComplete }) 
     },
     {
       title: 'Add Your Recipes',
-      description: 'Paste a URL and watch AI extract all the details instantly.',
+      description: 'Paste URLs, scan cards, or snap photos of dishes. AI handles the rest.',
       icon: <Utensils className="h-12 w-12 text-green-600" />,
       color: 'bg-green-100',
       demoType: 'add-recipe',
