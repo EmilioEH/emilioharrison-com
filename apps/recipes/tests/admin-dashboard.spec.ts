@@ -1,4 +1,4 @@
-import { test, expect } from './msw-setup'
+import { test, expect, AUTH_COOKIES } from './msw-setup'
 
 test.describe('Admin Dashboard', () => {
   test.beforeEach(async ({ page }) => {
@@ -114,16 +114,20 @@ test.describe('Admin Dashboard', () => {
       }
     })
 
+    await page.context().addCookies([...AUTH_COOKIES])
     await page.goto('/protected/recipes')
   })
 
   test('should display admin dashboard and tabs', async ({ page }) => {
+    // Debug: Check if user is recognized
+    await expect(page.getByText(/Welcome/i)).toBeVisible({ timeout: 5000 })
+
     // Open Burger Menu
     await page.getByRole('button', { name: /menu/i }).click()
 
     // Check for Admin Dashboard link (it should be visible for admins)
+
     const adminLink = page.getByText('Admin Dashboard')
-    await expect(adminLink).toBeVisible()
     await adminLink.click()
 
     // Verify Dashboard Headers/Tabs

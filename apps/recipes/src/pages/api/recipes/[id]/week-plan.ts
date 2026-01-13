@@ -1,13 +1,14 @@
 import type { APIRoute } from 'astro'
-import { getAuthUser, unauthorizedResponse } from '../../../../lib/api-helpers'
+import { getAuthUser, unauthorizedResponse, getCloudflareEnv } from '../../../../lib/api-helpers'
 import { db } from '../../../../lib/firebase-server'
 import type { WeekPlanData, FamilyRecipeData } from '../../../../lib/types'
+import { sendFamilyPush } from '../../../../lib/push-notifications'
 
 /**
  * POST /api/recipes/[id]/week-plan
  * Add a recipe to the week plan or update its planning status (family-scoped)
  */
-export const POST: APIRoute = async ({ params, request, cookies }) => {
+export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
   const userId = getAuthUser(cookies)
   const recipeId = params.id
 
@@ -108,6 +109,30 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
 
     // Fetch updated data
     familyData = await db.getDocument(`families/${userDoc.familyId}/recipeData`, recipeId)
+
+    // Notify Family (Fire and await to ensure delivery in serverless)
+    try {
+      const recipe = await db.getDocument('recipes', recipeId)
+      const recipeTitle = recipe?.title || 'a recipe'
+      const env = getCloudflareEnv(locals)
+      const dayName = new Date(assignedDate || Date.now()).toLocaleDateString('en-US', {
+        weekday: 'long',
+      })
+
+      await sendFamilyPush(
+        userDoc.familyId,
+        userId,
+        {
+          title: 'Meal Plan Update',
+          body: `${userDoc.displayName || 'Someone'} added ${recipeTitle} for ${dayName}.`,
+          url: '/protected/recipes/week',
+          type: 'mealPlan',
+        },
+        env,
+      )
+    } catch (err) {
+      console.error('Notification dispatch failed:', err)
+    }
 
     return new Response(
       JSON.stringify({

@@ -110,7 +110,15 @@ class TimerManagerService {
 
   private sendNotification(title: string, body: string) {
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/favicon.svg' })
+      new Notification(title, {
+        body,
+        icon: '/protected/recipes/icon-192.png',
+        badge: '/protected/recipes/icon-192.png',
+        tag: 'timer-finished',
+        renotify: true,
+        requireInteraction: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
     }
   }
 

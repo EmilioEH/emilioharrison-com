@@ -46,6 +46,17 @@ export const cookingSessionActions = {
       recipe,
       startTime: Date.now(),
     })
+
+    // Notify family (fire and forget)
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`
+
+    fetch(`${baseUrl}api/cooking/notify-start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipeId: recipe.id }),
+    }).catch((err) => console.error('Failed to notify start:', err))
   },
 
   endSession: () => {

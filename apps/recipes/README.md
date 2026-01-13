@@ -46,7 +46,12 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
   - **Family Invites**: Monitor pending family invitations and revoke them if necessary.
   - **Feedback**: Review, track, and resolve user feedback reports.
   - **Push Notifications**: Native PWA push notifications alert admins immediately when new feedback is submitted. Supported on Android, Windows, macOS, and iOS (requires "Add to Home Screen").
-- **Push Notifications**: Native PWA push notifications alert admins immediately when new feedback is submitted. Supported on Android, Windows, macOS, and iOS (requires "Add to Home Screen").
+- **Smart Notifications**: Comprehensive notification system keeping families in sync.
+  - **Cooking Timers**: Local alerts when cooking timers complete, even if the app is backgrounded.
+  - **Family Sync**: Push alerts when a family member updates the weekly meal plan.
+  - **Collaborative Cooking**: Notifications when someone starts a cooking session.
+  - **Invites**: Instant alerts when you receive a family invitation.
+  - **Granular Control**: Manage preferences for each notification type via the Settings menu.
 
 ## 🛠 Tech Stack
 

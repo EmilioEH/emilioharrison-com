@@ -15,6 +15,7 @@ import { AdminDashboard } from '../admin/AdminDashboard'
 import { FamilySetup } from './FamilySetup'
 import { FamilyManagementView } from './views/FamilyManagementView'
 import { InvitationModal } from './dialogs/InvitationModal'
+import { NotificationSettingsView } from './views/NotificationSettingsView'
 import type { Recipe, FamilyRecipeData, PendingInvite } from '../../lib/types'
 
 // --- Hooks ---
@@ -366,7 +367,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     window.addEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
 
     const handleNavigateToInvite = () => setView('invite')
+    const handleNavigateToNotifications = () => setView('notifications')
+
     window.addEventListener('navigate-to-invite', handleNavigateToInvite)
+    window.addEventListener('navigate-to-notifications', handleNavigateToNotifications)
 
     return () => {
       window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
@@ -378,6 +382,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       window.removeEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
       window.removeEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
       window.removeEventListener('navigate-to-invite', handleNavigateToInvite)
+      window.removeEventListener('navigate-to-notifications', handleNavigateToNotifications)
     }
   }, [setView])
 
@@ -668,6 +673,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
       />
     )
+  }
+
+  if (view === 'notifications') {
+    return <NotificationSettingsView onClose={() => setView('library')} />
   }
 
   if (view === 'settings') {

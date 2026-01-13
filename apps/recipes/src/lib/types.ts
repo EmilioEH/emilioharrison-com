@@ -163,6 +163,16 @@ export interface User {
   familyId?: string // Reference to family group
   joinedAt: string
   status?: 'pending' | 'approved' | 'rejected'
+  notificationPreferences?: {
+    email?: boolean
+    push?: boolean
+    types?: {
+      timers?: boolean
+      mealPlan?: boolean
+      cooking?: boolean
+      invites?: boolean
+    }
+  }
 }
 
 /** A note added by a family member on a recipe */

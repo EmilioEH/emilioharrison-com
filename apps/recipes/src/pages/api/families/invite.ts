@@ -1,13 +1,15 @@
 import type { APIRoute } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
+import { getCloudflareEnv } from '../../../lib/api-helpers'
+import { sendPushNotification } from '../../../lib/push-notifications'
 import type { PendingInvite } from '../../../lib/types'
 
 /**
  * POST /api/families/invite
  * Invite a user to join the current user's family by email
  */
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const userId = getAuthUser(cookies)
 
   if (!userId) {
@@ -103,6 +105,47 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     await db.setDocument('pending_invites', inviteId, newInvite)
+
+    // Notify the user if they already exist (Best Effort)
+    try {
+      // Create a deterministic lookup? No, we scan for now.
+      const allUsers = await db.getCollection('users')
+      const existingUser = allUsers.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (u: any) => u.email?.toLowerCase() === normalizedEmail,
+      )
+
+      if (existingUser) {
+        // Check User Preferences (Opt-out)
+        const prefs = existingUser.notificationPreferences
+        if (prefs?.types?.invites === false) {
+          console.log(`User ${existingUser.id} opted out of invite notifications`)
+        } else {
+          const subscriptions = await db.getCollection(
+            `users/${existingUser.id}/push_subscriptions`,
+          )
+          if (subscriptions && subscriptions.length > 0) {
+            const env = getCloudflareEnv(locals)
+            await Promise.all(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              subscriptions.map((sub: any) =>
+                sendPushNotification(
+                  sub,
+                  {
+                    title: 'New Family Invitation',
+                    body: `${currentUser.displayName} invited you to join ${family.name}.`,
+                    url: '/protected/recipes/settings',
+                  },
+                  env,
+                ),
+              ),
+            )
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to notify invited user:', err)
+    }
 
     return new Response(
       JSON.stringify({

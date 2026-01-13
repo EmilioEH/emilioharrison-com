@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react'
 
 import {
   X,
+  Bell,
   Settings,
   MessageSquare,
   Info,
@@ -30,6 +31,11 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
     closeBurgerMenu()
     // Navigate to settings - dispatch custom event that RecipeManager listens to
     window.dispatchEvent(new CustomEvent('navigate-to-settings'))
+  }
+
+  const handleNotifications = () => {
+    closeBurgerMenu()
+    window.dispatchEvent(new CustomEvent('navigate-to-notifications'))
   }
 
   const handleBulkImport = () => {
@@ -96,6 +102,15 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               >
                 <FolderUp className="text-foreground-variant h-5 w-5" />
                 <span className="font-medium text-foreground">Import Recipes</span>
+              </button>
+
+              <button
+                role="menuitem"
+                onClick={handleNotifications}
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <Bell className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Notifications</span>
               </button>
 
               <button

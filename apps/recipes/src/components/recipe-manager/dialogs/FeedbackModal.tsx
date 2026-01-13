@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import html2canvas from 'html2canvas'
+// import html2canvas from 'html2canvas'
 import { X, Send, Bug, Lightbulb, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react'
 import { processImage } from '../../../lib/image-optimization'
 import { ResponsiveModal } from '../../ui/ResponsiveModal'
@@ -46,6 +46,10 @@ export const FeedbackModal = ({ isOpen, onClose, appState, user }: FeedbackModal
       // Defer capture by 500ms to let the modal animation complete
       const timeoutId = setTimeout(async () => {
         try {
+          // Dynamic import to avoid build issues (duplicate case bug in html2canvas 1.4.1)
+          const html2canvasModule = await import('html2canvas')
+          const html2canvas = html2canvasModule.default || html2canvasModule
+
           const canvas = await html2canvas(document.body, {
             ignoreElements: (element: Element) => {
               // Ignore the modal itself to capture the app state behind it

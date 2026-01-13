@@ -13,6 +13,7 @@ export type ViewMode =
   | 'family-settings'
   | 'admin-dashboard'
   | 'invite'
+  | 'notifications'
 
 export interface RouteState {
   view: ViewMode
