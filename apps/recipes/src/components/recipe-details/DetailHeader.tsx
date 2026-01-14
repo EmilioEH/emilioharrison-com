@@ -5,16 +5,7 @@ import { Inline } from '@/components/ui/layout'
 import type { Recipe } from '../../lib/types'
 import { DetailHeaderActions } from './DetailHeaderActions'
 import { HeaderBackButton } from './DetailHeaderComponents'
-
-export type CookingStage = 'idle' | 'pre' | 'during' | 'post'
-export type HeaderAction =
-  | 'delete'
-  | 'edit'
-  | 'addToWeek'
-  | 'move'
-  | 'toggleFavorite'
-  | 'rate'
-  | 'share'
+import type { CookingStage, HeaderAction } from './types'
 
 interface DetailHeaderProps {
   recipe: Recipe
