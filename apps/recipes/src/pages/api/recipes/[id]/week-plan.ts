@@ -113,25 +113,35 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
     // Notify Family (Fire and await to ensure delivery in serverless)
     try {
       const recipe = await db.getDocument('recipes', recipeId)
-      const recipeTitle = recipe?.title || 'a recipe'
-      const env = getCloudflareEnv(locals)
-      const dayName = new Date(assignedDate || Date.now()).toLocaleDateString('en-US', {
-        weekday: 'long',
-      })
+      // Safely access env with fallback
+      let env
+      try {
+        env = getCloudflareEnv(locals)
+      } catch {
+        console.warn('Could not access Cloudflare Env for notifications')
+      }
 
-      await sendFamilyPush(
-        userDoc.familyId,
-        userId,
-        {
-          title: 'Meal Plan Update',
-          body: `${userDoc.displayName || 'Someone'} added ${recipeTitle} for ${dayName}.`,
-          url: '/protected/recipes/week',
-          type: 'mealPlan',
-        },
-        env,
-      )
+      if (env) {
+        const recipeTitle = recipe?.title || 'a recipe'
+        const dayName = new Date(assignedDate || Date.now()).toLocaleDateString('en-US', {
+          weekday: 'long',
+        })
+
+        await sendFamilyPush(
+          userDoc.familyId,
+          userId,
+          {
+            title: 'Meal Plan Update',
+            body: `${userDoc.displayName || 'Someone'} added ${recipeTitle} for ${dayName}.`,
+            url: '/protected/recipes/week',
+            type: 'mealPlan',
+          },
+          env,
+        )
+      }
     } catch (err) {
       console.error('Notification dispatch failed:', err)
+      // Do not block response on notification failure
     }
 
     return new Response(

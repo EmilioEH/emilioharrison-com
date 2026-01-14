@@ -232,7 +232,8 @@ export const test = base.extend<{
   mockApi: void
 }>({
   mockApi: [
-    async ({ page }, use) => {
+    async ({ page, context }, use) => {
+      await context.addCookies([...AUTH_COOKIES])
       await setupApiMock(page)
       await use()
     },

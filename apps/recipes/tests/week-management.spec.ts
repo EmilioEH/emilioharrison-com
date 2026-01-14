@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Week Management', () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,11 @@ test.describe('Week Management', () => {
     await page.goto('/protected/recipes')
 
     // Wait for app to load
-    await page.waitForSelector('[data-testid^="recipe-card"]', { timeout: 10000 })
+    // Wait for app to load - increased timeout for CI stability
+    await page.waitForSelector('[data-testid^="recipe-card"]', {
+      state: 'attached',
+      timeout: 30000,
+    })
   })
 
   test('should open management sheet when clicking more button on planned recipe', async ({

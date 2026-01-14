@@ -48,8 +48,14 @@ const getServiceAccount = async (context?: any): Promise<ServiceAccount> => {
     console.warn('Local service account file check failed or empty.', e)
   }
 
+  if (import.meta.env?.SSR === false) {
+    // Client-side should never call this
+    throw new Error('Firebase Admin SDK cannot be used on client side')
+  }
+
   throw new Error(
-    'Service Account not found via Env (FIREBASE_SERVICE_ACCOUNT) or File (firebase-service-account.json).',
+    'Service Account not found via Env (FIREBASE_SERVICE_ACCOUNT) or File (firebase-service-account.json). ' +
+      'Please check your .env or server configuration.',
   )
 }
 

@@ -138,12 +138,24 @@ export const addRecipeToDay = async (recipeId: string, day: DayOfWeek) => {
       }),
     })
 
+    if (!res.ok) {
+      const text = await res.text()
+      try {
+        const json = JSON.parse(text)
+        throw new Error(json.error || `Server Error: ${res.status}`)
+      } catch {
+        // If not JSON, it's likely a 500 crash or HTML error page
+        throw new Error(`Server Error (${res.status}): ${text.substring(0, 100)}`)
+      }
+    }
+
     const data = await res.json()
     if (data.success && data.data) {
       familyActions.setRecipeFamilyData(recipeId, data.data)
     }
   } catch (error) {
     console.error('Failed to add recipe to week:', error)
+    // Optional: Toast notification here if UI supports it
   }
 }
 
