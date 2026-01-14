@@ -28,6 +28,8 @@ import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { alert, confirm } from '../../lib/dialogStore'
+import { $reminders, checkReminders } from '../../lib/remindersStore'
+import { Bell, X } from 'lucide-react'
 
 // --- Sub-Components ---
 import { RecipeManagerView } from './RecipeManagerView'
@@ -692,6 +694,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         )}
       </AnimatePresence>
 
+      {/* Reminder Toast */}
+      <ReminderToast />
+
       {/* Share Recipe Dialog */}
       <ShareRecipeDialog
         recipe={shareRecipe}
@@ -703,3 +708,50 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 }
 
 export default RecipeManager
+
+// --- Helper Components ---
+
+function ReminderToast() {
+  const { missedReminders } = useStore($reminders)
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    checkReminders()
+  }, [])
+
+  const activeReminder = React.useMemo(() => {
+    return missedReminders.find((r) => !dismissed.has(r.title + r.scheduledFor)) || null
+  }, [missedReminders, dismissed])
+
+  if (!activeReminder) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -100, opacity: 0 }}
+        className="fixed left-4 right-4 top-4 z-[100] mx-auto max-w-md sm:left-1/2 sm:w-full sm:-translate-x-1/2"
+      >
+        <div className="flex items-start gap-4 rounded-lg border border-border bg-card p-4 shadow-lg">
+          <div className="rounded-full bg-primary/10 p-2 text-primary">
+            <Bell className="size-5" />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-sm font-bold">{activeReminder.title}</h4>
+            <p className="text-xs text-muted-foreground">{activeReminder.body}</p>
+          </div>
+          <button
+            onClick={() =>
+              setDismissed((prev) =>
+                new Set(prev).add(activeReminder.title + activeReminder.scheduledFor),
+              )
+            }
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}

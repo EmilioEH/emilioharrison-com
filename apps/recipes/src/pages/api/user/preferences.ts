@@ -15,10 +15,14 @@ export const GET: APIRoute = async ({ cookies }) => {
       JSON.stringify({
         preferences: {
           notifications: userDoc.notificationPreferences || {
-            timers: true,
-            mealPlan: true,
-            cooking: true,
-            invites: true,
+            email: true,
+            push: true,
+            types: {
+              timers: true,
+              mealPlan: true,
+              cooking: true,
+              invites: true,
+            },
           },
         },
       }),

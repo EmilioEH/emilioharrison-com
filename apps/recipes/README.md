@@ -18,6 +18,8 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
   - **Dish (Experimental)**: Upload a photo of a finished dish. Gemini will **reverse-engineer** the recipe, inferring likely ingredients and steps based on the visual cues and optional context (Cuisine, Taste Profile) you provide.
   - **URL**: Paste a link to import from a website.
   - **Import**: Bulk upload markdown files or manually enter details from one streamlined interface.
+- **Smart Notifications**: "Hybrid" reminder system for meal planning, grocery lists, and daily cooking prompts (Service Worker + In-App Fallback).
+- **Offline Capable**: Full PWA support with offline view and cached recipes.
 - **Smart Shoppable Grocery Lists**: Generate categorized grocery lists that intelligently convert recipe units (e.g., "4 cloves garlic") into store-friendly purchasable units (e.g., "1 head garlic").
 - **Source Attribution**: Grocery items perform "double duty"—displaying the aggregate store unit while allowing users to tap tags (e.g., `[RECIPE A]`) to see exactly how much is needed for each dish.
 - **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.

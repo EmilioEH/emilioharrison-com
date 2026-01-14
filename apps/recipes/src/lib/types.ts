@@ -173,6 +173,24 @@ export interface User {
       cooking?: boolean
       invites?: boolean
     }
+    reminders?: ReminderSettings
+  }
+}
+
+export interface ReminderSettings {
+  weeklyPlan: {
+    enabled: boolean
+    day: string // 'Sunday', 'Monday', etc.
+    time: string // '18:00' (24hr)
+  }
+  groceryList: {
+    enabled: boolean
+    day: string // 'Sunday', 'Monday', etc.
+    time: string // '10:00' (24hr)
+  }
+  dailyCooking: {
+    enabled: boolean
+    offsetHours: number // e.g. 2 hours before
   }
 }
 

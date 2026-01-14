@@ -90,3 +90,20 @@ self.addEventListener('notificationclick', (event) => {
     }),
   )
 })
+
+// Client Communication Handler (Client -> SW)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, body, icon, data } = event.data.payload
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon: icon || '/protected/recipes/icon-192.png',
+        badge: '/protected/recipes/icon-192.png',
+        data: data || '/protected/recipes/',
+        vibrate: [100, 50, 100],
+        tag: 'chefboard-reminder',
+      }),
+    )
+  }
+})

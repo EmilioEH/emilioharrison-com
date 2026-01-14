@@ -118,7 +118,10 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       if (existingUser) {
         // Check User Preferences (Opt-out)
         const prefs = existingUser.notificationPreferences
-        if (prefs?.types?.invites === false) {
+        // Check new nested structure OR legacy flat structure
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const legacyInvites = (prefs as any)?.invites
+        if (prefs?.types?.invites === false || legacyInvites === false) {
           console.log(`User ${existingUser.id} opted out of invite notifications`)
         } else {
           const subscriptions = await db.getCollection(

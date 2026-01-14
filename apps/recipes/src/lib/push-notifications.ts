@@ -81,9 +81,13 @@ export async function sendFamilyPush(
 
             // Default to TRUE if no prefs set (Opt-out model)
             // But if prefs exist, check the specific flag
-            if (prefs && prefs.types) {
-              if (prefs.types[payload.type] === false) {
-                return // User opted out of this type
+            if (prefs) {
+              if (prefs.types && prefs.types[payload.type] === false) {
+                return // User opted out (New)
+              }
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              if ((prefs as any)[payload.type] === false) {
+                return // User opted out (Legacy)
               }
             }
 
