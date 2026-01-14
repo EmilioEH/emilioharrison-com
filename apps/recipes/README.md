@@ -200,6 +200,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Service Worker Immediate Activation (Jan 2026)**: Fixed persistent "Service Worker not ready" errors on mobile devices by adding `skipWaiting()` and `clients.claim()` lifecycle calls. The SW now activates instantly instead of waiting 10+ seconds, ensuring push notification subscriptions succeed immediately.
 - **Robust Notification Subscription (Jan 2026)**: Implemented a resilient **Self-Healing** mechanism for push notifications in `PushNotificationManager`. The system now robustly handles race conditions, ensures **Mobile API Compliance**, guarantees **State Persistence** (via explicit scope verification), uses **Server-Side Upserts** to prevent conflict errors, and includes a user-facing **Test Notification** feature for instant verification.
 - **Scroll to Top Button (Jan 2026)**: Added a floating "Scroll to Top" button that appears when scrolling past the viewport height. It provides a smooth return to the top of the page and is positioned to avoid overlapping with the Beta Feedback Footer, ensuring a clean and accessible user experience.
+- **Notification System Stabilization (Jan 2026)**: Resolved critical "Illegal Constructor" errors affecting Android and certain desktop browsers by replacing raw `new Notification()` calls with the robust `ServiceWorkerRegistration.showNotification()` API. Added a new E2E test suite (`notification-settings.spec.ts`) to prevent regressions in preference persistence.
 
 ### Recent Updates (Dec 2025)
 

@@ -84,23 +84,20 @@ const triggerNotification = async (reminder: Reminder) => {
   if (!('serviceWorker' in navigator) || !('Notification' in window)) return
   if (Notification.permission !== 'granted') return
 
-  const registration = await navigator.serviceWorker.ready
+  try {
+    const registration = await navigator.serviceWorker.ready
 
-  // Use message to SW/showNotification
-  if (registration && registration.active) {
-    registration.active.postMessage({
-      type: 'SHOW_NOTIFICATION',
-      payload: {
-        title: reminder.title,
+    if (registration) {
+      // Use the standard API which works on both Mobile and Desktop
+      await registration.showNotification(reminder.title, {
         body: reminder.body,
-        data: `${getBaseUrl()}`, // Open app
-      },
-    })
-  } else {
-    // Fallback
-    new Notification(reminder.title, {
-      body: reminder.body,
-      icon: `${getBaseUrl()}icon-192.png`,
-    })
+        icon: `${getBaseUrl()}icon-192.png`,
+        data: {
+          url: `${getBaseUrl()}`, // Used by SW click handler
+        },
+      })
+    }
+  } catch (e) {
+    console.error('Failed to trigger notification:', e)
   }
 }
