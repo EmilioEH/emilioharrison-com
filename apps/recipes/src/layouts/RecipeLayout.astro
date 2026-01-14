@@ -11,6 +11,7 @@ import '@fontsource/space-grotesk/700.css'
 import GlobalFeedback from '../components/layout/GlobalFeedback'
 import GlobalBurgerMenu from '../components/layout/GlobalBurgerMenu'
 import GlobalDialogRoot from '../components/layout/GlobalDialogRoot'
+import { GlobalScrollToTop } from '../components/layout/GlobalScrollToTop'
 
 export interface Props {
   title: string
@@ -126,6 +127,7 @@ const isImpersonating = Astro.cookies.has('admin_mask')
 
     <GlobalBurgerMenu client:load user={user} isAdmin={isAdmin} />
     <GlobalDialogRoot client:load />
+    <GlobalScrollToTop client:load />
 
     <script>
       import '../lib/themeInit'

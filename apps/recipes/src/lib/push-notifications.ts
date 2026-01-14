@@ -42,7 +42,6 @@ export async function sendPushNotification(
     // Send
     await webpush.sendNotification(subscription, dataToSend)
     return { success: true }
-    return { success: true }
   } catch (error: unknown) {
     const err = error as { statusCode?: number; message?: string }
     // Check for "Gone" (410) - Subscription is dead

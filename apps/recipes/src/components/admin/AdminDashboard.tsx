@@ -51,7 +51,7 @@ interface AdminDashboardProps {
 import { AdminFamilyManager } from './AdminFamilyManager'
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'families' | 'codes' | 'invites'>('families')
+  const [activeTab, setActiveTab] = useState<'users' | 'families' | 'codes' | 'invites'>('users')
   const [users, setUsers] = useState<AdminUser[]>([])
   const [families, setFamilies] = useState<AdminFamily[]>([])
   const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null)
@@ -77,6 +77,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       const familiesData = await familiesRes.json()
       const codesData = await codesRes.json()
       const invitesData = await invitesRes.json()
+
+      console.log('[AdminDashboard] Fetched Data:', {
+        usersCount: usersData.users?.length,
+        familiesCount: familiesData.families?.length,
+        success: {
+          users: usersData.success,
+          families: familiesData.families,
+        },
+      })
 
       if (usersData.success) setUsers(usersData.users)
       if (familiesData.success) setFamilies(familiesData.families)

@@ -94,6 +94,58 @@ export const db = new Proxy({} as FirebaseDbProxy, {
     ) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return async (...args: any[]) => {
+        // CHECK FOR TEST MODE MOCKS
+        const context = getRequestContext()
+        const isTestUser = context?.cookies?.get('site_user')?.value === 'TestUser'
+
+        if (typeof process !== 'undefined' && process.env.DEBUG_TESTS) {
+          console.log('[FirebaseServer] Checking Test Mode:', {
+            hasContext: !!context,
+            siteUser: context?.cookies?.get('site_user')?.value,
+            isTestUser,
+          })
+        }
+
+        const testMode =
+          isTestUser ||
+          (typeof process !== 'undefined'
+            ? process.env.PUBLIC_TEST_MODE === 'true'
+            : import.meta.env.PUBLIC_TEST_MODE === 'true')
+
+        if (testMode) {
+          if (prop === 'getDocument') {
+            const [collection, id] = args
+            // Basic User Mock
+            if (collection === 'users' && id === 'TestUser') {
+              return {
+                id: 'TestUser',
+                email: 'emilioeh1991@gmail.com',
+                displayName: 'Emilio',
+                hasOnboarded: true,
+              }
+            }
+            // Secondary User Mock
+            if (collection === 'users' && id === 'User2') {
+              return {
+                id: 'User2',
+                email: 'guest@example.com',
+                displayName: 'Guest',
+                hasOnboarded: true,
+              }
+            }
+            // Family Mock
+            if (collection === 'families' && id === 'test-family-id') {
+              return {
+                id: 'test-family-id',
+                name: 'Test Family',
+                members: ['TestUser'],
+                createdBy: 'TestUser',
+              }
+            }
+          }
+          // Fallthrough for other methods or unmocked data
+        }
+
         const instance = await getDb()
         // Special case: getProjectId returns projectId from instance
         if (prop === 'getProjectId') {
