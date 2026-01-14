@@ -152,7 +152,7 @@ export const db = new Proxy({} as FirebaseDbProxy, {
           // Fallthrough for other methods or unmocked data
         }
 
-        const instance = await getDb()
+        const instance = await getDb(context)
         // Special case: getProjectId returns projectId from instance
         if (prop === 'getProjectId') {
           return instance.projectId
