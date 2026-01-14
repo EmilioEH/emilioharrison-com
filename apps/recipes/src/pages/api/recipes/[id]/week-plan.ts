@@ -30,8 +30,11 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
   }
 
   try {
+    console.log('[WeekPlan] POST started for recipe:', recipeId, 'user:', userId)
+
     const body = await request.json()
     const { isPlanned, assignedDate } = body
+    console.log('[WeekPlan] Request body:', { isPlanned, assignedDate })
 
     if (typeof isPlanned !== 'boolean') {
       return new Response(
@@ -47,7 +50,12 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
     }
 
     // 1. Get user's family and profile
+    console.log('[WeekPlan] Fetching user document...')
     const userDoc = await db.getDocument('users', userId)
+    console.log(
+      '[WeekPlan] User doc:',
+      userDoc ? { familyId: userDoc.familyId, displayName: userDoc.displayName } : 'NOT FOUND',
+    )
 
     if (!userDoc || !userDoc.familyId) {
       return new Response(
@@ -63,7 +71,9 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
     }
 
     // 2. Get existing family recipe data or create new
+    console.log('[WeekPlan] Fetching family recipe data...')
     let familyData = await db.getDocument(`families/${userDoc.familyId}/recipeData`, recipeId)
+    console.log('[WeekPlan] Family data exists:', !!familyData)
 
     const newWeekPlan: WeekPlanData = {
       isPlanned,
@@ -75,6 +85,7 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
 
     if (!familyData) {
       // Create new family data document
+      console.log('[WeekPlan] Creating new family data document...')
       const newFamilyData: FamilyRecipeData = {
         id: recipeId,
         notes: [],
@@ -84,6 +95,7 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
       }
 
       await db.createDocument(`families/${userDoc.familyId}/recipeData`, recipeId, newFamilyData)
+      console.log('[WeekPlan] Created successfully')
 
       return new Response(
         JSON.stringify({
@@ -98,14 +110,18 @@ export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
     }
 
     // 3. Update week plan
+    console.log('[WeekPlan] Updating existing family data...')
     await db.updateDocument(`families/${userDoc.familyId}/recipeData`, recipeId, {
       weekPlan: newWeekPlan,
     })
+    console.log('[WeekPlan] Update successful')
 
     // 4. Update family's lastUpdated for sync optimization (the "flag")
+    console.log('[WeekPlan] Updating family lastUpdated...')
     await db.updateDocument('families', userDoc.familyId, {
       lastUpdated: new Date().toISOString(),
     })
+    console.log('[WeekPlan] Family updated')
 
     // Fetch updated data
     familyData = await db.getDocument(`families/${userDoc.familyId}/recipeData`, recipeId)
