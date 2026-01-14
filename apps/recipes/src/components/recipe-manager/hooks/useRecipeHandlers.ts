@@ -30,7 +30,7 @@ export function useRecipeHandlers({
   bulkDeleteRecipes,
   setRecipe,
   setView,
-  selectedRecipe,
+  selectedRecipe: _selectedRecipe,
   selectedIds,
   clearSelection,
   setCurrentUser,
@@ -83,8 +83,11 @@ export function useRecipeHandlers({
 
   const handleSaveRecipeInternal = async (recipe: Partial<Recipe> & { id?: string }) => {
     const { success } = await saveRecipe(recipe)
-    if (success && selectedRecipe && selectedRecipe.id === recipe.id) {
-      // Inlined logic from RecipeManager
+    if (success) {
+      setView('library')
+      setRecipe(null)
+    } else {
+      await alert('Failed to save recipe')
     }
   }
 
