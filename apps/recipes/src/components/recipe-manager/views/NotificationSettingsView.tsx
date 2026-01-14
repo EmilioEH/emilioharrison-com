@@ -360,13 +360,24 @@ function ToggleRow({
   )
 }
 
-function Switch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function Switch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean
+  onChange: () => void
+  label?: string
+}) {
   return (
-    <div className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:bg-muted/50">
+    <label
+      className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:bg-muted/50"
+      aria-label={label || 'Toggle'}
+    >
       <input type="checkbox" className="peer sr-only" checked={checked} onChange={onChange} />
       <div className="h-6 w-11 rounded-full bg-input transition-colors peer-checked:bg-primary" />
       <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-background shadow-sm transition-transform peer-checked:translate-x-5" />
-    </div>
+    </label>
   )
 }
 
