@@ -131,7 +131,7 @@ export interface Feedback {
 
 export interface LogEntry {
   type: 'info' | 'warn' | 'error' | 'log'
-  args: unknown[]
+  args: string[]
   timestamp: string
 }
 
