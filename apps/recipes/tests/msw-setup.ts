@@ -187,7 +187,13 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         const body = await route.request().postDataJSON()
         if (body.reset === true) {
           // Null state
-          mockFamilyState = { family: null, members: [], incomingInvites: [], outgoingInvites: [] }
+          mockFamilyState = {
+            family: null,
+            members: [],
+            incomingInvites: [],
+            outgoingInvites: [],
+            token: null,
+          }
         } else if (body.scenario === 'pending-invite') {
           mockFamilyState = {
             family: null,
@@ -204,9 +210,10 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
               },
             ],
             outgoingInvites: [],
+            token: null,
           }
         } else if (body.family) {
-          mockFamilyState = body
+          mockFamilyState = body as MockFamilyState
         }
         await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
         return
