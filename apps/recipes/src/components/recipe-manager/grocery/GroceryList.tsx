@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { cn } from '../../../lib/utils'
 import {
   Check,
   Trash2,
@@ -103,7 +104,10 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
   return (
     <div
-      className={`flex h-full flex-col bg-card ${embedded ? '' : 'duration-300 animate-in slide-in-from-right-4'}`}
+      className={cn(
+        'flex min-h-0 flex-1 flex-col bg-card',
+        embedded ? 'w-full' : 'h-full duration-300 animate-in slide-in-from-right-4',
+      )}
     >
       {/* Header - hidden when embedded */}
       {!embedded && (

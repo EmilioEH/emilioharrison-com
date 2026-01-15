@@ -354,7 +354,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             </div>
 
             {/* Status Badges - Inline on right */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 pr-2">
               {/* Day Tags from all weeks */}
               {(() => {
                 const plannedDates = getPlannedDatesForRecipe(recipe.id)
@@ -552,28 +552,35 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
         </motion.div>
       ) : (
         // ACCORDION GROUP VIEW (Default)
-        groupedRecipes.sortedKeys.map((key) => (
-          <div
-            key={key}
-            ref={(el) => {
-              groupRefs.current[key] = el
-            }}
-          >
-            <AccordionGroup
-              title={getGroupTitle(key)}
-              count={groupedRecipes.groups[key].length}
-              isOpen={openGroups[key] !== false}
-              onToggle={() => toggleGroup(key)}
-              viewMode="list"
-              stickyHeader
-              stickyTop={headerHeight}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col"
+        >
+          {groupedRecipes.sortedKeys.map((key) => (
+            <div
+              key={key}
+              ref={(el) => {
+                groupRefs.current[key] = el
+              }}
             >
-              <div className="flex flex-col gap-1">
-                {groupedRecipes.groups[key].map(renderRecipeCard)}
-              </div>
-            </AccordionGroup>
-          </div>
-        ))
+              <AccordionGroup
+                title={getGroupTitle(key)}
+                count={groupedRecipes.groups[key].length}
+                isOpen={openGroups[key] !== false}
+                onToggle={() => toggleGroup(key)}
+                viewMode="list"
+                stickyHeader
+                stickyTop={headerHeight}
+              >
+                <div className="flex flex-col gap-1">
+                  {groupedRecipes.groups[key].map(renderRecipeCard)}
+                </div>
+              </AccordionGroup>
+            </div>
+          ))}
+        </motion.div>
       )}
 
       {/* Recipe Management Sheet */}

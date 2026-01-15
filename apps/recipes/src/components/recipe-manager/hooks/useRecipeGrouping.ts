@@ -132,20 +132,6 @@ export function useRecipeGrouping(recipes: Recipe[], sort: string) {
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       // Special case: week-day has "Unassigned" first
       if (sort === 'week-day') {
-        if (a === 'Unassigned') return 1 // Move Unassigned to bottom? Or Top? User preference. Usually Top for "To Plan".
-        // Actually, if we are viewing the week, we want Days first likely?
-        // Let's keep Unassigned at the end or filtered out?
-        // If it's the "Plan" view, maybe we ONLY want to see assigned ones?
-        // But the previous "Added" logic implies we want to filter from library.
-        // Wait, 'week' view is THE PLAN. It should show Mon-Sun.
-        // It should NOT show "Unassigned" recipes from the whole library, that would be thousands.
-        // SO: We should filter out 'Unassigned' in the Week View IF the list passed in is "All Recipes".
-        // BUT RecipeManager logic I implemented says:
-        // const weekViewRecipes = ... recipes.filter(r => ids.has(r.id))
-        // So ONLY planned recipes are passed in.
-        // Thus 'Unassigned' should be empty, UNLESS there's a sync issue.
-
-        // Let's put Unassigned Last just in case.
         if (a === 'Unassigned') return 1
         if (b === 'Unassigned') return -1
 

@@ -99,7 +99,15 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 
 Firestore does **NOT** support nested arrays (e.g., `number[][]`).
 
-- **Pattern**: When representing a matrix of data (like mapping ingredients to steps), use an array of objects: `Array<{ indices: number[] }>`.
+- **Pattern**: When representing a matrix of data (like mapping ingredients to- **Pattern:** Use an array of objects: `Array<{ indices: number[] }>`.
+
+### 6. Full-Screen Workspace Layout
+
+When creating "modal-like" fullscreen views (e.g., Week View, Recipe Detail) that are nested inside the main app's flex container:
+
+- **Constraint:** Do **NOT** use `absolute inset-0` for the root component.
+- **Why:** The parent `<main>` container in `RecipeManager` uses `flex-1`. Absolute children do not contribute to the parent's height, which can cause the parent to collapse (squashed container bug) on some browsers or during animations.
+- **Pattern:** Use `flex flex-1 flex-col min-h-0` for the root of these views. This ensures they correctly fill the available vertical space and maintain scroll integrity for their children.
 - **Why**: This ensures compatibility with Firestore's document model while allowing for complex relationship mappings.
 
 ### 5. Scrollspy Navigation

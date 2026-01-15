@@ -150,7 +150,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className="absolute inset-0 flex flex-col bg-background"
+      className="flex min-h-0 flex-1 flex-col bg-background"
     >
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-xl">
@@ -236,8 +236,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         </Stack>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Content area: scrolls everything inside */}
+      <div className="flex-1 scroll-pt-16 overflow-y-auto">
         {activeTab === 'plan' && (
           <RecipeLibrary
             recipes={groceryRecipes}
@@ -255,7 +255,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         )}
 
         {activeTab === 'grocery' && (
-          <div className="flex h-full flex-col">
+          <>
             {/* Cost Estimate Banner */}
             {groceryRecipes.length > 0 && (
               <div className="border-b border-border bg-muted/30 px-4 py-3">
@@ -351,17 +351,15 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             )}
 
             {/* Grocery List */}
-            <div className="flex-1 overflow-y-auto">
-              <GroceryList
-                ingredients={groceryItems}
-                isLoading={false}
-                onClose={() => setActiveTab('plan')}
-                recipes={groceryRecipes}
-                onOpenRecipe={onSelectRecipe}
-                embedded={true}
-              />
-            </div>
-          </div>
+            <GroceryList
+              ingredients={groceryItems}
+              isLoading={false}
+              onClose={() => setActiveTab('plan')}
+              recipes={groceryRecipes}
+              onOpenRecipe={onSelectRecipe}
+              embedded={true}
+            />
+          </>
         )}
       </div>
     </motion.div>
