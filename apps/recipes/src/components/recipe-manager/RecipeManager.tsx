@@ -407,132 +407,144 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   // --- RENDER ---
   return (
-    <RecipeManagerView
-      view={view}
-      loading={loading}
-      error={error}
-      showOnboarding={!isOnboardingComplete}
-      selectedRecipe={selectedRecipe}
-      user={user ?? undefined}
-      isAdmin={!!computedIsAdmin}
-      handleOnboardingComplete={() => setIsOnboardingComplete(true)}
-      handleUpdateRecipe={handleUpdateRecipe}
-      handleDeleteRecipe={handleDeleteRecipe}
-      handleAddToWeek={handleAddToWeek}
-      handleToggleFavorite={toggleFavorite}
-      handleExport={handleExport}
-      handleImport={handleImport}
-      handleDeleteAll={handleDeleteAll}
-      handleUpdateProfile={handleUpdateProfile}
-      handleBulkImportSave={handleBulkImportSave}
-      refreshRecipes={refreshRecipes}
-      setView={setView}
-      setRoute={setRoute}
-      family={family}
-      groceryItems={groceryItems}
-      isGenerating={isGenerating}
-      targetRecipes={targetRecipes}
-    >
-      <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
+    <>
+      <RecipeManagerView
+        view={view}
+        loading={loading}
+        error={error}
+        showOnboarding={!isOnboardingComplete}
+        selectedRecipe={selectedRecipe}
+        user={user ?? undefined}
+        isAdmin={!!computedIsAdmin}
+        handleOnboardingComplete={() => setIsOnboardingComplete(true)}
+        handleUpdateRecipe={handleUpdateRecipe}
+        handleDeleteRecipe={handleDeleteRecipe}
+        handleAddToWeek={handleAddToWeek}
+        handleToggleFavorite={toggleFavorite}
+        handleExport={handleExport}
+        handleImport={handleImport}
+        handleDeleteAll={handleDeleteAll}
+        handleUpdateProfile={handleUpdateProfile}
+        handleBulkImportSave={handleBulkImportSave}
+        refreshRecipes={refreshRecipes}
+        setView={setView}
+        setRoute={setRoute}
+        family={family}
+        groceryItems={groceryItems}
+        isGenerating={isGenerating}
+        targetRecipes={targetRecipes}
+      >
+        <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
-      {/* Full-width Header Shell */}
-      <AnimatePresence>
-        {!isSearchMode && (
-          <motion.div
-            initial={{ height: 'auto', opacity: 1 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="w-full"
-          >
-            <RecipeHeader
-              user={currentUser ?? undefined}
-              scrollContainer={scrollContainer}
-              onAddRecipe={() => {
-                setRecipe(null)
-                setView('edit')
-              }}
-              onViewWeek={() => setView(view === 'week' ? 'library' : 'week')}
-              isWeekView={view === 'week'}
+        {/* Full-width Header Shell */}
+        <AnimatePresence>
+          {!isSearchMode && (
+            <motion.div
+              initial={{ height: 'auto', opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="w-full"
+            >
+              <RecipeHeader
+                user={currentUser ?? undefined}
+                scrollContainer={scrollContainer}
+                onAddRecipe={() => {
+                  setRecipe(null)
+                  setView('edit')
+                }}
+                onViewWeek={() => setView(view === 'week' ? 'library' : 'week')}
+                isWeekView={view === 'week'}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground">
+          {view !== 'week' && (
+            <RecipeFilters
+              isOpen={filtersOpen}
+              onClose={() => setFiltersOpen(false)}
+              filters={filters}
+              setFilters={setFilters}
+              sort={sort}
+              setSort={setSort}
+              searchQuery={searchQuery}
+              setSearchQuery={handleSearchChange}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
 
-      <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground">
-        {view !== 'week' && (
-          <RecipeFilters
-            isOpen={filtersOpen}
-            onClose={() => setFiltersOpen(false)}
-            filters={filters}
-            setFilters={setFilters}
-            sort={sort}
-            setSort={setSort}
-            searchQuery={searchQuery}
-            setSearchQuery={handleSearchChange}
-          />
-        )}
+          {view !== 'week' && !isSelectionMode && (
+            <RecipeControlBar
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              onClearSearch={() => handleSearchChange('')}
+              onOpenFilters={() => setFiltersOpen(true)}
+              activeFilterCount={
+                (filters.protein?.length || 0) +
+                (filters.difficulty?.length || 0) +
+                (filters.cuisine?.length || 0) +
+                (filters.onlyFavorites ? 1 : 0)
+              }
+              isSearchMode={isSearchMode}
+              onSearchExpandedChange={setIsSearchMode}
+            />
+          )}
 
-        {view !== 'week' && !isSelectionMode && (
-          <RecipeControlBar
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            onClearSearch={() => handleSearchChange('')}
-            onOpenFilters={() => setFiltersOpen(true)}
-            activeFilterCount={
-              (filters.protein?.length || 0) +
-              (filters.difficulty?.length || 0) +
-              (filters.cuisine?.length || 0) +
-              (filters.onlyFavorites ? 1 : 0)
-            }
-            isSearchMode={isSearchMode}
-            onSearchExpandedChange={setIsSearchMode}
-          />
-        )}
+          <main className="relative flex-1 scroll-smooth pb-32">
+            {view === 'library' && (
+              <div className="flex h-full flex-col">
+                <div className="scrollbar-hide flex-1">
+                  {!isSelectionMode && recipes.length > 0 && null}
 
-        <main className="relative flex-1 scroll-smooth pb-32">
-          {view === 'library' && (
-            <div className="flex h-full flex-col">
-              <div className="scrollbar-hide flex-1">
-                {!isSelectionMode && recipes.length > 0 && null}
+                  <RecipeLibrary
+                    recipes={processedRecipes}
+                    sort={sort}
+                    onSelectRecipe={(r) => {
+                      if (isSelectionMode) {
+                        toggleSelection(r.id)
+                      } else {
+                        setRoute({ activeRecipeId: r.id, view: 'detail' })
+                      }
+                    }}
+                    onToggleThisWeek={(id) => handleAddToWeek(id)}
+                    isSelectionMode={isSelectionMode}
+                    selectedIds={selectedIds}
+                    hasSearch={!!searchQuery}
+                    scrollContainer={scrollContainer}
+                    onShare={(recipe) => setShareRecipe(recipe)}
+                  />
+                </div>
+              </div>
+            )}
 
-                <RecipeLibrary
+            {/* Week View with slide-up animation */}
+            <AnimatePresence>
+              {view === 'week' && (
+                <WeekWorkspace
                   recipes={processedRecipes}
-                  sort={sort}
-                  onSelectRecipe={(r) => {
-                    if (isSelectionMode) {
-                      toggleSelection(r.id)
-                    } else {
-                      setRoute({ activeRecipeId: r.id, view: 'detail' })
-                    }
-                  }}
-                  onToggleThisWeek={(id) => handleAddToWeek(id)}
-                  isSelectionMode={isSelectionMode}
-                  selectedIds={selectedIds}
-                  hasSearch={!!searchQuery}
+                  allRecipes={recipes}
+                  onClose={() => setView('library')}
+                  onOpenCalendar={() => setIsCalendarOpen(true)}
+                  onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                   scrollContainer={scrollContainer}
                   onShare={(recipe) => setShareRecipe(recipe)}
                 />
-              </div>
-            </div>
-          )}
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
 
-          {/* Week View with slide-up animation */}
-          <AnimatePresence>
-            {view === 'week' && (
-              <WeekWorkspace
-                recipes={processedRecipes}
-                allRecipes={recipes}
-                onClose={() => setView('library')}
-                onOpenCalendar={() => setIsCalendarOpen(true)}
-                onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
-                scrollContainer={scrollContainer}
-                onShare={(recipe) => setShareRecipe(recipe)}
-              />
-            )}
-          </AnimatePresence>
-        </main>
-      </div>
+        {/* Week Context Bar (Sticky Bottom) - Only for Main Views */}
+        {(view === 'library' || view === 'grocery') && !isSelectionMode && (
+          <WeekContextBar
+            onOpenCalendar={() => setIsCalendarOpen(true)}
+            onViewWeek={() => setView('week')}
+          />
+        )}
+      </RecipeManagerView>
+
+      {/* --- GLOBAL OVERLAYS (Outside View) --- */}
 
       {showBulkEdit && (
         <BulkEditModal
@@ -566,15 +578,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       />
       <CalendarPicker isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
 
-      {/* Week Context Bar (Sticky Bottom) */}
-      {(view === 'library' || view === 'grocery') && !isSelectionMode && (
-        <WeekContextBar
-          onOpenCalendar={() => setIsCalendarOpen(true)}
-          onViewWeek={() => setView('week')}
-        />
-      )}
-
-      {/* Sticky Bottom Actions (Selection Mode) */}
       {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (
         <div className="fixed bottom-8 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
@@ -703,7 +706,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         open={!!shareRecipe}
         onOpenChange={(open: boolean) => !open && setShareRecipe(null)}
       />
-    </RecipeManagerView>
+    </>
   )
 }
 

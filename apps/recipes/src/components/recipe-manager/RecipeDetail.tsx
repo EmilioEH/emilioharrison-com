@@ -172,7 +172,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
               </>
             ) : (
               <>
-                <ListPlus className="h-4 w-4" /> Add to List
+                <ListPlus className="h-4 w-4" /> Add to Week
               </>
             )}
           </button>
