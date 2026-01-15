@@ -294,7 +294,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         const newInvite = {
           id: `invite-${Date.now()}`,
           email: body.email,
-          status: 'pending',
+          status: 'pending' as const,
           createdAt: new Date().toISOString(),
         }
         mockFamilyState.outgoingInvites = [...(mockFamilyState.outgoingInvites || []), newInvite]
@@ -312,6 +312,8 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
           id: 'family-abc',
           name: 'The Harrison Family',
           members: ['user-creator', 'TestUser'],
+          createdBy: 'user-creator',
+          createdAt: new Date().toISOString(),
         }
         mockFamilyState.members = [
           { id: 'user-creator', role: 'creator' },
