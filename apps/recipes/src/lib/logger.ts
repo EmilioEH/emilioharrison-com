@@ -26,7 +26,7 @@ class LogBuffer {
       const safeArgs = args.map((arg) => {
         try {
           if (typeof arg === 'object') {
-            return JSON.stringify(arg, null, 2)
+            return JSON.stringify(arg)
           }
           return String(arg)
         } catch {
@@ -49,7 +49,29 @@ class LogBuffer {
   }
 
   getLogs(): LogEntry[] {
-    return [...this.logs]
+    // Firestore limit is ~1MB. We aim for 800KB to be safe.
+    const MAX_BYTES = 800 * 1024
+    let currentBytes = 0
+    const safeLogs: LogEntry[] = []
+
+    // Iterate backwards to keep most recent logs
+    for (let i = this.logs.length - 1; i >= 0; i--) {
+      const entry = this.logs[i]
+      // Estimate size: timestamp (~24) + type (~5) + args content
+      const entrySize = 30 + (entry.args ? entry.args.reduce((acc, str) => acc + str.length, 0) : 0)
+
+      if (currentBytes + entrySize > MAX_BYTES) {
+        console.warn(
+          `[Logger] Truncating log history. Dropped ${this.logs.length - 1 - i} older logs to fit 1MB limit.`,
+        )
+        break
+      }
+
+      currentBytes += entrySize
+      safeLogs.unshift(entry)
+    }
+
+    return safeLogs
   }
 }
 
