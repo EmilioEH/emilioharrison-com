@@ -91,6 +91,19 @@ export const AUTH_COOKIES = [
  */
 export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES) {
   let mockRecipes = [...recipes]
+  // Stateful storage for family data (persists across navigation)
+  const recipeFamilyData: Record<
+    string,
+    {
+      id: string
+      weekPlan?: {
+        isPlanned: boolean
+        assignedDate?: string
+        addedBy?: string
+        addedByName?: string
+      }
+    }
+  > = {}
 
   // Global fetch mock via init script to handle any variations in URL
   await page.addInitScript(() => {
@@ -166,30 +179,86 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
           headers: { 'Content-Type': 'application/json' },
         })
       }
+
       return originalFetch(...args)
     }
   })
 
   // Recipes API Mock remains via page.route as it often needs state (mockRecipes)
-  await page.route('**/api/recipes*', async (route) => {
+  await page.route('**/api/**', async (route) => {
     const method = route.request().method()
     const url = route.request().url()
+    console.log(`[MSW] Route matched: ${method} ${url}`)
 
-    // Skip family-data which is more specialized
+    //...handle /family-data
     if (url.includes('/family-data')) {
+      const recipeId = url.split('/recipes/')[1]?.split('/')[0] || ''
+      const familyData = recipeFamilyData[recipeId] || {
+        id: recipeId,
+        notes: [],
+        ratings: [],
+        weekPlan: { isPlanned: false },
+        cookingHistory: [],
+      }
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          id: url.split('/').slice(-2, -1)[0],
-          notes: [],
-          ratings: [],
-          weekPlan: { isPlanned: false },
-          cookingHistory: [],
+          ...familyData,
         }),
       })
       return
+    }
+
+    // Week Plan specific mock
+    if (url.includes('/week-plan')) {
+      const isDelete = method === 'DELETE'
+      const isPost = method === 'POST'
+
+      if (isPost) {
+        const body = await route.request().postDataJSON()
+        // Fixed ID extraction to handle full URL path
+        const match = url.match(/\/api\/recipes\/([^/]+)\/week-plan/)
+        const recipeId = match ? match[1] : 'unknown'
+
+        const responseData = {
+          success: true,
+          data: {
+            id: recipeId,
+            weekPlan: {
+              isPlanned: true,
+              assignedDate: body.assignedDate,
+              addedBy: 'TestUser',
+              addedByName: 'Test User',
+            },
+          },
+        }
+
+        // Store family data so it persists across navigation
+        recipeFamilyData[recipeId] = {
+          id: recipeId,
+          weekPlan: responseData.data.weekPlan,
+        }
+
+        // Return proper FamilyRecipeData structure required by the store
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(responseData),
+        })
+        return
+      }
+
+      if (isDelete) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        })
+        return
+      }
     }
 
     if (method === 'GET') {

@@ -161,6 +161,8 @@ All primitives use the `spacing` prop with a controlled scale:
 
 ### Recent Updates (Jan 2026)
 
+- **Week View Stabilization**: Resolved an issue where the Week View workspace sometimes failed to render planned recipes due to non-persistent store state during navigation. Improved store robustness and ensured reliable synchronization between the meal planner and the recipe library.
+- **E2E Test Infrastructure Hardening**: Broadened the MSW (Mock Service Worker) API interception strategy to catch nested routes (like `/week-plan`) and updated element locators using more stable `getByRole` and `filter` patterns. This significantly increases test reliability in CI-like environments.
 - **Feedback Screenshot Fix**: Resolved an issue where feedback screenshots failed to capture on long pages. Constrained `html2canvas` to the visible viewport to prevent illegally large canvases (30k+ pixels) from producing empty data URLs.
 - **Testing Infrastructure Hardening**: Expanded the automated testing strategy with a new **Integration Testing Layer** (`tests/integration/`) to verify complex server-side logic (like grocery list merging) that is mocked in E2E tests. Increased unit test coverage for core utilities (`date-helpers`, `type-guards`).
 

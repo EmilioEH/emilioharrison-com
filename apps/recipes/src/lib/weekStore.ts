@@ -66,6 +66,7 @@ export const allPlannedRecipes = computed($recipeFamilyData, (familyData) => {
         weekStart: format(weekStart, 'yyyy-MM-dd'),
         addedBy: data.weekPlan.addedBy,
         addedByName: data.weekPlan.addedByName,
+        mealType: undefined,
       })
     }
   })
@@ -74,8 +75,25 @@ export const allPlannedRecipes = computed($recipeFamilyData, (familyData) => {
 })
 
 // Get recipes for the currently active week
+// Get recipes for the currently active week
 export const currentWeekRecipes = computed([weekState, allPlannedRecipes], (state, recipes) => {
-  return recipes.filter((r) => r.weekStart === state.activeWeekStart)
+  // Robust check: re-calculate week start from date to avoid missing property issues
+  return recipes.filter((r) => {
+    // Primary check: precise property match
+    if (r.weekStart === state.activeWeekStart) return true
+
+    // Fallback check: derived from date (handles missing property or trim issues)
+    if (r.date && state.activeWeekStart) {
+      try {
+        const date = parseISO(r.date)
+        const derivedStart = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd')
+        return derivedStart === state.activeWeekStart
+      } catch {
+        return false
+      }
+    }
+    return false
+  })
 })
 
 // Get distinct weeks (for the calendar picker)
@@ -150,11 +168,18 @@ export const addRecipeToDay = async (recipeId: string, day: DayOfWeek) => {
     }
 
     const data = await res.json()
+
     if (data.success && data.data) {
       familyActions.setRecipeFamilyData(recipeId, data.data)
+    } else {
+      console.warn('[WeekStore] API success but no data?', data)
     }
   } catch (error) {
-    console.error('Failed to add recipe to week:', error)
+    console.error('Failed to add recipe to week (details):', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     // Optional: Toast notification here if UI supports it
   }
 }
