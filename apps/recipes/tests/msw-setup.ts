@@ -108,87 +108,206 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
   // Global fetch mock via init script to handle any variations in URL
   await page.addInitScript(() => {
     ;(window as unknown as { isPlaywright: boolean }).isPlaywright = true
-    const originalFetch = window.fetch
-    window.fetch = async (...args) => {
-      const url = typeof args[0] === 'string' ? args[0] : (args[0] as { url: string }).url
-      if (
-        typeof url === 'string' &&
-        url.includes('families/current') &&
-        !url.includes('familyId=')
-      ) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const scenario = (window as any).__TEST_SCENARIO__
-
-        if (scenario === 'pending-invite') {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              family: null,
-              members: [],
-              incomingInvites: [
-                {
-                  id: 'invite-123',
-                  email: 'emilioeh1991@gmail.com',
-                  familyId: 'family-abc',
-                  familyName: 'The Harrison Family',
-                  invitedBy: 'user-creator',
-                  invitedByName: 'Emilio',
-                  status: 'pending',
-                  createdAt: new Date().toISOString(),
-                },
-              ],
-              outgoingInvites: [],
-            }),
-            {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            },
-          )
-        }
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            family: {
-              id: 'test-family-id',
-              name: 'Test Family',
-              members: ['TestUser'],
-              createdBy: 'TestUser',
-              createdAt: new Date().toISOString(),
-            },
-            members: [
-              {
-                id: 'TestUser',
-                email: 'emilioeh1991@gmail.com',
-                displayName: 'Emilio',
-                familyId: 'test-family-id',
-                role: 'creator',
-                joinedAt: new Date().toISOString(),
-              },
-            ],
-          }),
-          {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          },
-        )
-      }
-      if (typeof url === 'string' && url.includes('week/planned')) {
-        return new Response(JSON.stringify({ success: true, planned: [] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      }
-
-      return originalFetch(...args)
-    }
+    // Removed old families/current mock to use page.route
   })
+
+  interface MockFamilyState {
+    family: {
+      id: string
+      name: string
+      members: string[]
+      createdBy: string
+      createdAt: string
+    } | null
+    members: Array<{
+      id: string
+      email: string
+      displayName: string
+      familyId: string
+      role: 'creator' | 'admin' | 'user'
+      joinedAt: string
+    }>
+    invites: Array<{
+      id: string
+      email: string
+      familyId: string
+      invitedBy: string
+      status: 'pending'
+      token: string
+    }>
+  }
+
+  // State for Family (Mutable)
+  let mockFamilyState: MockFamilyState = {
+    family: {
+      id: 'test-family-id',
+      name: 'Test Family',
+      members: ['TestUser'],
+      createdBy: 'TestUser',
+      createdAt: new Date().toISOString(),
+    },
+    members: [
+      {
+        id: 'TestUser',
+        email: 'emilioeh1991@gmail.com',
+        displayName: 'Emilio',
+        familyId: 'test-family-id',
+        role: 'creator',
+        joinedAt: new Date().toISOString(),
+      },
+    ],
+    incomingInvites: [],
+    outgoingInvites: [],
+  }
 
   // Recipes API Mock remains via page.route as it often needs state (mockRecipes)
   await page.route('**/api/**', async (route) => {
     const method = route.request().method()
     const url = route.request().url()
-    console.log(`[MSW] Route matched: ${method} ${url}`)
+    // console.log(`[MSW] Route matched: ${method} ${url}`)
+
+    // --- TEST HELPERS ---
+    if (url.includes('/api/test/reset-family')) {
+      if (method === 'POST') {
+        const body = await route.request().postDataJSON()
+        if (body.reset === true) {
+          // Null state
+          mockFamilyState = { family: null, members: [], incomingInvites: [], outgoingInvites: [] }
+        } else if (body.scenario === 'pending-invite') {
+          mockFamilyState = {
+            family: null,
+            members: [],
+            incomingInvites: [
+              {
+                id: 'invite-123',
+                email: 'emilioeh1991@gmail.com',
+                familyId: 'family-abc',
+                familyName: 'The Harrison Family',
+                invitedBy: 'user-creator',
+                invitedByName: 'Emilio',
+                status: 'pending',
+              },
+            ],
+            outgoingInvites: [],
+          }
+        } else if (body.family) {
+          mockFamilyState = body
+        }
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+        return
+      }
+    }
+
+    // --- FAMILIES API ---
+    if (url.includes('/families/current')) {
+      if (method === 'GET') {
+        // Check if we need to simulate pending invite scenario based on window.__TEST_SCENARIO__?
+        // We can't access window here.
+        // But we can rely on mockFamilyState being set by the test helper.
+
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            ...mockFamilyState,
+            currentUserId: 'TestUser', // Simplified
+          }),
+        })
+        return
+      }
+
+      if (method === 'POST') {
+        const body = await route.request().postDataJSON()
+        // Create Family
+        mockFamilyState.family = {
+          id: `family-${Date.now()}`,
+          name: body.name || 'New Family',
+          members: ['TestUser'],
+          createdBy: 'TestUser',
+          createdAt: new Date().toISOString(),
+        }
+        mockFamilyState.members = [
+          {
+            id: 'TestUser',
+            email: 'emilioeh1991@gmail.com',
+            role: 'creator',
+            familyId: mockFamilyState.family.id,
+          },
+        ]
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({ success: true, family: mockFamilyState.family }),
+        })
+        return
+      }
+
+      if (method === 'PATCH') {
+        const body = await route.request().postDataJSON()
+        if (mockFamilyState.family) {
+          mockFamilyState.family.name = body.name
+          await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+        } else {
+          await route.fulfill({
+            status: 400,
+            body: JSON.stringify({ success: false, error: 'No family' }),
+          })
+        }
+        return
+      }
+
+      if (method === 'DELETE') {
+        mockFamilyState.family = null
+        mockFamilyState.members = []
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+        return
+      }
+    }
+
+    // Invite Logic Mock
+    if (url.includes('/families/invite')) {
+      if (method === 'POST') {
+        const body = await route.request().postDataJSON()
+        // Add outgoing invite
+        const newInvite = {
+          id: `invite-${Date.now()}`,
+          email: body.email,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        }
+        mockFamilyState.outgoingInvites = [...(mockFamilyState.outgoingInvites || []), newInvite]
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+        return
+      }
+    }
+
+    // Join Logic Mock
+    if (url.includes('/families/join')) {
+      if (method === 'POST') {
+        // Assume join success to 'The Harrison Family' (hardcoded for pending scenario)
+        // or whatever family is implied
+        mockFamilyState.family = {
+          id: 'family-abc',
+          name: 'The Harrison Family',
+          members: ['user-creator', 'TestUser'],
+        }
+        mockFamilyState.members = [
+          { id: 'user-creator', role: 'creator' },
+          { id: 'TestUser', role: 'user' },
+        ]
+        mockFamilyState.incomingInvites = []
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+        return
+      }
+    }
+
+    // Leave Logic Mock
+    if (url.includes('/families/leave')) {
+      mockFamilyState.family = null
+      mockFamilyState.members = []
+      await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
+      return
+    }
 
     //...handle /family-data
     if (url.includes('/family-data')) {
@@ -259,6 +378,16 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         })
         return
       }
+    }
+
+    // Week Planned Mock
+    if (url.includes('week/planned')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, planned: [] }),
+      })
+      return
     }
 
     if (method === 'GET') {

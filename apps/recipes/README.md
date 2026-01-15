@@ -332,7 +332,7 @@ The application distinguishes between data tied to an individual user and data s
 
 ### Usage
 
-- **Setup:** New users are prompted to create or join a family workspace.
+- **Setup:** New users are prompted to create a new family workspace or **Join an Existing Family** using an activation code.
 - **Sync:** All actions (rating, planning, noting) automatically sync to all family members in real-time (via optimistic UI and SWR).
 - **Attribution:** Changes are attributed to the specific family member who made them (e.g., "Planned by Emilio").
 

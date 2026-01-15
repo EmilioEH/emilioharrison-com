@@ -22,6 +22,27 @@ export function FamilySetup({ open, onComplete }: FamilySetupProps) {
   const [partnerEmail, setPartnerEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [joinCode, setJoinCode] = useState('')
+
+  const handleJoinFamily = async () => {
+    if (!joinCode.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await fetch('/protected/recipes/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: joinCode }),
+      })
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error || 'Failed to join family')
+      onComplete()
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleCreateFamily = async () => {
     if (!familyName.trim()) {
@@ -96,7 +117,7 @@ export function FamilySetup({ open, onComplete }: FamilySetupProps) {
   }
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onComplete()}>
       <DialogContent className="max-w-md">
         {!mode ? (
           <>
@@ -110,6 +131,10 @@ export function FamilySetup({ open, onComplete }: FamilySetupProps) {
             <Stack spacing="md">
               <Button onClick={() => setMode('create')} className="w-full">
                 Create Family Workspace
+              </Button>
+
+              <Button onClick={() => setMode('join')} variant="secondary" className="w-full">
+                Join Existing Family
               </Button>
 
               <Button onClick={handleSkip} variant="outline" className="w-full">
@@ -171,6 +196,49 @@ export function FamilySetup({ open, onComplete }: FamilySetupProps) {
                 </Button>
                 <Button onClick={handleCreateFamily} disabled={loading || !familyName.trim()}>
                   {loading ? 'Creating...' : 'Create Family'}
+                </Button>
+              </Inline>
+            </DialogFooter>
+          </>
+        ) : mode === 'join' ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Join a Family</DialogTitle>
+              <DialogDescription>
+                Enter the activation code shared by your family member.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Stack spacing="md">
+              <div>
+                <label htmlFor="joinCode" className="text-sm font-medium">
+                  Activation Code
+                </label>
+                <Input
+                  id="joinCode"
+                  placeholder="e.g. 123456"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                <p className="font-semibold">How to find the code?</p>
+                <p>
+                  Ask a family member to go to{' '}
+                  <strong>Menu &gt; Invite &gt; Activation Code</strong>.
+                </p>
+              </div>
+            </Stack>
+
+            <DialogFooter>
+              <Inline spacing="sm" justify="end">
+                <Button onClick={() => setMode(null)} variant="outline" disabled={loading}>
+                  Back
+                </Button>
+                <Button onClick={handleJoinFamily} disabled={loading || !joinCode.trim()}>
+                  {loading ? 'Joining...' : 'Join Family'}
                 </Button>
               </Inline>
             </DialogFooter>

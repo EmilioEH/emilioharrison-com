@@ -94,8 +94,8 @@ test.describe('Family Leave Flow', () => {
     // Visit with Onboarding Bypass
     await page.goto('/protected/recipes?skip_onboarding=true')
 
-    // Wait for hydration
-    await page.waitForTimeout(1000)
+    // Wait for hydration and loading
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // Navigate to Family Settings via Event Dispatch (as button might be buried)
     await page.evaluate(() => {
@@ -142,12 +142,15 @@ test.describe('Family Leave Flow', () => {
 
     // Visit
     await page.goto('/protected/recipes?skip_onboarding=true')
-    await page.waitForTimeout(1000)
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // Navigate
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent('navigate-to-family-settings'))
     })
+
+    // Verify View is Open
+    await expect(page.getByText('Manage Family')).toBeVisible()
 
     // Verify Leave Button is NOT visible, Delete Button IS visible
     await expect(page.getByRole('button', { name: 'Leave Family' })).not.toBeVisible()

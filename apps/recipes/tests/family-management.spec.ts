@@ -16,7 +16,10 @@ test.describe('Family Management', () => {
   })
 
   test('user can access and view family management', async ({ page }) => {
-    // 1. Open Burger Menu
+    // 1. Wait for loading to complete
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    // 2. Open Burger Menu
     await page.click('button[aria-label="Menu"]')
 
     // 2. Click Manage Family

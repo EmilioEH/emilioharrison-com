@@ -77,8 +77,8 @@ test.describe('Family Join Flow', () => {
     // 3. Visit App (fetch mock handles data)
     await page.goto('/protected/recipes?skip_onboarding=true')
 
-    // 3. Visit App (fetch mock handles data)
-    await page.goto('/protected/recipes?skip_onboarding=true')
+    // Wait for loading
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // 4. Verify Invitation Modal Appears
     await expect(page.getByRole('dialog')).toBeVisible()
@@ -104,8 +104,8 @@ test.describe('Family Join Flow', () => {
 
     await page.goto('/protected/recipes?skip_onboarding=true')
 
-    // Additional wait for hydration/animation
-    await page.waitForTimeout(2000)
+    // Wait for hydration and loading
+    await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
     // Expect Modal
     await expect(page.getByText('The Harrison Family')).toBeVisible()
