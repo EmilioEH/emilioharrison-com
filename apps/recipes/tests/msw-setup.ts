@@ -127,7 +127,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
       role: 'creator' | 'admin' | 'user'
       joinedAt: string
     }>
-    invites: Array<{
+    outgoingInvites: Array<{
       id: string
       email: string
       familyId: string
@@ -135,6 +135,16 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
       status: 'pending'
       token: string
     }>
+    incomingInvites: Array<{
+      id: string
+      familyId: string
+      familyName: string
+      invitedBy: string
+      role: 'admin' | 'user'
+      token: string
+    }>
+    // For joining
+    token: string | null
   }
 
   // State for Family (Mutable)
@@ -156,8 +166,9 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         joinedAt: new Date().toISOString(),
       },
     ],
-    incomingInvites: [],
     outgoingInvites: [],
+    incomingInvites: [],
+    token: null,
   }
 
   // Recipes API Mock remains via page.route as it often needs state (mockRecipes)
