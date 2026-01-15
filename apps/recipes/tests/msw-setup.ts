@@ -121,27 +121,31 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
     } | null
     members: Array<{
       id: string
-      email: string
-      displayName: string
-      familyId: string
+      email?: string
+      displayName?: string
+      familyId?: string
       role: 'creator' | 'admin' | 'user'
-      joinedAt: string
+      joinedAt?: string
     }>
     outgoingInvites: Array<{
       id: string
       email: string
-      familyId: string
-      invitedBy: string
+      familyId?: string
+      invitedBy?: string
       status: 'pending'
-      token: string
+      token?: string
+      createdAt?: string
     }>
     incomingInvites: Array<{
       id: string
       familyId: string
       familyName: string
       invitedBy: string
-      role: 'admin' | 'user'
-      token: string
+      invitedByName?: string
+      email?: string
+      status?: 'pending'
+      role?: 'admin' | 'user'
+      token?: string
     }>
     // For joining
     token: string | null
