@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Menu, Plus, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
+import { useStore } from '@nanostores/react'
+import { $pendingInvites } from '../../lib/familyStore'
 
 interface RecipeHeaderProps {
   user?: string
@@ -21,6 +23,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   const [isVisible, setIsVisible] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
   const lastScrollTop = useRef(0)
+  const pendingInvites = useStore($pendingInvites)
 
   useEffect(() => {
     // If no container provided, default to window if available
@@ -65,11 +68,15 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
             <span>Welcome, {user}</span>
             <button
               onClick={openBurgerMenu}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-background hover:bg-background/20"
+              className="relative flex h-9 w-9 items-center justify-center rounded-md text-background hover:bg-background/20"
               title="Menu"
               aria-label="Menu"
             >
               <Menu className="h-6 w-6" />
+              {/* Notification Badge */}
+              {pendingInvites.length > 0 && (
+                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive ring-1 ring-white" />
+              )}
             </button>
           </div>
         </div>

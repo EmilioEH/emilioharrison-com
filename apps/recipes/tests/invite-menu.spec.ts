@@ -27,7 +27,7 @@ test.describe('Invite Menu Feature', () => {
     // Verify Invite View
     await expect(page.getByRole('heading', { name: 'Invite Others' })).toBeVisible()
     await expect(page.getByText('Invite to Your Family')).toBeVisible()
-    await expect(page.getByText('Activation Code')).toBeVisible()
+    await expect(page.getByText('Family Join Code')).toBeVisible()
 
     // Close Invite View
     const closeButton = page

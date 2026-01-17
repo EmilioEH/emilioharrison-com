@@ -21,15 +21,8 @@ export function useFamilySync() {
             familyActions.setPendingInvites(data.incomingInvites)
           }
 
-          const shouldSkip =
-            typeof window !== 'undefined' &&
-            (window.location.search.includes('skip_setup') ||
-              window.location.search.includes('skip_onboarding') ||
-              document.cookie.includes('skip_family_setup=true'))
-
-          if (!data.family && data.incomingInvites?.length === 0 && !shouldSkip) {
-            setShowFamilySetup(true)
-          }
+          // Auto-show logic removed to reduce friction.
+          // Family Setup is now opt-in via the "Manage Family" menu item.
         }
       } catch (err) {
         console.error('Failed to load family data', err)
