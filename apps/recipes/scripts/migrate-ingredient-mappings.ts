@@ -168,7 +168,7 @@ async function migrateRecipes(dryRun = true, limit?: number) {
 
       const mapping = await mapIngredientsWithAI(recipe)
       if (mapping) {
-        mapping.forEach((stepMapping, stepIdx) => {
+        mapping.stepIngredients.forEach((stepMapping, stepIdx) => {
           if (stepMapping.indices.length > 0) {
             const ingredientNames = stepMapping.indices
               .map((i) => recipe.ingredients[i]?.name || `[Invalid: ${i}]`)

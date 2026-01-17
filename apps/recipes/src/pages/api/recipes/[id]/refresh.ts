@@ -11,10 +11,8 @@ import type { Recipe } from '../../../../lib/types'
 // Given the constraints, calling the localhost endpoint might be flaky.
 // Let's replicate the basic flow: We have the Recipe. We construct the Body for `parse-recipe`.
 
-export const POST: APIRoute = async ({ params, request, locals }) => {
+export const POST: APIRoute = async ({ params, request }) => {
   // Delegate logic to parse-recipe endpoint
-
-  const _unused = locals // Keep if needed or remove
 
   const { id } = params
   if (!id) return serverErrorResponse('Recipe ID required')
