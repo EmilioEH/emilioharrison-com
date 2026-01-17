@@ -601,6 +601,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               currentPlannedDays={plannedDates}
               onRemove={async () => {
                 await removeRecipeFromDay(managementRecipeId)
+                // Close the sheet after removal so the UI reflects the change
+                setManagementRecipeId(null)
               }}
               onShare={onShare ? () => onShare(selectedRecipe) : undefined}
             />
