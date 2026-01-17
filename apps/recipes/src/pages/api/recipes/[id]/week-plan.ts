@@ -195,7 +195,11 @@ export const POST: APIRoute = async (context: APIContext) => {
  * DELETE /api/recipes/[id]/week-plan
  * Remove a recipe from the week plan
  */
-export const DELETE: APIRoute = async ({ params, cookies }) => {
+export const DELETE: APIRoute = async (context: APIContext) => {
+  // Ensure request context is set for db access to Cloudflare env
+  setRequestContext(context)
+
+  const { params, cookies } = context
   const userId = getAuthUser(cookies)
   const recipeId = params.id
 
