@@ -65,6 +65,30 @@ ${recipe.steps.join('\n')}
     }
 
     const newData = await parseRes.json()
+    const costUrl = `${baseUrl}/api/estimate-cost`
+
+    // Attempt to estimate cost
+    let estimatedCost = recipe.estimatedCost // Fallback to existing
+    try {
+      const costPayload = {
+        ingredients: newData.structuredIngredients || newData.ingredients || [],
+      }
+      const costRes = await fetch(costUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(costPayload),
+      })
+      if (costRes.ok) {
+        const costData = await costRes.json()
+        if (costData.totalCost) {
+          estimatedCost = costData.totalCost
+        }
+      } else {
+        console.warn('Cost estimation failed during refresh:', await costRes.text())
+      }
+    } catch (e) {
+      console.warn('Cost estimation error during refresh:', e)
+    }
 
     // MERGE strategy: Keep ID, createdBy, familyId, etc.
     // Overwrite content fields.
@@ -75,6 +99,7 @@ ${recipe.steps.join('\n')}
       sourceUrl: recipe.sourceUrl || newData.sourceUrl, // Keep existing if valid
       // Preserve user-added images if any
       images: recipe.images || newData.images,
+      estimatedCost,
     }
 
     await recipeRef.update(updatedRecipe)

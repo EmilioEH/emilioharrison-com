@@ -289,7 +289,7 @@ async function resolveInput(body: ParseRequestBody): Promise<ProcessedInput> {
   const { url, image, text } = body
   if (url) return await processUrlInput(url)
   if (text) return processTextInput(text, image)
-  return processImageInput(image!)
+  return await processImageInput(image!)
 }
 
 /** Executes the Gemini generation call and parses the result */
@@ -364,11 +364,29 @@ function processTextInput(text: string, image?: string): ProcessedInput {
 }
 
 /** Processes image input: extracts base64 data and mime type */
-function processImageInput(image: string): ProcessedInput {
+async function processImageInput(image: string): Promise<ProcessedInput> {
   let base64Data = ''
   let mimeType = 'image/jpeg' // Safe default
 
-  if (image.includes(',')) {
+  // Check if likely a URL
+  if (image.startsWith('http://') || image.startsWith('https://')) {
+    try {
+      const res = await fetch(image)
+      if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
+      const arrayBuffer = await res.arrayBuffer()
+      base64Data = Buffer.from(arrayBuffer).toString('base64')
+      mimeType = res.headers.get('content-type') || mimeType
+    } catch (error) {
+      console.warn(
+        'Failed to fetch image url in processImageInput, falling back to string check',
+        error,
+      )
+      // Fallback or re-throw? Re-throw seems safer for "Refresh" context.
+      throw new Error(
+        `Failed to download image from URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    }
+  } else if (image.includes(',')) {
     base64Data = image.split(',')[1] || ''
   } else {
     base64Data = image
