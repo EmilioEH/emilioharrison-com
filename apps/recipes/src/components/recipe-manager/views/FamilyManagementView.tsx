@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
-import { UserPlus, Shield, User, Trash2, ArrowLeft, LogOut, Share } from 'lucide-react'
+import { UserPlus, Shield, User, Trash2, ArrowLeft, LogOut, Share, Key, Mail } from 'lucide-react'
 import { useStore } from '@nanostores/react'
-import { $familyMembers, $currentUserId, familyActions } from '../../../lib/familyStore'
+import {
+  $familyMembers,
+  $currentUserId,
+  $pendingInvites,
+  familyActions,
+} from '../../../lib/familyStore'
 import { Stack, Inline } from '../../ui/layout'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
@@ -18,15 +23,17 @@ interface FamilyManagementViewProps {
 }
 
 export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onClose, family }) => {
-  // const family = useStore($currentFamily) // Use prop instead
   const members = useStore($familyMembers)
   const currentUserId = useStore($currentUserId)
+  const incomingInvites = useStore($pendingInvites)
 
   const [isEditingName, setIsEditingName] = useState(false)
   const [newFamilyName, setNewFamilyName] = useState(family?.name || '')
   const [inviteEmail, setInviteEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
+  const [joinCode, setJoinCode] = useState('')
+  const [showCreateFamily, setShowCreateFamily] = useState(false)
 
   // Load pending invites when component mounts or updates
   React.useEffect(() => {
@@ -232,7 +239,96 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
     })
   }
 
+  const handleAcceptInvite = async (invite: PendingInvite) => {
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId: invite.id, accept: true }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        const familyRes = await fetch('/protected/recipes/api/families/current')
+        const familyData = await familyRes.json()
+        if (familyData.success) {
+          familyActions.setFamily(familyData.family)
+          familyActions.setMembers(familyData.members || [])
+          familyActions.setPendingInvites([])
+          await alert(`Joined ${invite.familyName} successfully!`)
+          window.location.reload()
+        }
+      } else {
+        await alert(data.error || 'Failed to join family')
+      }
+    } catch (e) {
+      console.error(e)
+      await alert('An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeclineInvite = async (invite: PendingInvite) => {
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId: invite.id, accept: false }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        familyActions.setPendingInvites(incomingInvites.filter((i) => i.id !== invite.id))
+      } else {
+        await alert(data.error || 'Failed to decline invitation')
+      }
+    } catch (e) {
+      console.error(e)
+      await alert('An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleJoinWithCode = async () => {
+    if (!joinCode.trim()) return
+    setLoading(true)
+    try {
+      const res = await fetch('/protected/recipes/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: joinCode }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        await alert('Joined family successfully!')
+        window.location.reload()
+      } else {
+        await alert(data.error || 'Failed to join family')
+      }
+    } catch (e) {
+      console.error(e)
+      await alert('An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Show "Not in a Family" view with invites and join options
   if (!family) {
+    // If FamilySetup dialog is triggered
+    if (showCreateFamily) {
+      return (
+        <FamilySetup
+          open={true}
+          onComplete={() => {
+            window.location.reload()
+          }}
+        />
+      )
+    }
+
     return (
       <div className="absolute inset-0 z-50 flex flex-col bg-card animate-in slide-in-from-right">
         {/* Header */}
@@ -241,17 +337,108 @@ export const FamilyManagementView: React.FC<FamilyManagementViewProps> = ({ onCl
             <button onClick={onClose} className="hover:bg-card-variant -ml-2 rounded-full p-2">
               <ArrowLeft className="h-6 w-6" />
             </button>
-            <h2 className="font-display text-2xl font-bold text-foreground">Create Family</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground">Manage Family</h2>
           </Inline>
         </div>
-        <div className="flex-1 p-6">
-          <FamilySetup
-            open={true}
-            onComplete={() => {
-              // Refresh data after creation
-              window.location.reload()
-            }}
-          />
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <Stack spacing="xl" className="mx-auto max-w-2xl">
+            {/* Incoming Invitations Section */}
+            {incomingInvites.length > 0 && (
+              <section className="rounded-2xl border-2 border-primary bg-primary/5 p-6 shadow-sm">
+                <Stack spacing="md">
+                  <Inline spacing="sm" align="center">
+                    <Mail className="h-5 w-5 text-primary" />
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-primary">
+                      You're Invited!
+                    </h3>
+                  </Inline>
+
+                  {incomingInvites.map((invite) => (
+                    <div key={invite.id} className="rounded-lg bg-background p-4">
+                      <Stack spacing="sm">
+                        <div className="text-center">
+                          <div className="text-sm text-muted-foreground">Join</div>
+                          <div className="text-xl font-bold text-foreground">
+                            {invite.familyName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Invited by {invite.invitedByName}
+                          </div>
+                        </div>
+                        <Inline spacing="sm" justify="center" className="pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeclineInvite(invite)}
+                            disabled={loading}
+                          >
+                            Decline
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAcceptInvite(invite)}
+                            disabled={loading}
+                          >
+                            {loading ? 'Joining...' : 'Accept & Join'}
+                          </Button>
+                        </Inline>
+                      </Stack>
+                    </div>
+                  ))}
+                </Stack>
+              </section>
+            )}
+
+            {/* Join with Code Section */}
+            <section className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+              <Stack spacing="md">
+                <Inline spacing="sm" align="center">
+                  <Key className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Join with Code
+                  </h3>
+                </Inline>
+                <p className="text-sm text-muted-foreground">
+                  Have a family code? Enter it below to join an existing family.
+                </p>
+                <Inline spacing="sm">
+                  <Input
+                    placeholder="Enter 6-character code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    className="flex-1 font-mono uppercase tracking-widest"
+                    maxLength={6}
+                  />
+                  <Button onClick={handleJoinWithCode} disabled={loading || !joinCode.trim()}>
+                    {loading ? 'Joining...' : 'Join'}
+                  </Button>
+                </Inline>
+              </Stack>
+            </section>
+
+            {/* Create Family Section */}
+            <section className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+              <Stack spacing="md">
+                <Inline spacing="sm" align="center">
+                  <UserPlus className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Start Your Own
+                  </h3>
+                </Inline>
+                <p className="text-sm text-muted-foreground">
+                  Create a new family workspace to share recipes with your partner or family.
+                </p>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setShowCreateFamily(true)}
+                >
+                  Create New Family
+                </Button>
+              </Stack>
+            </section>
+          </Stack>
         </div>
       </div>
     )

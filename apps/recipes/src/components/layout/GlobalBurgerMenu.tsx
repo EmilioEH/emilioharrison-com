@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
+import { $pendingInvites } from '../../lib/familyStore'
 
 interface GlobalBurgerMenuProps {
   user?: string
@@ -26,6 +27,7 @@ interface GlobalBurgerMenuProps {
 
 const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const isOpen = useStore(burgerMenuOpen)
+  const pendingInvites = useStore($pendingInvites)
 
   const handleSettings = () => {
     closeBurgerMenu()
@@ -163,8 +165,20 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 onClick={handleManageFamily}
                 className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <UsersRound className="text-foreground-variant h-5 w-5" />
+                <div className="relative">
+                  <UsersRound className="text-foreground-variant h-5 w-5" />
+                  {pendingInvites.length > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                      {pendingInvites.length}
+                    </span>
+                  )}
+                </div>
                 <span className="font-medium text-foreground">Manage Family</span>
+                {pendingInvites.length > 0 && (
+                  <span className="ml-auto rounded-full bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">
+                    {pendingInvites.length} invite{pendingInvites.length > 1 ? 's' : ''}
+                  </span>
+                )}
               </button>
 
               <button

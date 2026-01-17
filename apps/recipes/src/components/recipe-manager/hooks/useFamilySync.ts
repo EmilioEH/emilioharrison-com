@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
-import type { PendingInvite } from '../../../lib/types'
 import { familyActions } from '../../../lib/familyStore'
 
 export function useFamilySync() {
   const [showFamilySetup, setShowFamilySetup] = useState(false)
   const [showSyncNotification, setShowSyncNotification] = useState(false)
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
 
   useEffect(() => {
     const loadFamilyData = async () => {
@@ -18,14 +16,16 @@ export function useFamilySync() {
           familyActions.setMembers(data.members || [])
           familyActions.setCurrentUserId(data.currentUserId || null)
 
+          // Sync to global store for badge visibility
           if (data.incomingInvites && Array.isArray(data.incomingInvites)) {
-            setPendingInvites(data.incomingInvites)
+            familyActions.setPendingInvites(data.incomingInvites)
           }
 
           const shouldSkip =
             typeof window !== 'undefined' &&
             (window.location.search.includes('skip_setup') ||
-              window.location.search.includes('skip_onboarding'))
+              window.location.search.includes('skip_onboarding') ||
+              document.cookie.includes('skip_family_setup=true'))
 
           if (!data.family && data.incomingInvites?.length === 0 && !shouldSkip) {
             setShowFamilySetup(true)
@@ -44,7 +44,5 @@ export function useFamilySync() {
     setShowFamilySetup,
     showSyncNotification,
     setShowSyncNotification,
-    pendingInvites,
-    setPendingInvites,
   }
 }

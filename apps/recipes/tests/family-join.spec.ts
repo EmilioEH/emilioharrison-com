@@ -7,6 +7,7 @@ test.describe('Family Join Flow', () => {
       { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
       { name: 'site_user', value: 'InvitedUser', domain: '127.0.0.1', path: '/' },
       { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: '127.0.0.1', path: '/' },
+      { name: 'skip_family_setup', value: 'true', domain: '127.0.0.1', path: '/' },
     ])
 
     // 2. Setup Isolated Mock Environment
@@ -73,47 +74,51 @@ test.describe('Family Join Flow', () => {
     })
   })
 
-  test('should display invitation modal and allow joining', async ({ page }) => {
+  test('should show badge on Manage Family and allow accepting invite', async ({ page }) => {
     // 3. Visit App (fetch mock handles data)
     await page.goto('/protected/recipes?skip_onboarding=true')
 
     // Wait for loading
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
-    // 4. Verify Invitation Modal Appears
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.getByText('You are invited to join')).toBeVisible()
+    // 4. Open Burger Menu
+    await page.getByRole('button', { name: 'Menu' }).click()
+
+    // 5. Verify badge appears on "Manage Family" menu item
+    await expect(page.getByText('1 invite')).toBeVisible()
+
+    // 6. Click Manage Family
+    await page.getByText('Manage Family').click()
+
+    // 7. Verify "You're Invited" section appears in Manage Family
+    await expect(page.getByText("You're Invited!")).toBeVisible()
     await expect(page.getByText('The Harrison Family')).toBeVisible()
     await expect(page.getByText('Invited by Emilio')).toBeVisible()
 
-    // 5. Accept Invitation
-    // Note: The click triggers a POST to api/families/join, which is handled by our manual fetch mock
-    await page.getByRole('button', { name: 'Accept Invitation' }).click()
+    // 8. Accept Invitation
+    await page.getByRole('button', { name: 'Accept & Join' }).click()
 
-    // 6. Verify Success
+    // 9. Verify Success
     await expect(page.getByText('Joined The Harrison Family successfully!')).toBeVisible()
   })
 
-  test('should allow declining invitation', async ({ page }) => {
-    // Update Mock for Decline if necessary?
-    // The previous test mock returned "Joined success".
-    // The decline logic expects success but different message?
-    // Actually, UI just needs success: true to show success message or close modal.
-    // If we click "Decline", client calls API with { accept: false }.
-    // Our mock returns success: true.
-
+  test('should allow declining invitation from Manage Family', async ({ page }) => {
     await page.goto('/protected/recipes?skip_onboarding=true')
 
     // Wait for hydration and loading
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
 
-    // Expect Modal
+    // Open Burger Menu and navigate to Manage Family
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await page.getByText('Manage Family').click()
+
+    // Verify invite is visible
     await expect(page.getByText('The Harrison Family')).toBeVisible()
 
     // Decline
     await page.getByRole('button', { name: 'Decline' }).click()
 
-    // Verify modal hidden (Decline usually closes it)
-    await expect(page.getByText('The Harrison Family')).toBeHidden()
+    // Verify invite is removed (the section should update)
+    await expect(page.getByText("You're Invited!")).toBeHidden()
   })
 })

@@ -59,11 +59,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       )
     }
 
-    // 2. Verify it's for this user
+    // 2. Verify it's for this user (only for invite-based joins)
     const userDoc = await db.getDocument('users', userId)
     const userEmail = userDoc?.email || cookies.get('site_email')?.value
 
-    if (!userEmail || invite.email.toLowerCase() !== userEmail.toLowerCase()) {
+    // Only verify email for invite-based joins (code joins are open to anyone with the code)
+    if (invite && (!userEmail || invite.email.toLowerCase() !== userEmail.toLowerCase())) {
       return new Response(
         JSON.stringify({ success: false, error: 'This invite is for a different email address' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } },

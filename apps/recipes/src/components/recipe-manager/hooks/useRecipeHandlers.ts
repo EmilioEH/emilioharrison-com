@@ -1,7 +1,6 @@
-import React from 'react'
 import type { Recipe, PendingInvite } from '../../../lib/types'
 import { alert, confirm } from '../../../lib/dialogStore'
-import { familyActions } from '../../../lib/familyStore'
+import { familyActions, $pendingInvites } from '../../../lib/familyStore'
 
 import type { ViewMode } from './useRouter'
 
@@ -18,7 +17,6 @@ interface UseRecipeHandlersProps {
   selectedIds: Set<string>
   clearSelection: () => void
   setCurrentUser: (name: string) => void
-  setPendingInvites: React.Dispatch<React.SetStateAction<PendingInvite[]>>
 }
 
 export function useRecipeHandlers({
@@ -34,7 +32,6 @@ export function useRecipeHandlers({
   selectedIds,
   clearSelection,
   setCurrentUser,
-  setPendingInvites,
 }: UseRecipeHandlersProps) {
   const handleAcceptInvite = async (invite: PendingInvite) => {
     try {
@@ -50,7 +47,7 @@ export function useRecipeHandlers({
         if (familyData.success) {
           familyActions.setFamily(familyData.family)
           familyActions.setMembers(familyData.members || [])
-          setPendingInvites([])
+          familyActions.setPendingInvites([])
           await alert(`Joined ${invite.familyName} successfully!`)
         }
       } else {
@@ -71,7 +68,8 @@ export function useRecipeHandlers({
       })
       const data = await res.json()
       if (data.success) {
-        setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id))
+        const current = $pendingInvites.get()
+        familyActions.setPendingInvites(current.filter((i) => i.id !== invite.id))
       } else {
         await alert(data.error || 'Failed to decline invitation')
       }

@@ -1,5 +1,5 @@
 import { atom, map } from 'nanostores'
-import type { Family, User, FamilyRecipeData } from './types'
+import type { Family, User, FamilyRecipeData, PendingInvite } from './types'
 
 // Current family workspace
 export const $currentFamily = atom<Family | null>(null)
@@ -9,6 +9,9 @@ export const $familyMembers = atom<User[]>([])
 
 // Current user ID (for permission checks)
 export const $currentUserId = atom<string | null>(null)
+
+// Pending incoming invites (for badge count)
+export const $pendingInvites = atom<PendingInvite[]>([])
 
 // Loading states
 export const $familyLoading = atom<boolean>(true)
@@ -32,6 +35,10 @@ export const familyActions = {
     $currentUserId.set(userId)
   },
 
+  setPendingInvites: (invites: PendingInvite[]) => {
+    $pendingInvites.set(invites)
+  },
+
   setRecipeFamilyData: (recipeId: string, data: FamilyRecipeData) => {
     const current = $recipeFamilyData.get()
     $recipeFamilyData.set({
@@ -51,6 +58,7 @@ export const familyActions = {
     $currentFamily.set(null)
     $familyMembers.set([])
     $currentUserId.set(null)
+    $pendingInvites.set([])
     $recipeFamilyData.set({})
     $familyLoading.set(true)
     $familyInitialized.set(false)

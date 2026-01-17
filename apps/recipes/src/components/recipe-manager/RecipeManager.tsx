@@ -7,7 +7,6 @@ import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './dialogs/BulkEditModal'
 import { FamilySetup } from './FamilySetup'
-import { InvitationModal } from './dialogs/InvitationModal'
 import type { Recipe, FamilyRecipeData } from '../../lib/types'
 
 // --- Hooks ---
@@ -94,14 +93,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   const { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl } = useRecipes()
 
   // Use the extracted family sync logic
-  const {
-    showFamilySetup,
-    setShowFamilySetup,
-    showSyncNotification,
-    setShowSyncNotification,
-    pendingInvites,
-    setPendingInvites,
-  } = useFamilySync()
+  const { showFamilySetup, setShowFamilySetup, showSyncNotification, setShowSyncNotification } =
+    useFamilySync()
 
   // Load planned recipes logic (kept in component for now as it's recipe-specific)
   useEffect(() => {
@@ -315,8 +308,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   // Actions & Handlers (Refactored to Hook)
   const {
-    handleAcceptInvite,
-    handleDeclineInvite,
     handleSaveRecipe,
     handleDeleteRecipe,
     handleUpdateRecipe,
@@ -337,7 +328,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     selectedIds,
     clearSelection,
     setCurrentUser,
-    setPendingInvites,
   })
 
   const handleBulkImportSave = async (recipes: Recipe[]) => {
@@ -620,14 +610,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         />
       )}
 
-      {/* Invitation Modal */}
-      {pendingInvites.length > 0 && (
-        <InvitationModal
-          invite={pendingInvites[0]}
-          onAccept={handleAcceptInvite}
-          onDecline={handleDeclineInvite}
-        />
-      )}
+      {/* Invitation Modal - DEPRECATED: Now handled in FamilyManagementView */}
 
       {/* Family Setup Modal */}
       <FamilySetup
