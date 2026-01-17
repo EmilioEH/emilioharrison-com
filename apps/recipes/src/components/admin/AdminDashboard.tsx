@@ -434,12 +434,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                       {family.id}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <button
-                        className="text-blue-600 hover:text-blue-900"
-                        onClick={() => setSelectedFamilyId(family.id)}
-                      >
-                        View
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="mr-2 text-blue-600 hover:text-blue-900"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedFamilyId(family.id)
+                          }}
+                        >
+                          View
+                        </button>
+                        <button
+                          className="rounded p-1 text-red-600 hover:bg-red-50"
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (
+                              window.confirm(
+                                `Are you sure you want to PERMANENTLY delete "${family.name}"? This will remove all data and members.`,
+                              )
+                            ) {
+                              try {
+                                const res = await fetch('/protected/recipes/api/admin/families', {
+                                  method: 'DELETE',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ familyId: family.id }),
+                                })
+                                if (res.ok) {
+                                  setFamilies((prev) => prev.filter((f) => f.id !== family.id))
+                                } else {
+                                  const data = await res.json()
+                                  alert(data.error || 'Failed to delete family')
+                                }
+                              } catch (err) {
+                                console.error(err)
+                                alert('Error deleting family')
+                              }
+                            }
+                          }}
+                          title="Delete Family"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
