@@ -11,6 +11,13 @@ export interface IngredientGroup {
   endIndex: number // Last ingredient index (inclusive)
 }
 
+/** Logical grouping of steps by cooking phase (e.g., "PREPARE THE SAUCE") */
+export interface StepGroup {
+  header: string // "PREPARE THE SAUCE"
+  startIndex: number // First step index (0-based)
+  endIndex: number // Last step index (inclusive)
+}
+
 /** Enhanced step with title and optional tip for redesigned instruction cards */
 export interface StructuredStep {
   title?: string // "Blend the Base" (2-4 words)
@@ -39,6 +46,7 @@ export interface Recipe {
   // Enhanced recipe structure (lazy-migrated via AI)
   ingredientGroups?: IngredientGroup[] // AI-generated ingredient groupings by cooking phase
   structuredSteps?: StructuredStep[] // AI-generated step titles and tips
+  stepGroups?: StepGroup[] // AI-generated step groupings by cooking phase
   notes?: string
   description?: string
   // New metadata for organization

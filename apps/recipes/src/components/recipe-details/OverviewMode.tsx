@@ -24,6 +24,7 @@ import type {
   IngredientGroup,
   StructuredStep,
   Ingredient,
+  StepGroup,
 } from '../../lib/types'
 
 interface OverviewModeProps {
@@ -49,13 +50,18 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [isEstimating, setIsEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
 
-  // Lazy-loaded enhanced recipe data (ingredient groups + structured steps)
+  // Lazy-loaded enhanced recipe data (ingredient groups + structured steps + step groups)
   const [enhancedData, setEnhancedData] = useState<{
     ingredientGroups: IngredientGroup[]
     structuredSteps: StructuredStep[]
+    stepGroups?: StepGroup[]
   } | null>(
     recipe.ingredientGroups && recipe.structuredSteps
-      ? { ingredientGroups: recipe.ingredientGroups, structuredSteps: recipe.structuredSteps }
+      ? {
+          ingredientGroups: recipe.ingredientGroups,
+          structuredSteps: recipe.structuredSteps,
+          stepGroups: recipe.stepGroups,
+        }
       : null,
   )
   const [isEnhancing, setIsEnhancing] = useState(false)
@@ -275,6 +281,24 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
   }, [enhancedData?.structuredSteps, recipe.steps])
 
+  // Memoized step groups with fallback to flat list
+  const displayStepGroups = useMemo((): Array<{
+    header: string | null
+    items: StructuredStep[]
+    startIndex: number
+  }> => {
+    const groups = enhancedData?.stepGroups || recipe.stepGroups
+    if (groups?.length) {
+      return groups.map((group) => ({
+        header: group.header,
+        items: displaySteps.slice(group.startIndex, group.endIndex + 1),
+        startIndex: group.startIndex,
+      }))
+    }
+    // Fallback: single ungrouped list
+    return [{ header: null, items: displaySteps, startIndex: 0 }]
+  }, [enhancedData?.stepGroups, recipe.stepGroups, displaySteps])
+
   return (
     <Stack spacing="none" className="flex-1 overflow-y-auto pb-20">
       <div className="relative">
@@ -445,18 +469,39 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 Cooking Mode <Play className="fill-current" />
               </Button>
             </Inline>
+
+            {/* Grouped Steps Display */}
             <Stack spacing="lg">
-              {displaySteps.map((step, idx) => (
-                <InstructionCard
-                  key={idx}
-                  stepNumber={idx + 1}
-                  title={step.title}
-                  text={step.text}
-                  highlightedText={step.highlightedText}
-                  tip={step.tip}
-                  isChecked={checkedSteps[idx]}
-                  onToggle={() => setCheckedSteps((p) => ({ ...p, [idx]: !p[idx] }))}
-                />
+              {displayStepGroups.map((group, gIdx) => (
+                <div key={gIdx}>
+                  {group.header && (
+                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                      • {group.header}
+                    </h3>
+                  )}
+                  <Stack spacing="lg">
+                    {group.items.map((step, idx) => {
+                      const globalIdx = group.startIndex + idx
+                      return (
+                        <InstructionCard
+                          key={globalIdx}
+                          stepNumber={globalIdx + 1}
+                          title={step.title}
+                          text={step.text}
+                          highlightedText={step.highlightedText}
+                          tip={step.tip}
+                          isChecked={checkedSteps[globalIdx]}
+                          onToggle={() =>
+                            setCheckedSteps((p) => ({
+                              ...p,
+                              [globalIdx]: !p[globalIdx],
+                            }))
+                          }
+                        />
+                      )
+                    })}
+                  </Stack>
+                </div>
               ))}
             </Stack>
           </div>

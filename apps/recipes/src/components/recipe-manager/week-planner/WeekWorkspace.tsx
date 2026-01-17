@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Share,
   Copy,
+  Sparkles,
+  Zap,
 } from 'lucide-react'
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
@@ -21,7 +23,7 @@ import { Stack, Inline } from '../../ui/layout'
 import { RecipeLibrary } from '../RecipeLibrary'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
-import type { Recipe } from '../../../lib/types'
+import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 
 type WorkspaceTab = 'plan' | 'grocery'
 
@@ -105,6 +107,40 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       setEstimateError(msg)
     } finally {
       setIsEstimating(false)
+    }
+  }
+
+  // AI-based grocery optimization
+  const [smartIngredients, setSmartIngredients] = useState<ShoppableIngredient[] | null>(null)
+  const [isOptimizing, setIsOptimizing] = useState(false)
+
+  // Reset smart list when recipes change
+  useMemo(() => {
+    setSmartIngredients(null)
+  }, [groceryRecipes])
+
+  const handleOptimizeList = async () => {
+    if (groceryRecipes.length === 0) return
+    setIsOptimizing(true)
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      const res = await fetch(`${baseUrl}api/generate-grocery-list`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipes: groceryRecipes }),
+      })
+      const data = await res.json()
+
+      if (data.ingredients) {
+        setSmartIngredients(data.ingredients)
+      }
+    } catch (e) {
+      console.error('Failed to optimize list', e)
+    } finally {
+      setIsOptimizing(false)
     }
   }
 
@@ -323,6 +359,27 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                       <Copy className="h-4 w-4" />
                     </Button>
                     <Button
+                      variant={smartIngredients ? 'default' : 'secondary'}
+                      size="sm"
+                      onClick={handleOptimizeList}
+                      disabled={isOptimizing || groceryItems.length === 0}
+                      className="gap-1.5"
+                      title="Optimize with AI"
+                    >
+                      {smartIngredients ? (
+                        <Sparkles className="h-4 w-4 text-yellow-300" />
+                      ) : (
+                        <Zap className={`h-4 w-4 ${isOptimizing ? 'animate-pulse' : ''}`} />
+                      )}
+                      <span className="hidden text-xs font-bold sm:inline">
+                        {isOptimizing
+                          ? 'Optimizing...'
+                          : smartIngredients
+                            ? 'Smart List'
+                            : 'Optimize'}
+                      </span>
+                    </Button>
+                    <Button
                       variant={costEstimate.isComplete && aiCost === null ? 'outline' : 'default'}
                       size="sm"
                       onClick={handleRefreshCost}
@@ -352,7 +409,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
             {/* Grocery List */}
             <GroceryList
-              ingredients={groceryItems}
+              ingredients={smartIngredients || groceryItems}
               isLoading={false}
               onClose={() => setActiveTab('plan')}
               recipes={groceryRecipes}

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getFirestore } from 'firebase-admin/firestore'
+import { db } from '../../../../lib/firebase-server'
 import { serverErrorResponse } from '../../../../lib/api-helpers'
 import type { Recipe } from '../../../../lib/types'
 // Import the generation logic directly or via internal fetch?
@@ -17,15 +17,11 @@ export const POST: APIRoute = async ({ params, request }) => {
   const { id } = params
   if (!id) return serverErrorResponse('Recipe ID required')
 
-  const db = getFirestore()
-  const recipeRef = db.collection('recipes').doc(id)
-  const doc = await recipeRef.get()
+  const recipe = (await db.getDocument('recipes', id)) as Recipe | null
 
-  if (!doc.exists) {
+  if (!recipe) {
     return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
   }
-
-  const recipe = doc.data() as Recipe
 
   // Construct payload for parsing
   const baseUrl = new URL(request.url).origin
@@ -34,11 +30,8 @@ export const POST: APIRoute = async ({ params, request }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = { mode: 'parse' }
 
-  if (recipe.sourceUrl) {
-    payload.url = recipe.sourceUrl
-  } else if (recipe.sourceImage) {
-    payload.image = recipe.sourceImage
-  } else {
+  // Helper to construct text-based payload from existing recipe data
+  const buildTextPayload = () => {
     const textRep = `
 Title: ${recipe.title}
 Description: ${recipe.description || ''}
@@ -49,15 +42,68 @@ ${recipe.ingredients.map((i) => `${i.amount} ${i.name}`).join('\n')}
 Instructions:
 ${recipe.steps.join('\n')}
     `.trim()
-    payload.text = textRep
+    return { text: textRep }
   }
 
+  if (recipe.sourceUrl) {
+    payload.url = recipe.sourceUrl
+  } else if (recipe.sourceImage) {
+    // Try image-based refresh, but fall back to text if image fetch fails
+    // (e.g., Firebase Storage URLs may require authentication)
+    payload.image = recipe.sourceImage
+  } else {
+    Object.assign(payload, buildTextPayload())
+  }
+
+  // Diagnostic logging
+  console.log('[Refresh] Recipe ID:', id)
+  console.log('[Refresh] Has sourceUrl:', !!recipe.sourceUrl)
+  console.log('[Refresh] Has sourceImage:', !!recipe.sourceImage)
+  if (recipe.sourceImage) {
+    const isBase64 = recipe.sourceImage.startsWith('data:')
+    const sizeKB = Math.round(recipe.sourceImage.length / 1024)
+    console.log(`[Refresh] sourceImage is ${isBase64 ? 'base64' : 'URL'}, size: ${sizeKB}KB`)
+  }
+
+  const cookieHeader = request.headers.get('cookie')
+
   try {
-    const parseRes = await fetch(parseUrl, {
+    let parseRes = await fetch(parseUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookieHeader || '',
+      },
       body: JSON.stringify(payload),
     })
+
+    // If image-based refresh fails, fall back to text-based regeneration
+    if (!parseRes.ok && recipe.sourceImage && payload.image) {
+      console.warn(
+        'Image-based refresh failed (likely auth/fetch issue), falling back to text-based regeneration',
+      )
+      const textPayload = {
+        mode: 'parse',
+        text: `
+Title: ${recipe.title}
+Description: ${recipe.description || ''}
+
+Ingredients:
+${recipe.ingredients.map((i) => `${i.amount} ${i.name}`).join('\n')}
+
+Instructions:
+${recipe.steps.join('\n')}
+        `.trim(),
+      }
+      parseRes = await fetch(parseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: cookieHeader || '',
+        },
+        body: JSON.stringify(textPayload),
+      })
+    }
 
     if (!parseRes.ok) {
       const err = await parseRes.text()
@@ -75,7 +121,10 @@ ${recipe.steps.join('\n')}
       }
       const costRes = await fetch(costUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: cookieHeader || '',
+        },
         body: JSON.stringify(costPayload),
       })
       if (costRes.ok) {
@@ -97,19 +146,26 @@ ${recipe.steps.join('\n')}
       ...newData,
       updatedAt: new Date().toISOString(),
       sourceUrl: recipe.sourceUrl || newData.sourceUrl, // Keep existing if valid
+      sourceImage: recipe.sourceImage || newData.sourceImage, // Preserve for future retry
       // Preserve user-added images if any
       images: recipe.images || newData.images,
       estimatedCost,
     }
 
-    await recipeRef.update(updatedRecipe)
+    await db.updateDocument('recipes', id, updatedRecipe)
 
     return new Response(JSON.stringify({ success: true, recipe: updatedRecipe }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('Refresh Loop Error:', error)
-    return serverErrorResponse(error instanceof Error ? error.message : 'Refresh failed')
+    console.error('[Refresh] Error occurred:', error)
+    console.error('[Refresh] Error type:', typeof error)
+    if (error instanceof Error) {
+      console.error('[Refresh] Error message:', error.message)
+      console.error('[Refresh] Error stack:', error.stack)
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Refresh failed'
+    return serverErrorResponse(errorMessage)
   }
 }

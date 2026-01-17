@@ -267,6 +267,12 @@ export class FirebaseRestService {
 
     if (!res.ok) {
       const text = await res.text()
+      try {
+        const errorBody = JSON.parse(text)
+        console.error('Firestore SET failed JSON:', JSON.stringify(errorBody, null, 2))
+      } catch {
+        console.error('Firestore SET failed TEXT:', text)
+      }
       throw new Error(`Firestore SET failed: ${text}`)
     }
 
@@ -382,12 +388,12 @@ export class FirebaseRestService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private toFirestoreFields(obj: any): any {
+  private toFirestoreFields(obj: any, inArray = false): any {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fields: any = {}
     for (const key in obj) {
       const val = obj[key]
-      fields[key] = this.toFirestoreValue(val)
+      fields[key] = this.toFirestoreValue(val, inArray)
     }
     return fields
   }
@@ -402,7 +408,7 @@ export class FirebaseRestService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private toFirestoreValue(val: any): any {
+  private toFirestoreValue(val: any, inArray = false): any {
     if (val === null || val === undefined) return { nullValue: null }
     if (typeof val === 'string') return { stringValue: val }
     if (typeof val === 'number') {
@@ -410,24 +416,23 @@ export class FirebaseRestService {
     }
     if (typeof val === 'boolean') return { booleanValue: val }
     if (Array.isArray(val)) {
-      // PREVENT "INVALID NESTED ENTITY" ERROR: Firestore Arrays cannot contain Arrays.
-      // We must detect if any child is an array and flatten or stringify it.
-      const safeValues = val.map((v) => {
-        if (Array.isArray(v)) {
-          // Fallback: Stringify nested arrays
-          return { stringValue: JSON.stringify(v) }
-        }
-        return this.toFirestoreValue(v)
-      })
+      if (inArray) {
+        // Firestore DOES NOT support nested arrays, even if separated by Map objects.
+        // Array -> Map -> Array is FORBIDDEN.
+        // Fallback: Stringify nested arrays to preserve data without crashing.
+        return { stringValue: JSON.stringify(val) }
+      }
 
-      return { arrayValue: { values: safeValues } }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const values = val.map((v: any) => this.toFirestoreValue(v, true))
+      return { arrayValue: { values } }
     }
     if (typeof val === 'object') {
       // Handle Date objects
       if (val instanceof Date) {
         return { timestampValue: val.toISOString() }
       }
-      return { mapValue: { fields: this.toFirestoreFields(val) } }
+      return { mapValue: { fields: this.toFirestoreFields(val, inArray) } }
     }
     return { stringValue: String(val) }
   }

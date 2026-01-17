@@ -50,6 +50,21 @@ const STRUCTURED_STEPS_RULES = `
   • Populate 'substeps' array for each step.
 `
 
+const STEP_GROUPING_RULES = `
+**STEP GROUPING (REQUIRED)**:
+- ALWAYS organize steps into logical phases that MATCH the ingredient groups.
+- The step groups should mirror the ingredient groups chronologically.
+- Common patterns:
+  • Steps using "FOR THE CURRY PASTE" ingredients → group as "MAKE THE CURRY PASTE"
+  • Steps using "THE PROTEIN" ingredients → group as "COOK THE PROTEIN"
+  • Steps that combine components → group as "ASSEMBLY" or "BRING IT TOGETHER"
+  • Final garnishing steps → group as "TO FINISH" or "GARNISH"
+- Use SHORT, ALL-CAPS headers (2-4 words max) that describe the ACTION.
+- Every step must belong to exactly one group.
+- Order groups chronologically by when they occur in the cooking process.
+- Populate 'stepGroups' with header, startIndex, and endIndex for each group.
+`
+
 const DISH_INFERENCE_SYSTEM_PROMPT = `
 You are an expert Chef and Recipe Developer. Your task is to analyze a photograph of a finished dish and generate a plausible recipe to recreate it.
 
@@ -77,6 +92,7 @@ Rules:
 
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
+${STEP_GROUPING_RULES}
 `
 
 const IMAGE_SYSTEM_PROMPT = `
@@ -102,6 +118,7 @@ Rules:
 10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
+${STEP_GROUPING_RULES}
 `
 
 const TEXT_SYSTEM_PROMPT = `
@@ -127,6 +144,7 @@ Rules:
 10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of arrays. Each inner array should contain the 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
+${STEP_GROUPING_RULES}
 `
 
 const URL_SYSTEM_PROMPT = `
@@ -155,6 +173,7 @@ Rules:
 13. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
+${STEP_GROUPING_RULES}
 `
 
 const JSON_LD_SYSTEM_PROMPT = `
@@ -175,6 +194,7 @@ The input is already structured data from the source website. Your job is not to
 7. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
+${STEP_GROUPING_RULES}
 `
 
 /**
@@ -381,7 +401,6 @@ async function processImageInput(image: string): Promise<ProcessedInput> {
         'Failed to fetch image url in processImageInput, falling back to string check',
         error,
       )
-      // Fallback or re-throw? Re-throw seems safer for "Refresh" context.
       throw new Error(
         `Failed to download image from URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
       )
@@ -390,6 +409,12 @@ async function processImageInput(image: string): Promise<ProcessedInput> {
     base64Data = image.split(',')[1] || ''
   } else {
     base64Data = image
+  }
+
+  // Safety Check: Prevent massive payloads (Gemini has limits, Worker has memory limits)
+  // 9MB limit (leaving room for base64 expansion)
+  if (base64Data.length > 9 * 1024 * 1024) {
+    throw new Error('Image too large (>9MB) for AI processing. Please use a smaller image.')
   }
 
   // Extract mimeType from data URL prefix if present
@@ -503,6 +528,18 @@ function createRecipeSchema() {
           required: ['text', 'highlightedText'],
         },
       },
+      stepGroups: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            header: { type: SchemaType.STRING },
+            startIndex: { type: SchemaType.NUMBER },
+            endIndex: { type: SchemaType.NUMBER },
+          },
+          required: ['header', 'startIndex', 'endIndex'],
+        },
+      },
       notes: { type: SchemaType.STRING, nullable: true },
       protein: {
         type: SchemaType.STRING,
@@ -528,6 +565,7 @@ function createRecipeSchema() {
       'steps',
       'structuredSteps',
       'ingredientGroups',
+      'stepGroups',
       'description',
     ],
   }

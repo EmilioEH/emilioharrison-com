@@ -8,11 +8,11 @@ import { CookingContainer } from '../cooking-mode/CookingContainer'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
-import { Play, Check, ListPlus } from 'lucide-react'
+import { Play, Check, ListPlus, Loader2 } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
-import { confirm } from '../../lib/dialogStore'
+import { confirm, alert } from '../../lib/dialogStore'
 
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
@@ -59,6 +59,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   const isCooking = session.isActive && session.recipeId === recipe.id
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -119,6 +120,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       const confirmed = await confirm('Refresh AI data? This will re-analyze the recipe text/url.')
       if (!confirmed) return
 
+      setIsRefreshing(true)
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
@@ -126,15 +128,27 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       try {
         const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/refresh`, { method: 'POST' })
         const data = await res.json()
+        setIsRefreshing(false) // Stop loading before showing outcome
+
         if (data.success && data.recipe) {
           onUpdate(data.recipe, 'save') // 'save' triggers refresh
-          alert('Recipe refreshed!')
+          await alert('Recipe refreshed successfully!', 'Success')
         } else {
           throw new Error(data.error || 'Refresh failed')
         }
       } catch (e) {
+        setIsRefreshing(false) // Ensure loading stops on error too
         console.error('Refresh error:', e)
-        alert('Failed to refresh recipe')
+        const errorMsg = e instanceof Error ? e.message : String(e)
+        // Check for specific size error we added
+        if (errorMsg.includes('too large')) {
+          await alert(
+            'The recipe image is too large (>9MB) for our AI to process. Please edit the recipe and upload a smaller image.',
+            'Image Too Large',
+          )
+        } else {
+          await alert(`Failed to refresh recipe: ${errorMsg}`, 'Error')
+        }
       }
     }
   }
@@ -211,6 +225,14 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
       {/* Share Recipe Dialog */}
       <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
+
+      {/* Refresh Loading Overlay */}
+      {isRefreshing && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="mt-4 font-display text-lg font-bold">Refreshing with AI...</p>
+        </div>
+      )}
     </Stack>
   )
 }
