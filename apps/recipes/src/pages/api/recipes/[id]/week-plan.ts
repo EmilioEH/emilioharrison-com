@@ -1,14 +1,20 @@
 import type { APIRoute } from 'astro'
+import type { APIContext } from 'astro'
 import { getAuthUser, unauthorizedResponse, getCloudflareEnv } from '../../../../lib/api-helpers'
 import { db } from '../../../../lib/firebase-server'
 import type { WeekPlanData, FamilyRecipeData } from '../../../../lib/types'
 import { sendFamilyPush } from '../../../../lib/push-notifications'
+import { setRequestContext } from '../../../../lib/request-context'
 
 /**
  * POST /api/recipes/[id]/week-plan
  * Add a recipe to the week plan or update its planning status (family-scoped)
  */
-export const POST: APIRoute = async ({ params, request, cookies, locals }) => {
+export const POST: APIRoute = async (context: APIContext) => {
+  // Ensure request context is set for db access to Cloudflare env
+  setRequestContext(context)
+
+  const { params, request, cookies, locals } = context
   const userId = getAuthUser(cookies)
   const recipeId = params.id
 
