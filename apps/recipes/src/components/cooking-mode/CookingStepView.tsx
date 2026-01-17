@@ -1,13 +1,14 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { UtensilsCrossed } from 'lucide-react'
+import { UtensilsCrossed, Check } from 'lucide-react'
 import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 import { TimerControl } from './TimerControl'
 import { PrepStep } from './PrepStep'
 import { Stack, Inline } from '../ui/layout'
+import { cn } from '../../lib/utils'
 import { getIngredientsForStep } from '../../utils/ingredientParsing'
-import type { Recipe } from '../../lib/types'
+import type { Recipe, StructuredStep } from '../../lib/types'
 
 interface CookingStepViewProps {
   recipe: Recipe
@@ -126,6 +127,7 @@ interface CurrentStepContentProps {
   stepNumber: number
   recipe: Recipe
   instructionIdx: number
+  structuredStep?: StructuredStep
 }
 
 const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
@@ -133,12 +135,28 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   stepNumber,
   recipe,
   instructionIdx,
+  structuredStep,
 }) => {
   // Get ingredients for this step
   const stepIngredients =
     recipe.stepIngredients && recipe.stepIngredients[instructionIdx]
       ? recipe.stepIngredients[instructionIdx].indices.map((idx) => recipe.ingredients[idx])
       : getIngredientsForStep(stepText, recipe.ingredients)
+
+  // Substep State
+  // We use local state for now. In a perfect world, this would be in cookingSession store,
+  // but for V1 we'll let it be ephemeral per visual instance.
+  const [completedSubsteps, setCompletedSubsteps] = React.useState<Record<number, boolean>>({})
+
+  const toggleSubstep = (idx: number) => {
+    setCompletedSubsteps((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }))
+  }
+
+  // Effect: Auto-mark substeps if the main step is somehow "done" (not applicable here as we navigate away)
+  // But maybe we want to play a sound when all are done? usage for later.
 
   // Smart timer parsing
   const parseTimer = (text: string): number | undefined => {
@@ -160,27 +178,123 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   // Determine font size based on length
   const getFontSize = (text: string) => {
     const len = text.length
-    if (len < 100) return 'text-3xl md:text-4xl text-center'
-    if (len < 200) return 'text-2xl md:text-3xl text-center'
-    if (len < 350) return 'text-xl md:text-2xl text-center'
-    return 'text-lg md:text-xl text-left' // Left align very long text for readability
+    if (len < 50) return 'text-3xl md:text-4xl text-center'
+    if (len < 120) return 'text-2xl md:text-3xl text-center'
+    if (len < 250) return 'text-xl md:text-2xl text-left'
+    return 'text-lg md:text-xl text-left'
   }
 
-  const fontSizeClass = getFontSize(stepText)
+  const mainTextClass = getFontSize(stepText)
+  const hasSubsteps = structuredStep?.substeps && structuredStep.substeps.length > 0
 
   return (
     <Stack spacing="lg" className="w-full">
       {/* Timer Controls */}
       <TimerControl stepNumber={stepNumber} suggestedDuration={suggestedTimer} />
 
-      {/* Current Step - Plain Text */}
-      <Stack spacing="lg" className="items-center py-4">
-        <p className={`font-display font-bold leading-tight text-foreground ${fontSizeClass}`}>
-          {stepText}
-        </p>
-      </Stack>
+      {/* Main Instruction Text (Show only if no substeps OR as a header) */}
+      {/* Design choice: If we have substeps, the main text serves as the "Goal" or "Summary".
+          If it's short, it's a Title. If it's long, it might be redundant with substeps.
+          Let's show it, but maybe smaller if we have substeps?
+          Actually, the Mockup showed "Prepare the Aromatics" as title, then the list.
+          Here 'stepText' IS the full text. `structuredStep.title` is the short one.
+      */}
 
-      {/* Contextual Ingredients */}
+      {structuredStep?.title && (
+        <h2 className="text-center font-display text-2xl font-bold text-foreground">
+          {structuredStep.title}
+        </h2>
+      )}
+
+      {!hasSubsteps && (
+        <Stack spacing="lg" className="items-center py-4">
+          <p className={`font-display font-bold leading-tight text-foreground ${mainTextClass}`}>
+            {structuredStep?.highlightedText ? (
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: structuredStep.highlightedText.replace(
+                    /\*\*(.*?)\*\*/g,
+                    '<span class="text-primary">$1</span>',
+                  ),
+                }}
+              />
+            ) : (
+              stepText
+            )}
+          </p>
+        </Stack>
+      )}
+
+      {/* Nested Substeps Checklist */}
+      {hasSubsteps && (
+        <Stack spacing="md" className="mt-4 w-full">
+          {(structuredStep?.substeps || []).map(
+            (sub: { text: string; action: string; targets: string[] }, i: number) => {
+              const isChecked = completedSubsteps[i]
+              return (
+                <motion.button
+                  key={i}
+                  onClick={() => toggleSubstep(i)}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className={cn(
+                    'active:scale-98 group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all',
+                    isChecked
+                      ? 'border-primary/20 bg-primary/5'
+                      : 'border-border bg-card hover:border-primary/50',
+                  )}
+                >
+                  {/* Custom Checkbox */}
+                  <div
+                    className={cn(
+                      'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                      isChecked
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-muted-foreground/30 text-transparent group-hover:border-primary/50',
+                    )}
+                  >
+                    <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                  </div>
+
+                  {/* Substep Text with Highlighted Action */}
+                  <span
+                    className={cn(
+                      'flex-1 text-lg font-medium leading-snug',
+                      isChecked
+                        ? 'text-muted-foreground line-through opacity-80'
+                        : 'text-foreground',
+                    )}
+                  >
+                    {/* Highlight the Action Verb if it exists at start of string or in text */}
+                    {sub.action ? (
+                      <span>
+                        {sub.text
+                          .split(new RegExp(`(${sub.action})`, 'i'))
+                          .map((part: string, idx: number) =>
+                            part.toLowerCase() === sub.action.toLowerCase() ? (
+                              <span key={idx} className={isChecked ? '' : 'text-primary'}>
+                                {part}
+                              </span>
+                            ) : (
+                              part
+                            ),
+                          )}
+                      </span>
+                    ) : (
+                      sub.text
+                    )}
+                  </span>
+                </motion.button>
+              )
+            },
+          )}
+        </Stack>
+      )}
+
+      {/* Contextual Ingredients (Only show if NOT in substep mode, or at bottom?) 
+          Actually, substeps usually mention ingredients. But mapping is still useful.
+      */}
       {stepIngredients.length > 0 && (
         <motion.div
           variants={containerVariants}
@@ -354,6 +468,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
                       stepNumber={thisStepIdx}
                       recipe={recipe}
                       instructionIdx={idx}
+                      structuredStep={recipe.structuredSteps?.[idx]}
                     />
                   )}
 

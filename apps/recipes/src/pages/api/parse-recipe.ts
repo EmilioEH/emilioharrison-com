@@ -42,6 +42,12 @@ const STRUCTURED_STEPS_RULES = `
   • "If too thick, add water 1 tbsp at a time" → tip
   • "Pro tip: ..." → tip
 - Populate 'structuredSteps' array with these objects.
+- **NESTED SUBSTEPS (CRITICAL)**:
+  • Break down the full instruction into 2-5 atomic, checkable actions.
+  • For "Dice the onion and mince the garlic", generate:
+    1. { "text": "Dice the onion", "action": "Dice", "targets": ["onion"] }
+    2. { "text": "Mince the garlic", "action": "Mince", "targets": ["garlic"] }
+  • Populate 'substeps' array for each step.
 `
 
 const DISH_INFERENCE_SYSTEM_PROMPT = `
@@ -463,6 +469,18 @@ function createRecipeSchema() {
             text: { type: SchemaType.STRING },
             highlightedText: { type: SchemaType.STRING },
             tip: { type: SchemaType.STRING, nullable: true },
+            substeps: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  text: { type: SchemaType.STRING },
+                  action: { type: SchemaType.STRING },
+                  targets: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                },
+                required: ['text', 'action'],
+              },
+            },
           },
           required: ['text', 'highlightedText'],
         },

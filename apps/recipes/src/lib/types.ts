@@ -17,6 +17,11 @@ export interface StructuredStep {
   text: string // Full instruction text
   highlightedText?: string // "Blend the **Base**" (markdown bolding of verbs)
   tip?: string // Optional pro-tip or warning
+  substeps?: Array<{
+    text: string // "Dice the onions"
+    action: string // "Dice" (verb)
+    targets: string[] // ["onions"] (ingredients/objects)
+  }>
 }
 
 export interface Recipe {
