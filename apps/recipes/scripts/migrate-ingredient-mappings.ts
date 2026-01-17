@@ -30,18 +30,20 @@ if (!GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
 
-const SYSTEM_PROMPT = `You are a cooking expert. Given a recipe's ingredients list and steps, determine which ingredients are used in each step.
+const SYSTEM_PROMPT = `You are a cooking expert.
+1. Map ingredients to steps: Determine which ingredients are used in each step.
+2. Structure the steps: Break down each step into atomic "substeps".
 
-For each step, provide the 0-based indices of the ingredients that are used or referenced in that step.
+OUTPUT FORMAT:
+Return a JSON object with:
+- stepIngredients: Array<{ indices: number[] }> (mapping of ingredients to steps)
+- structuredSteps: Array<{ title?, text, highlightedText, tip?, substeps: Array<{ text, action, targets }> }>
 
-Be intelligent about matching:
-- "lime" should match an ingredient called "limes" (singular/plural)
-- "salt" should match "sea salt" or "kosher salt"
-- "add the spice mixture" should match the spices that were combined earlier
-- Understand pronouns and context: "it", "them", "the mixture", etc.
-- If a step says "combine all ingredients", include all remaining ingredients not yet used
-
-Return the mapping as an array where each element corresponds to a step and contains the indices of ingredients used.`
+RULES:
+- Be intelligent about matching ingredients (plurals, pronouns).
+- For substeps, break down compound instructions (e.g. "Dice onion and sauté" -> 2 substeps).
+- CRITICAL: Maintain the EXACT number and order of steps as the input. Do not merge or split the main steps.
+`
 
 const responseSchema: Schema = {
   type: SchemaType.OBJECT,
@@ -50,20 +52,42 @@ const responseSchema: Schema = {
       type: SchemaType.ARRAY,
       items: {
         type: SchemaType.OBJECT,
-        properties: {
-          indices: {
-            type: SchemaType.ARRAY,
-            items: { type: SchemaType.NUMBER },
-          },
-        },
+        properties: { indices: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } } },
         required: ['indices'],
       },
     },
+    structuredSteps: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          title: { type: SchemaType.STRING, nullable: true },
+          text: { type: SchemaType.STRING },
+          highlightedText: { type: SchemaType.STRING },
+          tip: { type: SchemaType.STRING, nullable: true },
+          substeps: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                text: { type: SchemaType.STRING },
+                action: { type: SchemaType.STRING },
+                targets: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+              },
+              required: ['text', 'action'],
+            },
+          },
+        },
+        required: ['text', 'highlightedText'],
+      },
+    },
   },
-  required: ['stepIngredients'],
+  required: ['stepIngredients', 'structuredSteps'],
 }
 
-async function mapIngredientsWithAI(recipe: Recipe): Promise<Array<{ indices: number[] }> | null> {
+async function mapIngredientsWithAI(
+  recipe: Recipe,
+): Promise<{ stepIngredients: Array<{ indices: number[] }>; structuredSteps: any[] } | null> {
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
@@ -88,13 +112,18 @@ ${ingredientsList}
 STEPS:
 ${stepsList}
 
-Map each ingredient to the step(s) where it is used. Return the stepIngredients array.`
+Task:
+1. Map ingredients to steps.
+2. Generate structured steps with atomic substeps.`
 
     const result = await model.generateContent(prompt)
     const text = result.response.text()
     const parsed = JSON.parse(text)
 
-    return parsed.stepIngredients
+    return {
+      stepIngredients: parsed.stepIngredients,
+      structuredSteps: parsed.structuredSteps,
+    }
   } catch (error) {
     console.error(`  ⚠️ AI mapping failed: ${error}`)
     return null
@@ -174,16 +203,17 @@ async function migrateRecipes(dryRun = true, limit?: number) {
 
   for (const { id, recipe } of recipesToMigrate) {
     try {
-      const stepIngredients = await mapIngredientsWithAI(recipe)
+      const result = await mapIngredientsWithAI(recipe)
 
-      if (!stepIngredients) {
+      if (!result) {
         skippedCount++
         console.log(`⏭️ ${recipe.title} (AI failed, skipped)`)
         continue
       }
 
       await recipesRef.doc(id).update({
-        stepIngredients,
+        stepIngredients: result.stepIngredients,
+        structuredSteps: result.structuredSteps,
         updatedAt: new Date().toISOString(),
       })
 

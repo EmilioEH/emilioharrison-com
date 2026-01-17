@@ -5,5 +5,6 @@ export type HeaderAction =
   | 'addToWeek'
   | 'move'
   | 'toggleFavorite'
-  | 'rate'
+  | 'share'
+  | 'refresh'
   | 'share'

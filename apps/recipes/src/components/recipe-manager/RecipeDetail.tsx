@@ -98,7 +98,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     setIsEditing(false)
   }
 
-  const handleAction = (action: HeaderAction) => {
+  const handleAction = async (action: HeaderAction) => {
     if (action === 'delete') {
       confirm('Are you certain you want to delete this recipe?').then((confirmed) => {
         if (confirmed) {
@@ -115,6 +115,27 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       if (onToggleFavorite) onToggleFavorite()
     } else if (action === 'share') {
       setShareDialogOpen(true)
+    } else if (action === 'refresh') {
+      const confirmed = await confirm('Refresh AI data? This will re-analyze the recipe text/url.')
+      if (!confirmed) return
+
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      try {
+        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/refresh`, { method: 'POST' })
+        const data = await res.json()
+        if (data.success && data.recipe) {
+          onUpdate(data.recipe, 'save') // 'save' triggers refresh
+          alert('Recipe refreshed!')
+        } else {
+          throw new Error(data.error || 'Refresh failed')
+        }
+      } catch (e) {
+        console.error('Refresh error:', e)
+        alert('Failed to refresh recipe')
+      }
     }
   }
 
