@@ -265,7 +265,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const parts = [{ text: prompt }, contentPart]
     if (sourceInfo.image && text) {
-      parts.push(processImageInput(sourceInfo.image).contentPart)
+      parts.push((await processImageInput(sourceInfo.image)).contentPart)
     }
 
     const recipeData = await generateRecipe(client, parts)
