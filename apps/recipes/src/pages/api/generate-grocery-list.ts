@@ -6,7 +6,7 @@ import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 export const POST: APIRoute = async ({ request, locals }) => {
   let client
   try {
-    client = initGeminiClient(locals)
+    client = await initGeminiClient(locals)
   } catch {
     return serverErrorResponse('Missing API Key')
   }

@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
   let client
   try {
-    client = initGeminiClient(locals)
+    client = await initGeminiClient(locals)
   } catch {
     return serverErrorResponse('Missing API Key configuration')
   }

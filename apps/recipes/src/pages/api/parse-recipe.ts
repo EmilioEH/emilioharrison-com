@@ -232,7 +232,7 @@ function buildInferencePrompt(body: ParseRequestBody): string {
 export const POST: APIRoute = async ({ request, locals }) => {
   let client
   try {
-    client = initGeminiClient(locals)
+    client = await initGeminiClient(locals)
   } catch {
     return serverErrorResponse('Missing API Key configuration')
   }

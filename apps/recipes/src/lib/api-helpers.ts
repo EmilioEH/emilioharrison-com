@@ -1,5 +1,6 @@
 import type { AstroCookies, APIContext } from 'astro'
-import { GoogleGenAI } from '@google/genai'
+// Dynamic import used inside function
+// import { GoogleGenAI } from '@google/genai'
 
 // Define Cloudflare Env interface if not globally available,
 // or use a generic approach. Ideally this should come from App.Locals or separate type def.
@@ -58,7 +59,8 @@ export function badRequestResponse(message: string): Response {
  * Initializes the Google Generative AI client using the environment from locals or import.meta.
  * Throws an error if the API key is missing.
  */
-export function initGeminiClient(locals: APIContext['locals']): GoogleGenAI {
+export async function initGeminiClient(locals: APIContext['locals']) {
+  const { GoogleGenAI } = await import('@google/genai')
   const env = getCloudflareEnv(locals)
   const apiKey = env.GEMINI_API_KEY
 

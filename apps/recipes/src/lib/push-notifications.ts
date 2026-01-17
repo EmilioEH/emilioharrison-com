@@ -1,4 +1,5 @@
-import webpush from 'web-push'
+// Dynamic import used inside function
+// import webpush from 'web-push'
 
 export interface PushSubscriptionData {
   endpoint: string
@@ -34,7 +35,8 @@ export async function sendPushNotification(
   try {
     const keys = getVapidKeys(env)
 
-    // Configure Web Push
+    // Configure Web Push (Dynamic Import)
+    const webpush = (await import('web-push')).default
     webpush.setVapidDetails(keys.subject, keys.publicKey, keys.privateKey)
 
     const dataToSend = typeof payload === 'string' ? payload : JSON.stringify(payload)
