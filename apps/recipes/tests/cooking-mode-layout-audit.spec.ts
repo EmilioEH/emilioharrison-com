@@ -76,10 +76,14 @@ interface LayoutMeasurements {
 async function measureLayout(page: Page): Promise<LayoutMeasurements> {
   return page.evaluate(() => {
     const viewport = window.innerHeight
-    const header = document.querySelector('header')?.offsetHeight || 0
-    const timeline = document.querySelector('[data-testid="cooking-timeline"]')?.offsetHeight || 0
-    const timerCard = document.querySelector('[data-testid="active-timer-card"]')?.offsetHeight || 0
-    const footer = document.querySelector('[data-testid="cooking-footer"]')?.offsetHeight || 0
+    const header = (document.querySelector('header') as HTMLElement)?.offsetHeight || 0
+    const timeline =
+      (document.querySelector('[data-testid="cooking-timeline"]') as HTMLElement)?.offsetHeight || 0
+    const timerCard =
+      (document.querySelector('[data-testid="active-timer-card"]') as HTMLElement)?.offsetHeight ||
+      0
+    const footer =
+      (document.querySelector('[data-testid="cooking-footer"]') as HTMLElement)?.offsetHeight || 0
 
     const fixedUI = header + timeline + timerCard + footer
     const content = viewport - fixedUI
