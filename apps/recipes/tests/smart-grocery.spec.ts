@@ -41,6 +41,48 @@ test.describe('Smart Grocery List', () => {
       })
     })
 
+    // Mock API: Week Plan
+    await page.route('**/api/week/planned', async (route) => {
+      // Calculate current week Monday
+      // We need it to match the client's current week calculation
+      // Simplest: just use the client's time, or assume locally it matches.
+      // Easiest hack: Use a fixed date in the future? No, client defaults to current.
+      // We can try to use exact same logic or just respond with "today" if we assign it to "today".
+      // weekStore aligns to Monday.
+      const today = new Date()
+      const day = today.getDay()
+      const diff = today.getDate() - day + (day == 0 ? -6 : 1)
+      const monday = new Date(today.setDate(diff))
+      const mondayStr = monday.toISOString().split('T')[0]
+
+      // Assign to Monday
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          planned: [
+            {
+              id: '1',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: mondayStr, // Assigned to this week
+                addedBy: 'TestUser',
+              },
+            },
+            {
+              id: '2',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: mondayStr,
+                addedBy: 'TestUser',
+              },
+            },
+          ],
+        }),
+      })
+    })
+
     // Mock API: Generate Smart List
     await page.route('**/api/generate-grocery-list', async (route) => {
       const body = await route.request().postDataJSON()
@@ -84,6 +126,27 @@ test.describe('Smart Grocery List', () => {
     })
 
     await page.goto('http://127.0.0.1:8788/protected/recipes')
+    console.log('Current URL:', page.url())
+    console.log('Page Content:', await page.content())
+
+    // Ensure navigation to week view
+    page.on('console', (msg) => console.log('BROWSER LOG:', msg.text()))
+    page.on('pageerror', (err) => console.log('BROWSER ERROR:', err))
+    // Verify page loaded
+    await expect(page.getByText('Give Feedback')).toBeVisible({ timeout: 10000 })
+
+    // Navigate to Week View first
+    const viewWeekBtn = page.getByRole('button', { name: /view week/i })
+    if (await viewWeekBtn.isVisible()) {
+      await viewWeekBtn.click()
+    } else {
+      // Fallback or explicit title check
+      await page.getByTitle('View Week').click()
+    }
+
+    // Now find Grocery button
+    // "Plan" might be matched from "planned", but let's trust the button exists.
+    await page.getByRole('button', { name: /grocery/i }).click()
   })
 
   test('should optimize grocery list when button is clicked', async ({ page }) => {
@@ -95,9 +158,6 @@ test.describe('Smart Grocery List', () => {
     // Ensure navigation to week view
     // Verify page loaded
     await expect(page.getByText('Recipes', { exact: false }).first()).toBeVisible()
-
-    // Debug: output content if failed
-    console.log(await page.content())
 
     const shopTab = page.getByRole('tab', { name: /shop/i })
     if (await shopTab.isVisible()) {
