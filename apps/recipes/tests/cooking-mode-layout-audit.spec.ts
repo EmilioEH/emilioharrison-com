@@ -166,7 +166,7 @@ test.describe('Simple Recipe (2-3 steps, no timers)', () => {
       const previewCard = page.locator('text=/NEXT:/i').first()
       if (await previewCard.isVisible()) {
         // Measure contrast (should be readable)
-        const _color = await previewCard.evaluate((el) => {
+        await previewCard.evaluate((el) => {
           const style = window.getComputedStyle(el)
           return {
             color: style.color,
@@ -237,7 +237,7 @@ test.describe('Medium Recipe (5-7 steps, 1-2 timers)', () => {
 
     if (await timerButton.isVisible()) {
       // Measure before timer
-      const _beforeMeasurements = await measureLayout(page)
+      await measureLayout(page)
 
       // Start timer
       await timerButton.click()

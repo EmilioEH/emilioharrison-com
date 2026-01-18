@@ -191,10 +191,22 @@ export const TEST_RECIPES: Recipe[] = [
       {
         text: 'Combine shredded Fontina and Muenster cheeses in a small bowl.',
         title: 'Prep Mushroom Filling',
-        atomicSteps: [
-          'Combine shredded Fontina and Muenster cheeses in a small bowl.',
-          'Stuff each Portobello mushroom cap with the cheese mixture.',
-          'Set up a breading station with flour, beaten egg, and panko breadcrumbs seasoned with salt and black pepper.',
+        substeps: [
+          {
+            text: 'Combine shredded Fontina and Muenster cheeses in a small bowl.',
+            action: 'Combine',
+            targets: ['cheeses'],
+          },
+          {
+            text: 'Stuff each Portobello mushroom cap with the cheese mixture.',
+            action: 'Stuff',
+            targets: ['mushroom cap'],
+          },
+          {
+            text: 'Set up a breading station with flour, beaten egg, and panko breadcrumbs seasoned with salt and black pepper.',
+            action: 'Set up',
+            targets: ['breading station'],
+          },
         ],
       },
       {
@@ -220,12 +232,32 @@ export const TEST_RECIPES: Recipe[] = [
         title: 'Cook Beef Patties',
         highlightedText:
           'Form ground beef into 4 thin patties, slightly larger than the buns (they will shrink). Season both sides generously with salt and black pepper. Heat a large skillet or griddle over medium-high heat. Add the beef patties and cook for **2-3 minutes** per side, or until desired doneness.',
-        atomicSteps: [
-          'Form ground beef into 4 thin patties, slightly larger than the buns (they will shrink).',
-          'Season both sides generously with salt and black pepper.',
-          'Heat a large skillet or griddle over medium-high heat.',
-          'Add the beef patties and cook for 2-3 minutes per side, or until desired doneness.',
-          'During the last minute of cooking, place an American cheese slice on top of each patty to melt.',
+        substeps: [
+          {
+            text: 'Form ground beef into 4 thin patties, slightly larger than the buns (they will shrink).',
+            action: 'Form',
+            targets: ['ground beef'],
+          },
+          {
+            text: 'Season both sides generously with salt and black pepper.',
+            action: 'Season',
+            targets: ['patties'],
+          },
+          {
+            text: 'Heat a large skillet or griddle over medium-high heat.',
+            action: 'Heat',
+            targets: ['skillet'],
+          },
+          {
+            text: 'Add the beef patties and cook for 2-3 minutes per side, or until desired doneness.',
+            action: 'Add',
+            targets: ['beef patties'],
+          },
+          {
+            text: 'During the last minute of cooking, place an American cheese slice on top of each patty to melt.',
+            action: 'Place',
+            targets: ['cheese slice'],
+          },
         ],
       },
       {
@@ -235,13 +267,37 @@ export const TEST_RECIPES: Recipe[] = [
       {
         text: "Spread ShackSauce on the bottom bun. Layer the bottom bun with green leaf lettuce and tomato slices. Place one cheese-covered beef patty on top of the tomato. Carefully place the fried 'Shroom Patty on top of the beef patty.",
         title: 'Assemble Burger',
-        atomicSteps: [
-          'Spread ShackSauce on the bottom bun.',
-          'Layer the bottom bun with green leaf lettuce and tomato slices.',
-          'Place one cheese-covered beef patty on top of the tomato.',
-          "Carefully place the fried 'Shroom Patty on top of the beef patty.",
-          'Add the second patty on top (if making a double).',
-          'Top with the top bun and serve immediately.',
+        substeps: [
+          {
+            text: 'Spread ShackSauce on the bottom bun.',
+            action: 'Spread',
+            targets: ['ShackSauce'],
+          },
+          {
+            text: 'Layer the bottom bun with green leaf lettuce and tomato slices.',
+            action: 'Layer',
+            targets: ['bottom bun'],
+          },
+          {
+            text: 'Place one cheese-covered beef patty on top of the tomato.',
+            action: 'Place',
+            targets: ['beef patty'],
+          },
+          {
+            text: "Carefully place the fried 'Shroom Patty on top of the beef patty.",
+            action: 'Place',
+            targets: ["'Shroom Patty"],
+          },
+          {
+            text: 'Add the second patty on top (if making a double).',
+            action: 'Add',
+            targets: ['second patty'],
+          },
+          {
+            text: 'Top with the top bun and serve immediately.',
+            action: 'Top',
+            targets: ['top bun'],
+          },
         ],
       },
     ],
