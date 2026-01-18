@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Cooking Mode Step Enhancements', () => {
   test.use({

@@ -212,6 +212,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Scroll to Top Button (Jan 2026)**: Added a floating "Scroll to Top" button that appears when scrolling past the viewport height. It provides a smooth return to the top of the page and is positioned to avoid overlapping with the Beta Feedback Footer, ensuring a clean and accessible user experience.
 - **Notification System Stabilization (Jan 2026)**: Resolved critical "Illegal Constructor" errors affecting Android and certain desktop browsers by replacing raw `new Notification()` calls with the robust `ServiceWorkerRegistration.showNotification()` API. Added a new E2E test suite (`notification-settings.spec.ts`) to prevent regressions in preference persistence.
 - **Accessibility Fix (Jan 2026)**: Fixed an issue where toggle switches in Notification Settings were unclickable by replacing the custom `div`-based implementation with a proper `<label>` wrapper and adding `aria-label` support, ensuring full accessibility and interaction reliability.
+- **Cooking Timer & Layout Polish**: Refined the cooking timer experience by consolidating duplicate displays, restoring the minimized/expanded toggle, and enabling step navigation from the timer. Improved mobile layout with better footer padding and higher contrast for next-step previews.
 
 ### Recent Updates (Dec 2025)
 

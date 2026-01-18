@@ -37,11 +37,15 @@ const getRecipesCacheKey = (recipes: Recipe[]): string =>
     .join(',')
 
 /** Fetches shoppable ingredients from API */
-const fetchShoppableIngredients = async (recipes: Recipe[]): Promise<ShoppableIngredient[]> => {
+const fetchShoppableIngredients = async (
+  recipes: Recipe[],
+  signal?: AbortSignal,
+): Promise<ShoppableIngredient[]> => {
   const response = await fetch(`${getBaseUrl()}api/generate-grocery-list`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ recipes }),
+    signal,
   })
 
   if (!response.ok) {
@@ -102,7 +106,9 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [lastGeneratedIds, setLastGeneratedIds] = useState<string | null>(null)
   const [targetRecipes, setTargetRecipes] = useState<Recipe[]>([])
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const handleGenerateList = async () => {
     // Validate recipes
     const validation = validateRecipesForGroceryList(recipes)
@@ -140,16 +146,37 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
       console.warn('Failed to load from cache', e)
     }
 
+    // Cancel any existing request
+    if (abortController) {
+      abortController.abort()
+    }
+
     // Start generation
+    const newController = new AbortController()
+    setAbortController(newController)
     setView('grocery')
-    setIsGenerating(true)
+
+    // PROGRESSIVE ENHANCEMENT:
+    // 1. Show fallback items immediately (0ms latency)
+    const fallbackIngredients = convertToShoppableFormat(
+      recipesToProcess.filter((r) => r.structuredIngredients),
+    )
+    if (fallbackIngredients.length > 0) {
+      setGroceryItems(fallbackIngredients)
+      setIsGenerating(false) // Show list immediately
+    } else {
+      setIsGenerating(true) // No items? Show loading spinner
+    }
+
     setLastGeneratedIds(currentIds)
-    setGroceryItems([])
 
     // For the new shoppable format, we always call the API to get proper conversions
     // The API handles both structured and raw ingredients
     try {
-      const shoppableIngredients = await fetchShoppableIngredients(recipesToProcess)
+      const shoppableIngredients = await fetchShoppableIngredients(
+        recipesToProcess,
+        newController.signal,
+      )
       setGroceryItems(shoppableIngredients)
 
       // Save to cache
@@ -165,26 +192,50 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
         console.warn('Failed to save to cache', e)
       }
     } catch (err) {
+      // Don't show error if request was cancelled
+      if (err instanceof Error && err.name === 'AbortError') {
+        setIsGenerating(false)
+        setAbortController(null)
+        return
+      }
+
       console.error('Grocery gen failed', err)
-      // Fallback: convert local structured data to shoppable format (without AI conversions)
-      const fallbackIngredients = convertToShoppableFormat(
-        recipesToProcess.filter((r) => r.structuredIngredients),
-      )
-      setGroceryItems(fallbackIngredients)
-      if (fallbackIngredients.length === 0) {
-        await alert('Could not generate grocery list. Please try again.')
+
+      // If we didn't have fallback items before, set them now
+      if (groceryItems.length === 0) {
+        const fallback = convertToShoppableFormat(
+          recipesToProcess.filter((r) => r.structuredIngredients),
+        )
+        setGroceryItems(fallback)
+        if (fallback.length === 0) {
+          await alert('Could not generate grocery list. Please try again.')
+        } else {
+          await alert('Could not reach AI. Showing ingredients without store-unit conversions.')
+        }
       } else {
-        await alert('Could not reach AI. Showing ingredients without store-unit conversions.')
+        // We already showed fallback, just alert
+        // actually silent failure is better if we already showed the list
+        console.warn('AI enhancement failed, keeping fallback list')
       }
     }
 
     setIsGenerating(false)
+    setAbortController(null)
+  }
+
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort()
+      setAbortController(null)
+      setIsGenerating(false)
+    }
   }
 
   return {
     groceryItems,
     isGenerating,
     handleGenerateList,
+    handleCancel,
     targetRecipes,
   }
 }

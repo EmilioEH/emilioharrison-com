@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Global Menu Visibility', () => {
   test('should be visible and clickable on recipe detail page', async ({ page, context }) => {

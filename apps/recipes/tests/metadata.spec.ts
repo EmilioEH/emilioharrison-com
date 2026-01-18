@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Recipe Metadata & Filtering', () => {
   test('should create recipe with metadata and filter by it', async ({ page, context }) => {

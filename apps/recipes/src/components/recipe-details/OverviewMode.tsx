@@ -6,7 +6,7 @@ import {
   ChevronRight,
   Play,
   DollarSign,
-  Loader2,
+  Sparkles,
   AlertCircle,
 } from 'lucide-react'
 import { CookingHistorySummary } from './CookingHistorySummary'
@@ -31,12 +31,16 @@ interface OverviewModeProps {
   recipe: Recipe
   startCooking: () => void
   onSaveCost?: (cost: number) => void
+  isRefreshing?: boolean
+  refreshProgress?: string
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
   startCooking,
   onSaveCost = () => {},
+  isRefreshing = false,
+  refreshProgress = '',
 }) => {
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({})
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
@@ -407,6 +411,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </div>
           )}
 
+          {/* AI Refresh Progress Banner */}
+          {isRefreshing && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-primary/10 p-3 text-sm text-primary animate-in fade-in slide-in-from-top-2">
+              <Sparkles className="h-4 w-4 animate-pulse" />
+              <span className="font-medium">{refreshProgress || 'Refreshing with AI...'}</span>
+            </div>
+          )}
+
           {/* Cooking History Summary */}
           <CookingHistorySummary
             averageRating={averageRating}
@@ -428,9 +440,15 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 <span className="text-foreground-variant font-body text-sm font-normal">
                   ({recipe.ingredients?.length || 0})
                 </span>
-                {isEnhancing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </Inline>
             </Inline>
+
+            {isEnhancing && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg bg-primary/10 p-3 text-sm text-primary animate-in fade-in slide-in-from-top-2">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+                <span>Organizing ingredients into groups...</span>
+              </div>
+            )}
 
             {/* Grouped Ingredients Display */}
             <Stack spacing="lg">

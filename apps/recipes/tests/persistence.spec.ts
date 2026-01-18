@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Recipe Persistence', () => {
   test('should persist recipe after reload', async ({ page, context }) => {

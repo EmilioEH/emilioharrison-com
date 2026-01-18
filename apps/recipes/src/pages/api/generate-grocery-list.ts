@@ -3,24 +3,21 @@ import { formatRecipesForPrompt } from '../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  let client
-  try {
-    client = await initGeminiClient(locals)
-  } catch {
-    return serverErrorResponse('Missing API Key')
-  }
+const BATCH_SIZE = 5
 
-  const { recipes } = await request.json()
+interface GroceryIngredient {
+  name: string
+  purchaseAmount: number
+  purchaseUnit: string
+  category: string
+  sources: {
+    recipeId: string
+    recipeTitle: string
+    originalAmount: string
+  }[]
+}
 
-  if (!recipes || recipes.length === 0) {
-    return new Response(JSON.stringify({ ingredients: [] }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  const SYSTEM_PROMPT = `
+const SYSTEM_PROMPT = `
 You are an expert Grocery Shopping Assistant helping someone prepare a shopping list.
 
 **YOUR CRITICAL TASK:**
@@ -96,70 +93,125 @@ Include ALL recipe IDs and titles that contributed, with their ORIGINAL recipe a
 }
 `
 
-  const inputList = formatRecipesForPrompt(recipes)
-
-  const schema = {
-    type: SchemaType.OBJECT,
-    properties: {
-      ingredients: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            name: { type: SchemaType.STRING },
-            purchaseAmount: { type: SchemaType.NUMBER },
-            purchaseUnit: { type: SchemaType.STRING },
-            category: { type: SchemaType.STRING },
-            sources: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  recipeId: { type: SchemaType.STRING },
-                  recipeTitle: { type: SchemaType.STRING },
-                  originalAmount: { type: SchemaType.STRING },
-                },
-                required: ['recipeId', 'recipeTitle', 'originalAmount'],
+const SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    ingredients: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          name: { type: SchemaType.STRING },
+          purchaseAmount: { type: SchemaType.NUMBER },
+          purchaseUnit: { type: SchemaType.STRING },
+          category: { type: SchemaType.STRING },
+          sources: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                recipeId: { type: SchemaType.STRING },
+                recipeTitle: { type: SchemaType.STRING },
+                originalAmount: { type: SchemaType.STRING },
               },
+              required: ['recipeId', 'recipeTitle', 'originalAmount'],
             },
           },
-          required: ['name', 'purchaseAmount', 'purchaseUnit', 'category', 'sources'],
         },
+        required: ['name', 'purchaseAmount', 'purchaseUnit', 'category', 'sources'],
       },
     },
-    required: ['ingredients'],
+  },
+  required: ['ingredients'],
+}
+
+/** Processes a single batch of recipes via Gemini */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function processBatch(client: any, recipes: any[]): Promise<GroceryIngredient[]> {
+  const inputList = formatRecipesForPrompt(recipes)
+
+  const response = await client.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
+      },
+    ],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: SCHEMA,
+    },
+  })
+
+  // Access text property directly (getter)
+  const resultText = response.text
+  if (!resultText) throw new Error('No content generated')
+
+  const parsed = JSON.parse(resultText)
+  return parsed.ingredients || []
+}
+
+/** Merges ingredients from multiple batches */
+function mergeIngredients(batches: GroceryIngredient[][]): GroceryIngredient[] {
+  const ingredientMap = new Map<string, GroceryIngredient>()
+
+  for (const batch of batches) {
+    for (const ingredient of batch) {
+      // Normalize name for grouping
+      const key = `${ingredient.name.toLowerCase().trim()}_${ingredient.purchaseUnit.toLowerCase().trim()}`
+
+      if (ingredientMap.has(key)) {
+        const existing = ingredientMap.get(key)!
+        existing.purchaseAmount += ingredient.purchaseAmount
+        existing.sources.push(...ingredient.sources)
+      } else {
+        ingredientMap.set(key, { ...ingredient })
+      }
+    }
+  }
+
+  return Array.from(ingredientMap.values())
+}
+
+export const POST: APIRoute = async ({ request, locals }) => {
+  let client
+  try {
+    client = await initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key')
+  }
+
+  const { recipes } = await request.json()
+
+  if (!recipes || recipes.length === 0) {
+    return new Response(JSON.stringify({ ingredients: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   try {
-    // Client already initialized above
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
-        },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: schema,
-      },
-    })
+    // Split recipes into batches
+    const batches = []
+    for (let i = 0; i < recipes.length; i += BATCH_SIZE) {
+      batches.push(recipes.slice(i, i + BATCH_SIZE))
+    }
 
-    const resultText = response.text
-    if (!resultText) throw new Error('No content generated')
+    console.log(`Processing grocery list in ${batches.length} batches of size ${BATCH_SIZE}`)
 
-    const structuredIngredients = JSON.parse(resultText)
+    // Process all batches in parallel
+    const results = await Promise.all(batches.map((batch) => processBatch(client, batch)))
 
-    return new Response(JSON.stringify(structuredIngredients), {
+    // Merge results
+    const combinedIngredients = mergeIngredients(results)
+
+    return new Response(JSON.stringify({ ingredients: combinedIngredients }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Gemini API Error:', error)
-    return new Response(JSON.stringify({ error: 'Failed to generate list' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return serverErrorResponse(error instanceof Error ? error.message : 'Failed to generate list')
   }
 }

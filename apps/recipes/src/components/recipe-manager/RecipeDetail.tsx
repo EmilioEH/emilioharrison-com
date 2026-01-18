@@ -4,7 +4,6 @@ import { useStore } from '@nanostores/react'
 import { DetailHeader } from '../recipe-details/DetailHeader'
 import type { HeaderAction } from '../recipe-details/types'
 import { Stack, Inline } from '../ui/layout'
-import { LoadingOverlay } from '../ui/LoadingOverlay'
 import { CookingContainer } from '../cooking-mode/CookingContainer'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
@@ -39,7 +38,7 @@ const useWakeLock = (enabled: boolean) => {
 interface RecipeDetailProps {
   recipe: Recipe
   onClose: () => void
-  onUpdate: (recipe: Recipe, action: 'save' | 'edit') => void
+  onUpdate: (recipe: Recipe, action: 'save' | 'edit' | 'silent') => void
   onDelete: (id: string) => void
   onToggleThisWeek: (id?: string) => void
   onToggleFavorite?: () => void
@@ -61,6 +60,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshProgress, setRefreshProgress] = useState<string>('')
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -118,27 +118,28 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     } else if (action === 'share') {
       setShareDialogOpen(true)
     } else if (action === 'refresh') {
-      const confirmed = await confirm('Refresh AI data? This will re-analyze the recipe text/url.')
-      if (!confirmed) return
-
+      // Non-blocking refresh - no confirmation dialog
       setIsRefreshing(true)
+      setRefreshProgress('Preparing to refresh...')
+
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
       try {
+        setRefreshProgress('Analyzing recipe content...')
         const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/refresh`, { method: 'POST' })
+        setRefreshProgress('Applying AI enhancements...')
         const data = await res.json()
-        setIsRefreshing(false) // Stop loading before showing outcome
 
         if (data.success && data.recipe) {
-          onUpdate(data.recipe, 'save') // 'save' triggers refresh
-          await alert('Recipe refreshed successfully!', 'Success')
+          setRefreshProgress('Done!')
+          await new Promise((r) => setTimeout(r, 1000)) // Brief success display
+          onUpdate(data.recipe, 'silent') // Stay on the detail view
         } else {
           throw new Error(data.error || 'Refresh failed')
         }
       } catch (e) {
-        setIsRefreshing(false) // Ensure loading stops on error too
         console.error('Refresh error:', e)
         const errorMsg = e instanceof Error ? e.message : String(e)
         // Check for specific size error we added
@@ -150,6 +151,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         } else {
           await alert(`Failed to refresh recipe: ${errorMsg}`, 'Error')
         }
+      } finally {
+        setIsRefreshing(false)
+        setRefreshProgress('')
       }
     }
   }
@@ -189,6 +193,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         recipe={recipe}
         startCooking={startCooking}
         onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'save')}
+        isRefreshing={isRefreshing}
+        refreshProgress={refreshProgress}
       />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-8 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">
@@ -226,9 +232,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
       {/* Share Recipe Dialog */}
       <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
-
-      {/* Refresh Loading Overlay */}
-      {isRefreshing && <LoadingOverlay message="Refreshing with AI..." />}
     </Stack>
   )
 }

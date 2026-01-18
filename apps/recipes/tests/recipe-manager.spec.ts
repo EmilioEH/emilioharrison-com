@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Recipe Manager', () => {
   // Bypass authentication for all tests in this file

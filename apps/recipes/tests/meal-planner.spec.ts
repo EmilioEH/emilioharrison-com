@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Meal Planner Feature', () => {
   test.beforeEach(async ({ page, context }) => {

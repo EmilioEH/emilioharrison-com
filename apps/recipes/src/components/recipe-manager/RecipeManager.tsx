@@ -255,7 +255,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     const handleNavigateToSettings = () => setView('settings')
     const handleNavigateToFeedbackDashboard = () => setView('feedback-dashboard')
     const handleNavigateToBulkImport = () => setView('bulk-import')
-    const handleNavigateToFamilySettings = () => setView('family-settings')
+    const handleNavigateToFamilySettings = () => {
+      console.log('DEBUG: Navigate to Family Settings Triggered')
+      setView('family-settings')
+    }
     const handleNavigateToAdminDashboard = () => setView('admin-dashboard')
 
     window.addEventListener('navigate-to-settings', handleNavigateToSettings)

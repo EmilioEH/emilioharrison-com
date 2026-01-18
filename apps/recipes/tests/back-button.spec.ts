@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Back Button Navigation', () => {
   test('should not return to login page after logging in and pressing back', async ({

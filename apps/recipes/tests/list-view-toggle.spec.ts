@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test('toggle between grid and list view', async ({ page }) => {
   // 1. Navigate to the app

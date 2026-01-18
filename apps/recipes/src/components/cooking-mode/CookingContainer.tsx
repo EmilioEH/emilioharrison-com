@@ -9,9 +9,7 @@ import { CookingIngredientsOverlay } from './CookingIngredientsOverlay'
 import { IngredientsPanel } from './IngredientsPanel'
 import { CookingTimeline } from './CookingTimeline'
 import { CookingStepList } from './CookingStepList'
-import { CookingOptionsMenu } from './CookingOptionsMenu'
-
-import { ActiveTimersHeader } from './ActiveTimersHeader'
+import { ActiveTimerDisplay } from './ActiveTimerDisplay'
 import { CookingReview } from './CookingReview'
 
 interface CookingContainerProps {
@@ -23,7 +21,6 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [showIngredients, setShowIngredients] = useState(false)
   const [showNavigator, setShowNavigator] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
 
   // Local state to track if we are in review mode
   // The store keeps "isActive" true until we explicitly close everything
@@ -161,17 +158,12 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       {/* Header */}
       <CookingHeader
         session={session}
-        totalSteps={session.recipe.steps.length + 1}
+        title={session.recipe.title}
         onExit={() => setShowExitConfirm(true)}
         onMinimize={() => onClose()}
         onShowIngredients={() => setShowIngredients(true)}
-        onShowMenu={() => setShowMenu(true)}
         onShowNavigator={() => setShowNavigator(true)}
-        onStepJump={(idx) => cookingSessionActions.goToStep(idx)}
       />
-
-      {/* Persistent Condensed Timers */}
-      <ActiveTimersHeader />
 
       {/* Main Content Area - Responsive Layout */}
       <div className="flex flex-1 overflow-hidden">
@@ -194,6 +186,8 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
               onStepClick={(idx) => cookingSessionActions.goToStep(idx)}
             />
           </div>
+
+          <ActiveTimerDisplay />
 
           <CookingStepView
             recipe={session.recipe}
@@ -230,8 +224,6 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         onOpenChange={setShowNavigator}
         onStepSelect={(idx) => cookingSessionActions.goToStep(idx)}
       />
-
-      <CookingOptionsMenu isOpen={showMenu} onClose={() => setShowMenu(false)} />
     </Stack>
   )
 }

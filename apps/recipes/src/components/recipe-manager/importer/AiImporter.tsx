@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import type { Recipe } from '../../../lib/types'
-import { Loader2, ChefHat, Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, ChefHat, Info, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { processImage } from '../../../lib/image-optimization'
 import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
 import { Stack, Cluster } from '@/components/ui/layout'
-import { LoadingOverlay } from '@/components/ui/LoadingOverlay'
+// Removed blocking LoadingOverlay - using inline feedback instead
 import { uploadImage } from './api'
 
 interface AiImporterProps {
@@ -37,6 +37,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     tasteProfile,
     setTasteProfile,
     handleProcess,
+    progressMessage,
   } = useAiImporter({ onRecipeParsed, mode })
 
   const [internalIsUploading, setInternalIsUploading] = useState(false)
@@ -49,7 +50,8 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     setInternalIsUploading(true)
 
     try {
-      const file = await processImage(originalFile)
+      // Optimize image: 1024px max dimension, 0.7 quality
+      const file = await processImage(originalFile, 1024, 0.7)
 
       // Read as base64 for preview and fallback
       const reader = new FileReader()
@@ -266,10 +268,31 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         </Button>
       </Stack>
 
+      {/* Inline progress banner - non-blocking */}
       {(status === 'processing' || internalIsUploading) && (
-        <LoadingOverlay
-          message={internalIsUploading ? 'Uploading Photo...' : 'Consulting Chef Gemini...'}
-        />
+        <div className="mt-4 rounded-lg bg-primary/10 p-3 animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Sparkles className="h-4 w-4 animate-pulse" />
+            <span className="font-medium">
+              {internalIsUploading
+                ? 'Uploading Photo...'
+                : progressMessage || 'Consulting Chef Gemini...'}
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/20">
+            <div
+              className="h-full bg-primary transition-all duration-300 ease-out"
+              style={{
+                width: internalIsUploading
+                  ? '30%'
+                  : progressMessage?.includes('%')
+                    ? progressMessage.match(/\d+/)?.[0] + '%'
+                    : '10%',
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

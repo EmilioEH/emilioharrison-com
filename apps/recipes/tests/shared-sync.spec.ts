@@ -1,4 +1,5 @@
-import { test, expect, type Browser } from '@playwright/test'
+import { test, expect } from './msw-setup'
+import { type Browser } from '@playwright/test'
 
 test.describe('Shared Recipe Storage', () => {
   const createAuthContext = async (browser: Browser, name: string) => {

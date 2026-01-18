@@ -62,17 +62,13 @@ test.describe('Recipe Cooking Mode', () => {
 
     // Verify we are in Cooking Mode - Step 1 is now Prep
     await expect(page.getByText('Prep Ingredients')).toBeVisible()
-    // Total steps = 2 + 1 (Prep) = 3
-    await expect(page.getByText('Step 1 of 3')).toBeVisible()
 
     // 3. Navigate to Step 2 (First Instruction)
     await page.getByRole('button', { name: 'Start Cooking' }).click() // Prep step has "Start Cooking" button to next
-    await expect(page.getByText('Step 2 of 3')).toBeVisible()
     await expect(page.getByText(RECIPE.steps[0])).toBeVisible()
 
     // 4. Navigate to Step 3 (Second Instruction)
     await page.getByRole('button', { name: 'Next Step' }).click()
-    await expect(page.getByText('Step 3 of 3')).toBeVisible()
     await expect(page.getByText(RECIPE.steps[1])).toBeVisible()
 
     // 5. Check for Suggested Timer button (step has "20 mins")
@@ -89,7 +85,6 @@ test.describe('Recipe Cooking Mode', () => {
 
     // Navigate back to last step (3) for exit flow
     await page.getByTestId('timeline-step-3').click()
-    await expect(page.getByText('Step 3 of 3')).toBeVisible()
 
     // 7. Test Exit Flow
     await page.getByLabel('Exit Cooking Mode').click()

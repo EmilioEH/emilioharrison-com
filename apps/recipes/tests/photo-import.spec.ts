@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Photo Import Workflow', () => {
   test('should display source image after importing', async ({ page }) => {

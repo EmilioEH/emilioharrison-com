@@ -26,7 +26,7 @@ interface RecipeManagerViewProps {
   isGenerating: boolean
   targetRecipes: Recipe[]
   handleOnboardingComplete: () => void
-  handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit') => void
+  handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent') => void
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
   handleToggleFavorite: (recipe: Recipe) => void

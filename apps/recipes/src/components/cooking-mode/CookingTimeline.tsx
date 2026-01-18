@@ -17,6 +17,9 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
   // Use a ref to store references to each node element so we can scroll them into view
   const nodeRefs = useRef<(HTMLDivElement | null)[]>([])
 
+  // Adaptive sizing: use compact mode when there are many steps
+  const isCompact = totalSteps > 6
+
   // Auto-scroll to the active step when it changes
   useEffect(() => {
     const activeNode = nodeRefs.current[currentStep - 1]
@@ -49,7 +52,9 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
       ref={scrollContainerRef}
       className="no-scrollbar flex w-full overflow-x-auto scroll-smooth bg-muted/5 transition-all md:h-full md:w-20 md:flex-col md:overflow-y-auto md:overflow-x-hidden md:border-r md:border-border md:bg-muted/10 md:py-6"
     >
-      <div className="flex w-full flex-row items-center gap-1 px-4 py-3 md:min-h-full md:w-auto md:flex-col md:px-0 md:py-0">
+      <div
+        className={`flex w-full flex-row items-center gap-1 px-4 py-2 md:min-h-full md:w-auto md:flex-col md:px-0 md:py-0 ${isCompact ? 'gap-0.5' : ''}`}
+      >
         {Array.from({ length: totalSteps }).map((_, index) => {
           // Use 0-based step numbering: 0 = Prep, 1..N = instruction steps
           const stepNum = index
@@ -58,6 +63,10 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
           const isCompleted = index < currentStep - 1
           const isCurrent = index === currentStep - 1
           const isLast = index === totalSteps - 1
+
+          // Size classes based on compact mode
+          const currentSizeClass = isCompact ? 'h-7 w-7 md:h-8 md:w-8' : 'h-8 w-8 md:h-9 md:w-9'
+          const otherSizeClass = isCompact ? 'h-5 w-5' : 'h-6 w-6'
 
           return (
             <React.Fragment key={index}>
@@ -78,7 +87,7 @@ export const CookingTimeline: React.FC<CookingTimelineProps> = ({
                 tabIndex={0}
                 data-testid={`timeline-step-${stepNum}`}
                 className={`relative flex flex-shrink-0 cursor-pointer items-center justify-center transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  isCurrent ? 'h-10 w-10 md:h-11 md:w-11' : 'h-8 w-8'
+                  isCurrent ? currentSizeClass : otherSizeClass
                 }`}
               >
                 {/* Node Background */}

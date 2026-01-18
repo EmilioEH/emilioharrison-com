@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 import { AUTH_COOKIES } from './msw-setup'
 
 test.describe('Week View Synchronization', () => {
@@ -40,8 +40,12 @@ test.describe('Week View Synchronization', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 4. Add to "This Week"
+    // Wait for the save operation to complete provided by the mock
+    await expect(page.getByText('Recipe saved')).toBeVisible()
+
     // Find the recipe card
-    const recipeCard = page.locator('article', { hasText: 'Toast' })
+    const recipeCard = page.locator('article', { hasText: 'Toast' }).first()
+    await expect(recipeCard).toBeVisible()
     // Open 3-dot menu or context menu - wait, current UI might be different.
     // Let's use the explicit "Add to Week" if available, or just toggle "This Week" in detail.
     await recipeCard.click()
@@ -64,9 +68,9 @@ test.describe('Week View Synchronization', () => {
     // Click delete (might be in menu)
     // Assuming delete button is visible or in a menu in detail view
     // Check RecipeDetail.tsx: it has onDelete prop, usually a trash icon.
-    await page.getByRole('button', { name: 'Delete Recipe' }).click()
     // Confirm dialog
-    await page.on('dialog', (dialog) => dialog.accept())
+    page.on('dialog', (dialog) => dialog.accept())
+    await page.getByRole('button', { name: 'Delete Recipe' }).click()
 
     // 7. Verify Week Context Bar count is 0
     // Wait for animation

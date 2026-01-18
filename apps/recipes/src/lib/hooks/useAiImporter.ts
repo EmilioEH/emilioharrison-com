@@ -16,6 +16,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   const [imageData, setImageData] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
 
   const [dishName, setDishName] = useState('')
   const [cuisine, setCuisine] = useState('')
@@ -23,13 +24,26 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   const [dietaryNotes, setDietaryNotes] = useState('')
   const [tasteProfile, setTasteProfile] = useState('')
 
+  const [progressMessage, setProgressMessage] = useState('')
+
   const handleProcess = async () => {
+    // Cancel any existing request
+    if (abortController) {
+      abortController.abort()
+    }
+
+    const newController = new AbortController()
+    setAbortController(newController)
     setStatus('processing')
     setErrorMsg('')
+    setProgressMessage('Consulting Chef Gemini...')
+
     try {
       const payload = buildPayload()
       const baseUrl = getBaseUrl()
-      const data = await parseRecipe(payload, baseUrl)
+      const data = await parseRecipe(payload, baseUrl, newController.signal, (msg) => {
+        setProgressMessage(msg)
+      })
 
       const recipeWithSource = {
         ...(data as object),
@@ -39,10 +53,26 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
 
       onRecipeParsed(recipeWithSource)
       setStatus('idle')
+      setAbortController(null)
     } catch (err: unknown) {
+      // Don't show error if request was cancelled
+      if (err instanceof Error && err.name === 'AbortError') {
+        setStatus('idle')
+        return
+      }
+
       console.error(err)
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
       setStatus('error')
+      setAbortController(null)
+    }
+  }
+
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort()
+      setAbortController(null)
+      setStatus('idle')
     }
   }
 
@@ -111,5 +141,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     tasteProfile,
     setTasteProfile,
     handleProcess,
+    handleCancel,
+    progressMessage,
   }
 }

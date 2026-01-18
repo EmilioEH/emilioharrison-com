@@ -1,4 +1,5 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect } from './msw-setup'
+import { devices } from '@playwright/test'
 
 test.describe('Onboarding Flow', () => {
   test('Desktop user sees blocker', async ({ page, context }) => {

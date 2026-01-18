@@ -1,14 +1,69 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { UtensilsCrossed, Check } from 'lucide-react'
+import { Check, AlertTriangle } from 'lucide-react'
 import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 import { TimerControl } from './TimerControl'
 import { PrepStep } from './PrepStep'
 import { Stack, Inline } from '../ui/layout'
 import { cn } from '../../lib/utils'
-import { getIngredientsForStep } from '../../utils/ingredientParsing'
 import type { Recipe, StructuredStep } from '../../lib/types'
+
+// Error Boundary to gracefully handle crashes in step content
+interface StepErrorBoundaryProps {
+  stepText: string
+  stepNumber: number
+  children: React.ReactNode
+}
+
+interface StepErrorBoundaryState {
+  hasError: boolean
+  error?: Error
+}
+
+class StepErrorBoundary extends React.Component<StepErrorBoundaryProps, StepErrorBoundaryState> {
+  constructor(props: StepErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error): StepErrorBoundaryState {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[CookingMode] Step rendering error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Fallback UI: Show the step text in a simple format
+      return (
+        <Stack spacing="lg" className="w-full">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <Inline spacing="sm" className="mb-2 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-5 w-5" />
+              <span className="font-medium">Display Error</span>
+            </Inline>
+            <p className="text-sm text-muted-foreground">
+              There was an issue displaying this step. Showing plain text:
+            </p>
+          </div>
+          <Stack spacing="lg" className="items-center py-4">
+            <h2 className="text-center font-display text-lg font-bold text-foreground">
+              Step {this.props.stepNumber}
+            </h2>
+            <p className="text-center font-display text-xl font-bold leading-tight text-foreground">
+              {this.props.stepText}
+            </p>
+          </Stack>
+        </Stack>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 interface CookingStepViewProps {
   recipe: Recipe
@@ -84,22 +139,6 @@ const slideVariants = {
   }),
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0 },
-}
-
 // Preview card for previous/next steps (styled like original buttons)
 interface PreviewCardProps {
   stepText: string
@@ -112,12 +151,12 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ stepText, stepNumber, label, 
   <button
     type="button"
     onClick={onClick}
-    className="group w-full cursor-pointer rounded-xl border border-dashed border-border/50 bg-muted/20 p-4 text-left transition-all hover:bg-muted/40 active:scale-95"
+    className="group mt-4 w-full cursor-pointer rounded-xl border border-dashed border-border/60 bg-muted/30 p-4 text-left transition-all hover:bg-muted/50 active:scale-95"
   >
-    <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary">
+    <span className="mb-1 block font-display text-xs font-bold uppercase tracking-widest text-foreground/70 group-hover:text-primary">
       {label}: Step {stepNumber}
     </span>
-    <p className="line-clamp-1 text-sm text-muted-foreground opacity-60">{stepText}</p>
+    <p className="line-clamp-1 text-sm text-foreground/60">{stepText}</p>
   </button>
 )
 
@@ -133,16 +172,10 @@ interface CurrentStepContentProps {
 const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   stepText,
   stepNumber,
-  recipe,
-  instructionIdx,
+  recipe: _recipe,
+  instructionIdx: _instructionIdx,
   structuredStep,
 }) => {
-  // Get ingredients for this step
-  const stepIngredients =
-    recipe.stepIngredients && recipe.stepIngredients[instructionIdx]
-      ? recipe.stepIngredients[instructionIdx].indices.map((idx) => recipe.ingredients[idx])
-      : getIngredientsForStep(stepText, recipe.ingredients)
-
   // Substep State
   // We use local state for now. In a perfect world, this would be in cookingSession store,
   // but for V1 we'll let it be ephemeral per visual instance.
@@ -185,13 +218,29 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   }
 
   const mainTextClass = getFontSize(stepText)
-  const hasSubsteps = structuredStep?.substeps && structuredStep.substeps.length > 0
+
+  // Parse substeps - they may be stored as JSON string in Firestore
+  type Substep = { text: string; action: string; targets: string[] }
+  const getSubsteps = (): Substep[] => {
+    const raw = structuredStep?.substeps
+    if (!raw) return []
+    if (Array.isArray(raw)) return raw as Substep[]
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : []
+      } catch {
+        return []
+      }
+    }
+    return []
+  }
+
+  const substeps = getSubsteps()
+  const hasSubsteps = substeps.length > 0
 
   return (
     <Stack spacing="lg" className="w-full">
-      {/* Timer Controls */}
-      <TimerControl stepNumber={stepNumber} suggestedDuration={suggestedTimer} />
-
       {/* Main Instruction Text (Show only if no substeps OR as a header) */}
       {/* Design choice: If we have substeps, the main text serves as the "Goal" or "Summary".
           If it's short, it's a Title. If it's long, it might be redundant with substeps.
@@ -228,102 +277,80 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
       {/* Nested Substeps Checklist */}
       {hasSubsteps && (
         <Stack spacing="md" className="mt-4 w-full">
-          {(structuredStep?.substeps || []).map(
-            (sub: { text: string; action: string; targets: string[] }, i: number) => {
-              const isChecked = completedSubsteps[i]
-              return (
-                <motion.button
-                  key={i}
-                  onClick={() => toggleSubstep(i)}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+          {substeps.map((sub, i) => {
+            const isChecked = completedSubsteps[i]
+            return (
+              <motion.button
+                key={i}
+                onClick={() => toggleSubstep(i)}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className={cn(
+                  'active:scale-98 group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all',
+                  isChecked
+                    ? 'border-primary/20 bg-primary/5'
+                    : 'border-border bg-card hover:border-primary/50',
+                )}
+              >
+                {/* Custom Checkbox */}
+                <div
                   className={cn(
-                    'active:scale-98 group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all',
+                    'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors',
                     isChecked
-                      ? 'border-primary/20 bg-primary/5'
-                      : 'border-border bg-card hover:border-primary/50',
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-muted-foreground/30 text-transparent group-hover:border-primary/50',
                   )}
                 >
-                  {/* Custom Checkbox */}
-                  <div
-                    className={cn(
-                      'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-                      isChecked
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-muted-foreground/30 text-transparent group-hover:border-primary/50',
-                    )}
-                  >
-                    <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                  </div>
+                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                </div>
 
-                  {/* Substep Text with Highlighted Action */}
-                  <span
-                    className={cn(
-                      'flex-1 text-lg font-medium leading-snug',
-                      isChecked
-                        ? 'text-muted-foreground line-through opacity-80'
-                        : 'text-foreground',
-                    )}
-                  >
-                    {/* Highlight the Action Verb if it exists at start of string or in text */}
-                    {sub.action ? (
-                      <span>
-                        {sub.text
-                          .split(new RegExp(`(${sub.action})`, 'i'))
-                          .map((part: string, idx: number) =>
-                            part.toLowerCase() === sub.action.toLowerCase() ? (
-                              <span key={idx} className={isChecked ? '' : 'text-primary'}>
-                                {part}
-                              </span>
-                            ) : (
-                              part
-                            ),
-                          )}
-                      </span>
-                    ) : (
-                      sub.text
-                    )}
-                  </span>
-                </motion.button>
-              )
-            },
-          )}
+                {/* Substep Text with Highlighted Action */}
+                <span
+                  className={cn(
+                    'flex-1 text-lg font-medium leading-snug',
+                    isChecked ? 'text-muted-foreground line-through opacity-80' : 'text-foreground',
+                  )}
+                >
+                  {/* Highlight the Action Verb if it exists at start of string or in text */}
+                  {sub.action ? (
+                    <span>
+                      {(() => {
+                        // Safely escape regex special characters to prevent crashes
+                        const escapeRegExp = (str: string) =>
+                          str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                        try {
+                          const escapedAction = escapeRegExp(sub.action)
+                          return sub.text
+                            .split(new RegExp(`(${escapedAction})`, 'i'))
+                            .map((part: string, idx: number) =>
+                              part.toLowerCase() === sub.action.toLowerCase() ? (
+                                <span key={idx} className={isChecked ? '' : 'text-primary'}>
+                                  {part}
+                                </span>
+                              ) : (
+                                part
+                              ),
+                            )
+                        } catch {
+                          // Fallback: just show the text without highlighting
+                          return sub.text
+                        }
+                      })()}
+                    </span>
+                  ) : (
+                    sub.text
+                  )}
+                </span>
+              </motion.button>
+            )
+          })}
         </Stack>
       )}
 
-      {/* Contextual Ingredients (Only show if NOT in substep mode, or at bottom?) 
-          Actually, substeps usually mention ingredients. But mapping is still useful.
-      */}
-      {stepIngredients.length > 0 && (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="rounded-2xl border border-border bg-card p-5 shadow-sm"
-        >
-          <h4 className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            <span className="rounded-md bg-primary/20 p-1">
-              <UtensilsCrossed className="size-3.5 text-primary" />
-            </span>
-            Ingredients Needed
-          </h4>
-          <Stack as="ul" spacing="sm">
-            {stepIngredients.map((ing, i) => (
-              <motion.li key={i} variants={itemVariants} className="flex items-start gap-3">
-                <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                <span className="text-lg font-medium">
-                  <b className="text-foreground">{ing.amount}</b>{' '}
-                  <span className="text-muted-foreground">{ing.name}</span>
-                  {ing.prep && (
-                    <span className="italic text-muted-foreground opacity-70">, {ing.prep}</span>
-                  )}
-                </span>
-              </motion.li>
-            ))}
-          </Stack>
-        </motion.div>
-      )}
+      <TimerControl stepNumber={stepNumber} suggestedDuration={suggestedTimer} />
+
+      {/* Contextual Ingredients (Moved to Sticky Drawer) */}
     </Stack>
   )
 }
@@ -401,8 +428,8 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
     <div className="flex h-full flex-col">
       {/* Carousel Container */}
       <div className="relative flex-1 overflow-hidden">
-        <div className="absolute inset-0 flex flex-col items-center justify-center overflow-y-auto p-6">
-          <div className="relative flex h-full w-full max-w-2xl flex-col items-center">
+        <div className="absolute inset-0 flex flex-col items-center overflow-y-auto px-6 pb-24 pt-4">
+          <div className="relative flex w-full max-w-2xl flex-1 flex-col items-center justify-center">
             {/* Render ALL steps (or windowed subset) but keep them in DOM with stable keys */},
             {/* Render ALL steps (or windowed subset) but keep them in DOM with stable keys */}
             {recipe.steps.map((stepText, idx) => {
@@ -431,9 +458,9 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
                                 - offset 1 (Bottom): Show Preview Card for THIS step
                             */}
 
-                  {/* CASE 1: Top Card (Previous) */}
+                  {/* CASE 1: Top Card (Previous) - Hidden on mobile to prevent overlap */}
                   {offset === -1 && (
-                    <div className="pointer-events-auto">
+                    <div className="pointer-events-auto hidden md:block">
                       <PreviewCard
                         stepText={stepText}
                         stepNumber={thisStepIdx}
@@ -443,10 +470,10 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
                     </div>
                   )}
 
-                  {/* CASE 2: Prep Card (Special Case: If we are at first instruction, show Prep as previous) */}
+                  {/* CASE 2: Prep Card (Special Case - Hidden on mobile) */}
                   {currentInstructionIdx === 0 && offset === 0 && (
                     <motion.div
-                      className="absolute left-0 top-0 w-full"
+                      className="absolute left-0 top-0 hidden w-full md:block"
                       animate="top"
                       variants={carouselVariants}
                     >
@@ -463,18 +490,20 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
 
                   {/* CASE 3: Center Card (Current) */}
                   {offset === 0 && (
-                    <CurrentStepContent
-                      stepText={stepText}
-                      stepNumber={thisStepIdx}
-                      recipe={recipe}
-                      instructionIdx={idx}
-                      structuredStep={recipe.structuredSteps?.[idx]}
-                    />
+                    <StepErrorBoundary stepText={stepText} stepNumber={thisStepIdx}>
+                      <CurrentStepContent
+                        stepText={stepText}
+                        stepNumber={thisStepIdx}
+                        recipe={recipe}
+                        instructionIdx={idx}
+                        structuredStep={recipe.structuredSteps?.[idx]}
+                      />
+                    </StepErrorBoundary>
                   )}
 
-                  {/* CASE 4: Bottom Card (Next) */}
+                  {/* CASE 4: Bottom Card (Next) - Hidden on mobile to prevent overlap */}
                   {offset === 1 && (
-                    <div className="pointer-events-auto">
+                    <div className="pointer-events-auto hidden md:block">
                       <PreviewCard
                         stepText={stepText}
                         stepNumber={thisStepIdx}

@@ -1,7 +1,10 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 
 test.describe('Authentication Flow', () => {
-  test('should display login page with Google Sign-in', async ({ page }) => {
+  test('should display login page with Google Sign-in', async ({ page, context }) => {
+    // Clear auto-login cookies from msw-setup
+    await context.clearCookies()
+
     // 1. Visit Login Page
     await page.goto('/protected/recipes/login')
 
@@ -10,7 +13,8 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
   })
 
-  test('should handle pending access status', async ({ page }) => {
+  test('should handle pending access status', async ({ page, context }) => {
+    await context.clearCookies()
     // Mock Login Response for "Pending"
     await page.route('**/api/auth/login', async (route) => {
       const json = { error: 'Unauthorized', code: 'auth/pending', details: 'Pending Approval' }
@@ -36,7 +40,8 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByRole('button', { name: 'Check Status' })).toBeVisible()
   })
 
-  test('should handle denied access and request flow', async ({ page }) => {
+  test('should handle denied access and request flow', async ({ page, context }) => {
+    await context.clearCookies()
     // Mock Login Response for "Denied"
     await page.route('**/api/auth/login', async (route) => {
       const json = { error: 'Unauthorized', code: 'auth/denied', details: 'Access Denied' }
@@ -76,7 +81,8 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByText('Access Pending')).toBeVisible()
   })
 
-  test('should handle invite code redemption', async ({ page }) => {
+  test('should handle invite code redemption', async ({ page, context }) => {
+    await context.clearCookies()
     // 1. Mock Login Failure (Denied)
     await page.route('**/api/auth/login', async (route) => {
       const json = { error: 'Unauthorized', code: 'auth/denied', details: 'Access Denied' }

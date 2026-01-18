@@ -99,13 +99,19 @@ export function useRecipeHandlers({
     }
   }
 
-  const handleUpdateRecipe = (updatedRecipe: Recipe, mode: 'save' | 'edit' = 'save') => {
+  const handleUpdateRecipe = (updatedRecipe: Recipe, mode: 'save' | 'edit' | 'silent' = 'save') => {
     if (mode === 'edit') {
       setRecipe(updatedRecipe.id)
       setView('edit')
-    } else {
+    } else if (mode === 'silent') {
+      // In-place update without navigation (for AI refresh, cost updates, etc.)
       const changes = { ...updatedRecipe, updatedAt: new Date().toISOString() }
-      handleSaveRecipeInternal(changes)
+      saveRecipe(changes) // Just save, don't navigate
+      setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
+    } else {
+      // Original 'save' behavior (from editor)
+      const changes = { ...updatedRecipe, updatedAt: new Date().toISOString() }
+      handleSaveRecipeInternal(changes) // Navigate to library
       setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
     }
   }

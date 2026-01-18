@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './msw-setup'
 import type { Page, ConsoleMessage } from '@playwright/test'
 import type { Recipe } from '../src/lib/types'
 
