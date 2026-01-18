@@ -4,11 +4,12 @@ import { useStore } from '@nanostores/react'
 import { DetailHeader } from '../recipe-details/DetailHeader'
 import type { HeaderAction } from '../recipe-details/types'
 import { Stack, Inline } from '../ui/layout'
+import { LoadingOverlay } from '../ui/LoadingOverlay'
 import { CookingContainer } from '../cooking-mode/CookingContainer'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
-import { Play, Check, ListPlus, Loader2 } from 'lucide-react'
+import { Play, Check, ListPlus } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
@@ -227,12 +228,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
 
       {/* Refresh Loading Overlay */}
-      {isRefreshing && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 font-display text-lg font-bold">Refreshing with AI...</p>
-        </div>
-      )}
+      {isRefreshing && <LoadingOverlay message="Refreshing with AI..." />}
     </Stack>
   )
 }

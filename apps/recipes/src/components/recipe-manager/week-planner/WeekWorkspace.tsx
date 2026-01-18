@@ -16,6 +16,8 @@ import {
   Zap,
 } from 'lucide-react'
 
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay'
+
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
 import { buildGroceryItems, calculateCostEstimate } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
@@ -419,6 +421,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
           </>
         )}
       </div>
+      {isOptimizing && <LoadingOverlay message="Optimizing Grocery List..." />}
     </motion.div>
   )
 }

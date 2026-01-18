@@ -7,6 +7,7 @@ import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
 import { Stack, Cluster } from '@/components/ui/layout'
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay'
 import { uploadImage } from './api'
 
 interface AiImporterProps {
@@ -264,6 +265,12 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               : 'Process Recipe'}
         </Button>
       </Stack>
+
+      {(status === 'processing' || internalIsUploading) && (
+        <LoadingOverlay
+          message={internalIsUploading ? 'Uploading Photo...' : 'Consulting Chef Gemini...'}
+        />
+      )}
     </div>
   )
 }
