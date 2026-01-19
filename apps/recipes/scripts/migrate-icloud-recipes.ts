@@ -362,7 +362,8 @@ async function migrate() {
 
         // OPTIMIZE IMAGE (Resize & Compress)
         // --------------------------------------------------------------------------
-        let optimizedBuffer = processedBuffer // Start with heic-converted or original buffer
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let optimizedBuffer: any = processedBuffer // Start with heic-converted or original buffer
         let optimizedMimeType = mimeType
 
         // If it was HEIC, we already converted it to JPEG buffer above.
