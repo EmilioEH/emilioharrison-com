@@ -41,15 +41,25 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   isRefreshing = false,
   refreshProgress = '',
 }) => {
-  // NEW: View Mode State (defaults to 'enhanced' if available, else 'original')
-  // But wait, user requirement: "The user captured it immediately... allow user to toggle"
-  // If it was just scanned (strict), enhanced might not exist yet.
-  // So validation: checking if structuredSteps exist.
+  // Validate enhanced content exists
   const hasEnhancedContent =
     (recipe.structuredSteps?.length || 0) > 0 || (recipe.ingredientGroups?.length || 0) > 0
-  const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(
-    hasEnhancedContent ? 'enhanced' : 'original',
-  )
+
+  // NEW: View Mode State with localStorage persistence
+  const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(() => {
+    const savedPreference = localStorage.getItem('recipe-view-mode')
+    if (savedPreference === 'original' || savedPreference === 'enhanced') {
+      return savedPreference
+    }
+    // Default to enhanced if available
+    return hasEnhancedContent ? 'enhanced' : 'original'
+  })
+
+  // Save preference when user manually changes it
+  const handleViewModeChange = (mode: 'original' | 'enhanced') => {
+    setViewMode(mode)
+    localStorage.setItem('recipe-view-mode', mode)
+  }
 
   // Effect: When background enhancement finishes (prop update), notify user or auto-switch?
   // User asked for "Instantly toggle... notification".
@@ -344,13 +354,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               {hasEnhancedContent && (
                 <div className="ml-2 flex shrink-0 rounded-full border border-border bg-muted p-1">
                   <button
-                    onClick={() => setViewMode('original')}
+                    onClick={() => handleViewModeChange('original')}
                     className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'original' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     Original
                   </button>
                   <button
-                    onClick={() => setViewMode('enhanced')}
+                    onClick={() => handleViewModeChange('enhanced')}
                     className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'enhanced' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     <Sparkles className="h-3 w-3" /> Smart View
@@ -371,6 +381,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 </a>
               </Button>
             )}
+
+            {/* Modification Date (Critical for tests/features) */}
+            <div className="mb-4 text-xs text-muted-foreground">
+              Updated {new Date(recipe.updatedAt || recipe.createdAt || '').toLocaleDateString()}
+            </div>
 
             {recipe.description && (
               <p className="mb-4 mt-2 text-base italic leading-relaxed text-muted-foreground">

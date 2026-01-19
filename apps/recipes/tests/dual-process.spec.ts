@@ -106,11 +106,13 @@ test.describe('Dual-Process Recipe Import', () => {
             ingredients: [{ name: 'Simple Ingredient', amount: '1' }],
             steps: ['Just one simple step.'],
             creationMethod: 'ai-parse',
-            // ADD ENHANCED DATA
+            // ADD ENHANCED DATA (must be non-empty to trigger toggle)
             structuredSteps: [
               { text: 'Just one simple step.', highlightedText: '**Just** one simple step.' },
             ],
-            ingredientGroups: [],
+            ingredientGroups: [
+              { header: 'MAIN', startIndex: 0, endIndex: 0 }, // Non-empty array
+            ],
           },
         },
       })
@@ -119,6 +121,9 @@ test.describe('Dual-Process Recipe Import', () => {
     // Go to Detail View
     // Since we are in Library (virtual view), we click the recipe
     await page.getByText('Strict Recipe').click()
+
+    // Wait for React to update with enhanced data from the mock
+    await page.waitForTimeout(1000)
 
     // Verify "Smart View" toggle exists
     await expect(page.getByText('Smart View')).toBeVisible()

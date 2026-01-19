@@ -383,7 +383,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   const handleDeleteAll = async () => {
     if (await confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
-      setRecipes([])
+      const allIds = new Set(recipes.map((r) => r.id))
+      const success = await bulkDeleteRecipes(allIds)
+      if (success) {
+        setRecipes([])
+        await alert('All recipes deleted.')
+      } else {
+        await alert('Failed to delete all recipes.')
+      }
       setView('library')
     }
   }

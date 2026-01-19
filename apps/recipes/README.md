@@ -14,9 +14,9 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Data Control**: Export/Import your data and manage bulk deletions.
 - **Share Recipes**: Share any recipe as plain text (clipboard/native share) or as a professionally styled PDF. Customizable export includes recipe photo, notes, ratings, and cooking history. Uses Web Share API on mobile for seamless sharing.
 - **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor with three modes:
-  - **Scan**: Upload a photo of a written recipe card for AI parsing.
+  - **Scan**: Upload a photo of a written recipe card. **Dual-Process technology** immediately transcribes the text ("Strict Mode") so you can save right away, while AI runs in the background to structured and enhance the recipe with "Smart View" grouping.
   - **Dish (Experimental)**: Upload a photo of a finished dish. Gemini will **reverse-engineer** the recipe, inferring likely ingredients and steps based on the visual cues and optional context (Cuisine, Taste Profile) you provide.
-  - **URL**: Paste a link to import from a website.
+  - **URL**: Paste a link to import from a website. Also uses **Dual-Process**: immediate parsing followed by background enhancement.
   - **Import**: Bulk upload markdown files or manually enter details from one streamlined interface.
 - **Smart Notifications**: "Hybrid" reminder system for meal planning, grocery lists, and daily cooking prompts (Service Worker + In-App Fallback).
 - **Offline Capable**: Full PWA support with offline view and cached recipes.
@@ -87,7 +87,9 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 
 - **Data Priority**: The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_. Only if JSON-LD is missing does it construct a prompt for Gemini.
 - **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI is instructed to transcribe the recipe _exactly as written_, preserving the original author's voice and structure.
-- **Enhancement Mode (Kenji-Style)**: Used during **AI Refresh** and **Dish Photo Scan**. The AI applies "Kenji Lopez-Alt" style best practices:
+- **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI transcribes the recipe _exactly as written_, providing immediate access to the data.
+- **Dual-Process Enhancement**: After a new recipe is saved, a background job automatically triggers **Enhancement Mode**. This generates "Smart View" data (ingredient grouping, structured steps) without blocking the user.
+- **Enhancement Mode (Kenji-Style)**: Used during background enhancement, **AI Refresh**, and **Dish Photo Scan**. The AI applies "Kenji Lopez-Alt" style best practices:
   - **Scientific Grouping**: Group steps chronologically by component (e.g., "Prepare the Marina", "Cook the Pasta").
   - **Descriptive Paragraphs**: Combine atomic steps into readable, narrative paragraphs.
   - **Logical Formatting**: Standardizes units and ingredient names.

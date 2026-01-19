@@ -110,7 +110,6 @@ export class FirebaseRestService {
     const token = await this.getAccessToken()
     const baseUrl = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
 
-     
     let allDocuments: any[] = []
     let nextPageToken: string | undefined = undefined
     let pageCount = 0
@@ -148,7 +147,6 @@ export class FirebaseRestService {
     orderByField?: string,
     direction: 'ASC' | 'DESC' = 'DESC',
     pageToken?: string,
-     
   ): Promise<{ documents: any[]; nextPageToken?: string } | null> {
     const params = new URLSearchParams()
 
@@ -195,7 +193,6 @@ export class FirebaseRestService {
     return this.mapFirestoreDoc(data) as T
   }
 
-   
   async createDocument(collection: string, id: string | null, data: any) {
     const token = await this.getAccessToken()
     let url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
@@ -234,7 +231,6 @@ export class FirebaseRestService {
     return await res.json()
   }
 
-   
   async setDocument(collection: string, id: string, data: any, _merge = false) {
     // Uses PATCH to update/create
     const token = await this.getAccessToken()
@@ -280,7 +276,6 @@ export class FirebaseRestService {
     return await res.json()
   }
 
-   
   async updateDocument(collection: string, id: string, data: any) {
     return this.setDocument(collection, id, data, true)
   }
@@ -381,17 +376,16 @@ export class FirebaseRestService {
   }
 
   // --- Helpers ---
-   
+
   private mapFirestoreDoc(doc: any) {
     const id = doc.name.split('/').pop()
     const data = this.fromFirestoreFields(doc.fields)
     return { id, ...data }
   }
 
-   
   private fromFirestoreFields(fields: any): any {
     if (!fields) return {}
-     
+
     const obj: any = {}
     for (const key in fields) {
       const val = fields[key]
@@ -401,7 +395,6 @@ export class FirebaseRestService {
       else if (val.booleanValue !== undefined) obj[key] = val.booleanValue
       else if (val.timestampValue !== undefined) obj[key] = val.timestampValue
       else if (val.arrayValue !== undefined) {
-         
         obj[key] = (val.arrayValue.values || []).map((v: any) => this.fromFirestoreValue(v))
       } else if (val.mapValue !== undefined) {
         obj[key] = this.fromFirestoreFields(val.mapValue.fields)
@@ -410,7 +403,6 @@ export class FirebaseRestService {
     return obj
   }
 
-   
   private fromFirestoreValue(val: any): any {
     if (val.stringValue !== undefined) return val.stringValue
     else if (val.integerValue !== undefined) return Number(val.integerValue)
@@ -419,9 +411,7 @@ export class FirebaseRestService {
     return Object.values(val)[0]
   }
 
-   
   private toFirestoreFields(obj: any, inArray = false): any {
-     
     const fields: any = {}
     for (const key in obj) {
       const val = obj[key]
@@ -430,7 +420,6 @@ export class FirebaseRestService {
     return fields
   }
 
-   
   private toFirestoreNumber(val: number): any {
     if (Number.isNaN(val)) return { doubleValue: 'NaN' }
     if (val === Infinity) return { doubleValue: 'Infinity' }
@@ -439,7 +428,6 @@ export class FirebaseRestService {
     return { doubleValue: val }
   }
 
-   
   private toFirestoreValue(val: any, inArray = false): any {
     if (val === null || val === undefined) return { nullValue: null }
     if (typeof val === 'string') return { stringValue: val }
@@ -455,7 +443,6 @@ export class FirebaseRestService {
         return { stringValue: JSON.stringify(val) }
       }
 
-       
       const values = val.map((v: any) => this.toFirestoreValue(v, true))
       return { arrayValue: { values } }
     }

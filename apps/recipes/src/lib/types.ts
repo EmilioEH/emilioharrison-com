@@ -90,6 +90,10 @@ export interface Recipe {
   finishedImage?: string // Base64 or URL
   images?: string[] // Array of all recipe images (first one is primary)
 
+  // Enhancement Status (for dual-process import)
+  enhancementStatus?: 'pending' | 'processing' | 'complete' | 'error'
+  enhancementError?: string // Optional error message if enhancement fails
+
   // Version History (Full Snapshots)
   versions?: RecipeVersion[]
 }
