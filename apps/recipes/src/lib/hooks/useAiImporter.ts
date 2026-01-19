@@ -61,7 +61,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
         return
       }
 
-      console.error(err)
+      // console.error(err)
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
       setStatus('error')
       setAbortController(null)
@@ -80,6 +80,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     url?: string
     image?: string
     mode?: 'parse' | 'infer'
+    style?: 'strict' | 'enhanced'
     dishName?: string
     cuisine?: string
     knownIngredients?: string
@@ -90,7 +91,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   function buildPayload(): ParsePayload {
     if (mode === 'url') {
       if (!url) throw new Error('Please enter a URL')
-      return { url }
+      return { url, style: 'strict' }
     }
 
     if (!imageData) throw new Error('Please select an image')
@@ -102,6 +103,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       return {
         image: imageData,
         mode: 'infer' as const,
+        style: 'enhanced', // Kenji-style enhancement for dish photos
         dishName: dishName || undefined,
         cuisine: cuisine || undefined,
         knownIngredients: knownIngredients || undefined,
@@ -110,7 +112,11 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       }
     }
 
-    return { image: imageData }
+    // Default to strict for photo scan and url
+    return {
+      image: imageData,
+      style: 'strict',
+    }
   }
 
   function getBaseUrl() {

@@ -25,6 +25,7 @@ export async function parseRecipe(
     image?: string
     text?: string
     mode?: 'parse' | 'infer'
+    style?: 'strict' | 'enhanced'
     dishName?: string
     cuisine?: string
     knownIngredients?: string

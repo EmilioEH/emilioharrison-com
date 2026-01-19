@@ -15,54 +15,80 @@ const PROTEIN_OPTIONS = [
 ]
 
 // Shared prompt sections for redesign features (ingredient grouping + structured steps)
+
+const INGREDIENT_PARSING_RULES = `
+**INGREDIENT PARSING & FORMATTING (ENHANCED MODE)**:
+- **Dual Measurements**: ALWAYS provide volume (cups/tbsp) AND mass (grams/ounces) for dry goods and produce.
+  - Ex: "1 cup flour" -> amount: "5 oz (140g)", name: "all-purpose flour"
+  - Ex: "1 onion" -> amount: "1 medium", name: "yellow onion", prep: "finely diced (about 1.5 cups)"
+- **State & Prep**: Define the PHYSICAL STATE of the ingredient BEFORE it enters the pan.
+  - Ex: "Butter" -> name: "unsalted butter", prep: "cut into 1/2-inch cubes and kept chilled"
+- **Specificity**: Infer specific varieties contextually.
+  - Ex: "Oil" -> name: "neutral oil", prep: "such as canola, grapeseed, or peanut"
+- **Divided Uses**: If used multiple times (e.g. sauce and pasta water), append ", divided" to the name/prep.
+`
+
 const INGREDIENT_GROUPING_RULES = `
-**INGREDIENT GROUPING (REQUIRED)**:
-- ALWAYS organize ingredients into logical groups, even if the source has no explicit sections.
-- Analyze the steps to understand how ingredients are used together.
-- Common patterns:
-  • "FOR THE [COMPONENT]" - Ingredients blended/mixed together early (curry paste, marinade, dressing)
-  • "THE PROTEIN" - Main protein + its direct seasonings
-  • "AROMATICS" or "BASE" - Onions, garlic, ginger used for sautéing
-  • "TO FINISH" - Fresh herbs, citrus, garnishes added at the end
-- Use SHORT, ALL-CAPS headers (2-4 words max).
-- Every ingredient must belong to exactly one group.
-- Order groups chronologically by when they're used in the recipe.
-- Populate 'ingredientGroups' with startIndex and endIndex for each group.
+**INGREDIENT GROUPING (ENHANCED MODE)**:
+- **Mise-en-Place Flow**: Organize by chronology of use and component grouping.
+- **Logical Sub-Headers**: Group by component (e.g., "FOR THE DUXELLES", "FOR THE BEEF", "FOR THE ASSEMBLY").
+- **Chronological Ordering**: Ingredients listed in exact order they go into the pot.
+- **"Plus More" Syntax**: If used for main task and finishing, use modifier so it doesn't appear twice.
+  - Format: "1/2 cup parsley, minced, plus more for garnish"
+- **Strict Mapping**: Every ingredient must belong to a group.
+- **Populate**: 'ingredientGroups' with startIndex and endIndex for each group.
 `
 
 const STRUCTURED_STEPS_RULES = `
-**STRUCTURED STEPS (REQUIRED)**:
-- For each instruction step, generate:
-  • title: Short, action-focused name (2-4 words, e.g., "Sear the Shrimp", "Blend the Base")
-  • text: The full instruction text (keep as-is from source)
-  • highlightedText: The original instruction with key cooking action verbs wrapped in **bold** markdown (e.g., "**Whisk** the eggs until fluffy", "**Add** the onions and **sauté**")
-  • tip: Extract any pro-tips, warnings, or "Chef's notes" embedded in the text (null if none)
-- Tip extraction examples:
-  • "Don't overcrowd the pan!" → tip
-  • "If too thick, add water 1 tbsp at a time" → tip
-  • "Pro tip: ..." → tip
+**STRUCTURED STEPS (ENHANCED MODE - MACRO-STEPS)**:
+- **Macro-Step Architecture**: Group instructions into "Macro-Steps" based on phases of cooking (not individual actions).
+  - Aim for 4-6 dense paragraphs total.
+  - Phase 1: Prep/Sear (High heat)
+  - Phase 2: Aromatics/Deglaze
+  - Phase 3: Braise/Simmer
+  - Phase 4: Finish/Texture
+- **The "Until" Framework**: Every step involving heat MUST define a sensory endpoint using "until".
+  - Input: "Cook for 10 minutes."
+  - Output: "Cook, stirring frequently, until deep golden brown and reduced by half, about 10 minutes."
+- **Heat Management Descriptors**: Use descriptive physics terms (shimmering, foaming subsides, bare simmer).
+- **Troubleshooting Parentheticals**: Insert safety nets in parentheses for common failure points.
+  - Ex: "(If the garlic begins to darken too quickly, remove from heat to prevent bitterness.)"
+- **Scientific "Why"**: Occasionally explain the purpose of a technique (e.g., "...whisking vigorously to emulsify the fat").
+- **Parallel Processing**: Organize steps to utilize downtime (e.g., "While the potatoes boil, heat the butter...").
+- **The "Reserve" Pattern**: Explicitly manage flow (Cook meat -> Remove and Reserve -> Cook Veg -> Return meat).
+- **Data Structure**:
+  - title: Action-focused header (e.g., "Sear the Beef")
+  - text: The full macro-step paragraph.
+  - highlightedText: The text with key verbs in **bold**.
+  - tip: Key troubleshooting or scientific note extracted.
+  - substeps: Break down the macro-step into atomic actions.
 - Populate 'structuredSteps' array with these objects.
-- **NESTED SUBSTEPS (CRITICAL)**:
-  • Break down the full instruction into 2-5 atomic, checkable actions.
-  • For "Dice the onion and mince the garlic", generate:
-    1. { "text": "Dice the onion", "action": "Dice", "targets": ["onion"] }
-    2. { "text": "Mince the garlic", "action": "Mince", "targets": ["garlic"] }
-  • Populate 'substeps' array for each step.
 `
 
 const STEP_GROUPING_RULES = `
 **STEP GROUPING (REQUIRED)**:
-- ALWAYS organize steps into logical phases that MATCH the ingredient groups.
-- The step groups should mirror the ingredient groups chronologically.
-- Common patterns:
-  • Steps using "FOR THE CURRY PASTE" ingredients → group as "MAKE THE CURRY PASTE"
-  • Steps using "THE PROTEIN" ingredients → group as "COOK THE PROTEIN"
-  • Steps that combine components → group as "ASSEMBLY" or "BRING IT TOGETHER"
-  • Final garnishing steps → group as "TO FINISH" or "GARNISH"
-- Use SHORT, ALL-CAPS headers (2-4 words max) that describe the ACTION.
-- Every step must belong to exactly one group.
-- Order groups chronologically by when they occur in the cooking process.
-- Populate 'stepGroups' with header, startIndex, and endIndex for each group.
+- **Match Ingredients**: Organize steps into logical phases that MATCH the ingredient groups.
+- **Chronological**: The step groups should mirror the ingredient groups chronologically.
+- **Headers**: Use SHORT, ALL-CAPS headers (2-4 words max) that describe the ACTION.
+- **Populate**: 'stepGroups' with header, startIndex, and endIndex.
+`
+
+// --- STRICT TRANSCRIPTION RULES (Default) ---
+
+const STRICT_INGREDIENT_RULES = `
+**INGREDIENT PARSING (STRICT TRANSCRIPTION)**:
+- **Accuracy**: Transcribe ingredients EXACTLY as they appear in the source.
+- **No Conversion**: Do NOT convert units (e.g., keep "1 cup" as "1 cup", do not add grams).
+- **No Inferred States**: Do NOT add prep instructions that aren't explicit (e.g., if it says "Butter", leave it as "Butter").
+- **Grouping**: Only group if the source explicitly groups them. Otherwise, put all in one "MAIN" group.
+`
+
+const STRICT_STEP_RULES = `
+**STEP PARSING (STRICT TRANSCRIPTION)**:
+- **Accuracy**: Transcribe instructions EXACTLY as they appear.
+- **Structure**: Maintain the original step breakdown. Do NOT combine into macro-steps.
+- **No Embellishment**: Do NOT add "Why" or scientific explanations.
+- **No Sensory Inferences**: Do NOT add "until" descriptors if they aren't in the text.
 `
 
 const DISH_INFERENCE_SYSTEM_PROMPT = `
@@ -90,6 +116,7 @@ Rules:
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 9. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 
+${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
 ${STEP_GROUPING_RULES}
@@ -116,6 +143,7 @@ Rules:
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
 ${STEP_GROUPING_RULES}
@@ -142,6 +170,7 @@ Rules:
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of arrays. Each inner array should contain the 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
 ${STEP_GROUPING_RULES}
@@ -171,6 +200,7 @@ Rules:
     - 'name' (ingredient name without unit)
     - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
 13. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
 ${STEP_GROUPING_RULES}
@@ -192,6 +222,7 @@ The input is already structured data from the source website. Your job is not to
 5. Infer "Meal Type", "Dish Type" based on the recipe title and context.
 6. **ENRICH** missing metadata: Infer Occasion, Dietary tags, and Equipment from the content if they are missing.
 7. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
 ${STEP_GROUPING_RULES}
@@ -239,11 +270,27 @@ interface ParseRequestBody {
   image?: string
   text?: string
   mode?: 'parse' | 'infer'
+  style?: 'strict' | 'enhanced' // New parameter
   dishName?: string
   cuisine?: string
   knownIngredients?: string
   dietaryNotes?: string
   tasteProfile?: string
+}
+
+function getSystemPrompts(style: 'strict' | 'enhanced' = 'strict') {
+  if (style === 'enhanced') {
+    return `
+${INGREDIENT_PARSING_RULES}
+${INGREDIENT_GROUPING_RULES}
+${STRUCTURED_STEPS_RULES}
+${STEP_GROUPING_RULES}
+    `
+  }
+  return `
+${STRICT_INGREDIENT_RULES}
+${STRICT_STEP_RULES}
+  `
 }
 
 /** Builds the inference prompt with user-provided context substituted */
@@ -265,7 +312,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     const body: ParseRequestBody = await request.json()
-    const { url, image, text, mode = 'parse' } = body
+    const { url, image, text, mode = 'parse', style = 'strict' } = body
 
     if (!url && !image && !text) {
       return new Response(JSON.stringify({ error: 'No input provided' }), {
@@ -278,6 +325,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const processedInput = await resolveInput(body)
     const { contentPart, sourceInfo } = processedInput
     let { prompt } = processedInput
+
+    // Inject dynamic rules based on style
+    const dynamicRules = getSystemPrompts(style)
+    prompt = prompt + '\n' + dynamicRules
 
     if (mode === 'infer' && image) {
       prompt = buildInferencePrompt(body)

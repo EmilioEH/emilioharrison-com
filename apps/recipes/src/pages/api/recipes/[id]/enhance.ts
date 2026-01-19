@@ -10,15 +10,10 @@ You are a cooking expert analyzing a recipe to enhance its structure for display
 Given the recipe's title, ingredients, and steps, generate:
 
 1. INGREDIENT GROUPS:
-   - Organize ALL ingredients into logical cooking-phase groups
-   - Use short, all-caps headers (e.g., "FOR THE SAUCE", "THE PROTEIN", "TO FINISH")
-   - Every ingredient must belong to exactly one group
-   - Order groups chronologically by usage in the recipe
-   - Common patterns:
-     • "FOR THE [COMPONENT]" - Ingredients blended/mixed together early
-     • "THE PROTEIN" - Main protein + its direct seasonings
-     • "AROMATICS" or "BASE" - Onions, garlic, ginger for sautéing
-     • "TO FINISH" - Fresh herbs, citrus, garnishes added at the end
+   - **Mise-en-Place Flow**: Organize by CHRONOLOGICAL order of use in the recipe.
+   - **Logical Sections**: Group by component (e.g., "FOR THE DUXELLES", "FOR THE SAUCE").
+   - **Header Format**: Short, ALL-CAPS (e.g., "FOR THE PASTA").
+   - **Strict Mapping**: Every ingredient must belong to a group.
 
 2. STRUCTURED STEPS:
    - For each step, create:

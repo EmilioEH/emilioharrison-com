@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../../lib/firebase-server'
 import { serverErrorResponse } from '../../../../lib/api-helpers'
-import type { Recipe } from '../../../../lib/types'
+import type { Recipe, RecipeVersion } from '../../../../lib/types'
 // Import the generation logic directly or via internal fetch?
 // Since `parse-recipe` is an API route, we can call it internally or extract the logic.
 // For expediency, we'll re-fetch the parse-recipe endpoint internally or copy the shared logic.
@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ params, request }) => {
   const parseUrl = `${baseUrl}/api/parse-recipe`
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload: any = { mode: 'parse' }
+  const payload: any = { mode: 'parse', style: 'enhanced' }
 
   // Helper to construct text-based payload from existing recipe data
   const buildTextPayload = () => {
@@ -68,6 +68,18 @@ ${recipe.steps.join('\n')}
   const cookieHeader = request.headers.get('cookie')
 
   try {
+    // SNAPSHOT: Save current version before overwriting
+    const versionId = crypto.randomUUID()
+    const version: RecipeVersion = {
+      id: versionId,
+      recipeId: id,
+      timestamp: new Date().toISOString(),
+      changeType: 'ai-refresh',
+      createdBy: 'system',
+      data: recipe,
+    }
+    await db.addSubDocument('recipes', id, 'versions', versionId, version)
+
     let parseRes = await fetch(parseUrl, {
       method: 'POST',
       headers: {

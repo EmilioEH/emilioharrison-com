@@ -11,6 +11,8 @@ interface InstructionCardProps {
   tip?: string
   isChecked?: boolean
   onToggle?: () => void
+  hideNumber?: boolean
+  hideBadge?: boolean
 }
 
 /**
@@ -25,6 +27,8 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
   tip,
   isChecked = false,
   onToggle,
+  hideNumber = false,
+  hideBadge = false,
 }) => {
   // Simple markdown parser for bold text (e.g. "**mix**")
   const renderContent = () => {
@@ -50,25 +54,42 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
       )}
     >
       <Inline spacing="md" align="start">
-        {/* Step Number Badge */}
-        <button
-          onClick={onToggle}
-          className={cn(
-            'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors',
-            isChecked
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-foreground text-background hover:bg-foreground/80',
-          )}
-          aria-label={
-            isChecked ? `Step ${stepNumber} complete` : `Mark step ${stepNumber} complete`
-          }
-        >
-          {isChecked ? <Check className="h-4 w-4" /> : stepNumber}
-        </button>
+        {/* Step Number Badge / Toggle */}
+        {!hideBadge && (
+          <button
+            onClick={onToggle}
+            className={cn(
+              'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors',
+              isChecked
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-foreground text-background hover:bg-foreground/80',
+              // If hiding number or title exists, optimize for checkbox look (unless checked)
+              (hideNumber || (title && !isChecked)) &&
+                'bg-transparent text-foreground shadow-[inset_0_0_0_2px_currentColor] hover:bg-muted',
+            )}
+            aria-label={
+              isChecked ? `Step ${stepNumber} complete` : `Mark step ${stepNumber} complete`
+            }
+          >
+            {isChecked ? (
+              <Check className="h-4 w-4" />
+            ) : hideNumber || title ? (
+              // Simple checkbox circle if number is hidden or in header
+              <div className="h-2.5 w-2.5 rounded-full bg-current opacity-0" />
+            ) : (
+              // Strict mode: Number remains in badge
+              stepNumber
+            )}
+          </button>
+        )}
 
         <Stack spacing="sm" className="flex-1 pt-1">
-          {/* Step Title */}
-          {title && <h3 className="text-lg font-bold text-foreground">{title}</h3>}
+          {/* Step Title (with Number if present) */}
+          {title && (
+            <h3 className="text-lg font-bold text-foreground">
+              {!hideNumber && <span className="mr-1 opacity-70">{stepNumber}.</span>} {title}
+            </h3>
+          )}
 
           {/* Step Text */}
           <p

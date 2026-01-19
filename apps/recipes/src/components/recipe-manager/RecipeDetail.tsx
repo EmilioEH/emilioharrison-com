@@ -11,6 +11,7 @@ import { cookingSessionActions, $cookingSession } from '../../stores/cookingSess
 import { Play, Check, ListPlus } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
+import { VersionHistoryModal } from '../recipe-details/VersionHistoryModal'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
 import { confirm, alert } from '../../lib/dialogStore'
 
@@ -61,6 +62,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshProgress, setRefreshProgress] = useState<string>('')
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -155,6 +157,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         setIsRefreshing(false)
         setRefreshProgress('')
       }
+    } else if (action === 'history') {
+      setIsHistoryOpen(true)
     }
   }
 
@@ -232,6 +236,32 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
       {/* Share Recipe Dialog */}
       <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
+
+      {/* Version History Modal */}
+      <VersionHistoryModal
+        recipeId={recipe.id}
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        onRestore={() => {
+          // Force a reload of the current view to show restored data
+          // We can call onUpdate with 'silent' to trigger a re-render if the parent handles it
+          // But since the data changed on server, we might need to re-fetch?
+          // For now, let's rely on manual reload or if we can fetch fresh data here.
+          // Simple hack: window.location.reload() or close and reopen.
+          // Better: fetch fresh recipe and call onUpdate
+          const fetchFresh = async () => {
+            const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+              ? import.meta.env.BASE_URL
+              : `${import.meta.env.BASE_URL}/`
+            const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`)
+            if (res.ok) {
+              const data = await res.json()
+              if (data.recipe) onUpdate(data.recipe, 'silent')
+            }
+          }
+          fetchFresh()
+        }}
+      />
     </Stack>
   )
 }

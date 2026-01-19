@@ -7,4 +7,4 @@ export type HeaderAction =
   | 'toggleFavorite'
   | 'share'
   | 'refresh'
-  | 'share'
+  | 'history'

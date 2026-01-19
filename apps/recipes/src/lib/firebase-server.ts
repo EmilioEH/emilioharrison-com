@@ -95,7 +95,11 @@ export const db = new Proxy({} as FirebaseDbProxy, {
         'uploadFile',
         'downloadFile',
         'getFileMetadata',
-        'getProjectId', // New: async accessor for projectId
+        'getFileMetadata',
+        'getProjectId',
+        'getSubCollection',
+        'getSubDocument',
+        'addSubDocument',
       ].includes(prop as string)
     ) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

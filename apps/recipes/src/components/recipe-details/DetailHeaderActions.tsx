@@ -7,6 +7,7 @@ import {
   Share2,
   Trash2,
   Sparkles,
+  Clock,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -18,7 +19,9 @@ import {
 import { Button } from '@/components/ui/button'
 
 interface DetailHeaderActionsProps {
-  onAction: (action: 'delete' | 'edit' | 'addToWeek' | 'move' | 'share' | 'refresh') => void
+  onAction: (
+    action: 'delete' | 'edit' | 'addToWeek' | 'move' | 'share' | 'refresh' | 'history',
+  ) => void
   onToggleThisWeek?: () => void
   isThisWeek: boolean | undefined
 }
@@ -74,6 +77,11 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
           <DropdownMenuItem onClick={() => onAction('refresh')}>
             <Sparkles className="mr-2 h-4 w-4" />
             Refresh AI Data
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onAction('history')}>
+            <Clock className="mr-2 h-4 w-4" />
+            Version History
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

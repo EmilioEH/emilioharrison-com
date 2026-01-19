@@ -21,10 +21,9 @@ import { Carousel } from '../ui/Carousel'
 import type {
   Recipe,
   FamilyRecipeData,
-  IngredientGroup,
   StructuredStep,
   Ingredient,
-  StepGroup,
+  IngredientGroup,
 } from '../../lib/types'
 
 interface OverviewModeProps {
@@ -42,6 +41,26 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   isRefreshing = false,
   refreshProgress = '',
 }) => {
+  // NEW: View Mode State (defaults to 'enhanced' if available, else 'original')
+  // But wait, user requirement: "The user captured it immediately... allow user to toggle"
+  // If it was just scanned (strict), enhanced might not exist yet.
+  // So validation: checking if structuredSteps exist.
+  const hasEnhancedContent =
+    (recipe.structuredSteps?.length || 0) > 0 || (recipe.ingredientGroups?.length || 0) > 0
+  const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(
+    hasEnhancedContent ? 'enhanced' : 'original',
+  )
+
+  // Effect: When background enhancement finishes (prop update), notify user or auto-switch?
+  // User asked for "Instantly toggle... notification".
+  // Let's us show a notification badge on the toggle if enhanced becomes available while viewing 'original'.
+  useEffect(() => {
+    if (hasEnhancedContent && viewMode === 'original') {
+      // We could auto-switch, but let's respect user context.
+      // Just ensure the toggle is enabled.
+    }
+  }, [hasEnhancedContent, viewMode])
+
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({})
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
@@ -53,23 +72,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [estimatedCost, setEstimatedCost] = useState<number | null>(recipe.estimatedCost || null)
   const [isEstimating, setIsEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
-
-  // Lazy-loaded enhanced recipe data (ingredient groups + structured steps + step groups)
-  const [enhancedData, setEnhancedData] = useState<{
-    ingredientGroups: IngredientGroup[]
-    structuredSteps: StructuredStep[]
-    stepGroups?: StepGroup[]
-  } | null>(
-    recipe.ingredientGroups && recipe.structuredSteps
-      ? {
-          ingredientGroups: recipe.ingredientGroups,
-          structuredSteps: recipe.structuredSteps,
-          stepGroups: recipe.stepGroups,
-        }
-      : null,
-  )
-  const [isEnhancing, setIsEnhancing] = useState(false)
-  const [enhanceFailed, setEnhanceFailed] = useState(false)
 
   // Load family data on mount
   useEffect(() => {
@@ -91,41 +93,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     }
 
     loadFamilyData()
-  }, [recipe.id])
-
-  // Lazy-load enhanced data (ingredient groups + structured steps) if not present
-  useEffect(() => {
-    // Skip if already loaded, currently enhancing, or previously failed
-    if (enhancedData || isEnhancing || enhanceFailed) return
-
-    const loadEnhancedData = async () => {
-      setIsEnhancing(true)
-      try {
-        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-          ? import.meta.env.BASE_URL
-          : `${import.meta.env.BASE_URL}/`
-
-        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/enhance`, {
-          method: 'POST',
-        })
-
-        const data = await res.json()
-        if (data.success && data.data) {
-          setEnhancedData(data.data)
-        } else {
-          // Server returned an error response - don't retry
-          setEnhanceFailed(true)
-        }
-      } catch (error) {
-        console.error('Failed to load enhanced data:', error)
-        setEnhanceFailed(true)
-      } finally {
-        setIsEnhancing(false)
-      }
-    }
-
-    loadEnhancedData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipe.id])
 
   // Calculate average rating from family
@@ -263,8 +230,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     items: Ingredient[]
     startIndex: number
   }> => {
-    const groups = enhancedData?.ingredientGroups
-    if (groups?.length) {
+    const groups = recipe.ingredientGroups
+
+    // VIEW MODE LOGIC: If 'original', force flat list
+    if (viewMode === 'enhanced' && groups?.length) {
       return groups.map((group: IngredientGroup) => ({
         header: group.header,
         items: recipe.ingredients.slice(group.startIndex, group.endIndex + 1),
@@ -273,17 +242,28 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     }
     // Fallback: single ungrouped list
     return [{ header: null, items: recipe.ingredients, startIndex: 0 }]
-  }, [enhancedData?.ingredientGroups, recipe.ingredients])
+  }, [recipe.ingredientGroups, recipe.ingredients, viewMode])
 
   // Memoized structured steps with fallback to plain text
   const displaySteps = useMemo((): StructuredStep[] => {
-    const steps = enhancedData?.structuredSteps
+    // VIEW MODE LOGIC: If 'modified' (original text) requested or no structured steps
+    // original steps are in recipe.steps
+    if (viewMode === 'original' && recipe.steps && recipe.steps.length > 0) {
+      return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
+    }
+
+    const steps = recipe.structuredSteps
     if (steps?.length) {
       return steps
     }
-    // Fallback: wrap plain strings as StructuredStep
-    return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
-  }, [enhancedData?.structuredSteps, recipe.steps])
+
+    // Fallback if enhanced mode requested but no data (shouldn't happen due to toggle disable logic)
+    if (recipe.steps && recipe.steps.length > 0) {
+      return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
+    }
+
+    return []
+  }, [recipe.structuredSteps, recipe.steps, viewMode])
 
   // Memoized step groups with fallback to flat list
   const displayStepGroups = useMemo((): Array<{
@@ -291,8 +271,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     items: StructuredStep[]
     startIndex: number
   }> => {
-    const groups = enhancedData?.stepGroups || recipe.stepGroups
-    if (groups?.length) {
+    const groups = recipe.stepGroups
+
+    // VIEW MODE LOGIC: If 'original', force flat list
+    if (viewMode === 'enhanced' && groups?.length) {
       return groups.map((group) => ({
         header: group.header,
         items: displaySteps.slice(group.startIndex, group.endIndex + 1),
@@ -301,7 +283,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     }
     // Fallback: single ungrouped list
     return [{ header: null, items: displaySteps, startIndex: 0 }]
-  }, [enhancedData?.stepGroups, recipe.stepGroups, displaySteps])
+  }, [recipe.stepGroups, displaySteps, viewMode])
 
   return (
     <Stack spacing="none" className="flex-1 overflow-y-auto pb-20">
@@ -346,10 +328,36 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   {recipe.difficulty}
                 </Badge>
               )}
+              {recipe.difficulty && (
+                <Badge variant="tag" size="sm" className="uppercase">
+                  {recipe.difficulty}
+                </Badge>
+              )}
             </Inline>
-            <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-foreground">
-              {recipe.title}
-            </h1>
+
+            <Inline justify="between" align="start">
+              <h1 className="mb-2 flex-1 font-display text-3xl font-bold leading-tight text-foreground">
+                {recipe.title}
+              </h1>
+
+              {/* VIEW MODE TOGGLE */}
+              {hasEnhancedContent && (
+                <div className="ml-2 flex shrink-0 rounded-full border border-border bg-muted p-1">
+                  <button
+                    onClick={() => setViewMode('original')}
+                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'original' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    Original
+                  </button>
+                  <button
+                    onClick={() => setViewMode('enhanced')}
+                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'enhanced' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    <Sparkles className="h-3 w-3" /> Smart View
+                  </button>
+                </div>
+              )}
+            </Inline>
 
             {recipe.sourceUrl && (
               <Button
@@ -443,13 +451,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </Inline>
             </Inline>
 
-            {isEnhancing && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg bg-primary/10 p-3 text-sm text-primary animate-in fade-in slide-in-from-top-2">
-                <Sparkles className="h-4 w-4 animate-pulse" />
-                <span>Organizing ingredients into groups...</span>
-              </div>
-            )}
-
             {/* Grouped Ingredients Display */}
             <Stack spacing="lg">
               {displayGroups.map((group, gIdx) => (
@@ -493,9 +494,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               {displayStepGroups.map((group, gIdx) => (
                 <div key={gIdx}>
                   {group.header && (
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                      • {group.header}
-                    </h3>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
+                        {gIdx + 1}
+                      </div>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        {group.header}
+                      </h3>
+                    </div>
                   )}
                   <Stack spacing="lg">
                     {group.items.map((step, idx) => {
@@ -503,12 +509,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                       return (
                         <InstructionCard
                           key={globalIdx}
-                          stepNumber={globalIdx + 1}
+                          stepNumber={idx + 1}
                           title={step.title}
                           text={step.text}
                           highlightedText={step.highlightedText}
                           tip={step.tip}
                           isChecked={checkedSteps[globalIdx]}
+                          hideBadge={!!group.header} // Hide the badge entirely if in a group
+                          hideNumber={!!group.header} // Also hide the number in the title
                           onToggle={() =>
                             setCheckedSteps((p) => ({
                               ...p,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ServiceAccount } from './types'
 
 // Helper to base64url encode
@@ -101,7 +102,7 @@ export class FirebaseRestService {
 
   // --- Firestore ---
 
-  async getCollection(
+  async getCollection<T = any>(
     collection: string,
     orderByField?: string,
     direction: 'ASC' | 'DESC' = 'DESC',
@@ -109,7 +110,7 @@ export class FirebaseRestService {
     const token = await this.getAccessToken()
     const baseUrl = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let allDocuments: any[] = []
     let nextPageToken: string | undefined = undefined
     let pageCount = 0
@@ -137,7 +138,7 @@ export class FirebaseRestService {
       )
     }
 
-    return allDocuments.map(this.mapFirestoreDoc.bind(this))
+    return allDocuments.map((doc) => this.mapFirestoreDoc(doc)) as T[]
   }
 
   /** Helper to fetch a single page of collection results */
@@ -147,7 +148,7 @@ export class FirebaseRestService {
     orderByField?: string,
     direction: 'ASC' | 'DESC' = 'DESC',
     pageToken?: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
   ): Promise<{ documents: any[]; nextPageToken?: string } | null> {
     const params = new URLSearchParams()
 
@@ -179,7 +180,7 @@ export class FirebaseRestService {
     }
   }
 
-  async getDocument(collection: string, id: string) {
+  async getDocument<T = any>(collection: string, id: string) {
     const token = await this.getAccessToken()
     const url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}/${id}`
 
@@ -191,10 +192,10 @@ export class FirebaseRestService {
     if (!res.ok) throw new Error(`Firestore GET DOC failed: ${res.statusText}`)
 
     const data = await res.json()
-    return this.mapFirestoreDoc(data)
+    return this.mapFirestoreDoc(data) as T
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   async createDocument(collection: string, id: string | null, data: any) {
     const token = await this.getAccessToken()
     let url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}`
@@ -233,7 +234,7 @@ export class FirebaseRestService {
     return await res.json()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   async setDocument(collection: string, id: string, data: any, _merge = false) {
     // Uses PATCH to update/create
     const token = await this.getAccessToken()
@@ -279,7 +280,7 @@ export class FirebaseRestService {
     return await res.json()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   async updateDocument(collection: string, id: string, data: any) {
     return this.setDocument(collection, id, data, true)
   }
@@ -296,6 +297,37 @@ export class FirebaseRestService {
     if (!res.ok) {
       throw new Error(`Firestore DELETE failed: ${res.statusText}`)
     }
+  }
+
+  // --- Sub-collection Helpers ---
+
+  async getSubCollection<T = any>(
+    collection: string,
+    id: string,
+    subCollection: string,
+    orderByField?: string,
+    direction: 'ASC' | 'DESC' = 'DESC',
+  ) {
+    return this.getCollection<T>(`${collection}/${id}/${subCollection}`, orderByField, direction)
+  }
+
+  async getSubDocument<T = any>(
+    collection: string,
+    id: string,
+    subCollection: string,
+    subId: string,
+  ) {
+    return this.getDocument<T>(`${collection}/${id}/${subCollection}`, subId)
+  }
+
+  async addSubDocument(
+    collection: string,
+    id: string,
+    subCollection: string,
+    subId: string,
+    data: any,
+  ) {
+    return this.setDocument(`${collection}/${id}/${subCollection}`, subId, data)
   }
 
   // --- Storage ---
@@ -349,17 +381,17 @@ export class FirebaseRestService {
   }
 
   // --- Helpers ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private mapFirestoreDoc(doc: any) {
     const id = doc.name.split('/').pop()
     const data = this.fromFirestoreFields(doc.fields)
     return { id, ...data }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private fromFirestoreFields(fields: any): any {
     if (!fields) return {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const obj: any = {}
     for (const key in fields) {
       const val = fields[key]
@@ -369,7 +401,7 @@ export class FirebaseRestService {
       else if (val.booleanValue !== undefined) obj[key] = val.booleanValue
       else if (val.timestampValue !== undefined) obj[key] = val.timestampValue
       else if (val.arrayValue !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         obj[key] = (val.arrayValue.values || []).map((v: any) => this.fromFirestoreValue(v))
       } else if (val.mapValue !== undefined) {
         obj[key] = this.fromFirestoreFields(val.mapValue.fields)
@@ -378,7 +410,7 @@ export class FirebaseRestService {
     return obj
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private fromFirestoreValue(val: any): any {
     if (val.stringValue !== undefined) return val.stringValue
     else if (val.integerValue !== undefined) return Number(val.integerValue)
@@ -387,9 +419,9 @@ export class FirebaseRestService {
     return Object.values(val)[0]
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private toFirestoreFields(obj: any, inArray = false): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const fields: any = {}
     for (const key in obj) {
       const val = obj[key]
@@ -398,7 +430,7 @@ export class FirebaseRestService {
     return fields
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private toFirestoreNumber(val: number): any {
     if (Number.isNaN(val)) return { doubleValue: 'NaN' }
     if (val === Infinity) return { doubleValue: 'Infinity' }
@@ -407,7 +439,7 @@ export class FirebaseRestService {
     return { doubleValue: val }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private toFirestoreValue(val: any, inArray = false): any {
     if (val === null || val === undefined) return { nullValue: null }
     if (typeof val === 'string') return { stringValue: val }
@@ -423,7 +455,7 @@ export class FirebaseRestService {
         return { stringValue: JSON.stringify(val) }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const values = val.map((v: any) => this.toFirestoreValue(v, true))
       return { arrayValue: { values } }
     }

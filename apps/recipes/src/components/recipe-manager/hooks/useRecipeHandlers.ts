@@ -3,11 +3,13 @@ import { alert, confirm } from '../../../lib/dialogStore'
 import { familyActions, $pendingInvites } from '../../../lib/familyStore'
 
 import type { ViewMode } from './useRouter'
+import { useRecipeVersions } from './useRecipeVersions'
+import { triggerBackgroundEnhancement } from '../../../lib/services/recipe-enhancer'
 
 interface UseRecipeHandlersProps {
   recipes: Recipe[]
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
-  saveRecipe: (recipe: Partial<Recipe>) => Promise<{ success: boolean }>
+  saveRecipe: (recipe: Partial<Recipe>) => Promise<{ success: boolean; savedRecipe?: Recipe }>
   deleteRecipe: (id: string) => Promise<boolean>
   bulkUpdateRecipes: (ids: Set<string>, updates: Partial<Recipe>) => Promise<boolean>
   bulkDeleteRecipes: (ids: Set<string>) => Promise<boolean>
@@ -79,11 +81,30 @@ export function useRecipeHandlers({
     }
   }
 
+  // NEW: Version Control Hook
+  const { createSnapshot } = useRecipeVersions()
+
   const handleSaveRecipeInternal = async (recipe: Partial<Recipe> & { id?: string }) => {
-    const { success } = await saveRecipe(recipe)
+    // Snapshot original state before saving if it's an update
+    if (recipe.id) {
+      const original = recipes.find((r) => r.id === recipe.id)
+      if (original) {
+        // Fire and forget snapshot (don't block UI strictly, or maybe we should?)
+        // Let's await it to be safe, creating history is fast.
+        await createSnapshot(recipe.id, 'manual-edit', original)
+      }
+    }
+
+    const { success, savedRecipe: saved } = await saveRecipe(recipe)
     if (success) {
       setView('library')
       setRecipe(null)
+
+      // Background Enhancement Trigger (Fire-and-forget)
+      // Only for NEW recipes created via AI parsing
+      if (!recipe.id && saved?.id && recipe.creationMethod === 'ai-parse' && recipe.title) {
+        triggerBackgroundEnhancement(saved.id, recipe.title)
+      }
     } else {
       await alert('Failed to save recipe')
     }
@@ -107,7 +128,6 @@ export function useRecipeHandlers({
       // In-place update without navigation (for AI refresh, cost updates, etc.)
       const changes = { ...updatedRecipe, updatedAt: new Date().toISOString() }
       saveRecipe(changes) // Just save, don't navigate
-      setRecipes((prev) => prev.map((r) => (r.id === updatedRecipe.id ? changes : r)))
     } else {
       // Original 'save' behavior (from editor)
       const changes = { ...updatedRecipe, updatedAt: new Date().toISOString() }

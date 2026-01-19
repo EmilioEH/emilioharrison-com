@@ -81,13 +81,17 @@ While Astro handles the initial load, the app functions as a **Single Page Appli
 - **Instead:** Add a new `ViewMode` to `RecipeManager.tsx` and render a conditional component.
 - **Why:** This preserves the "App-like" feel, state (e.g. scroll position), and offline capability.
 
-### 2. Hybrid AI Parsing Strategy
+### 2. Hybrid AI Parsing & Enhancement
 
-We prioritize **deterministic data** over generative AI to save costs and latency.
+We prioritize **deterministic data** over generative AI to save costs and latency, but use different AI "Modes" depending on user intent.
 
-- The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_.
-- Only if JSON-LD is missing does it construct a prompt for Gemini.
-- **Agent Rule:** When modifying parsing logic, preserve this `extractJsonLd` priority. Do not blindly switch to "AI-only" parsing.
+- **Data Priority**: The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_. Only if JSON-LD is missing does it construct a prompt for Gemini.
+- **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI is instructed to transcribe the recipe _exactly as written_, preserving the original author's voice and structure.
+- **Enhancement Mode (Kenji-Style)**: Used during **AI Refresh** and **Dish Photo Scan**. The AI applies "Kenji Lopez-Alt" style best practices:
+  - **Scientific Grouping**: Group steps chronologically by component (e.g., "Prepare the Marina", "Cook the Pasta").
+  - **Descriptive Paragraphs**: Combine atomic steps into readable, narrative paragraphs.
+  - **Logical Formatting**: Standardizes units and ingredient names.
+- **Agent Rule**: When modifying `parse-recipe.ts`, ensure both `style='strict'` (default) and `style='enhanced'` flows are maintained. Do not force enhancement on initial import.
 
 ### 3. Storage Proxy & Custom Auth
 
@@ -188,7 +192,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Cooking Review Enhancements**: Added support for **inline editing** of ingredients and steps directly from the review screen. Changes are automatically persisted to the shared recipe, and the system handles amount/name parsing for ingredients.
 - **Week View Workspace**: Transformed the week view into a persistent, sliding workspace. Users can now toggle between a "Plan" view (daily meals) and a "Grocery" view (shoppable list) directly within the workspace contexts.
 - **Full-Screen Image Viewer**: Tapping a recipe's header image now opens it in a full-screen overlay using a React Portal, ensuring proper z-index stacking. Press ESC or tap the close button to dismiss.
-- **Recipe Edit Mode & Version History**: Introduced a comprehensive Edit Mode allowing users to modify ingredients, steps, metadata, and photos directly. Includes a **Version History** system that archives previous states of the recipe on every save, allowing users to view and restore past versions.
+- **Recipe Edit Mode & Version History**: Introduced a comprehensive Edit Mode allowing users to modify ingredients, steps, metadata, and photos directly. Includes a **Version History** system that archives previous states of the recipe on every save (both manual edits and **AI Refreshes**), allowing users to view and restore past versions with a built-in safety net.
 - **Invite Sharing & Auto-Auth (Jan 2026)**: Implemented native sharing for activation codes and family invites using the Web Share API. Added an "Invite Friends" section in Settings for authorized users to generate codes. Enhanced the login flow to automatically authorize and enroll users if they have a pending family invitation.
 - **Deterministic Invitation IDs**: Migrated to base64-encoded email IDs for pending invitations, enabling O(1) lookups during the login process for a seamless "invite-to-approve" experience.
 
@@ -213,6 +217,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Notification System Stabilization (Jan 2026)**: Resolved critical "Illegal Constructor" errors affecting Android and certain desktop browsers by replacing raw `new Notification()` calls with the robust `ServiceWorkerRegistration.showNotification()` API. Added a new E2E test suite (`notification-settings.spec.ts`) to prevent regressions in preference persistence.
 - **Accessibility Fix (Jan 2026)**: Fixed an issue where toggle switches in Notification Settings were unclickable by replacing the custom `div`-based implementation with a proper `<label>` wrapper and adding `aria-label` support, ensuring full accessibility and interaction reliability.
 - **Cooking Timer & Layout Polish**: Refined the cooking timer experience by consolidating duplicate displays, restoring the minimized/expanded toggle, and enabling step navigation from the timer. Improved mobile layout with better footer padding and higher contrast for next-step previews.
+- **Hybrid Instruction Display**: Implemented a smart numbering system for recipe instructions. "Strict" recipes (transcribed) display traditional step numbers (e.g., "(1) Step text"). "Enhanced" recipes (AI-structured) feature numbered **Group Headers** (e.g., "(1) PREP THE BEEF") with unnumbered, checklist-style steps below, improving readability for complex workflows.
 
 ### Recent Updates (Dec 2025)
 

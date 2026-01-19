@@ -95,12 +95,12 @@ export interface Recipe {
 }
 
 export interface RecipeVersion {
+  id: string
+  recipeId: string
   timestamp: string // ISO Date
-  userId?: string
-  userName?: string
-  changeType: 'edit' | 'restore' | 'import'
-  // Break recursion: A snapshot doesn't need to contain nested history
-  data: Omit<Partial<Recipe>, 'versions'>
+  changeType: 'manual-edit' | 'ai-refresh' | 'import' | 'restore'
+  createdBy?: string // userId (optional for legacy)
+  data: Partial<Recipe> // Snapshot of core fields
 }
 
 export interface StructuredIngredient {
