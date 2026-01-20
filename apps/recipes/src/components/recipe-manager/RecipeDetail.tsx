@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
+import { useRecipeActions } from './useRecipeActions'
 import { computed } from 'nanostores'
 import { useStore } from '@nanostores/react'
 import { DetailHeader } from '../recipe-details/DetailHeader'
-import type { HeaderAction } from '../recipe-details/types'
 import { Stack, Inline } from '../ui/layout'
 import { CookingContainer } from '../cooking-mode/CookingContainer'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
@@ -13,7 +13,6 @@ import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { VersionHistoryModal } from '../recipe-details/VersionHistoryModal'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
-import { confirm, alert } from '../../lib/dialogStore'
 
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
@@ -58,11 +57,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   // ... imports
 
   const isCooking = session.isActive && session.recipeId === recipe.id
-  const [shareDialogOpen, setShareDialogOpen] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [refreshProgress, setRefreshProgress] = useState<string>('')
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -74,92 +68,21 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
   useWakeLock(isCooking)
 
+  const {
+    handleAction,
+    handleSaveRecipe,
+    state: { shareDialogOpen, isEditing, isRefreshing, refreshProgress, isHistoryOpen },
+    setters: { setShareDialogOpen, setIsEditing, setIsHistoryOpen },
+  } = useRecipeActions({
+    recipe,
+    onUpdate,
+    onDelete,
+    onToggleThisWeek,
+    onToggleFavorite,
+  })
+
   const startCooking = () => {
     cookingSessionActions.startSession(recipe)
-  }
-
-  const handleSaveRecipe = async (updated: Recipe) => {
-    // 1. Persist to API
-    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-      ? import.meta.env.BASE_URL
-      : `${import.meta.env.BASE_URL}/`
-
-    const res = await fetch(`${baseUrl}api/recipes/${updated.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated),
-    })
-
-    if (!res.ok) {
-      alert('Failed to save recipe')
-      return
-    }
-
-    // 2. Update list in parent
-    onUpdate(updated, 'save')
-
-    // 3. Exit edit mode
-    setIsEditing(false)
-  }
-
-  const handleAction = async (action: HeaderAction) => {
-    if (action === 'delete') {
-      confirm('Are you certain you want to delete this recipe?').then((confirmed) => {
-        if (confirmed) {
-          onDelete(recipe.id)
-        }
-      })
-    } else if (action === 'edit') {
-      setIsEditing(true)
-    } else if (action === 'addToWeek') {
-      onToggleThisWeek(recipe.id)
-    } else if (action === 'move') {
-      onUpdate({ ...recipe }, 'edit')
-    } else if (action === 'toggleFavorite') {
-      if (onToggleFavorite) onToggleFavorite()
-    } else if (action === 'share') {
-      setShareDialogOpen(true)
-    } else if (action === 'refresh') {
-      // Non-blocking refresh - no confirmation dialog
-      setIsRefreshing(true)
-      setRefreshProgress('Preparing to refresh...')
-
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      try {
-        setRefreshProgress('Analyzing recipe content...')
-        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/refresh`, { method: 'POST' })
-        setRefreshProgress('Applying AI enhancements...')
-        const data = await res.json()
-
-        if (data.success && data.recipe) {
-          setRefreshProgress('Done!')
-          await new Promise((r) => setTimeout(r, 1000)) // Brief success display
-          onUpdate(data.recipe, 'silent') // Stay on the detail view
-        } else {
-          throw new Error(data.error || 'Refresh failed')
-        }
-      } catch (e) {
-        console.error('Refresh error:', e)
-        const errorMsg = e instanceof Error ? e.message : String(e)
-        // Check for specific size error we added
-        if (errorMsg.includes('too large')) {
-          await alert(
-            'The recipe image is too large (>9MB) for our AI to process. Please edit the recipe and upload a smaller image.',
-            'Image Too Large',
-          )
-        } else {
-          await alert(`Failed to refresh recipe: ${errorMsg}`, 'Error')
-        }
-      } finally {
-        setIsRefreshing(false)
-        setRefreshProgress('')
-      }
-    } else if (action === 'history') {
-      setIsHistoryOpen(true)
-    }
   }
 
   if (isCooking) {

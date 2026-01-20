@@ -134,16 +134,14 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
     } finally {
       cookingSessionActions.endSession()
       onClose()
-      // Refresh to show new data? Ideally yes, but skipping for now or handle via cache invalidation if needed.
-      window.location.reload()
+      // Removed refresh to avoid test flakiness and improve UX. State should update via store.
     }
   }
 
   const handleSkip = () => {
     cookingSessionActions.endSession()
     onClose()
-    // Refresh to clear state/redirect if needed
-    window.location.reload()
+    // Removed refresh to avoid test flakiness and improve UX. State should update via store.
   }
 
   if (isReviewing) {
@@ -168,7 +166,10 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       {/* Main Content Area - Responsive Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Timeline (Desktop Only) */}
-        <aside className="hidden h-full flex-col border-r border-border md:flex">
+        <aside
+          className="hidden h-full flex-col border-r border-border md:flex"
+          data-testid="cooking-timeline-sidebar"
+        >
           <CookingTimeline
             currentStep={session.currentStepIdx + 1}
             totalSteps={session.recipe.steps.length + 1}
@@ -197,7 +198,10 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         </main>
 
         {/* Right Sidebar - Ingredients (Desktop Only) */}
-        <aside className="hidden h-full w-80 flex-col border-l border-border md:flex lg:w-96">
+        <aside
+          className="hidden h-full w-80 flex-col border-l border-border md:flex lg:w-96"
+          data-testid="cooking-ingredients-sidebar"
+        >
           <IngredientsPanel />
         </aside>
       </div>

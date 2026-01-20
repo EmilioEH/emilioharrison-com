@@ -146,8 +146,16 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
           {/* Ingredient Notes & Edits Accordion */}
           <Card>
             <CardHeader
-              className="cursor-pointer p-4 transition-colors hover:bg-muted/20"
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer p-4 transition-colors hover:bg-muted/20 focus-visible:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
               onClick={() => setIngredientsOpen(!ingredientsOpen)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setIngredientsOpen(!ingredientsOpen)
+                }
+              }}
             >
               <Inline justify="between" spacing="none">
                 <Inline spacing="sm">
@@ -261,8 +269,16 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
           {/* Step Notes & Edits Accordion */}
           <Card>
             <CardHeader
-              className="cursor-pointer p-4 transition-colors hover:bg-muted/20"
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer p-4 transition-colors hover:bg-muted/20 focus-visible:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
               onClick={() => setStepsOpen(!stepsOpen)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setStepsOpen(!stepsOpen)
+                }
+              }}
             >
               <Inline justify="between" spacing="none">
                 <Inline spacing="sm">

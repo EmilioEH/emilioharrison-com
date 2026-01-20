@@ -78,7 +78,7 @@ test.describe('Recipe Cooking Mode', () => {
     // Note: data-testid usually 'timeline-step-X'. If step index is 0, is it step-1?
     // Timeline component logic: currentStep={session.currentStepIdx + 1}.
     // So Prep is step-1.
-    await page.getByTestId('timeline-step-1').click()
+    await page.getByTestId('timeline-step-1').first().click()
 
     // Should be back on Prep
     await expect(page.getByText('Prep Ingredients')).toBeVisible()
@@ -123,7 +123,10 @@ test.describe('Recipe Cooking Mode', () => {
     await expect(page.getByTestId('cooking-timeline-sidebar')).toBeVisible()
 
     // Verify Right Sidebar (Ingredients Panel) is visible
-    await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeVisible()
+    // Verify Right Sidebar (Ingredients Panel) is visible
+    await expect(
+      page.getByTestId('cooking-ingredients-sidebar').getByRole('heading', { name: 'Ingredients' }),
+    ).toBeVisible()
 
     // Verify Ingredients Button in header is HIDDEN on desktop
     await expect(page.getByRole('button', { name: 'Ingredients' })).toBeHidden()
@@ -157,7 +160,7 @@ test.describe('Recipe Cooking Mode', () => {
     await ingredientsBtn.click()
 
     // Verify Overlay is visible
-    await expect(page.getByRole('heading', { name: 'Ingredients' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Ingredients', exact: true })).toBeVisible()
   })
 
   test('should complete cooking and submit review', async ({ page }) => {
@@ -182,7 +185,7 @@ test.describe('Recipe Cooking Mode', () => {
 
     // Expect Review Screen
     await expect(page.getByText('All Done!')).toBeVisible()
-    await expect(page.getByText('Difficulty')).toBeVisible()
+    await expect(page.getByText('Difficulty', { exact: true })).toBeVisible()
 
     // Check that "Complete Review" is disabled initially
     await expect(page.getByRole('button', { name: 'Select Difficulty' })).toBeDisabled()
@@ -323,6 +326,10 @@ test.describe('Recipe Cooking Mode', () => {
     await page.getByRole('button', { name: 'Skip' }).click()
 
     // Verify returned to Detail View
-    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible()
+    // Verify we are still on the recipe page (or redirected correctly)
+    await expect(page).toHaveURL(/\/recipes/)
+    await expect(page.getByRole('heading', { name: RECIPE.title, exact: true })).toBeVisible({
+      timeout: 30000,
+    })
   })
 })

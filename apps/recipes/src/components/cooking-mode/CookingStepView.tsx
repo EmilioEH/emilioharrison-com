@@ -84,34 +84,34 @@ const getVariantForOffset = (offset: number) => {
 
 const carouselVariants = {
   center: {
-    y: '-50%',
+    y: 0,
     scale: 1,
     opacity: 1,
     zIndex: 10,
     display: 'block',
   },
   top: {
-    y: 'calc(-50% - 250px)', // Gap (24) + Height (approx 200) + Extra
+    y: '-250px',
     scale: 1,
     opacity: 0.6,
     zIndex: 1,
     display: 'block',
   },
   bottom: {
-    y: 'calc(-50% + 250px)',
+    y: '250px',
     scale: 1,
     opacity: 0.6,
     zIndex: 1,
     display: 'block',
   },
   hiddenTop: {
-    y: 'calc(-50% - 500px)',
+    y: '-500px',
     opacity: 0,
     zIndex: 0,
     transitionEnd: { display: 'none' },
   },
   hiddenBottom: {
-    y: 'calc(-50% + 500px)',
+    y: '500px',
     opacity: 0,
     zIndex: 0,
     transitionEnd: { display: 'none' },
@@ -122,6 +122,31 @@ const carouselVariants = {
     display: 'none',
   },
 }
+
+// ...
+
+// In the component logic (around line 432):
+// <div className="relative flex w-full max-w-2xl flex-1 flex-col items-center"> <!-- Removed justify-center -->
+
+// In the map loop (around line 450):
+/*
+ return (
+    <motion.div
+        key={`step-${idx}`}
+        layout // Enable layout animations for smooth position switching
+        animate={variantName}
+        initial={false}
+        variants={carouselVariants}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className={cn(
+            "w-full transition-[position]", // Add width
+            offset === 0 ? "relative my-auto" : "absolute top-1/2" // Switch positioning
+        )}
+        style={{
+            pointerEvents: offset === 0 ? 'auto' : 'none',
+        }}
+    >
+*/
 
 // Prep step slide variants (keep original for prep)
 const slideVariants = {
@@ -429,8 +454,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
       {/* Carousel Container */}
       <div className="relative flex-1 overflow-hidden">
         <div className="absolute inset-0 flex flex-col items-center overflow-y-auto px-6 pb-24 pt-4">
-          <div className="relative flex w-full max-w-2xl flex-1 flex-col items-center justify-center">
-            {/* Render ALL steps (or windowed subset) but keep them in DOM with stable keys */},
+          <div className="relative flex w-full max-w-2xl flex-1 flex-col items-center">
             {/* Render ALL steps (or windowed subset) but keep them in DOM with stable keys */}
             {recipe.steps.map((stepText, idx) => {
               const offset = idx - currentInstructionIdx
@@ -442,11 +466,15 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
               return (
                 <motion.div
                   key={`step-${idx}`} // STABLE KEY
+                  layout
                   animate={variantName}
                   initial={false} // Important: animate from current state not initial
                   variants={carouselVariants}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="absolute top-1/2 w-full"
+                  className={cn(
+                    'w-full transition-[position]',
+                    offset === 0 ? 'relative my-auto' : 'absolute top-1/2',
+                  )}
                   style={{
                     pointerEvents: offset === 0 ? 'auto' : 'none', // Only current card is interactive
                   }}
@@ -520,7 +548,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
       </div>
 
       {/* Static Navigation Footer */}
-      <div className="safe-area-pb z-10 border-t border-border bg-background/80 p-4 pb-12 backdrop-blur-xl">
+      <div className="safe-area-pb z-50 border-t border-border bg-background/80 p-4 pb-12 backdrop-blur-xl">
         <Inline spacing="md">
           <button
             type="button"

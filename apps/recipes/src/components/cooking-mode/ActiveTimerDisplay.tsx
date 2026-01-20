@@ -38,7 +38,7 @@ const TimerCircle: React.FC<{ elapsed: number; stepNumber: number }> = ({
 
 export const ActiveTimerDisplay: React.FC = () => {
   const session = useStore($cookingSession)
-  const [isExpanded, setIsExpanded] = React.useState(true)
+  const [isExpanded, setIsExpanded] = React.useState(false)
 
   const timers = Object.values(session.activeTimers)
 

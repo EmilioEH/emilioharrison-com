@@ -170,7 +170,8 @@ All primitives use the `spacing` prop with a controlled scale:
 
 - [Gemini API Guide](docs/technical/gemini-api-guide.md) – AI integration patterns
 - [Deployment Guide](docs/technical/deployment.md) – Production deployment steps
-- [Design System](docs/technical/design-system.md) – UI tokens and component styles (Migrated to shadcn/ui)
+- **[Design System](./docs/technical/design-system.md)** – UI tokens and component styles (Migrated to shadcn/ui)
+- **[Testing Strategy](./docs/technical/TESTING.md)**
 - [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
 
 ### Recent Updates (Jan 2026)
