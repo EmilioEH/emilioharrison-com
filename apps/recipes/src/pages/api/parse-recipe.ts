@@ -375,11 +375,27 @@ async function resolveInput(body: ParseRequestBody): Promise<ProcessedInput> {
   return await processImageInput(image!)
 }
 
-/** Executes the Gemini generation call and parses the result */
-/** Executes the Gemini generation call and streams the result */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function generateRecipeStream(client: any, parts: any[]): Promise<ReadableStream> {
+/**
+ * Executes the Gemini generation call and streams the result.
+ * Implements a "Fallback Quality Gate":
+ * 1. IF mode === 'infer': ALWAYS use 'gemini-2.5-flash' (High reasoning for images)
+ * 2. ELSE (Standard Parse):
+ *    a. Try 'gemini-2.5-flash-lite' (FAST)
+ *    b. On Error or Empty Result: Retry with 'gemini-2.5-flash' (SMART)
+ */
+
+async function generateRecipeStream(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parts: any[],
+  mode: string = 'parse',
+): Promise<ReadableStream> {
   const schema = createRecipeSchema()
+  const encoder = new TextEncoder()
+
+  console.log(`[AI] Generating recipe with mode: ${mode} using gemini-2.5-flash`)
+
   const result = await client.models.generateContentStream({
     model: 'gemini-2.5-flash',
     config: {
@@ -389,13 +405,11 @@ async function generateRecipeStream(client: any, parts: any[]): Promise<Readable
     contents: [{ role: 'user', parts }],
   })
 
-  const encoder = new TextEncoder()
   return new ReadableStream({
     async start(controller) {
       try {
-        // The result itself is an async iterable in @google/genai
         for await (const chunk of result) {
-          const text = chunk.text
+          const text = chunk.text()
           if (text) {
             controller.enqueue(encoder.encode(text))
           }

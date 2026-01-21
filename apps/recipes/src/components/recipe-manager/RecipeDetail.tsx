@@ -54,9 +54,41 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 }) => {
   const session = useStore($cookingSession)
 
-  // ... imports
-
   const isCooking = session.isActive && session.recipeId === recipe.id
+
+  // SWR Revalidation: Fetch fresh data on mount to catch background AI updates
+  useEffect(() => {
+    const revalidate = async () => {
+      try {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          const updatedRecipe = data.recipe || data
+          if (updatedRecipe && updatedRecipe.id === recipe.id) {
+            // Check for new enhanced content
+            const hasNewEnhanced =
+              (updatedRecipe.structuredSteps?.length || 0) > 0 &&
+              (!recipe.structuredSteps || recipe.structuredSteps.length === 0)
+
+            // Or if updatedAt has simply changed
+            const isNewer = updatedRecipe.updatedAt && updatedRecipe.updatedAt !== recipe.updatedAt
+
+            if (hasNewEnhanced || isNewer) {
+              onUpdate(updatedRecipe, 'silent')
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to revalidate recipe:', error)
+      }
+    }
+
+    revalidate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipe.id]) // Only run on mount/id change to prevent loop
 
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
@@ -166,17 +198,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
         onRestore={() => {
-          // Force a reload of the current view to show restored data
-          // We can call onUpdate with 'silent' to trigger a re-render if the parent handles it
-          // But since the data changed on server, we might need to re-fetch?
-          // For now, let's rely on manual reload or if we can fetch fresh data here.
-          // Simple hack: window.location.reload() or close and reopen.
-          // Better: fetch fresh recipe and call onUpdate
           const fetchFresh = async () => {
             const baseUrl = import.meta.env.BASE_URL.endsWith('/')
               ? import.meta.env.BASE_URL
               : `${import.meta.env.BASE_URL}/`
-            const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`)
+            const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
             if (res.ok) {
               const data = await res.json()
               if (data.recipe) onUpdate(data.recipe, 'silent')

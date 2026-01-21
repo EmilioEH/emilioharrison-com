@@ -81,7 +81,7 @@ interface FirebaseDbProxy extends FirebaseRestService {
 }
 
 // Export a Proxy for 'db' that auto-initializes
-export const db = new Proxy({} as FirebaseDbProxy, {
+const db = new Proxy({} as FirebaseDbProxy, {
   get(target, prop) {
     // If it's a method, return an async wrapper
     if (
@@ -94,7 +94,6 @@ export const db = new Proxy({} as FirebaseDbProxy, {
         'deleteDocument',
         'uploadFile',
         'downloadFile',
-        'getFileMetadata',
         'getFileMetadata',
         'getProjectId',
         'getSubCollection',
@@ -182,5 +181,4 @@ export const db = new Proxy({} as FirebaseDbProxy, {
 })
 
 // Alias for storage operations (uses same REST service)
-// Alias for storage operations (uses same REST service)
-export const bucket = db
+export { db, db as bucket }

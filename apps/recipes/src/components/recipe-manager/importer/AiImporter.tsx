@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import type { Recipe } from '../../../lib/types'
 import { Loader2, ChefHat, Info, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { processImage } from '../../../lib/image-optimization'
 import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
 import { Stack, Cluster } from '@/components/ui/layout'
-// Removed blocking LoadingOverlay - using inline feedback instead
 import { uploadImage } from './api'
+import { processImage } from '../../../lib/image-optimization'
+import type { Recipe } from '../../../lib/types'
+// Removed blocking LoadingOverlay - using inline feedback instead
 
 interface AiImporterProps {
   onRecipeParsed: (recipe: Recipe) => void
@@ -82,6 +82,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-md">
+      {/* ... (SourceToggle and Inputs remain the same) */}
       <SourceToggle mode={mode} setMode={setMode} />
 
       <Stack spacing="lg">
@@ -98,6 +99,8 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
 
             {mode === 'dish-photo' && (
               <div className="animate-in fade-in slide-in-from-top-2">
+                {/* ... (Dish photo inputs) ... */}
+                {/* I will omit the bulky inputs here for the replacement, assuming replace_file_content can target the render block effectively if I provide enough context or just replace the Loading Section */}
                 <div className="mb-4 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-600 dark:text-blue-400">
                   <div className="flex gap-2">
                     <Info className="h-4 w-4 shrink-0 translate-y-0.5" />

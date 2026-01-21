@@ -10,8 +10,8 @@ vi.mock('@google/genai', () => {
         generateContentStream: vi.fn(() => {
           return (async function* () {
             yield {
-              get text() {
-                return JSON.stringify({
+              text: () =>
+                JSON.stringify({
                   title: 'Mock Recipe',
                   ingredients: [{ name: 'Test Ingredient', amount: '1 cup' }],
                   steps: ['Step 1', 'Step 2'],
@@ -34,8 +34,7 @@ vi.mock('@google/genai', () => {
                     },
                   ],
                   description: 'A mock recipe.',
-                })
-              },
+                }),
             }
           })()
         }),

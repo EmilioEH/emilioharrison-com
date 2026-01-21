@@ -12,7 +12,7 @@ export interface IngredientGroup {
 }
 
 /** Logical grouping of steps by cooking phase (e.g., "PREPARE THE SAUCE") */
-export interface StepGroup {
+interface StepGroup {
   header: string // "PREPARE THE SAUCE"
   startIndex: number // First step index (0-based)
   endIndex: number // Last step index (inclusive)
@@ -107,7 +107,7 @@ export interface RecipeVersion {
   data: Partial<Recipe> // Snapshot of core fields
 }
 
-export interface StructuredIngredient {
+interface StructuredIngredient {
   original: string
   name: string
   amount: number
@@ -117,7 +117,7 @@ export interface StructuredIngredient {
 }
 
 /** A single recipe's contribution to a grocery item */
-export interface RecipeContribution {
+interface RecipeContribution {
   recipeId: string
   recipeTitle: string
   originalAmount: string // "1 clove", "4 garlics" - as written in recipe
@@ -149,13 +149,6 @@ export interface Feedback {
 export interface LogEntry {
   type: 'info' | 'warn' | 'error' | 'log'
   args: string[]
-  timestamp: string
-}
-
-// Firestore-safe log entry with flattened args (no nested arrays)
-export interface SafeLogEntry {
-  type: string
-  args: string // Flattened from array
   timestamp: string
 }
 
@@ -240,7 +233,7 @@ export interface PendingInvite {
 }
 
 /** Cooking history entry for a family member */
-export interface CookingHistoryEntry {
+interface CookingHistoryEntry {
   userId: string
   userName: string
   cookedAt: string // ISO date

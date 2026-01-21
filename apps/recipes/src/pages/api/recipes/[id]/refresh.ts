@@ -11,6 +11,7 @@ import type { Recipe, RecipeVersion } from '../../../../lib/types'
 // Given the constraints, calling the localhost endpoint might be flaky.
 // Let's replicate the basic flow: We have the Recipe. We construct the Body for `parse-recipe`.
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const POST: APIRoute = async ({ params, request }) => {
   // Delegate logic to parse-recipe endpoint
 
@@ -29,6 +30,8 @@ export const POST: APIRoute = async ({ params, request }) => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = { mode: 'parse', style: 'enhanced' }
+  const originalSourceUrl = recipe.sourceUrl
+  const originalSourceImage = recipe.sourceImage
 
   // Helper to construct text-based payload from existing recipe data
   const buildTextPayload = () => {
@@ -89,31 +92,26 @@ ${recipe.steps.join('\n')}
       body: JSON.stringify(payload),
     })
 
-    // If image-based refresh fails, fall back to text-based regeneration
-    if (!parseRes.ok && recipe.sourceImage && payload.image) {
+    // FALLBACK LOGIC: If image OR URL extraction failed, try text-based regeneration
+    if (!parseRes.ok && (originalSourceUrl || originalSourceImage)) {
       console.warn(
-        'Image-based refresh failed (likely auth/fetch issue), falling back to text-based regeneration',
+        `[Refresh] Source extraction failed (URL: ${!!originalSourceUrl}, Image: ${!!originalSourceImage}). Falling back to text-based regeneration.`,
       )
-      const textPayload = {
+
+      const textPayload = buildTextPayload()
+      const fallbackPayload = {
         mode: 'parse',
-        text: `
-Title: ${recipe.title}
-Description: ${recipe.description || ''}
-
-Ingredients:
-${recipe.ingredients.map((i) => `${i.amount} ${i.name}`).join('\n')}
-
-Instructions:
-${recipe.steps.join('\n')}
-        `.trim(),
+        style: 'enhanced',
+        ...textPayload,
       }
+
       parseRes = await fetch(parseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Cookie: cookieHeader || '',
         },
-        body: JSON.stringify(textPayload),
+        body: JSON.stringify(fallbackPayload),
       })
     }
 

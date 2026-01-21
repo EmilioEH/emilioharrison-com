@@ -52,20 +52,42 @@ test.describe('Dual-Process Recipe Import', () => {
       }
     })
 
-    // 4. Mock Get Recipe API (for redirect)
-    await page.route('**/api/recipes/new-recipe-id', async (route) => {
-      await route.fulfill({
-        json: {
-          recipe: {
-            id: 'new-recipe-id',
-            title: 'Strict Recipe',
-            ingredients: [{ name: 'Simple Ingredient', amount: '1' }],
-            steps: ['Just one simple step.'],
-            creationMethod: 'ai-parse',
-            // Initially no enhanced data
+    // 4. Mock Get Recipe API (Dynamic Response)
+    await page.route('**/api/recipes/new-recipe-id*', async (route) => {
+      // If enhance has been called, return the enhanced version
+      if (enhanceCalled) {
+        await route.fulfill({
+          json: {
+            recipe: {
+              id: 'new-recipe-id',
+              title: 'Strict Recipe',
+              ingredients: [{ name: 'Simple Ingredient', amount: '1' }],
+              steps: ['Just one simple step.'],
+              creationMethod: 'ai-parse',
+              // ADD ENHANCED DATA
+              structuredSteps: [
+                { text: 'Just one simple step.', highlightedText: '**Just** one simple step.' },
+              ],
+              ingredientGroups: [{ header: 'MAIN', startIndex: 0, endIndex: 0 }],
+            },
+            success: true,
           },
-        },
-      })
+        })
+      } else {
+        // Initial state
+        await route.fulfill({
+          json: {
+            recipe: {
+              id: 'new-recipe-id',
+              title: 'Strict Recipe',
+              ingredients: [{ name: 'Simple Ingredient', amount: '1' }],
+              steps: ['Just one simple step.'],
+              creationMethod: 'ai-parse',
+            },
+            success: true,
+          },
+        })
+      }
     })
 
     // Navigate to add recipe
@@ -91,42 +113,18 @@ test.describe('Dual-Process Recipe Import', () => {
     // Since it's fire-and-forget, we might not see the request finish before test ends unless we wait.
     await expect.poll(() => enhanceCalled).toBe(true)
 
-    // Now Mock the "Get Recipe" to return ENHANCED data (simulating background update finished)
-    await page.route('**/api/recipes/new-recipe-id*', async (route) => {
-      const url = route.request().url()
-      if (url.includes('family-data')) {
-        await route.fulfill({ json: { success: false } }) // prevent error
-        return
-      }
-      await route.fulfill({
-        json: {
-          recipe: {
-            id: 'new-recipe-id',
-            title: 'Strict Recipe',
-            ingredients: [{ name: 'Simple Ingredient', amount: '1' }],
-            steps: ['Just one simple step.'],
-            creationMethod: 'ai-parse',
-            // ADD ENHANCED DATA (must be non-empty to trigger toggle)
-            structuredSteps: [
-              { text: 'Just one simple step.', highlightedText: '**Just** one simple step.' },
-            ],
-            ingredientGroups: [
-              { header: 'MAIN', startIndex: 0, endIndex: 0 }, // Non-empty array
-            ],
-          },
-        },
-      })
-    })
-
     // Go to Detail View
-    // Since we are in Library (virtual view), we click the recipe
+    // Since we are in Library (virtual view), we click the recipe and WAIT for navigation
     await page.getByText('Strict Recipe').click()
+    await expect(page).toHaveURL(/recipe=new-recipe-id/)
 
     // Wait for React to update with enhanced data from the mock
-    await page.waitForTimeout(1000)
+    // Using a polling expectation is safer than a fixed timeout
+    // Wait for Smart View toggle to appear (triggered by SWR revalidation)
+    await expect(page.getByText('Smart View')).toBeVisible({ timeout: 10000 })
 
     // Verify "Smart View" toggle exists
-    await expect(page.getByText('Smart View')).toBeVisible()
+    // await expect(page.getByText('Smart View')).toBeVisible()
 
     // Verify default is 'Original' (no bold text) -> Actually logic says default is 'Enhanced' if available?
     // Code: `useState(hasEnhancedContent ? 'enhanced' : 'original')`

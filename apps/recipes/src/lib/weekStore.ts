@@ -24,7 +24,7 @@ export interface PlannedRecipe {
   addedByName?: string
 }
 
-export type WeekState = Record<string, string> & {
+type WeekState = Record<string, string> & {
   activeWeekStart: string // ISO Date of Monday for the currently viewed week
 }
 

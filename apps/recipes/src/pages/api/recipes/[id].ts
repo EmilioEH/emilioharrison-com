@@ -1,6 +1,32 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
 
+export const GET: APIRoute = async ({ params }) => {
+  const { id } = params
+
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
+  }
+
+  try {
+    const doc = await db.getDocument('recipes', id)
+    if (!doc) {
+      return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
+    }
+
+    return new Response(JSON.stringify({ recipe: doc, success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (e) {
+    console.error('GET Recipe Error', e)
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
+
 export const PUT: APIRoute = async ({ request, cookies, params }) => {
   const { id } = params
   const userCookie = cookies.get('site_user')

@@ -105,6 +105,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   if (view === 'detail' && selectedRecipe) {
     return (
       <RecipeDetail
+        key={`${selectedRecipe.id}-${selectedRecipe.updatedAt || ''}`}
         recipe={selectedRecipe}
         onClose={() => setView('library')}
         onUpdate={handleUpdateRecipe}

@@ -86,9 +86,8 @@ While Astro handles the initial load, the app functions as a **Single Page Appli
 We prioritize **deterministic data** over generative AI to save costs and latency, but use different AI "Modes" depending on user intent.
 
 - **Data Priority**: The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_. Only if JSON-LD is missing does it construct a prompt for Gemini.
-- **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI is instructed to transcribe the recipe _exactly as written_, preserving the original author's voice and structure.
-- **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI transcribes the recipe _exactly as written_, providing immediate access to the data.
-- **Dual-Process Enhancement**: After a new recipe is saved, a background job automatically triggers **Enhancement Mode**. This generates "Smart View" data (ingredient grouping, structured steps) without blocking the user.
+- **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI is instructed to transcribe the recipe _exactly as written_, preserving the original author's voice and structure, while providing immediate access to the data.
+- **Dual-Process Enhancement**: After a new recipe is saved, a background job automatically triggers **Enhancement Mode**. The UI uses an **SWR-style revalidation pattern** and **dynamic component remounting** (via `${id}-${updatedAt}` keys) in `RecipeDetail.tsx` to automatically pick up and render "Smart View" data once the background job finishes, without requiring a user refresh.
 - **Enhancement Mode (Kenji-Style)**: Used during background enhancement, **AI Refresh**, and **Dish Photo Scan**. The AI applies "Kenji Lopez-Alt" style best practices:
   - **Scientific Grouping**: Group steps chronologically by component (e.g., "Prepare the Marina", "Cook the Pasta").
   - **Descriptive Paragraphs**: Combine atomic steps into readable, narrative paragraphs.

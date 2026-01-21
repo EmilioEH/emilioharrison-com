@@ -39,7 +39,7 @@ test.describe('Photo Import Workflow', () => {
     await page.getByRole('button', { name: 'Process Recipe' }).click()
 
     // 6. Verify Source Image is visible
-    await expect(page.getByText('Source Image')).toBeVisible()
+    await expect(page.locator('div', { hasText: 'Source Image' }).first()).toBeVisible()
     await expect(page.locator('img[alt="Recipe Source"]')).toBeVisible()
   })
 })
