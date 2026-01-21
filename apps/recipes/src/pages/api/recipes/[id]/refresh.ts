@@ -26,7 +26,8 @@ export const POST: APIRoute = async ({ params, request }) => {
 
   // Construct payload for parsing
   const baseUrl = new URL(request.url).origin
-  const parseUrl = `${baseUrl}/api/parse-recipe`
+  const basePrefix = import.meta.env.BASE_URL.replace(/\/$/, '')
+  const parseUrl = `${baseUrl}${basePrefix}/api/parse-recipe`
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = { mode: 'parse', style: 'enhanced' }
@@ -128,7 +129,8 @@ ${recipe.steps.join('\n')}
     }
 
     const newData = await parseRes.json()
-    const costUrl = `${baseUrl}/api/estimate-cost`
+    const basePrefix = import.meta.env.BASE_URL.replace(/\/$/, '')
+    const costUrl = `${baseUrl}${basePrefix}/api/estimate-cost`
 
     // Attempt to estimate cost
     let estimatedCost = recipe.estimatedCost // Fallback to existing
