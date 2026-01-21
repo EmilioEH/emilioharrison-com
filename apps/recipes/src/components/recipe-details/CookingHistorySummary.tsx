@@ -84,6 +84,13 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
     reader.readAsDataURL(file)
   }
 
+  // Cancel review
+  const handleCancelReview = () => {
+    setReviewRating(0)
+    setReviewComment('')
+    setReviewPhoto(null)
+  }
+
   // Submit review
   const handleSubmitReview = async () => {
     if (!recipeId || reviewRating === 0) return
@@ -245,14 +252,25 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                     </Button>
                   )}
 
-                  <Button
-                    size="sm"
-                    onClick={handleSubmitReview}
-                    disabled={reviewRating === 0 || isSubmitting}
-                    className="w-full"
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Review'}
-                  </Button>
+                  <Inline spacing="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelReview}
+                      disabled={isSubmitting}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSubmitReview}
+                      disabled={reviewRating === 0 || isSubmitting}
+                      className="flex-1"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                    </Button>
+                  </Inline>
                 </Stack>
               </div>
             )}

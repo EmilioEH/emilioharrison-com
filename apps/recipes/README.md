@@ -176,6 +176,12 @@ All primitives use the `spacing` prop with a controlled scale:
 
 ### Recent Updates (Jan 2026)
 
+- **Comprehensive Review System**: Completely revamped recipe reviews with an **inline expansion pattern** on the recipe overview page. Users can now leave detailed reviews including a 5-star rating (required), optional comment (up to 500 characters), and optional finished dish photo. The review form uses **progressive disclosure**—selecting a star rating automatically expands to show comment and photo fields, creating a lightweight yet powerful review experience without modals or page navigation.
+- **Review Photo Integration**: Photos uploaded with reviews are automatically added to the recipe's image gallery, with the latest review photo becoming the recipe's main image. This provides visual social proof and helps families see how dishes turn out over time.
+- **Edit History Tracking**: All review edits are preserved in an `editHistory` array, showing an "edited" indicator with timestamp on modified reviews. Users can only edit their own reviews, with ownership verified server-side.
+- **Multiple Reviews per User**: Users can submit multiple reviews for the same recipe over time (e.g., after cooking it again), creating a richer history of experiences. Each review is a separate entry with its own timestamp.
+- **Backward Compatibility**: The new `reviews` array coexists with the legacy `ratings` array in `FamilyRecipeData`. Legacy ratings are automatically converted to review format for display, ensuring a smooth transition.
+
 - **Interactive Recipe Ratings**: Implemented a comprehensive 5-star rating system. Users can now rate recipes during the post-cooking review flow. The library view and recipe cards now display these ratings.
 - **Finished Dish Photos**: Added the ability to capture or upload a photo of the finished dish at the end of a cooking session. These photos are automatically added to the recipe's image gallery.
 - **Family Rating Breakdowns**: Enhanced the cooking history view to show an average rating and allow users to tap to see a detailed breakdown of individual family members' ratings, with the ability for users to update their own ratings. Now features **standard star highlighting** (fills all lead-up stars) and **seamless UI updates** without page refreshes.
@@ -342,8 +348,9 @@ The application distinguishes between data tied to an individual user and data s
 - **User-Specific (Private)**: Stored in `users/{userId}/...`
   - **Favorites**: Favoriting a recipe is a personal preference and does not affect other family members' views.
 - **Family-Scoped (Shared)**: Stored in `families/{familyId}/recipeData/{recipeId}`
-  - **Notes**: All notes are shared and visible to the family.
-  - **Ratings**: Ratings are individual but aggregated into a family average.
+  - **Reviews**: Users can leave multiple reviews per recipe, each with a star rating (1-5), optional comment, and optional photo. Reviews are individual (attributed to specific users) but displayed together for the family. Each user can submit multiple reviews over time. Edit history is preserved.
+  - **Notes** _(Deprecated - use Reviews)_: All notes are shared and visible to the family. These are legacy cooking annotations, distinct from reviews.
+  - **Ratings** _(Deprecated - use Reviews)_: Legacy ratings are individual but aggregated into a family average. New implementations should use the `reviews` array instead.
   - **Week Plan**: The meal plan is shared. If one member adds a recipe to "This Week," it appears for everyone.
   - **Cooking History**: Shared timeline of cooking sessions.
 
