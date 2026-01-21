@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react'
-import { Star, ChevronDown, ChevronUp } from 'lucide-react'
+import React, { useState, useMemo, useRef } from 'react'
+import { Star, ChevronDown, ChevronUp, Camera, X } from 'lucide-react'
 import { useStore } from '@nanostores/react'
 import { Inline, Stack } from '../ui/layout'
+import { Button } from '../ui/button'
 import { cn } from '../../lib/utils'
 import { $currentUserId } from '../../lib/familyStore'
-import type { FamilyRecipeData } from '../../lib/types'
+import type { FamilyRecipeData, Review } from '../../lib/types'
 
 interface CookingHistorySummaryProps {
   averageRating: number
@@ -26,76 +27,103 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   onRefresh,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [editingRating, setEditingRating] = useState<string | null>(null)
   const [hoverRating, setHoverRating] = useState<number>(0)
+
+  // NEW: Review form state
+  const [reviewRating, setReviewRating] = useState<number>(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewPhoto, setReviewPhoto] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   // Get current user ID from nanostore (set during app initialization)
   const currentUserId = useStore($currentUserId)
 
-  // Merge ratings and notes into session cards
-  const sessions = useMemo(() => {
+  // NEW: Get reviews from family data (with fallback to legacy ratings)
+  const reviews = useMemo((): Review[] => {
     if (!familyData) return []
 
-    const { ratings, notes } = familyData
-    // Start with ratings as base sessions
-    const grouped = ratings.map((r) => {
-      // Find a matching note from same user within reasonable time (e.g. same day)
-      // For simplicity, we just find the most recent note by this user for now
-      // A more robust implementation would time-window match.
-      const userNote = notes.find((n) => n.userName === r.userName)
+    // Prefer new reviews array
+    if (familyData.reviews?.length) {
+      return familyData.reviews.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+    }
 
-      return {
-        id: `r-${r.ratedAt}`,
-        user: {
-          name: r.userName,
-          userId: r.userId,
-          initial: r.userName.charAt(0).toUpperCase(),
-          // deterministically assign color based on name length/char?
-          color: getColorForUser(r.userName),
-        },
-        date: new Date(r.ratedAt).toLocaleDateString(),
-        timestamp: new Date(r.ratedAt).getTime(),
+    // Fallback: convert legacy ratings to review format for display
+    return (familyData.ratings || []).map(
+      (r): Review => ({
+        id: `legacy-${r.ratedAt}`,
+        recipeId: recipeId || '',
+        userId: r.userId,
+        userName: r.userName,
         rating: r.rating,
-        note: userNote?.text,
-      }
-    })
+        comment: undefined,
+        photoUrl: undefined,
+        difficulty: undefined,
+        source: 'quick' as const,
+        createdAt: r.ratedAt,
+      }),
+    )
+  }, [familyData, recipeId])
 
-    // Also include notes that might not have ratings?
-    // For MVP, focusing on rated sessions as "Cooking History" is cleaner.
-    // If we want to capture notes without ratings, we'd add them here.
+  const displayReviews = isExpanded ? reviews : []
 
-    return grouped.sort((a, b) => b.timestamp - a.timestamp)
-  }, [familyData])
+  // Check if current user has already reviewed
+  const currentUserReview = reviews.find((r) => currentUserId && r.userId === currentUserId)
 
-  const displaySessions = isExpanded ? sessions : []
+  // Handle photo selection
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-  const handleEditRating = async (_userId: string, newRating: number) => {
-    if (!recipeId) return
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setReviewPhoto(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
 
+  // Submit review
+  const handleSubmitReview = async () => {
+    if (!recipeId || reviewRating === 0) return
+
+    setIsSubmitting(true)
     try {
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
-      await fetch(`${baseUrl}api/recipes/${recipeId}/rating`, {
+      await fetch(`${baseUrl}api/recipes/${recipeId}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: newRating }),
+        body: JSON.stringify({
+          rating: reviewRating,
+          comment: reviewComment || undefined,
+          photoBase64: reviewPhoto || undefined,
+          source: 'quick',
+        }),
       })
 
-      // Instead of refreshing, trigger data reload
+      // Reset form
+      setReviewRating(0)
+      setReviewComment('')
+      setReviewPhoto(null)
+
+      // Trigger data reload
       onRefresh?.()
     } catch (error) {
-      console.error('Failed to update rating:', error)
+      console.error('Failed to submit review:', error)
+      alert('Failed to submit review. Please try again.')
     } finally {
-      setEditingRating(null)
+      setIsSubmitting(false)
     }
   }
 
   if (totalRatings === 0 && !familyData) return null
 
-  // Check if current user has already rated
-  const currentUserRating = sessions.find((s) => currentUserId && s.user.userId === currentUserId)
+  // Progressive disclosure: show comment field after rating selected
+  const showCommentField = reviewRating > 0
 
   return (
     <div className="mb-6 border-b border-border pb-6">
@@ -108,7 +136,9 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-bold text-foreground">{averageRating.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground">({totalRatings} ratings)</span>
+              <span className="text-xs text-muted-foreground">
+                ({totalRatings} {totalRatings === 1 ? 'review' : 'reviews'})
+              </span>
             </div>
             {lastCooked && (
               <>
@@ -120,7 +150,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
               </>
             )}
           </Inline>
-          {sessions.length > 0 &&
+          {reviews.length > 0 &&
             (isExpanded ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
             ) : (
@@ -129,11 +159,13 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         </Inline>
       </button>
 
-      {/* Add Rating Section - Show if current user hasn't rated */}
-      {currentUserId && !currentUserRating && (
+      {/* Add Review Section - Show if current user hasn't reviewed */}
+      {currentUserId && !currentUserReview && (
         <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-          <Stack spacing="sm">
-            <p className="text-sm font-medium text-foreground">Rate this recipe</p>
+          <Stack spacing="md">
+            <p className="text-sm font-medium text-foreground">Leave a review</p>
+
+            {/* Star Rating */}
             <Inline spacing="sm">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -142,14 +174,15 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                   onMouseLeave={() => setHoverRating(0)}
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleEditRating(currentUserId, star)
+                    setReviewRating(star)
                   }}
                   className="transition-transform hover:scale-110 active:scale-95"
+                  disabled={isSubmitting}
                 >
                   <Star
                     className={cn(
                       'h-6 w-6 transition-colors',
-                      star <= (hoverRating || 0)
+                      star <= (hoverRating || reviewRating)
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'fill-border text-border',
                     )}
@@ -157,72 +190,153 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                 </button>
               ))}
             </Inline>
-            <p className="text-xs text-muted-foreground">Tap a star to add your rating</p>
+
+            {/* Comment Field - Progressive Disclosure */}
+            {showCommentField && (
+              <div className="animate-in fade-in slide-in-from-top-2">
+                <Stack spacing="sm">
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="What did you think? (optional)"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    rows={3}
+                    maxLength={500}
+                    disabled={isSubmitting}
+                  />
+
+                  {/* Photo Upload */}
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoSelect}
+                    disabled={isSubmitting}
+                  />
+
+                  {reviewPhoto ? (
+                    <div className="relative">
+                      <img
+                        src={reviewPhoto}
+                        alt="Review preview"
+                        className="h-32 w-full rounded-lg object-cover"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setReviewPhoto(null)}
+                        className="absolute right-2 top-2 bg-background/80"
+                        disabled={isSubmitting}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => photoInputRef.current?.click()}
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
+                      <Camera className="h-4 w-4" />
+                      Add photo (optional)
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    onClick={handleSubmitReview}
+                    disabled={reviewRating === 0 || isSubmitting}
+                    className="w-full"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                  </Button>
+                </Stack>
+              </div>
+            )}
+
+            {!showCommentField && (
+              <p className="text-xs text-muted-foreground">Tap a star to start your review</p>
+            )}
           </Stack>
         </div>
       )}
 
-      {/* Expandable History */}
-      {isExpanded && sessions.length > 0 && (
+      {/* Expandable Review History */}
+      {isExpanded && reviews.length > 0 && (
         <div className="mt-4 animate-in fade-in slide-in-from-top-2">
           <Stack spacing="sm">
-            {displaySessions.map((session) => {
-              const isCurrentUserSession = currentUserId && session.user.userId === currentUserId
-              const isEditing = editingRating === session.user.userId
+            {displayReviews.map((review) => {
+              const isCurrentUserReview = currentUserId && review.userId === currentUserId
+              const hasBeenEdited = review.updatedAt && review.updatedAt !== review.createdAt
 
               return (
                 <div
-                  key={session.id}
-                  className="flex items-center justify-between rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                  key={review.id}
+                  className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/20"
                 >
-                  <Inline spacing="sm" align="center">
-                    <div
-                      className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white',
-                        session.user.color,
-                      )}
-                    >
-                      {session.user.initial}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-foreground">
-                        {session.user.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{session.date}</span>
-                    </div>
-                  </Inline>
-
-                  {/* Interactive Stars */}
-                  <Inline spacing="xs">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => {
-                          if (isCurrentUserSession) {
-                            if (isEditing || star !== session.rating) {
-                              handleEditRating(session.user.userId, star)
-                            }
-                          }
-                        }}
-                        disabled={!isCurrentUserSession}
-                        className={cn(
-                          'transition-transform',
-                          isCurrentUserSession && 'cursor-pointer hover:scale-110 active:scale-95',
-                          !isCurrentUserSession && 'cursor-default',
-                        )}
-                        title={isCurrentUserSession ? 'Click to change your rating' : ''}
-                      >
-                        <Star
+                  <Stack spacing="sm">
+                    {/* Header: Avatar + Name + Date */}
+                    <Inline spacing="sm" align="center" justify="between">
+                      <Inline spacing="sm" align="center">
+                        <div
                           className={cn(
-                            'h-4 w-4',
-                            star <= session.rating
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'fill-border text-border',
+                            'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white',
+                            getColorForUser(review.userName),
                           )}
-                        />
-                      </button>
-                    ))}
-                  </Inline>
+                        >
+                          {review.userName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-foreground">
+                            {review.userName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                            {hasBeenEdited && ' · edited'}
+                          </span>
+                        </div>
+                      </Inline>
+
+                      {/* Stars */}
+                      <Inline spacing="xs">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={cn(
+                              'h-4 w-4',
+                              star <= review.rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'fill-border text-border',
+                            )}
+                          />
+                        ))}
+                      </Inline>
+                    </Inline>
+
+                    {/* Comment */}
+                    {review.comment && (
+                      <p className="text-sm leading-relaxed text-foreground">{review.comment}</p>
+                    )}
+
+                    {/* Photo */}
+                    {review.photoUrl && (
+                      <img
+                        src={review.photoUrl}
+                        alt="Finished dish"
+                        className="rounded-lg object-cover"
+                      />
+                    )}
+
+                    {/* Edit button for current user */}
+                    {isCurrentUserReview && (
+                      <Button variant="ghost" size="sm" className="self-start">
+                        Edit Review
+                      </Button>
+                    )}
+                  </Stack>
                 </div>
               )
             })}

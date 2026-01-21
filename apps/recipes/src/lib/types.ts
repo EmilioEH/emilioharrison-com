@@ -220,6 +220,28 @@ export interface UserRating {
   ratedAt: string
 }
 
+/** A review with rating, optional comment, and optional photo */
+export interface Review {
+  id: string // unique review ID (generated)
+  recipeId: string
+  userId: string
+  userName: string
+  rating: number // 1-5 (required)
+  comment?: string // optional review text
+  photoUrl?: string // optional photo URL
+  difficulty?: 1 | 2 | 3 // optional difficulty (1=Easy, 2=Medium, 3=Hard)
+  source: 'cooking' | 'quick' | 'edit' // where the review came from
+  createdAt: string // ISO timestamp
+  updatedAt?: string // ISO timestamp (set when edited)
+  editHistory?: Array<{
+    rating: number
+    comment?: string
+    photoUrl?: string
+    difficulty?: 1 | 2 | 3
+    editedAt: string // ISO timestamp
+  }>
+}
+
 /** Invitation for a user to join a family */
 export interface PendingInvite {
   id: string
@@ -254,7 +276,8 @@ export interface WeekPlanData {
 export interface FamilyRecipeData {
   id: string // matches recipe ID
   notes: RecipeNote[]
-  ratings: UserRating[]
+  ratings: UserRating[] // DEPRECATED: Use reviews instead (kept for backward compatibility)
+  reviews?: Review[] // NEW: Unified reviews with ratings, comments, and photos
   weekPlan?: WeekPlanData
   cookingHistory: CookingHistoryEntry[]
   // Enhanced Review Data
