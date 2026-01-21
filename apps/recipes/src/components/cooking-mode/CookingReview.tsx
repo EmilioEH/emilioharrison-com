@@ -41,6 +41,7 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
   const [finishedPhoto, setFinishedPhoto] = useState<string | null>(null)
   const [ingredientNotes, setIngredientNotes] = useState<Record<number, string>>({})
   const [stepNotes, setStepNotes] = useState<Record<number, string>>({})
+  const [hoverRating, setHoverRating] = useState<number>(0)
 
   // Edit State
   const [ingredientEdits, setIngredientEdits] = useState<Record<number, string>>({})
@@ -162,6 +163,7 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
                 <button
                   key={level.value}
                   onClick={() => setDifficulty(level.value)}
+                  aria-label={`Difficulty: ${level.label}`}
                   className={cn(
                     'flex flex-col items-center justify-center rounded-lg border-2 py-4 transition-all duration-200 active:scale-95',
                     difficulty === level.value
@@ -185,14 +187,17 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
                   onClick={() => setRating(star)}
                   className="transition-transform active:scale-95"
                   type="button"
+                  aria-label={`Rate ${star} stars`}
                 >
                   <Star
                     className={cn(
-                      'h-8 w-8',
-                      star <= rating
+                      'h-8 w-8 transition-colors',
+                      star <= (hoverRating || rating)
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'fill-border text-border',
                     )}

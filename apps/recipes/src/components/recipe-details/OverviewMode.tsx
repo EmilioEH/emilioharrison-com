@@ -83,25 +83,25 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [isEstimating, setIsEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
 
+  const loadFamilyData = async () => {
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/family-data`)
+      const data = await res.json()
+
+      if (data.success && data.data) {
+        setFamilyData(data.data)
+      }
+    } catch (error) {
+      console.error('Failed to load family data:', error)
+    }
+  }
+
   // Load family data on mount
   useEffect(() => {
-    const loadFamilyData = async () => {
-      try {
-        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-          ? import.meta.env.BASE_URL
-          : `${import.meta.env.BASE_URL}/`
-
-        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/family-data`)
-        const data = await res.json()
-
-        if (data.success && data.data) {
-          setFamilyData(data.data)
-        }
-      } catch (error) {
-        console.error('Failed to load family data:', error)
-      }
-    }
-
     loadFamilyData()
   }, [recipe.id])
 
@@ -449,6 +449,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             lastCooked={recipe.lastCooked}
             familyData={familyData}
             recipeId={recipe.id}
+            onRefresh={loadFamilyData}
           />
 
           {/* Ingredients */}

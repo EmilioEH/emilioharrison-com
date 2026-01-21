@@ -13,6 +13,7 @@ interface CookingHistorySummaryProps {
   lastCookedBy?: string
   familyData?: FamilyRecipeData | null
   recipeId?: string
+  onRefresh?: () => void
 }
 
 export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
@@ -22,9 +23,11 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   lastCookedBy,
   familyData,
   recipeId,
+  onRefresh,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [editingRating, setEditingRating] = useState<string | null>(null)
+  const [hoverRating, setHoverRating] = useState<number>(0)
 
   // Get current user ID from nanostore (set during app initialization)
   const currentUserId = useStore($currentUserId)
@@ -80,8 +83,8 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         body: JSON.stringify({ rating: newRating }),
       })
 
-      // Refresh page to show updated rating
-      window.location.reload()
+      // Instead of refreshing, trigger data reload
+      onRefresh?.()
     } catch (error) {
       console.error('Failed to update rating:', error)
     } finally {
@@ -135,13 +138,22 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
                   onClick={(e) => {
                     e.stopPropagation()
                     handleEditRating(currentUserId, star)
                   }}
                   className="transition-transform hover:scale-110 active:scale-95"
                 >
-                  <Star className="h-6 w-6 fill-border text-border hover:fill-yellow-400 hover:text-yellow-400" />
+                  <Star
+                    className={cn(
+                      'h-6 w-6 transition-colors',
+                      star <= (hoverRating || 0)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'fill-border text-border',
+                    )}
+                  />
                 </button>
               ))}
             </Inline>

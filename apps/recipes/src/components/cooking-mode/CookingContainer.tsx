@@ -171,14 +171,14 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       console.error('Failed to save review data:', error)
     } finally {
       cookingSessionActions.endSession()
-      onClose()
+      // Removed onClose() to stay on the recipe overview after finishing.
       // Removed refresh to avoid test flakiness and improve UX. State should update via store.
     }
   }
 
   const handleSkip = () => {
     cookingSessionActions.endSession()
-    onClose()
+    // Removed onClose() to stay on the recipe overview after finishing.
     // Removed refresh to avoid test flakiness and improve UX. State should update via store.
   }
 
