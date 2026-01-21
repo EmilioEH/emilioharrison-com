@@ -448,6 +448,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             totalRatings={familyData?.ratings?.length || (recipe.rating ? 1 : 0)}
             lastCooked={recipe.lastCooked}
             familyData={familyData}
+            recipeId={recipe.id}
           />
 
           {/* Ingredients */}

@@ -53,6 +53,8 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
 
   const handleReviewComplete = async (data: {
     difficulty: number
+    rating: number
+    finishedPhoto?: string
     ingredientNotes: Record<number, string>
     stepNotes: Record<number, string>
     ingredientEdits: Record<number, string>
@@ -76,7 +78,43 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         }),
       })
 
-      // 2. Save Recipe Edits (If any)
+      // 2. Save Rating (NEW)
+      await fetch(`${baseUrl}api/recipes/${recipeId}/rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: data.rating }),
+      })
+
+      // 3. Upload Finished Photo (NEW)
+      if (data.finishedPhoto) {
+        // Process image
+        const { processImage } = await import('../../lib/image-optimization')
+        const blob = await fetch(data.finishedPhoto).then((r) => r.blob())
+        const file = new File([blob], 'finished-dish.jpg', { type: 'image/jpeg' })
+        const optimizedFile = await processImage(file)
+
+        // Upload to storage
+        const formData = new FormData()
+        formData.append('file', optimizedFile)
+        const uploadRes = await fetch(`${baseUrl}api/uploads`, {
+          method: 'POST',
+          body: formData,
+        })
+        const { key } = await uploadRes.json()
+        const uploadedUrl = `${baseUrl}api/uploads/${key}`
+
+        // Add to recipe images array
+        const currentImages = session.recipe.images || []
+        await fetch(`${baseUrl}api/recipes/${recipeId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            images: [uploadedUrl, ...currentImages],
+          }),
+        })
+      }
+
+      // 4. Save Recipe Edits (If any)
       const hasIngredientEdits = Object.keys(data.ingredientEdits).length > 0
       const hasStepEdits = Object.keys(data.stepEdits).length > 0
 

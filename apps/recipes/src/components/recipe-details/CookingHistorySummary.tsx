@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { Star, ChevronDown, ChevronUp } from 'lucide-react'
 import { Inline, Stack } from '../ui/layout'
-import { CookingHistoryCard } from './CookingHistoryCard'
+import { cn } from '../../lib/utils'
 import type { FamilyRecipeData } from '../../lib/types'
 
 interface CookingHistorySummaryProps {
@@ -10,6 +10,7 @@ interface CookingHistorySummaryProps {
   lastCooked?: string
   lastCookedBy?: string
   familyData?: FamilyRecipeData | null
+  recipeId?: string
 }
 
 export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
@@ -18,8 +19,20 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   lastCooked,
   lastCookedBy,
   familyData,
+  recipeId,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [editingRating, setEditingRating] = useState<string | null>(null)
+
+  // Get current user from localStorage (set during login)
+  const currentUser = useMemo(() => {
+    try {
+      const userData = localStorage.getItem('user')
+      return userData ? JSON.parse(userData) : null
+    } catch {
+      return null
+    }
+  }, [])
 
   // Merge ratings and notes into session cards
   const sessions = useMemo(() => {
@@ -37,6 +50,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         id: `r-${r.ratedAt}`,
         user: {
           name: r.userName,
+          userId: r.userId,
           initial: r.userName.charAt(0).toUpperCase(),
           // deterministically assign color based on name length/char?
           color: getColorForUser(r.userName),
@@ -56,6 +70,29 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   }, [familyData])
 
   const displaySessions = isExpanded ? sessions : []
+
+  const handleEditRating = async (_userId: string, newRating: number) => {
+    if (!recipeId) return
+
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      await fetch(`${baseUrl}api/recipes/${recipeId}/rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: newRating }),
+      })
+
+      // Refresh page to show updated rating
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to update rating:', error)
+    } finally {
+      setEditingRating(null)
+    }
+  }
 
   if (totalRatings === 0 && !familyData) return null
 
@@ -95,15 +132,66 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
       {isExpanded && sessions.length > 0 && (
         <div className="mt-4 animate-in fade-in slide-in-from-top-2">
           <Stack spacing="sm">
-            {displaySessions.map((session) => (
-              <CookingHistoryCard
-                key={session.id}
-                user={session.user}
-                date={session.date}
-                rating={session.rating}
-                note={session.note}
-              />
-            ))}
+            {displaySessions.map((session) => {
+              const isCurrentUser = currentUser && session.user.userId === currentUser.uid
+              const isEditing = editingRating === session.user.userId
+
+              return (
+                <div
+                  key={session.id}
+                  className="flex items-center justify-between rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                >
+                  <Inline spacing="sm" align="center">
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white',
+                        session.user.color,
+                      )}
+                    >
+                      {session.user.initial}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-foreground">
+                        {session.user.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{session.date}</span>
+                    </div>
+                  </Inline>
+
+                  {/* Interactive Stars */}
+                  <Inline spacing="xs">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => {
+                          if (isCurrentUser) {
+                            if (isEditing || star !== session.rating) {
+                              handleEditRating(session.user.userId, star)
+                            }
+                          }
+                        }}
+                        disabled={!isCurrentUser}
+                        className={cn(
+                          'transition-transform',
+                          isCurrentUser && 'cursor-pointer hover:scale-110 active:scale-95',
+                          !isCurrentUser && 'cursor-default',
+                        )}
+                        title={isCurrentUser ? 'Click to change your rating' : ''}
+                      >
+                        <Star
+                          className={cn(
+                            'h-4 w-4',
+                            star <= session.rating
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'fill-border text-border',
+                          )}
+                        />
+                      </button>
+                    ))}
+                  </Inline>
+                </div>
+              )
+            })}
           </Stack>
         </div>
       )}

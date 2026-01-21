@@ -44,7 +44,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Unified Navigation**: An integrated app header that houses the primary menu and grocery list actions. It is **scroll-aware** (sticks to top, hides on scroll down, reveals on scroll up) to maximize content visibility while maintaining easy access to navigation.
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
-- **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **inline editing** of ingredients and steps.
+- **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **5-star ratings**, **finished dish photo upload**, and **inline editing** of ingredients and steps.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via a persistent **Beta Footer Bar** fixed at the bottom of the viewport. Supports a global **keyboard shortcut** (`Cmd/Ctrl + Shift + F`) for instant reporting. The footer is **scroll-aware** (hides on scroll down, appears on scroll up) and intelligently stacked to never obscure content.
 - **Admin Dashboard**: A centralized interface (restricted to admins via `ADMIN_EMAILS` check) to:
   - **Users**: View all users, manage their access status (Disable/Enable), and remove users/spam accounts.
@@ -174,6 +174,10 @@ All primitives use the `spacing` prop with a controlled scale:
 - [Code Quality Criteria](docs/technical/code-quality-criteria.md) – Standards and best practices
 
 ### Recent Updates (Jan 2026)
+
+- **Interactive Recipe Ratings**: Implemented a comprehensive 5-star rating system. Users can now rate recipes during the post-cooking review flow. The library view and recipe cards now display these ratings.
+- **Finished Dish Photos**: Added the ability to capture or upload a photo of the finished dish at the end of a cooking session. These photos are automatically added to the recipe's image gallery.
+- **Family Rating Breakdowns**: Enhanced the cooking history view to show an average rating and allow users to tap to see a detailed breakdown of individual family members' ratings, with the ability for users to update their own ratings.
 
 - **Week View Stabilization**: Resolved an issue where the Week View workspace sometimes failed to render planned recipes due to non-persistent store state during navigation. Improved store robustness and ensured reliable synchronization between the meal planner and the recipe library.
 - **E2E Test Infrastructure Hardening**: Broadened the MSW (Mock Service Worker) API interception strategy to catch nested routes (like `/week-plan`) and updated element locators using more stable `getByRole` and `filter` patterns. This significantly increases test reliability in CI-like environments.

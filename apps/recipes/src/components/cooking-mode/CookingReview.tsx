@@ -1,5 +1,16 @@
-import React, { useState } from 'react'
-import { Check, Flame, MessageSquare, ChevronDown, Pencil, X, Plus, FileEdit } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import {
+  Check,
+  Flame,
+  MessageSquare,
+  ChevronDown,
+  Pencil,
+  X,
+  Plus,
+  FileEdit,
+  Star,
+  Camera,
+} from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardHeader, CardContent } from '../ui/card'
 import { Input } from '../ui/input'
@@ -11,6 +22,8 @@ import { cn } from '@/lib/utils'
 interface CookingReviewProps {
   onComplete: (data: {
     difficulty: number
+    rating: number
+    finishedPhoto?: string
     ingredientNotes: Record<number, string>
     stepNotes: Record<number, string>
     ingredientEdits: Record<number, string>
@@ -24,6 +37,8 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
   const recipe = session.recipe
 
   const [difficulty, setDifficulty] = useState<number>(0)
+  const [rating, setRating] = useState<number>(0)
+  const [finishedPhoto, setFinishedPhoto] = useState<string | null>(null)
   const [ingredientNotes, setIngredientNotes] = useState<Record<number, string>>({})
   const [stepNotes, setStepNotes] = useState<Record<number, string>>({})
 
@@ -39,8 +54,34 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
   const [stepsOpen, setStepsOpen] = useState(false)
 
+  const photoInputRef = useRef<HTMLInputElement>(null)
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      // Convert to base64 for preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFinishedPhoto(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Failed to read photo:', error)
+    }
+  }
+
   const handleSubmit = () => {
-    onComplete({ difficulty, ingredientNotes, stepNotes, ingredientEdits, stepEdits })
+    onComplete({
+      difficulty,
+      rating,
+      finishedPhoto: finishedPhoto || undefined,
+      ingredientNotes,
+      stepNotes,
+      ingredientEdits,
+      stepEdits,
+    })
   }
 
   if (!recipe) return null
@@ -132,6 +173,79 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
                 </button>
               ))}
             </div>
+          </Stack>
+
+          {/* Star Rating */}
+          <Stack spacing="md" as="section">
+            <Inline spacing="sm" className="font-display text-xl font-bold text-foreground">
+              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              <span>Recipe Rating</span>
+            </Inline>
+            <Inline justify="center" spacing="sm">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className="transition-transform active:scale-95"
+                  type="button"
+                >
+                  <Star
+                    className={cn(
+                      'h-8 w-8',
+                      star <= rating
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'fill-border text-border',
+                    )}
+                  />
+                </button>
+              ))}
+            </Inline>
+          </Stack>
+
+          {/* Finished Dish Photo */}
+          <Stack spacing="md" as="section">
+            <Inline spacing="sm" className="font-display text-xl font-bold text-foreground">
+              <Camera className="h-5 w-5" />
+              <span>Finished Dish (Optional)</span>
+            </Inline>
+
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+
+            {finishedPhoto ? (
+              <div className="relative overflow-hidden rounded-lg">
+                <img
+                  src={finishedPhoto}
+                  alt="Finished dish"
+                  className="w-full rounded-lg object-cover"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFinishedPhoto(null)}
+                  className="mt-2 w-full"
+                >
+                  <X className="h-4 w-4" />
+                  Remove Photo
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => photoInputRef.current?.click()}
+                className="w-full"
+              >
+                <Camera />
+                Add Photo
+              </Button>
+            )}
           </Stack>
 
           <Inline
@@ -388,9 +502,13 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
             size="lg"
             className="h-14 w-full rounded-xl text-lg font-bold shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={handleSubmit}
-            disabled={difficulty === 0}
+            disabled={difficulty === 0 || rating === 0}
           >
-            {difficulty === 0 ? 'Select Difficulty' : 'Complete Review'}
+            {difficulty === 0
+              ? 'Select Difficulty'
+              : rating === 0
+                ? 'Select Rating'
+                : 'Complete Review'}
           </Button>
           {onSkip && (
             <Button
