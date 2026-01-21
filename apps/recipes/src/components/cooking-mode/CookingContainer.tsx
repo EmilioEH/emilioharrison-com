@@ -6,9 +6,9 @@ import { Stack } from '../ui/layout'
 import { CookingStepView } from './CookingStepView'
 import { ExitConfirmation } from './ExitConfirmation'
 import { CookingIngredientsOverlay } from './CookingIngredientsOverlay'
+import { CookingInstructionsOverlay } from './CookingInstructionsOverlay'
 import { IngredientsPanel } from './IngredientsPanel'
 import { CookingTimeline } from './CookingTimeline'
-import { CookingStepList } from './CookingStepList'
 import { ActiveTimerDisplay } from './ActiveTimerDisplay'
 import { CookingReview } from './CookingReview'
 
@@ -259,11 +259,12 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
         onClose={() => setShowIngredients(false)}
       />
 
-      <CookingStepList
+      {/* Instructions Overlay */}
+      <CookingInstructionsOverlay
+        isOpen={showNavigator}
+        onClose={() => setShowNavigator(false)}
         recipe={session.recipe}
         currentStepIdx={session.currentStepIdx}
-        isOpen={showNavigator}
-        onOpenChange={setShowNavigator}
         onStepSelect={(idx) => cookingSessionActions.goToStep(idx)}
       />
     </Stack>

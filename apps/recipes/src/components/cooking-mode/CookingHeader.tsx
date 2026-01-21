@@ -1,81 +1,59 @@
 import React from 'react'
 import { X, List, UtensilsCrossed, ArrowLeft } from 'lucide-react'
 import type { CookingSession } from '../../stores/cookingSession'
+import { Button } from '@/components/ui/button'
 
 interface CookingHeaderProps {
   session: CookingSession
   title: string
-  // totalSteps: number // Removed as we show title now
   onExit: () => void
   onMinimize?: () => void
   onShowIngredients: () => void
-  // onShowMenu: () => void // Removed
   onShowNavigator: () => void
-  // onStepJump: (index: number) => void // Unused in this view
 }
 
 export const CookingHeader: React.FC<CookingHeaderProps> = ({
-  // session, // Unused for now if we don't show step count
-  title,
-  // totalSteps,
   onExit,
   onMinimize,
   onShowIngredients,
-  // onShowMenu,
   onShowNavigator,
 }) => {
   return (
     <div className="safe-area-pt flex flex-col bg-background shadow-sm transition-shadow">
       <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-        {/* Left Actions - Back Button */}
-        <div className="-ml-2 flex items-center">
+        {/* Left - Back Button */}
+        <div className="-ml-2">
           {onMinimize && (
-            <button
-              onClick={onMinimize}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
-              aria-label="Back"
-              title="Back"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
+            <Button onClick={onMinimize} variant="ghost" size="icon" aria-label="Back" title="Back">
+              <ArrowLeft />
+            </Button>
           )}
         </div>
 
-        {/* Center - Recipe Title */}
-        <div className="flex-1 px-2 text-center">
-          <h1 className="line-clamp-1 font-display text-base font-bold text-foreground">{title}</h1>
+        {/* Center - Action Buttons */}
+        <div className="flex items-center gap-2">
+          <Button onClick={onShowNavigator} variant="ghost" size="sm">
+            <List />
+            Instructions
+          </Button>
+
+          <Button onClick={onShowIngredients} variant="ghost" size="sm" className="md:hidden">
+            <UtensilsCrossed />
+            Ingredients
+          </Button>
         </div>
 
-        {/* Right Actions - Steps, Ingredients, Exit */}
-        <div className="-mr-2 flex items-center gap-1">
-          <button
-            onClick={onShowNavigator}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
-            title="View All Steps"
-            aria-label="View All Steps"
-          >
-            <List className="h-6 w-6" />
-          </button>
-
-          <button
-            onClick={onShowIngredients}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 md:hidden"
-            title="Ingredients"
-            aria-label="Ingredients"
-          >
-            <UtensilsCrossed className="h-6 w-6" />
-          </button>
-
-          <div className="mx-1 h-4 w-px bg-border/50" />
-
-          <button
+        {/* Right - Exit Button */}
+        <div className="-mr-2">
+          <Button
             onClick={onExit}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
+            variant="ghost"
+            size="icon"
             aria-label="Exit Cooking Mode"
             title="Exit Cooking Mode"
           >
-            <X className="h-6 w-6" />
-          </button>
+            <X />
+          </Button>
         </div>
       </div>
     </div>
