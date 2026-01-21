@@ -96,6 +96,9 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
 
   if (totalRatings === 0 && !familyData) return null
 
+  // Check if current user has already rated
+  const currentUserRating = sessions.find((s) => currentUser && s.user.userId === currentUser.uid)
+
   return (
     <div className="mb-6 border-b border-border pb-6">
       <button
@@ -127,6 +130,30 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
             ))}
         </Inline>
       </button>
+
+      {/* Add Rating Section - Show if current user hasn't rated */}
+      {currentUser && !currentUserRating && (
+        <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <Stack spacing="sm">
+            <p className="text-sm font-medium text-foreground">Rate this recipe</p>
+            <Inline spacing="sm">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEditRating(currentUser.uid, star)
+                  }}
+                  className="transition-transform hover:scale-110 active:scale-95"
+                >
+                  <Star className="h-6 w-6 fill-border text-border hover:fill-yellow-400 hover:text-yellow-400" />
+                </button>
+              ))}
+            </Inline>
+            <p className="text-xs text-muted-foreground">Tap a star to add your rating</p>
+          </Stack>
+        </div>
+      )}
 
       {/* Expandable History */}
       {isExpanded && sessions.length > 0 && (

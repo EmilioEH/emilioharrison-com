@@ -88,6 +88,7 @@ We prioritize **deterministic data** over generative AI to save costs and latenc
 - **Data Priority**: The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_. Only if JSON-LD is missing does it construct a prompt for Gemini.
 - **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI is instructed to transcribe the recipe _exactly as written_, preserving the original author's voice and structure, while providing immediate access to the data.
 - **Dual-Process Enhancement**: After a new recipe is saved, a background job automatically triggers **Enhancement Mode**. The UI uses an **SWR-style revalidation pattern** and **dynamic component remounting** (via `${id}-${updatedAt}` keys) in `RecipeDetail.tsx` to automatically pick up and render "Smart View" data once the background job finishes, without requiring a user refresh.
+- **Improved Parsing Resilience**: The `parse-recipe.ts` implementation includes robust handling for varying Gemini SDK response structures, ensuring stable text extraction even when the AI response format shifts.
 - **Enhancement Mode (Kenji-Style)**: Used during background enhancement, **AI Refresh**, and **Dish Photo Scan**. The AI applies "Kenji Lopez-Alt" style best practices:
   - **Scientific Grouping**: Group steps chronologically by component (e.g., "Prepare the Marina", "Cook the Pasta").
   - **Descriptive Paragraphs**: Combine atomic steps into readable, narrative paragraphs.
@@ -178,6 +179,8 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Interactive Recipe Ratings**: Implemented a comprehensive 5-star rating system. Users can now rate recipes during the post-cooking review flow. The library view and recipe cards now display these ratings.
 - **Finished Dish Photos**: Added the ability to capture or upload a photo of the finished dish at the end of a cooking session. These photos are automatically added to the recipe's image gallery.
 - **Family Rating Breakdowns**: Enhanced the cooking history view to show an average rating and allow users to tap to see a detailed breakdown of individual family members' ratings, with the ability for users to update their own ratings.
+- **Quick Rating Component**: Added a "Rate this recipe" component directly to the recipe overview for users who haven't rated yet. This allows for immediate 5-star feedback without needing to enter the full cooking flow.
+- **AI Infrastructure Hardening**: Resolved stability issues in recipe parsing by improving how the system handles streaming chunks from the Gemini SDK. Added strict JSON validation to internal refresh APIs to prevent "Unexpected token" errors.
 
 - **Week View Stabilization**: Resolved an issue where the Week View workspace sometimes failed to render planned recipes due to non-persistent store state during navigation. Improved store robustness and ensured reliable synchronization between the meal planner and the recipe library.
 - **E2E Test Infrastructure Hardening**: Broadened the MSW (Mock Service Worker) API interception strategy to catch nested routes (like `/week-plan`) and updated element locators using more stable `getByRole` and `filter` patterns. This significantly increases test reliability in CI-like environments.

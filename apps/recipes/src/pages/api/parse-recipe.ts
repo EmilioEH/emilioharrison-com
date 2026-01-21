@@ -409,7 +409,25 @@ async function generateRecipeStream(
     async start(controller) {
       try {
         for await (const chunk of result) {
-          const text = chunk.text()
+          let text = ''
+
+          // Try the text() method first (standard Gemini SDK chunk)
+          if (typeof chunk.text === 'function') {
+            text = chunk.text()
+          }
+          // Try the candidates path (alternative structure)
+          else if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
+            text = chunk.candidates[0].content.parts[0].text
+          }
+          // Fallback: check if it has a text property as a string
+          else if ('text' in chunk && typeof chunk.text === 'string') {
+            text = chunk.text
+          }
+          // Fallback: check if text is directly accessible
+          else if (typeof chunk === 'string') {
+            text = chunk
+          }
+
           if (text) {
             controller.enqueue(encoder.encode(text))
           }

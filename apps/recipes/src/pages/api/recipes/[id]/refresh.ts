@@ -120,6 +120,13 @@ ${recipe.steps.join('\n')}
       throw new Error(`Parse failed: ${err}`)
     }
 
+    // Check if response is actually JSON before parsing
+    const contentType = parseRes.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await parseRes.text()
+      throw new Error(`Expected JSON response but got: ${responseText.substring(0, 200)}`)
+    }
+
     const newData = await parseRes.json()
     const costUrl = `${baseUrl}/api/estimate-cost`
 
