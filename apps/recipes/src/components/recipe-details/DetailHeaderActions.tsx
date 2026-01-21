@@ -58,7 +58,7 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem
-            onClick={() => {
+            onSelect={() => {
               if (onToggleThisWeek) onToggleThisWeek()
               else onAction('addToWeek')
             }}
@@ -66,26 +66,26 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
             <Calendar className="mr-2 h-4 w-4" />
             {isThisWeek ? 'Remove from Week' : 'Add to This Week'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAction('move')}>
+          <DropdownMenuItem onSelect={() => onAction('move')}>
             <FolderInput className="mr-2 h-4 w-4" />
             Move Folder
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAction('edit')}>
+          <DropdownMenuItem onSelect={() => onAction('edit')}>
             <Edit2 className="mr-2 h-4 w-4" />
             Edit Recipe
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAction('refresh')}>
+          <DropdownMenuItem onSelect={() => onAction('refresh')}>
             <Sparkles className="mr-2 h-4 w-4" />
             Refresh AI Data
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onAction('history')}>
+          <DropdownMenuItem onSelect={() => onAction('history')}>
             <Clock className="mr-2 h-4 w-4" />
             Version History
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => onAction('delete')}
+            onSelect={() => onAction('delete')}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />

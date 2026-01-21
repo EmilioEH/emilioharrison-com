@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react'
 import { Star, ChevronDown, ChevronUp } from 'lucide-react'
+import { useStore } from '@nanostores/react'
 import { Inline, Stack } from '../ui/layout'
 import { cn } from '../../lib/utils'
+import { $currentUserId } from '../../lib/familyStore'
 import type { FamilyRecipeData } from '../../lib/types'
 
 interface CookingHistorySummaryProps {
@@ -24,15 +26,8 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   const [isExpanded, setIsExpanded] = useState(false)
   const [editingRating, setEditingRating] = useState<string | null>(null)
 
-  // Get current user from localStorage (set during login)
-  const currentUser = useMemo(() => {
-    try {
-      const userData = localStorage.getItem('user')
-      return userData ? JSON.parse(userData) : null
-    } catch {
-      return null
-    }
-  }, [])
+  // Get current user ID from nanostore (set during app initialization)
+  const currentUserId = useStore($currentUserId)
 
   // Merge ratings and notes into session cards
   const sessions = useMemo(() => {
@@ -97,7 +92,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   if (totalRatings === 0 && !familyData) return null
 
   // Check if current user has already rated
-  const currentUserRating = sessions.find((s) => currentUser && s.user.userId === currentUser.uid)
+  const currentUserRating = sessions.find((s) => currentUserId && s.user.userId === currentUserId)
 
   return (
     <div className="mb-6 border-b border-border pb-6">
@@ -132,7 +127,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
       </button>
 
       {/* Add Rating Section - Show if current user hasn't rated */}
-      {currentUser && !currentUserRating && (
+      {currentUserId && !currentUserRating && (
         <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
           <Stack spacing="sm">
             <p className="text-sm font-medium text-foreground">Rate this recipe</p>
@@ -142,7 +137,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                   key={star}
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleEditRating(currentUser.uid, star)
+                    handleEditRating(currentUserId, star)
                   }}
                   className="transition-transform hover:scale-110 active:scale-95"
                 >
@@ -160,7 +155,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         <div className="mt-4 animate-in fade-in slide-in-from-top-2">
           <Stack spacing="sm">
             {displaySessions.map((session) => {
-              const isCurrentUser = currentUser && session.user.userId === currentUser.uid
+              const isCurrentUserSession = currentUserId && session.user.userId === currentUserId
               const isEditing = editingRating === session.user.userId
 
               return (
@@ -191,19 +186,19 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                       <button
                         key={star}
                         onClick={() => {
-                          if (isCurrentUser) {
+                          if (isCurrentUserSession) {
                             if (isEditing || star !== session.rating) {
                               handleEditRating(session.user.userId, star)
                             }
                           }
                         }}
-                        disabled={!isCurrentUser}
+                        disabled={!isCurrentUserSession}
                         className={cn(
                           'transition-transform',
-                          isCurrentUser && 'cursor-pointer hover:scale-110 active:scale-95',
-                          !isCurrentUser && 'cursor-default',
+                          isCurrentUserSession && 'cursor-pointer hover:scale-110 active:scale-95',
+                          !isCurrentUserSession && 'cursor-default',
                         )}
-                        title={isCurrentUser ? 'Click to change your rating' : ''}
+                        title={isCurrentUserSession ? 'Click to change your rating' : ''}
                       >
                         <Star
                           className={cn(
