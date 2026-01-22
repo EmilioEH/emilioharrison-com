@@ -450,9 +450,7 @@ export const CookingReview: React.FC<CookingReviewProps> = ({ onComplete, onSkip
                             </Stack>
                           ) : (
                             <div className="mb-2 flex gap-3">
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                                {idx + 1}
-                              </span>
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground" />
                               <div className="flex-1">
                                 <div className="flex items-start justify-between gap-4">
                                   <p className="text-sm text-foreground/90">{displayText}</p>

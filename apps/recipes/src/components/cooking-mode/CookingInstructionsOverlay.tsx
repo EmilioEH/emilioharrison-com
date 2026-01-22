@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { X, List, Check } from 'lucide-react'
+import { X, List, Check, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,25 @@ interface CookingInstructionsOverlayProps {
   recipe: Recipe
   currentStepIdx: number
   onStepSelect: (index: number) => void
+}
+
+// Substep type definition
+type Substep = { text: string; action: string; targets: string[] }
+
+// Parse substeps - they may be stored as JSON string in Firestore
+const getSubsteps = (structuredStep?: StructuredStep): Substep[] => {
+  const raw = structuredStep?.substeps
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw as Substep[]
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
 }
 
 export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProps> = ({
@@ -117,7 +136,90 @@ export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProp
                       const globalIdx = group.startIndex + idx
                       const isCompleted = globalIdx < currentStepIdx
                       const isCurrent = globalIdx === currentStepIdx
+                      const substeps = getSubsteps(recipe.structuredSteps?.[globalIdx])
+                      const hasSubsteps = substeps.length > 0
 
+                      // When there are substeps, show them; otherwise show the step text
+                      if (hasSubsteps) {
+                        // Display substeps as individual tappable items
+                        return (
+                          <div key={globalIdx} className="space-y-2">
+                            {substeps.map((substep, subIdx) => (
+                              <button
+                                key={`${globalIdx}-${subIdx}`}
+                                onClick={() => handleStepClick(globalIdx)}
+                                className={cn(
+                                  'group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all',
+                                  isCurrent
+                                    ? 'border-primary bg-primary/10 shadow-sm'
+                                    : 'border-border bg-background hover:bg-muted/50 active:scale-[0.98]',
+                                  isCompleted && 'bg-muted opacity-60',
+                                )}
+                              >
+                                {/* Checkbox Status */}
+                                <div
+                                  className={cn(
+                                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs transition-colors',
+                                    isCurrent
+                                      ? 'border-primary bg-primary text-primary-foreground'
+                                      : isCompleted
+                                        ? 'border-transparent bg-muted-foreground/20 text-muted-foreground'
+                                        : 'border-muted-foreground/30 bg-background text-transparent',
+                                  )}
+                                >
+                                  {isCompleted && <Check className="h-3 w-3" />}
+                                </div>
+
+                                {/* Substep Text with Highlighted Action */}
+                                <span
+                                  className={cn(
+                                    'flex-1 text-sm font-medium leading-snug',
+                                    isCurrent ? 'text-foreground' : 'text-muted-foreground',
+                                  )}
+                                >
+                                  {substep.action ? (
+                                    <span>
+                                      {(() => {
+                                        const escapeRegExp = (str: string) =>
+                                          str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                                        try {
+                                          const escapedAction = escapeRegExp(substep.action)
+                                          return substep.text
+                                            .split(new RegExp(`(${escapedAction})`, 'i'))
+                                            .map((part: string, idx: number) =>
+                                              part.toLowerCase() ===
+                                              substep.action.toLowerCase() ? (
+                                                <span key={idx} className="font-bold">
+                                                  {part}
+                                                </span>
+                                              ) : (
+                                                part
+                                              ),
+                                            )
+                                        } catch {
+                                          return substep.text
+                                        }
+                                      })()}
+                                    </span>
+                                  ) : (
+                                    substep.text
+                                  )}
+                                </span>
+
+                                {/* Chevron indicator on hover */}
+                                <ChevronRight
+                                  className={cn(
+                                    'h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100',
+                                    isCurrent && 'text-primary opacity-100',
+                                  )}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        )
+                      }
+
+                      // Fallback: Show regular step text if no substeps
                       return (
                         <button
                           key={globalIdx}
@@ -141,20 +243,12 @@ export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProp
                                   : 'border-muted-foreground/30 bg-background text-muted-foreground',
                             )}
                           >
-                            {isCompleted ? (
-                              <Check className="h-3.5 w-3.5" />
-                            ) : group.header ? (
-                              // For enhanced recipes with groups, show index within group
-                              idx + 1
-                            ) : (
-                              // For plain recipes, show global step number
-                              globalIdx + 1
-                            )}
+                            {isCompleted && <Check className="h-3.5 w-3.5" />}
                           </div>
 
                           {/* Step Text */}
                           <div className="flex-1">
-                            {step.title && (
+                            {!group.header && step.title && (
                               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                                 {step.title}
                               </p>

@@ -527,7 +527,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                         <InstructionCard
                           key={globalIdx}
                           stepNumber={idx + 1}
-                          title={step.title}
+                          title={group.header ? undefined : step.title}
                           text={step.text}
                           highlightedText={step.highlightedText}
                           tip={step.tip}

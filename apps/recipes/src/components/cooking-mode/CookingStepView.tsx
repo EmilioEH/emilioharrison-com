@@ -197,8 +197,8 @@ interface CurrentStepContentProps {
 const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   stepText,
   stepNumber,
-  recipe: _recipe,
-  instructionIdx: _instructionIdx,
+  recipe,
+  instructionIdx,
   structuredStep,
 }) => {
   // Substep State
@@ -212,6 +212,12 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
       [idx]: !prev[idx],
     }))
   }
+
+  // Find the group header for this step (if Smart View grouping exists)
+  const currentGroup = recipe.stepGroups?.find(
+    (group) => instructionIdx >= group.startIndex && instructionIdx <= group.endIndex,
+  )
+  const displayTitle = currentGroup?.header || structuredStep?.title
 
   // Effect: Auto-mark substeps if the main step is somehow "done" (not applicable here as we navigate away)
   // But maybe we want to play a sound when all are done? usage for later.
@@ -274,9 +280,9 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
           Here 'stepText' IS the full text. `structuredStep.title` is the short one.
       */}
 
-      {structuredStep?.title && (
+      {displayTitle && (
         <h2 className="text-center font-display text-2xl font-bold text-foreground">
-          {structuredStep.title}
+          {displayTitle}
         </h2>
       )}
 
@@ -350,7 +356,7 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
                             .split(new RegExp(`(${escapedAction})`, 'i'))
                             .map((part: string, idx: number) =>
                               part.toLowerCase() === sub.action.toLowerCase() ? (
-                                <span key={idx} className={isChecked ? '' : 'text-primary'}>
+                                <span key={idx} className={isChecked ? '' : 'font-bold'}>
                                   {part}
                                 </span>
                               ) : (
