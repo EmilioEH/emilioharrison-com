@@ -243,9 +243,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
   // Construct images list
   // Prefer recipe.images. If empty, fallback to sourceImage/finishedImage as single item array
-  const displayImages = recipe.images?.length
-    ? recipe.images
-    : ([recipe.finishedImage || recipe.sourceImage].filter(Boolean) as string[])
+  const displayImages =
+    Array.isArray(recipe.images) && recipe.images.length > 0
+      ? recipe.images
+      : ([recipe.finishedImage || recipe.sourceImage].filter(Boolean) as string[])
 
   // Memoized ingredient groups with fallback to flat list
   const displayGroups = useMemo((): Array<{
@@ -254,35 +255,38 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     startIndex: number
   }> => {
     const groups = recipe.ingredientGroups
+    const ingredientsArray = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
 
     // VIEW MODE LOGIC: If 'original', force flat list
     if (viewMode === 'enhanced' && groups?.length) {
       return groups.map((group: IngredientGroup) => ({
         header: group.header,
-        items: recipe.ingredients?.slice(group.startIndex, group.endIndex + 1) || [],
+        items: ingredientsArray.slice(group.startIndex, group.endIndex + 1),
         startIndex: group.startIndex,
       }))
     }
-    // Fallback: single ungrouped list (handle missing ingredients array)
-    return [{ header: null, items: recipe.ingredients || [], startIndex: 0 }]
+    // Fallback: single ungrouped list (handle missing/malformed ingredients array)
+    return [{ header: null, items: ingredientsArray, startIndex: 0 }]
   }, [recipe.ingredientGroups, recipe.ingredients, viewMode])
 
   // Memoized structured steps with fallback to plain text
   const displaySteps = useMemo((): StructuredStep[] => {
     // VIEW MODE LOGIC: If 'modified' (original text) requested or no structured steps
     // original steps are in recipe.steps
-    if (viewMode === 'original' && recipe.steps && recipe.steps.length > 0) {
-      return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
+    const stepsArray = Array.isArray(recipe.steps) ? recipe.steps : []
+    const structuredStepsArray = Array.isArray(recipe.structuredSteps) ? recipe.structuredSteps : []
+
+    if (viewMode === 'original' && stepsArray.length > 0) {
+      return stepsArray.map((text: string) => ({ text, title: undefined, tip: undefined }))
     }
 
-    const steps = recipe.structuredSteps
-    if (steps?.length) {
-      return steps
+    if (structuredStepsArray.length > 0) {
+      return structuredStepsArray
     }
 
     // Fallback if enhanced mode requested but no data (shouldn't happen due to toggle disable logic)
-    if (recipe.steps && recipe.steps.length > 0) {
-      return recipe.steps.map((text: string) => ({ text, title: undefined, tip: undefined }))
+    if (stepsArray.length > 0) {
+      return stepsArray.map((text: string) => ({ text, title: undefined, tip: undefined }))
     }
 
     return []
