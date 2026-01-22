@@ -56,6 +56,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
   // NEW: View Mode State with localStorage persistence
   const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(() => {
+    // Guard against SSR where localStorage is not available
+    if (typeof window === 'undefined') {
+      return hasEnhancedContent ? 'enhanced' : 'original'
+    }
     const savedPreference = localStorage.getItem('recipe-view-mode')
     if (savedPreference === 'original' || savedPreference === 'enhanced') {
       return savedPreference
