@@ -563,6 +563,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   <Stack spacing="lg">
                     {group.items.map((step, idx) => {
                       const globalIdx = group.startIndex + idx
+                      const ingredientsArray = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+                      const targetIndices = recipe.stepIngredients?.[globalIdx]?.indices
+                      const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []
                       return (
                         <InstructionCard
                           key={globalIdx}
@@ -571,8 +574,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                           text={step.text}
                           highlightedText={step.highlightedText}
                           tip={step.tip}
-                          ingredients={recipe.ingredients}
-                          targetIngredientIndices={recipe.stepIngredients?.[globalIdx]?.indices}
+                          ingredients={ingredientsArray}
+                          targetIngredientIndices={targetIndicesArray}
                           isChecked={checkedSteps[globalIdx]}
                           hideBadge={!!group.header} // Hide the badge entirely if in a group
                           hideNumber={!!group.header} // Also hide the number in the title
