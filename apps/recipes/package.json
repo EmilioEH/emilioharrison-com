@@ -30,6 +30,7 @@
     "feedback:resolve": "npx tsx scripts/resolve-feedback.ts",
     "sync": "git add . && (git diff-index --quiet HEAD || git commit -m \"Auto-sync: $(date)\") && git push",
     "scan": "npm audit --audit-level=high",
+    "check:env": "npx tsx scripts/env-check.ts",
     "format": "prettier --write .",
     "prepare": "husky"
   },

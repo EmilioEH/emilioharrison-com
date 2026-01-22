@@ -2,6 +2,7 @@ import React from 'react'
 import { Check, Info } from 'lucide-react'
 import { Stack, Inline } from '../ui/layout'
 import { cn } from '../../lib/utils'
+import { renderHighlightedInstruction } from '../../lib/instruction-utils'
 
 interface InstructionCardProps {
   stepNumber: number
@@ -13,6 +14,8 @@ interface InstructionCardProps {
   onToggle?: () => void
   hideNumber?: boolean
   hideBadge?: boolean
+  ingredients?: { name: string }[]
+  targetIngredientIndices?: number[]
 }
 
 /**
@@ -29,19 +32,15 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
   onToggle,
   hideNumber = false,
   hideBadge = false,
+  ingredients = [],
+  targetIngredientIndices = [],
 }) => {
-  // Simple markdown parser for bold text (e.g. "**mix**")
+  // Use shared highlighting utility for ingredients and verbs
   const renderContent = () => {
-    const content = highlightedText || text
-    const parts = content.split('**')
-    return parts.map((part, i) =>
-      i % 2 === 1 ? (
-        <strong key={i} className="font-bold text-foreground">
-          {part}
-        </strong>
-      ) : (
-        part
-      ),
+    return renderHighlightedInstruction(
+      highlightedText || text,
+      ingredients,
+      targetIngredientIndices,
     )
   }
 

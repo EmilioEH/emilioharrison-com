@@ -10,6 +10,9 @@ const firebaseConfig = {
   appId: import.meta.env.PUBLIC_FIREBASE_APP_ID,
 }
 
-export const app = initializeApp(firebaseConfig)
-export const auth = getAuth(app)
+const isConfigValid = !!firebaseConfig.apiKey
+
+export const app = isConfigValid ? initializeApp(firebaseConfig) : null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const auth = app ? getAuth(app) : (null as any)
 export const googleProvider = new GoogleAuthProvider()

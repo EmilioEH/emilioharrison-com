@@ -156,11 +156,29 @@ test.describe('Recipe Cooking Mode', () => {
     const ingredientsBtn = page.getByRole('button', { name: 'Ingredients' })
     await expect(ingredientsBtn).toBeVisible()
 
-    // Open overlay
-    await ingredientsBtn.click()
-
     // Verify Overlay is visible
     await expect(page.getByRole('heading', { name: 'Ingredients', exact: true })).toBeVisible()
+
+    // NEW: Verify ingredient highlighting in overlay
+    // The first step (after Prep) of TEST_RECIPES[0] is usually "Add garlic and onions"
+    // So Garlic and Onions should be highlighted in the overlay.
+    // However, we are CURRENTLY on the Prep step (Step 1).
+    // In Prep step, no ingredients are highlighted (stepIdx -1).
+    // Let's navigate to Step 2 (First Instruction).
+    await page.getByLabel('Close overlay').click() // Close overlay
+    await page.getByRole('button', { name: 'Start Cooking' }).click() // To Step 2
+
+    // Open overlay again
+    await ingredientsBtn.click()
+
+    // Check for highlighted ingredients. They should have specific classes.
+    // Based on my implementation: 'border-primary/50 bg-primary/5 shadow-sm'
+    const highlightedIngredients = page.locator('.border-primary\\/50.bg-primary\\/5')
+    await expect(highlightedIngredients).toBeVisible()
+
+    // Verify that some ingredients are NOT highlighted
+    const nonHighlightedIngredients = page.locator('.border-transparent')
+    await expect(nonHighlightedIngredients.first()).toBeVisible()
   })
 
   test('should complete cooking and submit review', async ({ page }) => {
@@ -192,6 +210,9 @@ test.describe('Recipe Cooking Mode', () => {
 
     // Select Difficulty (Easy)
     await page.getByRole('button', { name: 'Easy' }).click()
+
+    // NEW: Select Rating (Mandatory)
+    await page.getByLabel('Rate 5 stars').click()
 
     // Button should be enabled now
     await expect(page.getByRole('button', { name: 'Complete Review' })).toBeEnabled()
@@ -241,6 +262,9 @@ test.describe('Recipe Cooking Mode', () => {
     // Select Difficulty
     await page.getByRole('button', { name: 'Easy' }).click()
 
+    // NEW: Select Rating (Mandatory)
+    await page.getByLabel('Rate 5 stars').click()
+
     // Open Ingredients Accordion
     await page.getByRole('button', { name: 'Ingredients' }).click()
 
@@ -274,10 +298,9 @@ test.describe('Recipe Cooking Mode', () => {
 
     // Find pencil relative to step text
     const stepPencil = page
-      .locator('div')
+      .locator('.group')
       .filter({ hasText: firstStepText })
-      .getByRole('button')
-      .filter({ has: page.locator('svg.lucide-pencil') })
+      .locator('button:has(svg.lucide-pencil)')
       .first()
     await stepPencil.click()
 

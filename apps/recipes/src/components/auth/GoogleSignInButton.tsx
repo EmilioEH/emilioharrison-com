@@ -24,6 +24,7 @@ export const GoogleSignInButton = () => {
     'idle' | 'loading' | 'pending_approval' | 'denied' | 'checking_redirect'
   >('idle')
   const [tempToken, setTempToken] = useState<string | null>(null)
+  const [missingEnv, setMissingEnv] = useState<string[]>([])
 
   // Invite Code State
   const [inviteCode, setInviteCode] = useState('')
@@ -40,8 +41,29 @@ export const GoogleSignInButton = () => {
       }
     }
 
+    // Check for missing environment variables
+    const checkEnv = () => {
+      const required = [
+        'PUBLIC_FIREBASE_API_KEY',
+        'PUBLIC_FIREBASE_AUTH_DOMAIN',
+        'PUBLIC_FIREBASE_PROJECT_ID',
+        'PUBLIC_FIREBASE_STORAGE_BUCKET',
+        'PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+        'PUBLIC_FIREBASE_APP_ID',
+      ]
+      const missing = required.filter((key) => !import.meta.env[key])
+      if (missing.length > 0) {
+        setMissingEnv(missing)
+        setError('Missing required environment variables.')
+        return true
+      }
+      return false
+    }
+    checkEnv()
+
     // Check for redirect result (mobile flow)
     const checkRedirect = async () => {
+      if (!auth) return
       // Only show "checking" if we are on a mobile device and might be returning from a redirect
       const isMobile = isMobileDevice()
       if (isMobile) setStatus('checking_redirect')
@@ -85,6 +107,11 @@ export const GoogleSignInButton = () => {
       // Firebase will try to open a popup, and if blocked, will often show an
       // internal redirect handler IF it's configured for it.
       console.log('[Auth] Attempting signInWithPopup')
+      if (!auth) {
+        setError('Firebase Auth not initialized. Check your configuration.')
+        setStatus('idle')
+        return
+      }
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
       setTempToken(idToken)
@@ -312,6 +339,29 @@ export const GoogleSignInButton = () => {
         >
           Back to Login
         </button>
+      </div>
+    )
+  }
+
+  if (missingEnv.length > 0) {
+    return (
+      <div className="flex flex-col gap-4 rounded-xl border border-red-200 bg-red-50 p-6 text-red-800 animate-in fade-in slide-in-from-bottom-2">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="h-6 w-6 text-red-600" />
+          <h3 className="text-lg font-bold">Configuration Error</h3>
+        </div>
+        <p className="text-sm">
+          The application is missing required Firebase configuration in <code>.env.local</code>:
+        </p>
+        <ul className="list-inside list-disc font-mono text-xs opacity-80">
+          {missingEnv.map((key) => (
+            <li key={key}>{key}</li>
+          ))}
+        </ul>
+        <div className="mt-2 text-xs leading-relaxed opacity-70">
+          Please check the <code>.env.local.example</code> file and ensure all keys are correctly
+          populated. The dev server must be restarted after updating environment variables.
+        </div>
       </div>
     )
   }

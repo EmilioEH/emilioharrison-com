@@ -552,6 +552,15 @@ npm run feedback:resolve <id> fixed --remote
 
    The app will be available at [`http://localhost:4321/protected/recipes`](http://localhost:4321/protected/recipes).
 
+### 🛠 Troubleshooting Common Local Issues
+
+- **Missing Login Button**: If the Google Sign-In button is missing, run `npm run check:env` to verify your `.env.local` configuration. The app requires valid Firebase keys to render authentication components.
+- **Vite Restart Required**: After adding or changing values in `.env.local`, you **must restart** the dev server (`Ctrl+C` then `npm run dev`) for the changes to take effect.
+- **Port Conflict**: If port 4321 is already in use, find the process using `lsof -i :4321` and kill it, or use `npm run dev -- --port XXXX`.
+
+> [!IMPORTANT]
+> **Always run `npm run check:env`** before starting development to ensure your local environment is correctly configured with the necessary secrets.
+
 4. **Preview with Wrangler** (Production Simulation):
 
    > [!WARNING]

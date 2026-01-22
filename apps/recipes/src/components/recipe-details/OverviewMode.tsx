@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
+import { useStore } from '@nanostores/react'
 import {
   Clock,
   Users,
@@ -18,6 +19,7 @@ import { Button } from '../ui/button'
 import { Stack, Inline } from '../ui/layout'
 import { ImageViewer } from '../ui/ImageViewer'
 import { Carousel } from '../ui/Carousel'
+import { aiOperationStore } from '../../lib/aiOperationStore'
 import type {
   Recipe,
   FamilyRecipeData,
@@ -41,6 +43,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   isRefreshing = false,
   refreshProgress = '',
 }) => {
+  // Track AI operations to detect background enhancement
+  const aiOperations = useStore(aiOperationStore)
+  const enhanceOpId = `enhance-${recipe.id}`
+  const isEnhancing = aiOperations.operations.some(
+    (op) => op.id === enhanceOpId && op.status === 'processing',
+  )
+
   // Validate enhanced content exists
   const hasEnhancedContent =
     (recipe.structuredSteps?.length || 0) > 0 || (recipe.ingredientGroups?.length || 0) > 0
@@ -351,19 +360,22 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               </h1>
 
               {/* VIEW MODE TOGGLE */}
-              {hasEnhancedContent && (
+              {(hasEnhancedContent || isEnhancing) && (
                 <div className="ml-2 flex shrink-0 rounded-full border border-border bg-muted p-1">
                   <button
                     onClick={() => handleViewModeChange('original')}
-                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'original' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                    disabled={isEnhancing}
+                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'original' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'} ${isEnhancing ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     Original
                   </button>
                   <button
                     onClick={() => handleViewModeChange('enhanced')}
-                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'enhanced' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                    disabled={isEnhancing || !hasEnhancedContent}
+                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'enhanced' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'} ${isEnhancing || !hasEnhancedContent ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
-                    <Sparkles className="h-3 w-3" /> Smart View
+                    <Sparkles className={`h-3 w-3 ${isEnhancing ? 'animate-pulse' : ''}`} />
+                    {isEnhancing ? 'Processing...' : 'Smart View'}
                   </button>
                 </div>
               )}
@@ -531,6 +543,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                           text={step.text}
                           highlightedText={step.highlightedText}
                           tip={step.tip}
+                          ingredients={recipe.ingredients}
+                          targetIngredientIndices={recipe.stepIngredients?.[globalIdx]?.indices}
                           isChecked={checkedSteps[globalIdx]}
                           hideBadge={!!group.header} // Hide the badge entirely if in a group
                           hideNumber={!!group.header} // Also hide the number in the title

@@ -19,11 +19,17 @@ Use this workflow when the user wants to **visually interact** with the app in a
    ```
    If missing, ask the user to copy `.env.local.example` and configure it.
 
-## Steps
-
 // turbo
 
-1. Start the development server (restart if already active but unresponsive):
+1. Validate the environment:
+
+   ```bash
+   cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npm run check:env
+   ```
+
+   If THIS fails, stop and fix the missing keys in `.env.local`.
+
+2. Start the development server (restart if already active but unresponsive):
 
    ```bash
    # If the server is already running but unresponsive, restart it.
@@ -32,7 +38,7 @@ Use this workflow when the user wants to **visually interact** with the app in a
 
    Wait for "http://localhost:4321" to appear.
 
-2. Open the app in the browser subagent:
+3. Open the app in the browser subagent:
    - **URL**: `http://localhost:4321/protected/recipes`
    - **Login**: If redirected to login, use the Google Sign-In button (requires `.env.local` config).
    - **Interact**: Use the browser tools to click, type, and navigate.

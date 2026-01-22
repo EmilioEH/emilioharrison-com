@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, List, UtensilsCrossed, ArrowLeft } from 'lucide-react'
+import { X, List, ShoppingBasket, ArrowLeft } from 'lucide-react'
 import type { CookingSession } from '../../stores/cookingSession'
 import { Button } from '@/components/ui/button'
 
@@ -32,14 +32,14 @@ export const CookingHeader: React.FC<CookingHeaderProps> = ({
 
         {/* Center - Action Buttons */}
         <div className="flex items-center gap-2">
+          <Button onClick={onShowIngredients} variant="ghost" size="sm" className="md:hidden">
+            <ShoppingBasket />
+            Ingredients
+          </Button>
+
           <Button onClick={onShowNavigator} variant="ghost" size="sm">
             <List />
             Instructions
-          </Button>
-
-          <Button onClick={onShowIngredients} variant="ghost" size="sm" className="md:hidden">
-            <UtensilsCrossed />
-            Ingredients
           </Button>
         </div>
 

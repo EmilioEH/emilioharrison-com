@@ -1,5 +1,6 @@
 import React from 'react'
 import { X, ChefHat } from 'lucide-react'
+import { cn } from '../../lib/utils'
 import { useStore } from '@nanostores/react'
 import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
 import { CheckableItem } from '../recipe-details/CheckableItem'
@@ -66,13 +67,29 @@ export const CookingIngredientsOverlay: React.FC<CookingIngredientsOverlayProps>
                   const text = `${ing.amount} ${ing.name}${prep}`
                   const isChecked = session.checkedIngredients.includes(idx)
 
+                  // Highlight if this ingredient is used in the current step
+                  // currentStepIdx 0 is Prep, 1 is First Instruction (idx 0 in stepIngredients)
+                  const stepIdx = session.currentStepIdx - 1
+                  const isHighlighted =
+                    stepIdx >= 0 &&
+                    (recipe.stepIngredients?.[stepIdx]?.indices?.includes(idx) || false)
+
                   return (
-                    <CheckableItem
+                    <div
                       key={idx}
-                      text={text}
-                      isChecked={isChecked}
-                      onToggle={() => cookingSessionActions.toggleIngredient(idx)}
-                    />
+                      className={cn(
+                        'rounded-xl border transition-all',
+                        isHighlighted
+                          ? 'border-primary/50 bg-primary/5 shadow-sm'
+                          : 'border-transparent',
+                      )}
+                    >
+                      <CheckableItem
+                        text={text}
+                        isChecked={isChecked}
+                        onToggle={() => cookingSessionActions.toggleIngredient(idx)}
+                      />
+                    </div>
                   )
                 })}
               </div>

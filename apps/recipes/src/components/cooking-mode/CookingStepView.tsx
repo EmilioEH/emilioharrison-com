@@ -2,7 +2,11 @@ import React from 'react'
 import { useStore } from '@nanostores/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, AlertTriangle } from 'lucide-react'
-import { $cookingSession, cookingSessionActions } from '../../stores/cookingSession'
+import {
+  $cookingSession,
+  cookingSessionActions,
+  type CookingSession,
+} from '../../stores/cookingSession'
 import { TimerControl } from './TimerControl'
 import { PrepStep } from './PrepStep'
 import { Stack, Inline } from '../ui/layout'
@@ -192,7 +196,10 @@ interface CurrentStepContentProps {
   recipe: Recipe
   instructionIdx: number
   structuredStep?: StructuredStep
+  session: CookingSession // Proper type for session
 }
+
+import { renderHighlightedInstruction } from '../../lib/instruction-utils'
 
 const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   stepText,
@@ -200,17 +207,20 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   recipe,
   instructionIdx,
   structuredStep,
+  session,
 }) => {
-  // Substep State
-  // We use local state for now. In a perfect world, this would be in cookingSession store,
-  // but for V1 we'll let it be ephemeral per visual instance.
-  const [completedSubsteps, setCompletedSubsteps] = React.useState<Record<number, boolean>>({})
+  // Use shared highlighting utility
+  const renderContent = (text: string) => {
+    return renderHighlightedInstruction(
+      text,
+      recipe.ingredients,
+      recipe.stepIngredients?.[instructionIdx]?.indices,
+    )
+  }
 
-  const toggleSubstep = (idx: number) => {
-    setCompletedSubsteps((prev) => ({
-      ...prev,
-      [idx]: !prev[idx],
-    }))
+  // Substep State using global store
+  const toggleSubstep = (subIdx: number) => {
+    cookingSessionActions.toggleSubstep(instructionIdx, subIdx)
   }
 
   // Find the group header for this step (if Smart View grouping exists)
@@ -218,9 +228,6 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
     (group) => instructionIdx >= group.startIndex && instructionIdx <= group.endIndex,
   )
   const displayTitle = currentGroup?.header || structuredStep?.title
-
-  // Effect: Auto-mark substeps if the main step is somehow "done" (not applicable here as we navigate away)
-  // But maybe we want to play a sound when all are done? usage for later.
 
   // Smart timer parsing
   const parseTimer = (text: string): number | undefined => {
@@ -272,14 +279,7 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
 
   return (
     <Stack spacing="lg" className="w-full">
-      {/* Main Instruction Text (Show only if no substeps OR as a header) */}
-      {/* Design choice: If we have substeps, the main text serves as the "Goal" or "Summary".
-          If it's short, it's a Title. If it's long, it might be redundant with substeps.
-          Let's show it, but maybe smaller if we have substeps?
-          Actually, the Mockup showed "Prepare the Aromatics" as title, then the list.
-          Here 'stepText' IS the full text. `structuredStep.title` is the short one.
-      */}
-
+      {/* ... */}
       {displayTitle && (
         <h2 className="text-center font-display text-2xl font-bold text-foreground">
           {displayTitle}
@@ -289,18 +289,7 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
       {!hasSubsteps && (
         <Stack spacing="lg" className="items-center py-4">
           <p className={`font-display font-bold leading-tight text-foreground ${mainTextClass}`}>
-            {structuredStep?.highlightedText ? (
-              <span
-                dangerouslySetInnerHTML={{
-                  __html: structuredStep.highlightedText.replace(
-                    /\*\*(.*?)\*\*/g,
-                    '<span class="text-primary">$1</span>',
-                  ),
-                }}
-              />
-            ) : (
-              stepText
-            )}
+            {renderContent(structuredStep?.highlightedText || stepText)}
           </p>
         </Stack>
       )}
@@ -309,7 +298,7 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
       {hasSubsteps && (
         <Stack spacing="md" className="mt-4 w-full">
           {substeps.map((sub, i) => {
-            const isChecked = completedSubsteps[i]
+            const isChecked = session.checkedSubsteps[`${instructionIdx}-${i}`] || false
             return (
               <motion.button
                 key={i}
@@ -333,45 +322,22 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
                       : 'border-muted-foreground/30 text-transparent group-hover:border-primary/50',
                   )}
                 >
-                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                  <Check
+                    className="h-3.5 w-3.5"
+                    strokeWidth={3}
+                    stroke="currentColor"
+                    fill="none"
+                  />
                 </div>
 
-                {/* Substep Text with Highlighted Action */}
+                {/* Substep Text with Highlighted Action & Ingredients */}
                 <span
                   className={cn(
                     'flex-1 text-lg font-medium leading-snug',
                     isChecked ? 'text-muted-foreground line-through opacity-80' : 'text-foreground',
                   )}
                 >
-                  {/* Highlight the Action Verb if it exists at start of string or in text */}
-                  {sub.action ? (
-                    <span>
-                      {(() => {
-                        // Safely escape regex special characters to prevent crashes
-                        const escapeRegExp = (str: string) =>
-                          str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-                        try {
-                          const escapedAction = escapeRegExp(sub.action)
-                          return sub.text
-                            .split(new RegExp(`(${escapedAction})`, 'i'))
-                            .map((part: string, idx: number) =>
-                              part.toLowerCase() === sub.action.toLowerCase() ? (
-                                <span key={idx} className={isChecked ? '' : 'font-bold'}>
-                                  {part}
-                                </span>
-                              ) : (
-                                part
-                              ),
-                            )
-                        } catch {
-                          // Fallback: just show the text without highlighting
-                          return sub.text
-                        }
-                      })()}
-                    </span>
-                  ) : (
-                    sub.text
-                  )}
+                  {renderContent(sub.text)}
                 </span>
               </motion.button>
             )
@@ -531,6 +497,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
                         recipe={recipe}
                         instructionIdx={idx}
                         structuredStep={recipe.structuredSteps?.[idx]}
+                        session={session}
                       />
                     </StepErrorBoundary>
                   )}

@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react'
 import { X, List, Check, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useStore } from '@nanostores/react'
+import { $cookingSession, cookingSessionActions } from '@/stores/cookingSession'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { Recipe, StructuredStep } from '@/lib/types'
@@ -39,6 +41,8 @@ export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProp
   currentStepIdx,
   onStepSelect,
 }) => {
+  const session = useStore($cookingSession)
+
   // Determine which steps to display based on available data
   const displaySteps = useMemo((): StructuredStep[] => {
     // Prefer structured steps if available
@@ -72,7 +76,9 @@ export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProp
   }, [recipe.stepGroups, displaySteps])
 
   const handleStepClick = (index: number) => {
-    onStepSelect(index)
+    // Navigation index alignment:
+    // globalIdx 0 follows Prep (session index 0), so we navigate to globalIdx + 1
+    onStepSelect(index + 1)
     onClose()
   }
 
@@ -121,21 +127,27 @@ export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProp
                   <div key={gIdx}>
                     {/* Group Header (for enhanced recipes) */}
                     {group.header && (
-                      <div className="mb-3 flex items-center gap-3">
+                      <button
+                        onClick={() => handleStepClick(group.startIndex)}
+                        className="group mb-3 flex w-full items-center gap-3 text-left transition-all active:scale-[0.98]"
+                      >
                         <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-bold text-background">
                           {gIdx + 1}
                         </div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <h3 className="flex-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           {group.header}
                         </h3>
-                      </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      </button>
                     )}
 
                     {/* Steps within group */}
                     {group.items.map((step, idx) => {
                       const globalIdx = group.startIndex + idx
-                      const isCompleted = globalIdx < currentStepIdx
-                      const isCurrent = globalIdx === currentStepIdx
+                      // Status alignment: currentStepIdx 0 is Prep.
+                      // Instructions begin at session step 1.
+                      const isCompleted = globalIdx < currentStepIdx - 1
+                      const isCurrent = globalIdx === currentStepIdx - 1
                       const substeps = getSubsteps(recipe.structuredSteps?.[globalIdx])
                       const hasSubsteps = substeps.length > 0
 
@@ -144,77 +156,87 @@ export const CookingInstructionsOverlay: React.FC<CookingInstructionsOverlayProp
                         // Display substeps as individual tappable items
                         return (
                           <div key={globalIdx} className="space-y-2">
-                            {substeps.map((substep, subIdx) => (
-                              <button
-                                key={`${globalIdx}-${subIdx}`}
-                                onClick={() => handleStepClick(globalIdx)}
-                                className={cn(
-                                  'group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all',
-                                  isCurrent
-                                    ? 'border-primary bg-primary/10 shadow-sm'
-                                    : 'border-border bg-background hover:bg-muted/50 active:scale-[0.98]',
-                                  isCompleted && 'bg-muted opacity-60',
-                                )}
-                              >
-                                {/* Checkbox Status */}
+                            {substeps.map((substep, subIdx) => {
+                              const isSubChecked =
+                                session.checkedSubsteps[`${globalIdx}-${subIdx}`] || false
+
+                              return (
                                 <div
+                                  key={`${globalIdx}-${subIdx}`}
                                   className={cn(
-                                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs transition-colors',
+                                    'group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all',
                                     isCurrent
-                                      ? 'border-primary bg-primary text-primary-foreground'
-                                      : isCompleted
+                                      ? 'border-primary bg-primary/10 shadow-sm'
+                                      : 'border-border bg-background hover:bg-muted/50',
+                                    isCompleted && 'bg-muted opacity-60',
+                                  )}
+                                >
+                                  {/* Checkbox Status - Now interactive */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      cookingSessionActions.toggleSubstep(globalIdx, subIdx)
+                                    }}
+                                    className={cn(
+                                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs transition-colors hover:scale-110 active:scale-95',
+                                      isSubChecked || isCompleted
                                         ? 'border-transparent bg-muted-foreground/20 text-muted-foreground'
-                                        : 'border-muted-foreground/30 bg-background text-transparent',
-                                  )}
-                                >
-                                  {isCompleted && <Check className="h-3 w-3" />}
+                                        : isCurrent
+                                          ? 'border-primary bg-background text-transparent'
+                                          : 'border-muted-foreground/30 bg-background text-transparent',
+                                    )}
+                                  >
+                                    {(isSubChecked || isCompleted) && <Check className="h-3 w-3" />}
+                                  </button>
+
+                                  {/* Substep Text with Highlighted Action - Still navigates on tap */}
+                                  <button
+                                    onClick={() => handleStepClick(globalIdx)}
+                                    className={cn(
+                                      'flex-1 text-sm font-medium leading-snug outline-none',
+                                      isCurrent ? 'text-foreground' : 'text-muted-foreground',
+                                      isSubChecked && 'line-through opacity-70',
+                                    )}
+                                  >
+                                    {substep.action ? (
+                                      <span>
+                                        {(() => {
+                                          const escapeRegExp = (str: string) =>
+                                            str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                                          try {
+                                            const escapedAction = escapeRegExp(substep.action)
+                                            return substep.text
+                                              .split(new RegExp(`(${escapedAction})`, 'i'))
+                                              .map((part: string, idx: number) =>
+                                                part.toLowerCase() ===
+                                                substep.action.toLowerCase() ? (
+                                                  <span key={idx} className="font-black">
+                                                    {part}
+                                                  </span>
+                                                ) : (
+                                                  part
+                                                ),
+                                              )
+                                          } catch {
+                                            return substep.text
+                                          }
+                                        })()}
+                                      </span>
+                                    ) : (
+                                      substep.text
+                                    )}
+                                  </button>
+
+                                  {/* Chevron indicator on hover */}
+                                  <ChevronRight
+                                    className={cn(
+                                      'h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100',
+                                      isCurrent && 'text-primary opacity-100',
+                                    )}
+                                  />
                                 </div>
-
-                                {/* Substep Text with Highlighted Action */}
-                                <span
-                                  className={cn(
-                                    'flex-1 text-sm font-medium leading-snug',
-                                    isCurrent ? 'text-foreground' : 'text-muted-foreground',
-                                  )}
-                                >
-                                  {substep.action ? (
-                                    <span>
-                                      {(() => {
-                                        const escapeRegExp = (str: string) =>
-                                          str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-                                        try {
-                                          const escapedAction = escapeRegExp(substep.action)
-                                          return substep.text
-                                            .split(new RegExp(`(${escapedAction})`, 'i'))
-                                            .map((part: string, idx: number) =>
-                                              part.toLowerCase() ===
-                                              substep.action.toLowerCase() ? (
-                                                <span key={idx} className="font-bold">
-                                                  {part}
-                                                </span>
-                                              ) : (
-                                                part
-                                              ),
-                                            )
-                                        } catch {
-                                          return substep.text
-                                        }
-                                      })()}
-                                    </span>
-                                  ) : (
-                                    substep.text
-                                  )}
-                                </span>
-
-                                {/* Chevron indicator on hover */}
-                                <ChevronRight
-                                  className={cn(
-                                    'h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100',
-                                    isCurrent && 'text-primary opacity-100',
-                                  )}
-                                />
-                              </button>
-                            ))}
+                              )
+                            })}
                           </div>
                         )
                       }

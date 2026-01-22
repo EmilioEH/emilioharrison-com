@@ -44,7 +44,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
   const handleExitConfirm = () => {
     cookingSessionActions.endSession()
     setShowExitConfirm(false)
-    onClose()
+    // Removed onClose() to stay on the recipe overview after exiting, matching review flow behavior.
   }
 
   const handleFinishCooking = () => {

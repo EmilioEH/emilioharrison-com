@@ -20,6 +20,7 @@ export interface CookingSession {
   completedSteps: number[] // array of step indices
   activeTimers: Record<string, Timer> // keyed by timer ID
   checkedIngredients: number[] // indices of checked ingredients
+  checkedSubsteps: Record<string, boolean> // key format: `instructionIdx-subIdx`
 }
 
 const initialSession: CookingSession = {
@@ -32,6 +33,7 @@ const initialSession: CookingSession = {
   completedSteps: [],
   activeTimers: {},
   checkedIngredients: [],
+  checkedSubsteps: {},
 }
 
 export const $cookingSession = map<CookingSession>(initialSession)
@@ -106,5 +108,13 @@ export const cookingSessionActions = {
       current.add(index)
     }
     $cookingSession.setKey('checkedIngredients', Array.from(current))
+  },
+
+  toggleSubstep: (instructionIdx: number, subIdx: number) => {
+    const session = $cookingSession.get()
+    const key = `${instructionIdx}-${subIdx}`
+    const current = { ...session.checkedSubsteps }
+    current[key] = !current[key]
+    $cookingSession.setKey('checkedSubsteps', current)
   },
 }
