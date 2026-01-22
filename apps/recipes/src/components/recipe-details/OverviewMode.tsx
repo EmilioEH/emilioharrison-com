@@ -385,18 +385,38 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               )}
             </Inline>
 
-            {recipe.sourceUrl && (
-              <Button
-                variant="link"
-                size="sm"
-                className="mb-4 h-auto p-0 text-xs uppercase tracking-wider"
-                asChild
-              >
-                <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  Source: {new URL(recipe.sourceUrl).hostname.replace('www.', '')} <ChevronRight />
-                </a>
-              </Button>
-            )}
+            {recipe.sourceUrl &&
+              (() => {
+                try {
+                  const hostname = new URL(recipe.sourceUrl).hostname.replace('www.', '')
+                  return (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="mb-4 h-auto p-0 text-xs uppercase tracking-wider"
+                      asChild
+                    >
+                      <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer">
+                        Source: {hostname} <ChevronRight />
+                      </a>
+                    </Button>
+                  )
+                } catch {
+                  // Invalid URL, just show the raw link
+                  return (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="mb-4 h-auto p-0 text-xs uppercase tracking-wider"
+                      asChild
+                    >
+                      <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer">
+                        View Source <ChevronRight />
+                      </a>
+                    </Button>
+                  )
+                }
+              })()}
 
             {/* Modification Date (Critical for tests/features) */}
             <div className="mb-4 text-xs text-muted-foreground">
