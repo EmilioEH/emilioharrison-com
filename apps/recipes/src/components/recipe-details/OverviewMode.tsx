@@ -259,12 +259,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     if (viewMode === 'enhanced' && groups?.length) {
       return groups.map((group: IngredientGroup) => ({
         header: group.header,
-        items: recipe.ingredients.slice(group.startIndex, group.endIndex + 1),
+        items: recipe.ingredients?.slice(group.startIndex, group.endIndex + 1) || [],
         startIndex: group.startIndex,
       }))
     }
-    // Fallback: single ungrouped list
-    return [{ header: null, items: recipe.ingredients, startIndex: 0 }]
+    // Fallback: single ungrouped list (handle missing ingredients array)
+    return [{ header: null, items: recipe.ingredients || [], startIndex: 0 }]
   }, [recipe.ingredientGroups, recipe.ingredients, viewMode])
 
   // Memoized structured steps with fallback to plain text
