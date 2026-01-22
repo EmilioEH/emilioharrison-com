@@ -213,8 +213,10 @@ const CurrentStepContent: React.FC<CurrentStepContentProps> = ({
   const renderContent = (text: string) => {
     return renderHighlightedInstruction(
       text,
-      recipe.ingredients,
-      recipe.stepIngredients?.[instructionIdx]?.indices,
+      Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+      Array.isArray(recipe.stepIngredients?.[instructionIdx]?.indices)
+        ? recipe.stepIngredients[instructionIdx].indices
+        : [],
     )
   }
 
