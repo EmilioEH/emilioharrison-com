@@ -116,6 +116,24 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     )
   }
 
+  // Handle recipe not found
+  if (view === 'detail' && !selectedRecipe) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 bg-card p-6 text-center">
+        <h2 className="text-xl font-bold text-foreground">Recipe Not Found</h2>
+        <p className="max-w-md text-muted-foreground">
+          This recipe may have been deleted or is no longer available.
+        </p>
+        <button
+          onClick={() => setView('library')}
+          className="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
+        >
+          Back to Recipes
+        </button>
+      </div>
+    )
+  }
+
   if (view === 'notifications') {
     return <NotificationSettingsView onClose={() => setView('library')} />
   }
