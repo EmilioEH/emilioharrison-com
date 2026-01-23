@@ -11,6 +11,8 @@ interface RecipeEditorProps {
   onCancel: () => void
   onDelete: (id: string) => void
   isEmbedded?: boolean
+  candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>
+  onImageSelect?: (url: string) => void
 }
 
 export const RecipeEditor: React.FC<RecipeEditorProps> = ({
@@ -19,6 +21,8 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   onCancel,
   onDelete,
   isEmbedded = false,
+  candidateImages = [],
+  onImageSelect,
 }) => {
   const [formData, setFormData] = useState<Partial<Recipe>>(recipe)
 
@@ -187,6 +191,18 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
           />
         </div>
       </Stack>
+
+      {/* Image Selector for URL imports */}
+      {candidateImages.length > 0 && onImageSelect && (
+        <ImageSelector
+          images={candidateImages}
+          selectedImage={formData.sourceImage || null}
+          onSelect={(url) => {
+            setFormData({ ...formData, sourceImage: url })
+            onImageSelect(url)
+          }}
+        />
+      )}
 
       <Cluster spacing="md">
         <div className="min-w-[45%] flex-1">

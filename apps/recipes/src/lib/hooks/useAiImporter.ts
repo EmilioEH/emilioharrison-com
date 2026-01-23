@@ -31,10 +31,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   const handleProcess = async () => {
-    // Cancel any existing request
-    if (abortController) {
-      abortController.abort()
-    }
+    if (abortController) abortController.abort()
 
     const newController = new AbortController()
     setAbortController(newController)
@@ -43,51 +40,62 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     setProgressMessage('Consulting Chef Gemini...')
 
     try {
-      const payload = buildPayload()
-      const baseUrl = getBaseUrl()
-      const result = await parseRecipe(payload, baseUrl, newController.signal, (msg) => {
-        setProgressMessage(msg)
-      })
+      const result = await parseRecipe(
+        buildPayload(),
+        getBaseUrl(),
+        newController.signal,
+        (msg) => {
+          setProgressMessage(msg)
+        },
+      )
 
-      // Extract candidate images from result if URL mode
-      if (mode === 'url' && result.candidateImages && result.candidateImages.length > 0) {
-        setCandidateImages(result.candidateImages)
-        // Auto-select default image if not already selected
-        if (!selectedImage) {
-          const defaultImg = result.candidateImages.find((img) => img.isDefault)
-          setSelectedImage(defaultImg?.url || result.candidateImages[0].url)
-        }
-      }
-
-      // Determine which image to use
-      let finalImage: string | undefined
-      if (mode === 'photo' || mode === 'dish-photo') {
-        finalImage = imagePreview || undefined
-      } else if (mode === 'url' && selectedImage) {
-        finalImage = selectedImage
-      }
-
-      const recipeWithSource = {
-        ...(result.data as object),
-        sourceImage: finalImage,
-        creationMethod: mode === 'dish-photo' ? 'ai-infer' : 'ai-parse',
-      } as Recipe
-
-      onRecipeParsed(recipeWithSource)
-      setStatus('idle')
-      setAbortController(null)
+      handleSuccessfulParse(result)
     } catch (err: unknown) {
-      // Don't show error if request was cancelled
-      if (err instanceof Error && err.name === 'AbortError') {
-        setStatus('idle')
-        return
-      }
-
-      // console.error(err)
-      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
-      setStatus('error')
+      handleParseError(err)
+    } finally {
       setAbortController(null)
     }
+  }
+
+  const handleSuccessfulParse = (result: {
+    data: unknown
+    candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>
+  }) => {
+    // Extract candidate images from result if URL mode
+    if (mode === 'url' && result.candidateImages && result.candidateImages.length > 0) {
+      setCandidateImages(result.candidateImages)
+      if (!selectedImage) {
+        const defaultImg = result.candidateImages.find((img) => img.isDefault)
+        setSelectedImage(defaultImg?.url || result.candidateImages[0].url)
+      }
+    }
+
+    // Determine which image to use
+    let finalImage: string | undefined
+    if (mode === 'photo' || mode === 'dish-photo') {
+      finalImage = imagePreview || undefined
+    } else if (mode === 'url' && selectedImage) {
+      finalImage = selectedImage
+    }
+
+    const recipeWithSource = {
+      ...(result.data as object),
+      sourceImage: finalImage,
+      creationMethod: mode === 'dish-photo' ? 'ai-infer' : 'ai-parse',
+    } as Recipe
+
+    onRecipeParsed(recipeWithSource, mode === 'url' ? result.candidateImages : undefined)
+    setStatus('idle')
+  }
+
+  const handleParseError = (err: unknown) => {
+    if (err instanceof Error && err.name === 'AbortError') {
+      setStatus('idle')
+      return
+    }
+
+    setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
+    setStatus('error')
   }
 
   const handleCancel = () => {

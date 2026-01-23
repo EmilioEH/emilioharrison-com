@@ -1,5 +1,2 @@
-# Sync feedback from DB to docs (kept local only, not committed)
-echo "🔄 Auto-syncing feedback reports..."
-npm run sync:feedback --workspace=@emilio/recipes
 
 npx lint-staged

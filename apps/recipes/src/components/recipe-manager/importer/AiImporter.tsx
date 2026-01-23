@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
-import { ImageSelector } from './ImageSelector'
 import { Stack, Cluster } from '@/components/ui/layout'
 import { uploadImage } from './api'
 import { processImage } from '../../../lib/image-optimization'
@@ -12,7 +11,10 @@ import type { Recipe } from '../../../lib/types'
 // Removed blocking LoadingOverlay - using inline feedback instead
 
 interface AiImporterProps {
-  onRecipeParsed: (recipe: Recipe) => void
+  onRecipeParsed: (
+    recipe: Recipe,
+    candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>,
+  ) => void
 }
 
 export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
@@ -39,9 +41,6 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     setTasteProfile,
     handleProcess,
     progressMessage,
-    candidateImages,
-    selectedImage,
-    setSelectedImage,
   } = useAiImporter({ onRecipeParsed, mode })
 
   const [internalIsUploading, setInternalIsUploading] = useState(false)
@@ -224,41 +223,25 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             )}
           </>
         ) : (
-          <>
-            <Stack spacing="sm">
-              <label
-                htmlFor="url-input"
-                className="text-foreground-variant text-sm font-medium uppercase tracking-wider"
-              >
-                Paste Recipe Link
-              </label>
-              <input
-                id="url-input"
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://cooking.nytimes.com/..."
-                className="bg-card-variant/20 w-full rounded-lg border border-border p-4 font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary"
-              />
-              <p className="text-foreground-variant text-xs">
-                We&apos;ll scrape the ingredients and instructions for you.
-              </p>
-            </Stack>
-
-            {/* Image Selector - shown after URL parsing completes */}
-            {candidateImages.length > 0 && (
-              <Stack spacing="sm" className="animate-in slide-in-from-top-2">
-                <label className="text-sm font-bold uppercase text-muted-foreground">
-                  Choose Recipe Image ({candidateImages.length} found)
-                </label>
-                <ImageSelector
-                  images={candidateImages}
-                  selectedImage={selectedImage}
-                  onSelect={setSelectedImage}
-                />
-              </Stack>
-            )}
-          </>
+          <Stack spacing="sm">
+            <label
+              htmlFor="url-input"
+              className="text-foreground-variant text-sm font-medium uppercase tracking-wider"
+            >
+              Paste Recipe Link
+            </label>
+            <input
+              id="url-input"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://cooking.nytimes.com/..."
+              className="bg-card-variant/20 w-full rounded-lg border border-border p-4 font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary"
+            />
+            <p className="text-foreground-variant text-xs">
+              We&apos;ll scrape the ingredients and instructions for you.
+            </p>
+          </Stack>
         )}
 
         {errorMsg && (
