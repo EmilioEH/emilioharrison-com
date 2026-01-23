@@ -26,6 +26,9 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   onImageSelect,
 }) => {
   const [formData, setFormData] = useState<Partial<Recipe>>(recipe)
+  const [internalCandidateImages, setInternalCandidateImages] = useState<
+    Array<{ url: string; alt?: string; isDefault?: boolean }>
+  >(candidateImages || [])
 
   // Initial load helpers
   const [ingText, setIngText] = useState(() => {
@@ -39,12 +42,19 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   })
   const [stepText, setStepText] = useState(recipe.steps?.join('\n') || '')
 
-  const handleRecipeParsed = (parsed: Recipe) => {
+  const handleRecipeParsed = (
+    parsed: Recipe,
+    candidateImgs?: Array<{ url: string; alt?: string; isDefault?: boolean }>,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       ...parsed,
       updatedAt: new Date().toISOString(),
     }))
+
+    if (candidateImgs) {
+      setInternalCandidateImages(candidateImgs)
+    }
 
     if (parsed.ingredients) {
       const text = parsed.ingredients
@@ -161,9 +171,23 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         />
       </div>
 
-      {formData.sourceImage && (
-        <div>
-          <div className="mb-1 block text-xs font-bold uppercase text-gray-400">Source Image</div>
+      <Stack spacing="md" className="bg-card-variant/10 rounded-xl border border-border p-4">
+        <span className="mb-1 block text-xs font-bold uppercase text-gray-400">Recipe Image</span>
+
+        {/* 1. Candidate Images Grid (if available) */}
+        {internalCandidateImages.length > 0 && (
+          <ImageSelector
+            images={internalCandidateImages}
+            selectedImage={formData.sourceImage || null}
+            onSelect={(url: string) => {
+              setFormData({ ...formData, sourceImage: url })
+              if (onImageSelect) onImageSelect(url)
+            }}
+          />
+        )}
+
+        {/* 2. Single Preview (if no candidates or as confirmation) */}
+        {formData.sourceImage && internalCandidateImages.length === 0 && (
           <div className="relative h-48 w-full overflow-hidden rounded-xl border border-border">
             <img
               src={formData.sourceImage}
@@ -171,39 +195,28 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
               className="h-full w-full object-cover"
             />
           </div>
-        </div>
-      )}
+        )}
 
-      <Stack spacing="sm">
-        <label
-          htmlFor="sourceimage-url"
-          className="mb-1 block text-xs font-bold uppercase text-gray-400"
-        >
-          Source Image
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="sourceimage-url"
-            type="url"
-            value={formData.sourceImage || ''}
-            onChange={(e) => setFormData({ ...formData, sourceImage: e.target.value })}
-            className="bg-card-variant w-full rounded-lg border border-border p-3 text-base"
-            placeholder="https://..."
-          />
-        </div>
+        {/* 3. URL Fallback Input */}
+        <Stack spacing="xs">
+          <label
+            htmlFor="sourceimage-url"
+            className="text-[10px] font-bold uppercase text-gray-400"
+          >
+            Image URL {internalCandidateImages.length > 0 && '(Manual Overwrite)'}
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="sourceimage-url"
+              type="url"
+              value={formData.sourceImage || ''}
+              onChange={(e) => setFormData({ ...formData, sourceImage: e.target.value })}
+              className="bg-card-variant w-full rounded-lg border border-border p-2 text-sm"
+              placeholder="https://..."
+            />
+          </div>
+        </Stack>
       </Stack>
-
-      {/* Image Selector for URL imports */}
-      {candidateImages.length > 0 && onImageSelect && (
-        <ImageSelector
-          images={candidateImages}
-          selectedImage={formData.sourceImage || null}
-          onSelect={(url: string) => {
-            setFormData({ ...formData, sourceImage: url })
-            onImageSelect(url)
-          }}
-        />
-      )}
 
       <Cluster spacing="md">
         <div className="min-w-[45%] flex-1">
