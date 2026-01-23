@@ -109,13 +109,14 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
         }
 
         const payload = { text: textContent, image: imageBase64 }
-        const data = await parseRecipe(payload, baseUrl)
+        const result = await parseRecipe(payload, baseUrl)
+        const recipeData = result.data as Recipe
 
         results.push({
-          ...(data as object),
+          ...(recipeData as object),
           sourceImage: uploadedImageUrl,
           // If no title parsed, fallback to filename
-          title: (data as Recipe).title || mdFile.name.replace('.md', ''),
+          title: recipeData.title || mdFile.name.replace('.md', ''),
         } as Recipe)
       }
 

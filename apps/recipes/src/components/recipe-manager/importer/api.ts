@@ -35,7 +35,10 @@ export async function parseRecipe(
   baseUrl: string,
   signal?: AbortSignal,
   onProgress?: (stage: string) => void,
-): Promise<unknown> {
+): Promise<{
+  data: unknown
+  candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>
+}> {
   const res = await fetch(`${baseUrl}api/parse-recipe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,13 +57,27 @@ export async function parseRecipe(
     }
     throw new Error(errMsg)
   }
-  if (!res.body) return await res.json()
+
+  // Extract metadata from headers
+  const sourceUrl = res.headers.get('X-Source-Url') || undefined
+  const candidateImagesHeader = res.headers.get('X-Candidate-Images')
+  let candidateImages: Array<{ url: string; alt?: string; isDefault?: boolean }> | undefined
+
+  try {
+    if (candidateImagesHeader) {
+      candidateImages = JSON.parse(candidateImagesHeader)
+    }
+  } catch {
+    // Invalid JSON in header, ignore
+  }
+
+  if (!res.body) {
+    const data = await res.json()
+    return { data, candidateImages }
+  }
 
   // If stream processing is requested via callback
   if (onProgress) {
-    // Capture headers for source info before reading body
-    const sourceUrl = res.headers.get('X-Source-Url') || undefined
-
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let result = ''
@@ -122,7 +139,7 @@ export async function parseRecipe(
       if (sourceUrl) {
         parsed.sourceUrl = sourceUrl
       }
-      return parsed
+      return { data: parsed, candidateImages }
     } catch (err) {
       console.warn('Stream parsing failed, falling back to text parsing if possible', err)
       // If JSON parse failed, it might be incomplete or error
@@ -130,5 +147,6 @@ export async function parseRecipe(
     }
   }
 
-  return await res.json()
+  const data = await res.json()
+  return { data, candidateImages }
 }

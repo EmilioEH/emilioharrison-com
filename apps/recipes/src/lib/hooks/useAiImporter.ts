@@ -25,6 +25,10 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   const [tasteProfile, setTasteProfile] = useState('')
 
   const [progressMessage, setProgressMessage] = useState('')
+  const [candidateImages, setCandidateImages] = useState<
+    Array<{ url: string; alt?: string; isDefault?: boolean }>
+  >([])
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   const handleProcess = async () => {
     // Cancel any existing request
@@ -41,13 +45,31 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     try {
       const payload = buildPayload()
       const baseUrl = getBaseUrl()
-      const data = await parseRecipe(payload, baseUrl, newController.signal, (msg) => {
+      const result = await parseRecipe(payload, baseUrl, newController.signal, (msg) => {
         setProgressMessage(msg)
       })
 
+      // Extract candidate images from result if URL mode
+      if (mode === 'url' && result.candidateImages && result.candidateImages.length > 0) {
+        setCandidateImages(result.candidateImages)
+        // Auto-select default image if not already selected
+        if (!selectedImage) {
+          const defaultImg = result.candidateImages.find((img) => img.isDefault)
+          setSelectedImage(defaultImg?.url || result.candidateImages[0].url)
+        }
+      }
+
+      // Determine which image to use
+      let finalImage: string | undefined
+      if (mode === 'photo' || mode === 'dish-photo') {
+        finalImage = imagePreview || undefined
+      } else if (mode === 'url' && selectedImage) {
+        finalImage = selectedImage
+      }
+
       const recipeWithSource = {
-        ...(data as object),
-        sourceImage: mode === 'photo' || mode === 'dish-photo' ? imagePreview : undefined,
+        ...(result.data as object),
+        sourceImage: finalImage,
         creationMethod: mode === 'dish-photo' ? 'ai-infer' : 'ai-parse',
       } as Recipe
 
@@ -149,5 +171,9 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     handleProcess,
     handleCancel,
     progressMessage,
+    candidateImages,
+    setCandidateImages,
+    selectedImage,
+    setSelectedImage,
   }
 }

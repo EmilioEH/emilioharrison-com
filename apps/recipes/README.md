@@ -81,14 +81,9 @@ While Astro handles the initial load, the app functions as a **Single Page Appli
 - **Instead:** Add a new `ViewMode` to `RecipeManager.tsx` and render a conditional component.
 - **Why:** This preserves the "App-like" feel, state (e.g. scroll position), and offline capability.
 
-### 2. Hybrid AI Parsing & Enhancement
-
-We prioritize **deterministic data** over generative AI to save costs and latency, but use different AI "Modes" depending on user intent.
-
-- **Data Priority**: The `parse-recipe.ts` endpoint attempts to extract structured `JSON-LD` from the URL _first_. Only if JSON-LD is missing does it construct a prompt for Gemini.
-- **Transcription Mode (Strict)**: Used during **Initial Imports**. The AI is instructed to transcribe the recipe _exactly as written_, preserving the original author's voice and structure, while providing immediate access to the data.
-- **Dual-Process Enhancement**: After a new recipe is saved, a background job automatically triggers **Enhancement Mode**. The UI uses an **SWR-style revalidation pattern** and **reusable data-fetching callbacks** in `RecipeDetail.tsx` to automatically pick up and render "Smart View" data once the background job finishes, without requiring a user refresh.
-- **Improved Parsing Resilience**: The `parse-recipe.ts` implementation includes robust handling for varying Gemini SDK response structures, ensuring stable text extraction even when the AI response format shifts.
+- **Unified AI Parsing Service**: All AI operations (initial parse, background enhancement, manual refresh) are centralized in `src/lib/services/ai-parser.ts`. This ensures consistent application of "Kenji-style" rules and prompt engineering across the entire stack.
+- **Total Reparse Background Enhancement**: After a new recipe is saved, a background job automatically triggers **Enhancement Mode**. Unlike traditional text-to-text enhancement, this process performs a **Total Reparse** from the original `sourceUrl` or `sourceImage` if available, ensuring maximum instruction quality and structured ingredient accuracy automatically.
+- **Improved Parsing Resilience**: The `ai-parser.ts` implementation includes robust handling for varying Gemini SDK response structures and strict JSON schema validation, ensuring stability even as AI models evolve.
 - **Enhancement Mode (Kenji-Style)**: Used during background enhancement, **AI Refresh**, and **Dish Photo Scan**. The AI applies "Kenji Lopez-Alt" style best practices:
   - **Scientific Grouping**: Group steps chronologically by component (e.g., "Prepare the Marina", "Cook the Pasta").
   - **Descriptive Paragraphs**: Combine atomic steps into readable, narrative paragraphs.
@@ -262,7 +257,7 @@ Key entry points for common tasks:
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                                                            |
 | **Add new metadata field** | Use slash command: `/add-metadata` (Covers Types, UI, AI, and Filtering)                                                          |
-| **Modify AI parsing**      | `src/pages/api/parse-recipe.ts` (prompt + response handling)                                                                      |
+| **Modify AI parsing**      | `src/lib/services/ai-parser.ts` (Core logic) & `src/pages/api/parse-recipe.ts` (Streaming)                                        |
 | **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI)                                       |
 | **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                                                             |
 | **Update global UI**       | `src/components/layout/` (GlobalBurgerMenu, GlobalFeedback)                                                                       |

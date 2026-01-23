@@ -41,7 +41,7 @@ export async function triggerBackgroundEnhancement(recipeId: string, _recipeTitl
 
     const data = await res.json()
 
-    if (data.success && !data.cached) {
+    if (data.success) {
       // Success! The Firestore document is now updated.
       // We don't need to do anything else because the client is subscribed to the document.
       // Just mark complete.
@@ -50,7 +50,6 @@ export async function triggerBackgroundEnhancement(recipeId: string, _recipeTitl
       // Remove after a delay so the UI (if showing status) has time to register "Done"
       setTimeout(() => removeAiOperation(opId), 3000)
     } else {
-      // If cached or no change
       removeAiOperation(opId)
     }
   } catch (err) {

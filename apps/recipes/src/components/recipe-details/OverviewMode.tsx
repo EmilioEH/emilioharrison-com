@@ -563,7 +563,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   <Stack spacing="lg">
                     {group.items.map((step, idx) => {
                       const globalIdx = group.startIndex + idx
-                      const ingredientsArray = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+                      const ingredientsArray = Array.isArray(recipe.ingredients)
+                        ? recipe.ingredients
+                        : []
                       const targetIndices = recipe.stepIngredients?.[globalIdx]?.indices
                       const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []
                       return (
