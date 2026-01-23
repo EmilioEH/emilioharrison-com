@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Save, Trash2 } from 'lucide-react'
 import { Stack, Inline, Cluster } from '@/components/ui/layout'
 import { AiImporter } from './importer/AiImporter'
+import { ImageSelector } from './importer/ImageSelector'
 import type { Recipe, Ingredient } from '../../lib/types'
 import { confirm } from '../../lib/dialogStore'
 
@@ -197,7 +198,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         <ImageSelector
           images={candidateImages}
           selectedImage={formData.sourceImage || null}
-          onSelect={(url) => {
+          onSelect={(url: string) => {
             setFormData({ ...formData, sourceImage: url })
             onImageSelect(url)
           }}

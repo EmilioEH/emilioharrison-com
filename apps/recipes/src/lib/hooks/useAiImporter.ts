@@ -6,7 +6,10 @@ import type { InputMode } from '../../components/recipe-manager/importer/SourceT
 type Status = 'idle' | 'processing' | 'error'
 
 interface UseAiImporterProps {
-  onRecipeParsed: (recipe: Recipe) => void
+  onRecipeParsed: (
+    recipe: Recipe,
+    candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>,
+  ) => void
   mode: InputMode
 }
 
