@@ -62,7 +62,29 @@ export async function extractImagesFromHtml(
     return excludePatterns.some((pattern) => pattern.test(url))
   }
 
-  // 1. Extract from JSON-LD (highest priority)
+  // 1. Extract from JSON-LD
+  extractFromJsonLd($, normalizeUrl, shouldExclude, seenUrls, images)
+
+  // 2. Extract from Open Graph
+  extractFromOpenGraph($, normalizeUrl, shouldExclude, seenUrls, images)
+
+  // 3. Extract from <img> tags
+  extractFromImgTags($, normalizeUrl, shouldExclude, seenUrls, images)
+
+  // 4. Extract from <a> tags
+  extractFromAnchorTags($, normalizeUrl, shouldExclude, seenUrls, images)
+
+  // Limit to first 10 images to avoid overwhelming UI
+  return images.slice(0, 10)
+}
+
+function extractFromJsonLd(
+  $: ReturnType<typeof load>,
+  normalizeUrl: (url: string) => string,
+  shouldExclude: (url: string) => boolean,
+  seenUrls: Set<string>,
+  images: CandidateImage[],
+) {
   try {
     const scripts = $('script[type="application/ld+json"]')
     for (const script of scripts) {
@@ -83,7 +105,6 @@ export async function extractImagesFromHtml(
           const imageData = recipe.image
           let imageUrls: string[] = []
 
-          // Handle different JSON-LD image formats
           if (typeof imageData === 'string') {
             imageUrls = [imageData]
           } else if (Array.isArray(imageData)) {
@@ -100,7 +121,7 @@ export async function extractImagesFromHtml(
               images.push({
                 url: normalized,
                 isFromJsonLd: true,
-                isDefault: index === 0, // First JSON-LD image is default
+                isDefault: index === 0,
               })
               seenUrls.add(normalized)
             }
@@ -111,10 +132,17 @@ export async function extractImagesFromHtml(
       }
     }
   } catch {
-    // Cheerio parsing failed, continue
+    // Cheerio parsing failed
   }
+}
 
-  // 2. Extract from Open Graph meta tags
+function extractFromOpenGraph(
+  $: ReturnType<typeof load>,
+  normalizeUrl: (url: string) => string,
+  shouldExclude: (url: string) => boolean,
+  seenUrls: Set<string>,
+  images: CandidateImage[],
+) {
   const ogImage = $('meta[property="og:image"]').attr('content')
   if (ogImage) {
     const normalized = normalizeUrl(ogImage)
@@ -122,40 +150,63 @@ export async function extractImagesFromHtml(
       images.push({
         url: normalized,
         isOpenGraph: true,
-        isDefault: images.length === 0, // Default if no JSON-LD found
+        isDefault: images.length === 0,
       })
       seenUrls.add(normalized)
     }
   }
+}
 
-  // 3. Extract from <img> tags in content
+function extractFromImgTags(
+  $: ReturnType<typeof load>,
+  normalizeUrl: (url: string) => string,
+  shouldExclude: (url: string) => boolean,
+  seenUrls: Set<string>,
+  images: CandidateImage[],
+) {
   $('img').each((_, elem) => {
     const $img = $(elem)
-    // Try src, then data-src (lazy loading)
     const src = $img.attr('src') || $img.attr('data-src') || $img.attr('data-lazy-src')
-
     if (!src) return
 
     const normalized = normalizeUrl(src)
     if (seenUrls.has(normalized) || shouldExclude(normalized)) return
 
-    // Try to filter by image dimensions in attributes
     const width = parseInt($img.attr('width') || '0', 10)
     const height = parseInt($img.attr('height') || '0', 10)
 
-    // Skip if dimensions are explicitly set and too small
-    if ((width > 0 && width < 200) || (height > 0 && height < 200)) {
-      return
-    }
+    if ((width > 0 && width < 200) || (height > 0 && height < 200)) return
 
     images.push({
       url: normalized,
       alt: $img.attr('alt'),
-      isDefault: images.length === 0, // First image is default if no JSON-LD/OG
+      isDefault: images.length === 0,
     })
     seenUrls.add(normalized)
   })
+}
 
-  // Limit to first 10 images to avoid overwhelming UI
-  return images.slice(0, 10)
+function extractFromAnchorTags(
+  $: ReturnType<typeof load>,
+  normalizeUrl: (url: string) => string,
+  shouldExclude: (url: string) => boolean,
+  seenUrls: Set<string>,
+  images: CandidateImage[],
+) {
+  $('a').each((_, elem) => {
+    const href = $(elem).attr('href')
+    if (!href) return
+
+    const normalized = normalizeUrl(href)
+    if (seenUrls.has(normalized) || shouldExclude(normalized)) return
+
+    if (/\.(jpg|jpeg|png|webp|avif)(\?.*)?$/i.test(normalized)) {
+      images.push({
+        url: normalized,
+        alt: $(elem).text().trim() || 'Image link',
+        isDefault: images.length === 0,
+      })
+      seenUrls.add(normalized)
+    }
+  })
 }

@@ -158,7 +158,10 @@ export const addRecipeToDay = async (recipeId: string, day: DayOfWeek): Promise<
         const json = JSON.parse(text)
         console.error('Failed to add recipe to week:', json.error || `Server Error: ${res.status}`)
       } catch {
-        console.error('Failed to add recipe to week:', `Server Error (${res.status}): ${text.substring(0, 100)}`)
+        console.error(
+          'Failed to add recipe to week:',
+          `Server Error (${res.status}): ${text.substring(0, 100)}`,
+        )
       }
       return false
     }

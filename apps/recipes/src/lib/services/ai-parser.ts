@@ -288,16 +288,109 @@ export type ProcessedInput = {
 /**
  * Resolves input with hybrid URL strategy
  */
+async function extractRedditContent(url: string): Promise<ProcessedInput> {
+  try {
+    // 1. Resolve URL (handle redirects like /s/ shortlinks)
+    const headRes = await fetch(url, {
+      method: 'HEAD',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      },
+    })
+    const finalUrl = headRes.url
+
+    // 2. Construct JSON URL
+    const cleanUrl = finalUrl.split('?')[0]
+    let jsonUrl = cleanUrl
+    if (jsonUrl.endsWith('/')) jsonUrl = jsonUrl.slice(0, -1)
+    if (!jsonUrl.endsWith('.json')) jsonUrl += '.json'
+
+    // 3. Fetch JSON
+    const res = await fetch(jsonUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      },
+    })
+
+    if (!res.ok) throw new Error(`Failed to fetch Reddit JSON (${res.status})`)
+
+    const json = await res.json()
+    const textParts: string[] = []
+    let combinedHtmlForImages = ''
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const processItem = (item: any) => {
+      const data = item?.data
+      if (!data) return
+      if (data.title) textParts.push(`Title: ${data.title}`)
+      if (data.selftext) textParts.push(`Post Content: ${data.selftext}`)
+      if (data.body) textParts.push(`Comment Content: ${data.body}`)
+
+      if (data.selftext_html) {
+        const $ = load(data.selftext_html)
+        combinedHtmlForImages += $.text() // Decode entities
+      }
+      if (data.body_html) {
+        const $ = load(data.body_html)
+        combinedHtmlForImages += $.text() // Decode entities
+      }
+
+      // Capture main post image/link or thumbnail
+      if (data.url && /\.(jpg|jpeg|png|webp|avif)(\?.*)?$/i.test(data.url)) {
+        combinedHtmlForImages += `<img src="${data.url}" />`
+      }
+      if (data.thumbnail && data.thumbnail.startsWith('http')) {
+        combinedHtmlForImages += `<img src="${data.thumbnail}" />`
+      }
+    }
+
+    if (Array.isArray(json)) {
+      // [0] Post, [1] Comments
+      if (json[0]?.data?.children?.[0]) {
+        processItem(json[0].data.children[0])
+      }
+      // Target specific comment or top 3 comments
+      const comments = json[1]?.data?.children || []
+      for (const comment of comments.slice(0, 3)) {
+        processItem(comment)
+      }
+    }
+
+    // 4. Extract Images
+    const { extractImagesFromHtml } = await import('./extract-images')
+    const candidateImages = await extractImagesFromHtml(combinedHtmlForImages, finalUrl)
+
+    return {
+      prompt: TEXT_SYSTEM_PROMPT,
+      contentPart: {
+        text: `Source URL: ${finalUrl}\n\nReddit Content:\n${textParts.join('\n\n')}`,
+      },
+      sourceInfo: { url: finalUrl, candidateImages },
+    }
+  } catch (error) {
+    console.warn('Reddit extraction failed, falling back to standard fetch:', error)
+    // Fallback handled by caller if needed, or just throw
+    throw error
+  }
+}
+
 export async function resolveInput(params: ParseParams): Promise<ProcessedInput> {
   const { url, image, text } = params
 
   if (url) {
+    if (url.includes('reddit.com') || url.includes('redd.it')) {
+      return await extractRedditContent(url)
+    }
+
     if (!url.startsWith('http')) throw new Error('Invalid URL')
     const siteRes = await fetch(url, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Cache-Control': 'no-cache',
