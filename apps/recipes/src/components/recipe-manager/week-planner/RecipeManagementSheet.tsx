@@ -70,7 +70,7 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onClose}>
+      <Sheet open={isOpen && !showDayPicker && !showWeekPicker} onOpenChange={onClose}>
         <SheetContent side="bottom" className="max-h-[85vh]">
           <SheetHeader>
             <SheetTitle className="text-left">Manage Recipe</SheetTitle>
@@ -179,6 +179,7 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
           recipeTitle={recipeTitle}
           mode="edit"
           startWithWeekPicker
+          currentDay={currentPlannedDays[0]?.day}
         />
       )}
     </>

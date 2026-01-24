@@ -132,18 +132,14 @@ const getBaseUrl = () => {
 
 /**
  * Add a recipe to a specific day in the CURRENTLY ACTIVE week
+ * @returns true if successful, false otherwise
  */
-export const addRecipeToDay = async (recipeId: string, day: DayOfWeek) => {
+export const addRecipeToDay = async (recipeId: string, day: DayOfWeek): Promise<boolean> => {
   const activeStart = weekState.get().activeWeekStart
   const dateOfStart = parseISO(activeStart)
   const dayIndex = DAYS_OF_WEEK.indexOf(day)
   const targetDate = addDays(dateOfStart, dayIndex)
   const dateStr = format(targetDate, 'yyyy-MM-dd')
-
-  // Optimistic Update
-  // We can't easily optimistic update computed derived stores directly without complex logic,
-  // but we can assume the API call will be fast.
-  // For better UX, we could manually inject into $recipeFamilyData
 
   // Call API
   try {
@@ -160,27 +156,28 @@ export const addRecipeToDay = async (recipeId: string, day: DayOfWeek) => {
       const text = await res.text()
       try {
         const json = JSON.parse(text)
-        throw new Error(json.error || `Server Error: ${res.status}`)
+        console.error('Failed to add recipe to week:', json.error || `Server Error: ${res.status}`)
       } catch {
-        // If not JSON, it's likely a 500 crash or HTML error page
-        throw new Error(`Server Error (${res.status}): ${text.substring(0, 100)}`)
+        console.error('Failed to add recipe to week:', `Server Error (${res.status}): ${text.substring(0, 100)}`)
       }
+      return false
     }
 
     const data = await res.json()
 
     if (data.success && data.data) {
       familyActions.setRecipeFamilyData(recipeId, data.data)
+      return true
     } else {
       console.warn('[WeekStore] API success but no data?', data)
+      return false
     }
   } catch (error) {
     console.error('Failed to add recipe to week (details):', error)
     if (error instanceof Error) {
       console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
     }
-    // Optional: Toast notification here if UI supports it
+    return false
   }
 }
 

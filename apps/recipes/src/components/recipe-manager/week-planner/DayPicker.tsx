@@ -23,6 +23,7 @@ interface DayPickerProps {
   recipeTitle: string
   mode?: 'add' | 'edit' // New: edit mode for moving recipes
   startWithWeekPicker?: boolean // New: start with week picker view open
+  currentDay?: (typeof DAYS_OF_WEEK)[number] // The day the recipe is currently planned for (used for week moves)
 }
 
 export const DayPicker: React.FC<DayPickerProps> = ({
@@ -32,6 +33,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
   recipeTitle,
   mode = 'add',
   startWithWeekPicker = false,
+  currentDay,
 }) => {
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
@@ -68,13 +70,25 @@ export const DayPicker: React.FC<DayPickerProps> = ({
     if (isPlanned) {
       await removeRecipeFromDay(recipeId)
     } else {
-      await addRecipeToDay(recipeId, day)
-      onClose()
+      const success = await addRecipeToDay(recipeId, day)
+      if (success) {
+        onClose()
+      }
     }
   }
 
-  const handleSelectWeek = (weekStart: string) => {
+  const handleSelectWeek = async (weekStart: string) => {
     switchWeekContext(weekStart)
+
+    // If in "move to week" mode with a current day, automatically move the recipe
+    if (startWithWeekPicker && mode === 'edit' && currentDay) {
+      const success = await addRecipeToDay(recipeId, currentDay)
+      if (success) {
+        onClose()
+        return
+      }
+    }
+
     setShowWeekPicker(false)
   }
 
