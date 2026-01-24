@@ -84,7 +84,9 @@ export function useRecipeHandlers({
   // NEW: Version Control Hook
   const { createSnapshot } = useRecipeVersions()
 
-  const handleSaveRecipeInternal = async (recipe: Partial<Recipe> & { id?: string }) => {
+  const handleSaveRecipeInternal = async (
+    recipe: Partial<Recipe> & { id?: string },
+  ): Promise<{ success: boolean; savedId?: string }> => {
     // Snapshot original state before saving if it's an update
     if (recipe.id) {
       const original = recipes.find((r) => r.id === recipe.id)
@@ -96,17 +98,27 @@ export function useRecipeHandlers({
     }
 
     const { success, savedRecipe: saved } = await saveRecipe(recipe)
+
     if (success) {
-      setView('library')
-      setRecipe(null)
+      // ONLY navigate to library if it's an EXISTING recipe (edit mode)
+      // New recipes will stay on the "Success" screen handled by RecipeEditor
+      if (recipe.id) {
+        setView('library')
+        setRecipe(null)
+      }
+      // If it's a new recipe, we do NOT change view here.
+      // The RecipeEditor will handle the "Success" state.
 
       // Background Enhancement Trigger (Fire-and-forget)
       // Only for NEW recipes created via AI parsing
       if (!recipe.id && saved?.id && recipe.creationMethod === 'ai-parse' && recipe.title) {
         triggerBackgroundEnhancement(saved.id, recipe.title)
       }
+
+      return { success: true, savedId: saved?.id }
     } else {
       await alert('Failed to save recipe')
+      return { success: false }
     }
   }
 

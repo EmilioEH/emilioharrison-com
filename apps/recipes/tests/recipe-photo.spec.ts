@@ -51,7 +51,7 @@ test.describe('Recipe Photo Features', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Open Recipe
-    await page.getByText(title).first().click()
+    await page.getByRole('button', { name: 'View Recipe' }).click()
 
     // 3. Start Cooking
     await page.getByRole('button', { name: 'Start Prepping' }).click()

@@ -554,7 +554,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         />
       )}
 
-      {/* Edit/Add Recipe Modal */}
       <ResponsiveModal
         isOpen={view === 'edit'}
         onClose={() => setView('library')}
@@ -566,6 +565,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           onCancel={() => setView('library')}
           onDelete={handleDeleteRecipe}
           isEmbedded={true}
+          onView={(id) => setRoute({ activeRecipeId: id, view: 'detail' })}
         />
       </ResponsiveModal>
 

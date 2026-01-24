@@ -40,15 +40,17 @@ test.describe('Week View Synchronization', () => {
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 4. Add to "This Week"
-    // Wait for the save operation to complete provided by the mock
-    await expect(page.getByText('Recipe saved')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+    // Go to Detail
+    await page.getByRole('button', { name: 'View Recipe' }).click()
 
-    // Find the recipe card
-    const recipeCard = page.locator('article', { hasText: 'Toast' }).first()
-    await expect(recipeCard).toBeVisible()
-    // Open 3-dot menu or context menu - wait, current UI might be different.
-    // Let's use the explicit "Add to Week" if available, or just toggle "This Week" in detail.
-    await recipeCard.click()
+    // Toggle "Add to Week" (assuming it's available in detail or menu)
+    // The test originally clicked a card in library.
+    // Now we are in detail view.
+    // Need to find "Add to Week" button.
+    // WeekWorkspace.tsx has logic. Detail view (RecipeDetail.tsx) usually has it in "More" or direct.
+    // Let's assume there is a way or check the original test logic.
+    // "await page.getByRole('button', { name: 'Add to Week' }).click()" was used after opening.
     await page.getByRole('button', { name: 'Add to Week' }).click()
 
     // Select Monday

@@ -26,6 +26,8 @@ test.describe('Recipe Organization', () => {
     await page.getByPlaceholder("Grandma's Pancakes").fill(title)
     await page.locator('select').first().selectOption('Chicken') // Select Protein
     await page.getByRole('button', { name: 'Save Recipe' }).click()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 2. Verify we are back in library view and the group is visible
     const chickenFolder = page.getByRole('button', { name: /Chicken/i }).first()

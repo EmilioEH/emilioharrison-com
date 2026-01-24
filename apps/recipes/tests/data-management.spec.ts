@@ -105,15 +105,25 @@ test.describe('Data Management Features', () => {
     await page.goto('/protected/recipes')
 
     // 1. Create 2 recipes
+    // 1. Create 2 recipes
     const timestamp = Date.now()
-    for (let i = 1; i <= 2; i++) {
-      await page.getByRole('button', { name: 'Add Recipe' }).click()
-      await page.getByLabel('Title').fill(`Bulk Delete ${i} ${timestamp}`)
-      await page.getByLabel('Protein').selectOption('Chicken')
-      await page.getByRole('button', { name: 'Save Recipe' }).click()
-      // Wait for library to show (Save causes nav back to library)
-      await page.getByRole('button', { name: 'Add Recipe' }).waitFor()
-    }
+
+    // First recipe
+    await page.getByRole('button', { name: 'Add Recipe' }).click()
+    await page.getByLabel('Title').fill(`Bulk Delete 1 ${timestamp}`)
+    await page.getByLabel('Protein').selectOption('Chicken')
+    await page.getByRole('button', { name: 'Save Recipe' }).click()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // Second recipe via "Add Another"
+    await page.getByRole('button', { name: 'Add Another Recipe' }).click()
+    await page.getByLabel('Title').fill(`Bulk Delete 2 ${timestamp}`)
+    await page.getByLabel('Protein').selectOption('Chicken')
+    await page.getByRole('button', { name: 'Save Recipe' }).click()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // Back to library
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 2. Enter Selection Mode (via Burger Menu)
     await page.getByRole('button', { name: 'Open Menu' }).click()
@@ -148,6 +158,8 @@ test.describe('Data Management Features', () => {
     await page.getByRole('button', { name: 'Add Recipe' }).click()
     await page.getByLabel('Title').fill(`Export Test`)
     await page.getByRole('button', { name: 'Save Recipe' }).click()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Open Settings via Burger Menu
     await page.getByRole('button', { name: 'Open Menu' }).click()

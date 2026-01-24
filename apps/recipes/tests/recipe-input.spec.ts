@@ -74,6 +74,12 @@ test.describe('Recipe Add Flow (Unified)', () => {
     // Save the recipe
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
+    // Expect "Recipe Saved" success screen
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // Click "Back to Library" to return
+    await page.getByRole('button', { name: 'Back to Library' }).click()
+
     // Expect to be back on the library
     await expect(page.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()
   })
@@ -114,7 +120,46 @@ test.describe('Recipe Add Flow (Unified)', () => {
     // Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Expect to be back on the library
+    // Expect "Recipe Saved" success screen
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // Click "View Recipe"
+    const viewBtn = page.getByRole('button', { name: 'View Recipe' })
+    await expect(viewBtn).toBeVisible()
+    await viewBtn.click()
+
+    // Expect to define detail view
+    await expect(page.getByRole('heading', { name: 'Manual Test Recipe' })).toBeVisible()
+  })
+
+  test('should allow adding multiple recipes in a row', async ({ page }) => {
+    await page.goto('/protected/recipes')
+    await page.getByLabel('Add Recipe').click()
+
+    // 1. Add First Recipe
+    await page.getByLabel('Title').fill('First Recipe')
+    await page.getByRole('button', { name: 'Save Recipe' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // 2. Click "Add Another"
+    await page.getByRole('button', { name: 'Add Another Recipe' }).click()
+
+    // Verify form is reset (check title is empty)
+    await expect(page.getByLabel('Title')).toHaveValue('')
+    await expect(page.getByRole('heading', { name: 'New Recipe' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).not.toBeVisible()
+
+    // 3. Add Second Recipe
+    await page.getByLabel('Title').fill('Second Recipe')
+    await page.getByRole('button', { name: 'Save Recipe' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // 4. Return to library
+    await page.getByRole('button', { name: 'Back to Library' }).click()
+
+    // Verify Library View
     await expect(page.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()
   })
 

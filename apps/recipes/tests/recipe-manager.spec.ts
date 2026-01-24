@@ -76,6 +76,12 @@ test.describe('Recipe Manager', () => {
 
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
+    // Expect Success UI
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+
+    // Click "Back to Library"
+    await page.getByRole('button', { name: 'Back to Library' }).click()
+
     // 3. Verify it appears in the list inside the Beef accordion
     // The accordion header contains a heading with 'Beef' and a count.
     // Find the specific recipe card by its unique title heading

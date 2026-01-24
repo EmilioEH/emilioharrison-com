@@ -105,17 +105,11 @@ test.describe('Dual-Process Recipe Import', () => {
     // Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // Verify redirected to Library (or Detail?) -> logic says Library
-    // Wait for route change
-    // await expect(page).toHaveURL(/\/library/); // logic sets view='library'
-
     // Verify Enhance was triggered
-    // Since it's fire-and-forget, we might not see the request finish before test ends unless we wait.
     await expect.poll(() => enhanceCalled).toBe(true)
 
     // Go to Detail View
-    // Since we are in Library (virtual view), we click the recipe and WAIT for navigation
-    await page.getByText('Strict Recipe').click()
+    await page.getByRole('button', { name: 'View Recipe' }).click()
     await expect(page).toHaveURL(/recipe=new-recipe-id/)
 
     // Wait for React to update with enhanced data from the mock

@@ -8,12 +8,13 @@ import { confirm } from '../../lib/dialogStore'
 
 interface RecipeEditorProps {
   recipe: Partial<Recipe>
-  onSave: (recipe: Partial<Recipe>) => void
+  onSave: (recipe: Partial<Recipe>) => Promise<{ success: boolean; savedId?: string } | void> | void
   onCancel: () => void
   onDelete: (id: string) => void
   isEmbedded?: boolean
   candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>
   onImageSelect?: (url: string) => void
+  onView?: (id: string) => void
 }
 
 export const RecipeEditor: React.FC<RecipeEditorProps> = ({
@@ -24,6 +25,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   isEmbedded = false,
   candidateImages = [],
   onImageSelect,
+  onView,
 }) => {
   const [formData, setFormData] = useState<Partial<Recipe>>(recipe)
   const [internalCandidateImages, setInternalCandidateImages] = useState<
@@ -103,7 +105,10 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
       })
   }
 
-  const handleInternalSave = () => {
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [savedId, setSavedId] = useState<string | null>(null)
+
+  const handleInternalSave = async () => {
     const updatedFormData = {
       ...formData,
       ingredients: parseIngredients(ingText),
@@ -112,12 +117,75 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         .map((s) => s.trim())
         .filter(Boolean),
     }
-    onSave(updatedFormData)
+
+    const result = await onSave(updatedFormData)
+
+    // Check if onSave returned a promise with success status (updated signature)
+    if (result && typeof result === 'object' && 'success' in result) {
+      if (result.success && !recipe.id) {
+        // Only show success screen for NEW recipes
+        setSavedId(result.savedId || null)
+        setShowSuccess(true)
+      }
+    }
+  }
+
+  const handleResetForNew = () => {
+    setFormData({})
+    setIngText('')
+    setStepText('')
+    setInternalCandidateImages([])
+    setShowSuccess(false)
+    setSavedId(null)
   }
 
   const containerClasses = isEmbedded
     ? 'space-y-4'
     : 'bg-card animate-in slide-in-from-bottom-4 space-y-4 rounded-xl border border-border p-4 shadow-sm'
+
+  if (showSuccess) {
+    return (
+      <Stack
+        spacing="lg"
+        className={containerClasses + ' items-center justify-center py-12 text-center'}
+      >
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+          <Save className="h-8 w-8" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="font-display text-2xl font-bold">Recipe Saved!</h2>
+          <p className="text-muted-foreground">
+            "{formData.title || 'Untitled Recipe'}" has been added to your library.
+          </p>
+        </div>
+
+        <Stack spacing="md" className="w-full max-w-xs">
+          {savedId && onView && (
+            <button
+              onClick={() => onView(savedId)}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3 font-bold text-primary-foreground shadow-lg transition-transform hover:scale-[1.02]"
+            >
+              View Recipe
+            </button>
+          )}
+
+          <button
+            onClick={handleResetForNew}
+            className="bg-card-variant w-full rounded-full border border-border py-3 font-medium hover:bg-muted"
+          >
+            Add Another Recipe
+          </button>
+
+          <button
+            onClick={onCancel}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Back to Library
+          </button>
+        </Stack>
+      </Stack>
+    )
+  }
 
   return (
     <Stack spacing="md" className={containerClasses}>

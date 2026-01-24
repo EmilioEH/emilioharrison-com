@@ -95,10 +95,8 @@ test.describe('Image Selection and Gallery Integration', () => {
     // 4. Save Recipe
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // 5. Verify in library and open it
-    const recipeCard = page.getByRole('heading', { name: 'Mock URL Recipe' })
-    await expect(recipeCard).toBeVisible()
-    await recipeCard.click()
+    // 5.  open it
+    await page.getByRole('button', { name: 'View Recipe' }).click()
 
     // 6. Verify image is in the gallery/header
     // Wait for the detail view to settle

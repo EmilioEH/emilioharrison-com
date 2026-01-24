@@ -62,6 +62,8 @@ test.describe('Shared Recipe Storage', () => {
 
     await pageAlice.getByLabel('Title').fill(uniqueRecipe)
     await pageAlice.getByRole('button', { name: 'Save Recipe' }).click()
+    await expect(pageAlice.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+    await pageAlice.getByRole('button', { name: 'Back to Library' }).click()
 
     // Wait for save confirmation (Review & Edit or New Recipe header should be gone)
     await expect(pageAlice.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()

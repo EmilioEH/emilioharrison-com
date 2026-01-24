@@ -48,6 +48,8 @@ test.describe('Fuzzy Search', () => {
     await page.getByPlaceholder('Recipe Title').fill('Highlighter Test Recipe')
     // Click Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Wait for load
     await expect(page.getByText('Highlighter Test Recipe')).toBeVisible()

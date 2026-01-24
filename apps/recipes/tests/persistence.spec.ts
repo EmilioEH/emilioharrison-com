@@ -51,6 +51,9 @@ test.describe('Recipe Persistence', () => {
     await page.getByText('Save Recipe').click()
 
     // Wait for save sync and navigation back to library
+    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
+
     // The "New Recipe" header should be gone
     await expect(page.getByRole('heading', { name: 'New Recipe' })).not.toBeVisible()
 
