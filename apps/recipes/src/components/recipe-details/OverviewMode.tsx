@@ -509,22 +509,28 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </Inline>
 
             {/* Grouped Ingredients Display */}
-            <Stack spacing="lg">
-              {displayGroups.map((group, gIdx) => (
-                <div key={gIdx}>
-                  {group.header && (
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                      • {group.header}
-                    </h3>
-                  )}
-                  <Stack spacing="xs">
-                    {group.items.map((ing, idx) => (
-                      <IngredientRow key={idx} ingredient={ing} />
-                    ))}
-                  </Stack>
-                </div>
-              ))}
-            </Stack>
+            {displayGroups.length === 1 && displayGroups[0].items.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No ingredients listed yet.
+              </div>
+            ) : (
+              <Stack spacing="lg">
+                {displayGroups.map((group, gIdx) => (
+                  <div key={gIdx}>
+                    {group.header && (
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        • {group.header}
+                      </h3>
+                    )}
+                    <Stack spacing="xs">
+                      {group.items.map((ing, idx) => (
+                        <IngredientRow key={idx} ingredient={ing} />
+                      ))}
+                    </Stack>
+                  </div>
+                ))}
+              </Stack>
+            )}
           </div>
 
           {/* Steps */}
@@ -547,53 +553,59 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </Inline>
 
             {/* Grouped Steps Display */}
-            <Stack spacing="lg">
-              {displayStepGroups.map((group, gIdx) => (
-                <div key={gIdx}>
-                  {group.header && (
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
-                        {gIdx + 1}
+            {displayStepGroups.length === 1 && displayStepGroups[0].items.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No instructions listed yet.
+              </div>
+            ) : (
+              <Stack spacing="lg">
+                {displayStepGroups.map((group, gIdx) => (
+                  <div key={gIdx}>
+                    {group.header && (
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
+                          {gIdx + 1}
+                        </div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                          {group.header}
+                        </h3>
                       </div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                        {group.header}
-                      </h3>
-                    </div>
-                  )}
-                  <Stack spacing="lg">
-                    {group.items.map((step, idx) => {
-                      const globalIdx = group.startIndex + idx
-                      const ingredientsArray = Array.isArray(recipe.ingredients)
-                        ? recipe.ingredients
-                        : []
-                      const targetIndices = recipe.stepIngredients?.[globalIdx]?.indices
-                      const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []
-                      return (
-                        <InstructionCard
-                          key={globalIdx}
-                          stepNumber={idx + 1}
-                          title={group.header ? undefined : step.title}
-                          text={step.text}
-                          highlightedText={step.highlightedText}
-                          tip={step.tip}
-                          ingredients={ingredientsArray}
-                          targetIngredientIndices={targetIndicesArray}
-                          isChecked={checkedSteps[globalIdx]}
-                          hideBadge={!!group.header} // Hide the badge entirely if in a group
-                          hideNumber={!!group.header} // Also hide the number in the title
-                          onToggle={() =>
-                            setCheckedSteps((p) => ({
-                              ...p,
-                              [globalIdx]: !p[globalIdx],
-                            }))
-                          }
-                        />
-                      )
-                    })}
-                  </Stack>
-                </div>
-              ))}
-            </Stack>
+                    )}
+                    <Stack spacing="lg">
+                      {group.items.map((step, idx) => {
+                        const globalIdx = group.startIndex + idx
+                        const ingredientsArray = Array.isArray(recipe.ingredients)
+                          ? recipe.ingredients
+                          : []
+                        const targetIndices = recipe.stepIngredients?.[globalIdx]?.indices
+                        const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []
+                        return (
+                          <InstructionCard
+                            key={globalIdx}
+                            stepNumber={idx + 1}
+                            title={group.header ? undefined : step.title}
+                            text={step.text}
+                            highlightedText={step.highlightedText}
+                            tip={step.tip}
+                            ingredients={ingredientsArray}
+                            targetIngredientIndices={targetIndicesArray}
+                            isChecked={checkedSteps[globalIdx]}
+                            hideBadge={!!group.header} // Hide the badge entirely if in a group
+                            hideNumber={!!group.header} // Also hide the number in the title
+                            onToggle={() =>
+                              setCheckedSteps((p) => ({
+                                ...p,
+                                [globalIdx]: !p[globalIdx],
+                              }))
+                            }
+                          />
+                        )
+                      })}
+                    </Stack>
+                  </div>
+                ))}
+              </Stack>
+            )}
           </div>
 
           {recipe.notes && (

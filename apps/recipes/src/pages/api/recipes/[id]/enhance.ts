@@ -56,6 +56,45 @@ ${recipe.steps.join('\n')}
       images: recipe.images || newData.images,
     }
 
+    // SAFETY MERGE: Do not overwrite existing ingredients/steps with empty arrays
+    if (newData.ingredients && newData.ingredients.length > 0) {
+      updatedRecipe.ingredients = newData.ingredients
+    } else {
+      console.warn('[Enhance] AI returned empty ingredients. Keeping original.')
+      updatedRecipe.ingredients = recipe.ingredients
+    }
+
+    if (newData.steps && newData.steps.length > 0) {
+      updatedRecipe.steps = newData.steps
+    } else {
+      console.warn('[Enhance] AI returned empty steps. Keeping original.')
+      updatedRecipe.steps = recipe.steps
+    }
+
+    if (newData.structuredSteps && newData.structuredSteps.length > 0) {
+      updatedRecipe.structuredSteps = newData.structuredSteps
+    } else {
+      // If we have structured steps, keep them. If not, we might be okay with empty (it's optional-ish)
+      // But better safe than sorry if we already had them.
+      if (recipe.structuredSteps && recipe.structuredSteps.length > 0) {
+        console.warn('[Enhance] AI returned empty structuredSteps. Keeping original.')
+        updatedRecipe.structuredSteps = recipe.structuredSteps
+      }
+    }
+
+    // Same for groups
+    if (newData.ingredientGroups && newData.ingredientGroups.length > 0) {
+      updatedRecipe.ingredientGroups = newData.ingredientGroups
+    } else if (recipe.ingredientGroups && recipe.ingredientGroups.length > 0) {
+      updatedRecipe.ingredientGroups = recipe.ingredientGroups
+    }
+
+    if (newData.stepGroups && newData.stepGroups.length > 0) {
+      updatedRecipe.stepGroups = newData.stepGroups
+    } else if (recipe.stepGroups && recipe.stepGroups.length > 0) {
+      updatedRecipe.stepGroups = recipe.stepGroups
+    }
+
     await db.updateDocument('recipes', recipeId, updatedRecipe)
 
     return new Response(
