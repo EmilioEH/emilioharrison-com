@@ -65,7 +65,7 @@ test.describe('Week View Synchronization', () => {
     await expect(page.getByRole('button', { name: 'View Week Plan' })).toContainText('1 meals')
 
     // 6. Delete the recipe
-    // Open detail again
+    const recipeCard = page.getByRole('heading', { name: 'Toast' })
     await recipeCard.click()
     // Click delete (might be in menu)
     // Assuming delete button is visible or in a menu in detail view
