@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Button } from '../../ui/button'
 import { Stack } from '../../ui/layout'
 import { DayPicker } from './DayPicker'
-import type { DayOfWeek } from '../../../lib/weekStore'
+import { switchWeekContext, type DayOfWeek } from '../../../lib/weekStore'
 
 interface PlannedDayInfo {
   day: DayOfWeek
@@ -45,6 +45,11 @@ export const RecipeManagementSheet: React.FC<RecipeManagementSheetProps> = ({
   }
 
   const handleMoveToDay = () => {
+    // Switch to the week where the recipe is currently planned
+    // so DayPicker shows the correct week context
+    if (currentPlannedDays.length > 0) {
+      switchWeekContext(currentPlannedDays[0].weekStart)
+    }
     setShowDayPicker(true)
   }
 

@@ -46,11 +46,23 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     parsed: Recipe,
     candidateImgs?: Array<{ url: string; alt?: string; isDefault?: boolean }>,
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...parsed,
-      updatedAt: new Date().toISOString(),
-    }))
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        ...parsed,
+        updatedAt: new Date().toISOString(),
+      }
+
+      // Ensure sourceImage is in the images array
+      if (parsed.sourceImage) {
+        const currentImages = updated.images || []
+        if (!currentImages.includes(parsed.sourceImage)) {
+          updated.images = [parsed.sourceImage, ...currentImages]
+        }
+      }
+
+      return updated
+    })
 
     if (candidateImgs) {
       setInternalCandidateImages(candidateImgs)
@@ -180,7 +192,16 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
             images={internalCandidateImages}
             selectedImage={formData.sourceImage || null}
             onSelect={(url: string) => {
-              setFormData({ ...formData, sourceImage: url })
+              setFormData((prev) => {
+                const currentImages = prev.images || []
+                // Move selected image to the front of images array
+                const filteredImages = currentImages.filter((img) => img !== url)
+                return {
+                  ...prev,
+                  sourceImage: url,
+                  images: [url, ...filteredImages],
+                }
+              })
               if (onImageSelect) onImageSelect(url)
             }}
           />
