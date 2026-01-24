@@ -33,6 +33,10 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   >([])
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
+  // Blocked site fallback state
+  const [isBlocked, setIsBlocked] = useState(false)
+  const [pastedText, setPastedText] = useState('')
+
   const handleProcess = async () => {
     if (abortController) abortController.abort()
 
@@ -97,6 +101,14 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       return
     }
 
+    // Detect blocked site error
+    if (err instanceof Error && err.message.startsWith('BLOCKED:')) {
+      setIsBlocked(true)
+      setErrorMsg('')
+      setStatus('idle')
+      return
+    }
+
     setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
     setStatus('error')
   }
@@ -112,6 +124,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   interface ParsePayload {
     url?: string
     image?: string
+    text?: string
     mode?: 'parse' | 'infer'
     style?: 'strict' | 'enhanced'
     dishName?: string
@@ -122,6 +135,11 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   }
 
   function buildPayload(): ParsePayload {
+    // Handle pasted text fallback (when site is blocked)
+    if (isBlocked && pastedText) {
+      return { text: pastedText, style: 'strict' }
+    }
+
     if (mode === 'url') {
       if (!url) throw new Error('Please enter a URL')
       return { url, style: 'strict' }
@@ -158,6 +176,11 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       : `${import.meta.env.BASE_URL}/`
   }
 
+  const clearBlockedState = () => {
+    setIsBlocked(false)
+    setPastedText('')
+  }
+
   return {
     url,
     setUrl,
@@ -186,5 +209,10 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     setCandidateImages,
     selectedImage,
     setSelectedImage,
+    // Blocked site fallback
+    isBlocked,
+    pastedText,
+    setPastedText,
+    clearBlockedState,
   }
 }

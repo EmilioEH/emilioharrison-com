@@ -296,10 +296,27 @@ export async function resolveInput(params: ParseParams): Promise<ProcessedInput>
     const siteRes = await fetch(url, {
       headers: {
         'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       },
     })
-    if (!siteRes.ok) throw new Error('Failed to fetch URL')
+    if (!siteRes.ok) {
+      // Detect blocked/bot-protected responses
+      const blockedStatuses = [403, 429, 503]
+      if (blockedStatuses.includes(siteRes.status)) {
+        throw new Error(`BLOCKED:${siteRes.status}`)
+      }
+      throw new Error(`Failed to fetch URL (${siteRes.status}: ${siteRes.statusText})`)
+    }
     const html = await siteRes.text()
     const jsonLdData = extractJsonLd(html)
 
