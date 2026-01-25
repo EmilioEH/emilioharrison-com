@@ -355,11 +355,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   {recipe.difficulty}
                 </Badge>
               )}
-              {recipe.difficulty && (
-                <Badge variant="tag" size="sm" className="uppercase">
-                  {recipe.difficulty}
-                </Badge>
-              )}
             </Inline>
 
             <Inline justify="between" align="start">
