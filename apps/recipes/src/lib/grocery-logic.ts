@@ -17,12 +17,15 @@ export const mergeShoppableIngredients = (
   for (const ing of ingredients) {
     const key = `${ing.name.toLowerCase().trim()}|${ing.purchaseUnit.toLowerCase().trim()}`
 
+    // Safe access to sources
+    const sources = Array.isArray(ing.sources) ? ing.sources : []
+
     if (mergedMap.has(key)) {
       const existing = mergedMap.get(key)!
       existing.purchaseAmount += ing.purchaseAmount
 
       // Merge sources, avoiding duplicates by recipeId
-      for (const src of ing.sources) {
+      for (const src of sources) {
         if (!existing.sources.some((s) => s.recipeId === src.recipeId)) {
           existing.sources.push({ ...src })
         }
@@ -31,7 +34,7 @@ export const mergeShoppableIngredients = (
       // Clone the ingredient and its sources array
       mergedMap.set(key, {
         ...ing,
-        sources: ing.sources.map((s) => ({ ...s })),
+        sources: sources.map((s) => ({ ...s })),
       })
     }
   }

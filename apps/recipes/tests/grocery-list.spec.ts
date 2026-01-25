@@ -372,4 +372,66 @@ test.describe('Grocery List', () => {
     // Should see "0.5 gallon" (detail)
     await expect(page.getByText('0.5 gallon').first()).toBeVisible()
   })
+  test('displays error message when AI generation fails', async ({ page }) => {
+    // 1. Mock Recpies & Plan
+    // Mock Recipes
+    await page.route('**/api/recipes*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          recipes: [
+            { id: '1', title: 'Steak', ingredients: [], thisWeek: true, structuredIngredients: [] },
+          ],
+        }),
+      })
+    })
+
+    // Mock Week Plan (Recipe 1 planned)
+    await page.route('**/api/week/planned', async (route) => {
+      // Create valid planned data
+      const dateStr = new Date().toISOString().split('T')[0]
+      await route.fulfill({
+        status: 200,
+        body: JSON.stringify({
+          success: true,
+          planned: [
+            {
+              id: '1',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'user',
+              },
+            },
+          ],
+        }),
+      })
+    })
+
+    // 2. Mock API Failure (500)
+    await page.route('**/api/grocery/generate', async (route) => {
+      // Simulate server error
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'AI Service Down' }),
+      })
+    })
+
+    // 3. Reload and Go to Grocery
+    await page.reload()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
+
+    // 4. Expect Error Banner
+    // "Failed to generate Smart List" or check for alert icon
+    await expect(page.getByText('Failed to generate Smart List')).toBeVisible()
+    await expect(
+      page.getByText('The AI service encountered an error. Please try again.'),
+    ).toBeVisible()
+
+    // 5. Expect Retry Button
+    const retryBtn = page.getByRole('button', { name: 'Retry' })
+    await expect(retryBtn).toBeVisible()
+  })
 })

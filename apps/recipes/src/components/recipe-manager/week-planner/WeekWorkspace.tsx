@@ -127,39 +127,79 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     listId ? `grocery_lists/${listId}` : null,
   )
 
+  // Check for stuck processing
+  const [isStuck, setIsStuck] = useState(false)
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (aiGroceryList?.status === 'processing' && aiGroceryList.updatedAt) {
+      interval = setInterval(() => {
+        const lastUpdate = new Date(aiGroceryList.updatedAt).getTime()
+        const now = new Date().getTime()
+        // Consider stuck if processing for > 45 seconds (it usually takes 5-10s)
+        if (now - lastUpdate > 45000) {
+          setIsStuck(true)
+        }
+      }, 1000)
+    } else {
+      setIsStuck(false)
+    }
+    return () => clearInterval(interval)
+  }, [aiGroceryList])
+
   const isProcessing = useMemo(() => {
+    // If we determined it's stuck, don't show processing state
+    if (isStuck) return false
+
     // Check local store or remote status
     if (operations.some((op) => op.id === `grocery-${listId}` && op.status === 'processing'))
       return true
     if (aiGroceryList?.status === 'processing') return true
     return false
-  }, [operations, listId, aiGroceryList])
+  }, [operations, listId, aiGroceryList, isStuck])
+
+  const hasLocalError = useMemo(() => {
+    return operations.some((op) => op.id === `grocery-${listId}` && op.status === 'error')
+  }, [operations, listId])
+
+  const hasError = aiGroceryList?.status === 'error' || isStuck || hasLocalError
 
   const hasSmartList =
     aiGroceryList?.status === 'complete' &&
     Array.isArray(aiGroceryList.ingredients) &&
-    aiGroceryList.ingredients.length > 0
+    aiGroceryList.ingredients.length > 0 &&
+    !isStuck &&
+    !hasLocalError
 
   // Auto-trigger when opening grocery tab if no list exists and not processing
   useEffect(() => {
     if (activeTab === 'grocery' && user && groceryRecipes.length > 0 && !aiLoading) {
-      const needsGeneration = !aiGroceryList && !isProcessing
+      const needsGeneration = !aiGroceryList && !isProcessing && !isStuck
 
       if (needsGeneration) {
         console.log('Auto-triggering grocery generation')
         triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
       }
     }
-  }, [activeTab, user, groceryRecipes, aiGroceryList, isProcessing, activeWeekStart, aiLoading])
+  }, [
+    activeTab,
+    user,
+    groceryRecipes,
+    aiGroceryList,
+    isProcessing,
+    activeWeekStart,
+    aiLoading,
+    isStuck,
+  ])
 
   // Auto-switch to AI view when ready (only once)
   useEffect(() => {
-    if (hasSmartList && viewMode === 'programmatic' && !isProcessing) {
+    if (hasSmartList && viewMode === 'programmatic' && !isProcessing && !isStuck) {
       // Optional: Only auto-switch if user hasn't toggled back manually?
       // For now, simpler is better: if it completes while looking at it, show toast or just switch?
       // Let's NOT auto-switch to avoid jarring jump, but show the toggle as enabled/highlighted.
     }
-  }, [hasSmartList, isProcessing])
+  }, [hasSmartList, isProcessing, isStuck])
 
   // Combined ingredients based on view mode
   const displayedIngredients = useMemo(() => {
@@ -462,6 +502,39 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             )}
 
             {/* Grocery List */}
+            {hasError && (
+              <div className="m-4 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+                <Inline spacing="sm">
+                  <AlertTriangle className="h-5 w-5" />
+                  <Stack spacing="xs" className="flex-1">
+                    <p className="font-bold">
+                      {isStuck ? 'Generation Timed Out' : 'Failed to generate Smart List'}
+                    </p>
+                    <p className="text-xs opacity-90">
+                      {isStuck
+                        ? 'The request took too long. Please try again.'
+                        : 'The AI service encountered an error. Please try again.'}
+                    </p>
+                  </Stack>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      // Force retry
+                      console.log('Retrying grocery generation...')
+                      if (user) {
+                        triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
+                      }
+                    }}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Retry
+                  </Button>
+                </Inline>
+              </div>
+            )}
+
             <GroceryList
               ingredients={displayedIngredients}
               isLoading={false}

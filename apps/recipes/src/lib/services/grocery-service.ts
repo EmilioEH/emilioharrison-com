@@ -67,7 +67,6 @@ export async function triggerGroceryGeneration(
       status: 'error',
       error: err instanceof Error ? err.message : 'Unknown error',
     })
-    // Keep error visible for a bit
-    setTimeout(() => removeAiOperation(opId), 5000)
+    // Error persists until user retries
   }
 }
