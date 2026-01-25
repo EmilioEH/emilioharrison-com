@@ -96,7 +96,24 @@ While Astro handles the initial load, the app functions as a **Single Page Appli
 - **Pattern:** All file uploads must go through the `POST /api/uploads` endpoint.
 - **Why:** The app uses a custom `FirebaseRestService` on the server to handle authentication with a Service Account, avoiding complex CORS/Auth setup on the client.
 
-### 4. Firestore Array Constraints
+### 5. Real-time Synchronization (Firestore Hooks)
+
+The app utilizes a custom `useFirestoreDocument` hook (see `src/lib/firestoreHooks.ts`) to manage real-time data synchronization with Firebase.
+
+- **Pattern**: Automatically handles subscription/unsubscription to Firestore documents based on component lifecycle.
+- **Reliability**: Includes built-in handling for loading states and error boundaries, ensuring the UI remains in sync with the "Source of Truth" in Firestore without manual refresh.
+- **Auth Integration**: Deeply integrated with `authStore.ts` to ensure subscriptions only active when a valid user is present.
+
+### 6. Intelligent Image Extraction
+
+Recipe imports from URLs are enhanced by a dedicated extraction service (`src/lib/services/extract-images.ts`).
+
+- **Multi-Strategy**: Uses a tiered approach to find the best recipe image:
+  1. **JSON-LD**: High-fidelity structured data parsing.
+  2. **Open Graph**: Social media metadata.
+  3. **Twitter Cards**: Platform-specific metadata.
+  4. **Microdata**: HTML-embedded semantic markers.
+- **Filtering**: Intelligently ignores low-quality assets like icons, avatars, and UI elements to present the user with relevant candidate images.
 
 Firestore does **NOT** support nested arrays (e.g., `number[][]`).
 
