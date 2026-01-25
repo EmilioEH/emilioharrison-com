@@ -79,8 +79,8 @@ test.describe('Grocery List', () => {
     })
 
     // 3. Initial State: 2 recipes in "This Week"
-    // Click "Grocery List" (Shop Tab)
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    // Click "Grocery" button in header (New Flow)
+    await page.getByRole('button', { name: 'Grocery List' }).click() // Logic updated to use Week View
 
     // 4. Verify API was called
     await expect(async () => {
@@ -90,18 +90,18 @@ test.describe('Grocery List', () => {
     // Verify list is shown (new format shows amount + unit + name)
     await expect(page.getByText('beef', { exact: false })).toBeVisible()
 
-    // 5. Close grocery list by clicking Library tab
-    await page.getByRole('tab', { name: /Library/i }).click()
+    // 5. Close grocery list (it's in Week View now)
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 6. Click "Grocery List" AGAIN
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
 
     // 7. Verify API was NOT called again (cached)
     expect(apiCallCount).toBe(1)
 
     // 8. Change Selection
     // Go back
-    await page.getByRole('tab', { name: /Library/i }).click()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Add a recipe to "This Week" (Recipe 3)
     // Find recipe 3 card.
@@ -154,7 +154,7 @@ test.describe('Grocery List', () => {
     await page.reload()
 
     // 9. Click "Grocery List"
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
 
     // 10. Verify API WAS called (count -> 2)
     // Actually, reload resets the client-side cache (useState), so it WOULD call 2.
@@ -188,27 +188,27 @@ test.describe('Grocery List', () => {
     await page.reload()
 
     // Call 1
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
     // Wait for list to appear to ensure API call started/finished
     await expect(page.getByText('beef', { exact: false })).toBeVisible()
     // expect(apiCallCount).toBe(1) // Flaky: sometimes reports 0 even if list loads
-    await page.getByRole('tab', { name: /Library/i }).click()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Call 2 (Cached)
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
     expect(apiCallCount).toBe(1)
-    await page.getByRole('tab', { name: /Library/i }).click()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Call 3 (Reload -> Persistent Cache)
     await page.reload()
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
     // Wait for list to appear (confirms data loaded)
     await expect(page.getByText('beef', { exact: false }).first()).toBeVisible()
     // API call count should still be 1 (loaded from localStorage)
     expect(apiCallCount).toBe(1)
 
     // Call 4 (Selection Change -> New Call)
-    await page.getByRole('tab', { name: /Library/i }).click()
+    await page.getByRole('button', { name: 'Back to Library' }).click()
     // Toggle Recipe 3 (id: 3) to be included in "This Week"?
     // Wait, mock setup: Recipe 1 & 2 are This Week. Recipe 3 is NOT.
     // Let's add Recipe 3.
@@ -261,21 +261,21 @@ test.describe('Grocery List', () => {
             {
               id: '1',
               title: 'Recipe A',
-              ingredients: [],
+              ingredients: [{ name: 'milk', amount: '0.5 gallon' }],
               thisWeek: true,
               structuredIngredients: [],
             },
             {
               id: '2',
               title: 'Recipe B',
-              ingredients: [],
+              ingredients: [{ name: 'milk', amount: '0.5 gallon' }],
               thisWeek: true,
               structuredIngredients: [],
             },
             {
               id: '3',
               title: 'Recipe C',
-              ingredients: [],
+              ingredients: [{ name: 'eggs', amount: '12' }],
               thisWeek: true,
               structuredIngredients: [],
             },
@@ -284,9 +284,59 @@ test.describe('Grocery List', () => {
       })
     })
 
+    // Mock Week Plan Data (Required for WeekWorkspace grocery calculation)
+    await page.route('**/api/week/planned', async (route) => {
+      const today = new Date()
+      // Calculate Monday of "This Week" (Monday Start)
+      const day = today.getDay()
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1)
+      const monday = new Date(today.setDate(diff))
+      const year = monday.getFullYear()
+      const month = String(monday.getMonth() + 1).padStart(2, '0')
+      const dom = String(monday.getDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${dom}`
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          planned: [
+            {
+              id: '1',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'user',
+                addedByName: 'User',
+              },
+            },
+            {
+              id: '2',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'user',
+                addedByName: 'User',
+              },
+            },
+            {
+              id: '3',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'user',
+                addedByName: 'User',
+              },
+            },
+          ],
+        }),
+      })
+    })
+
     // Navigate and Click Grocery List
     await page.reload() // Refresh to clear state
-    await page.getByRole('tab', { name: /Shop/i }).click()
+    await page.getByRole('button', { name: 'Grocery List' }).click()
 
     // 1. Verify "Eggs" (Single Source)
     // Should see "Eggs"

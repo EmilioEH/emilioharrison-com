@@ -34,7 +34,9 @@ interface WeekWorkspaceProps {
   onOpenCalendar: () => void
   onSelectRecipe: (recipe: Recipe) => void
   scrollContainer: HTMLElement | Window | null
+
   onShare?: (recipe: Recipe) => void
+  initialTab?: WorkspaceTab
 }
 
 export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
@@ -45,8 +47,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   onSelectRecipe,
   scrollContainer,
   onShare,
+  initialTab = 'plan',
 }) => {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('plan')
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
 

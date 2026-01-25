@@ -12,11 +12,10 @@ import type { Recipe, FamilyRecipeData } from '../../lib/types'
 // --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
-import { useGroceryListGenerator } from './hooks/useGroceryListGenerator'
 
 import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
-import { useRouter, type ViewMode } from './hooks/useRouter'
+import { useRouter } from './hooks/useRouter'
 import { useRecipeHandlers } from './hooks/useRecipeHandlers'
 import { useRecipeContext } from './hooks/useRecipeContext'
 import { useFamilySync } from './hooks/useFamilySync'
@@ -204,24 +203,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setSearch(query)
   }
 
-  // Compute planned IDs for grocery list
-  const plannedRecipeIds = React.useMemo(() => {
-    return new Set(activeWeekPlanned.map((p) => p.recipeId))
-  }, [activeWeekPlanned])
+  // --- NEW: Week Tab State Management ---
+  // If user clicks "Grocery", we set this to 'grocery' and view to 'week'.
+  const [weekInitialTab, setWeekInitialTab] = useState<'plan' | 'grocery'>('plan')
 
-  const { groceryItems, isGenerating, handleGenerateList, targetRecipes } = useGroceryListGenerator(
-    recipes,
-    (v: string) => setView(v as ViewMode),
-    plannedRecipeIds,
-  )
-
-  // Auto-generate grocery list when entering Shop tab
-  useEffect(() => {
-    if (view === 'grocery' && recipes.length > 0) {
-      handleGenerateList()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view])
+  // DELETED: useGroceryListGenerator hook call
+  // DELETED: Auto-generate effect
 
   // Scroll Container Ref State & Broadcaster
   const { scrollContainer } = useScrollBroadcaster()
@@ -436,9 +423,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         setView={setView}
         setRoute={setRoute}
         family={family}
-        groceryItems={groceryItems}
-        isGenerating={isGenerating}
-        targetRecipes={targetRecipes}
       >
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
@@ -459,8 +443,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                   setRecipe(null)
                   setView('edit')
                 }}
-                onViewWeek={() => setView(view === 'week' ? 'library' : 'week')}
-                onViewGrocery={() => setView('grocery')}
+                onViewWeek={() => {
+                  setWeekInitialTab('plan')
+                  setView(view === 'week' ? 'library' : 'week')
+                }}
+                onViewGrocery={() => {
+                  setWeekInitialTab('grocery')
+                  setView('week')
+                }}
                 isWeekView={view === 'week'}
               />
             </motion.div>
@@ -536,6 +526,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                   onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                   scrollContainer={scrollContainer}
                   onShare={(recipe) => setShareRecipe(recipe)}
+                  initialTab={weekInitialTab}
                 />
               )}
             </AnimatePresence>
@@ -546,7 +537,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         {(view === 'library' || view === 'grocery') && !isSelectionMode && (
           <WeekContextBar
             onOpenCalendar={() => setIsCalendarOpen(true)}
-            onViewWeek={() => setView('week')}
+            onViewWeek={() => {
+              setWeekInitialTab('plan')
+              setView('week')
+            }}
           />
         )}
       </RecipeManagerView>

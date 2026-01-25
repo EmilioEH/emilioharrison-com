@@ -8,9 +8,9 @@ import { BulkRecipeImporter } from './importer/BulkRecipeImporter'
 import FeedbackDashboard from './views/FeedbackDashboard'
 import { AdminDashboard } from '../admin/AdminDashboard'
 import { InviteView } from './views/InviteView'
-import { GroceryList } from './grocery/GroceryList'
+
 import { FamilyManagementView } from './views/FamilyManagementView'
-import type { Recipe, Family, ShoppableIngredient } from '../../lib/types'
+import type { Recipe, Family } from '../../lib/types'
 import type { ViewMode } from './hooks/useRouter'
 
 interface RecipeManagerViewProps {
@@ -22,9 +22,7 @@ interface RecipeManagerViewProps {
   user: string | null | undefined
   isAdmin: boolean
   family: Family | null
-  groceryItems: ShoppableIngredient[]
-  isGenerating: boolean
-  targetRecipes: Recipe[]
+
   handleOnboardingComplete: () => void
   handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent') => void
   handleDeleteRecipe: (id: string) => void
@@ -51,9 +49,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   user,
   isAdmin,
   family,
-  groceryItems,
-  isGenerating,
-  targetRecipes,
+
   handleOnboardingComplete,
   handleUpdateRecipe,
   handleDeleteRecipe,
@@ -66,7 +62,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   handleBulkImportSave,
   refreshRecipes,
   setView,
-  setRoute,
+
   children,
 }) => {
   if (showOnboarding) {
@@ -185,22 +181,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
 
   if (view === 'invite') {
     return <InviteView onClose={() => setView('library')} />
-  }
-
-  if (view === 'grocery') {
-    return (
-      <div className="flex h-full flex-col">
-        <GroceryList
-          ingredients={groceryItems}
-          isLoading={isGenerating}
-          onClose={() => setView('library')}
-          recipes={targetRecipes}
-          onOpenRecipe={(recipe: Recipe) => {
-            setRoute({ activeRecipeId: recipe.id, view: 'detail' })
-          }}
-        />
-      </div>
-    )
   }
 
   if (view === 'family-settings') {
