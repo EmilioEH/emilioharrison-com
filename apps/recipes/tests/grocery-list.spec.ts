@@ -78,7 +78,53 @@ test.describe('Grocery List', () => {
       })
     })
 
-    // 3. Initial State: 2 recipes in "This Week"
+    // 3. Mock Week Plan to match the recipes
+    await page.route('**/api/week/planned', async (route) => {
+      const today = new Date()
+      const day = today.getDay()
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1)
+      const monday = new Date(today.setDate(diff))
+      const dateStr = monday.toISOString().split('T')[0] // Use current week Monday
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          planned: [
+            {
+              id: '1',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'TestUser',
+                addedByName: 'Test User',
+              },
+            },
+            {
+              id: '2',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'TestUser',
+                addedByName: 'Test User',
+              },
+            },
+            {
+              id: '3',
+              weekPlan: {
+                isPlanned: true,
+                assignedDate: dateStr,
+                addedBy: 'TestUser',
+                addedByName: 'Test User',
+              },
+            },
+          ],
+        }),
+      })
+    })
+
+    // 4. Initial State: 2 recipes in "This Week" (now backed by plan)
     // Click "Grocery" button in header (New Flow)
     await page.getByRole('button', { name: 'Grocery List' }).click() // Logic updated to use Week View
 
@@ -336,10 +382,14 @@ test.describe('Grocery List', () => {
 
     // Navigate and Click Grocery List
     await page.reload() // Refresh to clear state
+    await page.waitForResponse((resp) => resp.url().includes('api/week/planned'))
     await page.getByRole('button', { name: 'Grocery List' }).click()
 
     // 1. Verify "Eggs" (Single Source)
     // Should see "Eggs"
+    // 1. Verify "Eggs" (Single Source)
+    // Should see "Eggs"
+    await expect(page.getByText('eggs', { exact: false })).toBeVisible()
     const eggsRow = page.locator('div').filter({ hasText: 'eggs' }).last()
     await expect(eggsRow).toBeVisible()
 

@@ -1,0 +1,130 @@
+14:52:02 [@astrojs/cloudflare] Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
+14:52:02 [@astrojs/cloudflare] If you see the error "Invalid binding `SESSION`" in your build output, you need to add the binding to your wrangler config file.
+14:52:02 [WARN] [adapter] Cloudflare does not support sharp at runtime. However, you can configure `imageService: "compile"` to optimize images with sharp on prerendered pages during build time.
+14:52:02 [content] Syncing content
+14:52:02 [content] Synced content
+14:52:02 [types] Generated 127ms
+14:52:02 [check] Getting diagnostics for Astro files in /Users/emilioharrison/Code/emilioharrison-com/apps/recipes...
+[96meslint.config.js[0m:[93m16[0m:[93m25[0m - [93mwarning[0m[90m ts(6387): [0mThe signature '(...configs: InfiniteDepthConfigWithExtends[]): ConfigArray' of 'tseslint.config' is deprecated.
+
+[7m16[0m export default tseslint.config(
+[7m  [0m [93m                        ~~~~~~[0m
+
+[96meslint.config.strict.js[0m:[93m17[0m:[93m25[0m - [93mwarning[0m[90m ts(6387): [0mThe signature '(...configs: InfiniteDepthConfigWithExtends[]): ConfigArray' of 'tseslint.config' is deprecated.
+
+[7m17[0m export default tseslint.config(
+[7m  [0m [93m                        ~~~~~~[0m
+
+[96msrc/components/recipe-manager/RecipeLibrary.tsx[0m:[93m235[0m:[93m33[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'toggleGroup'.
+
+[7m235[0m                 onToggle={() => toggleGroup(key)}
+[7m   [0m [91m                                ~~~~~~~~~~~[0m
+[96msrc/components/recipe-manager/RecipeLibrary.tsx[0m:[93m82[0m:[93m22[0m - [91merror[0m[90m ts(6133): [0m'setOpenGroups' is declared but its value is never read.
+
+[7m82[0m   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+[7m  [0m [91m                     ~~~~~~~~~~~~~[0m
+
+[96msrc/components/recipe-manager/dialogs/InvitationModal.tsx[0m:[93m29[0m:[93m9[0m - [93mwarning[0m[90m ts(80007): [0m'await' has no effect on the type of this expression.
+
+[7m29[0m         await onDecline(invite)
+[7m  [0m [93m        ~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/components/recipe-manager/dialogs/InvitationModal.tsx[0m:[93m27[0m:[93m9[0m - [93mwarning[0m[90m ts(80007): [0m'await' has no effect on the type of this expression.
+
+[7m27[0m         await onAccept(invite)
+[7m  [0m [93m        ~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/components/ui/checkbox.tsx[0m:[93m10[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m10[0m   React.ElementRef<typeof CheckboxPrimitive.Root>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+
+[96msrc/components/ui/dialog.tsx[0m:[93m80[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m80[0m   React.ElementRef<typeof DialogPrimitive.Description>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dialog.tsx[0m:[93m68[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m68[0m   React.ElementRef<typeof DialogPrimitive.Title>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dialog.tsx[0m:[93m31[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m31[0m   React.ElementRef<typeof DialogPrimitive.Content>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dialog.tsx[0m:[93m16[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m16[0m   React.ElementRef<typeof DialogPrimitive.Overlay>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m154[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m154[0m   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
+[7m   [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m140[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m140[0m   React.ElementRef<typeof DropdownMenuPrimitive.Label>,
+[7m   [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m118[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m118[0m   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
+[7m   [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m95[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m95[0m   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m77[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m77[0m   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m58[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m58[0m   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m43[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m43[0m   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/dropdown-menu.tsx[0m:[93m22[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m22[0m   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+
+[96msrc/components/ui/separator.tsx[0m:[93m7[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m7[0m   React.ElementRef<typeof SeparatorPrimitive.Root>,
+[7m [0m [93m        ~~~~~~~~~~[0m
+
+[96msrc/components/ui/sheet.tsx[0m:[93m100[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m100[0m   React.ElementRef<typeof SheetPrimitive.Description>,
+[7m   [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/sheet.tsx[0m:[93m88[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m88[0m   React.ElementRef<typeof SheetPrimitive.Title>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/sheet.tsx[0m:[93m58[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m58[0m   React.ElementRef<typeof SheetPrimitive.Content>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/sheet.tsx[0m:[93m19[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m19[0m   React.ElementRef<typeof SheetPrimitive.Overlay>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+
+[96msrc/components/ui/tabs.tsx[0m:[93m39[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m39[0m   React.ElementRef<typeof TabsPrimitive.Content>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/tabs.tsx[0m:[93m24[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m24[0m   React.ElementRef<typeof TabsPrimitive.Trigger>,
+[7m  [0m [93m        ~~~~~~~~~~[0m
+[96msrc/components/ui/tabs.tsx[0m:[93m9[0m:[93m9[0m - [93mwarning[0m[90m ts(6385): [0m'ElementRef' is deprecated.
+
+[7m9[0m   React.ElementRef<typeof TabsPrimitive.List>,
+[7m [0m [93m        ~~~~~~~~~~[0m
+
+Result (312 files): 
+- 2 errors
+- 0 warnings
+- 25 hints
+

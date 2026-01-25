@@ -185,6 +185,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
               <button
                 key={item.day}
                 onClick={() => handleToggleDay(item.day)}
+                aria-label={item.day}
                 className={`flex items-center justify-between rounded-md p-3 transition-all ${
                   item.isSelected
                     ? 'bg-primary/10 font-bold text-primary'

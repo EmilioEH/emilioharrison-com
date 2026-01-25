@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth'
+import { getFirestore, type Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.PUBLIC_FIREBASE_API_KEY,
@@ -13,6 +14,6 @@ const firebaseConfig = {
 const isConfigValid = !!firebaseConfig.apiKey
 
 export const app = isConfigValid ? initializeApp(firebaseConfig) : null
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const auth = app ? getAuth(app) : (null as any)
+export const auth = app ? getAuth(app) : (null as unknown as Auth)
+export const db = app ? getFirestore(app) : (null as unknown as Firestore)
 export const googleProvider = new GoogleAuthProvider()

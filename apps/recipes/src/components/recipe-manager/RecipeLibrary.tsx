@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef, useEffect } from 'react'
+import React, { useState, useLayoutEffect, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { ChefHat } from 'lucide-react'
 import { AccordionGroup } from '@/components/ui/AccordionGroup'
@@ -85,26 +85,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   // Subscribe to all planned recipes to trigger re-renders when plans change
   useStore(allPlannedRecipes)
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const isProgrammaticScroll = useRef(false)
-
-  // Scrollspy & Tabs
-  const [activeGroup, setActiveGroup] = useState<string>(() => {
-    return (scrollCache['library_activeGroup'] as string) || ''
-  })
-  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
-  const navRef = useRef<HTMLDivElement>(null)
-
   // Use custom hook for complex grouping logic
   const { groupedRecipes, getGroupTitle } = useRecipeGrouping(recipes, sort)
-
-  // Initialize active group if none exists
-  useEffect(() => {
-    if (groupedRecipes.sortedKeys.length > 0 && !activeGroup) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveGroup(groupedRecipes.sortedKeys[0])
-    }
-  }, [groupedRecipes.sortedKeys, activeGroup])
 
   // 1. One-time Scroll Restoration
   useLayoutEffect(() => {
@@ -113,19 +95,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
     if (container && cachedScroll > 0) {
       container.scrollTo({ top: cachedScroll, behavior: 'instant' })
-
-      // Restore active pill scroll position
-      const currentGroup = scrollCache['library_activeGroup']
-      if (currentGroup && navRef.current) {
-        const activeBtn = navRef.current.querySelector(
-          `[data-group="${currentGroup}"]`,
-        ) as HTMLElement
-        if (activeBtn) {
-          const left =
-            activeBtn.offsetLeft - navRef.current.clientWidth / 2 + activeBtn.clientWidth / 2
-          navRef.current.scrollTo({ left, behavior: 'instant' })
-        }
-      }
     }
   }, [scrollContainer]) // Only run on mount or when container becomes available
 
@@ -138,83 +107,17 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
       // Cache Scroll
       const currentScroll = container instanceof Window ? window.scrollY : container.scrollTop
       scrollCache['library'] = currentScroll
-
-      // Scrollspy Logic
-      if (isSelectionMode || isProgrammaticScroll.current) return
-
-      const scrollPosition = currentScroll + 180 // Offset
-
-      // Find the group currently in view
-      let currentGroup = activeGroup
-
-      for (const key of groupedRecipes.sortedKeys) {
-        const el = groupRefs.current[key]
-        if (el) {
-          const { offsetTop, offsetHeight } = el
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            currentGroup = key
-            break
-          }
-        }
-      }
-
-      if (currentGroup !== activeGroup) {
-        setActiveGroup(currentGroup)
-        scrollCache['library_activeGroup'] = currentGroup
-
-        // Scroll pill into view
-        const navEl = navRef.current
-        if (navEl) {
-          const activeBtn = navEl.querySelector(`[data-group="${currentGroup}"]`) as HTMLElement
-          if (activeBtn) {
-            const left = activeBtn.offsetLeft - navEl.clientWidth / 2 + activeBtn.clientWidth / 2
-            navEl.scrollTo({ left, behavior: 'smooth' })
-          }
-        }
-      }
     }
 
     container.addEventListener('scroll', handleScroll)
     return () => container.removeEventListener('scroll', handleScroll)
-  }, [activeGroup, groupedRecipes, isSelectionMode, scrollContainer])
-
-  const stickyHeaderRef = useRef<HTMLDivElement>(null)
-  const [headerHeight, setHeaderHeight] = useState(0)
-
-  useLayoutEffect(() => {
-    if (stickyHeaderRef.current) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setHeaderHeight(entry.borderBoxSize[0].blockSize)
-        }
-      })
-      resizeObserver.observe(stickyHeaderRef.current)
-      return () => resizeObserver.disconnect()
-    }
-  }, [])
+  }, [scrollContainer])
 
   const toggleGroup = (groupName: string) => {
     setOpenGroups((prev) => ({
       ...prev,
       [groupName]: !prev[groupName],
     }))
-  }
-
-  const scrollToGroup = (key: string) => {
-    setActiveGroup(key)
-    const el = groupRefs.current[key]
-    const container = scrollContainer || window.recipeScrollContainer
-    if (el && container) {
-      isProgrammaticScroll.current = true
-      // Scroll to element, accounting for dynamic header height
-      const top = Math.max(0, el.offsetTop - headerHeight - 10) // 10px buffer
-      container.scrollTo({ top, behavior: 'smooth' })
-
-      // Release lock after animation + margin
-      setTimeout(() => {
-        isProgrammaticScroll.current = false
-      }, 1000)
-    }
   }
 
   if (recipes.length === 0) {
@@ -232,35 +135,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   }
 
   return (
-    <div ref={containerRef} className="pb-24 animate-in fade-in">
-      {/* Category Nav - Scrollable (Sticky) */}
-      {!isSelectionMode && !hasSearch && (
-        <div
-          ref={stickyHeaderRef}
-          className="sticky top-0 z-40 bg-background/95 pb-2 pt-2 shadow-sm backdrop-blur transition-all"
-        >
-          <div
-            ref={navRef}
-            className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto px-4 pb-1"
-          >
-            {groupedRecipes.sortedKeys.map((key) => (
-              <button
-                key={key}
-                data-group={key}
-                onClick={() => scrollToGroup(key)}
-                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
-                  activeGroup === key
-                    ? 'bg-foreground text-background shadow-md'
-                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                } `}
-              >
-                {getGroupTitle(key)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
+    <div className="pb-24 animate-in fade-in">
       {/* Main Content Area */}
       {/* Main Content Area */}
       {isSelectionMode ? (
@@ -359,12 +234,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           className="flex flex-col"
         >
           {groupedRecipes.sortedKeys.map((key) => (
-            <div
-              key={key}
-              ref={(el) => {
-                groupRefs.current[key] = el
-              }}
-            >
+            <div key={key}>
               <AccordionGroup
                 title={getGroupTitle(key)}
                 count={groupedRecipes.groups[key].length}
@@ -372,7 +242,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
                 stickyHeader
-                stickyTop={headerHeight}
+                stickyTop={0}
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (

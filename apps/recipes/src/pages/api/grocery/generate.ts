@@ -153,25 +153,245 @@ async function processBatch(client: any, recipes: any[]): Promise<GroceryIngredi
   return parsed.ingredients || []
 }
 
+function getIngredientKey(ingredient: GroceryIngredient): string {
+  return `${ingredient.name.toLowerCase().trim()}_${ingredient.purchaseUnit.toLowerCase().trim()}`
+}
+
+function getSafeSourcesArray(ingredient: GroceryIngredient): GroceryIngredient['sources'] {
+  return Array.isArray(ingredient.sources) ? ingredient.sources : []
+}
+
+function mergeSourcesIntoExisting(
+  existing: GroceryIngredient,
+  newSources: GroceryIngredient['sources'],
+): void {
+  for (const src of newSources) {
+    const isDuplicate = !src.recipeId || existing.sources.some((s) => s.recipeId === src.recipeId)
+    if (!isDuplicate) {
+      existing.sources.push(src)
+    }
+  }
+}
+
 function mergeIngredients(batches: GroceryIngredient[][]): GroceryIngredient[] {
   const ingredientMap = new Map<string, GroceryIngredient>()
 
   for (const batch of batches) {
     for (const ingredient of batch) {
-      // Normalize name for grouping
-      const key = `${ingredient.name.toLowerCase().trim()}_${ingredient.purchaseUnit.toLowerCase().trim()}`
+      const key = getIngredientKey(ingredient)
+      const sources = getSafeSourcesArray(ingredient)
+      const existing = ingredientMap.get(key)
 
-      if (ingredientMap.has(key)) {
-        const existing = ingredientMap.get(key)!
+      if (existing) {
         existing.purchaseAmount += ingredient.purchaseAmount
-        existing.sources.push(...ingredient.sources)
+        mergeSourcesIntoExisting(existing, sources)
       } else {
-        ingredientMap.set(key, { ...ingredient })
+        ingredientMap.set(key, {
+          ...ingredient,
+          sources: sources.map((s) => ({ ...s })),
+        })
       }
     }
   }
 
   return Array.from(ingredientMap.values())
+}
+
+function processStructuredIngredient(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ing: any,
+  recipeId: string,
+  recipeTitle: string,
+  sourceMap: Map<string, GroceryIngredient['sources']>,
+): void {
+  const normalizedName = ing.name?.toLowerCase().trim()
+  if (!normalizedName) return
+
+  const source = {
+    recipeId,
+    recipeTitle,
+    originalAmount: `${ing.amount || ''} ${ing.unit || ''} ${ing.name}`.trim(),
+  }
+  addToSourceMap(sourceMap, normalizedName, source)
+}
+
+function processBasicIngredient(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ing: any,
+  recipeId: string,
+  recipeTitle: string,
+  sourceMap: Map<string, GroceryIngredient['sources']>,
+): void {
+  const normalizedName = ing.name?.toLowerCase().trim()
+  if (!normalizedName) return
+
+  const source = {
+    recipeId,
+    recipeTitle,
+    originalAmount: ing.amount ? `${ing.amount} ${ing.name}` : ing.name,
+  }
+  addToSourceMap(sourceMap, normalizedName, source)
+}
+
+/**
+ * Build a map of normalized ingredient names to their recipe sources.
+ * Used as a fallback when AI doesn't return proper source attribution.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildSourceMap(recipes: any[]): Map<string, GroceryIngredient['sources']> {
+  const sourceMap = new Map<string, GroceryIngredient['sources']>()
+
+  for (const recipe of recipes) {
+    const { id: recipeId, title: recipeTitle } = recipe
+
+    const structuredIngredients = recipe.structuredIngredients
+    if (Array.isArray(structuredIngredients)) {
+      structuredIngredients.forEach((ing) =>
+        processStructuredIngredient(ing, recipeId, recipeTitle, sourceMap),
+      )
+    }
+
+    const basicIngredients = recipe.ingredients
+    if (Array.isArray(basicIngredients)) {
+      basicIngredients.forEach((ing) =>
+        processBasicIngredient(ing, recipeId, recipeTitle, sourceMap),
+      )
+    }
+  }
+
+  return sourceMap
+}
+
+function addToSourceMap(
+  map: Map<string, GroceryIngredient['sources']>,
+  name: string,
+  source: GroceryIngredient['sources'][0],
+) {
+  const existing = map.get(name)
+  if (existing) {
+    // Avoid duplicate sources from same recipe
+    if (!existing.some((s) => s.recipeId === source.recipeId)) {
+      existing.push(source)
+    }
+  } else {
+    map.set(name, [source])
+  }
+}
+
+/**
+ * Extract base words from an ingredient name for matching.
+ * Removes common modifiers, units, and prep terms.
+ */
+function extractBaseWords(name: string): Set<string> {
+  const normalized = name.toLowerCase().trim()
+  // Split on spaces, commas, and common separators
+  const words = normalized.split(/[\s,]+/).filter((w) => w.length > 0)
+
+  // Common words to ignore in matching
+  const stopWords = new Set([
+    'fresh',
+    'dried',
+    'minced',
+    'chopped',
+    'diced',
+    'sliced',
+    'whole',
+    'ground',
+    'crushed',
+    'large',
+    'small',
+    'medium',
+    'cloves',
+    'clove',
+    'cups',
+    'cup',
+    'tbsp',
+    'tsp',
+    'oz',
+    'lb',
+    'pound',
+    'tablespoon',
+    'teaspoon',
+    'of',
+    'the',
+    'a',
+    'an',
+    'for',
+    'to',
+  ])
+
+  return new Set(words.filter((w) => !stopWords.has(w) && w.length > 2))
+}
+
+/**
+ * Check if two ingredient names match based on shared base words.
+ */
+function ingredientNamesMatch(name1: string, name2: string): boolean {
+  const words1 = extractBaseWords(name1)
+  const words2 = extractBaseWords(name2)
+
+  // Check for any shared words
+  for (const word of words1) {
+    if (words2.has(word)) return true
+    // Also check if word is a substring of any word in the other set
+    for (const otherWord of words2) {
+      if (word.includes(otherWord) || otherWord.includes(word)) return true
+    }
+  }
+  return false
+}
+
+/**
+ * Try to find matching sources for an ingredient name using word-based fuzzy matching.
+ * Handles cases where AI normalizes names differently (e.g., "garlic cloves" → "garlic").
+ */
+function findMatchingSources(
+  ingredientName: string,
+  sourceMap: Map<string, GroceryIngredient['sources']>,
+): GroceryIngredient['sources'] {
+  const normalizedName = ingredientName.toLowerCase().trim()
+
+  // Exact match first
+  if (sourceMap.has(normalizedName)) {
+    return sourceMap.get(normalizedName)!
+  }
+
+  // Word-based fuzzy matching
+  const matches: GroceryIngredient['sources'] = []
+  for (const [key, sources] of sourceMap.entries()) {
+    if (ingredientNamesMatch(normalizedName, key)) {
+      for (const src of sources) {
+        if (!matches.some((m) => m.recipeId === src.recipeId)) {
+          matches.push(src)
+        }
+      }
+    }
+  }
+
+  return matches
+}
+
+/**
+ * Deterministically assign sources to ingredients based on recipe data.
+ * Ignores AI-provided sources entirely - we track sources ourselves from the original recipes.
+ */
+function assignSourcesDeterministically(
+  ingredients: GroceryIngredient[],
+  sourceMap: Map<string, GroceryIngredient['sources']>,
+): GroceryIngredient[] {
+  return ingredients.map((ingredient) => {
+    // Always use recipe-derived sources, ignore whatever AI returned
+    const sources = findMatchingSources(ingredient.name, sourceMap)
+
+    if (sources.length === 0) {
+      console.warn(`[Source Assignment] No matching recipes found for "${ingredient.name}"`)
+    }
+
+    return {
+      ...ingredient,
+      sources,
+    }
+  })
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -237,9 +457,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     console.log(`[Background] Processing grocery list ${listId} in ${batches.length} batches`)
 
+    // Build source map from original recipes
+    const sourceMap = buildSourceMap(recipes)
+    console.log(`[SourceMap] Built map with ${sourceMap.size} ingredient keys from ${recipes.length} recipes`)
+    // Log a few entries
+    const mapEntries = Array.from(sourceMap.entries()).slice(0, 5)
+    for (const [key, sources] of mapEntries) {
+      console.log(`  - "${key}": ${sources.length} sources`)
+    }
+
     // Process all batches
     const results = await Promise.all(batches.map((batch) => processBatch(client, batch)))
-    const combinedIngredients = mergeIngredients(results)
+    const mergedIngredients = mergeIngredients(results)
+
+    // Ensure all ingredients have source attribution from recipe data
+    const combinedIngredients = assignSourcesDeterministically(mergedIngredients, sourceMap)
+
+    // Debug: Log what we're saving
+    console.log(`[Grocery] Saving ${combinedIngredients.length} ingredients`)
+    for (const ing of combinedIngredients.slice(0, 3)) {
+      console.log(`  - ${ing.name}: ${ing.sources.length} sources`, ing.sources.map((s) => s.recipeTitle))
+    }
 
     // Update to completion
     await db.updateDocument('grocery_lists', listId, {

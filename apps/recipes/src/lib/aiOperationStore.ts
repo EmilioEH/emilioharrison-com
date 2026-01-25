@@ -9,6 +9,7 @@ export interface AiOperation {
   progress: number
   cancelable: boolean
   error?: string
+  message?: string
 }
 
 interface AiOperationState {

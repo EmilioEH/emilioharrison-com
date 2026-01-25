@@ -5,7 +5,6 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   ShieldAlert,
   ArrowLeft,
 } from 'lucide-react'
@@ -14,6 +13,7 @@ import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
 import { Stack, Cluster } from '@/components/ui/layout'
+import { AiProgressBar } from '@/components/ui/AiProgressBar'
 import { uploadImage } from './api'
 import { processImage } from '../../../lib/image-optimization'
 import type { Recipe } from '../../../lib/types'
@@ -340,28 +340,22 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
 
       {/* Inline progress banner - non-blocking */}
       {(status === 'processing' || internalIsUploading) && (
-        <div className="mt-4 rounded-lg bg-primary/10 p-3 animate-in fade-in slide-in-from-bottom-2">
-          <div className="flex items-center gap-2 text-sm text-primary">
-            <Sparkles className="h-4 w-4 animate-pulse" />
-            <span className="font-medium">
-              {internalIsUploading
+        <div className="mt-4">
+          <AiProgressBar
+            progress={
+              internalIsUploading
+                ? '30%'
+                : progressMessage?.includes('%')
+                  ? progressMessage.match(/\d+/)?.[0] + '%'
+                  : '10%'
+            }
+            message={
+              internalIsUploading
                 ? 'Uploading Photo...'
-                : progressMessage || 'Consulting Chef Gemini...'}
-            </span>
-          </div>
-          {/* Progress bar */}
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/20">
-            <div
-              className="h-full bg-primary transition-all duration-300 ease-out"
-              style={{
-                width: internalIsUploading
-                  ? '30%'
-                  : progressMessage?.includes('%')
-                    ? progressMessage.match(/\d+/)?.[0] + '%'
-                    : '10%',
-              }}
-            />
-          </div>
+                : progressMessage || 'Consulting Chef Gemini...'
+            }
+            isAnimating={true}
+          />
         </div>
       )}
     </div>

@@ -6,6 +6,26 @@ interface ShoppableCategory {
 }
 
 /**
+ * Safely parse sources which may come back as a JSON string from Firestore.
+ */
+function parseSources(sources: unknown): ShoppableIngredient['sources'] {
+  if (Array.isArray(sources)) {
+    return sources
+  }
+  if (typeof sources === 'string' && sources.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(sources)
+      if (Array.isArray(parsed)) {
+        return parsed
+      }
+    } catch {
+      // Invalid JSON, return empty
+    }
+  }
+  return []
+}
+
+/**
  * Merges shoppable ingredients by combining duplicates (same name + same purchaseUnit).
  * Preserves source attribution from all contributing recipes.
  */
@@ -17,8 +37,8 @@ export const mergeShoppableIngredients = (
   for (const ing of ingredients) {
     const key = `${ing.name.toLowerCase().trim()}|${ing.purchaseUnit.toLowerCase().trim()}`
 
-    // Safe access to sources
-    const sources = Array.isArray(ing.sources) ? ing.sources : []
+    // Safe access to sources - handles both arrays and JSON strings from Firestore
+    const sources = parseSources(ing.sources)
 
     if (mergedMap.has(key)) {
       const existing = mergedMap.get(key)!

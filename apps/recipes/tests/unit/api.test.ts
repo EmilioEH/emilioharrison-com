@@ -7,11 +7,31 @@ vi.mock('@google/genai', () => {
   return {
     GoogleGenAI: class {
       models = {
-        generateContentStream: vi.fn(() => {
+        generateContentStream: vi.fn((args) => {
+          const prompt = JSON.stringify(args)
+          const isGrocery = prompt.includes('Grocery') || prompt.includes('shopping list')
+
           return (async function* () {
-            yield {
-              text: () =>
-                JSON.stringify({
+            if (isGrocery) {
+              yield {
+                text: JSON.stringify({
+                  ingredients: [
+                    {
+                      name: 'Test Ingredient',
+                      purchaseAmount: 2,
+                      purchaseUnit: 'unit',
+                      category: 'Produce',
+                      sources: [
+                        { recipeId: 'r0', recipeTitle: 'Recipe 0', originalAmount: '1 item' },
+                        { recipeId: 'r1', recipeTitle: 'Recipe 1', originalAmount: '1 item' },
+                      ],
+                    },
+                  ],
+                }),
+              }
+            } else {
+              yield {
+                text: JSON.stringify({
                   title: 'Mock Recipe',
                   ingredients: [{ name: 'Test Ingredient', amount: '1 cup' }],
                   steps: ['Step 1', 'Step 2'],
@@ -19,22 +39,16 @@ vi.mock('@google/genai', () => {
                   prepTime: 10,
                   cookTime: 20,
                   servings: 4,
-                  // Add required fields
                   structuredIngredients: [],
                   ingredientGroups: [{ header: 'Main', startIndex: 0, endIndex: 1 }],
                   stepGroups: [{ header: 'Cook', startIndex: 0, endIndex: 2 }],
                   structuredSteps: [
-                    {
-                      text: 'Step 1',
-                      highlightedText: 'Step 1',
-                    },
-                    {
-                      text: 'Step 2',
-                      highlightedText: 'Step 2',
-                    },
+                    { text: 'Step 1', highlightedText: 'Step 1' },
+                    { text: 'Step 2', highlightedText: 'Step 2' },
                   ],
                   description: 'A mock recipe.',
                 }),
+              }
             }
           })()
         }),
@@ -128,7 +142,7 @@ describe('API Tests', () => {
       expect(response.status).toBe(200)
     })
 
-    it('should batch process recipes when >5 provided', async () => {
+    it('should process multiple recipes in a single stream', async () => {
       // Create 6 dummy recipes
       const recipes = Array(6)
         .fill(null)
@@ -153,10 +167,8 @@ describe('API Tests', () => {
       const data = await response.json()
 
       // Verification:
-      // 6 recipes split into 2 batches (size 5).
-      // Mock returns 1 'Test Ingredient' per call.
-      // Merge logic aggregates them.
-      // Expected: 1 ingredient with purchaseAmount = 2 (1+1).
+      // Single stream aggregation.
+      // Mock returns purchaseAmount = 2.
       expect(data.ingredients).toHaveLength(1)
       expect(data.ingredients[0].name).toBe('Test Ingredient')
       expect(data.ingredients[0].purchaseAmount).toBe(2)

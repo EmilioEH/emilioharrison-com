@@ -3,20 +3,6 @@ import { formatRecipesForPrompt } from '../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 
-const BATCH_SIZE = 5
-
-interface GroceryIngredient {
-  name: string
-  purchaseAmount: number
-  purchaseUnit: string
-  category: string
-  sources: {
-    recipeId: string
-    recipeTitle: string
-    originalAmount: string
-  }[]
-}
-
 const SYSTEM_PROMPT = `
 You are an expert Grocery Shopping Assistant helping someone prepare a shopping list.
 
@@ -125,55 +111,6 @@ const SCHEMA = {
   required: ['ingredients'],
 }
 
-/** Processes a single batch of recipes via Gemini */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function processBatch(client: any, recipes: any[]): Promise<GroceryIngredient[]> {
-  const inputList = formatRecipesForPrompt(recipes)
-
-  const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
-      },
-    ],
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: SCHEMA,
-    },
-  })
-
-  // Access text property directly (getter)
-  const resultText = response.text
-  if (!resultText) throw new Error('No content generated')
-
-  const parsed = JSON.parse(resultText)
-  return parsed.ingredients || []
-}
-
-/** Merges ingredients from multiple batches */
-function mergeIngredients(batches: GroceryIngredient[][]): GroceryIngredient[] {
-  const ingredientMap = new Map<string, GroceryIngredient>()
-
-  for (const batch of batches) {
-    for (const ingredient of batch) {
-      // Normalize name for grouping
-      const key = `${ingredient.name.toLowerCase().trim()}_${ingredient.purchaseUnit.toLowerCase().trim()}`
-
-      if (ingredientMap.has(key)) {
-        const existing = ingredientMap.get(key)!
-        existing.purchaseAmount += ingredient.purchaseAmount
-        existing.sources.push(...ingredient.sources)
-      } else {
-        ingredientMap.set(key, { ...ingredient })
-      }
-    }
-  }
-
-  return Array.from(ingredientMap.values())
-}
-
 export const POST: APIRoute = async ({ request, locals }) => {
   let client
   try {
@@ -192,23 +129,56 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    // Split recipes into batches
-    const batches = []
-    for (let i = 0; i < recipes.length; i += BATCH_SIZE) {
-      batches.push(recipes.slice(i, i + BATCH_SIZE))
-    }
+    // Single Stream - No Batching (Gemini 2.5 Flash has 1M token context)
+    const inputList = formatRecipesForPrompt(recipes)
 
-    console.log(`Processing grocery list in ${batches.length} batches of size ${BATCH_SIZE}`)
+    const streamResponse = await client.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
+        },
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: SCHEMA,
+      },
+    })
 
-    // Process all batches in parallel
-    const results = await Promise.all(batches.map((batch) => processBatch(client, batch)))
+    // Create a readable stream that pipes the raw text chunks to the client
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of streamResponse) {
+            let text = ''
+            // Handle various chunk formats from the SDK
+            if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
+              text = chunk.candidates[0].content.parts[0].text
+            } else if ('text' in chunk && typeof (chunk as { text: string }).text === 'string') {
+              text = (chunk as { text: string }).text
+            } else if (typeof chunk === 'string') {
+              text = chunk
+            }
 
-    // Merge results
-    const combinedIngredients = mergeIngredients(results)
+            if (text) {
+              controller.enqueue(encoder.encode(text))
+            }
+          }
+          controller.close()
+        } catch (err) {
+          controller.error(err)
+        }
+      },
+    })
 
-    return new Response(JSON.stringify({ ingredients: combinedIngredients }), {
+    return new Response(readable, {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Transfer-Encoding': 'chunked',
+      },
     })
   } catch (error) {
     console.error('Gemini API Error:', error)

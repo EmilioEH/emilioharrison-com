@@ -527,6 +527,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                   scrollContainer={scrollContainer}
                   onShare={(recipe) => setShareRecipe(recipe)}
                   initialTab={weekInitialTab}
+                  user={currentUser}
                 />
               )}
             </AnimatePresence>

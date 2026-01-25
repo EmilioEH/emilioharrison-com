@@ -10,6 +10,10 @@ vi.mock('firebase/auth', () => ({
   GoogleAuthProvider: vi.fn(),
 }))
 
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(() => 'mock-db'),
+}))
+
 describe('firebase-client', () => {
   it('initializes firebase app and auth', async () => {
     // Import the module - this triggers the top-level code

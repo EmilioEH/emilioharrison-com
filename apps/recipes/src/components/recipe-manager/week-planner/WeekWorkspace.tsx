@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { useStore } from '@nanostores/react'
 import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek } from 'date-fns'
 import { motion } from 'framer-motion'
@@ -23,10 +23,13 @@ import { RecipeLibrary } from '../RecipeLibrary'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
-import { aiOperationStore } from '../../../lib/aiOperationStore'
+import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
+import { AiProgressBar } from '../../ui/AiProgressBar'
 import { useAuth } from '../../../lib/authStore'
 import { useFirestoreDocument } from '../../../lib/firestoreHooks'
 import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
+
+import type { User } from 'firebase/auth'
 
 type WorkspaceTab = 'plan' | 'grocery'
 
@@ -40,6 +43,7 @@ interface WeekWorkspaceProps {
 
   onShare?: (recipe: Recipe) => void
   initialTab?: WorkspaceTab
+  user?: User | { uid: string } | string | null
 }
 
 export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
@@ -51,12 +55,15 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   scrollContainer,
   onShare,
   initialTab = 'plan',
+  user: propsUser,
 }) => {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
   const [viewMode, setViewMode] = useState<'programmatic' | 'ai'>('programmatic')
-  const { user } = useAuth()
+  const { user: authUser } = useAuth()
+  const rawUser = propsUser || authUser
+  const user = useMemo(() => (typeof rawUser === 'string' ? { uid: rawUser } : rawUser), [rawUser])
 
   const activeDate = parseISO(activeWeekStart)
   const today = new Date()
@@ -85,10 +92,30 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const [isEstimating, setIsEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
 
-  const handleRefreshCost = async () => {
+  const handleRefreshCost = useCallback(async () => {
     if (groceryItems.length === 0) return
     setIsEstimating(true)
     setEstimateError(null)
+
+    // Generate a cache key based on sorted items to be order-independent
+    const sortedItems = [...groceryItems].sort((a, b) => a.name.localeCompare(b.name))
+    const cacheKey = `cost_est_${user?.uid}_${JSON.stringify(sortedItems.map((i) => ({ n: i.name, a: i.purchaseAmount, u: i.purchaseUnit })))}`
+
+    // Check cache
+    try {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        const data = JSON.parse(cached)
+        if (data.totalCost) {
+          console.log('Using cached cost estimate')
+          setAiCost(data.totalCost)
+          setIsEstimating(false)
+          return
+        }
+      }
+    } catch (e) {
+      console.warn('Cache read failed', e)
+    }
 
     try {
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
@@ -108,6 +135,12 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
       if (data.totalCost) {
         setAiCost(data.totalCost)
+        // Save to cache
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(data))
+        } catch (e) {
+          console.warn('Cache write failed', e)
+        }
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Could not estimate cost'
@@ -116,7 +149,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     } finally {
       setIsEstimating(false)
     }
-  }
+  }, [groceryItems, user])
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
@@ -177,8 +210,13 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       const needsGeneration = !aiGroceryList && !isProcessing && !isStuck
 
       if (needsGeneration) {
-        console.log('Auto-triggering grocery generation')
         triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
+      }
+
+      // Auto-trigger cost estimate (checks cache first)
+      // Only trigger if we don't have a cost, aren't currently working on it, and haven't failed recently
+      if (!aiCost && !isEstimating && !estimateError) {
+        handleRefreshCost()
       }
     }
   }, [
@@ -190,6 +228,10 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     activeWeekStart,
     aiLoading,
     isStuck,
+    handleRefreshCost,
+    aiCost,
+    isEstimating,
+    estimateError,
   ])
 
   // Auto-switch to AI view when ready (only once)
@@ -406,8 +448,53 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                     )}
                   </Stack>
 
-                  {/* Actions: View Toggle + Share + Copy */}
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  {/* Actions: Icons + View Toggle */}
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+                    <Inline spacing="xs">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          handleRefreshCost()
+                          if (user) {
+                            const listId = `${user.uid}_${activeWeekStart}`
+                            removeAiOperation(`grocery-${listId}`)
+                            triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
+                          }
+                        }}
+                        disabled={isEstimating || isProcessing}
+                        className="h-8 w-8 rounded-full"
+                        title="Refresh AI & Costs"
+                        aria-label="Refresh AI & Costs"
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 ${isEstimating || isProcessing ? 'animate-spin' : ''}`}
+                        />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleShareGrocery}
+                        className="h-8 w-8 rounded-full"
+                        title="Share"
+                        aria-label="Share Grocery List"
+                      >
+                        <Share className="h-4 w-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCopyGrocery}
+                        className="h-8 w-8 rounded-full"
+                        title="Copy"
+                        aria-label="Copy Grocery List"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </Inline>
+
                     {/* View Toggle */}
                     <div className="flex items-center rounded-lg border border-border bg-background p-1 shadow-sm">
                       <button
@@ -437,57 +524,22 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         Smart List
                       </button>
                     </div>
-
-                    <Inline spacing="xs">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleShareGrocery}
-                        className="h-8 w-8 rounded-full"
-                        title="Share"
-                        aria-label="Share Grocery List"
-                      >
-                        <Share className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCopyGrocery}
-                        className="h-8 w-8 rounded-full"
-                        title="Copy"
-                        aria-label="Copy Grocery List"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={costEstimate.isComplete && aiCost === null ? 'outline' : 'default'}
-                        size="sm"
-                        onClick={handleRefreshCost}
-                        disabled={isEstimating || groceryItems.length === 0}
-                        className="gap-1.5"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isEstimating ? 'animate-spin' : ''}`} />
-                        <span className="text-xs font-bold">
-                          {isEstimating
-                            ? 'Estimating...'
-                            : aiCost !== null
-                              ? 'Refresh'
-                              : 'Get Estimate'}
-                        </span>
-                      </Button>
-                    </Inline>
                   </div>
                 </Inline>
 
                 {/* Progress Indicator */}
                 {isProcessing && (
-                  <div className="mt-2 w-full overflow-hidden rounded-full bg-muted">
-                    <motion.div
-                      className="h-1 bg-primary"
-                      initial={{ width: '0%' }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 10, ease: 'linear', repeat: Infinity }}
+                  <div className="mt-2 text-primary">
+                    <AiProgressBar
+                      progress={
+                        operations.find((op) => op.id === `grocery-${listId}`)?.progress ||
+                        (aiGroceryList?.status === 'processing' ? 5 : 0)
+                      }
+                      message={
+                        operations.find((op) => op.id === `grocery-${listId}`)?.message ||
+                        (isStuck ? 'Still processing...' : 'Consulting Chef Gemini...')
+                      }
+                      isAnimating={true}
                     />
                   </div>
                 )}
