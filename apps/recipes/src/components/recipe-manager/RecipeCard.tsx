@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ChefHat, Star, MoreVertical } from 'lucide-react'
+import { ChefHat, Star, MoreVertical, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
@@ -231,10 +231,10 @@ export const RecipeCard = memo(
                 >
                   <Badge
                     variant="inactive"
-                    size="md"
-                    className="cursor-pointer uppercase tracking-wider hover:bg-muted"
+                    size="sm"
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full p-0 hover:bg-muted"
                   >
-                    Add to Week
+                    <Plus className="h-3.5 w-3.5" />
                   </Badge>
                 </button>
               )}

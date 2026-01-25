@@ -22,7 +22,7 @@ test.describe('Week Management', () => {
     if (!recipeTitle) throw new Error('Recipe title not found')
 
     // Click "Add to Week" badge
-    await firstRecipeCard.locator('text=Add to Week').click()
+    await firstRecipeCard.getByRole('button', { name: 'Add to Week' }).click()
 
     // Select a day (Monday)
     await page.locator('button:has-text("Mon")').first().click()
@@ -42,8 +42,9 @@ test.describe('Week Management', () => {
     await weekRecipeCard.getByRole('button', { name: 'Manage recipe' }).click()
 
     // Verify management sheet opened
-    await expect(page.locator('text=Manage Recipe')).toBeVisible()
-    await expect(page.locator(`text=${recipeTitle}`)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Manage Recipe', exact: true })).toBeVisible()
+    // Scope search to the sheet/dialog if possible, or just be more specific
+    await expect(page.getByRole('dialog').getByText(recipeTitle)).toBeVisible()
   })
 
   test('should remove recipe from specific day', async ({ page }) => {
@@ -52,7 +53,7 @@ test.describe('Week Management', () => {
     const recipeTitle = await firstRecipeCard.locator('h4').textContent()
     if (!recipeTitle) throw new Error('Recipe title not found')
 
-    await firstRecipeCard.locator('text=Add to Week').click()
+    await firstRecipeCard.getByRole('button', { name: 'Add to Week' }).click()
     await page.locator('button:has-text("Mon")').first().click()
 
     // Open Week View
@@ -66,8 +67,8 @@ test.describe('Week Management', () => {
       .first()
     await weekRecipeCard.getByRole('button', { name: 'Manage recipe' }).click()
 
-    // Click remove button
-    await page.locator('button:has-text("Remove")').first().click()
+    // Click remove button - use strict locator
+    await page.getByRole('button', { name: 'Remove' }).first().click()
 
     // Verify recipe is removed from week view
     await expect(page.locator(`h4:has-text("${recipeTitle}")`)).not.toBeVisible()
@@ -79,7 +80,7 @@ test.describe('Week Management', () => {
     const recipeTitle = await firstRecipeCard.locator('h4').textContent()
     if (!recipeTitle) throw new Error('Recipe title not found')
 
-    await firstRecipeCard.locator('text=Add to Week').click()
+    await firstRecipeCard.getByRole('button', { name: 'Add to Week' }).click()
     await page.locator('button:has-text("Mon")').first().click()
 
     // Open Week View
@@ -94,13 +95,14 @@ test.describe('Week Management', () => {
     await weekRecipeCard.getByRole('button', { name: 'Manage recipe' }).click()
 
     // Verify "Move to Different Day" button exists
-    await expect(page.locator('text=Move to Different Day')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Move to Different Day' })).toBeVisible()
 
     // Click it to open day picker
-    await page.locator('text=Move to Different Day').click()
+    await page.getByRole('button', { name: 'Move to Different Day' }).click()
 
-    // Verify day picker opened with "Move" title
-    await expect(page.locator('text=Move')).toBeVisible()
+    // Verify day picker opened with "Move" title - use strict heading check
+    // The title might be 'Move "Recipe Name"' or just 'Move', check previous error: <h2 ...>Move "E2E Test Recipe"</h2>
+    await expect(page.getByRole('heading', { name: 'Move' })).toBeVisible()
   })
 
   test('should show move to different week option', async ({ page }) => {
@@ -109,7 +111,7 @@ test.describe('Week Management', () => {
     const recipeTitle = await firstRecipeCard.locator('h4').textContent()
     if (!recipeTitle) throw new Error('Recipe title not found')
 
-    await firstRecipeCard.locator('text=Add to Week').click()
+    await firstRecipeCard.getByRole('button', { name: 'Add to Week' }).click()
     await page.locator('button:has-text("Mon")').first().click()
 
     // Open Week View
@@ -141,7 +143,7 @@ test.describe('Week Management', () => {
 
     // Plan a recipe
     const firstRecipeCard = page.locator('[data-testid^="recipe-card"]').first()
-    await firstRecipeCard.locator('text=Add to Week').click()
+    await firstRecipeCard.getByRole('button', { name: 'Add to Week' }).click()
 
     // Wait for the API call to complete
     const responsePromise = page.waitForResponse(
@@ -165,7 +167,7 @@ test.describe('Week Management', () => {
     if (!recipeTitle) throw new Error('Recipe title not found')
 
     // Add to Monday
-    await firstRecipeCard.locator('text=Add to Week').click()
+    await firstRecipeCard.getByRole('button', { name: 'Add to Week' }).click()
     await page.locator('button:has-text("Mon")').first().click()
 
     // Add to Wednesday (reopen the card)

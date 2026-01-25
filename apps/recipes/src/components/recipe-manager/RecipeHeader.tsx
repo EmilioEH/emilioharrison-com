@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Menu, Plus, CalendarDays } from 'lucide-react'
+import { Menu, Plus, CalendarDays, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
 import { useStore } from '@nanostores/react'
@@ -10,6 +10,7 @@ interface RecipeHeaderProps {
   scrollContainer?: HTMLElement | Window | null
   onAddRecipe?: () => void
   onViewWeek?: () => void
+  onViewGrocery?: () => void
   isWeekView?: boolean
 }
 
@@ -18,6 +19,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   scrollContainer,
   onAddRecipe,
   onViewWeek,
+  onViewGrocery,
   isWeekView,
 }) => {
   const [isVisible, setIsVisible] = useState(true)
@@ -101,6 +103,19 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           {/* Hide buttons in week view - they're in the WeekSelectorHeader */}
           {!isWeekView && (
             <div className="flex items-center gap-2">
+              {onViewGrocery && (
+                <Button
+                  variant="ghost"
+                  onClick={onViewGrocery}
+                  className="flex h-11 items-center gap-1.5 rounded-full px-3 text-foreground hover:bg-muted"
+                  title="Grocery List"
+                  aria-label="Grocery List"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="hidden text-sm font-bold sm:inline-block">Grocery</span>
+                </Button>
+              )}
+
               {onViewWeek && (
                 <Button
                   variant="ghost"

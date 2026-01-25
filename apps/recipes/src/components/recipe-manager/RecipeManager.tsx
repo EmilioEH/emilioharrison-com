@@ -454,6 +454,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                   setView('edit')
                 }}
                 onViewWeek={() => setView(view === 'week' ? 'library' : 'week')}
+                onViewGrocery={() => setView('grocery')}
                 isWeekView={view === 'week'}
               />
             </motion.div>
