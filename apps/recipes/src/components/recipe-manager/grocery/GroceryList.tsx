@@ -105,8 +105,10 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   return (
     <div
       className={cn(
-        'flex min-h-0 flex-1 flex-col bg-card',
+        'flex min-h-0 flex-1 flex-col bg-card transition-colors duration-500',
         embedded ? 'w-full' : 'h-full duration-300 animate-in slide-in-from-right-4',
+        // Optional: Add a subtle tint or border for AI mode?
+        // viewMode === 'ai' && 'bg-primary/5'
       )}
     >
       {/* Header - hidden when embedded */}

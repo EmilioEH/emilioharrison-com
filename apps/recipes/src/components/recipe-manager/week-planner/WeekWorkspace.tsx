@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useStore } from '@nanostores/react'
 import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek } from 'date-fns'
 import { motion } from 'framer-motion'
@@ -13,7 +13,6 @@ import {
   Share,
   Copy,
   Sparkles,
-  Zap,
 } from 'lucide-react'
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
@@ -23,7 +22,11 @@ import { Stack, Inline } from '../../ui/layout'
 import { RecipeLibrary } from '../RecipeLibrary'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
-import type { Recipe, ShoppableIngredient } from '../../../lib/types'
+import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
+import { aiOperationStore } from '../../../lib/aiOperationStore'
+import { useAuth } from '../../../lib/authStore'
+import { useFirestoreDocument } from '../../../lib/firestoreHooks'
+import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
 
 type WorkspaceTab = 'plan' | 'grocery'
 
@@ -52,6 +55,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
+  const [viewMode, setViewMode] = useState<'programmatic' | 'ai'>('programmatic')
+  const { user } = useAuth()
 
   const activeDate = parseISO(activeWeekStart)
   const today = new Date()
@@ -113,39 +118,53 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     }
   }
 
-  // AI-based grocery optimization
-  const [smartIngredients, setSmartIngredients] = useState<ShoppableIngredient[] | null>(null)
-  const [isOptimizing, setIsOptimizing] = useState(false)
+  // AI-based grocery background ops
+  const { operations } = useStore(aiOperationStore)
+  const listId = user ? `${user.uid}_${activeWeekStart}` : null
 
-  // Reset smart list when recipes change
-  useMemo(() => {
-    setSmartIngredients(null)
-  }, [groceryRecipes])
+  // Subscribe to Firestore document for this week's list
+  const { data: aiGroceryList } = useFirestoreDocument<GroceryListType>(
+    listId ? `grocery_lists/${listId}` : null,
+  )
 
-  const handleOptimizeList = async () => {
-    if (groceryRecipes.length === 0) return
-    setIsOptimizing(true)
-    try {
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
+  const isProcessing = useMemo(() => {
+    // Check local store or remote status
+    if (operations.some((op) => op.id === `grocery-${listId}` && op.status === 'processing'))
+      return true
+    if (aiGroceryList?.status === 'processing') return true
+    return false
+  }, [operations, listId, aiGroceryList])
 
-      const res = await fetch(`${baseUrl}api/generate-grocery-list`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipes: groceryRecipes }),
-      })
-      const data = await res.json()
+  const hasSmartList = aiGroceryList?.status === 'complete' && aiGroceryList.ingredients.length > 0
 
-      if (data.ingredients) {
-        setSmartIngredients(data.ingredients)
+  // Auto-trigger when opening grocery tab if no list exists and not processing
+  useEffect(() => {
+    if (activeTab === 'grocery' && user && groceryRecipes.length > 0) {
+      const needsGeneration = !aiGroceryList && !isProcessing
+
+      if (needsGeneration) {
+        console.log('Auto-triggering grocery generation')
+        triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
       }
-    } catch (e) {
-      console.error('Failed to optimize list', e)
-    } finally {
-      setIsOptimizing(false)
     }
-  }
+  }, [activeTab, user, groceryRecipes, aiGroceryList, isProcessing, activeWeekStart])
+
+  // Auto-switch to AI view when ready (only once)
+  useEffect(() => {
+    if (hasSmartList && viewMode === 'programmatic' && !isProcessing) {
+      // Optional: Only auto-switch if user hasn't toggled back manually?
+      // For now, simpler is better: if it completes while looking at it, show toast or just switch?
+      // Let's NOT auto-switch to avoid jarring jump, but show the toggle as enabled/highlighted.
+    }
+  }, [hasSmartList, isProcessing])
+
+  // Combined ingredients based on view mode
+  const displayedIngredients = useMemo(() => {
+    if (viewMode === 'ai' && hasSmartList && aiGroceryList) {
+      return aiGroceryList.ingredients
+    }
+    return groceryItems
+  }, [viewMode, hasSmartList, aiGroceryList, groceryItems])
 
   // Share/Copy grocery list
   const buildGroceryText = () => {
@@ -339,67 +358,91 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                     )}
                   </Stack>
 
-                  {/* Actions: Share, Copy, Refresh */}
-                  <Inline spacing="xs">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleShareGrocery}
-                      className="h-8 w-8 rounded-full"
-                      title="Share"
-                      aria-label="Share Grocery List"
-                    >
-                      <Share className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleCopyGrocery}
-                      className="h-8 w-8 rounded-full"
-                      title="Copy"
-                      aria-label="Copy Grocery List"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={smartIngredients ? 'default' : 'secondary'}
-                      size="sm"
-                      onClick={handleOptimizeList}
-                      disabled={isOptimizing || groceryItems.length === 0}
-                      className="gap-1.5"
-                      title="Optimize with AI"
-                    >
-                      {smartIngredients ? (
-                        <Sparkles className="h-4 w-4 text-yellow-300" />
-                      ) : (
-                        <Zap className={`h-4 w-4 ${isOptimizing ? 'animate-pulse' : ''}`} />
-                      )}
-                      <span className="hidden text-xs font-bold sm:inline">
-                        {isOptimizing
-                          ? 'Optimizing...'
-                          : smartIngredients
-                            ? 'Smart List'
-                            : 'Optimize'}
-                      </span>
-                    </Button>
-                    <Button
-                      variant={costEstimate.isComplete && aiCost === null ? 'outline' : 'default'}
-                      size="sm"
-                      onClick={handleRefreshCost}
-                      disabled={isEstimating || groceryItems.length === 0}
-                      className="gap-1.5"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${isEstimating ? 'animate-spin' : ''}`} />
-                      <span className="text-xs font-bold">
-                        {isEstimating
-                          ? 'Estimating...'
-                          : aiCost !== null
-                            ? 'Refresh'
-                            : 'Get Estimate'}
-                      </span>
-                    </Button>
-                  </Inline>
+                  {/* Actions: View Toggle + Share + Copy */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    {/* View Toggle */}
+                    <div className="flex items-center rounded-lg border border-border bg-background p-1 shadow-sm">
+                      <button
+                        onClick={() => setViewMode('programmatic')}
+                        className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                          viewMode === 'programmatic'
+                            ? 'bg-muted text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Standard
+                      </button>
+                      <button
+                        onClick={() => hasSmartList && setViewMode('ai')}
+                        disabled={!hasSmartList}
+                        className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                          viewMode === 'ai'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-muted-foreground'
+                        } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
+                      >
+                        {isProcessing ? (
+                          <RefreshCw className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3" />
+                        )}
+                        Smart List
+                      </button>
+                    </div>
+
+                    <Inline spacing="xs">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleShareGrocery}
+                        className="h-8 w-8 rounded-full"
+                        title="Share"
+                        aria-label="Share Grocery List"
+                      >
+                        <Share className="h-4 w-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCopyGrocery}
+                        className="h-8 w-8 rounded-full"
+                        title="Copy"
+                        aria-label="Copy Grocery List"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={costEstimate.isComplete && aiCost === null ? 'outline' : 'default'}
+                        size="sm"
+                        onClick={handleRefreshCost}
+                        disabled={isEstimating || groceryItems.length === 0}
+                        className="gap-1.5"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${isEstimating ? 'animate-spin' : ''}`} />
+                        <span className="text-xs font-bold">
+                          {isEstimating
+                            ? 'Estimating...'
+                            : aiCost !== null
+                              ? 'Refresh'
+                              : 'Get Estimate'}
+                        </span>
+                      </Button>
+                    </Inline>
+                  </div>
                 </Inline>
+
+                {/* Progress Indicator */}
+                {isProcessing && (
+                  <div className="mt-2 w-full overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      className="h-1 bg-primary"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 10, ease: 'linear', repeat: Infinity }}
+                    />
+                  </div>
+                )}
 
                 {/* Error State */}
                 {estimateError && (
@@ -412,7 +455,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
             {/* Grocery List */}
             <GroceryList
-              ingredients={smartIngredients || groceryItems}
+              ingredients={displayedIngredients}
               isLoading={false}
               onClose={() => setActiveTab('plan')}
               recipes={groceryRecipes}

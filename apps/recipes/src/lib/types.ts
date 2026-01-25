@@ -116,6 +116,16 @@ interface StructuredIngredient {
   sourceRecipeIds?: string[] // IDs of recipes generating this ingredient
 }
 
+export interface GroceryList {
+  id: string // Format: "{userId}_{weekStartDate}"
+  userId: string
+  weekStartDate: string
+  ingredients: ShoppableIngredient[]
+  status: 'pending' | 'processing' | 'complete' | 'error'
+  createdAt: string
+  updatedAt: string
+}
+
 /** A single recipe's contribution to a grocery item */
 interface RecipeContribution {
   recipeId: string
