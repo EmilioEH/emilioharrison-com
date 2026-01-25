@@ -204,9 +204,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setSearch(query)
   }
 
+  // Compute planned IDs for grocery list
+  const plannedRecipeIds = React.useMemo(() => {
+    return new Set(activeWeekPlanned.map((p) => p.recipeId))
+  }, [activeWeekPlanned])
+
   const { groceryItems, isGenerating, handleGenerateList, targetRecipes } = useGroceryListGenerator(
     recipes,
     (v: string) => setView(v as ViewMode),
+    plannedRecipeIds,
   )
 
   // Auto-generate grocery list when entering Shop tab

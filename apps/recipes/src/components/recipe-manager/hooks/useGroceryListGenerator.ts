@@ -10,16 +10,30 @@ const getBaseUrl = (): string => {
 /** Validates recipes for grocery list generation */
 type ValidationResult = { valid: true; recipes: Recipe[] } | { valid: false; error: string }
 
-const validateRecipesForGroceryList = (recipes: Recipe[]): ValidationResult => {
-  const thisWeekRecipes = recipes.filter((r) => r.thisWeek)
-  const recipesToProcess = thisWeekRecipes.length > 0 ? thisWeekRecipes : recipes
+const validateRecipesForGroceryList = (
+  recipes: Recipe[],
+  plannedRecipeIds?: Set<string>,
+): ValidationResult => {
+  let recipesToProcess: Recipe[]
+
+  if (plannedRecipeIds && plannedRecipeIds.size > 0) {
+    recipesToProcess = recipes.filter((r) => plannedRecipeIds.has(r.id))
+  } else {
+    // Fallback to legacy thisWeek logic or all recipes if none planned?
+    // Actually, for "Grocery" button which implies "this week's grocery", we should stick to planned if available.
+    // If nothing passed, maybe fallback to thisWeek property for backward compatibility?
+    const thisWeekRecipes = recipes.filter((r) => r.thisWeek)
+    recipesToProcess = thisWeekRecipes.length > 0 ? thisWeekRecipes : recipes
+  }
 
   if (recipesToProcess.length === 0) {
     return { valid: false, error: 'No recipes found to generate a list.' }
   }
 
-  // Enforce 3-recipe minimum for "This Week" planning
-  if (thisWeekRecipes.length > 0 && thisWeekRecipes.length < 3) {
+  // Enforce 3-recipe minimum for "This Week" planning if using that mode
+  // If explicitly selecting specific recipes (e.g. from week plan), maybe relax this?
+  // Let's keep it consistent: better to have a few recipes for a grocery list.
+  if (recipesToProcess.length < 3) {
     return {
       valid: false,
       error: 'Please select at least 3 recipes to ensure efficient meal planning!',
@@ -101,7 +115,11 @@ const convertToShoppableFormat = (recipes: Recipe[]): ShoppableIngredient[] => {
   return Array.from(ingredientMap.values())
 }
 
-export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: string) => void) => {
+export const useGroceryListGenerator = (
+  recipes: Recipe[],
+  setView: (view: string) => void,
+  plannedRecipeIds?: Set<string>,
+) => {
   const [groceryItems, setGroceryItems] = useState<ShoppableIngredient[]>([])
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [lastGeneratedIds, setLastGeneratedIds] = useState<string | null>(null)
@@ -111,7 +129,7 @@ export const useGroceryListGenerator = (recipes: Recipe[], setView: (view: strin
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const handleGenerateList = async () => {
     // Validate recipes
-    const validation = validateRecipesForGroceryList(recipes)
+    const validation = validateRecipesForGroceryList(recipes, plannedRecipeIds)
     if (!validation.valid) {
       await alert(validation.error)
       return
