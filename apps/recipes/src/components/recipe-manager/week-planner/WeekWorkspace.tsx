@@ -123,7 +123,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const listId = user ? `${user.uid}_${activeWeekStart}` : null
 
   // Subscribe to Firestore document for this week's list
-  const { data: aiGroceryList } = useFirestoreDocument<GroceryListType>(
+  const { data: aiGroceryList, loading: aiLoading } = useFirestoreDocument<GroceryListType>(
     listId ? `grocery_lists/${listId}` : null,
   )
 
@@ -135,11 +135,14 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return false
   }, [operations, listId, aiGroceryList])
 
-  const hasSmartList = aiGroceryList?.status === 'complete' && aiGroceryList.ingredients.length > 0
+  const hasSmartList =
+    aiGroceryList?.status === 'complete' &&
+    Array.isArray(aiGroceryList.ingredients) &&
+    aiGroceryList.ingredients.length > 0
 
   // Auto-trigger when opening grocery tab if no list exists and not processing
   useEffect(() => {
-    if (activeTab === 'grocery' && user && groceryRecipes.length > 0) {
+    if (activeTab === 'grocery' && user && groceryRecipes.length > 0 && !aiLoading) {
       const needsGeneration = !aiGroceryList && !isProcessing
 
       if (needsGeneration) {
@@ -147,7 +150,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
       }
     }
-  }, [activeTab, user, groceryRecipes, aiGroceryList, isProcessing, activeWeekStart])
+  }, [activeTab, user, groceryRecipes, aiGroceryList, isProcessing, activeWeekStart, aiLoading])
 
   // Auto-switch to AI view when ready (only once)
   useEffect(() => {
@@ -160,7 +163,12 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
   // Combined ingredients based on view mode
   const displayedIngredients = useMemo(() => {
-    if (viewMode === 'ai' && hasSmartList && aiGroceryList) {
+    if (
+      viewMode === 'ai' &&
+      hasSmartList &&
+      aiGroceryList &&
+      Array.isArray(aiGroceryList.ingredients)
+    ) {
       return aiGroceryList.ingredients
     }
     return groceryItems

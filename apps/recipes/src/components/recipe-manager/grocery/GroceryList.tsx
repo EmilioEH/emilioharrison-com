@@ -38,7 +38,9 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 }) => {
   // 1. Merge & Categorize (Memoized)
   const categorizedList = useMemo(() => {
-    const merged = mergeShoppableIngredients(ingredients)
+    // Safety check: ensure ingredients is an array
+    const validIngredients = Array.isArray(ingredients) ? ingredients : []
+    const merged = mergeShoppableIngredients(validIngredients)
     return categorizeShoppableIngredients(merged)
   }, [ingredients])
 
