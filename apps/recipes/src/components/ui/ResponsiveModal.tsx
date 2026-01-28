@@ -8,6 +8,7 @@ interface ResponsiveModalProps {
   children: React.ReactNode
   title?: string
   footer?: React.ReactNode
+  compact?: boolean // Smaller height for quick actions (~45% vs 90%)
 }
 
 // Subscribe to a dummy external store that always returns true on client
@@ -16,7 +17,7 @@ const getSnapshot = () => true
 const getServerSnapshot = () => false
 
 export const ResponsiveModal = React.forwardRef<HTMLDivElement, ResponsiveModalProps>(
-  ({ isOpen, onClose, children, title, footer }, ref) => {
+  ({ isOpen, onClose, children, title, footer, compact = false }, ref) => {
     const [isMobile, setIsMobile] = useState(false)
     const isClient = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
@@ -66,7 +67,7 @@ export const ResponsiveModal = React.forwardRef<HTMLDivElement, ResponsiveModalP
           aria-labelledby={title ? 'modal-title' : undefined}
           className={`relative z-50 flex flex-col bg-card shadow-xl transition-all duration-300 ease-out ${
             isMobile
-              ? 'mt-auto h-[90vh] w-full rounded-t-[28px] animate-in slide-in-from-bottom'
+              ? `mt-auto w-full rounded-t-[28px] animate-in slide-in-from-bottom ${compact ? 'h-auto max-h-[45vh]' : 'h-[90vh]'}`
               : 'm-4 h-auto max-h-[85vh] w-full max-w-2xl rounded-[28px] animate-in fade-in zoom-in-95'
           } `}
           style={isMobile ? { bottom: 0, position: 'absolute' } : {}}

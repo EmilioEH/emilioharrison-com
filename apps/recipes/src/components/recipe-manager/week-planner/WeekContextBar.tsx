@@ -1,14 +1,21 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useStore } from '@nanostores/react'
 import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek, getDay } from 'date-fns'
-import { Calendar, ChevronRight, Check } from 'lucide-react'
+import { ChevronUp, ChevronDown, X, ShoppingCart, Calendar } from 'lucide-react'
 
-import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
-import { Button } from '../../ui/button'
+import {
+  weekState,
+  switchWeekContext,
+  currentWeekRecipes,
+  removeRecipeFromDay,
+  DAYS_OF_WEEK,
+} from '../../../lib/weekStore'
+import { $recipes } from '../../../lib/recipeStore'
+import type { Recipe } from '../../../lib/types'
 
 interface WeekContextBarProps {
-  onOpenCalendar: () => void
   onViewWeek: () => void
+  onViewGrocery?: () => void
 }
 
 /**
@@ -21,9 +28,22 @@ const getSmartDefaultWeek = (): 'this' | 'next' => {
   return day === 0 || day >= 5 ? 'next' : 'this'
 }
 
-export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, onViewWeek }) => {
+/**
+ * Get recipe image URL (first from images array, fallback to sourceImage)
+ */
+const getRecipeImage = (recipe: Recipe): string | null => {
+  if (recipe.images && recipe.images.length > 0) {
+    return recipe.images[0]
+  }
+  return recipe.sourceImage || null
+}
+
+export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onViewWeek, onViewGrocery }) => {
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
+  const allRecipes = useStore($recipes)
+
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const activeDate = parseISO(activeWeekStart)
   const today = new Date()
@@ -35,14 +55,16 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
 
   // Week date range formatting
   const weekEndDate = addDays(activeDate, 6)
-  const dateRangeLabel = `${format(activeDate, 'MMM d')}-${format(weekEndDate, 'd')}`
+  const dateRangeLabel = `${format(activeDate, 'MMM d')} – ${format(weekEndDate, 'd')}`
+
+  // Week label
+  const weekLabel = isThisWeek ? 'This Week' : isNextWeek ? 'Next Week' : `Week of ${format(activeDate, 'MMM d')}`
 
   // Handlers
-  const handleSetThisWeek = () => switchWeekContext(format(currentWeekStarts, 'yyyy-MM-dd'))
   const handleSetNextWeek = () => switchWeekContext(format(nextWeekStarts, 'yyyy-MM-dd'))
 
   // Apply smart default on mount if needed
-  React.useEffect(() => {
+  useEffect(() => {
     const smartDefault = getSmartDefaultWeek()
     if (smartDefault === 'next' && isThisWeek) {
       handleSetNextWeek()
@@ -52,12 +74,19 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
   }, [])
 
   // Scroll-aware logic to sync with FeedbackFooter
-  const [isFooterVisible, setIsFooterVisible] = React.useState(true)
-  const lastScrollY = React.useRef(0)
+  const [isFooterVisible, setIsFooterVisible] = useState(true)
+  const lastScrollY = useRef(0)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
+
+      // When expanded, always stay visible
+      if (isExpanded) {
+        setIsFooterVisible(true)
+        lastScrollY.current = currentScrollY
+        return
+      }
 
       // Sync with FeedbackFooter logic:
       // Hide footer (means this bar should slide down) on scroll down
@@ -74,102 +103,223 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onOpenCalendar, 
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [isExpanded])
+
+  // Build day data with recipe info
+  const dayData = DAYS_OF_WEEK.map((day, index) => {
+    const date = addDays(activeDate, index)
+    const plannedRecipe = currentRecipes.find((r) => r.day === day)
+    const recipe = plannedRecipe ? allRecipes.find((r) => r.id === plannedRecipe.recipeId) : null
+
+    return {
+      day,
+      dayAbbrev: format(date, 'EEE'),
+      date,
+      dateNum: format(date, 'd'),
+      isPlanned: !!plannedRecipe,
+      recipe,
+      recipeId: plannedRecipe?.recipeId,
+      addedByName: plannedRecipe?.addedByName,
+    }
+  })
+
+  const plannedCount = dayData.filter((d) => d.isPlanned).length
+  const emptyDays = dayData.filter((d) => !d.isPlanned)
+
+  // Handle remove recipe
+  const handleRemoveRecipe = async (recipeId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    await removeRecipeFromDay(recipeId)
+  }
+
+  // Handle grocery click
+  const handleGroceryClick = () => {
+    if (onViewGrocery) {
+      onViewGrocery()
+    } else {
+      onViewWeek() // Fallback to week view
+    }
+    setIsExpanded(false)
+  }
 
   return (
-    <div
-      className={`pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgb(0,0,0,0.08)] backdrop-blur-xl transition-transform duration-300 ease-in-out ${
-        isFooterVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-8'
-      }`}
-      style={{
-        // On mobile, the footer is 32px (h-8). This bar is bottom-8 (32px).
-        // When footer hides (translate-y-full), this should move down by 32px to sit at bottom-0.
-        // Tailwind 'translate-y-8' is 2rem (32px).
-        // Using style for cleaner conditional override if needed, but class is fine.
-        transform: isFooterVisible ? 'translateY(0)' : 'translateY(2rem)',
-      }}
-    >
-      <div className="mx-auto flex max-w-2xl flex-col px-4 py-3">
-        {/* Top Row: Controls */}
-        <div className="flex items-center justify-between gap-3">
-          {/* Left: Week Toggles */}
-          <div className="flex items-center gap-2">
-            {/* This/Next Toggle */}
-            <div className="flex items-center rounded-lg bg-muted/50 p-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleSetThisWeek()
-                }}
-                className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
-                  isThisWeek
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                aria-label="This Week"
-              >
-                This
-                {isThisWeek && <Check className="h-3 w-3" />}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleSetNextWeek()
-                }}
-                className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
-                  isNextWeek
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                aria-label="Next Week"
-              >
-                Next
-                {isNextWeek && <Check className="h-3 w-3" />}
-              </button>
+    <>
+      {/* Backdrop when expanded */}
+      {isExpanded && (
+        <div
+          role="button"
+          tabIndex={0}
+          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm"
+          onClick={() => setIsExpanded(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              setIsExpanded(false)
+            }
+          }}
+          aria-label="Close meal plan drawer"
+        />
+      )}
+
+      <div
+        className={`pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-card shadow-[0_-4px_20px_rgb(0,0,0,0.12)] transition-all duration-300 ease-in-out ${
+          isFooterVisible ? 'translate-y-0' : 'translate-y-full'
+        } ${isExpanded ? 'rounded-t-2xl' : ''}`}
+        style={{
+          transform: isFooterVisible ? 'translateY(0)' : 'translateY(calc(100% + 2rem))',
+          maxHeight: isExpanded ? '60vh' : 'auto',
+        }}
+      >
+        {/* Collapsed View */}
+        <div className="mx-auto max-w-2xl px-4">
+          {/* Header Row - Always Visible */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex w-full items-center justify-between py-3"
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? 'Collapse meal plan' : 'Expand meal plan'}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-foreground">{weekLabel}</span>
+              <span className="text-xs text-muted-foreground">
+                {plannedCount}/{DAYS_OF_WEEK.length} days
+              </span>
             </div>
 
-            {/* Calendar Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation()
-                onOpenCalendar()
-              }}
-              className="h-8 w-8 rounded-full"
-              title="Select Week"
-              aria-label="Select Week"
-            >
-              <Calendar className="h-4 w-4" />
-            </Button>
-          </div>
+            <div className="flex items-center gap-2">
+              {/* Day Dots */}
+              <div className="flex items-center gap-1">
+                {dayData.map((d) => (
+                  <div
+                    key={d.day}
+                    className={`h-2 w-2 rounded-full transition-colors ${
+                      d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
+                    }`}
+                    title={`${d.day}${d.recipe ? `: ${d.recipe.title}` : ''}`}
+                  />
+                ))}
+              </div>
 
-          {/* Right: View Link */}
-          <button
-            onClick={onViewWeek}
-            className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80"
-            aria-label="View Week Plan"
-          >
-            View
-            <ChevronRight className="h-3.5 w-3.5" />
+              {/* Expand/Collapse Icon */}
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
           </button>
-        </div>
 
-        {/* Bottom Row: Clickable Info Area */}
-        <button
-          onClick={onViewWeek}
-          className="mt-1 flex w-full items-center justify-between rounded-md px-1 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
-          aria-label="View Week Plan"
-        >
-          <span className="font-medium">{dateRangeLabel}</span>
-          <div className="flex items-center gap-1">
-            <span>
-              <span className="font-bold text-foreground">{currentRecipes.length}</span> meals
-            </span>
-            <ChevronRight className="h-3 w-3" />
-          </div>
-        </button>
+          {/* Expanded Content */}
+          {isExpanded && (
+            <div className="overflow-y-auto pb-4" style={{ maxHeight: 'calc(60vh - 60px)' }}>
+              {/* Date Range Subheader */}
+              <div className="mb-3 text-xs text-muted-foreground">{dateRangeLabel}</div>
+
+              {/* Planned Recipes List */}
+              {plannedCount > 0 && (
+                <div className="mb-4 space-y-2">
+                  {dayData
+                    .filter((d) => d.isPlanned && d.recipe)
+                    .map((d) => (
+                      <div
+                        key={d.day}
+                        className="flex items-center gap-3 rounded-lg bg-muted/50 p-2"
+                      >
+                        {/* Recipe Thumbnail */}
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                          {d.recipe && getRecipeImage(d.recipe) ? (
+                            <img
+                              src={getRecipeImage(d.recipe)!}
+                              alt={d.recipe.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-lg">
+                              🍽️
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Recipe Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {d.recipe?.title}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="font-medium">{d.dayAbbrev}</span>
+                            {d.recipe?.prepTime && d.recipe?.cookTime && (
+                              <>
+                                <span>·</span>
+                                <span>{d.recipe.prepTime + d.recipe.cookTime} min</span>
+                              </>
+                            )}
+                            {d.addedByName && (
+                              <>
+                                <span>·</span>
+                                <span className="truncate">by {d.addedByName.split(' ')[0]}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={(e) => d.recipeId && handleRemoveRecipe(d.recipeId, e)}
+                          className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          aria-label={`Remove ${d.recipe?.title} from ${d.day}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Empty Days */}
+              {emptyDays.length > 0 && (
+                <div className="mb-4 rounded-lg border border-dashed border-border p-3">
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">{emptyDays.length} empty days:</span>{' '}
+                    {emptyDays.map((d) => d.dayAbbrev).join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* No Meals Planned State */}
+              {plannedCount === 0 && (
+                <div className="mb-4 rounded-lg bg-muted/50 p-4 text-center">
+                  <p className="text-sm text-muted-foreground">No meals planned yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tap the + on any recipe to add it
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleGroceryClick}
+                  disabled={plannedCount === 0}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Grocery List
+                </button>
+
+                <button
+                  onClick={() => {
+                    onViewWeek()
+                    setIsExpanded(false)
+                  }}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Full View
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

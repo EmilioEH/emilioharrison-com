@@ -75,9 +75,10 @@ async function getDb(context?: any): Promise<FirebaseRestService> {
   return _dbInstance
 }
 
-// Extended interface for the proxy that includes async getProjectId
+// Extended interface for the proxy that includes async getProjectId and createCustomToken
 interface FirebaseDbProxy extends FirebaseRestService {
   getProjectId(): Promise<string>
+  createCustomToken(uid: string, claims?: Record<string, unknown>): Promise<string>
 }
 
 // Export a Proxy for 'db' that auto-initializes
@@ -99,6 +100,7 @@ const db = new Proxy({} as FirebaseDbProxy, {
         'getSubCollection',
         'getSubDocument',
         'addSubDocument',
+        'createCustomToken',
       ].includes(prop as string)
     ) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

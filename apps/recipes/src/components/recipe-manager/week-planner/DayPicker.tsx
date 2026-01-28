@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { format, parseISO, addDays, isSameWeek, startOfWeek, addWeeks } from 'date-fns'
+import React, { useState, useRef } from 'react'
+import { format, parseISO, addDays, isSameWeek, startOfWeek, addWeeks, isToday } from 'date-fns'
 import { useStore } from '@nanostores/react'
-import { Check, Calendar, ArrowLeft } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 
 import {
   weekState,
@@ -11,19 +11,30 @@ import {
   removeRecipeFromDay,
   DAYS_OF_WEEK,
   allPlannedRecipes,
+  type DayOfWeek,
 } from '../../../lib/weekStore'
 import { ResponsiveModal } from '../../ui/ResponsiveModal'
-import { Button } from '../../ui/button'
-import { Stack } from '../../ui/layout'
 
 interface DayPickerProps {
   isOpen: boolean
   onClose: () => void
   recipeId: string
   recipeTitle: string
-  mode?: 'add' | 'edit' // New: edit mode for moving recipes
-  startWithWeekPicker?: boolean // New: start with week picker view open
-  currentDay?: (typeof DAYS_OF_WEEK)[number] // The day the recipe is currently planned for (used for week moves)
+  mode?: 'add' | 'edit'
+  startWithWeekPicker?: boolean
+  currentDay?: DayOfWeek
+}
+
+// Haptic feedback utility
+const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    const patterns = {
+      light: [10],
+      medium: [20],
+      success: [10, 50, 20],
+    }
+    navigator.vibrate(patterns[style])
+  }
 }
 
 export const DayPicker: React.FC<DayPickerProps> = ({
@@ -32,23 +43,26 @@ export const DayPicker: React.FC<DayPickerProps> = ({
   recipeId,
   recipeTitle,
   mode = 'add',
-  startWithWeekPicker = false,
-  currentDay,
+  startWithWeekPicker: _startWithWeekPicker = false,
+  currentDay: _currentDay,
 }) => {
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
   const allRecipes = useStore(allPlannedRecipes)
 
-  // Local state for week picker modal
-  const [showWeekPicker, setShowWeekPicker] = useState(false)
+  // Touch handling for swipe
+  const touchStartX = useRef<number>(0)
+  const touchEndX = useRef<number>(0)
 
-  // Reset week picker view when modal opens (but keep the active week from context bar)
-  useEffect(() => {
-    if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowWeekPicker(startWithWeekPicker)
-    }
-  }, [isOpen, startWithWeekPicker])
+  // Long press state
+  const [longPressDay, setLongPressDay] = useState<DayOfWeek | null>(null)
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Wrapped close handler that resets state
+  const handleClose = () => {
+    setLongPressDay(null)
+    onClose()
+  }
 
   const plannedDays = currentRecipes.filter((p) => p.recipeId === recipeId).map((p) => p.day)
 
@@ -57,6 +71,13 @@ export const DayPicker: React.FC<DayPickerProps> = ({
   const isThisWeek = isSameWeek(activeDate, today, { weekStartsOn: 1 })
   const isNextWeek = isSameWeek(activeDate, addWeeks(today, 1), { weekStartsOn: 1 })
 
+  // Calculate week boundaries for navigation
+  const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+  const maxWeekStart = addWeeks(currentWeekStart, 7) // 8 weeks total
+
+  const canGoBack = activeDate > currentWeekStart
+  const canGoForward = activeDate < maxWeekStart
+
   // Get week label
   const getWeekLabel = () => {
     if (isThisWeek) return 'This Week'
@@ -64,165 +85,310 @@ export const DayPicker: React.FC<DayPickerProps> = ({
     return `Week of ${format(activeDate, 'MMM d')}`
   }
 
-  const handleToggleDay = async (day: (typeof DAYS_OF_WEEK)[number]) => {
+  // Get meal count for current week
+  const mealCount = allRecipes.filter((r) => r.weekStart === activeWeekStart).length
+
+  // Get meals for a specific day (for long-press preview)
+  const getMealsForDay = (day: DayOfWeek) => {
+    return currentRecipes.filter((r) => r.day === day)
+  }
+
+  // Check if a day has any meals (for dot indicator)
+  const dayHasMeals = (day: DayOfWeek) => {
+    return currentRecipes.some((r) => r.day === day)
+  }
+
+  const handleToggleDay = async (day: DayOfWeek) => {
     const isPlanned = plannedDays.includes(day)
+
+    triggerHaptic(isPlanned ? 'light' : 'success')
 
     if (isPlanned) {
       await removeRecipeFromDay(recipeId)
     } else {
       const success = await addRecipeToDay(recipeId, day)
       if (success) {
-        onClose()
+        handleClose()
       }
     }
   }
 
-  const handleSelectWeek = async (weekStart: string) => {
-    switchWeekContext(weekStart)
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const newWeekStart =
+      direction === 'prev' ? addWeeks(activeDate, -1) : addWeeks(activeDate, 1)
 
-    // If in "move to week" mode with a current day, automatically move the recipe
-    if (startWithWeekPicker && mode === 'edit' && currentDay) {
-      const success = await addRecipeToDay(recipeId, currentDay)
-      if (success) {
-        onClose()
-        return
-      }
-    }
+    // Check bounds
+    if (direction === 'prev' && !canGoBack) return
+    if (direction === 'next' && !canGoForward) return
 
-    setShowWeekPicker(false)
+    triggerHaptic('light')
+    switchWeekContext(format(newWeekStart, 'yyyy-MM-dd'))
   }
 
+  // Touch handlers for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current
+    const threshold = 50
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        navigateWeek('next')
+      } else {
+        navigateWeek('prev')
+      }
+    }
+  }
+
+  // Long press handlers
+  const handleLongPressStart = (day: DayOfWeek) => {
+    longPressTimer.current = setTimeout(() => {
+      triggerHaptic('medium')
+      setLongPressDay(day)
+    }, 500)
+  }
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+
+  const handleLongPressCancel = () => {
+    handleLongPressEnd()
+    setLongPressDay(null)
+  }
+
+  // Build day data
   const daysList = DAYS_OF_WEEK.map((day, index) => {
     const date = addDays(activeDate, index)
-    const dateLabel = format(date, 'EEE d.M.')
-    const fullDate = format(date, 'yyyy-MM-dd')
+    const dayNum = format(date, 'd')
+    const dayAbbrev = format(date, 'EEE') // Mon, Tue, Wed, etc.
     const isSelected = plannedDays.includes(day)
+    const isTodayDate = isToday(date)
+    const hasMeals = dayHasMeals(day)
 
-    return { day, dateLabel, fullDate, isSelected }
+    return { day, dayNum, dayAbbrev, isSelected, isTodayDate, hasMeals, date }
   })
 
-  // Generate 8 weeks for picker
-  const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
-  const weeks = Array.from({ length: 8 }, (_, i) => {
-    const weekStart = addWeeks(currentWeekStart, i)
-    return format(weekStart, 'yyyy-MM-dd')
-  })
+  // Split into two rows: 4 + 3
+  const topRow = daysList.slice(0, 4)
+  const bottomRow = daysList.slice(4)
 
   return (
     <ResponsiveModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={mode === 'edit' ? `Move "${recipeTitle}"` : `Add "${recipeTitle}"`}
+      compact
     >
-      {showWeekPicker ? (
-        // Week Picker View
-        <Stack spacing="sm" className="pb-6">
+      <div
+        className="pb-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Week Header with Navigation */}
+        <div className="mb-4 flex items-center justify-between">
           <button
-            onClick={() => setShowWeekPicker(false)}
-            className="mb-2 flex items-center gap-1 self-start text-sm font-medium text-primary hover:text-primary/80"
+            onClick={() => navigateWeek('prev')}
+            disabled={!canGoBack}
+            className={`rounded-full p-2 transition-colors ${
+              canGoBack ? 'text-foreground hover:bg-accent' : 'text-muted-foreground/30'
+            }`}
+            aria-label="Previous week"
           >
-            <ArrowLeft className="h-4 w-4" /> Back to days
+            <ChevronLeft className="h-5 w-5" />
           </button>
 
-          {weeks.map((weekStart) => {
-            const startDate = parseISO(weekStart)
-            const endDate = addDays(startDate, 6)
-            const isSelected = weekStart === activeWeekStart
-            const weekIsThisWeek = isSameWeek(startDate, today, { weekStartsOn: 1 })
-            const weekIsNextWeek = isSameWeek(startDate, addWeeks(today, 1), { weekStartsOn: 1 })
-
-            // Count meals for this week
-            const mealCount = allRecipes.filter((r) => r.weekStart === weekStart).length
-
-            let label = `Week of ${format(startDate, 'MMM d')}`
-            if (weekIsThisWeek) label = 'This Week'
-            else if (weekIsNextWeek) label = 'Next Week'
-
-            return (
-              <button
-                key={weekStart}
-                onClick={() => handleSelectWeek(weekStart)}
-                className={`flex items-center justify-between rounded-lg border p-3 transition-all ${
-                  isSelected
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-card hover:bg-accent/50'
-                }`}
-              >
-                <Stack spacing="xs">
-                  <span className={`font-bold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
-                    {label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}
-                  </span>
-                </Stack>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
+          <div className="text-center">
+            <div className="font-display text-sm font-bold text-foreground">{getWeekLabel()}</div>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>
+                {format(activeDate, 'MMM d')} – {format(addDays(activeDate, 6), 'MMM d')}
+              </span>
+              {mealCount > 0 && (
+                <>
+                  <span>·</span>
+                  <span>
                     {mealCount} {mealCount === 1 ? 'meal' : 'meals'}
                   </span>
-                  {isSelected && <Check className="h-4 w-4 text-primary" />}
-                </div>
-              </button>
-            )
-          })}
-        </Stack>
-      ) : (
-        // Day Selection View (Default)
-        <Stack spacing="md" className="pb-6">
-          {/* Week Info */}
-          <div className="rounded-lg bg-muted/50 p-3">
-            <Stack spacing="xs">
-              <span className="text-sm font-bold text-foreground">{getWeekLabel()}</span>
-              <span className="text-xs text-muted-foreground">
-                {format(activeDate, 'MMM d')} - {format(addDays(activeDate, 6), 'MMM d')}
-              </span>
-            </Stack>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Days List */}
-          <Stack spacing="xs">
-            {daysList.map((item) => (
-              <button
-                key={item.day}
-                onClick={() => handleToggleDay(item.day)}
-                aria-label={item.day}
-                className={`flex items-center justify-between rounded-md p-3 transition-all ${
-                  item.isSelected
-                    ? 'bg-primary/10 font-bold text-primary'
-                    : 'text-foreground hover:bg-accent'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-                      item.isSelected
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-muted-foreground/30'
-                    }`}
-                  >
-                    {item.isSelected && <Check className="h-3 w-3" />}
-                  </div>
-                  <span>{item.dateLabel}</span>
-                </div>
-                {item.isSelected && <span className="text-xs">Added</span>}
-              </button>
-            ))}
-          </Stack>
-
-          {/* Pick Other Week - Secondary Button */}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowWeekPicker(true)}
-            className="mx-auto gap-2 text-xs font-medium"
-            title="Pick a different week"
-            aria-label="Pick a different week"
+          <button
+            onClick={() => navigateWeek('next')}
+            disabled={!canGoForward}
+            className={`rounded-full p-2 transition-colors ${
+              canGoForward ? 'text-foreground hover:bg-accent' : 'text-muted-foreground/30'
+            }`}
+            aria-label="Next week"
           >
-            <Calendar className="h-4 w-4" />
-            <span>Pick a different week</span>
-          </Button>
-        </Stack>
-      )}
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Day Grid */}
+        <div className="space-y-2">
+          {/* Top Row - 4 days */}
+          <div className="grid grid-cols-4 gap-2">
+            {topRow.map((item) => (
+              <DayCell
+                key={item.day}
+                item={item}
+                onSelect={handleToggleDay}
+                onLongPressStart={handleLongPressStart}
+                onLongPressEnd={handleLongPressEnd}
+              />
+            ))}
+          </div>
+
+          {/* Bottom Row - 3 days, centered */}
+          <div className="flex justify-center gap-2">
+            {bottomRow.map((item) => (
+              <DayCell
+                key={item.day}
+                item={item}
+                onSelect={handleToggleDay}
+                onLongPressStart={handleLongPressStart}
+                onLongPressEnd={handleLongPressEnd}
+                className="w-[calc(25%-4px)]"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Today indicator legend */}
+        <div className="mt-3 text-center text-xs text-muted-foreground">
+          {daysList.some((d) => d.isTodayDate) && <span>○ = today</span>}
+        </div>
+
+        {/* Long Press Preview Overlay */}
+        {longPressDay && (
+          <div
+            role="button"
+            tabIndex={0}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={(e) => {
+              // Only close if clicking the backdrop, not the dialog
+              if (e.target === e.currentTarget) {
+                handleLongPressCancel()
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+                handleLongPressCancel()
+              }
+            }}
+            onTouchEnd={(e) => {
+              if (e.target === e.currentTarget) {
+                handleLongPressCancel()
+              }
+            }}
+            aria-label="Close preview"
+          >
+            <div
+              role="dialog"
+              aria-labelledby="long-press-title"
+              aria-modal="true"
+              className="mx-4 max-w-sm rounded-2xl bg-card p-4 shadow-xl"
+            >
+              <h3 id="long-press-title" className="mb-2 font-display text-lg font-bold">
+                {longPressDay} – {format(daysList.find((d) => d.day === longPressDay)?.date || new Date(), 'MMM d')}
+              </h3>
+              {getMealsForDay(longPressDay).length > 0 ? (
+                <ul className="space-y-1">
+                  {getMealsForDay(longPressDay).map((meal) => (
+                    <li key={meal.recipeId} className="text-sm text-muted-foreground">
+                      • {meal.recipeId === recipeId ? recipeTitle : 'Other recipe'}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No meals planned</p>
+              )}
+              <p className="mt-3 text-xs text-muted-foreground">Tap anywhere to close</p>
+            </div>
+          </div>
+        )}
+      </div>
     </ResponsiveModal>
+  )
+}
+
+// Extracted DayCell component for cleaner code
+interface DayCellProps {
+  item: {
+    day: DayOfWeek
+    dayNum: string
+    dayAbbrev: string
+    isSelected: boolean
+    isTodayDate: boolean
+    hasMeals: boolean
+  }
+  onSelect: (day: DayOfWeek) => void
+  onLongPressStart: (day: DayOfWeek) => void
+  onLongPressEnd: () => void
+  className?: string
+}
+
+const DayCell: React.FC<DayCellProps> = ({
+  item,
+  onSelect,
+  onLongPressStart,
+  onLongPressEnd,
+  className = '',
+}) => {
+  const { day, dayNum, dayAbbrev, isSelected, isTodayDate, hasMeals } = item
+
+  return (
+    <button
+      onClick={() => onSelect(day)}
+      onTouchStart={() => onLongPressStart(day)}
+      onTouchEnd={onLongPressEnd}
+      onTouchCancel={onLongPressEnd}
+      onMouseDown={() => onLongPressStart(day)}
+      onMouseUp={onLongPressEnd}
+      onMouseLeave={onLongPressEnd}
+      aria-label={`${day}, ${isSelected ? 'selected' : 'not selected'}`}
+      className={`relative flex aspect-square flex-col items-center justify-center rounded-xl transition-all ${
+        isSelected
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-muted/50 text-foreground hover:bg-muted'
+      } ${isTodayDate && !isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-card' : ''} ${className}`}
+    >
+      {/* Day abbreviation */}
+      <span className="text-xs font-medium opacity-70">{dayAbbrev}</span>
+
+      {/* Day number */}
+      <span className="text-lg font-bold">{dayNum}</span>
+
+      {/* Checkmark for selected */}
+      {isSelected && (
+        <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground">
+          <Check className="h-3 w-3 text-primary" />
+        </div>
+      )}
+
+      {/* Meal indicator dot (only when not selected) */}
+      {hasMeals && !isSelected && (
+        <div className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
+      )}
+
+      {/* Today ring indicator (visual label below) */}
+      {isTodayDate && !isSelected && (
+        <div className="absolute -bottom-0.5 text-[8px] font-bold text-primary">○</div>
+      )}
+    </button>
   )
 }

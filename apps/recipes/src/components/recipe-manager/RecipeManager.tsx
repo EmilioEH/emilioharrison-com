@@ -12,6 +12,7 @@ import type { Recipe, FamilyRecipeData } from '../../lib/types'
 // --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
+import { useFirebaseAuthSync } from '../../lib/useFirebaseAuthSync'
 
 import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
@@ -90,6 +91,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [hasOnboarded, user])
 
   const { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl } = useRecipes()
+
+  // Sync server session with Firebase client SDK for Firestore subscriptions
+  useFirebaseAuthSync()
 
   // Use the extracted family sync logic
   const { showFamilySetup, setShowFamilySetup, showSyncNotification, setShowSyncNotification } =
@@ -537,9 +541,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         {/* Week Context Bar (Sticky Bottom) - Only for Main Views */}
         {(view === 'library' || view === 'grocery') && !isSelectionMode && (
           <WeekContextBar
-            onOpenCalendar={() => setIsCalendarOpen(true)}
             onViewWeek={() => {
               setWeekInitialTab('plan')
+              setView('week')
+            }}
+            onViewGrocery={() => {
+              setWeekInitialTab('grocery')
               setView('week')
             }}
           />

@@ -375,6 +375,61 @@ export class FirebaseRestService {
     return await res.json()
   }
 
+  // --- Auth ---
+
+  /**
+   * Creates a custom token for Firebase Auth client-side sign-in.
+   * This allows syncing server-side session auth with client-side Firebase Auth.
+   */
+  async createCustomToken(uid: string, claims?: Record<string, any>): Promise<string> {
+    const now = Math.floor(Date.now() / 1000)
+
+    const header = { alg: 'RS256', typ: 'JWT' }
+    const payload: Record<string, any> = {
+      iss: this.serviceAccount.client_email,
+      sub: this.serviceAccount.client_email,
+      aud: 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit',
+      iat: now,
+      exp: now + 3600, // 1 hour
+      uid,
+    }
+
+    if (claims) {
+      payload.claims = claims
+    }
+
+    const encodedHeader = base64UrlEncode(JSON.stringify(header))
+    const encodedPayload = base64UrlEncode(JSON.stringify(payload))
+    const unsignedToken = `${encodedHeader}.${encodedPayload}`
+
+    // Parse Private Key (PEM to CryptoKey)
+    const pem = this.serviceAccount.private_key
+      .replace(/-----BEGIN PRIVATE KEY-----/, '')
+      .replace(/-----END PRIVATE KEY-----/, '')
+      .replace(/\s/g, '')
+
+    const binaryKey = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0))
+
+    const key = await crypto.subtle.importKey(
+      'pkcs8',
+      binaryKey,
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256',
+      },
+      false,
+      ['sign'],
+    )
+
+    const signature = await crypto.subtle.sign(
+      'RSASSA-PKCS1-v1_5',
+      key,
+      new TextEncoder().encode(unsignedToken),
+    )
+
+    return `${unsignedToken}.${base64UrlEncodeBuffer(signature)}`
+  }
+
   // --- Helpers ---
 
   private mapFirestoreDoc(doc: any) {
