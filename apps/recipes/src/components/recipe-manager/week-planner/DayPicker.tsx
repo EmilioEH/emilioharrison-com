@@ -127,6 +127,8 @@ export const DayPicker: React.FC<DayPickerProps> = ({
   // Touch handlers for swipe
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
+    // Initialize touchEndX to same position so a tap (no move) results in diff=0
+    touchEndX.current = e.touches[0].clientX
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {

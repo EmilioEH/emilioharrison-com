@@ -156,9 +156,11 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const listId = user ? `${user.uid}_${activeWeekStart}` : null
 
   // Subscribe to Firestore document for this week's list
-  const { data: aiGroceryList, loading: aiLoading } = useFirestoreDocument<GroceryListType>(
-    listId ? `grocery_lists/${listId}` : null,
-  )
+  const {
+    data: aiGroceryList,
+    loading: aiLoading,
+    error: firestoreError,
+  } = useFirestoreDocument<GroceryListType>(listId ? `grocery_lists/${listId}` : null)
 
   // Check for stuck processing
   const [isStuck, setIsStuck] = useState(false)
@@ -195,7 +197,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return operations.some((op) => op.id === `grocery-${listId}` && op.status === 'error')
   }, [operations, listId])
 
-  const hasError = aiGroceryList?.status === 'error' || isStuck || hasLocalError
+  const hasError = aiGroceryList?.status === 'error' || isStuck || hasLocalError || !!firestoreError
 
   const hasSmartList =
     aiGroceryList?.status === 'complete' &&
@@ -207,7 +209,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   // Auto-trigger when opening grocery tab if no list exists and not processing
   useEffect(() => {
     if (activeTab === 'grocery' && user && groceryRecipes.length > 0 && !aiLoading) {
-      const needsGeneration = !aiGroceryList && !isProcessing && !isStuck
+      // Don't auto-generate if there's a Firestore error (likely auth issue)
+      const needsGeneration = !aiGroceryList && !isProcessing && !isStuck && !firestoreError
 
       if (needsGeneration) {
         triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
@@ -228,6 +231,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     activeWeekStart,
     aiLoading,
     isStuck,
+    firestoreError,
     handleRefreshCost,
     aiCost,
     isEstimating,
@@ -560,28 +564,36 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                   <AlertTriangle className="h-5 w-5" />
                   <Stack spacing="xs" className="flex-1">
                     <p className="font-bold">
-                      {isStuck ? 'Generation Timed Out' : 'Failed to generate Smart List'}
+                      {firestoreError
+                        ? 'Failed to load grocery list'
+                        : isStuck
+                          ? 'Generation Timed Out'
+                          : 'Failed to generate Smart List'}
                     </p>
                     <p className="text-xs opacity-90">
-                      {isStuck
-                        ? 'The request took too long. Please try again.'
-                        : 'The AI service encountered an error. Please try again.'}
+                      {firestoreError
+                        ? 'Could not connect to the database. Please refresh the page.'
+                        : isStuck
+                          ? 'The request took too long. Please try again.'
+                          : 'The AI service encountered an error. Please try again.'}
                     </p>
                   </Stack>
                   <Button
                     size="sm"
                     variant="destructive"
                     onClick={() => {
-                      // Force retry
-                      console.log('Retrying grocery generation...')
-                      if (user) {
+                      // Force retry - reload page for Firestore errors, regenerate for others
+                      if (firestoreError) {
+                        window.location.reload()
+                      } else if (user) {
+                        console.log('Retrying grocery generation...')
                         triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
                       }
                     }}
                     className="gap-2"
                   >
                     <RefreshCw className="h-4 w-4" />
-                    Retry
+                    {firestoreError ? 'Refresh' : 'Retry'}
                   </Button>
                 </Inline>
               </div>
