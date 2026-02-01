@@ -55,15 +55,19 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   scrollContainer,
   onShare,
   initialTab = 'plan',
-  user: propsUser,
+  user: _propsUser,
 }) => {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
   const [viewMode, setViewMode] = useState<'programmatic' | 'ai'>('programmatic')
   const { user: authUser } = useAuth()
-  const rawUser = propsUser || authUser
-  const user = useMemo(() => (typeof rawUser === 'string' ? { uid: rawUser } : rawUser), [rawUser])
+
+  // IMPORTANT: For Firestore operations, we MUST use the Firebase Auth user (authUser)
+  // because Firestore security rules check request.auth.uid.
+  // The propsUser is the display name from cookies - NOT the Firebase UID.
+  // Using propsUser for Firestore would cause permission-denied errors.
+  const user = authUser
 
   const activeDate = parseISO(activeWeekStart)
   const today = new Date()
