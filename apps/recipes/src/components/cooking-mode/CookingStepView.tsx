@@ -13,6 +13,34 @@ import { Stack, Inline } from '../ui/layout'
 import { cn } from '../../lib/utils'
 import type { Recipe, StructuredStep } from '../../lib/types'
 
+// Play a quick "ding" sound when completing a step
+const playStepCompleteSound = () => {
+  try {
+    const AudioCtor =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AudioCtor) return
+
+    const ctx = new AudioCtor()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+
+    // Quick "ding" - higher pitch than timer beep, short duration
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(1200, ctx.currentTime)
+    gain.gain.setValueAtTime(0.08, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+
+    osc.start()
+    osc.stop(ctx.currentTime + 0.2)
+  } catch {
+    // Silently fail if audio not supported
+  }
+}
+
 // Error Boundary to gracefully handle crashes in step content
 interface StepErrorBoundaryProps {
   stepText: string
@@ -365,6 +393,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
   // STEP 0: PREP - Keep original behavior
   if (stepIdx === 0) {
     const handleNext = () => {
+      playStepCompleteSound()
       cookingSessionActions.completeStep(0)
       if (recipe.steps.length === 0) {
         if (onFinish) onFinish()
@@ -402,6 +431,7 @@ export const CookingStepView: React.FC<CookingStepViewProps> = ({
 
   // Navigation handlers
   const handleNext = () => {
+    playStepCompleteSound()
     cookingSessionActions.completeStep(stepIdx)
     if (!isLastStep) {
       cookingSessionActions.goToStep(stepIdx + 1)

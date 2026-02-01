@@ -7,6 +7,21 @@ import { HighlightedText } from '../ui/HighlightedText'
 import type { Recipe } from '../../lib/types'
 import { getPlannedDatesForRecipe } from '../../lib/weekStore'
 
+// Helper to normalize titles to Title Case
+const toTitleCase = (str: string): string => {
+  // If mostly uppercase, convert to title case
+  const upperCount = (str.match(/[A-Z]/g) || []).length
+  const letterCount = (str.match(/[a-zA-Z]/g) || []).length
+  if (letterCount > 0 && upperCount / letterCount > 0.7) {
+    return str
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+  return str
+}
+
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -90,12 +105,12 @@ export const RecipeCard = memo(
         role="button"
         tabIndex={0}
         data-testid={`recipe-card-${recipe.id}`}
-        className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:bg-accent/50 ${
-          isSelected ? 'border-primary/20 bg-accent' : 'hover:border-border hover:shadow-sm'
+        className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all active:scale-[0.98] active:bg-accent/70 ${
+          isSelected
+            ? 'border-primary/20 bg-accent'
+            : 'hover:border-border hover:bg-accent/50 hover:shadow-sm'
         }`}
         onClick={() => {
-          // Stop propagation if clicking strictly on the card background to avoid triggering parent?
-          // But parent `renderRecipeCard` just used `onSelectRecipe`.
           onSelect(recipe)
         }}
         onKeyDown={(e) => {
@@ -105,19 +120,19 @@ export const RecipeCard = memo(
           }
         }}
       >
-        {/* Square Thumbnail */}
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
+        {/* Square Thumbnail with border for contrast */}
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm ring-1 ring-black/5">
           {recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage ? (
             <img
               src={recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-cover"
               alt=""
               loading="lazy"
               decoding="async"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <ChefHat className="h-8 w-8 text-muted-foreground/50" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+              <ChefHat className="h-10 w-10 text-muted-foreground/30" />
             </div>
           )}
         </div>
@@ -126,7 +141,7 @@ export const RecipeCard = memo(
         <div className="flex flex-1 flex-col justify-center">
           <div className="flex items-start justify-between gap-2">
             <h4 className="line-clamp-2 flex-1 font-display text-lg font-bold leading-tight text-foreground">
-              <HighlightedText text={recipe.title} matches={titleMatches} />
+              <HighlightedText text={toTitleCase(recipe.title)} matches={titleMatches} />
             </h4>
             {(recipe.rating ?? 0) > 0 && (
               <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
@@ -219,7 +234,7 @@ export const RecipeCard = memo(
                 </Badge>
               )}
 
-              {/* Add to Week button */}
+              {/* Add to Week button - 44px touch target */}
               {!allowManagement && (
                 <button
                   onClick={(e) => {
