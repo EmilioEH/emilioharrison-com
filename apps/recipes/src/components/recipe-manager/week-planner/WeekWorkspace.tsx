@@ -245,7 +245,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       // For now, simpler is better: if it completes while looking at it, show toast or just switch?
       // Let's NOT auto-switch to avoid jarring jump, but show the toggle as enabled/highlighted.
     }
-  }, [hasSmartList, isProcessing, isStuck])
+  }, [hasSmartList, isProcessing, isStuck, viewMode])
 
   // Combined ingredients based on view mode
   const displayedIngredients = useMemo(() => {
@@ -572,7 +572,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                     </p>
                     <p className="text-xs opacity-90">
                       {firestoreError
-                        ? 'Could not connect to the database. Please refresh the page.'
+                        ? `Database error: ${firestoreError.message || 'Could not connect'}. Please refresh the page.`
                         : isStuck
                           ? 'The request took too long. Please try again.'
                           : 'The AI service encountered an error. Please try again.'}

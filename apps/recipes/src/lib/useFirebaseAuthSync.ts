@@ -47,6 +47,7 @@ export function useFirebaseAuthSync() {
 
         if (response.status === 401) {
           // Not logged in on server side - this is expected for unauthenticated users
+          console.log('[AuthSync] No server session, skipping Firebase auth')
           setState('no-session')
           return
         }
@@ -58,7 +59,8 @@ export function useFirebaseAuthSync() {
         const { token } = await response.json()
 
         // Sign in to Firebase with the custom token
-        await signInWithCustomToken(auth, token)
+        const userCredential = await signInWithCustomToken(auth, token)
+        console.log('[AuthSync] Signed in with uid:', userCredential.user.uid)
         setState('synced')
       } catch (err) {
         console.error('Firebase auth sync failed:', err)

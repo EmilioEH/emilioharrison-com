@@ -90,7 +90,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setIsOnboardingComplete(state)
   }, [hasOnboarded, user])
 
-  const { recipes, setRecipes, loading, initialized, error, refreshRecipes, getBaseUrl } = useRecipes()
+  const { recipes, setRecipes, loading, initialized, error, refreshRecipes, getBaseUrl } =
+    useRecipes()
 
   // Sync server session with Firebase client SDK for Firestore subscriptions
   useFirebaseAuthSync()

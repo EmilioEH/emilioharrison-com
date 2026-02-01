@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import { auth } from '../../lib/firebase-client'
-import {
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-} from 'firebase/auth'
+import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth'
 import { Mail, ArrowRight, CheckCircle, AlertCircle, Key } from 'lucide-react'
 
 const EMAIL_STORAGE_KEY = 'emailForSignIn'
@@ -325,8 +321,9 @@ export const EmailLinkSignIn = () => {
         <div>
           <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Check Your Email</h3>
           <p className="max-w-xs text-gray-600 dark:text-gray-400">
-            We sent a magic link to <strong className="text-gray-800 dark:text-gray-200">{email}</strong>.
-            Click the link to sign in.
+            We sent a magic link to{' '}
+            <strong className="text-gray-800 dark:text-gray-200">{email}</strong>. Click the link to
+            sign in.
           </p>
         </div>
         <button
