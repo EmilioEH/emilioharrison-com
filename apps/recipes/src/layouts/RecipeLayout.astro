@@ -143,7 +143,21 @@ const isImpersonating = Astro.cookies.has('admin_mask')
 
             // Listen for new SW taking control (after skipWaiting + clients.claim)
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-              console.log('New SW activated, reloading for fresh state...')
+              console.log('New SW activated')
+
+              // Don't reload if user is viewing a recipe detail - this prevents
+              // the bug where users get unexpectedly kicked back to the library
+              const params = new URLSearchParams(window.location.search)
+              const isViewingRecipe = params.get('view') === 'detail' && params.get('recipe')
+
+              if (isViewingRecipe) {
+                console.log('Deferring SW reload - user viewing recipe detail')
+                // Store flag to reload on next natural navigation
+                sessionStorage.setItem('sw_update_pending', 'true')
+                return
+              }
+
+              console.log('Reloading for fresh SW state...')
               window.location.reload()
             })
           } catch (registrationError) {

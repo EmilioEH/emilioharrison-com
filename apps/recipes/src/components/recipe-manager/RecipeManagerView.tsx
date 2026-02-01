@@ -16,6 +16,7 @@ import type { ViewMode } from './hooks/useRouter'
 interface RecipeManagerViewProps {
   view: string
   loading: boolean
+  initialized: boolean
   error: string | null
   showOnboarding: boolean
   selectedRecipe: Recipe | null
@@ -43,6 +44,7 @@ interface RecipeManagerViewProps {
 export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   view,
   loading,
+  initialized,
   error,
   showOnboarding,
   selectedRecipe,
@@ -112,8 +114,24 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     )
   }
 
-  // Handle recipe not found
+  // Handle recipe not found - but only AFTER recipes have been initialized
+  // This prevents the "Recipe Not Found" screen from flashing during initial load
+  // or when the page reloads (e.g., from service worker update)
   if (view === 'detail' && !selectedRecipe) {
+    // If recipes haven't been initialized yet, show loading spinner
+    // This prevents premature "Recipe Not Found" during page load/reload
+    if (!initialized) {
+      return (
+        <div
+          data-testid="loading-indicator"
+          className="flex h-full items-center justify-center bg-card"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )
+    }
+
+    // Recipes are initialized but recipe not found - show the not found screen
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 bg-card p-6 text-center">
         <h2 className="text-xl font-bold text-foreground">Recipe Not Found</h2>

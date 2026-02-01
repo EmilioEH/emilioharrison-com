@@ -71,5 +71,5 @@ export const useRecipes = () => {
 
   const error = useStore($recipesError)
 
-  return { recipes, setRecipes, loading, error, refreshRecipes, getBaseUrl }
+  return { recipes, setRecipes, loading, initialized, error, refreshRecipes, getBaseUrl }
 }
