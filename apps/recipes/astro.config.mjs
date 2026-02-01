@@ -59,7 +59,7 @@ if (!globalThis.MessageChannel) {
     },
   },
   devToolbar: {
-    enabled: false,
+    enabled: true,
   },
   integrations: [react(), tailwind(), markdoc()],
 })

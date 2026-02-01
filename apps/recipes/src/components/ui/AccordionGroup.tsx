@@ -24,7 +24,7 @@ export const AccordionGroup: React.FC<AccordionGroupProps> = ({
 }) => (
   <div className="border-b border-border last:border-0">
     <div
-      className={stickyHeader ? 'sticky z-30 bg-background/95 backdrop-blur-sm' : ''}
+      className={stickyHeader ? 'sticky z-20 bg-background/95 backdrop-blur-sm' : ''}
       style={stickyHeader ? { top: stickyTop } : undefined}
     >
       <button

@@ -242,7 +242,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
                 stickyHeader
-                stickyTop={0}
+                stickyTop={110}
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (

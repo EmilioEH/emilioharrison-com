@@ -13,7 +13,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
 - **Data Control**: Export/Import your data and manage bulk deletions.
 - **Share Recipes**: Share any recipe as plain text (clipboard/native share) or as a professionally styled PDF. Customizable export includes recipe photo, notes, ratings, and cooking history. Uses Web Share API on mobile for seamless sharing.
-- **Unified Add Recipe Flow**: A single FAB (floating action button) opens the recipe editor with three modes:
+- **Unified Add Recipe Flow**: The recipe editor supports three modes:
   - **Scan**: Upload a photo of a written recipe card. **Dual-Process technology** immediately transcribes the text ("Strict Mode") so you can save right away, while AI runs in the background to structured and enhance the recipe with "Smart View" grouping.
   - **Dish (Experimental)**: Upload a photo of a finished dish. Gemini will **reverse-engineer** the recipe, inferring likely ingredients and steps based on the visual cues and optional context (Cuisine, Taste Profile) you provide.
   - **URL**: Paste a link to import from a website. Also uses **Dual-Process**: immediate parsing followed by background enhancement.

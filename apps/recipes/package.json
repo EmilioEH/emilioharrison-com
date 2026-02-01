@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "go": "npm run check:env && npm run dev",
     "start": "astro dev",
     "build": "astro build",
     "build:test": "PUBLIC_TEST_MODE=true astro build",

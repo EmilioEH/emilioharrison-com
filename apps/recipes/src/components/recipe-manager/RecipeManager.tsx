@@ -443,10 +443,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               <RecipeHeader
                 user={currentUser ?? undefined}
                 scrollContainer={scrollContainer}
-                onAddRecipe={() => {
-                  setRecipe(null)
-                  setView('edit')
-                }}
                 onViewWeek={() => {
                   setWeekInitialTab('plan')
                   setView(view === 'week' ? 'library' : 'week')
@@ -461,7 +457,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           )}
         </AnimatePresence>
 
-        <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground">
+        <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card pt-24 text-foreground">
           {view !== 'week' && (
             <RecipeFilters
               isOpen={filtersOpen}

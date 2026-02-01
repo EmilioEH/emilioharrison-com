@@ -55,7 +55,7 @@ test.describe('Recipe Manager', () => {
     })
   })
 
-  test('should allow creating and viewing a recipe in accordion groups', async ({ page }) => {
+  test('should NOT show the Add Recipe button', async ({ page }) => {
     // 1. Go to the recipe manager
     await page.goto('/protected/recipes')
 
@@ -63,75 +63,9 @@ test.describe('Recipe Manager', () => {
     await expect(page).toHaveURL(/\/protected\/recipes/)
     await expect(page.getByText('CHEFBOARD')).toBeVisible()
 
-    // 2. Add a new recipe with a protein
-    await page.getByRole('button', { name: 'Add Recipe' }).click()
-
-    const testTitle = `ZESTY_BEEF_STEW_${Date.now()}`
-    await page.getByLabel('Title').fill(testTitle)
-    await page.getByLabel('Ingredients (One per line)').fill('1 lb Beef')
-    await page.getByLabel('Instructions (One per line)').fill('Stew beef')
-
-    // Select protein
-    await page.getByLabel('Protein').selectOption('Beef')
-
-    await page.getByRole('button', { name: 'Save Recipe' }).click()
-
-    // Expect Success UI
-    await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
-
-    // Click "Back to Library"
-    await page.getByRole('button', { name: 'Back to Library' }).click()
-
-    // 3. Verify it appears in the list inside the Beef accordion
-    // The accordion header contains a heading with 'Beef' and a count.
-    // Find the specific recipe card by its unique title heading
-    const recipeCard = page
-      .getByRole('button')
-      .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) })
-
-    // Ensure it's visible (should be open by default now)
-    await expect(recipeCard).toBeVisible()
-
-    // Give it a moment to be really stable
-    await page.waitForTimeout(500)
-
-    // 4. Click into it to verify details
-    await recipeCard.click()
-
-    // Wait for detail view entrance animation
-    await page.waitForTimeout(500)
-
-    // Wait for Detail View content to be stable
-    // Check title first to verify view is rendered
-    await expect(page.getByRole('heading', { name: testTitle, exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /^Ingredients/ })).toBeVisible()
-
-    // Close detail view (Back to Library)
-    await page.getByRole('button', { name: 'Back to Library' }).click()
-
-    // Verify we are back in the library and the accordion is still there
-    await expect(
-      page
-        .getByRole('button')
-        .filter({ has: page.getByRole('heading', { name: 'Beef', exact: true }) }),
-    ).toBeVisible()
-    await expect(
-      page
-        .getByRole('button')
-        .filter({ has: page.getByRole('heading', { name: testTitle, exact: true }) }),
-    ).toBeVisible()
-
-    // Test sorting change - filter is now in LibraryToolbar
-    await page.getByRole('button', { name: 'Open Filters' }).click()
-    await page.getByRole('button', { name: 'Alphabetical' }).click()
-    await page.locator('button:has(svg.lucide-x)').click()
-
-    // After sorting alpha, it should be grouped by first letter
-    const firstLetter = testTitle.charAt(0).toUpperCase()
-    await expect(
-      page
-        .getByRole('button')
-        .filter({ has: page.getByRole('heading', { name: firstLetter, exact: true }) }),
-    ).toBeVisible()
+    // 2. Ensure "Add" button is missing
+    await expect(page.getByRole('button', { name: 'Add Recipe' })).not.toBeVisible()
+    // Also check for "Add" text just in case
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).not.toBeVisible()
   })
 })

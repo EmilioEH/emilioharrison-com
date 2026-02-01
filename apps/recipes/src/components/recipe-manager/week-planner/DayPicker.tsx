@@ -114,8 +114,7 @@ export const DayPicker: React.FC<DayPickerProps> = ({
   }
 
   const navigateWeek = (direction: 'prev' | 'next') => {
-    const newWeekStart =
-      direction === 'prev' ? addWeeks(activeDate, -1) : addWeeks(activeDate, 1)
+    const newWeekStart = direction === 'prev' ? addWeeks(activeDate, -1) : addWeeks(activeDate, 1)
 
     // Check bounds
     if (direction === 'prev' && !canGoBack) return
@@ -304,7 +303,8 @@ export const DayPicker: React.FC<DayPickerProps> = ({
               className="mx-4 max-w-sm rounded-2xl bg-card p-4 shadow-xl"
             >
               <h3 id="long-press-title" className="mb-2 font-display text-lg font-bold">
-                {longPressDay} – {format(daysList.find((d) => d.day === longPressDay)?.date || new Date(), 'MMM d')}
+                {longPressDay} –{' '}
+                {format(daysList.find((d) => d.day === longPressDay)?.date || new Date(), 'MMM d')}
               </h3>
               {getMealsForDay(longPressDay).length > 0 ? (
                 <ul className="space-y-1">

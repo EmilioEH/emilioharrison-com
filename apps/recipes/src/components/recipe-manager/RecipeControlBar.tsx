@@ -20,7 +20,7 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
   onSearchExpandedChange,
 }) => {
   return (
-    <div className="bg-background/95 pb-2 pt-4 shadow-sm backdrop-blur transition-all">
+    <div className="sticky top-[56px] z-30 bg-background/95 pb-2 pt-4 shadow-sm backdrop-blur transition-all">
       <Inline spacing="sm" className="px-4">
         {/* Search Input */}
         <div className="relative flex-1">

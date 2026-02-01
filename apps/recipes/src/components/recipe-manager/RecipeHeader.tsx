@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Menu, Plus, CalendarDays, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openBurgerMenu } from '../../lib/burgerMenuStore'
@@ -16,49 +16,29 @@ interface RecipeHeaderProps {
 
 export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   user,
-  scrollContainer,
+  scrollContainer: _scrollContainer,
   onAddRecipe,
   onViewWeek,
   onViewGrocery,
   isWeekView,
 }) => {
-  const [isVisible, setIsVisible] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
-  const lastScrollTop = useRef(0)
   const pendingInvites = useStore($pendingInvites)
 
+  // Welcome Bar collapse logic only - header always stays visible
   useEffect(() => {
-    // If no container provided, default to window if available
-    const target = scrollContainer || (typeof window !== 'undefined' ? window : null)
-    if (!target) return
-
     const handleScroll = () => {
-      const currentScroll = target instanceof Window ? window.scrollY : target.scrollTop
-
+      const currentScrollY = window.scrollY
       // Welcome Bar Logic (Collapse if > 20px)
-      setIsScrolled(currentScroll > 20)
-
-      // Main Header Visibility Logic (Hide on scroll down, Show on scroll up)
-      if (currentScroll > lastScrollTop.current && currentScroll > 50) {
-        setIsVisible(false)
-      } else if (currentScroll < lastScrollTop.current) {
-        setIsVisible(true)
-      }
-
-      lastScrollTop.current = currentScroll
+      setIsScrolled(currentScrollY > 20)
     }
 
-    target.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll()
-    return () => target.removeEventListener('scroll', handleScroll)
-  }, [scrollContainer])
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <header
-      className={`sticky top-0 z-40 flex flex-col justify-end border-b border-border bg-background/95 shadow-md backdrop-blur-md transition-all duration-300 ease-in-out ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      }`}
-    >
+    <header className="fixed left-0 right-0 top-0 z-40 flex flex-col justify-end border-b border-border bg-background/95 shadow-md backdrop-blur-md">
       {/* Static Welcome Bar */}
       {user && (
         <div

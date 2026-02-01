@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useStore } from '@nanostores/react'
 import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek, getDay } from 'date-fns'
 import { ChevronUp, ChevronDown, X, ShoppingCart, Calendar } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 import {
   weekState,
@@ -58,7 +59,11 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onViewWeek, onVi
   const dateRangeLabel = `${format(activeDate, 'MMM d')} – ${format(weekEndDate, 'd')}`
 
   // Week label
-  const weekLabel = isThisWeek ? 'This Week' : isNextWeek ? 'Next Week' : `Week of ${format(activeDate, 'MMM d')}`
+  const weekLabel = isThisWeek
+    ? 'This Week'
+    : isNextWeek
+      ? 'Next Week'
+      : `Week of ${format(activeDate, 'MMM d')}`
 
   // Handlers
   const handleSetNextWeek = () => switchWeekContext(format(nextWeekStarts, 'yyyy-MM-dd'))
@@ -73,29 +78,34 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onViewWeek, onVi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Scroll-aware logic to sync with FeedbackFooter
-  const [isFooterVisible, setIsFooterVisible] = useState(true)
+  // Scroll-aware logic: collapse to pill on scroll down, expand on scroll up
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const lastScrollY = useRef(0)
+  const scrollUpDistance = useRef(0)
+  const SCROLL_UP_THRESHOLD = 50 // pixels of scroll-up needed before expanding
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
+      const delta = currentScrollY - lastScrollY.current
 
-      // When expanded, always stay visible
+      // When expanded drawer is open, don't collapse
       if (isExpanded) {
-        setIsFooterVisible(true)
         lastScrollY.current = currentScrollY
         return
       }
 
-      // Sync with FeedbackFooter logic:
-      // Hide footer (means this bar should slide down) on scroll down
-      if (currentScrollY > lastScrollY.current && currentScrollY > 20) {
-        setIsFooterVisible(false)
+      // Scrolling down - collapse to pill
+      if (delta > 0 && currentScrollY > 20) {
+        setIsCollapsed(true)
+        scrollUpDistance.current = 0
       }
-      // Show footer (this bar slides up back to position) on scroll up
-      else if (currentScrollY < lastScrollY.current) {
-        setIsFooterVisible(true)
+      // Scrolling up - expand after threshold
+      else if (delta < 0) {
+        scrollUpDistance.current += Math.abs(delta)
+        if (scrollUpDistance.current >= SCROLL_UP_THRESHOLD) {
+          setIsCollapsed(false)
+        }
       }
 
       lastScrollY.current = currentScrollY
@@ -142,6 +152,12 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onViewWeek, onVi
     setIsExpanded(false)
   }
 
+  // Handle pill click - expand from collapsed state
+  const handlePillClick = () => {
+    setIsCollapsed(false)
+    setIsExpanded(true)
+  }
+
   return (
     <>
       {/* Backdrop when expanded */}
@@ -160,166 +176,205 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({ onViewWeek, onVi
         />
       )}
 
-      <div
-        className={`pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-card shadow-[0_-4px_20px_rgb(0,0,0,0.12)] transition-all duration-300 ease-in-out ${
-          isFooterVisible ? 'translate-y-0' : 'translate-y-full'
-        } ${isExpanded ? 'rounded-t-2xl' : ''}`}
-        style={{
-          transform: isFooterVisible ? 'translateY(0)' : 'translateY(calc(100% + 2rem))',
-          maxHeight: isExpanded ? '60vh' : 'auto',
-        }}
-      >
-        {/* Collapsed View */}
-        <div className="mx-auto max-w-2xl px-4">
-          {/* Header Row - Always Visible */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex w-full items-center justify-between py-3"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? 'Collapse meal plan' : 'Expand meal plan'}
+      {/* Collapsed Pill View with morph animation */}
+      <AnimatePresence>
+        {isCollapsed && !isExpanded && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            onClick={handlePillClick}
+            className="pb-safe fixed inset-x-0 bottom-10 z-40 mx-auto flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-2 shadow-lg hover:scale-105 active:scale-95"
+            aria-label={`${plannedCount} meals planned this week. Tap to expand.`}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-foreground">{weekLabel}</span>
-              <span className="text-xs text-muted-foreground">
-                {plannedCount}/{DAYS_OF_WEEK.length} days
-              </span>
+            <Calendar className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">{plannedCount} planned</span>
+            {/* Day Dots */}
+            <div className="flex items-center gap-0.5">
+              {dayData.map((d) => (
+                <div
+                  key={d.day}
+                  className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                    d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
             </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
-            <div className="flex items-center gap-2">
-              {/* Day Dots */}
-              <div className="flex items-center gap-1">
-                {dayData.map((d) => (
-                  <div
-                    key={d.day}
-                    className={`h-2 w-2 rounded-full transition-colors ${
-                      d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
-                    }`}
-                    title={`${d.day}${d.recipe ? `: ${d.recipe.title}` : ''}`}
-                  />
-                ))}
-              </div>
+      {/* Full Bar View with animation */}
+      <AnimatePresence>
+        {(!isCollapsed || isExpanded) && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className={`pb-safe fixed bottom-8 left-0 right-0 z-40 border-t border-border bg-card shadow-[0_-4px_20px_rgb(0,0,0,0.12)] ${
+              isExpanded ? 'rounded-t-2xl' : ''
+            }`}
+            style={{
+              maxHeight: isExpanded ? '60vh' : 'auto',
+            }}
+          >
+            {/* Collapsed View */}
+            <div className="mx-auto max-w-2xl px-4">
+              {/* Header Row - Always Visible */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex w-full items-center justify-between py-3"
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? 'Collapse meal plan' : 'Expand meal plan'}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-foreground">{weekLabel}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {plannedCount}/{DAYS_OF_WEEK.length} days
+                  </span>
+                </div>
 
-              {/* Expand/Collapse Icon */}
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
-          </button>
-
-          {/* Expanded Content */}
-          {isExpanded && (
-            <div className="overflow-y-auto pb-4" style={{ maxHeight: 'calc(60vh - 60px)' }}>
-              {/* Date Range Subheader */}
-              <div className="mb-3 text-xs text-muted-foreground">{dateRangeLabel}</div>
-
-              {/* Planned Recipes List */}
-              {plannedCount > 0 && (
-                <div className="mb-4 space-y-2">
-                  {dayData
-                    .filter((d) => d.isPlanned && d.recipe)
-                    .map((d) => (
+                <div className="flex items-center gap-2">
+                  {/* Day Dots */}
+                  <div className="flex items-center gap-1">
+                    {dayData.map((d) => (
                       <div
                         key={d.day}
-                        className="flex items-center gap-3 rounded-lg bg-muted/50 p-2"
-                      >
-                        {/* Recipe Thumbnail */}
-                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {d.recipe && getRecipeImage(d.recipe) ? (
-                            <img
-                              src={getRecipeImage(d.recipe)!}
-                              alt={d.recipe.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-lg">
-                              🍽️
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Recipe Info */}
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-foreground">
-                            {d.recipe?.title}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="font-medium">{d.dayAbbrev}</span>
-                            {d.recipe?.prepTime && d.recipe?.cookTime && (
-                              <>
-                                <span>·</span>
-                                <span>{d.recipe.prepTime + d.recipe.cookTime} min</span>
-                              </>
-                            )}
-                            {d.addedByName && (
-                              <>
-                                <span>·</span>
-                                <span className="truncate">by {d.addedByName.split(' ')[0]}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Remove Button */}
-                        <button
-                          onClick={(e) => d.recipeId && handleRemoveRecipe(d.recipeId, e)}
-                          className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          aria-label={`Remove ${d.recipe?.title} from ${d.day}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
+                        className={`h-2 w-2 rounded-full transition-colors ${
+                          d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
+                        }`}
+                        title={`${d.day}${d.recipe ? `: ${d.recipe.title}` : ''}`}
+                      />
                     ))}
-                </div>
-              )}
+                  </div>
 
-              {/* Empty Days */}
-              {emptyDays.length > 0 && (
-                <div className="mb-4 rounded-lg border border-dashed border-border p-3">
-                  <div className="text-xs text-muted-foreground">
-                    <span className="font-medium">{emptyDays.length} empty days:</span>{' '}
-                    {emptyDays.map((d) => d.dayAbbrev).join(', ')}
+                  {/* Expand/Collapse Icon */}
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+              </button>
+
+              {/* Expanded Content */}
+              {isExpanded && (
+                <div className="overflow-y-auto pb-4" style={{ maxHeight: 'calc(60vh - 60px)' }}>
+                  {/* Date Range Subheader */}
+                  <div className="mb-3 text-xs text-muted-foreground">{dateRangeLabel}</div>
+
+                  {/* Planned Recipes List */}
+                  {plannedCount > 0 && (
+                    <div className="mb-4 space-y-2">
+                      {dayData
+                        .filter((d) => d.isPlanned && d.recipe)
+                        .map((d) => (
+                          <div
+                            key={d.day}
+                            className="flex items-center gap-3 rounded-lg bg-muted/50 p-2"
+                          >
+                            {/* Recipe Thumbnail */}
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                              {d.recipe && getRecipeImage(d.recipe) ? (
+                                <img
+                                  src={getRecipeImage(d.recipe)!}
+                                  alt={d.recipe.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-lg">
+                                  🍽️
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Recipe Info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium text-foreground">
+                                {d.recipe?.title}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span className="font-medium">{d.dayAbbrev}</span>
+                                {d.recipe?.prepTime && d.recipe?.cookTime && (
+                                  <>
+                                    <span>·</span>
+                                    <span>{d.recipe.prepTime + d.recipe.cookTime} min</span>
+                                  </>
+                                )}
+                                {d.addedByName && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="truncate">
+                                      by {d.addedByName.split(' ')[0]}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Remove Button */}
+                            <button
+                              onClick={(e) => d.recipeId && handleRemoveRecipe(d.recipeId, e)}
+                              className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Remove ${d.recipe?.title} from ${d.day}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Empty Days */}
+                  {emptyDays.length > 0 && (
+                    <div className="mb-4 rounded-lg border border-dashed border-border p-3">
+                      <div className="text-xs text-muted-foreground">
+                        <span className="font-medium">{emptyDays.length} empty days:</span>{' '}
+                        {emptyDays.map((d) => d.dayAbbrev).join(', ')}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No Meals Planned State */}
+                  {plannedCount === 0 && (
+                    <div className="mb-4 rounded-lg bg-muted/50 p-4 text-center">
+                      <p className="text-sm text-muted-foreground">No meals planned yet</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Tap the + on any recipe to add it
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleGroceryClick}
+                      disabled={plannedCount === 0}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      Grocery List
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onViewWeek()
+                        setIsExpanded(false)
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Full View
+                    </button>
                   </div>
                 </div>
               )}
-
-              {/* No Meals Planned State */}
-              {plannedCount === 0 && (
-                <div className="mb-4 rounded-lg bg-muted/50 p-4 text-center">
-                  <p className="text-sm text-muted-foreground">No meals planned yet</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Tap the + on any recipe to add it
-                  </p>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={handleGroceryClick}
-                  disabled={plannedCount === 0}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  Grocery List
-                </button>
-
-                <button
-                  onClick={() => {
-                    onViewWeek()
-                    setIsExpanded(false)
-                  }}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Full View
-                </button>
-              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

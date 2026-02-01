@@ -459,7 +459,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Build source map from original recipes
     const sourceMap = buildSourceMap(recipes)
-    console.log(`[SourceMap] Built map with ${sourceMap.size} ingredient keys from ${recipes.length} recipes`)
+    console.log(
+      `[SourceMap] Built map with ${sourceMap.size} ingredient keys from ${recipes.length} recipes`,
+    )
     // Log a few entries
     const mapEntries = Array.from(sourceMap.entries()).slice(0, 5)
     for (const [key, sources] of mapEntries) {
@@ -476,7 +478,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Debug: Log what we're saving
     console.log(`[Grocery] Saving ${combinedIngredients.length} ingredients`)
     for (const ing of combinedIngredients.slice(0, 3)) {
-      console.log(`  - ${ing.name}: ${ing.sources.length} sources`, ing.sources.map((s) => s.recipeTitle))
+      console.log(
+        `  - ${ing.name}: ${ing.sources.length} sources`,
+        ing.sources.map((s) => s.recipeTitle),
+      )
     }
 
     // Update to completion

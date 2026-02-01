@@ -6,20 +6,27 @@ import { Button } from '@/components/ui/button'
 export const FeedbackFooter = () => {
   const [isVisible, setIsVisible] = React.useState(true)
   const lastScrollY = React.useRef(0)
+  const scrollUpDistance = React.useRef(0)
+  const SCROLL_UP_THRESHOLD = 50 // pixels of scroll-up needed before showing
 
   useEffect(() => {
     const handleScroll = () => {
       // Get current scroll position
       const currentScrollY = window.scrollY
+      const delta = currentScrollY - lastScrollY.current
 
-      // Determine direction
-      // Hide on scroll down (if moved more than 10px and not at top)
-      if (currentScrollY > lastScrollY.current && currentScrollY > 20) {
+      // Scrolling down
+      if (delta > 0 && currentScrollY > 20) {
         setIsVisible(false)
+        scrollUpDistance.current = 0 // Reset scroll-up distance
       }
-      // Show on scroll up
-      else if (currentScrollY < lastScrollY.current) {
-        setIsVisible(true)
+      // Scrolling up
+      else if (delta < 0) {
+        scrollUpDistance.current += Math.abs(delta)
+        // Only show after cumulative 50px scroll up
+        if (scrollUpDistance.current >= SCROLL_UP_THRESHOLD) {
+          setIsVisible(true)
+        }
       }
 
       lastScrollY.current = currentScrollY
