@@ -222,6 +222,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 isOpen={openGroups[key] !== false}
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
+                stickyHeader={!hasSearch}
                 stickyTop={
                   isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : 'top-content-top'
                 }
