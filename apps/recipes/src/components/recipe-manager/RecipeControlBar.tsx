@@ -26,7 +26,13 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
     <div
       className={`sticky z-30 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all ${
         isContainedScroll ? 'top-0 pt-safe-top' : 'top-header'
-      } ${isSearchMode && !isContainedScroll ? 'pt-safe-top' : isContainedScroll ? '' : 'pt-4'}`}
+      } ${
+        isSearchMode && !isContainedScroll
+          ? 'pt-[calc(var(--safe-area-top)+1rem)]'
+          : isContainedScroll
+            ? ''
+            : 'pt-4'
+      }`}
     >
       <Inline spacing="sm" className="px-4">
         {/* Search Input */}

@@ -608,8 +608,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
           <main className="relative flex-1 scroll-smooth pb-32">
             {view === 'library' && (
-              <div className="flex h-full flex-col">
-                <div className="scrollbar-hide flex-1">
+              <div className={useContainedScroll ? 'flex flex-col' : 'flex h-full flex-col'}>
+                <div className={useContainedScroll ? '' : 'scrollbar-hide flex-1'}>
                   {!isSelectionMode && recipes.length > 0 && null}
 
                   <RecipeLibrary
