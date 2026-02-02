@@ -55,6 +55,7 @@ interface RecipeLibraryProps {
   allowManagement?: boolean // show management menu for week context
   currentWeekStart?: string // current week context for management
   onShare?: (recipe: Recipe) => void
+  isContainedScroll?: boolean // When true, use contained scroll sticky positioning
 }
 
 declare global {
@@ -75,6 +76,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   allowManagement = false,
   currentWeekStart: _currentWeekStart,
   onShare,
+  isContainedScroll = false,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   // Management UI state
@@ -221,6 +223,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
                 stickyHeader
+                stickyTop={isContainedScroll ? 'top-[56px]' : 'top-content-top'}
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (

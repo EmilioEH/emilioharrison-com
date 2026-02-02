@@ -9,6 +9,7 @@ interface RecipeControlBarProps {
   activeFilterCount: number
   isSearchMode: boolean
   onSearchExpandedChange: (expanded: boolean) => void
+  isContainedScroll?: boolean // When true, sticky position uses top-0 instead of top-header
 }
 
 export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
@@ -19,12 +20,13 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
   activeFilterCount,
   isSearchMode,
   onSearchExpandedChange,
+  isContainedScroll = false,
 }) => {
   return (
     <div
-      className={`sticky top-header z-30 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all ${
-        isSearchMode ? 'pt-safe-top' : 'pt-4'
-      }`}
+      className={`sticky z-30 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all ${
+        isContainedScroll ? 'top-0 pt-safe-top' : 'top-header'
+      } ${isSearchMode && !isContainedScroll ? 'pt-safe-top' : isContainedScroll ? '' : 'pt-4'}`}
     >
       <Inline spacing="sm" className="px-4">
         {/* Search Input */}

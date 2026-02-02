@@ -38,6 +38,13 @@
     --content-top: calc(var(--safe-area-top) + var(--search-bar-height));
   }
 
+  /* Contained scroll mode - when keyboard is active on mobile */
+  /* The scroll container becomes the reference for sticky positioning */
+  [data-scroll-mode='contained'] {
+    --header-height: 0px;
+    --content-top: var(--search-bar-height);
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

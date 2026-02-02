@@ -9,6 +9,7 @@ interface AccordionGroupProps {
   onToggle: () => void
   viewMode: 'grid' | 'list'
   stickyHeader?: boolean
+  stickyTop?: string // Custom sticky top class (e.g., 'top-[56px]'), defaults to 'top-content-top'
 }
 
 export const AccordionGroup: React.FC<AccordionGroupProps> = ({
@@ -19,11 +20,12 @@ export const AccordionGroup: React.FC<AccordionGroupProps> = ({
   onToggle,
   viewMode,
   stickyHeader = false,
+  stickyTop = 'top-content-top',
 }) => (
   <div className="border-b border-border last:border-0">
     <div
       className={
-        stickyHeader ? 'sticky top-content-top z-20 bg-background/95 backdrop-blur-sm' : ''
+        stickyHeader ? `sticky ${stickyTop} z-20 bg-background/95 backdrop-blur-sm` : ''
       }
     >
       <button

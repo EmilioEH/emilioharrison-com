@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { VarietyWarning } from './VarietyWarning'
@@ -215,13 +215,34 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   const [drawerExpanded, setDrawerExpanded] = useState(false)
 
   // Scroll Container Ref State & Broadcaster
-  const { scrollContainer } = useScrollBroadcaster()
+  const { scrollContainer, setScrollContainer } = useScrollBroadcaster()
 
   // Hooks
   const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
     useRecipeSelection()
   const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [isSearchMode, setIsSearchMode] = useState(false)
+
+  // Mobile detection for contained scroll mode (fixes sticky headers with keyboard)
+  const [isMobile, setIsMobile] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const useContainedScroll = isSearchMode && isMobile
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Switch scroll container when entering/exiting contained scroll mode
+  useEffect(() => {
+    if (useContainedScroll && scrollContainerRef.current) {
+      setScrollContainer(scrollContainerRef.current)
+    } else {
+      setScrollContainer(typeof window !== 'undefined' ? window : null)
+    }
+  }, [useContainedScroll, setScrollContainer])
 
   const { saveRecipe, deleteRecipe, toggleFavorite, bulkUpdateRecipes, bulkDeleteRecipes } =
     useRecipeActions({
@@ -476,7 +497,13 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
         <div
           data-search-mode={isSearchMode ? 'true' : undefined}
-          className="relative mx-auto flex min-h-full w-full max-w-2xl flex-col overflow-visible bg-card pt-content-top text-foreground"
+          data-scroll-mode={useContainedScroll ? 'contained' : undefined}
+          ref={useContainedScroll ? scrollContainerRef : undefined}
+          className={
+            useContainedScroll
+              ? 'fixed inset-0 z-40 mx-auto flex w-full max-w-2xl flex-col overflow-y-auto bg-card pt-safe-top text-foreground'
+              : 'relative mx-auto flex min-h-full w-full max-w-2xl flex-col overflow-visible bg-card pt-content-top text-foreground'
+          }
         >
           {view !== 'week' && (
             <RecipeFilters
@@ -505,6 +532,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               }
               isSearchMode={isSearchMode}
               onSearchExpandedChange={setIsSearchMode}
+              isContainedScroll={useContainedScroll}
             />
           )}
 
@@ -530,6 +558,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                     hasSearch={!!searchQuery}
                     scrollContainer={scrollContainer}
                     onShare={(recipe) => setShareRecipe(recipe)}
+                    isContainedScroll={useContainedScroll}
                   />
                 </div>
               </div>
