@@ -13,27 +13,37 @@ import {
 import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 import { RecipeCard } from './RecipeCard'
 
-// Animation Variants
+// Animation Variants - only stagger first few items for perceived performance
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1,
+      staggerChildren: 0.03,
+      delayChildren: 0.05,
+    },
+  },
+}
+
+// Fast container for search results - no stagger delay
+const fastContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.15,
     },
   },
 }
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      type: 'spring',
-      bounce: 0,
-      duration: 0.4,
+      type: 'tween',
+      duration: 0.2,
     },
   },
 }
@@ -58,6 +68,7 @@ interface RecipeLibraryProps {
   allowManagement?: boolean // show management menu for week context
   currentWeekStart?: string // current week context for management
   onShare?: (recipe: Recipe) => void
+  stickyHeaderOffset?: number
 }
 
 declare global {
@@ -78,6 +89,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   allowManagement = false,
   currentWeekStart: _currentWeekStart,
   onShare,
+  stickyHeaderOffset = 110,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   // Management UI state
@@ -202,9 +214,9 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           })}
         </motion.div>
       ) : hasSearch ? (
-        // FLAT LIST VIEW (For Search)
+        // FLAT LIST VIEW (For Search) - use fast variants for instant results
         <motion.div
-          variants={containerVariants}
+          variants={fastContainerVariants}
           initial="hidden"
           animate="visible"
           className="flex flex-col gap-2 p-4 pt-0"
@@ -212,7 +224,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           <p className="mb-2 text-sm font-medium text-muted-foreground">
             Found {recipes.length} recipes
           </p>
-          {recipes.map((recipe) => (
+          {recipes.map((recipe, index) => (
             <RecipeCard
               key={recipe.id}
               recipe={recipe}
@@ -222,6 +234,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               onToggleThisWeek={onToggleThisWeek}
               allowManagement={allowManagement}
               onManage={(id) => setManagementRecipeId(id)}
+              skipAnimation={index > 8}
             />
           ))}
         </motion.div>
@@ -242,7 +255,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
                 stickyHeader
-                stickyTop={110}
+                stickyTop={stickyHeaderOffset}
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (

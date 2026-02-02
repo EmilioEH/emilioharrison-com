@@ -208,12 +208,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setSearch(query)
   }
 
-  // --- NEW: Week Tab State Management ---
+  // --- Week Tab State Management ---
   // If user clicks "Grocery", we set this to 'grocery' and view to 'week'.
   const [weekInitialTab, setWeekInitialTab] = useState<'plan' | 'grocery'>('plan')
-
-  // DELETED: useGroceryListGenerator hook call
-  // DELETED: Auto-generate effect
+  // Track if drawer should be expanded (e.g., when minimizing from full view)
+  const [drawerExpanded, setDrawerExpanded] = useState(false)
 
   // Scroll Container Ref State & Broadcaster
   const { scrollContainer } = useScrollBroadcaster()
@@ -475,7 +474,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           )}
         </AnimatePresence>
 
-        <div className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card pt-24 text-foreground">
+        <div
+            className={`shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground ${
+              isSearchMode ? 'pt-0' : 'pt-24'
+            }`}
+          >
           {view !== 'week' && (
             <RecipeFilters
               isOpen={filtersOpen}
@@ -540,6 +543,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                   recipes={processedRecipes}
                   allRecipes={recipes}
                   onClose={() => setView('library')}
+                  onMinimize={() => {
+                    setView('library')
+                    setDrawerExpanded(true)
+                  }}
                   onOpenCalendar={() => setIsCalendarOpen(true)}
                   onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                   scrollContainer={scrollContainer}
@@ -557,12 +564,16 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           <WeekContextBar
             onViewWeek={() => {
               setWeekInitialTab('plan')
+              setDrawerExpanded(false)
               setView('week')
             }}
             onViewGrocery={() => {
               setWeekInitialTab('grocery')
+              setDrawerExpanded(false)
               setView('week')
             }}
+            defaultExpanded={drawerExpanded}
+            onExpandedChange={setDrawerExpanded}
           />
         )}
       </RecipeManagerView>

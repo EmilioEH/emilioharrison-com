@@ -13,13 +13,14 @@ import {
   Share,
   Copy,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react'
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
 import { buildGroceryItems, calculateCostEstimate } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
-import { RecipeLibrary } from '../RecipeLibrary'
+import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
@@ -37,6 +38,7 @@ interface WeekWorkspaceProps {
   recipes: Recipe[]
   allRecipes: Recipe[]
   onClose: () => void
+  onMinimize?: () => void
   onOpenCalendar: () => void
   onSelectRecipe: (recipe: Recipe) => void
   scrollContainer: HTMLElement | Window | null
@@ -50,9 +52,10 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   recipes: _recipes,
   allRecipes,
   onClose,
+  onMinimize,
   onOpenCalendar,
   onSelectRecipe,
-  scrollContainer,
+  scrollContainer: _scrollContainer,
   onShare,
   initialTab = 'plan',
   user: _propsUser,
@@ -311,18 +314,22 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-xl">
         <Stack spacing="xs" className="mx-auto max-w-2xl px-4 py-3">
-          {/* Controls Row: Back + Week Toggles + Calendar + Grocery */}
+          {/* Controls Row: Minimize + Week Toggles + Calendar + Grocery */}
           <Inline spacing="xs" justify="between">
-            {/* Left: Back Button */}
+            {/* Left: Minimize/Close Button */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={onMinimize || onClose}
               className="h-8 w-8 rounded-full"
-              title="Back to Library"
-              aria-label="Back to Library"
+              title={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
+              aria-label={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
             >
-              <X className="h-4 w-4" />
+              {onMinimize ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
             </Button>
 
             {/* Center: Week Toggles + Calendar */}
@@ -393,19 +400,14 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       </div>
 
       {/* Content area: scrolls everything inside */}
-      <div className="flex-1 scroll-pt-16 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         {activeTab === 'plan' && (
-          <RecipeLibrary
-            recipes={groceryRecipes}
-            sort="week-day"
+          <WeekPlanView
+            activeWeekStart={activeWeekStart}
+            currentRecipes={currentRecipes}
+            allRecipes={allRecipes}
             onSelectRecipe={onSelectRecipe}
-            onToggleThisWeek={() => {}}
-            isSelectionMode={false}
-            selectedIds={new Set()}
-            hasSearch={false}
-            scrollContainer={scrollContainer}
-            allowManagement={true}
-            currentWeekStart={activeWeekStart}
+            onAddRecipe={() => onClose()}
             onShare={onShare}
           />
         )}

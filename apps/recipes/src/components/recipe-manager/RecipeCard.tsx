@@ -43,6 +43,7 @@ interface RecipeCardProps {
   onToggleThisWeek: (id: string) => void
   onManage?: (id: string) => void
   allowManagement?: boolean
+  skipAnimation?: boolean
 }
 
 export const RecipeCard = memo(
@@ -54,6 +55,7 @@ export const RecipeCard = memo(
     onToggleThisWeek,
     onManage,
     allowManagement = false,
+    skipAnimation = false,
   }: RecipeCardProps) => {
     // Calculate planned dates once for performance (memoized inside the component render)
     // Since this is a pure component, it will re-render if getPlannedDatesForRecipe output changes?
@@ -100,8 +102,9 @@ export const RecipeCard = memo(
 
     return (
       <motion.div
-        variants={itemVariants}
-        layout="position" // specific to framer motion list reordering smoothness
+        variants={skipAnimation ? undefined : itemVariants}
+        initial={skipAnimation ? false : undefined}
+        animate={skipAnimation ? { opacity: 1, y: 0 } : undefined}
         role="button"
         tabIndex={0}
         data-testid={`recipe-card-${recipe.id}`}
