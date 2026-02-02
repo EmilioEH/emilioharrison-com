@@ -325,11 +325,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               title={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
               aria-label={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
             >
-              {onMinimize ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <X className="h-4 w-4" />
-              )}
+              {onMinimize ? <ChevronDown className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
 
             {/* Center: Week Toggles + Calendar */}

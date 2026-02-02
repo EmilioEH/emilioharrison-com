@@ -59,7 +59,7 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       spacing: {
-        'header': 'var(--header-height)',
+        header: 'var(--header-height)',
         'search-bar': 'var(--search-bar-height)',
         'content-top': 'var(--content-top)',
         'safe-top': 'var(--safe-area-top)',

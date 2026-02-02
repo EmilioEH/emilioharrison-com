@@ -161,12 +161,12 @@ The application uses **CSS Custom Properties** to manage sticky element position
 
 #### Tailwind Spacing Utilities (in `tailwind.config.js`)
 
-| Utility | CSS Variable | Usage |
-|---------|--------------|-------|
-| `top-header` | `--header-height` | Sticky position below header |
-| `top-content-top` | `--content-top` | Sticky position below all shell elements |
-| `pt-content-top` | `--content-top` | Padding to clear all shell elements |
-| `pt-safe-top` | `--safe-area-top` | Safe area padding for notched devices |
+| Utility           | CSS Variable      | Usage                                    |
+| ----------------- | ----------------- | ---------------------------------------- |
+| `top-header`      | `--header-height` | Sticky position below header             |
+| `top-content-top` | `--content-top`   | Sticky position below all shell elements |
+| `pt-content-top`  | `--content-top`   | Padding to clear all shell elements      |
+| `pt-safe-top`     | `--safe-area-top` | Safe area padding for notched devices    |
 
 #### How to Modify Layout
 

@@ -19,6 +19,7 @@ This document serves as the single source of truth for design decisions, pattern
 ### Overview
 
 The recipes app uses a **CSS Variables hybrid approach** for layout management:
+
 - **CSS Variables** define heights of shell elements (header, search bar)
 - **Data attributes** toggle layout states (e.g., search mode)
 - **Tailwind utilities** expose variables for easy use in components
@@ -47,32 +48,31 @@ Defined in `src/styles/global.css`:
 
 Defined in `tailwind.config.js` under `theme.extend.spacing`:
 
-| Utility | CSS Variable | Usage |
-|---------|--------------|-------|
-| `top-header` | `--header-height` | Sticky position below header |
-| `pt-header` | `--header-height` | Padding for header height |
-| `top-content-top` | `--content-top` | Sticky position below all shell elements |
-| `pt-content-top` | `--content-top` | Padding to clear all shell elements |
-| `pt-safe-top` | `--safe-area-top` | Safe area padding for notched devices |
-| `top-search-bar` | `--search-bar-height` | Search bar height |
+| Utility           | CSS Variable          | Usage                                    |
+| ----------------- | --------------------- | ---------------------------------------- |
+| `top-header`      | `--header-height`     | Sticky position below header             |
+| `pt-header`       | `--header-height`     | Padding for header height                |
+| `top-content-top` | `--content-top`       | Sticky position below all shell elements |
+| `pt-content-top`  | `--content-top`       | Padding to clear all shell elements      |
+| `pt-safe-top`     | `--safe-area-top`     | Safe area padding for notched devices    |
+| `top-search-bar`  | `--search-bar-height` | Search bar height                        |
 
 ### Usage Examples
 
 **Sticky element below header:**
+
 ```tsx
-<div className="sticky top-header z-30">
-  {/* This sticks below the header */}
-</div>
+<div className="sticky top-header z-30">{/* This sticks below the header */}</div>
 ```
 
 **Content that clears all shell elements:**
+
 ```tsx
-<div className="pt-content-top">
-  {/* Content starts below header + search bar */}
-</div>
+<div className="pt-content-top">{/* Content starts below header + search bar */}</div>
 ```
 
 **State-based layout changes:**
+
 ```tsx
 // In parent component
 <div data-search-mode={isSearchMode ? 'true' : undefined}>
@@ -83,6 +83,7 @@ Defined in `tailwind.config.js` under `theme.extend.spacing`:
 ### How to Add New Shell Elements
 
 1. **Add a CSS variable** in `global.css`:
+
    ```css
    :root {
      --toolbar-height: 48px;
@@ -91,6 +92,7 @@ Defined in `tailwind.config.js` under `theme.extend.spacing`:
    ```
 
 2. **Add Tailwind utility** in `tailwind.config.js`:
+
    ```js
    spacing: {
      'toolbar': 'var(--toolbar-height)',
@@ -106,13 +108,13 @@ Defined in `tailwind.config.js` under `theme.extend.spacing`:
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/styles/global.css` | CSS variable definitions and state overrides |
-| `tailwind.config.js` | Tailwind spacing utilities that reference variables |
-| `src/components/recipe-manager/RecipeManager.tsx` | Sets `data-search-mode` attribute |
-| `src/components/recipe-manager/RecipeControlBar.tsx` | Uses `top-header` for sticky positioning |
-| `src/components/ui/AccordionGroup.tsx` | Uses `top-content-top` for sticky headers |
+| File                                                 | Purpose                                             |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| `src/styles/global.css`                              | CSS variable definitions and state overrides        |
+| `tailwind.config.js`                                 | Tailwind spacing utilities that reference variables |
+| `src/components/recipe-manager/RecipeManager.tsx`    | Sets `data-search-mode` attribute                   |
+| `src/components/recipe-manager/RecipeControlBar.tsx` | Uses `top-header` for sticky positioning            |
+| `src/components/ui/AccordionGroup.tsx`               | Uses `top-content-top` for sticky headers           |
 
 ### Benefits
 

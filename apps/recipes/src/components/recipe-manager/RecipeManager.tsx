@@ -475,9 +475,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         </AnimatePresence>
 
         <div
-            data-search-mode={isSearchMode ? 'true' : undefined}
-            className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card pt-content-top text-foreground"
-          >
+          data-search-mode={isSearchMode ? 'true' : undefined}
+          className="relative mx-auto flex min-h-full w-full max-w-2xl flex-col overflow-visible bg-card pt-content-top text-foreground"
+        >
           {view !== 'week' && (
             <RecipeFilters
               isOpen={filtersOpen}
