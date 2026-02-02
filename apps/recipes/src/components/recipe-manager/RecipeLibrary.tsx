@@ -25,16 +25,6 @@ const containerVariants = {
   },
 }
 
-// Fast container for search results - no stagger delay
-const fastContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 0.15,
-    },
-  },
-}
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
@@ -69,6 +59,7 @@ interface RecipeLibraryProps {
   currentWeekStart?: string // current week context for management
   onShare?: (recipe: Recipe) => void
   stickyHeaderOffset?: number
+  isSearchMode?: boolean // search bar is expanded/focused
 }
 
 declare global {
@@ -90,6 +81,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   currentWeekStart: _currentWeekStart,
   onShare,
   stickyHeaderOffset = 110,
+  isSearchMode = false,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   // Management UI state
@@ -213,39 +205,20 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             )
           })}
         </motion.div>
-      ) : hasSearch ? (
-        // FLAT LIST VIEW (For Search) - use fast variants for instant results
-        <motion.div
-          variants={fastContainerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-col gap-2 p-4 pt-0"
-        >
-          <p className="mb-2 text-sm font-medium text-muted-foreground">
-            Found {recipes.length} recipes
-          </p>
-          {recipes.map((recipe, index) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              isSelectionMode={isSelectionMode}
-              isSelected={selectedIds.has(recipe.id)}
-              onSelect={onSelectRecipe}
-              onToggleThisWeek={onToggleThisWeek}
-              allowManagement={allowManagement}
-              onManage={(id) => setManagementRecipeId(id)}
-              skipAnimation={index > 8}
-            />
-          ))}
-        </motion.div>
       ) : (
-        // ACCORDION GROUP VIEW (Default)
+        // ACCORDION GROUP VIEW (Default and Search)
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="flex flex-col"
         >
+          {/* Search Results Counter */}
+          {hasSearch && (
+            <p className="px-6 py-3 text-sm font-medium text-muted-foreground">
+              Found {recipes.length} recipes
+            </p>
+          )}
           {groupedRecipes.sortedKeys.map((key) => (
             <div key={key}>
               <AccordionGroup
@@ -255,7 +228,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
                 stickyHeader
-                stickyTop={stickyHeaderOffset}
+                stickyTop={isSearchMode ? 60 : stickyHeaderOffset}
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (

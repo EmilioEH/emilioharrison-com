@@ -531,6 +531,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                     hasSearch={!!searchQuery}
                     scrollContainer={scrollContainer}
                     onShare={(recipe) => setShareRecipe(recipe)}
+                    isSearchMode={isSearchMode}
                   />
                 </div>
               </div>
