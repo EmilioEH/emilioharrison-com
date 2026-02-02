@@ -22,8 +22,8 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
 }) => {
   return (
     <div
-      className={`sticky z-30 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all ${
-        isSearchMode ? 'top-0 pt-[env(safe-area-inset-top,12px)]' : 'top-[56px] pt-4'
+      className={`sticky top-header z-30 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all ${
+        isSearchMode ? 'pt-safe-top' : 'pt-4'
       }`}
     >
       <Inline spacing="sm" className="px-4">

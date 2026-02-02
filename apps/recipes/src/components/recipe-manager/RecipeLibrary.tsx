@@ -49,17 +49,13 @@ interface RecipeLibraryProps {
   isSelectionMode: boolean
   selectedIds: Set<string>
   onClearSearch?: () => void
-  // onSearchChange removed
   searchQuery?: string
   hasSearch?: boolean
   scrollContainer?: HTMLElement | Window | null
-  // New Header Tools Props removed (onOpenFilters, activeFilterCount, onSearchExpandedChange, hideSearch)
   // Week management props
   allowManagement?: boolean // show management menu for week context
   currentWeekStart?: string // current week context for management
   onShare?: (recipe: Recipe) => void
-  stickyHeaderOffset?: number
-  isSearchMode?: boolean // search bar is expanded/focused
 }
 
 declare global {
@@ -80,8 +76,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   allowManagement = false,
   currentWeekStart: _currentWeekStart,
   onShare,
-  stickyHeaderOffset = 110,
-  isSearchMode = false,
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   // Management UI state
@@ -228,7 +222,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
                 stickyHeader
-                stickyTop={isSearchMode ? 60 : stickyHeaderOffset}
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (

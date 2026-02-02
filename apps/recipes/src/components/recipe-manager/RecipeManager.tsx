@@ -475,9 +475,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         </AnimatePresence>
 
         <div
-            className={`shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card text-foreground ${
-              isSearchMode ? 'pt-0' : 'pt-24'
-            }`}
+            data-search-mode={isSearchMode ? 'true' : undefined}
+            className="shadow-md-3 relative mx-auto flex min-h-full w-full max-w-2xl flex-col bg-card pt-content-top text-foreground"
           >
           {view !== 'week' && (
             <RecipeFilters
@@ -531,7 +530,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                     hasSearch={!!searchQuery}
                     scrollContainer={scrollContainer}
                     onShare={(recipe) => setShareRecipe(recipe)}
-                    isSearchMode={isSearchMode}
                   />
                 </div>
               </div>

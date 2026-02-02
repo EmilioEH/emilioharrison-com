@@ -58,6 +58,12 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      spacing: {
+        'header': 'var(--header-height)',
+        'search-bar': 'var(--search-bar-height)',
+        'content-top': 'var(--content-top)',
+        'safe-top': 'var(--safe-area-top)',
+      },
     },
   },
   plugins: [typography, require('tailwindcss-animate')],

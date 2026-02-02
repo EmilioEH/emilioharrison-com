@@ -24,6 +24,18 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+
+    /* Layout dimensions */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --header-height: 56px;
+    --search-bar-height: 56px;
+    --content-top: calc(var(--header-height) + var(--search-bar-height));
+  }
+
+  /* Search mode: header hidden, search bar at top */
+  [data-search-mode='true'] {
+    --header-height: 0px;
+    --content-top: calc(var(--safe-area-top) + var(--search-bar-height));
   }
 
   .dark {
