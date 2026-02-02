@@ -23,6 +23,8 @@ This directory (`/docs`) serves as the central knowledge base for the project. A
 
 > **Note**: For Family Sync (multi-user) features, refer to `docs/technical/family-sync-architecture.md`.
 
+> **Note**: For Layout System (sticky headers, CSS variables), refer to `docs/technical/design-system.md` (the "CSS Variables Layout System" section) and the "Layout System" section in the root `CLAUDE.md`.
+
 - **`docs/guides/`**
   - **Purpose**: Instructions for users and developers.
   - **Examples**: `how-to-blog.md`, `setup-guide.md`.
@@ -36,3 +38,4 @@ This directory (`/docs`) serves as the central knowledge base for the project. A
 4.  **Update Plans**: When changing plans, update `docs/project-management/implementation_plan.md` instead of creating new scattered files.
 5.  **Naming Conventions**: Use `kebab-case` for filenames (e.g., `new-feature-plan.md`).
 6.  **Timestamps**: For periodic reports (like audits), append the date (e.g., `code-quality-audit-2025-11-27.md`).
+7.  **Layout Changes**: When modifying sticky headers, element positioning, or adding new shell UI elements, use the CSS Variables system. Never hardcode pixel values for `top` or `padding-top`. See `docs/technical/design-system.md` for details.

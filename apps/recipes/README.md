@@ -133,7 +133,50 @@ When creating "modal-like" fullscreen views (e.g., Week View, Recipe Detail) tha
 - `RecipeLibrary.tsx` implements a manual "Scrollspy" to sync the sticky category header with the scroll position.
 - **Caution:** Refactoring the list view requires checking this scroll logic (`onScroll`, `scrollCache`) to ensure the "sticky header" experience breaks gracefully.
 
-### 6. Layout Primitives (Jan 2026)
+### 6. CSS Variables Layout System (Feb 2026)
+
+The application uses **CSS Custom Properties** to manage sticky element positioning and layout dimensions. This avoids hardcoded pixel values and makes layout changes maintainable.
+
+#### Why CSS Variables for Layout?
+
+- **Before:** Sticky headers used hardcoded `top` values (`top-[56px]`, `top-[110px]`), breaking when elements were added/removed.
+- **After:** All layout dimensions flow from CSS variables that automatically update based on app state.
+
+#### CSS Variables (defined in `src/styles/global.css`)
+
+```css
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --header-height: 56px;
+  --search-bar-height: 56px;
+  --content-top: calc(var(--header-height) + var(--search-bar-height));
+}
+
+/* Search mode: header hidden, search bar at top */
+[data-search-mode='true'] {
+  --header-height: 0px;
+  --content-top: calc(var(--safe-area-top) + var(--search-bar-height));
+}
+```
+
+#### Tailwind Spacing Utilities (in `tailwind.config.js`)
+
+| Utility | CSS Variable | Usage |
+|---------|--------------|-------|
+| `top-header` | `--header-height` | Sticky position below header |
+| `top-content-top` | `--content-top` | Sticky position below all shell elements |
+| `pt-content-top` | `--content-top` | Padding to clear all shell elements |
+| `pt-safe-top` | `--safe-area-top` | Safe area padding for notched devices |
+
+#### How to Modify Layout
+
+1. **Add a new shell element**: Add a CSS variable and update `--content-top` calculation
+2. **Change element height**: Update the single CSS variable in `global.css`
+3. **State-based changes**: Use `data-*` attributes and CSS selectors to override variables
+
+**Agent Rule:** Never hardcode pixel values for `top` or `padding-top` on sticky/positioned elements. Always use the CSS variable utilities.
+
+### 7. Layout Primitives (Jan 2026)
 
 The application uses **semantic layout components** (`Stack`, `Inline`, `Cluster`) defined in `src/components/ui/layout.tsx` to ensure consistent spacing and improve maintainability.
 
@@ -281,6 +324,7 @@ Key entry points for common tasks:
 | **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.tsx` & `scripts/resolve-feedback.ts`                                             |
 | **Add E2E test**           | [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts) (API mocking & auth cookies) |
 | **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                                                              |
+| **Modify layout/sticky**   | `src/styles/global.css` (CSS variables) & `tailwind.config.js` (utilities) – see "CSS Variables Layout System" section            |
 
 **Conventions:**
 

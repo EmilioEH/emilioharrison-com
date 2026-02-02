@@ -3,11 +3,124 @@
 > [!CAUTION]
 > **This document describes the legacy "Vibe Coding" design system. The project has been migrated to [shadcn/ui](https://ui.shadcn.com/) for its core design system and components. Please refer to `apps/recipes/README.md` and the components in `src/components/ui/` for the current source of truth.**
 
-**Last Updated**: December 30, 2025  
-**Architectural State**: Migrated to shadcn/ui  
+**Last Updated**: December 30, 2025
+**Architectural State**: Migrated to shadcn/ui
 **Version**: 2.0 (Migration Status)
 
 This document serves as the single source of truth for design decisions, patterns, and conventions used in the Emilio Harrison portfolio project.
+
+---
+
+## CSS Variables Layout System (CURRENT)
+
+> [!IMPORTANT]
+> **This section is current and actively used.** The layout system uses CSS Custom Properties to manage sticky element positioning and avoid hardcoded pixel values.
+
+### Overview
+
+The recipes app uses a **CSS Variables hybrid approach** for layout management:
+- **CSS Variables** define heights of shell elements (header, search bar)
+- **Data attributes** toggle layout states (e.g., search mode)
+- **Tailwind utilities** expose variables for easy use in components
+
+### CSS Variables
+
+Defined in `src/styles/global.css`:
+
+```css
+:root {
+  /* Layout dimensions */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --header-height: 56px;
+  --search-bar-height: 56px;
+  --content-top: calc(var(--header-height) + var(--search-bar-height));
+}
+
+/* Search mode: header hidden, search bar at top */
+[data-search-mode='true'] {
+  --header-height: 0px;
+  --content-top: calc(var(--safe-area-top) + var(--search-bar-height));
+}
+```
+
+### Tailwind Spacing Utilities
+
+Defined in `tailwind.config.js` under `theme.extend.spacing`:
+
+| Utility | CSS Variable | Usage |
+|---------|--------------|-------|
+| `top-header` | `--header-height` | Sticky position below header |
+| `pt-header` | `--header-height` | Padding for header height |
+| `top-content-top` | `--content-top` | Sticky position below all shell elements |
+| `pt-content-top` | `--content-top` | Padding to clear all shell elements |
+| `pt-safe-top` | `--safe-area-top` | Safe area padding for notched devices |
+| `top-search-bar` | `--search-bar-height` | Search bar height |
+
+### Usage Examples
+
+**Sticky element below header:**
+```tsx
+<div className="sticky top-header z-30">
+  {/* This sticks below the header */}
+</div>
+```
+
+**Content that clears all shell elements:**
+```tsx
+<div className="pt-content-top">
+  {/* Content starts below header + search bar */}
+</div>
+```
+
+**State-based layout changes:**
+```tsx
+// In parent component
+<div data-search-mode={isSearchMode ? 'true' : undefined}>
+  {/* All children automatically get updated CSS variable values */}
+</div>
+```
+
+### How to Add New Shell Elements
+
+1. **Add a CSS variable** in `global.css`:
+   ```css
+   :root {
+     --toolbar-height: 48px;
+     --content-top: calc(var(--header-height) + var(--search-bar-height) + var(--toolbar-height));
+   }
+   ```
+
+2. **Add Tailwind utility** in `tailwind.config.js`:
+   ```js
+   spacing: {
+     'toolbar': 'var(--toolbar-height)',
+   }
+   ```
+
+3. **Update state overrides** if needed:
+   ```css
+   [data-some-mode='true'] {
+     --toolbar-height: 0px;
+   }
+   ```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/styles/global.css` | CSS variable definitions and state overrides |
+| `tailwind.config.js` | Tailwind spacing utilities that reference variables |
+| `src/components/recipe-manager/RecipeManager.tsx` | Sets `data-search-mode` attribute |
+| `src/components/recipe-manager/RecipeControlBar.tsx` | Uses `top-header` for sticky positioning |
+| `src/components/ui/AccordionGroup.tsx` | Uses `top-content-top` for sticky headers |
+
+### Benefits
+
+- **Single source of truth**: Heights defined once, used everywhere
+- **State-aware**: Data attributes automatically update all dependent values
+- **No prop drilling**: Components don't need offset props passed down
+- **Easy to modify**: Change one variable to update entire layout
+- **Future-proof**: Add new shell elements by updating `--content-top` calculation
 
 ---
 

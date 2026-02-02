@@ -165,6 +165,43 @@ Middleware sets request context (`lib/request-context.ts`) to provide Cloudflare
 - **Linting**: ESLint with strict config, Prettier with Astro plugin
 - **Bundler**: Vite (via Astro)
 
+### Layout System (Recipes App)
+
+The recipes app uses **CSS Custom Properties** for layout dimensions to avoid hardcoded pixel values. This allows sticky elements to stack properly and makes layout changes maintainable.
+
+**CSS Variables** (defined in `src/styles/global.css`):
+```css
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --header-height: 56px;
+  --search-bar-height: 56px;
+  --content-top: calc(var(--header-height) + var(--search-bar-height));
+}
+
+/* Search mode overrides (header hidden) */
+[data-search-mode='true'] {
+  --header-height: 0px;
+  --content-top: calc(var(--safe-area-top) + var(--search-bar-height));
+}
+```
+
+**Tailwind Spacing Utilities** (defined in `tailwind.config.js`):
+- `top-header`, `pt-header` → uses `--header-height`
+- `top-content-top`, `pt-content-top` → uses `--content-top`
+- `pt-safe-top` → uses `--safe-area-top`
+
+**How to modify layout:**
+1. **Add a new shell element** (e.g., toolbar below search): Add a new variable `--toolbar-height` and update `--content-top` to include it
+2. **Change element heights**: Update the single CSS variable in `global.css`
+3. **Add state-based layouts**: Use `data-*` attributes on containers and CSS selectors to override variables
+
+**Key files:**
+- `src/styles/global.css` - CSS variable definitions
+- `tailwind.config.js` - Tailwind spacing utilities
+- `RecipeManager.tsx` - Sets `data-search-mode` attribute
+- `RecipeControlBar.tsx` - Uses `top-header` for sticky positioning
+- `AccordionGroup.tsx` - Uses `top-content-top` for sticky headers
+
 ## Testing
 
 ### Unit Tests (Vitest)
