@@ -235,6 +235,46 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Visual Viewport logic for iOS Keyboard
+  const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    if (!useContainedScroll) {
+      setViewportHeight(undefined)
+      return
+    }
+
+    const handleResize = () => {
+      // Basic fallback
+      let height = window.innerHeight
+
+      // Robust Visual Viewport support for iOS
+      if (window.visualViewport) {
+        height = window.visualViewport.height
+      }
+
+      setViewportHeight(height)
+    }
+
+    // Initial check
+    handleResize()
+
+    // Listen to both window resize and visualViewport resize
+    window.addEventListener('resize', handleResize)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize)
+      window.visualViewport.addEventListener('scroll', handleResize)
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize)
+        window.visualViewport.removeEventListener('scroll', handleResize)
+      }
+    }
+  }, [useContainedScroll])
+
   // Switch scroll container when entering/exiting contained scroll mode
   useEffect(() => {
     if (useContainedScroll && scrollContainerRef.current) {
@@ -251,20 +291,18 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
       document.body.style.width = '100%'
-      document.body.style.height = '100%'
+      // Don't limit body height, just overflow hidden
     } else {
       // Restore body scrolling
       document.body.style.overflow = ''
       document.body.style.position = ''
       document.body.style.width = ''
-      document.body.style.height = ''
     }
     return () => {
       // Cleanup on unmount
       document.body.style.overflow = ''
       document.body.style.position = ''
       document.body.style.width = ''
-      document.body.style.height = ''
     }
   }, [useContainedScroll])
 
@@ -525,10 +563,17 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           ref={useContainedScroll ? scrollContainerRef : undefined}
           className={
             useContainedScroll
-              ? 'fixed inset-0 z-40 mx-auto flex h-full w-full max-w-2xl flex-col overflow-y-auto overscroll-contain bg-card pt-safe-top text-foreground'
+              ? 'fixed inset-0 z-40 mx-auto flex w-full max-w-2xl flex-col overflow-y-auto overscroll-contain bg-card pt-safe-top text-foreground'
               : 'relative mx-auto flex min-h-full w-full max-w-2xl flex-col overflow-visible bg-card pt-content-top text-foreground'
           }
-          style={useContainedScroll ? { WebkitOverflowScrolling: 'touch' } : undefined}
+          style={
+            useContainedScroll
+              ? {
+                  WebkitOverflowScrolling: 'touch',
+                  height: viewportHeight ? `${viewportHeight}px` : '100%',
+                }
+              : undefined
+          }
         >
           {view !== 'week' && (
             <RecipeFilters

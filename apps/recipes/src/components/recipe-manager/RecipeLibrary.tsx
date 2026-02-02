@@ -222,8 +222,9 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 isOpen={openGroups[key] !== false}
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
-                stickyHeader
-                stickyTop={isContainedScroll ? 'top-[56px]' : 'top-content-top'}
+                stickyTop={
+                  isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : 'top-content-top'
+                }
               >
                 <div className="flex flex-col gap-1">
                   {groupedRecipes.groups[key].map((recipe) => (
