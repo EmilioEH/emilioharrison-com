@@ -563,7 +563,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           ref={useContainedScroll ? scrollContainerRef : undefined}
           className={
             useContainedScroll
-              ? 'fixed inset-0 z-40 mx-auto flex w-full max-w-2xl flex-col overflow-y-auto overscroll-contain bg-card pt-safe-top text-foreground'
+              ? 'fixed inset-0 z-40 mx-auto flex w-full max-w-2xl flex-col overflow-y-auto overscroll-contain bg-card text-foreground'
               : 'relative mx-auto flex min-h-full w-full max-w-2xl flex-col overflow-visible bg-card pt-content-top text-foreground'
           }
           style={

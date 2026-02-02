@@ -30,7 +30,7 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
         isSearchMode && !isContainedScroll
           ? 'pt-[calc(var(--safe-area-top)+1rem)]'
           : isContainedScroll
-            ? ''
+            ? 'pt-2'
             : 'pt-4'
       }`}
     >

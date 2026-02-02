@@ -8,7 +8,7 @@ test.describe('Fuzzy Search', () => {
     },
   })
   test('finds recipe with typo', async ({ page }) => {
-    await page.goto('http://127.0.0.1:9002/protected/recipes')
+    await page.goto('/protected/recipes')
 
     // Wait for recipes to load
     await expect(page.getByText('E2E Test Recipe')).toBeVisible({ timeout: 10000 })
@@ -21,7 +21,7 @@ test.describe('Fuzzy Search', () => {
   })
 
   test('finds recipe by partial ingredient', async ({ page }) => {
-    await page.goto('http://127.0.0.1:9002/protected/recipes')
+    await page.goto('/protected/recipes')
 
     // Search for "flour" -> matches "E2E Test Recipe"
     const searchInput = page.getByPlaceholder('Search recipes...')
@@ -31,7 +31,7 @@ test.describe('Fuzzy Search', () => {
   })
 
   test('finds recipe by partial title', async ({ page }) => {
-    await page.goto('http://127.0.0.1:9002/protected/recipes')
+    await page.goto('/protected/recipes')
 
     const searchInput = page.getByPlaceholder('Search recipes...')
     await searchInput.fill('test')
@@ -39,7 +39,7 @@ test.describe('Fuzzy Search', () => {
     await expect(page.getByText('E2E Test Recipe')).toBeVisible()
   })
   test('highlights search term in results', async ({ page }) => {
-    await page.goto('http://127.0.0.1:9002/protected/recipes')
+    await page.goto('/protected/recipes')
 
     // Workaround: Create a recipe manually since mock data seems missing in test env
     // Click Add
