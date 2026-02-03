@@ -25,12 +25,12 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
   return (
     <div
       className={`sticky z-30 bg-background/95 pb-2 shadow-sm backdrop-blur transition-all ${
-        isContainedScroll ? 'top-0 pt-safe-top' : 'top-header'
+        isContainedScroll ? 'top-0' : 'top-header'
       } ${
         isSearchMode && !isContainedScroll
           ? 'pt-[calc(var(--safe-area-top)+1rem)]'
           : isContainedScroll
-            ? 'pt-6'
+            ? 'pt-[calc(var(--safe-area-top)+1.5rem)]'
             : 'pt-4'
       }`}
     >

@@ -200,8 +200,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
             )
           })}
         </motion.div>
-      ) : (
-        // ACCORDION GROUP VIEW (Default and Search)
+      ) : hasSearch ? (
+        // FLAT SEARCH RESULTS VIEW
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -209,11 +209,32 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           className="flex flex-col"
         >
           {/* Search Results Counter */}
-          {hasSearch && (
-            <p className="px-6 py-3 text-sm font-medium text-muted-foreground">
-              Found {recipes.length} recipes
-            </p>
-          )}
+          <p className="px-6 py-3 text-sm font-medium text-muted-foreground">
+            Found {recipes.length} recipes
+          </p>
+          <div className="flex flex-col gap-1 px-4 pb-8">
+            {recipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedIds.has(recipe.id)}
+                onSelect={onSelectRecipe}
+                onToggleThisWeek={onToggleThisWeek}
+                allowManagement={allowManagement}
+                onManage={(id) => setManagementRecipeId(id)}
+              />
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        // ACCORDION GROUP VIEW (Default)
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col"
+        >
           {groupedRecipes.sortedKeys.map((key) => (
             <div key={key}>
               <AccordionGroup
@@ -222,7 +243,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 isOpen={openGroups[key] !== false}
                 onToggle={() => toggleGroup(key)}
                 viewMode="list"
-                stickyHeader={!hasSearch}
                 stickyTop={
                   isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : 'top-content-top'
                 }
