@@ -543,6 +543,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               <RecipeHeader
                 user={currentUser ?? undefined}
                 scrollContainer={scrollContainer}
+                onAddRecipe={() => setView('edit')}
                 onViewWeek={() => {
                   setWeekInitialTab('plan')
                   setView(view === 'week' ? 'library' : 'week')
