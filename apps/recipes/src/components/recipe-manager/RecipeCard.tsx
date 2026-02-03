@@ -92,7 +92,7 @@ export const RecipeCard = memo(
     // Result: Stale badges.
 
     // Solution: Pass `plannedDates` as a prop.
-    const plannedDates = getPlannedDatesForRecipe(recipe.id)
+    const plannedDates = getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)
     const isPlanned = plannedDates.length > 0
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')

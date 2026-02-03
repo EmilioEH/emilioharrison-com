@@ -1,7 +1,6 @@
-import React, { useState, useLayoutEffect, useEffect } from 'react'
+import React, { useState, useLayoutEffect, useEffect, useMemo } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { ChefHat } from 'lucide-react'
-import { AccordionGroup } from '@/components/ui/AccordionGroup'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
@@ -12,6 +11,7 @@ import {
 } from '../../lib/weekStore'
 import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 import { RecipeCard } from './RecipeCard'
+import { CategoryPillBar } from './CategoryPillBar'
 
 // Animation Variants - only stagger first few items for perceived performance
 const containerVariants = {
@@ -78,7 +78,8 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   onShare,
   isContainedScroll = false,
 }) => {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  // Category filter state
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
   // Management UI state
   const [managementRecipeId, setManagementRecipeId] = useState<string | null>(null)
   // Subscribe to all planned recipes to trigger re-renders when plans change
@@ -112,12 +113,45 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [scrollContainer])
 
-  const toggleGroup = (groupName: string) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [groupName]: !prev[groupName],
-    }))
-  }
+  // Filter recipes based on selected categories
+  const filteredRecipes = useMemo(() => {
+    // If no categories selected, show all recipes
+    if (selectedCategories.size === 0) {
+      return recipes
+    }
+
+    // Filter recipes that match any of the selected categories
+    return recipes.filter((recipe) => {
+      // Get the category keys for this recipe based on current sort
+      const recipeCategories: string[] = []
+
+      // Determine which category this recipe belongs to based on sort type
+      if (sort === 'protein') {
+        recipeCategories.push(recipe.protein || 'Uncategorized')
+      } else if (sort === 'mealType') {
+        recipeCategories.push(recipe.mealType || 'Other')
+      } else if (sort === 'dishType') {
+        recipeCategories.push(recipe.dishType || 'Other')
+      } else if (sort === 'alpha') {
+        recipeCategories.push(recipe.title ? recipe.title[0].toUpperCase() : '#')
+      } else if (sort === 'time') {
+        const totalMinutes = (recipe.prepTime || 0) + (recipe.cookTime || 0)
+        if (totalMinutes <= 15) recipeCategories.push('15 Min or Less')
+        else if (totalMinutes <= 30) recipeCategories.push('30 Min or Less')
+        else if (totalMinutes <= 60) recipeCategories.push('Under 1 Hour')
+        else recipeCategories.push('Over 1 Hour')
+      } else if (sort === 'cost-low' || sort === 'cost-high') {
+        const cost = recipe.estimatedCost
+        if (cost === undefined || cost === null) recipeCategories.push('Unknown')
+        else if (cost < 10) recipeCategories.push('Under $10')
+        else if (cost < 20) recipeCategories.push('$10 - $20')
+        else recipeCategories.push('Over $20')
+      }
+
+      // Check if any of this recipe's categories are selected
+      return recipeCategories.some((cat) => selectedCategories.has(cat))
+    })
+  }, [recipes, selectedCategories, sort])
 
   if (recipes.length === 0) {
     return (
@@ -228,42 +262,43 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           </div>
         </motion.div>
       ) : (
-        // ACCORDION GROUP VIEW (Default)
+        // CATEGORY PILL BAR + FLAT LIST VIEW (Default)
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="flex flex-col"
         >
-          {groupedRecipes.sortedKeys.map((key) => (
-            <div key={key}>
-              <AccordionGroup
-                title={getGroupTitle(key)}
-                count={groupedRecipes.groups[key].length}
-                isOpen={openGroups[key] !== false}
-                onToggle={() => toggleGroup(key)}
-                viewMode="list"
-                stickyTop={
-                  isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : 'top-content-top'
-                }
-              >
-                <div className="flex flex-col gap-1">
-                  {groupedRecipes.groups[key].map((recipe) => (
-                    <RecipeCard
-                      key={recipe.id}
-                      recipe={recipe}
-                      isSelectionMode={isSelectionMode}
-                      isSelected={selectedIds.has(recipe.id)}
-                      onSelect={onSelectRecipe}
-                      onToggleThisWeek={onToggleThisWeek}
-                      allowManagement={allowManagement}
-                      onManage={(id) => setManagementRecipeId(id)}
-                    />
-                  ))}
-                </div>
-              </AccordionGroup>
-            </div>
-          ))}
+          {/* Category Pills */}
+          <CategoryPillBar
+            categories={groupedRecipes.sortedKeys.map((key) => ({
+              key,
+              label: getGroupTitle(key),
+              count: groupedRecipes.groups[key].length,
+            }))}
+            selectedCategories={selectedCategories}
+            onSelectionChange={setSelectedCategories}
+            stickyTop={
+              isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : 'top-content-top'
+            }
+            isContainedScroll={isContainedScroll}
+          />
+
+          {/* Flat Recipe List */}
+          <div className="flex flex-col gap-1 px-4 pb-8 pt-2">
+            {filteredRecipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedIds.has(recipe.id)}
+                onSelect={onSelectRecipe}
+                onToggleThisWeek={onToggleThisWeek}
+                allowManagement={allowManagement}
+                onManage={(id) => setManagementRecipeId(id)}
+              />
+            ))}
+          </div>
         </motion.div>
       )}
 
