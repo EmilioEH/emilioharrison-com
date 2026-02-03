@@ -250,7 +250,7 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
         <motion.div
           animate={{ x: swipeX }}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="relative flex items-center gap-4 bg-card p-3"
+          className="relative flex touch-pan-y items-center gap-4 bg-card p-3"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
