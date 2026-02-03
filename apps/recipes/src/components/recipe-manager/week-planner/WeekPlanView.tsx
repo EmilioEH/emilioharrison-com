@@ -131,9 +131,10 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
       hasMovedRef.current = true
     }
 
-    // Only handle horizontal swipe if not scrolling vertically
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      e.preventDefault() // Prevent scroll while swiping
+    // Only handle horizontal swipe if not scrolling vertically AND movement is significant
+    // We increase threshold for "swiping" to 10px to assume intentionality
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      if (e.cancelable) e.preventDefault() // Prevent scroll while swiping
 
       // Limit swipe distance - allow right swipe for cook, left swipe for menu
       const limitedSwipe = Math.max(-180, Math.min(150, deltaX))
@@ -143,8 +144,6 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
 
   // Handle touch end
   const handleTouchEnd = () => {
-    const deltaX = touchCurrentX.current - touchStartX.current
-
     // Check if swipe threshold met
     if (Math.abs(swipeX) > SWIPE_THRESHOLD) {
       if (swipeX > 0) {
@@ -158,14 +157,6 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
         triggerHaptic('light')
         setSwipeX(MENU_OPEN_POSITION)
         setIsMenuOpen(true)
-      }
-    } else if (!hasMovedRef.current && Math.abs(deltaX) < 10) {
-      // Tap - View recipe (or close menu if open)
-      if (isMenuOpen) {
-        setSwipeX(0)
-        setIsMenuOpen(false)
-      } else {
-        onSelectRecipe(recipe)
       }
     } else {
       // Didn't reach threshold, snap back
@@ -195,6 +186,16 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
     onMove(recipeId)
     setSwipeX(0)
     setIsMenuOpen(false)
+  }
+
+  // Handle click (selection)
+  const handleClick = () => {
+    if (isMenuOpen) {
+      setSwipeX(0)
+      setIsMenuOpen(false)
+    } else {
+      onSelectRecipe(recipe)
+    }
   }
 
   return (
@@ -250,7 +251,8 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
         <motion.div
           animate={{ x: swipeX }}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="relative flex touch-pan-y items-center gap-4 bg-card p-3"
+          className="relative flex cursor-pointer touch-pan-y items-center gap-4 bg-card p-3"
+          onClick={handleClick}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
