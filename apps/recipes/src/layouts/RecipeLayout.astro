@@ -145,20 +145,42 @@ const isImpersonating = Astro.cookies.has('admin_mask')
             navigator.serviceWorker.addEventListener('controllerchange', () => {
               console.log('New SW activated')
 
-              // Don't reload if user is viewing a recipe detail - this prevents
-              // the bug where users get unexpectedly kicked back to the library
-              const params = new URLSearchParams(window.location.search)
-              const isViewingRecipe = params.get('view') === 'detail' && params.get('recipe')
+              // Wait for any in-progress navigation to complete before checking
+              // This prevents race conditions where the URL hasn't been updated yet
+              // by React Router when users are clicking to open a recipe
+              requestAnimationFrame(() => {
+                setTimeout(() => {
+                  // Don't reload if user is viewing a recipe detail - this prevents
+                  // the bug where users get unexpectedly kicked back to the library
+                  const params = new URLSearchParams(window.location.search)
+                  const isViewingRecipe = params.get('view') === 'detail' && params.get('recipe')
 
-              if (isViewingRecipe) {
-                console.log('Deferring SW reload - user viewing recipe detail')
-                // Store flag to reload on next natural navigation
-                sessionStorage.setItem('sw_update_pending', 'true')
-                return
-              }
+                  // Also check history state as a backup (React Router sets this)
+                  const historyState = window.history.state
+                  const isNavigatingToRecipe =
+                    historyState?.view === 'detail' && historyState?.activeRecipeId
 
-              console.log('Reloading for fresh SW state...')
-              window.location.reload()
+                  // Debug logging to help diagnose any remaining issues
+                  console.log('SW reload check:', {
+                    url: window.location.search,
+                    urlView: params.get('view'),
+                    urlRecipe: params.get('recipe'),
+                    historyView: historyState?.view,
+                    historyRecipeId: historyState?.activeRecipeId,
+                    willDefer: isViewingRecipe || isNavigatingToRecipe,
+                  })
+
+                  if (isViewingRecipe || isNavigatingToRecipe) {
+                    console.log('Deferring SW reload - user viewing recipe detail')
+                    // Store flag to reload on next natural navigation
+                    sessionStorage.setItem('sw_update_pending', 'true')
+                    return
+                  }
+
+                  console.log('Reloading for fresh SW state...')
+                  window.location.reload()
+                }, 100) // Small delay to let navigation complete
+              })
             })
           } catch (registrationError) {
             console.log('SW registration failed: ', registrationError)
