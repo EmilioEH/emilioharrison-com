@@ -1,17 +1,17 @@
 import React, { useState, useRef } from 'react'
 import { format, parseISO, addDays } from 'date-fns'
-import { X, Plus, Clock, User, ChefHat } from 'lucide-react'
+import { Plus, Clock, User, ChefHat, Calendar, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import {
   DAYS_OF_WEEK,
   removeRecipeFromDay,
-  addRecipeToDay,
   type PlannedRecipe,
   type DayOfWeek,
 } from '../../../lib/weekStore'
 import type { Recipe } from '../../../lib/types'
 import { cookingSessionActions } from '../../../stores/cookingSession'
+import { DayPicker } from './DayPicker'
 
 interface WeekPlanViewProps {
   activeWeekStart: string
@@ -82,15 +82,13 @@ interface SwipeableRecipeCardProps {
   onSelectRecipe: (recipe: Recipe) => void
   onStartCooking: (recipe: Recipe) => void
   onRemove: (recipeId: string) => void
-  onDragStart: (recipeId: string, day: DayOfWeek) => void
-  onDragEnd: () => void
-  isDragOver: boolean
+  onMove: (recipeId: string) => void
 }
 
 const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
   recipe,
   recipeId,
-  day,
+  day: _day,
   dayName,
   monthAbbrev,
   dateNum,
@@ -98,21 +96,18 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
   onSelectRecipe,
   onStartCooking,
   onRemove,
-  onDragStart,
-  onDragEnd,
-  isDragOver,
+  onMove,
 }) => {
   const [swipeX, setSwipeX] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const touchCurrentX = useRef(0)
   const touchCurrentY = useRef(0)
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const hasMovedRef = useRef(false)
 
-  const SWIPE_THRESHOLD = 80 // Distance to trigger action
-  const LONG_PRESS_DURATION = 400 // ms to trigger drag
+  const SWIPE_THRESHOLD = 80 // Distance to trigger action/menu
+  const MENU_OPEN_POSITION = -160 // How far to swipe left to lock menu open
 
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -121,15 +116,6 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
     touchCurrentX.current = e.touches[0].clientX
     touchCurrentY.current = e.touches[0].clientY
     hasMovedRef.current = false
-
-    // Start long press timer for drag
-    longPressTimer.current = setTimeout(() => {
-      if (!hasMovedRef.current) {
-        triggerHaptic('medium')
-        setIsDragging(true)
-        onDragStart(recipeId, day)
-      }
-    }, LONG_PRESS_DURATION)
   }
 
   // Handle touch move
@@ -145,43 +131,18 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
       hasMovedRef.current = true
     }
 
-    // If dragging, don't handle swipe
-    if (isDragging) {
-      return
-    }
-
-    // Cancel long press if moved vertically (scrolling)
-    if (Math.abs(deltaY) > 10) {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current)
-        longPressTimer.current = null
-      }
-    }
-
     // Only handle horizontal swipe if not scrolling vertically
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       e.preventDefault() // Prevent scroll while swiping
-      // Limit swipe distance
-      const limitedSwipe = Math.max(-150, Math.min(150, deltaX))
+
+      // Limit swipe distance - allow right swipe for cook, left swipe for menu
+      const limitedSwipe = Math.max(-180, Math.min(150, deltaX))
       setSwipeX(limitedSwipe)
     }
   }
 
   // Handle touch end
   const handleTouchEnd = () => {
-    // Clear long press timer
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-
-    // If dragging, end drag
-    if (isDragging) {
-      setIsDragging(false)
-      onDragEnd()
-      return
-    }
-
     const deltaX = touchCurrentX.current - touchStartX.current
 
     // Check if swipe threshold met
@@ -190,48 +151,62 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
         // Swiped right - Start cooking
         triggerHaptic('success')
         onStartCooking(recipe)
+        setSwipeX(0)
+        setIsMenuOpen(false)
       } else {
-        // Swiped left - Remove
+        // Swiped left - Open menu (lock it open)
         triggerHaptic('light')
-        onRemove(recipeId)
+        setSwipeX(MENU_OPEN_POSITION)
+        setIsMenuOpen(true)
       }
     } else if (!hasMovedRef.current && Math.abs(deltaX) < 10) {
-      // Tap - View recipe
-      onSelectRecipe(recipe)
+      // Tap - View recipe (or close menu if open)
+      if (isMenuOpen) {
+        setSwipeX(0)
+        setIsMenuOpen(false)
+      } else {
+        onSelectRecipe(recipe)
+      }
+    } else {
+      // Didn't reach threshold, snap back
+      setSwipeX(0)
+      setIsMenuOpen(false)
     }
-
-    // Reset swipe
-    setSwipeX(0)
   }
 
   // Handle touch cancel
   const handleTouchCancel = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
     setSwipeX(0)
-    setIsDragging(false)
-    onDragEnd()
+    setIsMenuOpen(false)
+  }
+
+  // Handle menu actions
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    triggerHaptic('light')
+    onRemove(recipeId)
+    setSwipeX(0)
+    setIsMenuOpen(false)
+  }
+
+  const handleMove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    triggerHaptic('light')
+    onMove(recipeId)
+    setSwipeX(0)
+    setIsMenuOpen(false)
   }
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       {/* Day Header */}
-      <div
-        className={`flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2 transition-colors ${
-          isDragOver ? 'bg-primary/20 ring-2 ring-primary ring-inset' : ''
-        }`}
-      >
+      <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground">{dayName}</span>
           <span className="text-xs text-muted-foreground">
             {monthAbbrev} {dateNum}
           </span>
         </div>
-        {isDragging && (
-          <span className="text-xs font-medium text-primary">Drop on another day to move</span>
-        )}
       </div>
 
       {/* Swipeable Container */}
@@ -248,24 +223,34 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
             <span className="ml-2 font-bold text-primary-foreground">Cook</span>
           </motion.div>
 
-          {/* Right side - Remove (revealed when swiping left) */}
+          {/* Right side - Menu (revealed when swiping left) */}
           <motion.div
             initial={false}
             animate={{ opacity: swipeX < -20 ? 1 : 0 }}
-            className="flex h-full items-center bg-destructive px-6"
+            className="flex h-full items-center gap-2 bg-muted px-4"
           >
-            <span className="mr-2 font-bold text-destructive-foreground">Remove</span>
-            <X className="h-6 w-6 text-destructive-foreground" />
+            <button
+              onClick={handleMove}
+              className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+              aria-label="Move recipe"
+            >
+              <Calendar className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive text-destructive-foreground transition-colors hover:bg-destructive/90"
+              aria-label="Delete recipe"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
           </motion.div>
         </div>
 
         {/* Recipe Card (swipeable) */}
         <motion.div
-          animate={{ x: swipeX, scale: isDragging ? 1.05 : 1 }}
+          animate={{ x: swipeX }}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className={`relative flex items-center gap-4 bg-card p-3 ${
-            isDragging ? 'z-50 cursor-grabbing opacity-90 shadow-2xl' : 'cursor-grab'
-          }`}
+          className="relative flex items-center gap-4 bg-card p-3"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -322,11 +307,12 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
   onShare: _onShare,
 }) => {
   const activeDate = parseISO(activeWeekStart)
-  const [draggedRecipe, setDraggedRecipe] = useState<{
+  const [movePickerState, setMovePickerState] = useState<{
+    isOpen: boolean
     recipeId: string
-    fromDay: DayOfWeek
+    recipeTitle: string
+    currentDay?: DayOfWeek
   } | null>(null)
-  const [dragOverDay, setDragOverDay] = useState<DayOfWeek | null>(null)
 
   // Build day data with recipe info
   const dayData = DAYS_OF_WEEK.map((day, index) => {
@@ -360,111 +346,88 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
     onSelectRecipe(recipe) // Navigate to recipe detail which will show cooking mode
   }
 
-  // Handle drag start
-  const handleDragStart = (recipeId: string, fromDay: DayOfWeek) => {
-    setDraggedRecipe({ recipeId, fromDay })
+  // Handle move recipe - opens day picker
+  const handleMoveRecipe = (recipeId: string) => {
+    const recipe = allRecipes.find((r) => r.id === recipeId)
+    const plannedRecipe = currentRecipes.find((r) => r.recipeId === recipeId)
+    if (recipe) {
+      setMovePickerState({
+        isOpen: true,
+        recipeId,
+        recipeTitle: recipe.title,
+        currentDay: plannedRecipe?.day,
+      })
+    }
   }
 
-  // Handle drag end
-  const handleDragEnd = () => {
-    if (draggedRecipe && dragOverDay && dragOverDay !== draggedRecipe.fromDay) {
-      // Move recipe to new day
-      const moveRecipe = async () => {
-        // Remove from old day
-        await removeRecipeFromDay(draggedRecipe.recipeId)
-        // Add to new day
-        await addRecipeToDay(draggedRecipe.recipeId, dragOverDay)
-        triggerHaptic('success')
-      }
-      moveRecipe()
-    }
-    setDraggedRecipe(null)
-    setDragOverDay(null)
-  }
-
-  // Handle drag over empty day
-  const handleDragOverDay = (day: DayOfWeek) => {
-    if (draggedRecipe && day !== draggedRecipe.fromDay) {
-      setDragOverDay(day)
-    }
+  // Close day picker
+  const handleCloseDayPicker = () => {
+    setMovePickerState(null)
   }
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="flex flex-col gap-3 p-4 pb-24"
-    >
-      {dayData.map((d) => (
-        <motion.div
-          key={d.day}
-          variants={itemVariants}
-          onTouchMove={() => draggedRecipe && handleDragOverDay(d.day)}
-        >
-          {d.isPlanned && d.recipe ? (
-            // Planned Day Card with Swipe & Drag
-            <SwipeableRecipeCard
-              recipe={d.recipe}
-              recipeId={d.recipeId!}
-              day={d.day}
-              dayName={d.dayName}
-              monthAbbrev={d.monthAbbrev}
-              dateNum={d.dateNum}
-              addedByName={d.addedByName}
-              onSelectRecipe={onSelectRecipe}
-              onStartCooking={handleStartCooking}
-              onRemove={handleRemoveRecipe}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              isDragOver={dragOverDay === d.day}
-            />
-          ) : (
-            // Empty Day Card - Drop Zone
-            <div
-              className={`overflow-hidden rounded-xl border border-dashed transition-all ${
-                dragOverDay === d.day
-                  ? 'border-primary bg-primary/10 ring-2 ring-primary ring-offset-2'
-                  : 'border-border bg-card/50'
-              }`}
-            >
-              {/* Day Header */}
-              <div
-                className={`flex items-center justify-between border-b border-dashed px-4 py-2 transition-colors ${
-                  dragOverDay === d.day
-                    ? 'border-primary bg-primary/20'
-                    : 'border-border bg-muted/20'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-sm font-bold ${
-                      dragOverDay === d.day ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {d.dayName}
-                  </span>
-                  <span className="text-xs text-muted-foreground/70">
-                    {d.monthAbbrev} {d.dateNum}
-                  </span>
+    <>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col gap-3 p-4 pb-24"
+      >
+        {dayData.map((d) => (
+          <motion.div key={d.day} variants={itemVariants}>
+            {d.isPlanned && d.recipe ? (
+              // Planned Day Card with Swipe
+              <SwipeableRecipeCard
+                recipe={d.recipe}
+                recipeId={d.recipeId!}
+                day={d.day}
+                dayName={d.dayName}
+                monthAbbrev={d.monthAbbrev}
+                dateNum={d.dateNum}
+                addedByName={d.addedByName}
+                onSelectRecipe={onSelectRecipe}
+                onStartCooking={handleStartCooking}
+                onRemove={handleRemoveRecipe}
+                onMove={handleMoveRecipe}
+              />
+            ) : (
+              // Empty Day Card
+              <div className="overflow-hidden rounded-xl border border-dashed border-border bg-card/50">
+                {/* Day Header */}
+                <div className="flex items-center justify-between border-b border-dashed border-border bg-muted/20 px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-muted-foreground">{d.dayName}</span>
+                    <span className="text-xs text-muted-foreground/70">
+                      {d.monthAbbrev} {d.dateNum}
+                    </span>
+                  </div>
                 </div>
-                {dragOverDay === d.day && (
-                  <span className="text-xs font-medium text-primary">Drop here</span>
-                )}
-              </div>
 
-              {/* Empty State */}
-              <button
-                onClick={() => onAddRecipe?.(d.day)}
-                className="flex w-full items-center justify-center gap-2 p-6 text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
-              >
-                <Plus className="h-5 w-5" />
-                <span className="text-sm font-medium">Add a recipe</span>
-              </button>
-            </div>
-          )}
-        </motion.div>
-      ))}
-    </motion.div>
+                {/* Empty State */}
+                <button
+                  onClick={() => onAddRecipe?.(d.day)}
+                  className="flex w-full items-center justify-center gap-2 p-6 text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span className="text-sm font-medium">Add a recipe</span>
+                </button>
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* DayPicker Modal for Moving Recipes */}
+      {movePickerState && (
+        <DayPicker
+          isOpen={movePickerState.isOpen}
+          onClose={handleCloseDayPicker}
+          recipeId={movePickerState.recipeId}
+          recipeTitle={movePickerState.recipeTitle}
+          mode="edit"
+          currentDay={movePickerState.currentDay}
+        />
+      )}
+    </>
   )
 }
