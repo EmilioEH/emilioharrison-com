@@ -279,7 +279,9 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
           >
             {/* Collapsed/Medium View - CONTEXTUAL */}
             <div className="mx-auto max-w-2xl px-4">
-              {!isExpanded && nextMeal && (contextMode === 'cooking' || contextMode === 'pre-cooking') ? (
+              {!isExpanded &&
+              nextMeal &&
+              (contextMode === 'cooking' || contextMode === 'pre-cooking') ? (
                 // COOKING/PRE-COOKING MODE: Show meal preview with quick actions
                 <div className="py-3">
                   {/* Meal Preview Header */}
@@ -299,11 +301,16 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
 
                   {/* Recipe Title & Time */}
                   <div className="mb-3">
-                    <div className="text-base font-bold text-foreground">{nextMeal.recipe.title}</div>
+                    <div className="text-base font-bold text-foreground">
+                      {nextMeal.recipe.title}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {formatTimeUntilMeal(nextMeal.minutesUntil)}
                       {nextMeal.recipe.prepTime && nextMeal.recipe.cookTime && (
-                        <span> • {nextMeal.recipe.prepTime + nextMeal.recipe.cookTime} min total</span>
+                        <span>
+                          {' '}
+                          • {nextMeal.recipe.prepTime + nextMeal.recipe.cookTime} min total
+                        </span>
                       )}
                     </div>
                   </div>
@@ -316,7 +323,8 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
                           onSelectRecipe(nextMeal.recipe)
                         }
                       }}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                      disabled={!onSelectRecipe}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                     >
                       <ChefHat className="h-4 w-4" />
                       {contextMode === 'cooking' ? 'Start Cooking' : 'View Recipe'}
@@ -464,7 +472,10 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
                             <div className="text-xs text-muted-foreground">
                               {formatMealLabel(nextMeal)}
                               {nextMeal.recipe.prepTime && nextMeal.recipe.cookTime && (
-                                <span> • {nextMeal.recipe.prepTime + nextMeal.recipe.cookTime} min</span>
+                                <span>
+                                  {' '}
+                                  • {nextMeal.recipe.prepTime + nextMeal.recipe.cookTime} min
+                                </span>
                               )}
                             </div>
                           </div>
@@ -478,7 +489,8 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
                               handleSetExpanded(false)
                             }
                           }}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                          disabled={!onSelectRecipe}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                         >
                           <ChefHat className="h-4 w-4" />
                           {contextMode === 'cooking' ? 'Start Cooking' : 'View Recipe'}

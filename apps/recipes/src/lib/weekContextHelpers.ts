@@ -103,10 +103,13 @@ export function getNextUpcomingMeal(
   if (!nextMeal) return null
 
   // Determine mode based on time until meal
-  if (nextMeal.minutesUntil <= cookingThreshold && nextMeal.minutesUntil > 60) {
-    nextMeal.mode = 'pre-cooking' // 1-2 hours before
-  } else if (nextMeal.minutesUntil <= 60) {
+  // Cooking mode: within 60 min of meal
+  // Pre-cooking mode: between 60 min and cookingThreshold
+  const preCookingStart = Math.max(cookingThreshold, 60)
+  if (nextMeal.minutesUntil <= 60) {
     nextMeal.mode = 'cooking' // Less than 1 hour
+  } else if (nextMeal.minutesUntil <= preCookingStart) {
+    nextMeal.mode = 'pre-cooking' // 1-2 hours before (or up to threshold)
   }
 
   return nextMeal

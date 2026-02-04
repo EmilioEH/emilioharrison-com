@@ -121,13 +121,13 @@ const isImpersonating = Astro.cookies.has('admin_mask')
         <slot />
       </main>
       <div class="fixed bottom-0 left-0 right-0 z-50">
-        {/* <GlobalFeedback client:load /> */}
+        <GlobalFeedback client:load />
       </div>
     </div>
 
-    {/* <GlobalBurgerMenu client:load user={user} isAdmin={isAdmin} /> */}
-    {/* <GlobalDialogRoot client:load /> */}
-    {/* <GlobalScrollToTop client:load /> */}
+    <GlobalBurgerMenu client:load user={user} isAdmin={isAdmin} />
+    <GlobalDialogRoot client:load />
+    <GlobalScrollToTop client:load />
 
     <script>
       import '../lib/themeInit'
