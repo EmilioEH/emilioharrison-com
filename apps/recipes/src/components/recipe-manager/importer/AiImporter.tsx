@@ -87,6 +87,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
       const publicUrl = await uploadImage(file, baseUrl)
       if (publicUrl) {
         setImagePreview(publicUrl)
+        setImageData(publicUrl)
       } else {
         console.error('Failed to upload image - base64 will be used directly')
       }

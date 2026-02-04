@@ -34,6 +34,7 @@ interface OverviewModeProps {
   onSaveCost?: (cost: number) => void
   isRefreshing?: boolean
   refreshProgress?: string
+  onRecipeRefresh?: () => void | Promise<void>
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
@@ -42,6 +43,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   onSaveCost = () => {},
   isRefreshing = false,
   refreshProgress = '',
+  onRecipeRefresh,
 }) => {
   // Track AI operations to detect background enhancement
   const aiOperations = useStore(aiOperationStore)
@@ -121,9 +123,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   }, [recipe.id])
 
   // Calculate average rating from family
-  const averageRating = familyData?.ratings?.length
-    ? familyData.ratings.reduce((sum, r) => sum + r.rating, 0) / familyData.ratings.length
-    : recipe.rating || 0
+  const averageRating = familyData?.reviews?.length
+    ? familyData.reviews.reduce((sum, r) => sum + r.rating, 0) / familyData.reviews.length
+    : familyData?.ratings?.length
+      ? familyData.ratings.reduce((sum, r) => sum + r.rating, 0) / familyData.ratings.length
+      : recipe.rating || 0
 
   const handleEstimateCost = async () => {
     setIsEstimating(true)
@@ -482,11 +486,16 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           {/* Cooking History Summary */}
           <CookingHistorySummary
             averageRating={averageRating}
-            totalRatings={familyData?.ratings?.length || (recipe.rating ? 1 : 0)}
+            totalRatings={
+              familyData?.reviews?.length ||
+              familyData?.ratings?.length ||
+              (recipe.rating ? 1 : 0)
+            }
             lastCooked={recipe.lastCooked}
             familyData={familyData}
             recipeId={recipe.id}
             onRefresh={loadFamilyData}
+            onRecipeRefresh={onRecipeRefresh}
           />
 
           {/* Ingredients */}

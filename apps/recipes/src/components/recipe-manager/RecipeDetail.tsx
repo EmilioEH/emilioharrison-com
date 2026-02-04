@@ -117,6 +117,24 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     cookingSessionActions.startSession(recipe)
   }
 
+  const refreshRecipe = async () => {
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        const updatedRecipe = data.recipe || data
+        if (updatedRecipe && updatedRecipe.id === recipe.id) {
+          onUpdate(updatedRecipe, 'silent')
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to refresh recipe after review:', error)
+    }
+  }
+
   if (isCooking) {
     return <CookingContainer onClose={onClose} />
   }
@@ -154,6 +172,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'silent')}
         isRefreshing={isRefreshing}
         refreshProgress={refreshProgress}
+        onRecipeRefresh={refreshRecipe}
       />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-8 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">

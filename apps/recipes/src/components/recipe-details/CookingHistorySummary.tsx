@@ -15,6 +15,7 @@ interface CookingHistorySummaryProps {
   familyData?: FamilyRecipeData | null
   recipeId?: string
   onRefresh?: () => void
+  onRecipeRefresh?: () => void | Promise<void>
 }
 
 export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
@@ -25,6 +26,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   familyData,
   recipeId,
   onRefresh,
+  onRecipeRefresh,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [hoverRating, setHoverRating] = useState<number>(0)
@@ -101,7 +103,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
-      await fetch(`${baseUrl}api/recipes/${recipeId}/reviews`, {
+      const res = await fetch(`${baseUrl}api/recipes/${recipeId}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,6 +114,11 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         }),
       })
 
+      if (!res.ok) {
+        const errorPayload = await res.json().catch(() => ({}))
+        throw new Error(errorPayload.error || 'Failed to submit review')
+      }
+
       // Reset form
       setReviewRating(0)
       setReviewComment('')
@@ -119,6 +126,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
 
       // Trigger data reload
       onRefresh?.()
+      await onRecipeRefresh?.()
     } catch (error) {
       console.error('Failed to submit review:', error)
       alert('Failed to submit review. Please try again.')

@@ -15,6 +15,8 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   }
 
   try {
+    const requestUrl = new URL(request.url)
+    const baseUrl = new URL(import.meta.env.BASE_URL || '/', requestUrl.origin).toString()
     // Extract user info from cookies
     const userIdCookie = cookies.get('currentUserId')
     const familyIdCookie = cookies.get('familyId')
@@ -65,7 +67,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         const bucketName = `${projectId}.firebasestorage.app`
 
         await bucket.uploadFile(bucketName, filename, buffer, 'image/jpeg')
-        photoUrl = `/api/uploads/${filename}`
+        photoUrl = new URL(`api/uploads/${filename}`, baseUrl).toString()
       } catch (uploadError) {
         console.error('Photo upload failed:', uploadError)
         return new Response(

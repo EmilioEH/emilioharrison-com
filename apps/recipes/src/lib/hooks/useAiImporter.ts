@@ -146,7 +146,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     }
 
     if (!imageData) throw new Error('Please select an image')
-    if (imageData.length > 1024 * 1024 * 4) {
+    if (imageData.length > 1024 * 1024 * 9) {
       throw new Error('The image is too large. Please try a smaller photo.')
     }
 
