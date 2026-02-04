@@ -487,9 +487,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           <CookingHistorySummary
             averageRating={averageRating}
             totalRatings={
-              familyData?.reviews?.length ||
-              familyData?.ratings?.length ||
-              (recipe.rating ? 1 : 0)
+              familyData?.reviews?.length || familyData?.ratings?.length || (recipe.rating ? 1 : 0)
             }
             lastCooked={recipe.lastCooked}
             familyData={familyData}
