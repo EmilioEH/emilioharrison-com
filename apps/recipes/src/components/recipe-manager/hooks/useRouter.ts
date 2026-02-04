@@ -29,11 +29,24 @@ export function useRouter() {
     }
 
     const params = new URLSearchParams(window.location.search)
-    return {
-      view: (params.get('view') as ViewMode) || 'library',
-      activeRecipeId: params.get('recipe'),
-      searchQuery: params.get('q') || '',
+    let view = (params.get('view') as ViewMode) || 'library'
+    const activeRecipeId = params.get('recipe')
+    const searchQuery = params.get('q') || ''
+
+    // Auto-correct inconsistent state: if we have a recipe but no view, set view to detail
+    if (activeRecipeId && view === 'library') {
+      view = 'detail'
+
+      // Update URL to fix the inconsistency
+      const correctedParams = new URLSearchParams()
+      correctedParams.set('view', 'detail')
+      correctedParams.set('recipe', activeRecipeId)
+      if (searchQuery) correctedParams.set('q', searchQuery)
+      const newUrl = `${window.location.pathname}?${correctedParams.toString()}`
+      window.history.replaceState({ view, activeRecipeId, searchQuery }, '', newUrl)
     }
+
+    return { view, activeRecipeId, searchQuery }
   })
 
   // Sync state to URL and History
@@ -69,11 +82,12 @@ export function useRouter() {
       } else {
         // Fallback to parsing URL if state is null (e.g. initial load)
         const params = new URLSearchParams(window.location.search)
-        setState({
+        const newState = {
           view: (params.get('view') as ViewMode) || 'library',
           activeRecipeId: params.get('recipe'),
           searchQuery: params.get('q') || '',
-        })
+        }
+        setState(newState)
       }
     }
 
@@ -81,11 +95,20 @@ export function useRouter() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  // Memoize the setter functions to prevent re-creating them on every render
+  // This is critical for preventing infinite loops when these are used in useEffect dependencies
+  const setRecipe = useCallback(
+    (id: string | null) => updateRoute({ activeRecipeId: id }),
+    [updateRoute],
+  )
+  const setView = useCallback((view: ViewMode) => updateRoute({ view }), [updateRoute])
+  const setSearch = useCallback((query: string) => updateRoute({ searchQuery: query }), [updateRoute])
+
   return {
     ...state,
-    setRecipe: (id: string | null) => updateRoute({ activeRecipeId: id }),
-    setView: (view: ViewMode) => updateRoute({ view }),
-    setSearch: (query: string) => updateRoute({ searchQuery: query }),
+    setRecipe,
+    setView,
+    setSearch,
     setRoute: updateRoute,
   }
 }

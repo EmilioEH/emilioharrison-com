@@ -6,6 +6,7 @@ import markdoc from '@astrojs/markdoc'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://astro.build/config
+// Force restart: 2
 export default defineConfig({
   output: 'server',
   site: 'https://emilioharrison.com',
@@ -17,13 +18,13 @@ export default defineConfig({
   }),
   vite: {
     plugins: [
-      nodePolyfills({
-        include: ['buffer', 'process', 'stream'],
-        globals: {
-          Buffer: true,
-          process: true,
-        },
-      }),
+      //       nodePolyfills({
+      //         include: ['buffer', 'process', 'stream'],
+      //         globals: {
+      //           Buffer: true,
+      //           process: true,
+      //         },
+      //       }),
     ],
     build: {
       rollupOptions: {

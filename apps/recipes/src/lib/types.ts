@@ -277,6 +277,8 @@ interface CookingHistoryEntry {
 export interface WeekPlanData {
   isPlanned: boolean
   assignedDate?: string // YYYY-MM-DD
+  mealTime?: string // HH:mm format (e.g., "18:00" for 6pm)
+  mealType?: 'breakfast' | 'lunch' | 'dinner' // Optional meal type classification
   addedBy?: string // userId
   addedByName?: string // userName
   addedAt?: string // ISO date

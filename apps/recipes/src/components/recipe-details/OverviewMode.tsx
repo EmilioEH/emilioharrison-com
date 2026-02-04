@@ -102,7 +102,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
-      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/family-data`)
+      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/family-data`, {
+        cache: 'no-store',
+      })
       const data = await res.json()
 
       if (data.success && data.data) {

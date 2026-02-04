@@ -19,7 +19,8 @@ export interface PlannedRecipe {
   day: DayOfWeek
   date: string // YYYY-MM-DD
   weekStart: string // YYYY-MM-DD (Monday)
-  mealType?: string // Optional: Breakfast, Lunch, Dinner
+  mealType?: 'breakfast' | 'lunch' | 'dinner'
+  mealTime?: string // HH:mm format (e.g., "18:00" for 6pm)
   addedBy?: string
   addedByName?: string
 }
@@ -64,9 +65,10 @@ export const allPlannedRecipes = computed($recipeFamilyData, (familyData) => {
         day: DAYS_OF_WEEK[dayIndex],
         date: data.weekPlan.assignedDate,
         weekStart: format(weekStart, 'yyyy-MM-dd'),
+        mealType: data.weekPlan.mealType,
+        mealTime: data.weekPlan.mealTime,
         addedBy: data.weekPlan.addedBy,
         addedByName: data.weekPlan.addedByName,
-        mealType: undefined,
       })
     }
   })

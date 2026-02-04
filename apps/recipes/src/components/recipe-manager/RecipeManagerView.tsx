@@ -67,6 +67,12 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
 
   children,
 }) => {
+  React.useEffect(() => {
+    if (view === 'admin-dashboard' && !isAdmin) {
+      setView('library')
+    }
+  }, [view, isAdmin, setView])
+
   if (showOnboarding) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />
   }
@@ -191,7 +197,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
 
   if (view === 'admin-dashboard') {
     if (!isAdmin) {
-      setView('library')
       return null
     }
     return <AdminDashboard onClose={() => setView('library')} />

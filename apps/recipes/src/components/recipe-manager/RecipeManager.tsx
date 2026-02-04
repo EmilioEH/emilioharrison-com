@@ -680,6 +680,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               setDrawerExpanded(false)
               setView('week')
             }}
+            onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
             defaultExpanded={drawerExpanded}
             onExpandedChange={setDrawerExpanded}
           />

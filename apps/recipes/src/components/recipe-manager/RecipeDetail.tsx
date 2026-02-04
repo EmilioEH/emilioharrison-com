@@ -151,7 +151,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       <OverviewMode
         recipe={recipe}
         startCooking={startCooking}
-        onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'save')}
+        onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'silent')}
         isRefreshing={isRefreshing}
         refreshProgress={refreshProgress}
       />
