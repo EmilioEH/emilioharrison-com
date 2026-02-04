@@ -20,6 +20,7 @@ import {
   formatMealLabel,
   getContextMode,
 } from '../../../lib/weekContextHelpers'
+import { $userPreferences, getWeekTransitionDayNumber } from '../../../lib/userPreferences'
 
 interface WeekContextBarProps {
   onViewWeek: () => void
@@ -30,13 +31,17 @@ interface WeekContextBarProps {
 }
 
 /**
- * Get smart default week based on current day of week.
- * Fri-Sun → Next Week, Mon-Thu → This Week
+ * Get smart default week based on current day of week and user preference
+ * Uses user's preferred day to start planning next week
  */
-const getSmartDefaultWeek = (): 'this' | 'next' => {
+const getSmartDefaultWeek = (transitionDay: number): 'this' | 'next' => {
   const day = getDay(new Date()) // 0 = Sunday, 1 = Monday, ...
-  // Friday = 5, Saturday = 6, Sunday = 0
-  return day === 0 || day >= 5 ? 'next' : 'this'
+  // If today is on or after the transition day, show next week
+  // Handle Sunday (0) specially - it wraps around
+  if (transitionDay === 0) {
+    return day === 0 ? 'next' : 'this'
+  }
+  return day >= transitionDay ? 'next' : 'this'
 }
 
 /**
@@ -60,13 +65,20 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
   const currentRecipes = useStore(currentWeekRecipes)
   const plannedRecipes = useStore(allPlannedRecipes)
   const allRecipes = useStore($recipes)
+  const preferences = useStore($userPreferences)
 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
-  // Calculate next upcoming meal and context mode
+  // Calculate next upcoming meal and context mode using user preferences
   const nextMeal = useMemo(
-    () => getNextUpcomingMeal(plannedRecipes, allRecipes),
-    [plannedRecipes, allRecipes],
+    () =>
+      getNextUpcomingMeal(
+        plannedRecipes,
+        allRecipes,
+        preferences.cookingModeThreshold,
+        preferences.defaultMealTimes,
+      ),
+    [plannedRecipes, allRecipes, preferences.cookingModeThreshold, preferences.defaultMealTimes],
   )
   const contextMode = useMemo(() => getContextMode(nextMeal), [nextMeal])
 
@@ -105,7 +117,8 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
 
   // Apply smart default on mount if needed
   useEffect(() => {
-    const smartDefault = getSmartDefaultWeek()
+    const transitionDay = getWeekTransitionDayNumber(preferences.planNextWeekStartDay)
+    const smartDefault = getSmartDefaultWeek(transitionDay)
     if (smartDefault === 'next' && isThisWeek) {
       handleSetNextWeek()
     }

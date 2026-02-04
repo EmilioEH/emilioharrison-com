@@ -102,7 +102,10 @@ export function useRouter() {
     [updateRoute],
   )
   const setView = useCallback((view: ViewMode) => updateRoute({ view }), [updateRoute])
-  const setSearch = useCallback((query: string) => updateRoute({ searchQuery: query }), [updateRoute])
+  const setSearch = useCallback(
+    (query: string) => updateRoute({ searchQuery: query }),
+    [updateRoute],
+  )
 
   return {
     ...state,

@@ -43,6 +43,7 @@ import { WeekContextBar } from './week-planner/WeekContextBar'
 import { WeekWorkspace } from './week-planner/WeekWorkspace'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
+import { WeekPlannerSettings } from '../settings/WeekPlannerSettings'
 import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
 import { $cookingSession } from '../../stores/cookingSession'
 
@@ -222,6 +223,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     useRecipeSelection()
   const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [isSearchMode, setIsSearchMode] = useState(false)
+  const [showWeekPlannerSettings, setShowWeekPlannerSettings] = useState(false)
 
   // Mobile detection for contained scroll mode (fixes sticky headers with keyboard)
   const [isMobile, setIsMobile] = useState(false)
@@ -349,9 +351,14 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
     const handleNavigateToInvite = () => setView('invite')
     const handleNavigateToNotifications = () => setView('notifications')
+    const handleNavigateToWeekPlannerSettings = () => setShowWeekPlannerSettings(true)
 
     window.addEventListener('navigate-to-invite', handleNavigateToInvite)
     window.addEventListener('navigate-to-notifications', handleNavigateToNotifications)
+    window.addEventListener(
+      'navigate-to-week-planner-settings',
+      handleNavigateToWeekPlannerSettings,
+    )
 
     return () => {
       window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
@@ -364,6 +371,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       window.removeEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
       window.removeEventListener('navigate-to-invite', handleNavigateToInvite)
       window.removeEventListener('navigate-to-notifications', handleNavigateToNotifications)
+      window.removeEventListener(
+        'navigate-to-week-planner-settings',
+        handleNavigateToWeekPlannerSettings,
+      )
     }
   }, [setView])
 
@@ -842,6 +853,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         open={!!shareRecipe}
         onOpenChange={(open: boolean) => !open && setShareRecipe(null)}
       />
+
+      {/* Week Planner Settings Modal */}
+      <ResponsiveModal
+        isOpen={showWeekPlannerSettings}
+        onClose={() => setShowWeekPlannerSettings(false)}
+        title="Week Planner Settings"
+      >
+        <WeekPlannerSettings />
+      </ResponsiveModal>
     </>
   )
 }

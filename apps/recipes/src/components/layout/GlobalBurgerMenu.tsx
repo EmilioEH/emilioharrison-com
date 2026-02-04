@@ -35,6 +35,11 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
     window.dispatchEvent(new CustomEvent('navigate-to-settings'))
   }
 
+  const handleWeekPlannerSettings = () => {
+    closeBurgerMenu()
+    window.dispatchEvent(new CustomEvent('navigate-to-week-planner-settings'))
+  }
+
   const handleNotifications = () => {
     closeBurgerMenu()
     window.dispatchEvent(new CustomEvent('navigate-to-notifications'))
@@ -122,6 +127,15 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               >
                 <Settings className="text-foreground-variant h-5 w-5" />
                 <span className="font-medium text-foreground">Settings</span>
+              </button>
+
+              <button
+                role="menuitem"
+                onClick={handleWeekPlannerSettings}
+                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+              >
+                <LayoutDashboard className="text-foreground-variant h-5 w-5" />
+                <span className="font-medium text-foreground">Week Planner Settings</span>
               </button>
 
               {/* Admin Dashboard Link */}

@@ -37,10 +37,15 @@ export interface NextMealInfo {
 
 /**
  * Get the default meal time based on meal type
+ * Uses provided meal times or falls back to constants
  */
-function getDefaultMealTime(mealType?: 'breakfast' | 'lunch' | 'dinner'): string {
-  if (!mealType) return DEFAULT_MEAL_TIMES.dinner
-  return DEFAULT_MEAL_TIMES[mealType]
+function getDefaultMealTime(
+  mealType?: 'breakfast' | 'lunch' | 'dinner',
+  customMealTimes?: Record<string, string>,
+): string {
+  const times = customMealTimes || DEFAULT_MEAL_TIMES
+  if (!mealType) return times.dinner || DEFAULT_MEAL_TIMES.dinner
+  return times[mealType] || DEFAULT_MEAL_TIMES[mealType]
 }
 
 /**
@@ -48,14 +53,16 @@ function getDefaultMealTime(mealType?: 'breakfast' | 'lunch' | 'dinner'): string
  * @param date YYYY-MM-DD format
  * @param time HH:mm format (optional, defaults based on mealType)
  * @param mealType Used to determine default time if time is not specified
+ * @param customMealTimes Optional custom default meal times
  */
 function parseMealDateTime(
   date: string,
   time?: string,
   mealType?: 'breakfast' | 'lunch' | 'dinner',
+  customMealTimes?: Record<string, string>,
 ): Date {
   const dateObj = parseISO(date)
-  const timeStr = time || getDefaultMealTime(mealType)
+  const timeStr = time || getDefaultMealTime(mealType, customMealTimes)
   const [hours, minutes] = timeStr.split(':').map(Number)
   dateObj.setHours(hours, minutes, 0, 0)
   return dateObj
@@ -64,11 +71,14 @@ function parseMealDateTime(
 /**
  * Get the next upcoming meal from a list of planned recipes
  * Returns null if no upcoming meals found
+ * @param cookingThreshold Minutes before meal to switch to cooking mode (default: 120)
+ * @param customMealTimes Optional custom default meal times
  */
 export function getNextUpcomingMeal(
   plannedRecipes: PlannedRecipe[],
   allRecipes: Recipe[],
   cookingThreshold = DEFAULT_COOKING_THRESHOLD,
+  customMealTimes?: Record<string, string>,
 ): NextMealInfo | null {
   const now = new Date()
   const upcomingMeals: NextMealInfo[] = []
@@ -78,7 +88,12 @@ export function getNextUpcomingMeal(
     const recipe = allRecipes.find((r) => r.id === planned.recipeId)
     if (!recipe) return
 
-    const mealDateTime = parseMealDateTime(planned.date, planned.mealTime, planned.mealType)
+    const mealDateTime = parseMealDateTime(
+      planned.date,
+      planned.mealTime,
+      planned.mealType,
+      customMealTimes,
+    )
     const minutesUntil = differenceInMinutes(mealDateTime, now)
 
     // Only include future meals
