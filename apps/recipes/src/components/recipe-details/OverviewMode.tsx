@@ -248,11 +248,25 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   }
 
   // Construct images list
-  // Prefer recipe.images. If empty, fallback to sourceImage/finishedImage as single item array
-  const displayImages =
-    Array.isArray(recipe.images) && recipe.images.length > 0
-      ? recipe.images
-      : ([recipe.finishedImage || recipe.sourceImage].filter(Boolean) as string[])
+  // Prefer recipe.images. If empty, fallback to sourceImage/finishedImage as single item array.
+  // Also include any review photos from family data (for immediate visibility after submitting a review).
+  const displayImages = useMemo(() => {
+    const baseImages =
+      Array.isArray(recipe.images) && recipe.images.length > 0
+        ? recipe.images
+        : ([recipe.finishedImage || recipe.sourceImage].filter(Boolean) as string[])
+
+    // Collect photo URLs from reviews
+    const reviewPhotos = (familyData?.reviews || [])
+      .map((r) => r.photoUrl)
+      .filter((url): url is string => !!url)
+
+    // Merge, de-duplicate, and keep review photos that aren't already in the base set
+    const baseSet = new Set(baseImages)
+    const extraPhotos = reviewPhotos.filter((url) => !baseSet.has(url))
+
+    return [...baseImages, ...extraPhotos]
+  }, [recipe.images, recipe.finishedImage, recipe.sourceImage, familyData?.reviews])
 
   // Memoized ingredient groups with fallback to flat list
   const displayGroups = useMemo((): Array<{
