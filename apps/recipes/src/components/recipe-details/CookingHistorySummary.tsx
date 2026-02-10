@@ -36,6 +36,7 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
   const [reviewComment, setReviewComment] = useState('')
   const [reviewPhoto, setReviewPhoto] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   // Get current user ID from nanostore (set during app initialization)
@@ -91,9 +92,50 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
     setReviewRating(0)
     setReviewComment('')
     setReviewPhoto(null)
+    setEditingReviewId(null)
   }
 
-  // Submit review
+  // Edit review
+  const handleEditReview = (review: Review) => {
+    setReviewRating(review.rating)
+    setReviewComment(review.comment || '')
+    setReviewPhoto(review.photoUrl || null)
+    setEditingReviewId(review.id)
+    // Ensure section is expanded (though it should be to see the button)
+    setIsExpanded(true)
+    // Scroll to form?
+  }
+
+  // Delete review
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!recipeId || !confirm('Are you sure you want to delete this review?')) return
+
+    setIsSubmitting(true)
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      const res = await fetch(`${baseUrl}api/recipes/${recipeId}/reviews/${reviewId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to delete review')
+      }
+
+      // Success
+      onRefresh?.()
+      await onRecipeRefresh?.()
+    } catch (error) {
+      console.error('Failed to delete review:', error)
+      alert('Failed to delete review.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Submit review (Create or Update)
   const handleSubmitReview = async () => {
     if (!recipeId || reviewRating === 0) return
 
@@ -103,8 +145,14 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
-      const res = await fetch(`${baseUrl}api/recipes/${recipeId}/reviews`, {
-        method: 'POST',
+      const url = editingReviewId
+        ? `${baseUrl}api/recipes/${recipeId}/reviews/${editingReviewId}`
+        : `${baseUrl}api/recipes/${recipeId}/reviews`
+
+      const method = editingReviewId ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rating: reviewRating,
@@ -120,9 +168,8 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
       }
 
       // Reset form
-      setReviewRating(0)
-      setReviewComment('')
-      setReviewPhoto(null)
+      handleCancelReview()
+      setIsExpanded(true)
 
       // Trigger data reload
       onRefresh?.()
@@ -185,6 +232,8 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
+                  type="button"
+                  aria-label={`Rate ${star} stars`}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
                   onClick={(e) => {
@@ -276,7 +325,11 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                       disabled={reviewRating === 0 || isSubmitting}
                       className="flex-1"
                     >
-                      {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                      {isSubmitting
+                        ? 'Submitting...'
+                        : editingReviewId
+                          ? 'Update Review'
+                          : 'Submit Review'}
                     </Button>
                   </Inline>
                 </Stack>
@@ -356,11 +409,28 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
                       />
                     )}
 
-                    {/* Edit button for current user */}
+                    {/* Edit/Delete buttons for current user */}
                     {isCurrentUserReview && (
-                      <Button variant="ghost" size="sm" className="self-start">
-                        Edit Review
-                      </Button>
+                      <Inline spacing="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="self-start text-muted-foreground hover:text-foreground"
+                          onClick={() => handleEditReview(review)}
+                          disabled={isSubmitting}
+                        >
+                          Edit Review
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="self-start text-red-500 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => handleDeleteReview(review.id)}
+                          disabled={isSubmitting}
+                        >
+                          Delete
+                        </Button>
+                      </Inline>
                     )}
                   </Stack>
                 </div>
