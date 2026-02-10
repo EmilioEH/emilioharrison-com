@@ -1,32 +1,41 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { bucket, db } from '@/lib/firebase-server'
 import type { Review } from '@/lib/types'
+import { getAuthUser, unauthorizedResponse } from '@/lib/api-helpers'
+import { setRequestContext } from '@/lib/request-context'
 
 /**
  * POST /api/recipes/:id/reviews
  * Submit a new review for a recipe with rating, optional comment, and optional photo
  */
-export const POST: APIRoute = async ({ params, request, cookies }) => {
+export const POST: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+
+  const { params, request, cookies } = context
   const { id: recipeId } = params
   if (!recipeId) {
     return new Response(JSON.stringify({ error: 'Recipe ID required' }), { status: 400 })
   }
 
+  const userId = getAuthUser(cookies)
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
   try {
     const requestUrl = new URL(request.url)
     const baseUrl = new URL(import.meta.env.BASE_URL || '/', requestUrl.origin).toString()
-    // Extract user info from cookies
-    const userIdCookie = cookies.get('currentUserId')
-    const userNameCookie = cookies.get('currentUserName')
-    const familyIdCookie = cookies.get('familyId')
 
-    if (!userIdCookie?.value || !userNameCookie?.value || !familyIdCookie?.value) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 })
+    // Look up user profile from Firestore (standard pattern)
+    const userDoc = await db.getDocument('users', userId)
+    if (!userDoc || !userDoc.familyId) {
+      return new Response(JSON.stringify({ error: 'You must create or join a family first' }), {
+        status: 400,
+      })
     }
 
-    const userId = userIdCookie.value
-    const userName = userNameCookie.value
-    const familyId = familyIdCookie.value
+    const userName = userDoc.displayName || 'User'
+    const familyId = userDoc.familyId
 
     // Parse request body
     const body = await request.json()

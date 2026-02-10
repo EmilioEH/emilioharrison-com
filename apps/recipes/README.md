@@ -7,7 +7,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 
 ## 🚀 Core Features
 
-- **PWA Experience**: Installable on mobile with offline support.
+- **PWA Experience**: Installable on mobile; Service Worker caches the app shell and icons.
 - **Advanced Management**: Edit recipes, track version history, and rate/favorite your best dishes. Supports **multi-image upload** (including auto-converting HEIC/HEIF) and a **zoomable photo carousel**.
 - **Rich Metadata Tagging**: Organize recipes by Meal Type (Breakfast, Dinner, etc.), Dish Type (Main, Side, etc.), Dietary restrictions (Vegan, Keto), required Equipment (Air Fryer, Slow Cooker), and Occasion (Weeknight, Party).
 - **Advanced Filtering & Grouping**: Filter your library by any metadata field. Sort and group recipes into dynamic accordions by Meal Type, Dish Type, or Protein. Powered by [Fuse.js](https://fusejs.io/) for fuzzy search.
@@ -18,11 +18,11 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
   - **Dish (Experimental)**: Upload a photo of a finished dish. Gemini will **reverse-engineer** the recipe, inferring likely ingredients and steps based on the visual cues and optional context (Cuisine, Taste Profile) you provide.
   - **URL**: Paste a link to import from a website. Also uses **Dual-Process**: immediate parsing followed by background enhancement.
   - **Import**: Bulk upload markdown files or manually enter details from one streamlined interface.
-- **Smart Notifications**: "Hybrid" reminder system for meal planning, grocery lists, and daily cooking prompts (Service Worker + In-App Fallback).
-- **Offline Capable**: Full PWA support with offline view and cached recipes.
-- **Smart Shoppable Grocery Lists**: Generate categorized grocery lists that intelligently convert recipe units (e.g., "4 cloves garlic") into store-friendly purchasable units (e.g., "1 head garlic").
+- **Smart Notifications**: Reminder system for meal planning, grocery lists, and daily cooking prompts (in-app scheduling with Service Worker notification display).
+- **Offline Lite**: App shell is cached by the Service Worker; grocery list has an offline fallback. Full recipe browsing offline is not currently supported.
+- **Smart Shoppable Grocery Lists**: Generate categorized grocery lists that intelligently convert recipe units (e.g., "4 cloves garlic") into store-friendly purchasable units (e.g., "1 head garlic"). Includes a background AI job that saves lists to Firestore.
 - **Source Attribution**: Grocery items perform "double duty"—displaying the aggregate store unit while allowing users to tap tags (e.g., `[RECIPE A]`) to see exactly how much is needed for each dish.
-- **Persistent Caching**: Grocery lists are cached locally, allowing for instant 0ms reloading of previously generated lists, even after closing the app.
+- **Persistent Grocery State**: Checked items are stored locally; AI-generated lists are persisted in Firestore for fast reloads.
 - **Shared Family Collection**: All recipes are stored in Firebase Firestore and shared across all authenticated users. Perfect for families or groups collaborating on a recipe collection.
 - **Waitlist/Access Control**:
   - "Invite Only" mode active.
@@ -44,7 +44,7 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Unified Navigation**: An integrated app header that houses the primary menu and grocery list actions. It is **scroll-aware** (sticks to top, hides on scroll down, reveals on scroll up) to maximize content visibility while maintaining easy access to navigation.
 - **Modern Bottom Navigation**: A sticky, glassmorphic bottom bar that houses primary controls—tabs (Library/This Week), search, filters, and view toggles—providing an ergonomic mobile-first experience similar to modern app designs.
 - **Sticky & Collapsible Group Headers**: Improved library navigation with group headers that stick to the top while scrolling and can be toggled to expand or collapse categories, optimizing vertical space.
-- **Recipe Cooking Mode 3.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **5-star ratings**, **finished dish photo upload**, and **inline editing** of ingredients and steps.
+- **Recipe Cooking Mode 2.0**: A premium step-by-step experience with "Smart Timers", **persistent ingredients panel** (desktop/tablet), **horizontal timeline navigation**, and an integrated **review flow** with **5-star ratings**, **finished dish photo upload**, and **inline editing** of ingredients and steps.
 - **Feedback System**: Directly submit bug reports and enhancement ideas from any screen via a persistent **Beta Footer Bar** fixed at the bottom of the viewport. Supports a global **keyboard shortcut** (`Cmd/Ctrl + Shift + F`) for instant reporting. The footer is **scroll-aware** (hides on scroll down, appears on scroll up) and intelligently stacked to never obscure content.
 - **Admin Dashboard**: A centralized interface (restricted to admins via `ADMIN_EMAILS` check) to:
   - **Users**: View all users, manage their access status (Disable/Enable), and remove users/spam accounts.
@@ -53,11 +53,15 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
   - **Feedback**: Review, track, and resolve user feedback reports.
   - **Push Notifications**: Native PWA push notifications alert admins immediately when new feedback is submitted. Supported on Android, Windows, macOS, and iOS (requires "Add to Home Screen").
 - **Smart Notifications**: Comprehensive notification system keeping families in sync.
-  - **Cooking Timers**: Local alerts when cooking timers complete, even if the app is backgrounded.
+  - **Cooking Timers**: Local alerts while the app is open (uses the Notification API). Push notifications are used for family events.
   - **Family Sync**: Push alerts when a family member updates the weekly meal plan.
   - **Collaborative Cooking**: Notifications when someone starts a cooking session.
   - **Invites**: Instant alerts when you receive a family invitation.
   - **Granular Control**: Manage preferences for each notification type via the Settings menu.
+  - **Reminder Scheduling**: Configure weekly planning, grocery list, and daily cooking reminders in Notification Settings.
+
+- **Email Link Sign-In**: Optional email link authentication flow in addition to Google Sign-In.
+- **AI Cost Estimate**: Estimate grocery cost for recipes and weekly plans using the AI cost endpoint.
 
 ## 🛠 Tech Stack
 
@@ -66,8 +70,9 @@ Chefboard is an intelligent recipe management system built for speed, utility, a
 - **Animations**: [Framer Motion](https://www.framer.com/motion/) (Layout & Physics-based transitions)
 - **State Management**: [Nanostores](https://github.com/nanostores/nanostores) (Lightweight & Framework-agnostic)
 - **Search**: [Fuse.js](https://fusejs.io/) (Fuzzy search for recipe library) - **Matches titles and ingredients** with support for typos and partial phrases. Results are **sorted by relevance** (best match first), overriding other sort filters when active. Includes **match highlighting** for better visibility.
+- **AI**: Gemini 2.5 Flash via `@google/genai`
 - **Serverless**: [Cloudflare Pages](https://pages.cloudflare.com/) (Host) + [Firebase Firestore](https://firebase.google.com/docs/firestore) (Data) + [Firebase Storage](https://firebase.google.com/docs/storage) (Images)
-- **Content**: [Markdoc](https://markdoc.dev/) + Markdown
+- **Content**: Markdoc integration (currently unused; no content collections defined)
 - **Testing**: [Vitest](https://vitest.dev/) (Unit) + [Playwright](https://playwright.dev/) (E2E) + [Stryker](https://stryker-mutator.io/) (Mutation)
 
 ## 🧱 Architectural Patterns
@@ -196,12 +201,12 @@ The application uses **semantic layout components** (`Stack`, `Inline`, `Cluster
 
 All primitives use the `spacing` prop with a controlled scale:
 
-- `xs` = 2px (0.5rem)
-- `sm` = 8px (2rem)
-- `md` = 16px (4rem)
-- `lg` = 24px (6rem)
-- `xl` = 32px (8rem)
-- `2xl` = 48px (12rem)
+- `xs` = 2px
+- `sm` = 8px
+- `md` = 16px
+- `lg` = 24px
+- `xl` = 32px
+- `2xl` = 48px
 
 #### Usage Guidelines
 
@@ -286,7 +291,7 @@ All primitives use the `spacing` prop with a controlled scale:
 - **Service Worker Immediate Activation (Jan 2026)**: Fixed persistent "Service Worker not ready" errors on mobile devices by adding `skipWaiting()` and `clients.claim()` lifecycle calls. The SW now activates instantly instead of waiting 10+ seconds, ensuring push notification subscriptions succeed immediately.
 - **Robust Notification Subscription (Jan 2026)**: Implemented a resilient **Self-Healing** mechanism for push notifications in `PushNotificationManager`. The system now robustly handles race conditions, ensures **Mobile API Compliance**, guarantees **State Persistence** (via explicit scope verification), uses **Server-Side Upserts** to prevent conflict errors, and includes a user-facing **Test Notification** feature for instant verification.
 - **Scroll to Top Button (Jan 2026)**: Added a floating "Scroll to Top" button that appears when scrolling past the viewport height. It provides a smooth return to the top of the page and is positioned to avoid overlapping with the Beta Feedback Footer, ensuring a clean and accessible user experience.
-- **Notification System Stabilization (Jan 2026)**: Resolved critical "Illegal Constructor" errors affecting Android and certain desktop browsers by replacing raw `new Notification()` calls with the robust `ServiceWorkerRegistration.showNotification()` API. Added a new E2E test suite (`notification-settings.spec.ts`) to prevent regressions in preference persistence.
+- **Notification System Stabilization (Jan 2026)**: Push notifications now use `ServiceWorkerRegistration.showNotification()` to avoid "Illegal Constructor" errors on some devices. Added a new E2E test suite (`notification-settings.spec.ts`) to prevent regressions in preference persistence.
 - **Accessibility Fix (Jan 2026)**: Fixed an issue where toggle switches in Notification Settings were unclickable by replacing the custom `div`-based implementation with a proper `<label>` wrapper and adding `aria-label` support, ensuring full accessibility and interaction reliability.
 - **Cooking Timer & Layout Polish**: Refined the cooking timer experience by consolidating duplicate displays, restoring the minimized/expanded toggle, and enabling step navigation from the timer. Improved mobile layout with better footer padding and higher contrast for next-step previews.
 - **Hybrid Instruction Display**: Implemented a smart numbering system for recipe instructions. "Strict" recipes (transcribed) display traditional step numbers (e.g., "(1) Step text"). "Enhanced" recipes (AI-structured) feature numbered **Group Headers** (e.g., "(1) PREP THE BEEF") with unnumbered, checklist-style steps below, improving readability for complex workflows.
@@ -313,18 +318,20 @@ All primitives use the `spacing` prop with a controlled scale:
 
 Key entry points for common tasks:
 
-| Task                       | Primary Files                                                                                                                     |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                                                            |
-| **Add new metadata field** | Use slash command: `/add-metadata` (Covers Types, UI, AI, and Filtering)                                                          |
-| **Modify AI parsing**      | `src/lib/services/ai-parser.ts` (Core logic) & `src/pages/api/parse-recipe.ts` (Streaming)                                        |
-| **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI)                                       |
-| **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                                                             |
-| **Update global UI**       | `src/components/layout/` (GlobalBurgerMenu, GlobalFeedback)                                                                       |
-| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.tsx` & `scripts/resolve-feedback.ts`                                             |
-| **Add E2E test**           | [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts) (API mocking & auth cookies) |
-| **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                                                              |
-| **Modify layout/sticky**   | `src/styles/global.css` (CSS variables) & `tailwind.config.js` (utilities) – see "CSS Variables Layout System" section            |
+| Task                       | Primary Files                                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Fix UI bug**             | `src/components/recipe-manager/*.tsx` → find component by feature name                                                 |
+| **Add new metadata field** | Use slash command: `/add-metadata` (Covers Types, UI, AI, and Filtering)                                               |
+| **Modify AI parsing**      | `src/lib/services/ai-parser.ts` (Core logic) & `src/pages/api/parse-recipe.ts` (Streaming)                             |
+| **Change grocery logic**   | `src/lib/grocery-logic.ts` (deterministic) or `src/pages/api/generate-grocery-list.ts` (AI)                            |
+| **Cost estimation**        | `src/pages/api/estimate-cost.ts` & `src/components/recipe-manager/week-planner/WeekWorkspace.tsx`                      |
+| **Notifications**          | `src/components/recipe-manager/views/NotificationSettingsView.tsx` & `src/lib/push-notifications.ts`                   |
+| **Add API endpoint**       | Create in `src/pages/api/` – Astro file-based routing                                                                  |
+| **Update global UI**       | `src/components/layout/` (GlobalBurgerMenu, GlobalFeedback)                                                            |
+| **Manage Feedback**        | `src/components/recipe-manager/FeedbackDashboard.tsx` & `scripts/resolve-feedback.ts`                                  |
+| **Add E2E test**           | [tests/msw-setup.ts](tests/msw-setup.ts) (API mocking & auth cookies)                                                  |
+| **Run app locally**        | Use `/run-local` slash command – starts dev server and opens browser                                                   |
+| **Modify layout/sticky**   | `src/styles/global.css` (CSS variables) & `tailwind.config.js` (utilities) – see "CSS Variables Layout System" section |
 
 **Conventions:**
 
@@ -362,7 +369,7 @@ npm run check:hygiene
 
 ### Testing & Validation
 
-For a comprehensive guide on which test to run and how to debug, see the **[/run-tests](file:///Users/emilioharrison/Code/emilioharrison-com/.agent/workflows/run-tests.md)** workflow.
+For a comprehensive guide on which test to run and how to debug, see the **[/run-tests](../../.agent/workflows/run-tests.md)** workflow.
 
 ```bash
 /run-tests # Auto-runs Unit and E2E checks
@@ -495,7 +502,7 @@ We use **two complementary testing approaches**:
 > Major functional tests (e.g., Data Management) use **Network Interception** to mock backend responses. This ensures tests are fast, reliable, and **do not write data** to the live production database.
 
 > [!IMPORTANT]
-> **API Mocking**: Use the [msw-setup.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/tests/msw-setup.ts) fixture for all API-related tests. It handles the `BASE_URL` logic and provides centralized mock data.
+> **API Mocking**: Use the [tests/msw-setup.ts](tests/msw-setup.ts) fixture for all API-related tests. It handles the `BASE_URL` logic and provides centralized mock data.
 >
 > **Auth Cookies**: When using custom `storageState`, always use domain `127.0.0.1` (not `localhost`) to match Playwright's default `baseURL`.
 
@@ -522,7 +529,7 @@ The project uses aggressive **pre-push hooks** that run linting and type checks.
     - **Do NOT** create new pages in `src/pages/` for app features. Use `RecipeManager` views.
     - **Do NOT** use `firebase/storage` client SDK. Use `api/uploads`.
 3.  **Type Safety**: Always run `npm run check:ts` after modifying `src/lib/` or `src/pages/api/`.
-    - The **Firebase integration** ([firebase-rest.ts](file:///Users/emilioharrison/Code/emilioharrison-com/apps/recipes/src/lib/firebase-rest.ts)) is custom. Do not assume standard `firebase-admin` methods (like `.file().save()`) work; check the class implementation.
+    - The **Firebase integration** ([src/lib/firebase-rest.ts](src/lib/firebase-rest.ts)) is custom. Do not assume standard `firebase-admin` methods (like `.file().save()`) work; check the class implementation.
 4.  **Self-Correction Loop**: Before declaring a task finished, **you MUST run**:
     ```bash
     npm run check:quick
@@ -628,7 +635,7 @@ npm run feedback:resolve <id> fixed --remote
 
    Available at `http://localhost:8788/protected/recipes`.
 
-For a detailed breakdown of the local environment and how to manage data, see the [Local Run Workflow](file:///Users/emilioharrison/Code/emilioharrison-com/.agent/workflows/run-local.md).
+For a detailed breakdown of the local environment and how to manage data, see the [Local Run Workflow](../../.agent/workflows/run-local.md).
 
 ## 🚀 Production Deployment
 
@@ -687,41 +694,32 @@ The following bindings must be configured in the **Cloudflare Pages Dashboard** 
 src/
 ├── components/
 │ ├── recipe-manager/ # Core recipe management
-│ │ ├── RecipeManager.tsx # Main orchestrator component
-│ │ ├── RecipeLibrary.tsx # Recipe grid/list with grouping
-│ │ ├── RecipeDetail.tsx # Individual recipe view
-│ │ ├── RecipeEditor.tsx # Edit/create recipe form with AI import
-│ │ ├── AiImporter.tsx # AI recipe parsing (photo/URL)
-│ │ ├── RecipeFilters.tsx # Filter panel (metadata, search)
-│ │ ├── RecipeHeader.tsx # App bar with menu trigger
-│ │ ├── BottomControls.tsx # Unified sticky bottom navigation
-│ │ ├── GroceryList.tsx # Grocery list with shopping mode
-│ │ ├── SettingsView.tsx # Settings and data management
-│ │ ├── FamilyManagementView.tsx # Family member management and invites
-│ │ ├── FeedbackDashboard.tsx # Integrated feedback management UI
-│ │ ├── BulkEditModal.tsx # Bulk update metadata
-│ │ ├── BulkRecipeImporter.tsx # Bulk markdown upload
-│ │ ├── RecipeControlBar.tsx # Actions for selected recipes
-│ │ ├── VarietyWarning.tsx # Protein variety alerts
-│ │ └── hooks/
-│ │ ├── useRecipes.ts # Recipe CRUD operations
-│ │ ├── useFilteredRecipes.ts # Filtering, sorting, search
-│ │ └── useGroceryListGenerator.ts # Grocery list with caching
-│ ├── cooking-mode/ # Cooking Experience 2.0 Components
-│ │ ├── CookingContainer.tsx # Main orchestrator for cooking flow
-│ │ ├── CookingHeader.tsx # Header with progress and tools
-│ │ ├── CookingStepView.tsx # Step-by-step instruction view
-│ │ ├── CookingIngredientsOverlay.tsx # Slide-up ingredient checklist
-│ │ ├── CookingTimeline.tsx # NEW: Interactive horizontal progress roadmap
-│ │ ├── CookingReview.tsx # Post-cooking rate/note/photo flow
-│ │ ├── CookingStepList.tsx # Full "Jump to Step" list (Sheet component)
-│ │ ├── ActiveTimersHeader.tsx # Condensed timers view
-│ │ ├── CookingOptionsMenu.tsx # Settings and tools menu
-│ │ ├── CookingStatusIndicator.tsx # Visual feedback for session
-│ │ ├── ExitConfirmation.tsx # End session dialog
-│ │ └── TimerControl.tsx # Timer UI and management
-│ ├── ui/ # shadcn/ui components (button, tabs, input, dialog, etc.)
-│ │ └── layout.tsx # Layout Primitives (Stack, Inline, Cluster, PageShell)
+│ │ ├── dialogs/ # Modals (share, feedback, bulk edit)
+│ │ ├── grocery/ # Grocery list UI
+│ │ ├── importer/ # AI importer + photo uploads
+│ │ ├── views/ # Settings, notifications, invites, feedback dashboard
+│ │ ├── week-planner/ # Week workspace (plan + grocery)
+│ │ └── hooks/ # Recipe + router hooks
+│ ├── cooking-mode/ # Cooking Experience components
+│ │ ├── CookingContainer.tsx
+│ │ ├── CookingHeader.tsx
+│ │ ├── CookingStepView.tsx
+│ │ ├── CookingIngredientsOverlay.tsx
+│ │ ├── CookingInstructionsOverlay.tsx
+│ │ ├── CookingTimeline.tsx
+│ │ ├── CookingReview.tsx
+│ │ ├── ActiveTimersHeader.tsx
+│ │ ├── ActiveTimerDisplay.tsx
+│ │ ├── CookingOptionsMenu.tsx
+│ │ ├── CookingStatusIndicator.tsx
+│ │ ├── IngredientsPanel.tsx
+│ │ ├── ExitConfirmation.tsx
+│ │ └── TimerControl.tsx
+│ ├── recipe-details/ # Overview, reviews, version history
+│ ├── admin/ # Admin dashboard + family manager
+│ ├── auth/ # Google + email link sign-in
+│ ├── onboarding/ # PWA onboarding + tutorials
+│ ├── ui/ # shadcn/ui components
 │ └── layout/ # Global layout components
 ├── pages/ # Astro File-based Routing
 │ ├── index.astro # Main recipe app entry
@@ -729,34 +727,45 @@ src/
 │ ├── login.astro # Authentication page
 │ ├── logout.astro # Sign out handler
 │ └── api/ # Backend API endpoints
-│ ├── parse-recipe.ts # AI recipe extraction
-│ ├── generate-grocery-list.ts # AI grocery categorization
-│ ├── feedback.ts # Feedback submission
-│ ├── recipes/ # Recipe CRUD endpoints
-│ └── uploads/ # Image serving
+│ ├── admin/
+│ ├── auth/
+│ ├── families/
+│ ├── grocery/
+│ ├── recipes/
+│ ├── push/
+│ ├── user/
+│ └── week/
 ├── lib/ # Shared utilities & State
-│ ├── recipeStore.ts # Core recipe nanostore
-│ ├── weekStore.ts # Weekly planning nanostore
-│ ├── burgerMenuStore.ts # Global menu state
-│ ├── feedbackStore.ts # Feedback modal state
-│ ├── types.ts # TypeScript interfaces
-│ ├── firebase-server.ts # Firebase Service Account (Server)
-│ ├── firebase-client.ts # Firebase App (Client)
-│ ├── firebase-rest.ts # Custom Firestore REST client
-│ ├── grocery-logic.ts # Deterministic grocery merging
-│ └── notifications.ts # Browser notification helpers
+│ ├── services/ # AI parser, grocery service, recipe enhancer
+│ ├── recipeStore.ts
+│ ├── weekStore.ts
+│ ├── familyStore.ts
+│ ├── authStore.ts
+│ ├── firebase-client.ts
+│ ├── firebase-server.ts
+│ ├── firebase-rest.ts
+│ ├── push-notifications.ts
+│ ├── grocery-logic.ts
+│ ├── grocery-utils.ts
+│ ├── types.ts
+│ └── firestoreHooks.ts
+├── services/
+│ └── timerManager.ts # Cooking timers
 ├── stores/
 │ └── cookingSession.ts # Active cooking state nanostore
 ├── layouts/
-│ ├── Layout.astro # Base HTML layout
-│ └── RecipeLayout.astro # App wrapper with global menus
+│ ├── Layout.astro
+│ └── RecipeLayout.astro
 └── styles/ # Global CSS
 tests/ # Playwright E2E tests
-├── auth.spec.ts # Google Sign-In flow
-├── recipe-manager.spec.ts # Core management
-├── cooking-mode.spec.ts # Cooking workflow
-├── grocery-list.spec.ts # List generation
-├── feedback.spec.ts # Feedback submission
+├── admin-_.spec.ts
+├── cooking-mode.spec.ts
+├── grocery-list.spec.ts
+├── notification-settings.spec.ts
+├── onboarding.spec.ts
+├── recipe-_.spec.ts
+├── share-invite.spec.ts
+├── week-\*.spec.ts
 ├── msw-setup.ts # Centralized network mocking & auth
 └── ... # Additional test suites
 

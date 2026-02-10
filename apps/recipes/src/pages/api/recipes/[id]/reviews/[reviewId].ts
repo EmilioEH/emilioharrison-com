@@ -1,12 +1,17 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { bucket, db } from '@/lib/firebase-server'
 import type { Review } from '@/lib/types'
+import { getAuthUser, unauthorizedResponse } from '@/lib/api-helpers'
+import { setRequestContext } from '@/lib/request-context'
 
 /**
  * PUT /api/recipes/:id/reviews/:reviewId
  * Edit an existing review (only by the original author)
  */
-export const PUT: APIRoute = async ({ params, request, cookies }) => {
+export const PUT: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+
+  const { params, request, cookies } = context
   const { id: recipeId, reviewId } = params
   if (!recipeId || !reviewId) {
     return new Response(JSON.stringify({ error: 'Recipe ID and Review ID required' }), {
@@ -14,19 +19,24 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     })
   }
 
+  const userId = getAuthUser(cookies)
+  if (!userId) {
+    return unauthorizedResponse()
+  }
+
   try {
     const requestUrl = new URL(request.url)
     const baseUrl = new URL(import.meta.env.BASE_URL || '/', requestUrl.origin).toString()
-    // Extract user info from cookies
-    const userIdCookie = cookies.get('currentUserId')
-    const familyIdCookie = cookies.get('familyId')
 
-    if (!userIdCookie?.value || !familyIdCookie?.value) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 })
+    // Look up user profile from Firestore (standard pattern)
+    const userDoc = await db.getDocument('users', userId)
+    if (!userDoc || !userDoc.familyId) {
+      return new Response(JSON.stringify({ error: 'You must create or join a family first' }), {
+        status: 400,
+      })
     }
 
-    const userId = userIdCookie.value
-    const familyId = familyIdCookie.value
+    const familyId = userDoc.familyId
 
     // Parse request body
     const body = await request.json()
