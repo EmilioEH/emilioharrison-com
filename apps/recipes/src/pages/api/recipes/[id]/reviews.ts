@@ -24,7 +24,11 @@ export const POST: APIRoute = async (context: APIContext) => {
 
   try {
     const requestUrl = new URL(request.url)
-    const baseUrl = new URL(import.meta.env.BASE_URL || '/', requestUrl.origin).toString()
+    const basePath = import.meta.env.BASE_URL || '/'
+    const baseUrl = new URL(
+      basePath.endsWith('/') ? basePath : `${basePath}/`,
+      requestUrl.origin,
+    ).toString()
 
     // Look up user profile from Firestore (standard pattern)
     const userDoc = await db.getDocument('users', userId)
