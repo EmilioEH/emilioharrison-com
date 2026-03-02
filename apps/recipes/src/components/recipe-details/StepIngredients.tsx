@@ -21,7 +21,7 @@ export const StepIngredients: React.FC<StepIngredientsProps> = ({ ingredients, i
   return (
     <div className="flex flex-wrap gap-1.5 pb-1">
       {resolved.map((ing, i) => (
-        <Badge key={i} variant="tag" size="sm" className="rounded-full font-normal">
+        <Badge key={indices[i]} variant="tag" size="sm" className="rounded-full font-normal">
           <span className="text-muted-foreground/70">{ing.amount}</span>
           <span className="ml-1">{ing.name}</span>
         </Badge>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Check, Info } from 'lucide-react'
 import { Stack } from '../ui/layout'
 import { cn } from '../../lib/utils'
@@ -41,22 +41,11 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
   fullIngredients,
 }) => {
   // Use shared highlighting utility for ingredients and verbs
-  const renderContent = () => {
-    if (stepNumber === 1) {
-      console.log('[InstructionCard step 1]', {
-        text,
-        highlightedText,
-        hasStarMarkers: highlightedText?.includes('**'),
-        targetIngredientIndices,
-        ingredientsCount: ingredients.length,
-      })
-    }
-    return renderHighlightedInstruction(
-      highlightedText || text,
-      ingredients,
-      targetIngredientIndices,
-    )
-  }
+  const content = useMemo(
+    () =>
+      renderHighlightedInstruction(highlightedText || text, ingredients, targetIngredientIndices),
+    [text, highlightedText, ingredients, targetIngredientIndices],
+  )
 
   const showToggle = !hideBadge
   const showStepNumber = !hideNumber
@@ -136,7 +125,7 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
               isChecked ? 'text-muted-foreground line-through' : 'text-foreground/90',
             )}
           >
-            {renderContent()}
+            {content}
           </p>
 
           {fullIngredients && targetIngredientIndices.length > 0 && (

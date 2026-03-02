@@ -9,7 +9,7 @@ export function renderHighlightedInstruction(
   text: string,
   ingredients: { name: string }[] = [],
   highlightIndices: number[] = [],
-) {
+): React.ReactNode {
   if (!text) return null
 
   // 1. Identify ingredients to highlight in this text

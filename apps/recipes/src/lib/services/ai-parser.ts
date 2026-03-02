@@ -672,6 +672,7 @@ export function createRecipeSchema() {
       'ingredients',
       'steps',
       'structuredSteps',
+      'stepIngredients',
       'ingredientGroups',
       'stepGroups',
       'description',

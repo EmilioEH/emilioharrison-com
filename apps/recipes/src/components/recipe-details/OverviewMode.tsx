@@ -91,16 +91,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     localStorage.setItem('recipe-view-mode', mode)
   }
 
-  // Effect: When background enhancement finishes (prop update), notify user or auto-switch?
-  // User asked for "Instantly toggle... notification".
-  // Let's us show a notification badge on the toggle if enhanced becomes available while viewing 'original'.
-  useEffect(() => {
-    if (hasEnhancedContent && viewMode === 'original') {
-      // We could auto-switch, but let's respect user context.
-      // Just ensure the toggle is enabled.
-    }
-  }, [hasEnhancedContent, viewMode])
-
   const [checkedIngredientsList, setCheckedIngredientsList] = useState<number[]>(() =>
     getCheckedIngredients(recipe.id),
   )
@@ -336,7 +326,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
   // Memoized structured steps with fallback to plain text
   const displaySteps = useMemo((): StructuredStep[] => {
-    // VIEW MODE LOGIC: If 'modified' (original text) requested or no structured steps
+    // VIEW MODE LOGIC: If 'original' text requested or no structured steps
     // original steps are in recipe.steps
     const stepsArray = Array.isArray(recipe.steps) ? recipe.steps : []
     const structuredStepsArray = Array.isArray(recipe.structuredSteps) ? recipe.structuredSteps : []
