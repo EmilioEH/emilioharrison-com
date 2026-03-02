@@ -59,14 +59,14 @@ export function renderHighlightedInstruction(
     if (fullMatch.startsWith('**')) {
       // It's a verb
       parts.push(
-        <strong key={match.index} className="font-black text-foreground">
+        <strong key={match.index} className="font-semibold text-foreground">
           {verbContent}
         </strong>,
       )
     } else if (ingredientMatch) {
       // It's an ingredient
       parts.push(
-        <span key={match.index} className="font-semibold text-primary">
+        <span key={match.index} className="font-normal text-primary">
           {ingredientMatch}
         </span>,
       )

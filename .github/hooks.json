@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "postSaveFile": [
+      {
+        "event": "postSaveFile",
+        "pattern": "apps/recipes/src/**/*.{ts,tsx}",
+        "command": "cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npx prettier --write ${file}",
+        "timeout": 5000
+      }
+    ]
+  }
+}

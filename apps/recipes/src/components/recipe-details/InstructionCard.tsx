@@ -1,8 +1,10 @@
 import React from 'react'
 import { Check, Info } from 'lucide-react'
-import { Stack, Inline } from '../ui/layout'
+import { Stack } from '../ui/layout'
 import { cn } from '../../lib/utils'
 import { renderHighlightedInstruction } from '../../lib/instruction-utils'
+import { StepIngredients } from './StepIngredients'
+import type { Ingredient } from '../../lib/types'
 
 interface InstructionCardProps {
   stepNumber: number
@@ -16,6 +18,8 @@ interface InstructionCardProps {
   hideBadge?: boolean
   ingredients?: { name: string }[]
   targetIngredientIndices?: number[]
+  /** Full ingredient objects for rendering inline step ingredients */
+  fullIngredients?: Ingredient[]
 }
 
 /**
@@ -34,9 +38,19 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
   hideBadge = false,
   ingredients = [],
   targetIngredientIndices = [],
+  fullIngredients,
 }) => {
   // Use shared highlighting utility for ingredients and verbs
   const renderContent = () => {
+    if (stepNumber === 1) {
+      console.log('[InstructionCard step 1]', {
+        text,
+        highlightedText,
+        hasStarMarkers: highlightedText?.includes('**'),
+        targetIngredientIndices,
+        ingredientsCount: ingredients.length,
+      })
+    }
     return renderHighlightedInstruction(
       highlightedText || text,
       ingredients,
@@ -44,71 +58,101 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
     )
   }
 
+  const showToggle = !hideBadge
+  const showStepNumber = !hideNumber
+
+  const gridColumnsClass =
+    showToggle && showStepNumber
+      ? 'grid-cols-[1.5rem_2.5rem_minmax(0,1fr)]'
+      : showToggle || showStepNumber
+        ? 'grid-cols-[1.5rem_minmax(0,1fr)]'
+        : 'grid-cols-1'
+
   return (
     <div
       className={cn(
-        'transition-opacity',
+        'border-b border-border/50 py-2.5 transition-opacity last:border-b-0',
         isChecked ? 'opacity-50' : 'opacity-100',
-        // Removed Card borders/shadow for lighter read view
       )}
+      data-testid="instruction-step-card"
     >
-      <Inline spacing="md" align="start">
-        {/* Step Number Badge / Toggle */}
-        {!hideBadge && (
-          <button
-            onClick={onToggle}
+      <div className={cn('grid w-full items-start gap-x-2 text-left font-body', gridColumnsClass)}>
+        {showToggle &&
+          (onToggle ? (
+            <button
+              type="button"
+              onClick={onToggle}
+              className={cn(
+                'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+                isChecked
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-muted-foreground/40',
+              )}
+              aria-label={
+                isChecked ? `Step ${stepNumber} complete` : `Mark step ${stepNumber} complete`
+              }
+              data-testid="instruction-step-toggle"
+            >
+              {isChecked && <Check className="h-3 w-3" />}
+            </button>
+          ) : (
+            <div
+              className={cn(
+                'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+                isChecked
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-muted-foreground/40',
+              )}
+            >
+              {isChecked && <Check className="h-3 w-3" />}
+            </div>
+          ))}
+
+        {showStepNumber && (
+          <span
             className={cn(
-              'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors',
-              isChecked
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-foreground text-background hover:bg-foreground/80',
-              // If hiding number or title exists, optimize for checkbox look (unless checked)
-              (hideNumber || (title && !isChecked)) &&
-                'bg-transparent text-foreground shadow-[inset_0_0_0_2px_currentColor] hover:bg-muted',
+              'text-right text-sm font-normal tabular-nums text-muted-foreground',
+              isChecked && 'line-through',
             )}
-            aria-label={
-              isChecked ? `Step ${stepNumber} complete` : `Mark step ${stepNumber} complete`
-            }
           >
-            {isChecked ? (
-              <Check className="h-4 w-4" />
-            ) : hideNumber || title ? (
-              // Simple checkbox circle if number is hidden or in header
-              <div className="h-2.5 w-2.5 rounded-full bg-current opacity-0" />
-            ) : (
-              // Strict mode: Number remains in badge
-              stepNumber
-            )}
-          </button>
+            {stepNumber}
+          </span>
         )}
 
-        <Stack spacing="sm" className="flex-1 pt-1">
-          {/* Step Title (with Number if present) */}
+        <Stack spacing="xs" className="min-w-0">
           {title && (
-            <h3 className="text-lg font-bold text-foreground">
-              {!hideNumber && <span className="mr-1 opacity-70">{stepNumber}.</span>} {title}
-            </h3>
+            <span
+              className={cn(
+                'text-sm font-semibold',
+                isChecked ? 'text-muted-foreground line-through' : 'text-foreground',
+              )}
+            >
+              {title}
+            </span>
           )}
-
-          {/* Step Text */}
           <p
             className={cn(
-              'text-base leading-relaxed',
-              isChecked ? 'line-through' : 'text-muted-foreground',
+              'text-base leading-7',
+              isChecked ? 'text-muted-foreground line-through' : 'text-foreground/90',
             )}
           >
             {renderContent()}
           </p>
 
-          {/* Optional Tip (Pill Style) */}
+          {fullIngredients && targetIngredientIndices.length > 0 && (
+            <div className="mt-1">
+              <StepIngredients ingredients={fullIngredients} indices={targetIngredientIndices} />
+            </div>
+          )}
+
           {tip && (
-            <div className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground">
               <Info className="h-4 w-4 flex-shrink-0" />
               <span>{tip}</span>
             </div>
           )}
         </Stack>
-      </Inline>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useRecipeActions } from './useRecipeActions'
 import { computed } from 'nanostores'
 import { useStore } from '@nanostores/react'
@@ -98,7 +98,13 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     ),
   )
 
-  useWakeLock(isCooking)
+  // Track if user is actively cooking from the overview (checking ingredients/steps)
+  const [isOverviewCooking, setIsOverviewCooking] = useState(false)
+  const handleOverviewCookingChange = useCallback((active: boolean) => {
+    setIsOverviewCooking(active)
+  }, [])
+
+  useWakeLock(isCooking || isOverviewCooking)
 
   const {
     handleAction,
@@ -170,9 +176,13 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         recipe={recipe}
         startCooking={startCooking}
         onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'silent')}
+        onPersistStepIngredients={(stepIngredients) =>
+          onUpdate({ ...recipe, stepIngredients }, 'silent')
+        }
         isRefreshing={isRefreshing}
         refreshProgress={refreshProgress}
         onRecipeRefresh={refreshRecipe}
+        onActivelyCoookingChange={handleOverviewCookingChange}
       />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-8 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">

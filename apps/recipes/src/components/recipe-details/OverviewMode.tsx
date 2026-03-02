@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react'
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useStore } from '@nanostores/react'
 import {
   Clock,
@@ -20,6 +20,17 @@ import { Stack, Inline } from '../ui/layout'
 import { ImageViewer } from '../ui/ImageViewer'
 import { Carousel } from '../ui/Carousel'
 import { aiOperationStore } from '../../lib/aiOperationStore'
+import {
+  getCheckedIngredients,
+  getCheckedSteps,
+  toggleIngredient,
+  toggleStep,
+} from '../../stores/overviewCooking'
+import {
+  computeStepIngredientMappings,
+  hasUsefulStepIngredientMappings,
+  areStepIngredientMappingsEqual,
+} from '../../lib/step-ingredient-mapping'
 import type {
   Recipe,
   FamilyRecipeData,
@@ -35,6 +46,8 @@ interface OverviewModeProps {
   isRefreshing?: boolean
   refreshProgress?: string
   onRecipeRefresh?: () => void | Promise<void>
+  onActivelyCoookingChange?: (active: boolean) => void
+  onPersistStepIngredients?: (stepIngredients: Array<{ indices: number[] }>) => void | Promise<void>
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
@@ -44,6 +57,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   isRefreshing = false,
   refreshProgress = '',
   onRecipeRefresh,
+  onActivelyCoookingChange,
+  onPersistStepIngredients,
 }) => {
   // Track AI operations to detect background enhancement
   const aiOperations = useStore(aiOperationStore)
@@ -86,9 +101,38 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     }
   }, [hasEnhancedContent, viewMode])
 
-  const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({})
+  const [checkedIngredientsList, setCheckedIngredientsList] = useState<number[]>(() =>
+    getCheckedIngredients(recipe.id),
+  )
+  const [checkedStepsList, setCheckedStepsList] = useState<number[]>(() =>
+    getCheckedSteps(recipe.id),
+  )
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
+
+  // Derived: is the user actively cooking from the overview?
+  const isActivelyCooking = checkedIngredientsList.length > 0 || checkedStepsList.length > 0
+
+  // Notify parent about active cooking state (for wake lock)
+  useEffect(() => {
+    onActivelyCoookingChange?.(isActivelyCooking)
+  }, [isActivelyCooking, onActivelyCoookingChange])
+
+  const handleToggleIngredient = useCallback(
+    (index: number) => {
+      const updated = toggleIngredient(recipe.id, index)
+      setCheckedIngredientsList(updated)
+    },
+    [recipe.id],
+  )
+
+  const handleToggleStep = useCallback(
+    (globalIdx: number) => {
+      const updated = toggleStep(recipe.id, globalIdx)
+      setCheckedStepsList(updated)
+    },
+    [recipe.id],
+  )
 
   // Family Sync State
   const [familyData, setFamilyData] = useState<FamilyRecipeData | null>(null)
@@ -97,6 +141,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [estimatedCost, setEstimatedCost] = useState<number | null>(recipe.estimatedCost || null)
   const [isEstimating, setIsEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
+  const lastPersistedStepIngredientSignature = useRef<string | null>(null)
 
   const loadFamilyData = async () => {
     try {
@@ -332,6 +377,52 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     return [{ header: null, items: displaySteps, startIndex: 0 }]
   }, [recipe.stepGroups, displaySteps, viewMode])
 
+  const computedStepIngredients = useMemo(
+    () =>
+      computeStepIngredientMappings(
+        Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+        Array.isArray(recipe.steps) ? recipe.steps : [],
+        Array.isArray(recipe.structuredSteps) ? recipe.structuredSteps : [],
+      ),
+    [recipe.ingredients, recipe.steps, recipe.structuredSteps],
+  )
+
+  const stepCount = Array.isArray(recipe.steps) ? recipe.steps.length : 0
+  const hasPersistedUsefulMappings = hasUsefulStepIngredientMappings(
+    recipe.stepIngredients,
+    stepCount,
+  )
+  const hasComputedUsefulMappings = hasUsefulStepIngredientMappings(
+    computedStepIngredients,
+    stepCount,
+  )
+
+  const effectiveStepIngredients = hasPersistedUsefulMappings
+    ? recipe.stepIngredients
+    : computedStepIngredients
+
+  useEffect(() => {
+    if (!onPersistStepIngredients) return
+    if (hasPersistedUsefulMappings) return
+    if (!hasComputedUsefulMappings) return
+    if (areStepIngredientMappingsEqual(recipe.stepIngredients, computedStepIngredients)) return
+
+    const signature = `${recipe.id}:${JSON.stringify(computedStepIngredients)}`
+    if (lastPersistedStepIngredientSignature.current === signature) return
+    lastPersistedStepIngredientSignature.current = signature
+
+    Promise.resolve(onPersistStepIngredients(computedStepIngredients)).catch((error) => {
+      console.warn('Failed to persist computed stepIngredients mapping:', error)
+    })
+  }, [
+    onPersistStepIngredients,
+    hasPersistedUsefulMappings,
+    hasComputedUsefulMappings,
+    recipe.stepIngredients,
+    recipe.id,
+    computedStepIngredients,
+  ])
+
   return (
     <Stack spacing="none" className="flex-1 overflow-y-auto pb-20">
       <div className="relative">
@@ -511,7 +602,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           />
 
           {/* Ingredients */}
-          <div className="mb-8">
+          <div className="mb-8" data-testid="overview-ingredients-section">
             <Inline
               as="h2"
               spacing="none"
@@ -520,9 +611,15 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             >
               <Inline spacing="sm">
                 Ingredients
-                <span className="text-foreground-variant font-body text-sm font-normal">
-                  ({recipe.ingredients?.length || 0})
-                </span>
+                {checkedIngredientsList.length > 0 ? (
+                  <span className="font-body text-sm font-normal text-primary">
+                    {checkedIngredientsList.length}/{recipe.ingredients?.length || 0} ready
+                  </span>
+                ) : (
+                  <span className="text-foreground-variant font-body text-sm font-normal">
+                    ({recipe.ingredients?.length || 0})
+                  </span>
+                )}
               </Inline>
             </Inline>
 
@@ -534,16 +631,27 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             ) : (
               <Stack spacing="lg">
                 {displayGroups.map((group, gIdx) => (
-                  <div key={gIdx}>
+                  <div key={gIdx} className="rounded-lg bg-muted/20 p-3">
                     {group.header && (
-                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                        • {group.header}
+                      <h3
+                        className="mb-3 border-b border-border/70 pb-2 text-base font-semibold uppercase tracking-wide text-foreground/80"
+                        data-testid="ingredients-group-header"
+                      >
+                        {group.header}
                       </h3>
                     )}
                     <Stack spacing="xs">
-                      {group.items.map((ing, idx) => (
-                        <IngredientRow key={idx} ingredient={ing} />
-                      ))}
+                      {group.items.map((ing, idx) => {
+                        const globalIdx = group.startIndex + idx
+                        return (
+                          <IngredientRow
+                            key={globalIdx}
+                            ingredient={ing}
+                            isChecked={checkedIngredientsList.includes(globalIdx)}
+                            onToggle={() => handleToggleIngredient(globalIdx)}
+                          />
+                        )
+                      })}
                     </Stack>
                   </div>
                 ))}
@@ -552,7 +660,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           </div>
 
           {/* Steps */}
-          <div className="mb-8">
+          <div className="mb-8" data-testid="overview-instructions-section">
             <Inline
               as="h2"
               spacing="none"
@@ -576,53 +684,39 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 No instructions listed yet.
               </div>
             ) : (
-              <Stack spacing="lg">
-                {displayStepGroups.map((group, gIdx) => (
-                  <div key={gIdx}>
-                    {group.header && (
-                      <div className="mb-4 flex items-center gap-3">
-                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
-                          {gIdx + 1}
-                        </div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                          {group.header}
-                        </h3>
-                      </div>
-                    )}
-                    <Stack spacing="lg">
+              <div className="rounded-lg bg-muted/20 p-3" data-testid="instructions-group">
+                <Stack spacing="xs">
+                  {displayStepGroups.map((group, gIdx) => (
+                    <React.Fragment key={gIdx}>
                       {group.items.map((step, idx) => {
                         const globalIdx = group.startIndex + idx
                         const ingredientsArray = Array.isArray(recipe.ingredients)
                           ? recipe.ingredients
                           : []
-                        const targetIndices = recipe.stepIngredients?.[globalIdx]?.indices
+                        const targetIndices = effectiveStepIngredients?.[globalIdx]?.indices
                         const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []
                         return (
                           <InstructionCard
                             key={globalIdx}
-                            stepNumber={idx + 1}
-                            title={group.header ? undefined : step.title}
+                            stepNumber={globalIdx + 1}
+                            title={step.title}
                             text={step.text}
                             highlightedText={step.highlightedText}
                             tip={step.tip}
                             ingredients={ingredientsArray}
                             targetIngredientIndices={targetIndicesArray}
-                            isChecked={checkedSteps[globalIdx]}
-                            hideBadge={!!group.header} // Hide the badge entirely if in a group
-                            hideNumber={!!group.header} // Also hide the number in the title
-                            onToggle={() =>
-                              setCheckedSteps((p) => ({
-                                ...p,
-                                [globalIdx]: !p[globalIdx],
-                              }))
-                            }
+                            fullIngredients={ingredientsArray}
+                            isChecked={checkedStepsList.includes(globalIdx)}
+                            hideBadge={false}
+                            hideNumber={false}
+                            onToggle={() => handleToggleStep(globalIdx)}
                           />
                         )
                       })}
-                    </Stack>
-                  </div>
-                ))}
-              </Stack>
+                    </React.Fragment>
+                  ))}
+                </Stack>
+              </div>
             )}
           </div>
 

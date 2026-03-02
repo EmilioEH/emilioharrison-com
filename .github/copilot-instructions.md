@@ -3,12 +3,37 @@
 ## Project Overview
 
 Monorepo with two Astro SSR apps deployed to Cloudflare Pages via a gateway worker:
+
 - **apps/recipes**: Recipe management PWA with Firebase, AI parsing (Gemini), family sharing
 - **apps/website**: Portfolio/blog with Keystatic CMS
 
 **Primary reference**: Always read `apps/recipes/README.md` for architectural context.
 
 **Communication**: Focus on user experience impact. Avoid jargon—say "the button wasn't visible" not "DOM element not found".
+
+## How Emilio Works With You
+
+Emilio gives short, UX-focused prompts. He describes problems the way a user would. Five workflows:
+
+| Workflow    | Emilio says something like...             | What to do                                                                                                                             |
+| ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Explore** | "How does cooking mode work?"             | Map the feature — components, stores, APIs, data flow. Read-only. Use the `Explore` agent.                                             |
+| **Iterate** | "Cooking mode has bad ux"                 | Research the feature, diagnose 2-4 specific UX problems, show Emilio, then fix after approval. Use the `Iterate` agent.                |
+| **Build**   | "I want users to share grocery lists"     | Research where it fits, propose a plan, then build after approval. Use the `Build` agent.                                              |
+| **Review**  | "Review what we just changed"             | Read-only analysis of recent changes against architecture rules, UX quality, and code standards. Use the `Review` agent.               |
+| **Improve** | "Improve the code for grocery generation" | Refactor, harden, optimize code quality without changing behavior. Runs after Iterate→Review or Build→Review. Use the `Improve` agent. |
+
+**Typical sequences:**
+
+- Feature iteration: **Iterate → Review → Improve**
+- New feature: **Build → Review → Improve**
+- Direct cleanup: **Improve** (point at an area)
+
+**Key rule**: Never start coding improvements or new features without showing a diagnosis/plan first. Emilio approves the direction, then you implement.
+
+Custom agents: `.github/agents/` (explore, iterate, build, review, improve)
+
+Prompt shortcuts: `.github/prompts/` — `/explore-feature`, `/iterate-feature`, `/improve-feature`, `/build-feature`, `/quality-gate`, `/check-feedback`, `/add-recipe-field`
 
 ## Quality Gate Protocol
 
@@ -27,7 +52,7 @@ npx jscpd src/        # Code duplication
 npx playwright test   # Always use 127.0.0.1 for auth cookies
 ```
 
-**Self-correction rule**: If checks fail, fix them yourself. Report the *fix*, not the error.
+**Self-correction rule**: If checks fail, fix them yourself. Report the _fix_, not the error.
 
 ## Critical Commands
 
@@ -45,18 +70,24 @@ npm run build:test     # E2E build with PUBLIC_TEST_MODE=true
 ## Architecture Rules
 
 ### SPA Routing (Recipes App)
+
 **Do NOT create new Astro pages** for app features. The app is an SPA with `[...path].astro` as fallback.
+
 - Add new features by adding a `ViewMode` in `RecipeManager.tsx`
 - Navigation uses `useRouter` hook, not Astro routing
 
 ### Request Context Pattern
+
 Middleware sets `setRequestContext(context)` for modules needing Cloudflare runtime env (like `firebase-server.ts` accessing `FIREBASE_SERVICE_ACCOUNT`).
 
 ### Storage Proxy
+
 **Never use Firebase Client SDK** (`firebase/storage`) in browser. All uploads go through `POST /api/uploads`. Uses server-side `FirebaseRestService` with Service Account.
 
 ### Firestore Constraints
+
 Firestore does **not** support nested arrays. Use objects instead:
+
 ```ts
 // ❌ Wrong: number[][]
 // ✅ Correct: Array<{ indices: number[] }>
@@ -67,6 +98,7 @@ Firestore does **not** support nested arrays. Use objects instead:
 Use CSS variables for layout positioning - **never hardcode pixel values** for sticky elements.
 
 **Key variables** (in [global.css](apps/recipes/src/styles/global.css)):
+
 - `--header-height`, `--search-bar-height`, `--content-top`
 
 **Tailwind utilities**: `top-header`, `top-content-top`, `pt-content-top`, `pt-safe-top`
@@ -92,9 +124,10 @@ Spacing scale: `xs`(2px), `sm`(8px), `md`(16px), `lg`(24px), `xl`(32px), `2xl`(4
 ## Responsive Modals
 
 Always add mobile-safe margins:
+
 ```tsx
 // ✅ Mobile-first pattern
-className="fixed left-4 right-4 mx-auto ... sm:left-1/2 sm:-translate-x-1/2"
+className = "fixed left-4 right-4 mx-auto ... sm:left-1/2 sm:-translate-x-1/2";
 ```
 
 ## AI Integration (Gemini)
@@ -132,10 +165,13 @@ apps/recipes/src/
 ├── services/     # Service layer (ai-parser, etc.)
 └── stores/       # Nanostores for state
 
-.agent/           # Detailed agent rules and workflows
-├── rules/        # Always-on constraints (quality gate, design system)
-├── knowledge/    # Domain knowledge (recipe schema, grocery logic)
-└── workflows/    # Step-by-step procedures
+.agent/              # Agent rules and workflows (monorepo root)
+├── rules/           # Always-on constraints (quality gate, design system)
+├── knowledge/       # Domain knowledge (recipe schema, grocery logic)
+└── workflows/       # Step-by-step procedures
+.github/
+├── agents/          # Custom agents (explore, improve, build)
+└── prompts/         # Reusable prompt files
 ```
 
 ## UI Stack
@@ -144,3 +180,17 @@ apps/recipes/src/
 - **Animations**: Framer Motion
 - **State**: Nanostores with `@nanostores/persistent`
 - **Search**: Fuse.js (fuzzy search)
+
+## MCP Servers
+
+Configured in `.vscode/mcp.json`. Agents call these automatically — you don't need to invoke them manually.
+
+| Server                       | What it does                                          | Used by                  |
+| ---------------------------- | ----------------------------------------------------- | ------------------------ |
+| **Context7**                 | Live docs for any library (React, Astro, Radix, etc.) | All agents               |
+| **Cloudflare Bindings**      | Manage Workers, KV, and build resources               | Iterate, Build, Improve  |
+| **Cloudflare Observability** | Production logs, analytics, error debugging           | Iterate, Review, Improve |
+| **Cloudflare Docs**          | Current Workers/Pages/KV reference                    | Explore, Build           |
+| **Playwright MCP**           | Accessibility snapshots for E2E test selectors        | Iterate, Build, Improve  |
+| **shadcn/ui**                | Component APIs, variants, blocks, demos               | Iterate, Build           |
+| **GitHub**                   | Repo management, PRs, issues                          | All agents               |
