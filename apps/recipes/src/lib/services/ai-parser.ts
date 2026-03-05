@@ -459,6 +459,9 @@ async function processImageInput(image: string): Promise<ProcessedInput> {
     const arrayBuffer = await res.arrayBuffer()
     base64Data = Buffer.from(arrayBuffer).toString('base64')
     mimeType = res.headers.get('content-type') || mimeType
+  } else if (image.startsWith('/') || image.startsWith('api/')) {
+    // Reject relative URL paths that were mistakenly passed instead of base64
+    throw new Error('Invalid image data: received a URL path instead of image bytes')
   } else if (image.includes(',')) {
     base64Data = image.split(',')[1] || ''
   } else {

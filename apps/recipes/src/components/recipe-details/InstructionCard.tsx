@@ -52,9 +52,9 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
 
   const gridColumnsClass =
     showToggle && showStepNumber
-      ? 'grid-cols-[1.5rem_2.5rem_minmax(0,1fr)]'
+      ? 'grid-cols-[1.25rem_2.5rem_minmax(0,1fr)]'
       : showToggle || showStepNumber
-        ? 'grid-cols-[1.5rem_minmax(0,1fr)]'
+        ? 'grid-cols-[1.25rem_minmax(0,1fr)]'
         : 'grid-cols-1'
 
   return (

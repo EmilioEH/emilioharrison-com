@@ -50,7 +50,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       type="button"
       onClick={onToggle}
       className={cn(
-        'grid w-full grid-cols-[1.5rem_2.5rem_7rem_minmax(0,1fr)] items-start gap-x-2 border-b border-border/50 py-2.5 text-left font-body text-base text-foreground transition-opacity last:border-0',
+        'grid w-full grid-cols-[1.25rem_2.5rem_7rem_minmax(0,1fr)] items-start gap-x-2 border-b border-border/50 py-2.5 text-left font-body text-base text-foreground transition-opacity last:border-0',
         isChecked && 'opacity-50',
       )}
       data-testid="ingredient-row"

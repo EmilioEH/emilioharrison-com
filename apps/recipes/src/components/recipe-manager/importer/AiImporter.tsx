@@ -86,8 +86,9 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
 
       const publicUrl = await uploadImage(file, baseUrl)
       if (publicUrl) {
+        // Only update preview with the uploaded URL (for display & sourceImage).
+        // imageData stays as base64 — Gemini needs raw bytes, not a URL path.
         setImagePreview(publicUrl)
-        setImageData(publicUrl)
       } else {
         console.error('Failed to upload image - base64 will be used directly')
       }
