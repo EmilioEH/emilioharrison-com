@@ -150,9 +150,9 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       throw new Error('The image is too large. Please try a smaller photo.')
     }
 
-    const imagePayload = imagePreview && (imagePreview.startsWith('http') || imagePreview.startsWith('/'))
-      ? imagePreview
-      : imageData
+    // Always send base64 data to the AI parser.
+    // imagePreview (the uploaded URL) is only for display & sourceImage.
+    const imagePayload = imageData
 
     if (mode === 'dish-photo') {
       return {
