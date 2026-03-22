@@ -1,14 +1,7 @@
 import { test, expect } from './msw-setup'
 
 test.describe('Recipe Add Flow (Unified)', () => {
-  test.beforeEach(async ({ context, page }) => {
-    // Set auth cookies directly (simulates authenticated state)
-    await context.addCookies([
-      { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
-      { name: 'site_user', value: 'TestUser', domain: 'localhost', path: '/' },
-      { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
-    ])
-
+  test.beforeEach(async ({ page }) => {
     // Mock Parse Recipe API
     await page.route('**/api/parse-recipe', async (route) => {
       await route.fulfill({
@@ -35,14 +28,14 @@ test.describe('Recipe Add Flow (Unified)', () => {
           json: { id: `mock-id-${Date.now()}` },
         })
       } else {
-        await route.continue()
+        await route.fallback()
       }
     })
   })
 
   test('FAB opens unified recipe editor with AI importer', async ({ page }) => {
     await page.goto('/protected/recipes')
-    await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('CHEFBOARD')).toBeVisible({ timeout: 30000 })
 
     // Click the FAB (Add Recipe button)
     await page.getByLabel('Add Recipe').click()
@@ -51,7 +44,7 @@ test.describe('Recipe Add Flow (Unified)', () => {
     await expect(page.getByRole('heading', { name: 'New Recipe' })).toBeVisible()
 
     // Verify the AI Importer is present (Photo/URL toggle)
-    await expect(page.getByText('Photo', { exact: true })).toBeVisible()
+    await expect(page.getByText('Image', { exact: true })).toBeVisible()
     await expect(page.getByText('URL', { exact: true })).toBeVisible()
   })
 

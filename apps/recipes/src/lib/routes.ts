@@ -11,6 +11,7 @@ const PUBLIC_API_ROUTES = [
   '/api/auth/request-access', // Access request for new users
   '/api/auth/redeem-code', // Invite code redemption for new users
   '/api/feedback', // Public feedback submission
+  '/api/uploads', // Public to allow server-side fetching
 ]
 
 /**

@@ -150,9 +150,13 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       throw new Error('The image is too large. Please try a smaller photo.')
     }
 
+    const imagePayload = imagePreview && (imagePreview.startsWith('http') || imagePreview.startsWith('/'))
+      ? imagePreview
+      : imageData
+
     if (mode === 'dish-photo') {
       return {
-        image: imageData,
+        image: imagePayload,
         mode: 'infer' as const,
         style: 'enhanced', // Kenji-style enhancement for dish photos
         dishName: dishName || undefined,
@@ -165,7 +169,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
 
     // Default to strict for photo scan and url
     return {
-      image: imageData,
+      image: imagePayload,
       style: 'strict',
     }
   }
