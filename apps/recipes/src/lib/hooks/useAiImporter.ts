@@ -150,9 +150,17 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       throw new Error('The image is too large. Please try a smaller photo.')
     }
 
-    // Always send base64 data to the AI parser.
-    // imagePreview (the uploaded URL) is only for display & sourceImage.
-    const imagePayload = imageData
+    // Prefer the uploaded URL to avoid large base64 payloads crashing iOS Safari.
+    // Convert relative paths (e.g. /protected/recipes/api/uploads/key) to absolute
+    // URLs so the server-side AI parser can fetch the image over HTTP.
+    let imagePayload = imageData
+    if (imagePreview) {
+      if (imagePreview.startsWith('http')) {
+        imagePayload = imagePreview
+      } else if (imagePreview.startsWith('/')) {
+        imagePayload = `${window.location.origin}${imagePreview}`
+      }
+    }
 
     if (mode === 'dish-photo') {
       return {
