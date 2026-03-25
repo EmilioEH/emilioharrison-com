@@ -541,6 +541,7 @@ export async function executeAiParse(
     config: {
       responseMimeType: 'application/json',
       responseSchema: createRecipeSchema(),
+      maxOutputTokens: 65536,
     },
     contents: [{ role: 'user', parts }],
   })

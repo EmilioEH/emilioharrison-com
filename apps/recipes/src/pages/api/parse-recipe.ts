@@ -119,6 +119,7 @@ async function generateRecipeStream(
     config: {
       responseMimeType: 'application/json',
       responseSchema: schema,
+      maxOutputTokens: 65536,
     },
     contents: [{ role: 'user', parts }],
   })
