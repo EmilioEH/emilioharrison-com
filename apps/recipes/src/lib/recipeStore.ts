@@ -18,6 +18,7 @@ export const recipeActions = {
   setError: (error: string) => {
     $recipesError.set(error)
     $recipesLoading.set(false)
+    $recipesInitialized.set(true)
   },
 
   clearError: () => {
