@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import type { Recipe, Ingredient, RecipeVersion } from '../../lib/types'
-import { Stack, Inline } from '../ui/layout'
+import { Stack, Inline, Cluster } from '../ui/layout'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { Button } from '../ui/button'
@@ -21,6 +21,11 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
 
   const handleTextChange = (field: keyof Recipe, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleNumberChange = (field: keyof Recipe, value: string) => {
+    const num = value === '' ? undefined : Number(value)
+    setFormData((prev) => ({ ...prev, [field]: num }))
   }
 
   // --- Ingredients Management ---
@@ -157,6 +162,126 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 value={formData.sourceUrl || ''}
                 onChange={(e) => handleTextChange('sourceUrl', e.target.value)}
                 placeholder="https://..."
+              />
+            </div>
+          </Stack>
+
+          {/* Categories & Details */}
+          <Stack spacing="md">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Categories
+            </h3>
+
+            <Cluster spacing="md">
+              <div className="min-w-[45%] flex-1 grid gap-2">
+                <Label htmlFor="protein">Protein</Label>
+                <select
+                  id="protein"
+                  value={formData.protein || ''}
+                  onChange={(e) => handleTextChange('protein', e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
+                >
+                  <option value="">None</option>
+                  {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="min-w-[45%] flex-1 grid gap-2">
+                <Label htmlFor="difficulty">Difficulty</Label>
+                <select
+                  id="difficulty"
+                  value={formData.difficulty || ''}
+                  onChange={(e) => handleTextChange('difficulty', e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
+                >
+                  <option value="">Select...</option>
+                  {(['Easy', 'Medium', 'Hard'] as const).map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+            </Cluster>
+
+            <Cluster spacing="md">
+              <div className="min-w-[45%] flex-1 grid gap-2">
+                <Label htmlFor="mealType">Meal Type</Label>
+                <select
+                  id="mealType"
+                  value={formData.mealType || ''}
+                  onChange={(e) => handleTextChange('mealType', e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
+                >
+                  <option value="">Select...</option>
+                  {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="min-w-[45%] flex-1 grid gap-2">
+                <Label htmlFor="dishType">Dish Type</Label>
+                <select
+                  id="dishType"
+                  value={formData.dishType || ''}
+                  onChange={(e) => handleTextChange('dishType', e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
+                >
+                  <option value="">Select...</option>
+                  {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            </Cluster>
+
+            <Cluster spacing="sm">
+              <div className="min-w-[30%] flex-1 grid gap-2">
+                <Label htmlFor="servings">Servings</Label>
+                <Input
+                  id="servings"
+                  type="number"
+                  min={1}
+                  value={formData.servings ?? ''}
+                  onChange={(e) => handleNumberChange('servings', e.target.value)}
+                  placeholder="4"
+                />
+              </div>
+              <div className="min-w-[30%] flex-1 grid gap-2">
+                <Label htmlFor="prepTime">Prep (min)</Label>
+                <Input
+                  id="prepTime"
+                  type="number"
+                  min={0}
+                  value={formData.prepTime ?? ''}
+                  onChange={(e) => handleNumberChange('prepTime', e.target.value)}
+                  placeholder="15"
+                />
+              </div>
+              <div className="min-w-[30%] flex-1 grid gap-2">
+                <Label htmlFor="cookTime">Cook (min)</Label>
+                <Input
+                  id="cookTime"
+                  type="number"
+                  min={0}
+                  value={formData.cookTime ?? ''}
+                  onChange={(e) => handleNumberChange('cookTime', e.target.value)}
+                  placeholder="30"
+                />
+              </div>
+            </Cluster>
+
+            <div className="grid gap-2">
+              <Label htmlFor="dietary">Dietary Tags</Label>
+              <Input
+                id="dietary"
+                value={formData.dietary?.join(', ') || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    dietary: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                  }))
+                }
+                placeholder="Gluten-Free, Dairy-Free..."
               />
             </div>
           </Stack>
