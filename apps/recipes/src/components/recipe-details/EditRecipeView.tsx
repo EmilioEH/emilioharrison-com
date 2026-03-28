@@ -270,6 +270,30 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
               </div>
             </Cluster>
 
+            <Cluster spacing="md">
+              <div className="min-w-[45%] flex-1 grid gap-2">
+                <Label htmlFor="cuisine">Cuisine</Label>
+                <Input
+                  id="cuisine"
+                  value={formData.cuisine || ''}
+                  onChange={(e) => handleTextChange('cuisine', e.target.value)}
+                  placeholder="Italian, Mexican..."
+                />
+              </div>
+              <div className="min-w-[45%] flex-1 grid gap-2">
+                <Label htmlFor="estimatedCost">Est. Cost ($)</Label>
+                <Input
+                  id="estimatedCost"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={formData.estimatedCost ?? ''}
+                  onChange={(e) => handleNumberChange('estimatedCost', e.target.value)}
+                  placeholder="12.50"
+                />
+              </div>
+            </Cluster>
+
             <div className="grid gap-2">
               <Label htmlFor="dietary">Dietary Tags</Label>
               <Input
@@ -282,6 +306,36 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   }))
                 }
                 placeholder="Gluten-Free, Dairy-Free..."
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="equipment">Equipment</Label>
+              <Input
+                id="equipment"
+                value={formData.equipment?.join(', ') || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    equipment: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                  }))
+                }
+                placeholder="Air Fryer, Slow Cooker..."
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="occasion">Occasion</Label>
+              <Input
+                id="occasion"
+                value={formData.occasion?.join(', ') || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    occasion: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                  }))
+                }
+                placeholder="Weeknight, Party, Meal Prep..."
               />
             </div>
           </Stack>
@@ -305,9 +359,16 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Note: Add new photos in the main view for now.
-            </p>
+            <div className="grid gap-2">
+              <Label htmlFor="sourceImage">Hero Image URL</Label>
+              <Input
+                id="sourceImage"
+                type="url"
+                value={formData.sourceImage || ''}
+                onChange={(e) => handleTextChange('sourceImage', e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
           </Stack>
 
           {/* Ingredients */}
