@@ -62,14 +62,41 @@ Every element earns its place by answering: *"Which user job does this serve, an
 - Does the user need this, or does the team think they might want it someday? (resist feature creep)
 - Is there an existing pattern that already serves this need?
 - Could progressive disclosure hide this until it's actually needed?
+- **Self-sufficiency test**: can the user complete this task entirely within the app, without leaving to find missing information? If not, there is a utility gap.
 
 ### Usability checklist — ask before shipping anything
 
+Evaluate against the 5 measurable dimensions of usability (NNG):
+
+1. **Learnability** — Can a new user accomplish basic tasks on their first attempt?
+2. **Efficiency** — Once familiar, can users complete tasks quickly?
+3. **Memorability** — After not using the feature for a while, can users pick it up again easily?
+4. **Error rate** — How often do users make mistakes, and can they recover without data loss?
+5. **Satisfaction** — Does the interaction feel pleasant, not just functional?
+
+And the qualitative questions:
 - Can users find this without being told it's there?
 - Does the system clearly communicate its current state? (loading, empty, error, success)
 - If something goes wrong, can the user recover easily?
 - Does the label/icon match the user's mental model, not internal jargon?
 - Is the visual hierarchy directing attention to what matters most?
+
+### Jakob Nielsen's 10 Heuristics (canonical evaluation reference)
+
+Use these to spot usability violations during review. Each maps directly to recipe app concerns:
+
+| # | Heuristic | Recipe app application |
+|---|---|---|
+| 1 | **Visibility of system status** | Show loading states for AI parsing, sync indicators, timer countdowns |
+| 2 | **Match with the real world** | Use cooking vocabulary (prep time, servings, difficulty) not data model names |
+| 3 | **User control and freedom** | Easy back navigation, confirm before delete, undo bulk edits |
+| 4 | **Consistency and standards** | Same patterns for all list items, same icon meanings across screens |
+| 5 | **Error prevention** | Confirm destructive actions; validate import data before committing |
+| 6 | **Recognition over recall** | Show recipe thumbnails, display current filters visually, don't make users memorise |
+| 7 | **Flexibility and efficiency** | Category pills for power filtering; gestures for practiced users |
+| 8 | **Aesthetic and minimalist design** | Every element earns its place; use progressive disclosure for advanced options |
+| 9 | **Help users recover from errors** | Plain-language error messages with a suggested action, not just a code |
+| 10 | **Help and documentation** | In-context tips at moment of need (e.g. first AI import, first cooking session) |
 
 ---
 
@@ -377,7 +404,18 @@ Only animate elements with purpose — not static text or layout wrappers.
 
 ## 8. Mobile-First Patterns
 
-- Minimum tap target: **44×44px** (`h-11 w-11`)
+### NNG mobile constraints — design implications for Chefboard
+
+NNG research establishes constraints that directly shape every decision here:
+
+- **Sessions are short**: average mobile session is ~72 seconds. Every screen must support quick task completion. Preserve state so users can resume interrupted sessions (e.g. mid-cook, mid-import).
+- **Single-window**: users cannot reference another app while in Chefboard. Every screen must be self-sufficient — the cooking view must show all ingredients and steps without requiring the user to leave.
+- **Touch error rate is high**: accidental taps are frequent. Undo, back navigation, and confirmation dialogs on destructive actions are essential, not optional.
+- **Gestures are invisible**: never rely on a swipe or gesture as the only affordance for an action. Always pair with a visible control.
+
+### Implementation rules
+
+- Minimum tap target: **1cm × 1cm physically**, which is `h-11 w-11` (44px) at standard density — this is grounded in MIT Touch Lab data (average fingertip width 1.6–2cm)
 - Icon buttons: always `rounded-full`, minimum `h-10 w-10`
 - Sticky elements use CSS variable utilities, never hardcoded `top-*`
 - Safe area insets: `pt-safe-top` / `pb-[env(safe-area-inset-bottom)]` near screen edges
@@ -387,6 +425,8 @@ Only animate elements with purpose — not static text or layout wrappers.
   ```
 - Overlays on mobile: `fixed inset-0` with `justify-end` (bottom sheet) or `justify-end` (side drawer)
 - Image hover zoom: `transition-transform group-hover:scale-105` inside `overflow-hidden`
+- Use device capabilities to reduce utility gaps without adding UI: camera for recipe photo import, push notifications for timers
+- Progressive disclosure is especially valuable on mobile — keep primary surfaces clean and reveal advanced options contextually
 
 ---
 
