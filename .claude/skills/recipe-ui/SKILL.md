@@ -21,7 +21,59 @@ no hard offset shadows.
 
 ---
 
-## 1. Aesthetic Overview
+## 1. Design Philosophy: Usefulness = Usability + Utility
+
+Every UI decision must satisfy both dimensions. Neither alone is sufficient.
+
+**Utility** — does the feature do what users need?
+> "It doesn't matter how easy something is to use if it doesn't do what you want."
+> — Jakob Nielsen, NN/g
+
+**Usability** — can users actually find and use those features?
+> "A feature that exists but can't be found is, as far as users are concerned, a feature that doesn't exist."
+> — NN/g, Aesthetic and Minimalist Design
+
+**Usefulness** is achieved only when both are present.
+
+### Chefboard's Core User Jobs
+
+Every element on screen must serve at least one of these goals:
+
+1. **Find a recipe** to cook — browse, filter, search the library
+2. **Cook a recipe** — follow steps and timers without friction
+3. **Plan the week** — assign recipes to days, see what's coming
+4. **Grow the library** — add, import, or edit recipes
+5. **Share with family** — collaborate on planning and recipes
+
+If an element doesn't serve any of these jobs, question whether it belongs.
+
+### Signal vs. Noise
+
+Minimalism is not about aesthetics — it's about maximising informational value:
+
+- **Signal**: elements that directly help users accomplish a goal (labels, actions, status, content)
+- **Noise**: elements that consume attention without serving a goal (decoration, redundant text, low-utility features, clutter)
+
+Every element earns its place by answering: *"Which user job does this serve, and does it make that job easier or harder to see?"*
+
+### Utility checklist — ask before building anything
+
+- What specific user job does this element or feature serve?
+- Does the user need this, or does the team think they might want it someday? (resist feature creep)
+- Is there an existing pattern that already serves this need?
+- Could progressive disclosure hide this until it's actually needed?
+
+### Usability checklist — ask before shipping anything
+
+- Can users find this without being told it's there?
+- Does the system clearly communicate its current state? (loading, empty, error, success)
+- If something goes wrong, can the user recover easily?
+- Does the label/icon match the user's mental model, not internal jargon?
+- Is the visual hierarchy directing attention to what matters most?
+
+---
+
+## 2. Aesthetic Overview
 
 The app looks like a well-crafted native mobile app:
 
@@ -340,8 +392,20 @@ Only animate elements with purpose — not static text or layout wrappers.
 
 ## 9. Implementation Checklist
 
-Before finalising any UI change:
+### Usefulness (before designing)
+- [ ] Every new element serves one of the 5 core user jobs
+- [ ] No feature was added because "it might be useful someday" — it solves a real, present need
+- [ ] Less-common actions use progressive disclosure rather than always-visible controls
+- [ ] Nothing on screen is purely decorative without also being functional
 
+### Usability (before shipping)
+- [ ] System state is always visible — loading, empty, error, and success states are handled
+- [ ] Labels and icons match user language, not internal naming
+- [ ] Users can recover from mistakes — destructive actions have confirmation; navigation has back
+- [ ] Visual hierarchy puts the primary action or most important content first
+- [ ] Information density is appropriate — not so sparse it wastes space, not so dense it overwhelms
+
+### Visual implementation
 - [ ] Colors use semantic tokens — no raw hex, no hardcoded `gray-*` (use `muted`, `border`, `secondary`)
 - [ ] Borders are `border-border` or `border-primary/N` — no stark black outlines
 - [ ] Shadows are `shadow-sm` / `shadow-md` — no hard offset pixel shadows
