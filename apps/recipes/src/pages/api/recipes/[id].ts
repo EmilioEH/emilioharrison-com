@@ -1,8 +1,14 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
+import { getAuthUser } from '../../../lib/api-helpers'
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, cookies }) => {
   const { id } = params
+
+  const userId = getAuthUser(cookies)
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
 
   if (!id) {
     return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
@@ -29,8 +35,11 @@ export const GET: APIRoute = async ({ params }) => {
 
 export const PUT: APIRoute = async ({ request, cookies, params }) => {
   const { id } = params
-  const userCookie = cookies.get('site_user')
-  const user = userCookie?.value
+  const user = getAuthUser(cookies)
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
 
   if (!id) {
     return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
@@ -55,7 +64,7 @@ export const PUT: APIRoute = async ({ request, cookies, params }) => {
     // 1. Create a snapshot of the CURRENT (old) state
     const versionSnapshot = {
       timestamp: now,
-      userId: user || 'anonymous',
+      userId: user,
       changeType: 'edit',
       data: doc, // The full existing document
     }
@@ -99,8 +108,13 @@ export const PUT: APIRoute = async ({ request, cookies, params }) => {
   }
 }
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, cookies }) => {
   const { id } = params
+
+  const userId = getAuthUser(cookies)
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
 
   if (!id) {
     return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
