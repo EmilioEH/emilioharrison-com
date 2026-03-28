@@ -1,4 +1,7 @@
 import typography from '@tailwindcss/typography'
+import animate from 'tailwindcss-animate'
+import forms from '@tailwindcss/forms'
+import containerQueries from '@tailwindcss/container-queries'
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -82,5 +85,5 @@ export default {
       }),
     },
   },
-  plugins: [typography],
+  plugins: [typography, animate, forms, containerQueries],
 }
