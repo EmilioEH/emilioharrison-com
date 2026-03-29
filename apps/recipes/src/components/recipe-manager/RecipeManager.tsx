@@ -39,8 +39,8 @@ import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 
 import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
-import { WeekContextBar } from './week-planner/WeekContextBar'
 import { WeekWorkspace } from './week-planner/WeekWorkspace'
+import { BottomTabBar } from './BottomTabBar'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 import { WeekPlannerSettings } from '../settings/WeekPlannerSettings'
@@ -208,12 +208,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setSearchQuery(query)
     setSearch(query)
   }
-
-  // --- Week Tab State Management ---
-  // If user clicks "Grocery", we set this to 'grocery' and view to 'week'.
-  const [weekInitialTab, setWeekInitialTab] = useState<'plan' | 'grocery'>('plan')
-  // Track if drawer should be expanded (e.g., when minimizing from full view)
-  const [drawerExpanded, setDrawerExpanded] = useState(false)
 
   // Scroll Container Ref State & Broadcaster
   const { scrollContainer, setScrollContainer } = useScrollBroadcaster()
@@ -551,32 +545,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
         {/* Full-width Header Shell */}
-        <AnimatePresence>
-          {!isSearchMode && (
-            <motion.div
-              initial={{ height: 'auto', opacity: 1 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="w-full"
-            >
-              <RecipeHeader
-                user={currentUser ?? undefined}
-                scrollContainer={scrollContainer}
-                onAddRecipe={() => setView('edit')}
-                onViewWeek={() => {
-                  setWeekInitialTab('plan')
-                  setView(view === 'week' ? 'library' : 'week')
-                }}
-                onViewGrocery={() => {
-                  setWeekInitialTab('grocery')
-                  setView('week')
-                }}
-                isWeekView={view === 'week'}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!isSearchMode && (
+          <RecipeHeader onAddRecipe={() => setView('edit')} />
+        )}
 
         <div
           data-search-mode={isSearchMode ? 'true' : undefined}
@@ -627,7 +598,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             />
           )}
 
-          <main className="relative flex-1 scroll-smooth pb-32">
+          <main className="relative flex-1 scroll-smooth pb-tab-bar">
             {view === 'library' && (
               <div className={useContainedScroll ? 'flex flex-col' : 'flex h-full flex-col'}>
                 <div className={useContainedScroll ? '' : 'scrollbar-hide flex-1'}>
@@ -662,15 +633,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                   recipes={processedRecipes}
                   allRecipes={recipes}
                   onClose={() => setView('library')}
-                  onMinimize={() => {
-                    setView('library')
-                    setDrawerExpanded(true)
-                  }}
+                  onMinimize={() => setView('library')}
                   onOpenCalendar={() => setIsCalendarOpen(true)}
                   onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                   scrollContainer={scrollContainer}
                   onShare={(recipe) => setShareRecipe(recipe)}
-                  initialTab={weekInitialTab}
+                  initialTab="plan"
                   user={currentUser}
                 />
               )}
@@ -678,25 +646,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
           </main>
         </div>
 
-        {/* Week Context Bar (Sticky Bottom) - Only for Main Views */}
-        {(view === 'library' || view === 'grocery') && !isSelectionMode && (
-          <WeekContextBar
-            onViewWeek={() => {
-              setWeekInitialTab('plan')
-              setDrawerExpanded(false)
-              setView('week')
-            }}
-            onViewGrocery={() => {
-              setWeekInitialTab('grocery')
-              setDrawerExpanded(false)
-              setView('week')
-            }}
-            onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
-            defaultExpanded={drawerExpanded}
-            onExpandedChange={setDrawerExpanded}
-          />
-        )}
       </RecipeManagerView>
+
+      {/* Primary Tab Bar — hidden during selection mode and drilldown views */}
+      {(view === 'library' || view === 'week') && !isSelectionMode && (
+        <BottomTabBar
+          activeTab={view === 'week' ? 'week' : 'library'}
+          onTabChange={(tab) => setView(tab === 'week' ? 'week' : 'library')}
+        />
+      )}
 
       {/* --- GLOBAL OVERLAYS (Outside View) --- */}
 
@@ -734,7 +692,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
       {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (
-        <div className="fixed bottom-8 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
           <span className="text-sm font-bold text-muted-foreground">
             {selectedIds.size} selected
           </span>
@@ -801,7 +759,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 transform"
+            className="fixed bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+0.5rem)] left-1/2 z-50 -translate-x-1/2 transform"
           >
             <div className="flex items-center gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-lg">
               <span className="text-sm font-medium">Family updates available</span>

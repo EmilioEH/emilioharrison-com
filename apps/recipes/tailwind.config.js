@@ -63,6 +63,7 @@ export default {
         'search-bar': 'var(--search-bar-height)',
         'content-top': 'var(--content-top)',
         'safe-top': 'var(--safe-area-top)',
+        'tab-bar': 'calc(var(--tab-bar-height) + env(safe-area-inset-bottom) + 1rem)',
       },
     },
   },
