@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Calendar,
   Edit2,
@@ -31,6 +31,8 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
   onToggleThisWeek,
   isThisWeek,
 }) => {
+  const [open, setOpen] = useState(false)
+
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -44,7 +46,7 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
         <Share2 className="h-5 w-5" />
       </Button>
 
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -52,6 +54,7 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
             className="h-11 w-11 rounded-full"
             title="More Options"
             aria-label="More Options"
+            onClick={() => setOpen((v) => !v)}
           >
             <MoreHorizontal className="h-6 w-6" />
           </Button>
