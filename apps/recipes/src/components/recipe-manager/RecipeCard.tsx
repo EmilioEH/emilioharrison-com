@@ -44,6 +44,7 @@ interface RecipeCardProps {
   onManage?: (id: string) => void
   allowManagement?: boolean
   skipAnimation?: boolean
+  plannedDates: ReturnType<typeof getPlannedDatesForRecipe>
 }
 
 export const RecipeCard = memo(
@@ -56,43 +57,8 @@ export const RecipeCard = memo(
     onManage,
     allowManagement = false,
     skipAnimation = false,
+    plannedDates,
   }: RecipeCardProps) => {
-    // Calculate planned dates once for performance (memoized inside the component render)
-    // Since this is a pure component, it will re-render if getPlannedDatesForRecipe output changes?
-    // No, getPlannedDatesForRecipe is a function. React doesn't know.
-    // However, RecipeLibrary subscribes to weekStore. If weekStore updates, RecipeLibrary re-renders.
-    // We need to pass plannedDates OR weekStore state down if we want it to update accurately without full remount?
-    // But for now, calculation is cheap enough if component is memoized against props.
-    // Wait, if weekStore updates, RecipeLibrary re-renders. If we pass recipe object (stable?), the card won't re-render unless we pass something that changes.
-    // We need to ensure the card updates when `plannedDates` change.
-    // Changing strategy: calculate planned dates inside component?
-    // Yes, but `getPlannedDatesForRecipe` reads from store state directly?
-    // `getPlannedDatesForRecipe` imports from `weekStore.ts`. It likely uses `allPlannedRecipes.get()`.
-    // If we want reactivity, we should use `useStore` inside the card or pass the data.
-    // RecipeLibrary subscribes to `allPlannedRecipes`. It causes RecipeLibrary to re-render.
-    // Then RecipeCard receives the same props (recipe). Since `memo` checks props, and recipe didn't change, it WON'T re-render.
-    // So the "Planned" badges WON'T update if we just use `memo`.
-
-    // FIX: We need to calculate plannedDates in Parent and pass it down, OR subscribe in Child.
-    // Passing it down is cleaner for reactivity if Parent already subscribes.
-    // But `getPlannedDatesForRecipe` is used inside `renderRecipeCard` in current code.
-
-    // Let's assume for now we keep the calculation inside. To ensure updates, we need to subscribe to weekStore?
-    // Or simpler: The Parent (RecipeLibrary) subscribes. It re-renders.
-    // We need to pass a "version" or the planned data to force update?
-    // Or just accept that for now we want to fix MOUNT performance.
-    // BUT the bug "Slow load" is about MOUNT performance.
-    // Correctness of "Added" badge is secondary but important.
-
-    // Decision: I will use `getPlannedDatesForRecipe` inside but I'll add a dummy prop `_weekVersion` or similar if needed?
-    // Actually, RecipeLibrary re-rendering should propagate updates if we don't memoize too aggressively?
-    // If we memoize, we block context updates? No.
-    // But `getPlannedDatesForRecipe` reads global store (via direct access usually).
-    // If `RecipeLibrary` re-renders, `RecipeCard` (memo) sees same props -> no re-render -> no new `getPlannedDatesForRecipe` call.
-    // Result: Stale badges.
-
-    // Solution: Pass `plannedDates` as a prop.
-    const plannedDates = getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)
     const isPlanned = plannedDates.length > 0
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
@@ -240,20 +206,13 @@ export const RecipeCard = memo(
               {/* Add to Week button - 44px touch target */}
               {!allowManagement && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleThisWeek(recipe.id)
-                  }}
-                  className="focus:outline-none"
+                  onClick={(e) => { e.stopPropagation(); onToggleThisWeek(recipe.id) }}
                   aria-label="Add to Week"
+                  className="flex h-11 w-11 items-center justify-center rounded-full
+                             text-muted-foreground hover:bg-accent hover:text-foreground
+                             active:scale-95 transition-all focus:outline-none"
                 >
-                  <Badge
-                    variant="inactive"
-                    size="sm"
-                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full p-0 hover:bg-muted"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Badge>
+                  <Plus className="h-4 w-4" />
                 </button>
               )}
             </div>
@@ -269,7 +228,7 @@ export const RecipeCard = memo(
               e.stopPropagation()
               onManage(recipe.id)
             }}
-            className="h-8 w-8 shrink-0 self-center rounded-full hover:bg-accent"
+            className="h-11 w-11 shrink-0 self-center rounded-full hover:bg-accent"
             title="Manage recipe"
             aria-label="Manage recipe"
           >

@@ -31,8 +31,9 @@ const itemVariants: Variants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: 'tween',
-      duration: 0.2,
+      type: 'spring',
+      bounce: 0,
+      duration: 0.3,
     },
   },
 }
@@ -155,7 +156,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
 
   if (recipes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center text-gray-400">
+      <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
         <ChefHat className="mb-4 h-16 w-16 opacity-50" />
         <p className="mb-4 font-bold">No recipes found.</p>
         <p className="mb-6 max-w-xs text-sm">
@@ -257,6 +258,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
+                plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
               />
             ))}
           </div>
@@ -296,6 +298,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
+                plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
               />
             ))}
           </div>
