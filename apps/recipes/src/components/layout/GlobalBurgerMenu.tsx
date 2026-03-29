@@ -87,13 +87,13 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
           />
 
           {/* Drawer - slides in from right */}
-          <div className="shadow-md-3 relative h-full w-72 max-w-[85vw] bg-card duration-200 animate-in slide-in-from-right">
+          <div className="relative h-full w-72 max-w-[85vw] bg-card shadow-lg duration-200 animate-in slide-in-from-right">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <span className="font-display text-lg font-bold text-foreground">Menu</span>
               <button
                 onClick={closeBurgerMenu}
-                className="hover:bg-card-variant rounded-full p-2"
+                className="hover:bg-accent rounded-full p-2"
                 aria-label="Close Menu"
               >
                 <X className="h-5 w-5 text-foreground" />
@@ -105,36 +105,36 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleBulkImport}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <FolderUp className="text-foreground-variant h-5 w-5" />
+                <FolderUp className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Import Recipes</span>
               </button>
 
               <button
                 role="menuitem"
                 onClick={handleNotifications}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <Bell className="text-foreground-variant h-5 w-5" />
+                <Bell className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Notifications</span>
               </button>
 
               <button
                 role="menuitem"
                 onClick={handleSettings}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <Settings className="text-foreground-variant h-5 w-5" />
+                <Settings className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Settings</span>
               </button>
 
               <button
                 role="menuitem"
                 onClick={handleWeekPlannerSettings}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <LayoutDashboard className="text-foreground-variant h-5 w-5" />
+                <LayoutDashboard className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Week Planner Settings</span>
               </button>
 
@@ -144,9 +144,9 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   <button
                     role="menuitem"
                     onClick={handleFeedbackDashboard}
-                    className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                    className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                   >
-                    <LayoutDashboard className="text-foreground-variant h-5 w-5" />
+                    <LayoutDashboard className="text-muted-foreground h-5 w-5" />
                     <span className="font-medium text-foreground">Feedback Dashboard</span>
                   </button>
                   <button
@@ -155,9 +155,9 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                       closeBurgerMenu()
                       window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
                     }}
-                    className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                    className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                   >
-                    <ShieldAlert className="text-foreground-variant h-5 w-5" />
+                    <ShieldAlert className="text-muted-foreground h-5 w-5" />
                     <span className="font-medium text-foreground">Admin Dashboard</span>
                   </button>
                   <button
@@ -166,9 +166,9 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                       closeBurgerMenu()
                       window.location.href = '/protected/recipes?force_onboarding=true'
                     }}
-                    className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                    className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                   >
-                    <GraduationCap className="text-foreground-variant h-5 w-5" />
+                    <GraduationCap className="text-muted-foreground h-5 w-5" />
                     <span className="font-medium text-foreground">Onboarding (Demo)</span>
                   </button>
                 </>
@@ -177,10 +177,10 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleManageFamily}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <div className="relative">
-                  <UsersRound className="text-foreground-variant h-5 w-5" />
+                  <UsersRound className="text-muted-foreground h-5 w-5" />
                   {pendingInvites.length > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
                       {pendingInvites.length}
@@ -188,11 +188,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   )}
                 </div>
                 <span className="font-medium text-foreground">Manage Family</span>
-                {pendingInvites.length > 0 && (
-                  <span className="ml-auto rounded-full bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">
-                    {pendingInvites.length} invite{pendingInvites.length > 1 ? 's' : ''}
-                  </span>
-                )}
               </button>
 
               <button
@@ -201,9 +196,9 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   closeBurgerMenu()
                   window.dispatchEvent(new CustomEvent('navigate-to-invite'))
                 }}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <UserPlus className="text-foreground-variant h-5 w-5" />
+                <UserPlus className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Invite</span>
               </button>
 
@@ -213,35 +208,35 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   closeBurgerMenu()
                   window.dispatchEvent(new CustomEvent('toggle-selection-mode'))
                 }}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <CheckSquare className="text-foreground-variant h-5 w-5" />
+                <CheckSquare className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Select Recipes</span>
               </button>
 
               <button
                 role="menuitem"
                 onClick={handleFeedback}
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                 aria-label="Send Feedback"
               >
-                <MessageSquare className="text-foreground-variant h-5 w-5" />
+                <MessageSquare className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Send Feedback</span>
               </button>
 
               <a
                 role="menuitem"
                 href="/protected/recipes/logout"
-                className="hover:bg-card-variant flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
-                <LogOut className="text-foreground-variant h-5 w-5" />
+                <LogOut className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Log Out</span>
               </a>
             </div>
 
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 border-t border-border p-4">
-              <div className="text-foreground-variant flex items-center gap-2 text-xs">
+              <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <Info className="h-4 w-4" />
                 <span>Chefboard v1.0</span>
               </div>
