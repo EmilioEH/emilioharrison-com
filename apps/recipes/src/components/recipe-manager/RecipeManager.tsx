@@ -692,7 +692,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
       {/* Sticky Bottom Actions (Selection Mode) */}
       {isSelectionMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] backdrop-blur-sm animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-md backdrop-blur-sm animate-in slide-in-from-bottom-5">
           <span className="text-sm font-bold text-muted-foreground">
             {selectedIds.size} selected
           </span>
@@ -759,6 +759,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
             className="fixed bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+0.5rem)] left-1/2 z-50 -translate-x-1/2 transform"
           >
             <div className="flex items-center gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-lg">
@@ -787,13 +788,13 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                     console.error('Failed to refresh:', e)
                   }
                 }}
-                className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold hover:bg-white/30"
+                className="rounded-full bg-primary-foreground/20 px-3 py-1 text-xs font-bold hover:bg-primary-foreground/30"
               >
                 Refresh
               </button>
               <button
                 onClick={() => setShowSyncNotification(false)}
-                className="ml-1 text-white/70 hover:text-white"
+                className="ml-1 text-primary-foreground/70 hover:text-primary-foreground"
               >
                 ✕
               </button>
@@ -847,6 +848,7 @@ function ReminderToast() {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -100, opacity: 0 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
         className="fixed left-4 right-4 top-4 z-[100] mx-auto max-w-md sm:left-1/2 sm:w-full sm:-translate-x-1/2"
       >
         <div className="flex items-start gap-4 rounded-lg border border-border bg-card p-4 shadow-lg">
@@ -860,12 +862,13 @@ function ReminderToast() {
           <button
             onClick={() =>
               setDismissed((prev) =>
-                new Set(prev).add(activeReminder.title + activeReminder.scheduledFor),
+                new Set(prev).add(activeReminder.title + activeReminder.scheduledFor)
               )
             }
-            className="text-muted-foreground hover:text-foreground"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all"
+            aria-label="Dismiss reminder"
           >
-            <X className="size-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       </motion.div>

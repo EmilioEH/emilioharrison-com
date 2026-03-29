@@ -34,7 +34,7 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
       {isSelectionMode && (
         <div className="absolute left-2 top-2 z-20">
           <div
-            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${isSelected ? 'border-primary bg-primary' : 'border-gray-400 bg-white/80'}`}
+            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/30 bg-background/80'}`}
           >
             {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
           </div>
@@ -99,7 +99,7 @@ export const LibraryRecipeCard: React.FC<LibraryRecipeCardProps> = ({
       className={`absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-sm transition-all ${
         recipe.thisWeek
           ? 'bg-primary text-primary-foreground hover:shadow-md'
-          : 'bg-white/50 text-muted-foreground backdrop-blur-sm hover:bg-secondary hover:text-secondary-foreground'
+          : 'bg-secondary/50 text-muted-foreground backdrop-blur-sm hover:bg-secondary hover:text-secondary-foreground'
       }`}
       title={recipe.thisWeek ? 'Remove from This Week' : 'Add to This Week'}
     >
