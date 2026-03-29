@@ -120,13 +120,13 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           <Inline spacing="sm">
             <button
               onClick={() => console.log('Filters')}
-              className="bg-card-variant rounded-full p-2 text-muted-foreground hover:text-foreground"
+              className="bg-muted rounded-full p-2 text-muted-foreground hover:text-foreground"
             >
               <ListFilter className="h-5 w-5" />
             </button>
             <button
               onClick={onClose}
-              className="bg-card-variant rounded-full p-2 text-muted-foreground hover:text-foreground"
+              className="bg-muted rounded-full p-2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -139,7 +139,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         {/* Empty State */}
         {ingredients.length === 0 && (
           <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
-            <div className="bg-card-variant mb-4 rounded-full p-6">
+            <div className="bg-muted mb-4 rounded-full p-6">
               <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
             </div>
             <h3 className="font-display text-lg font-bold">All clear!</h3>
@@ -150,8 +150,8 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         )}
         {/* Recipe Sources Header - scrolls with content */}
         {!embedded && !isLoading && recipes.length > 0 && (
-          <div className="bg-card-container -mx-4 -mt-4 mb-6 border-b border-border px-6 py-4">
-            <p className="text-foreground-variant text-base font-bold">
+          <div className="bg-muted/30 -mx-4 -mt-4 mb-6 border-b border-border px-6 py-4">
+            <p className="text-muted-foreground text-base font-bold">
               Shopping for {recipes.length} Recipes
             </p>
             <Stack spacing="sm">
@@ -180,7 +180,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                 <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
                   {category.name}
                 </h3>
-                <div className="bg-card-container-low border-border-variant overflow-hidden rounded-xl border shadow-sm">
+                <div className="bg-card border-border overflow-hidden rounded-xl border shadow-sm">
                   {category.items.map((item) => {
                     const itemKey = `${item.name}-${item.purchaseUnit}`
                     const isChecked = checkedItems.has(item.name)
@@ -190,7 +190,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                     return (
                       <div
                         key={itemKey}
-                        className={`border-border-variant border-b last:border-0 ${isChecked ? 'bg-card-container-high opacity-50' : ''}`}
+                        className={`border-border border-b last:border-0 ${isChecked ? 'opacity-50' : ''}`}
                       >
                         {/* Main Item Row */}
                         <div className="flex flex-col p-4">
@@ -235,7 +235,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
                             {/* Item Details */}
                             <div
-                              className={`ml-3 flex-1 ${isChecked ? 'text-foreground-variant line-through' : 'text-foreground'}`}
+                              className={`ml-3 flex-1 ${isChecked ? 'text-muted-foreground line-through' : 'text-foreground'}`}
                             >
                               <div className="flex flex-wrap items-baseline gap-1">
                                 <span className="font-display text-lg font-bold">
@@ -277,7 +277,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
                         {/* Expanded Source Details (Only if > 1 source) */}
                         {multipleSources && isExpanded && (
-                          <div className="border-border-variant border-t bg-muted/30 px-4 py-3 pl-14">
+                          <div className="border-border border-t bg-muted/30 px-4 py-3 pl-14">
                             <Stack spacing="xs">
                               {item.sources.map((source, idx) => {
                                 const recipe = findRecipeById(source.recipeId)
@@ -308,7 +308,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
             {categorizedList.length === 0 && ingredients.length > 0 && (
               <div className="py-20 text-center opacity-50">
-                <ShoppingBasket className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                <ShoppingBasket className="mx-auto mb-4 h-16 w-16 text-muted-foreground/50" />
                 <p>No ingredients found.</p>
               </div>
             )}
