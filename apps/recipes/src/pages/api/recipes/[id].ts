@@ -61,12 +61,18 @@ export const PUT: APIRoute = async ({ request, cookies, params }) => {
     }
 
     // Handle Versioning
-    // 1. Create a snapshot of the CURRENT (old) state
+    // 1. Create a snapshot of the CURRENT (old) state.
+    // Strip `versions` from the snapshot data — storing nested version arrays
+    // causes each snapshot's data.versions to be JSON-stringified by the
+    // Firestore REST layer, and every subsequent save re-stringifies the
+    // previous string, growing the document exponentially until it hits the
+    // 1MB Firestore document size limit.
+    const { versions: _prevVersions, ...docWithoutVersions } = doc
     const versionSnapshot = {
       timestamp: now,
       userId: user,
       changeType: 'edit',
-      data: doc, // The full existing document
+      data: docWithoutVersions,
     }
 
     // 2. Append to existing versions (or create new array)
