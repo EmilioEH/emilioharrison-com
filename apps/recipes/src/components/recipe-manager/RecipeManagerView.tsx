@@ -1,5 +1,5 @@
 import React from 'react'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react'
 import { OnboardingFlow } from '../onboarding/OnboardingFlow'
 import { RecipeDetail } from './RecipeDetail'
 import { NotificationSettingsView } from './views/NotificationSettingsView'
@@ -92,7 +92,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 bg-card p-6 text-center">
         <div className="rounded-full bg-destructive/10 p-4">
-          <Loader2 className="h-8 w-8 text-destructive" />
+          <AlertCircle className="h-8 w-8 text-destructive" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Something went wrong</h2>
         <p className="max-w-md text-muted-foreground">{error}</p>

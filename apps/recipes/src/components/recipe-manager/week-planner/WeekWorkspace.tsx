@@ -321,7 +321,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               variant="ghost"
               size="icon"
               onClick={onMinimize || onClose}
-              className="h-8 w-8 rounded-full"
+              className="h-11 w-11 rounded-full"
               title={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
               aria-label={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
             >
@@ -362,7 +362,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={onOpenCalendar}
-                className="h-8 w-8 rounded-full"
+                className="h-11 w-11 rounded-full"
                 title="Select Week"
                 aria-label="Select Week"
               >
@@ -469,7 +469,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                           }
                         }}
                         disabled={isEstimating || isProcessing}
-                        className="h-8 w-8 rounded-full"
+                        className="h-11 w-11 rounded-full"
                         title="Refresh AI & Costs"
                         aria-label="Refresh AI & Costs"
                       >
@@ -482,7 +482,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={handleShareGrocery}
-                        className="h-8 w-8 rounded-full"
+                        className="h-11 w-11 rounded-full"
                         title="Share"
                         aria-label="Share Grocery List"
                       >
@@ -493,7 +493,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={handleCopyGrocery}
-                        className="h-8 w-8 rounded-full"
+                        className="h-11 w-11 rounded-full"
                         title="Copy"
                         aria-label="Copy Grocery List"
                       >
