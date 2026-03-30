@@ -16,7 +16,7 @@ const tabs = [
 
 export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm">
+    <div className="fixed bottom-8 left-0 right-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm">
       <div className="mx-auto flex max-w-2xl">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id
