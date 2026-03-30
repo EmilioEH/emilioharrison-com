@@ -404,7 +404,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             allRecipes={allRecipes}
             onSelectRecipe={onSelectRecipe}
             onAddRecipe={() => onClose()}
-            onShare={onShare}
           />
         )}
 
