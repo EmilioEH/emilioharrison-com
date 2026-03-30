@@ -115,14 +115,35 @@ export class FirebaseRestService {
     let pageCount = 0
     const MAX_PAGES = 50 // Safety limit ~1000-10000 docs depending on pageSize default
 
+    let effectiveOrderByField = orderByField
+    let orderedQueryFailed = false
+
     do {
-      const result = await this.fetchCollectionPage(
-        baseUrl,
-        token,
-        orderByField,
-        direction,
-        nextPageToken,
-      )
+      let result: { documents: any[]; nextPageToken?: string } | null = null
+
+      try {
+        result = await this.fetchCollectionPage(
+          baseUrl,
+          token,
+          effectiveOrderByField,
+          direction,
+          nextPageToken,
+        )
+      } catch (e) {
+        // If the ordered query fails on the first page, fall back to unordered.
+        // This handles missing Firestore indexes or unsupported orderBy formats.
+        if (orderByField && !orderedQueryFailed && !nextPageToken) {
+          console.warn(
+            `Firestore ordered query failed for '${collection}' (orderBy: ${orderByField} ${direction}), retrying without ordering:`,
+            e,
+          )
+          effectiveOrderByField = undefined
+          orderedQueryFailed = true
+          result = await this.fetchCollectionPage(baseUrl, token, undefined, direction, undefined)
+        } else {
+          throw e
+        }
+      }
 
       if (result === null) return [] // 404 - empty collection
 
@@ -161,7 +182,8 @@ export class FirebaseRestService {
 
     params.append('pageSize', '300')
 
-    const queryString = params.toString()
+    // Replace + with %20 for spaces to ensure RFC 3986 compliant URL encoding
+    const queryString = params.toString().replace(/\+/g, '%20')
     const url = queryString ? `${baseUrl}?${queryString}` : baseUrl
 
     const res = await fetch(url, {
@@ -169,7 +191,16 @@ export class FirebaseRestService {
     })
 
     if (res.status === 404) return null
-    if (!res.ok) throw new Error(`Firestore GET failed: ${res.statusText}`)
+    if (!res.ok) {
+      let errorDetail = res.statusText
+      try {
+        const body = await res.text()
+        if (body) errorDetail = `${res.statusText} - ${body}`
+      } catch {
+        // ignore body read errors
+      }
+      throw new Error(`Firestore GET failed: ${errorDetail}`)
+    }
 
     const data = await res.json()
     return {
