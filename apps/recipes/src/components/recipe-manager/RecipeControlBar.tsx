@@ -69,7 +69,7 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
           onClick={onOpenFilters}
           title="Open Filters"
           aria-label="Open Filters"
-          className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border transition-colors ${
+          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border transition-colors ${
             activeFilterCount > 0
               ? 'bg-primary text-primary-foreground'
               : 'bg-secondary text-secondary-foreground hover:bg-muted'
