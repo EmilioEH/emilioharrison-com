@@ -19,7 +19,6 @@ interface WeekPlanViewProps {
   allRecipes: Recipe[]
   onSelectRecipe: (recipe: Recipe) => void
   onAddRecipe?: (day: string) => void
-  onShare?: (recipe: Recipe) => void
 }
 
 /**
@@ -294,6 +293,13 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
               )}
             </div>
           </div>
+
+          {/* Swipe affordance */}
+          <div className="flex shrink-0 flex-col items-center gap-0.5 pl-1 text-muted-foreground/30">
+            <div className="h-0.5 w-4 rounded-full bg-current" />
+            <div className="h-0.5 w-4 rounded-full bg-current" />
+            <div className="h-0.5 w-4 rounded-full bg-current" />
+          </div>
         </motion.div>
       </div>
     </div>
@@ -306,7 +312,6 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
   allRecipes,
   onSelectRecipe,
   onAddRecipe,
-  onShare: _onShare,
 }) => {
   const activeDate = parseISO(activeWeekStart)
   const [movePickerState, setMovePickerState] = useState<{

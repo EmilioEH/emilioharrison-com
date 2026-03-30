@@ -105,7 +105,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleBulkImport}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <FolderUp className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Import Recipes</span>
@@ -114,7 +114,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleNotifications}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <Bell className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Notifications</span>
@@ -123,7 +123,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleSettings}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <Settings className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Settings</span>
@@ -132,7 +132,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleWeekPlannerSettings}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <LayoutDashboard className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Week Planner Settings</span>
@@ -144,7 +144,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   <button
                     role="menuitem"
                     onClick={handleFeedbackDashboard}
-                    className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                    className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                   >
                     <LayoutDashboard className="text-muted-foreground h-5 w-5" />
                     <span className="font-medium text-foreground">Feedback Dashboard</span>
@@ -155,7 +155,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                       closeBurgerMenu()
                       window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
                     }}
-                    className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                    className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                   >
                     <ShieldAlert className="text-muted-foreground h-5 w-5" />
                     <span className="font-medium text-foreground">Admin Dashboard</span>
@@ -166,7 +166,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                       closeBurgerMenu()
                       window.location.href = '/protected/recipes?force_onboarding=true'
                     }}
-                    className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                    className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                   >
                     <GraduationCap className="text-muted-foreground h-5 w-5" />
                     <span className="font-medium text-foreground">Onboarding (Demo)</span>
@@ -177,7 +177,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleManageFamily}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <div className="relative">
                   <UsersRound className="text-muted-foreground h-5 w-5" />
@@ -196,7 +196,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   closeBurgerMenu()
                   window.dispatchEvent(new CustomEvent('navigate-to-invite'))
                 }}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <UserPlus className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Invite</span>
@@ -208,7 +208,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   closeBurgerMenu()
                   window.dispatchEvent(new CustomEvent('toggle-selection-mode'))
                 }}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <CheckSquare className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Select Recipes</span>
@@ -217,7 +217,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <button
                 role="menuitem"
                 onClick={handleFeedback}
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
                 aria-label="Send Feedback"
               >
                 <MessageSquare className="text-muted-foreground h-5 w-5" />
@@ -227,7 +227,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <a
                 role="menuitem"
                 href="/protected/recipes/logout"
-                className="hover:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
+                className="hover:bg-accent active:bg-accent flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors"
               >
                 <LogOut className="text-muted-foreground h-5 w-5" />
                 <span className="font-medium text-foreground">Log Out</span>
