@@ -121,7 +121,7 @@ export function calculateCostEstimate(recipes: Recipe[]) {
 
 /**
  * Calculates the ISO week number for a date.
- * Used for biweekly frequency calculation.
+ * Used for frequency calculation.
  */
 function getISOWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -132,67 +132,54 @@ function getISOWeekNumber(date: Date): number {
 }
 
 /**
- * Determines if a recurring item is due for the given week based on its frequency.
- *
- * - weekly: always due
- * - biweekly: due every other week since creation (even week numbers from createdAt)
- * - monthly: due once per calendar month (if currentMonth !== lastAddedMonth)
- *
- * Edge case: if lastAddedWeek === currentWeekStart, item was already added this week (skip)
+ * Resolves frequencyWeeks from a RecurringGroceryItem, handling legacy `frequency` field.
+ * Legacy mapping: weekly → 1, biweekly → 2, monthly → 4
  */
-export function isRecurringItemDue(
-  item: RecurringGroceryItem,
-  currentWeekStart: string,
-): boolean {
+export function resolveFrequencyWeeks(item: RecurringGroceryItem): number {
+  if (item.frequencyWeeks) return item.frequencyWeeks
+  // Legacy migration
+  switch (item.frequency) {
+    case 'weekly':
+      return 1
+    case 'biweekly':
+      return 2
+    case 'monthly':
+      return 4
+    default:
+      return 1
+  }
+}
+
+/**
+ * Determines if a recurring item is due for the given week based on its frequencyWeeks.
+ *
+ * An item is due when the number of weeks since creation is a multiple of frequencyWeeks.
+ * Edge case: if lastAddedWeek === currentWeekStart, item was already added this week (skip).
+ */
+export function isRecurringItemDue(item: RecurringGroceryItem, currentWeekStart: string): boolean {
   // Already added this week? Skip
   if (item.lastAddedWeek === currentWeekStart) {
     return false
   }
 
+  const weeks = resolveFrequencyWeeks(item)
+
+  // frequencyWeeks === 1 means every week — always due
+  if (weeks === 1) {
+    return true
+  }
+
   const currentWeekDate = new Date(currentWeekStart)
   const createdAtDate = new Date(item.createdAt)
 
-  switch (item.frequency) {
-    case 'weekly':
-      return true
+  const createdWeek = getISOWeekNumber(createdAtDate)
+  const currentWeek = getISOWeekNumber(currentWeekDate)
+  const createdYear = createdAtDate.getFullYear()
+  const currentYear = currentWeekDate.getFullYear()
 
-    case 'biweekly': {
-      // Calculate weeks since creation, inject on even-numbered weeks
-      const createdWeek = getISOWeekNumber(createdAtDate)
-      const currentWeek = getISOWeekNumber(currentWeekDate)
-      const createdYear = createdAtDate.getFullYear()
-      const currentYear = currentWeekDate.getFullYear()
+  const weeksDiff = (currentYear - createdYear) * 52 + (currentWeek - createdWeek)
 
-      // Calculate total weeks difference
-      const weeksDiff =
-        (currentYear - createdYear) * 52 + (currentWeek - createdWeek)
-
-      // Due on even weeks from creation (0, 2, 4, 6, ...)
-      return weeksDiff >= 0 && weeksDiff % 2 === 0
-    }
-
-    case 'monthly': {
-      // Due if current month is different from lastAddedWeek month
-      // Or if never added before
-      if (!item.lastAddedWeek) {
-        return true
-      }
-
-      // Parse dates consistently using UTC to avoid timezone issues
-      const lastParts = item.lastAddedWeek.split('-').map(Number)
-      const currentParts = currentWeekStart.split('-').map(Number)
-
-      const lastYear = lastParts[0]
-      const lastMonth = lastParts[1] // 1-12
-      const currentYear = currentParts[0]
-      const currentMonth = currentParts[1] // 1-12
-
-      return currentYear !== lastYear || currentMonth !== lastMonth
-    }
-
-    default:
-      return false
-  }
+  return weeksDiff >= 0 && weeksDiff % weeks === 0
 }
 
 /**
@@ -205,7 +192,7 @@ function recurringItemToShoppable(item: RecurringGroceryItem): ShoppableIngredie
     purchaseUnit: item.purchaseUnit,
     category: item.category,
     isRecurring: true,
-    recurringFrequency: item.frequency,
+    recurringFrequencyWeeks: resolveFrequencyWeeks(item),
     sources: [], // Recurring items have no recipe sources
     ...(item.aisle !== undefined && { aisle: item.aisle }),
     ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
@@ -266,7 +253,7 @@ export function mergeRecurringIntoIngredients(
       // Mark as recurring if not already
       if (!merged[existingIndex].isRecurring) {
         merged[existingIndex].isRecurring = true
-        merged[existingIndex].recurringFrequency = recurring.recurringFrequency
+        merged[existingIndex].recurringFrequencyWeeks = recurring.recurringFrequencyWeeks
       }
       // Copy price info if not present
       if (recurring.hebPrice && !merged[existingIndex].hebPrice) {

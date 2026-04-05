@@ -3,6 +3,7 @@ import {
   isRecurringItemDue,
   filterDueRecurringItems,
   mergeRecurringIntoIngredients,
+  resolveFrequencyWeeks,
 } from './grocery-utils'
 import type { RecurringGroceryItem, ShoppableIngredient } from './types'
 
@@ -16,31 +17,53 @@ describe('grocery-utils - Recurring Items', () => {
     purchaseAmount: 2,
     purchaseUnit: 'packs',
     category: 'Beverages',
-    frequency: 'weekly',
+    frequencyWeeks: 1,
     createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   })
 
+  describe('resolveFrequencyWeeks', () => {
+    it('should return frequencyWeeks when set', () => {
+      const item = createRecurringItem({ frequencyWeeks: 3 })
+      expect(resolveFrequencyWeeks(item)).toBe(3)
+    })
+
+    it('should map legacy weekly to 1', () => {
+      const item = createRecurringItem({ frequencyWeeks: 0, frequency: 'weekly' })
+      expect(resolveFrequencyWeeks(item)).toBe(1)
+    })
+
+    it('should map legacy biweekly to 2', () => {
+      const item = createRecurringItem({ frequencyWeeks: 0, frequency: 'biweekly' })
+      expect(resolveFrequencyWeeks(item)).toBe(2)
+    })
+
+    it('should map legacy monthly to 4', () => {
+      const item = createRecurringItem({ frequencyWeeks: 0, frequency: 'monthly' })
+      expect(resolveFrequencyWeeks(item)).toBe(4)
+    })
+  })
+
   describe('isRecurringItemDue', () => {
-    describe('weekly frequency', () => {
+    describe('every week (frequencyWeeks: 1)', () => {
       it('should return true for weekly items', () => {
-        const item = createRecurringItem({ frequency: 'weekly' })
+        const item = createRecurringItem({ frequencyWeeks: 1 })
         expect(isRecurringItemDue(item, '2026-04-07')).toBe(true)
       })
 
       it('should return false if already added this week', () => {
         const item = createRecurringItem({
-          frequency: 'weekly',
+          frequencyWeeks: 1,
           lastAddedWeek: '2026-04-07',
         })
         expect(isRecurringItemDue(item, '2026-04-07')).toBe(false)
       })
     })
 
-    describe('biweekly frequency', () => {
+    describe('every 2 weeks (frequencyWeeks: 2)', () => {
       it('should return true on even weeks from creation', () => {
         const item = createRecurringItem({
-          frequency: 'biweekly',
+          frequencyWeeks: 2,
           createdAt: '2026-01-06T00:00:00.000Z', // Week 2
         })
         // Week 4 - 2 weeks later (even)
@@ -51,7 +74,7 @@ describe('grocery-utils - Recurring Items', () => {
 
       it('should return false on odd weeks from creation', () => {
         const item = createRecurringItem({
-          frequency: 'biweekly',
+          frequencyWeeks: 2,
           createdAt: '2026-01-06T00:00:00.000Z', // Week 2
         })
         // Week 3 - 1 week later (odd)
@@ -62,44 +85,34 @@ describe('grocery-utils - Recurring Items', () => {
 
       it('should return false if already added this week', () => {
         const item = createRecurringItem({
-          frequency: 'biweekly',
+          frequencyWeeks: 2,
           lastAddedWeek: '2026-01-20',
         })
         expect(isRecurringItemDue(item, '2026-01-20')).toBe(false)
       })
     })
 
-    describe('monthly frequency', () => {
-      it('should return true if never added before', () => {
+    describe('custom weeks (frequencyWeeks: 3)', () => {
+      it('should return true every 3 weeks from creation', () => {
         const item = createRecurringItem({
-          frequency: 'monthly',
-          lastAddedWeek: undefined,
+          frequencyWeeks: 3,
+          createdAt: '2026-01-06T00:00:00.000Z', // Week 2
         })
-        expect(isRecurringItemDue(item, '2026-04-07')).toBe(true)
+        // Week 5 - 3 weeks later
+        expect(isRecurringItemDue(item, '2026-01-27')).toBe(true)
+        // Week 8 - 6 weeks later
+        expect(isRecurringItemDue(item, '2026-02-17')).toBe(true)
       })
 
-      it('should return true if current month differs from lastAddedWeek month', () => {
+      it('should return false on non-multiple weeks from creation', () => {
         const item = createRecurringItem({
-          frequency: 'monthly',
-          lastAddedWeek: '2026-03-03', // March
+          frequencyWeeks: 3,
+          createdAt: '2026-01-06T00:00:00.000Z', // Week 2
         })
-        expect(isRecurringItemDue(item, '2026-04-07')).toBe(true) // April
-      })
-
-      it('should return false if same month as lastAddedWeek', () => {
-        const item = createRecurringItem({
-          frequency: 'monthly',
-          lastAddedWeek: '2026-04-01', // April
-        })
-        expect(isRecurringItemDue(item, '2026-04-07')).toBe(false) // Also April
-      })
-
-      it('should return true if same month but different year', () => {
-        const item = createRecurringItem({
-          frequency: 'monthly',
-          lastAddedWeek: '2025-04-07', // April 2025
-        })
-        expect(isRecurringItemDue(item, '2026-04-07')).toBe(true) // April 2026
+        // Week 3 - 1 week later (not multiple of 3)
+        expect(isRecurringItemDue(item, '2026-01-13')).toBe(false)
+        // Week 4 - 2 weeks later (not multiple of 3)
+        expect(isRecurringItemDue(item, '2026-01-20')).toBe(false)
       })
     })
   })
@@ -110,12 +123,12 @@ describe('grocery-utils - Recurring Items', () => {
         createRecurringItem({
           id: 'item-1',
           name: 'Weekly Item',
-          frequency: 'weekly',
+          frequencyWeeks: 1,
         }),
         createRecurringItem({
           id: 'item-2',
           name: 'Already Added',
-          frequency: 'weekly',
+          frequencyWeeks: 1,
           lastAddedWeek: '2026-04-07',
         }),
       ]
@@ -131,6 +144,7 @@ describe('grocery-utils - Recurring Items', () => {
     it('should convert RecurringGroceryItem to ShoppableIngredient', () => {
       const items: RecurringGroceryItem[] = [
         createRecurringItem({
+          frequencyWeeks: 1,
           aisle: 12,
           hebPrice: 4.99,
           hebPriceUnit: 'each',
@@ -145,7 +159,7 @@ describe('grocery-utils - Recurring Items', () => {
         purchaseUnit: 'packs',
         category: 'Beverages',
         isRecurring: true,
-        recurringFrequency: 'weekly',
+        recurringFrequencyWeeks: 1,
         sources: [],
         aisle: 12,
         hebPrice: 4.99,
@@ -173,7 +187,7 @@ describe('grocery-utils - Recurring Items', () => {
           purchaseUnit: 'packs',
           category: 'Beverages',
           isRecurring: true,
-          recurringFrequency: 'weekly',
+          recurringFrequencyWeeks: 1,
           sources: [],
         },
       ]
@@ -202,7 +216,7 @@ describe('grocery-utils - Recurring Items', () => {
           purchaseUnit: 'count',
           category: 'Dairy & Eggs',
           isRecurring: true,
-          recurringFrequency: 'weekly',
+          recurringFrequencyWeeks: 1,
           sources: [],
         },
       ]
@@ -233,7 +247,7 @@ describe('grocery-utils - Recurring Items', () => {
           purchaseUnit: 'stick',
           category: 'Dairy & Eggs',
           isRecurring: true,
-          recurringFrequency: 'weekly',
+          recurringFrequencyWeeks: 1,
           hebPrice: 3.99,
           hebPriceUnit: 'each',
           sources: [],
@@ -264,7 +278,7 @@ describe('grocery-utils - Recurring Items', () => {
           purchaseUnit: 'gallon',
           category: 'Dairy & Eggs',
           isRecurring: true,
-          recurringFrequency: 'weekly',
+          recurringFrequencyWeeks: 1,
           sources: [],
         },
       ]
@@ -293,7 +307,7 @@ describe('grocery-utils - Recurring Items', () => {
           purchaseUnit: 'pints',
           category: 'Dairy & Eggs',
           isRecurring: true,
-          recurringFrequency: 'weekly',
+          recurringFrequencyWeeks: 1,
           sources: [],
         },
       ]

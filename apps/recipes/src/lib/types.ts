@@ -143,7 +143,9 @@ export interface RecurringGroceryItem {
   aisle?: number
   hebPrice?: number
   hebPriceUnit?: string
-  frequency: 'weekly' | 'biweekly' | 'monthly'
+  frequencyWeeks: number // 1 = weekly, 2 = biweekly, N = custom
+  /** @deprecated Use frequencyWeeks. Kept for lazy migration of existing Firestore docs. */
+  frequency?: 'weekly' | 'biweekly' | 'monthly'
   createdAt: string // ISO date
   lastAddedWeek?: string // weekStartDate of last injection (undefined if never added)
 }
@@ -170,7 +172,7 @@ export interface ShoppableIngredient {
   storeLocation?: string // in-store location (e.g., "In Dairy on the Back Wall")
   // Recurring item fields
   isRecurring?: boolean // true if flagged as recurring
-  recurringFrequency?: 'weekly' | 'biweekly' | 'monthly'
+  recurringFrequencyWeeks?: number // 1 = weekly, 2 = biweekly, N = custom weeks
 }
 
 /** User-saved product metadata that persists across grocery list generations */

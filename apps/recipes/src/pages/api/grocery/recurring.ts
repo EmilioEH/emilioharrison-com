@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import type { RecurringGroceryItem } from '../../../lib/types'
+import { resolveFrequencyWeeks } from '../../../lib/grocery-utils'
 
 /**
  * Recurring grocery items CRUD operations.
@@ -32,7 +33,13 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     const collectionPath = `recurring_grocery_items/${userId}/items`
-    const items = await db.getCollection<RecurringGroceryItem>(collectionPath)
+    const rawItems = await db.getCollection<RecurringGroceryItem>(collectionPath)
+
+    // Lazy-migrate: resolve frequencyWeeks for legacy items with string frequency
+    const items = rawItems.map((item) => ({
+      ...item,
+      frequencyWeeks: resolveFrequencyWeeks(item),
+    }))
 
     return new Response(JSON.stringify({ items }), {
       status: 200,
@@ -61,8 +68,13 @@ export const POST: APIRoute = async ({ request }) => {
       })
     }
 
-    if (!item.frequency || !['weekly', 'biweekly', 'monthly'].includes(item.frequency)) {
-      return new Response(JSON.stringify({ error: 'Invalid frequency' }), {
+    if (
+      !item.frequencyWeeks ||
+      typeof item.frequencyWeeks !== 'number' ||
+      item.frequencyWeeks < 1 ||
+      item.frequencyWeeks > 52
+    ) {
+      return new Response(JSON.stringify({ error: 'Invalid frequencyWeeks (must be 1-52)' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -78,7 +90,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (existing) {
       // Update frequency instead of creating duplicate
       await db.updateDocument(collectionPath, existing.id, {
-        frequency: item.frequency,
+        frequencyWeeks: item.frequencyWeeks,
         purchaseAmount: item.purchaseAmount,
         purchaseUnit: item.purchaseUnit,
       })
@@ -97,7 +109,7 @@ export const POST: APIRoute = async ({ request }) => {
       purchaseAmount: item.purchaseAmount,
       purchaseUnit: item.purchaseUnit,
       category: item.category,
-      frequency: item.frequency,
+      frequencyWeeks: item.frequencyWeeks,
       createdAt: new Date().toISOString(),
       ...(item.aisle !== undefined && { aisle: item.aisle }),
       ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
@@ -154,10 +166,10 @@ export const DELETE: APIRoute = async ({ request }) => {
  */
 export const PATCH: APIRoute = async ({ request }) => {
   try {
-    const { userId, itemId, frequency, lastAddedWeek } = (await request.json()) as {
+    const { userId, itemId, frequencyWeeks, lastAddedWeek } = (await request.json()) as {
       userId: string
       itemId: string
-      frequency?: 'weekly' | 'biweekly' | 'monthly'
+      frequencyWeeks?: number
       lastAddedWeek?: string
     }
 
@@ -168,24 +180,27 @@ export const PATCH: APIRoute = async ({ request }) => {
       })
     }
 
-    if (!frequency && !lastAddedWeek) {
+    if (!frequencyWeeks && !lastAddedWeek) {
       return new Response(JSON.stringify({ error: 'Nothing to update' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    if (frequency && !['weekly', 'biweekly', 'monthly'].includes(frequency)) {
-      return new Response(JSON.stringify({ error: 'Invalid frequency' }), {
+    if (
+      frequencyWeeks &&
+      (typeof frequencyWeeks !== 'number' || frequencyWeeks < 1 || frequencyWeeks > 52)
+    ) {
+      return new Response(JSON.stringify({ error: 'Invalid frequencyWeeks (must be 1-52)' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
     const collectionPath = `recurring_grocery_items/${userId}/items`
-    const updates: Record<string, string> = {}
+    const updates: Record<string, string | number> = {}
 
-    if (frequency) updates.frequency = frequency
+    if (frequencyWeeks) updates.frequencyWeeks = frequencyWeeks
     if (lastAddedWeek) updates.lastAddedWeek = lastAddedWeek
 
     await db.updateDocument(collectionPath, itemId, updates)

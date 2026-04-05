@@ -12,7 +12,7 @@ import {
   CheckSquare,
   DollarSign,
   Tag,
-  Repeat,
+  CalendarDays,
   MapPin,
 } from 'lucide-react'
 import { Stack, Inline } from '@/components/ui/layout'
@@ -209,7 +209,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
   // 9. Recurring Item Toggle
   const handleToggleRecurring = useCallback(
-    async (itemName: string, frequency: 'weekly' | 'biweekly' | 'monthly' | null) => {
+    async (itemName: string, frequencyWeeks: number | null) => {
       if (!userId) {
         console.warn('Cannot toggle recurring: missing userId')
         return
@@ -222,7 +222,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         (ing) => ing.name.toLowerCase().trim() === itemName.toLowerCase().trim(),
       )
 
-      if (frequency === null) {
+      if (frequencyWeeks === null) {
         // Remove from recurring - need to find the item ID first
         const getResponse = await fetch(
           `${baseUrl}api/grocery/recurring?userId=${encodeURIComponent(userId)}`,
@@ -255,7 +255,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
               purchaseAmount: item.purchaseAmount,
               purchaseUnit: item.purchaseUnit,
               category: item.category,
-              frequency,
+              frequencyWeeks,
               ...(item.aisle !== undefined && { aisle: item.aisle }),
               ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
               ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
@@ -470,14 +470,10 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                   </span>
                                 )}
                                 {/* Recurring Item Badge */}
-                                {item.isRecurring && (
+                                {item.isRecurring && item.recurringFrequencyWeeks && (
                                   <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                                    <Repeat className="h-2.5 w-2.5" />
-                                    {item.recurringFrequency === 'weekly'
-                                      ? 'Weekly'
-                                      : item.recurringFrequency === 'biweekly'
-                                        ? 'Biweekly'
-                                        : 'Monthly'}
+                                    <CalendarDays className="h-2.5 w-2.5" />
+                                    {item.recurringFrequencyWeeks}w
                                   </span>
                                 )}
                               </div>
@@ -533,7 +529,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               <RecurringItemToggle
                                 itemName={item.name}
                                 isRecurring={item.isRecurring}
-                                recurringFrequency={item.recurringFrequency}
+                                recurringFrequencyWeeks={item.recurringFrequencyWeeks}
                                 onToggleRecurring={handleToggleRecurring}
                                 disabled={isChecked}
                               />
