@@ -76,7 +76,7 @@ describe('Integration: Grocery Logic', () => {
 
       const result = mergeShoppableIngredients(input)
       expect(result[0].sources).toHaveLength(1)
-      expect(result[0].sources[0].recipeId).toBe('1')
+      expect(result[0].sources?.[0].recipeId).toBe('1')
     })
   })
 })

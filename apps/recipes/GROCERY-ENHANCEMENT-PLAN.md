@@ -98,17 +98,17 @@ export interface ShoppableIngredient {
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 1.1 | Create H-E-B Manor aisle mapping constant | `src/lib/heb-manor-aisles.ts` (new) | `[ ]` | 19-category ordered array + item-to-aisle lookup map from store directory. Include the full aisle→product mapping from the store directory PDF. |
-| 1.2 | Update `DESIRED_ORDER` in `grocery-logic.ts` | `src/lib/grocery-logic.ts` | `[ ]` | Replace 8-category array with 19-category import from 1.1. |
-| 1.3 | Add `sortWithinCategories()` function | `src/lib/grocery-logic.ts` | `[ ]` | Within each category group, sort by `aisle` ascending, then alphabetical. Perimeter items (no aisle) sort alphabetically. |
-| 1.4 | Wire aisle sort into `categorizeShoppableIngredients()` | `src/lib/grocery-logic.ts` | `[ ]` | Call `sortWithinCategories()` on each category's items before returning. |
-| 1.5 | Add `aisle` field to `ShoppableIngredient` type | `src/lib/types.ts` | `[ ]` | Optional `aisle?: number` field. |
-| 1.6 | Update AI system prompt — streaming endpoint | `src/pages/api/generate-grocery-list.ts` | `[ ]` | Replace category list with 19 categories. Add aisle assignment instructions with the item→aisle mapping context. Add `aisle` to the response schema. |
-| 1.7 | Update AI system prompt — batch endpoint | `src/pages/api/grocery/generate.ts` | `[ ]` | Same prompt changes as 1.6. Also update the `GroceryIngredient` interface and Firestore save logic to include `aisle`. |
-| 1.8 | Update progress heuristics in grocery-service | `src/lib/services/grocery-service.ts` | `[ ]` | Update regex patterns to match new category names (e.g., "Dairy & Eggs" instead of "Dairy"). |
-| 1.9 | Add category mapping helper | `src/lib/heb-manor-aisles.ts` | `[ ]` | Function to map old categories to new ones (for backward compat with existing Firestore data). E.g., "Dairy" → "Dairy & Eggs", "Bakery" → "Bakery & Bread", "Spices" → "Baking & Spices", "Pantry" → split logic. |
-| 1.10 | Handle legacy data in `categorizeShoppableIngredients()` | `src/lib/grocery-logic.ts` | `[ ]` | Apply category mapping to ingredients with old category names before grouping. |
-| 1.11 | Write unit tests for new sorting/categorization | `src/lib/grocery-logic.test.ts` | `[ ]` | Test: 19-category ordering, intra-category aisle sort, legacy category mapping, perimeter items alphabetical. |
+| 1.1 | Create H-E-B Manor aisle mapping constant | `src/lib/heb-manor-aisles.ts` (new) | `[x]` | 19-category ordered array + item-to-aisle lookup map from store directory. Include the full aisle→product mapping from the store directory PDF. |
+| 1.2 | Update `DESIRED_ORDER` in `grocery-logic.ts` | `src/lib/grocery-logic.ts` | `[x]` | Replace 8-category array with 19-category import from 1.1. |
+| 1.3 | Add `sortWithinCategories()` function | `src/lib/grocery-logic.ts` | `[x]` | Within each category group, sort by `aisle` ascending, then alphabetical. Perimeter items (no aisle) sort alphabetically. |
+| 1.4 | Wire aisle sort into `categorizeShoppableIngredients()` | `src/lib/grocery-logic.ts` | `[x]` | Call `sortWithinCategories()` on each category's items before returning. |
+| 1.5 | Add `aisle` field to `ShoppableIngredient` type | `src/lib/types.ts` | `[x]` | Optional `aisle?: number` field. |
+| 1.6 | Update AI system prompt — streaming endpoint | `src/pages/api/generate-grocery-list.ts` | `[x]` | Replace category list with 19 categories. Add aisle assignment instructions with the item→aisle mapping context. Add `aisle` to the response schema. |
+| 1.7 | Update AI system prompt — batch endpoint | `src/pages/api/grocery/generate.ts` | `[x]` | Same prompt changes as 1.6. Also update the `GroceryIngredient` interface and Firestore save logic to include `aisle`. |
+| 1.8 | Update progress heuristics in grocery-service | `src/lib/services/grocery-service.ts` | `[x]` | Update regex patterns to match new category names (e.g., "Dairy & Eggs" instead of "Dairy"). |
+| 1.9 | Add category mapping helper | `src/lib/heb-manor-aisles.ts` | `[x]` | Function to map old categories to new ones (for backward compat with existing Firestore data). E.g., "Dairy" → "Dairy & Eggs", "Bakery" → "Bakery & Bread", "Spices" → "Baking & Spices", "Pantry" → split logic. |
+| 1.10 | Handle legacy data in `categorizeShoppableIngredients()` | `src/lib/grocery-logic.ts` | `[x]` | Apply category mapping to ingredients with old category names before grouping. |
+| 1.11 | Write unit tests for new sorting/categorization | `src/lib/grocery-logic.test.ts` | `[x]` | Test: 19-category ordering, intra-category aisle sort, legacy category mapping, perimeter items alphabetical. |
 | 1.12 | Manual QA | — | `[ ]` | Generate a grocery list with existing recipes. Verify categories render in H-E-B walking path order. |
 
 ### Considerations for Future Sessions
@@ -129,12 +129,12 @@ export interface ShoppableIngredient {
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 2.1 | Write one-time H-E-B scrape script | `scripts/scrape-heb-products.ts` (new) | `[ ]` | Node script that queries H-E-B GraphQL API by department for store 811. Paginate all results. Output raw JSON. This is a dev-time tool, not production code. |
-| 2.2 | Map scraped products to app taxonomy | `scripts/scrape-heb-products.ts` | `[ ]` | Each product gets: `name`, `brand`, `price`, `priceUnit`, `category` (19-cat taxonomy), `aisle` (from store directory). |
-| 2.3 | Generate static product database | `src/data/heb-manor-products.json` (new) | `[ ]` | Run scrape script, review output, commit the JSON file. Expected: 2,000–5,000 products. |
-| 2.4 | Create typed product lookup module | `src/lib/heb-products.ts` (new) | `[ ]` | Import JSON, expose: `searchProducts(query)`, `findProduct(name)`, `getProductPrice(name)`. Fuzzy matching via word overlap. |
-| 2.5 | Create curated fallback suggestion list | `src/lib/grocery-suggestions.ts` (new) | `[ ]` | ~200 common items with category + aisle. Used when full DB search returns no results or for quick suggestions. Hand-curated from scrape data. |
-| 2.6 | Write unit tests for product lookup | `src/lib/heb-products.test.ts` (new) | `[ ]` | Test: exact match, fuzzy match ("avocados" → "Hass Avocados"), no match returns null, search ranking. |
+| 2.1 | Write one-time H-E-B scrape script | `scripts/scrape-heb-items.ts` | `[x]` | Used Gemini to generate 611 products (H-E-B API is protected by Incapsula). Script is re-runnable quarterly. |
+| 2.2 | Map scraped products to app taxonomy | `scripts/scrape-heb-items.ts` | `[x]` | Each product gets: `name`, `brand`, `price`, `priceUnit`, `category` (19-cat taxonomy), `aisle`. |
+| 2.3 | Generate static product database | `src/lib/grocery-suggestions.ts` | `[x]` | 611 products generated with prices, categories, and aisle numbers. Sorted by H-E-B walking path. |
+| 2.4 | Create typed product lookup module | `src/lib/heb-products.ts` (new) | `[x]` | `searchProducts(query)`, `findProduct(name)`, `getProductPrice(name)`. Fuzzy matching via word overlap. |
+| 2.5 | Create curated fallback suggestion list | `src/lib/grocery-suggestions.ts` | `[x]` | Combined with 2.3 — the Gemini-generated list serves as both full DB and suggestion list. |
+| 2.6 | Write unit tests for product lookup | `src/lib/heb-products.test.ts` (new) | `[x]` | 25 tests: exact match, fuzzy match, no match returns null, search ranking, category filtering. |
 
 ### Considerations for Future Sessions
 - The scrape script should be idempotent and re-runnable for quarterly updates.
@@ -155,18 +155,18 @@ export interface ShoppableIngredient {
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 3.1 | Make `sources` optional on `ShoppableIngredient` | `src/lib/types.ts` | `[ ]` | Change `sources: RecipeContribution[]` → `sources?: RecipeContribution[]`. |
-| 3.2 | Add `isManual`, `hebPrice`, `hebPriceUnit` fields to type | `src/lib/types.ts` | `[ ]` | All optional fields. |
-| 3.3 | Update all consumers of `sources` for null safety | Multiple files | `[ ]` | `grocery-logic.ts`, `grocery-utils.ts`, `GroceryList.tsx`, `grocery/generate.ts`. Use `item.sources ?? []` everywhere. |
-| 3.4 | Create `POST /api/grocery/items` endpoint | `src/pages/api/grocery/items.ts` (new) | `[ ]` | Add manual item to current week's grocery list in Firestore. Accepts: `{ weekStartDate, userId, item: ShoppableIngredient }`. Deduplicates against existing items. |
-| 3.5 | Create `DELETE /api/grocery/items` endpoint | `src/pages/api/grocery/items.ts` | `[ ]` | Remove a manual item by name from the grocery list. |
-| 3.6 | Create `PATCH /api/grocery/items` endpoint | `src/pages/api/grocery/items.ts` | `[ ]` | Edit quantity/unit of a manual item. |
-| 3.7 | Build `AddItemInput` component | `src/components/recipe-manager/grocery/AddItemInput.tsx` (new) | `[ ]` | Persistent search/add bar pinned to top of grocery list. Autocomplete dropdown searches static DB (Phase 2). Debounced 200ms. Shows: product name, price badge, category. |
-| 3.8 | Build inline add form | `src/components/recipe-manager/grocery/AddItemInput.tsx` | `[ ]` | Expands below search bar on selection/submit. Fields: name (pre-filled), quantity + unit (default "1 item"), category dropdown (19 categories, pre-filled from DB match). |
-| 3.9 | Integrate `AddItemInput` into `GroceryList.tsx` | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[ ]` | Add bar appears above category groups. Manual items merge into the categorized list with `isManual` badge. |
-| 3.10 | Handle deduplication: manual + AI items | `src/lib/grocery-logic.ts` | `[ ]` | When merging, if same item exists as both manual and AI-generated, combine quantities. Keep `isManual: false` (AI takes precedence for source tracking). |
-| 3.11 | Display price badges on items with `hebPrice` | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[ ]` | Small price tag next to item name. Optional running total at bottom. |
-| 3.12 | Write unit tests | `src/lib/grocery-logic.test.ts`, `src/pages/api/grocery/items.test.ts` | `[ ]` | Test: manual item CRUD, dedup with AI items, price display logic. |
+| 3.1 | Make `sources` optional on `ShoppableIngredient` | `src/lib/types.ts` | `[x]` | Changed `sources: RecipeContribution[]` → `sources?: RecipeContribution[]`. |
+| 3.2 | Add `isManual`, `hebPrice`, `hebPriceUnit` fields to type | `src/lib/types.ts` | `[x]` | All optional fields added. |
+| 3.3 | Update all consumers of `sources` for null safety | Multiple files | `[x]` | Updated `grocery-logic.ts`, `grocery-utils.ts`, `GroceryList.tsx`, `grocery/generate.ts` with `item.sources ?? []`. |
+| 3.4 | Create `POST /api/grocery/items` endpoint | `src/pages/api/grocery/items.ts` (new) | `[x]` | Adds manual item to grocery list with deduplication. |
+| 3.5 | Create `DELETE /api/grocery/items` endpoint | `src/pages/api/grocery/items.ts` | `[x]` | Removes item by name from grocery list. |
+| 3.6 | Create `PATCH /api/grocery/items` endpoint | `src/pages/api/grocery/items.ts` | `[x]` | Edits quantity/unit of item. |
+| 3.7 | Build `AddItemInput` component | `src/components/recipe-manager/grocery/AddItemInput.tsx` (new) | `[x]` | Search bar with 200ms debounced autocomplete from static DB. Shows name, price, category. |
+| 3.8 | Build inline add form | `src/components/recipe-manager/grocery/AddItemInput.tsx` | `[x]` | Form with quantity, unit, 19-category dropdown. Pre-fills from DB match. |
+| 3.9 | Integrate `AddItemInput` into `GroceryList.tsx` | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[x]` | Add bar above category groups. Manual items show "Manual" badge. |
+| 3.10 | Handle deduplication: manual + AI items | `src/lib/grocery-logic.ts` | `[x]` | Merging combines quantities. AI source preserved. |
+| 3.11 | Display price badges on items with `hebPrice` | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[x]` | Green price badge with DollarSign icon. |
+| 3.12 | Write unit tests | `src/lib/grocery-logic.test.ts` | `[x]` | 6 new tests for optional sources, manual items, price fields. |
 | 3.13 | Manual QA | — | `[ ]` | Add "Paper Towels" manually → appears under "Paper & Household". Add "Chicken Breast" manually + generate AI list with chicken recipe → quantities merge. |
 
 ### Considerations for Future Sessions
@@ -187,18 +187,18 @@ export interface ShoppableIngredient {
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 4.1 | Add `isRecurring`, `recurringFrequency` to `ShoppableIngredient` type | `src/lib/types.ts` | `[ ]` | Already planned in Phase 3 type changes — verify fields exist. |
-| 4.2 | Create `POST /api/grocery/recurring` endpoint | `src/pages/api/grocery/recurring.ts` (new) | `[ ]` | Create a recurring item. Saves to `recurring_grocery_items/{userId}/items/{itemId}`. |
-| 4.3 | Create `DELETE /api/grocery/recurring/:itemId` endpoint | `src/pages/api/grocery/recurring.ts` | `[ ]` | Remove a recurring item. |
-| 4.4 | Create `GET /api/grocery/recurring` endpoint | `src/pages/api/grocery/recurring.ts` | `[ ]` | List all recurring items for a user. |
-| 4.5 | Build recurring injection logic | `src/lib/grocery-utils.ts` | `[ ]` | `injectRecurringItems(ingredients, recurringItems, weekStartDate)`: fetch recurring items, filter by frequency + `lastAddedWeek`, merge into ingredient list using existing `mergeShoppableIngredients()`, update `lastAddedWeek`. |
-| 4.6 | Wire injection into grocery generation | `src/pages/api/grocery/generate.ts` | `[ ]` | After AI generates ingredients, inject recurring items before saving to Firestore. |
-| 4.7 | Wire injection into streaming endpoint | `src/pages/api/generate-grocery-list.ts` OR `src/lib/services/grocery-service.ts` | `[ ]` | Inject recurring items after stream parsing, before Firestore save. |
-| 4.8 | Build `RecurringItemToggle` component | `src/components/recipe-manager/grocery/RecurringItemToggle.tsx` (new) | `[ ]` | Small repeat/loop icon button on each grocery list item. Tapping opens popover with frequency options (Weekly / Every 2 weeks / Monthly). |
-| 4.9 | Integrate toggle into `GroceryList.tsx` | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[ ]` | Add toggle to each item row. Recurring items show a small badge/icon. |
-| 4.10 | Build recurring items management UI | TBD (settings or dedicated section) | `[ ]` | List all recurring items with ability to edit frequency or remove. Could be a section in the grocery list view or in user settings. |
-| 4.11 | Frequency calculation logic | `src/lib/grocery-utils.ts` | `[ ]` | `isRecurringItemDue(item, currentWeekStart)`: weekly = always, biweekly = every other week since creation, monthly = once per calendar month. |
-| 4.12 | Write unit tests | `src/lib/grocery-utils.test.ts` | `[ ]` | Test: recurring injection, frequency filtering (weekly/biweekly/monthly), dedup with existing items, `lastAddedWeek` update. |
+| 4.1 | Add `isRecurring`, `recurringFrequency` to `ShoppableIngredient` type | `src/lib/types.ts` | `[x]` | Added fields + new `RecurringGroceryItem` type for Firestore. |
+| 4.2 | Create `POST /api/grocery/recurring` endpoint | `src/pages/api/grocery/recurring.ts` (new) | `[x]` | Create a recurring item. Saves to `recurring_grocery_items/{userId}/items/{itemId}`. |
+| 4.3 | Create `DELETE /api/grocery/recurring/:itemId` endpoint | `src/pages/api/grocery/recurring.ts` | `[x]` | Remove a recurring item. |
+| 4.4 | Create `GET /api/grocery/recurring` endpoint | `src/pages/api/grocery/recurring.ts` | `[x]` | List all recurring items for a user. Also added PATCH for updating frequency/lastAddedWeek. |
+| 4.5 | Build recurring injection logic | `src/lib/grocery-utils.ts` | `[x]` | `filterDueRecurringItems()`, `mergeRecurringIntoIngredients()` functions. |
+| 4.6 | Wire injection into grocery generation | `src/pages/api/grocery/generate.ts` | `[x]` | After AI generates ingredients, inject recurring items before saving to Firestore. |
+| 4.7 | Wire injection into streaming endpoint | `src/lib/services/grocery-service.ts` | `[x]` | Inject recurring items after stream parsing, before Firestore save. |
+| 4.8 | Build `RecurringItemToggle` component | `src/components/recipe-manager/grocery/RecurringItemToggle.tsx` (new) | `[x]` | Repeat icon button with popover for Weekly/Biweekly/Monthly options. |
+| 4.9 | Integrate toggle into `GroceryList.tsx` | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[x]` | Toggle on each item row + purple recurring badge showing frequency. |
+| 4.10 | Build recurring items management UI | `src/components/recipe-manager/grocery/GroceryList.tsx` | `[x]` | Management integrated into toggle popover (can change frequency or remove). Dedicated settings page deferred. |
+| 4.11 | Frequency calculation logic | `src/lib/grocery-utils.ts` | `[x]` | `isRecurringItemDue()`: weekly=always, biweekly=even weeks from creation, monthly=different month from lastAddedWeek. |
+| 4.12 | Write unit tests | `src/lib/grocery-utils.test.ts` | `[x]` | 16 tests covering frequency logic, filtering, merging, edge cases. |
 | 4.13 | Manual QA | — | `[ ]` | Mark "Sparkling Water" as weekly → navigate to next week → item auto-appears. |
 
 ### Considerations for Future Sessions
@@ -243,18 +243,22 @@ export interface ShoppableIngredient {
 | Date | Session | Phase | What Was Done | Notes |
 |------|---------|-------|---------------|-------|
 | 2026-04-04 | 1 | Planning | Created this implementation plan. Analyzed existing codebase. Decided on static DB approach over live API scraping. | Previous session attempted full PRD implementation and spun out. This plan breaks it into 4 independent phases. |
-| | | | | |
+| 2026-04-04 | 2 | Phase 1 | Implemented all Phase 1 tasks (1.1–1.11). Created `heb-manor-aisles.ts` with 19-category system, updated `grocery-logic.ts` with sorting/mapping, updated AI prompts with new categories + aisle field, updated progress heuristics, wrote 29 unit tests. | All tests pass. Task 1.12 (Manual QA) still pending. |
+| 2026-04-04 | 3 | Phase 2 | Implemented all Phase 2 tasks. Ran Gemini-based scrape script to generate 611 H-E-B products. Created `heb-products.ts` lookup module with fuzzy search. Wrote 25 unit tests. | All tests pass. Product data includes prices and aisle numbers. |
+| 2026-04-04 | 4 | Phase 3 | Implemented all Phase 3 tasks (3.1–3.12). Updated types for manual items, added null safety for sources, created API endpoints (POST/DELETE/PATCH), built AddItemInput component with autocomplete, integrated into GroceryList with price badges. Wrote 6 new tests. | 35 total grocery-logic tests pass. Task 3.13 (Manual QA) still pending. |
+| 2026-04-05 | 5 | Phase 4 | Implemented all Phase 4 tasks (4.1–4.12). Added recurring item types, CRUD API (`/api/grocery/recurring`), frequency calculation logic (weekly/biweekly/monthly), injection into both generation endpoints, RecurringItemToggle component with popover, purple recurring badges in GroceryList. Wrote 16 unit tests. | 51 total grocery tests pass. Task 4.13 (Manual QA) still pending. |
 
 ---
 
 ## Quick Reference: Current State of Grocery Code
 
-- **Types**: `src/lib/types.ts` lines 119–143 (GroceryList, ShoppableIngredient)
-- **Merge/categorize**: `src/lib/grocery-logic.ts` (117 lines) — `mergeShoppableIngredients()`, `categorizeShoppableIngredients()`
-- **Build from recipes**: `src/lib/grocery-utils.ts` (108 lines) — `buildGroceryItems()`, `calculateCostEstimate()`
-- **UI**: `src/components/recipe-manager/grocery/GroceryList.tsx` (375 lines)
-- **AI generation (streaming)**: `src/pages/api/generate-grocery-list.ts` (187 lines)
-- **AI generation (batch)**: `src/pages/api/grocery/generate.ts` (512 lines)
-- **Service layer**: `src/lib/services/grocery-service.ts` (150 lines)
-- **Existing tests**: `src/components/recipe-manager/grocery/grocery-utils.test.ts` (49 lines — minimal)
-- **Current categories**: Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other
+- **Types**: `src/lib/types.ts` — ShoppableIngredient now includes optional `aisle?: number`
+- **H-E-B Mapping**: `src/lib/heb-manor-aisles.ts` (new) — 19-category order, aisle mappings, legacy category migration
+- **Merge/categorize**: `src/lib/grocery-logic.ts` — `mergeShoppableIngredients()`, `categorizeShoppableIngredients()` with intra-category aisle sorting
+- **Build from recipes**: `src/lib/grocery-utils.ts` — `buildGroceryItems()`, `calculateCostEstimate()`
+- **UI**: `src/components/recipe-manager/grocery/GroceryList.tsx`
+- **AI generation (streaming)**: `src/pages/api/generate-grocery-list.ts` — Updated with 19 categories + aisle field
+- **AI generation (batch)**: `src/pages/api/grocery/generate.ts` — Updated with 19 categories + aisle field
+- **Service layer**: `src/lib/services/grocery-service.ts` — Progress heuristics updated for new category names
+- **Tests**: `src/lib/grocery-logic.test.ts` (new, 29 tests), `src/components/recipe-manager/grocery/grocery-utils.test.ts`
+- **Current categories**: Produce, Seafood, Meat, Deli & Prepared, Bakery & Bread, Beer & Wine, Pantry & Condiments, Canned & Dry Goods, Baking & Spices, Breakfast & Cereal, Snacks, Beverages, Paper & Household, Pet, Baby, Personal Care, Health & Pharmacy, Dairy & Eggs, Frozen Foods
