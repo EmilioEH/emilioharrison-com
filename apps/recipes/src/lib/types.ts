@@ -160,6 +160,8 @@ export interface ShoppableIngredient {
   isManual?: boolean // true if user-added (not AI-generated)
   hebPrice?: number // price from static DB (e.g., 1.49)
   hebPriceUnit?: string // "each", "lb", "oz", etc.
+  hebUnitPrice?: number // per-unit price (e.g., 0.25)
+  hebUnitPriceUnit?: string // unit for per-unit price (e.g., "ct", "oz", "lb")
   // HEB product fields (from URL import or overrides)
   hebProductId?: string // HEB product ID (e.g., "8271501")
   hebProductUrl?: string // full HEB product page URL
@@ -179,6 +181,8 @@ export interface ProductOverride {
   imageUrl?: string
   hebPrice?: number
   hebPriceUnit?: string
+  hebUnitPrice?: number
+  hebUnitPriceUnit?: string
   hebSize?: string
   category?: string
   aisle?: number

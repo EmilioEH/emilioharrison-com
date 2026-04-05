@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  X,
-  Minus,
-  Plus,
-  DollarSign,
-  ExternalLink,
-  Trash2,
-} from 'lucide-react'
+import { X, Minus, Plus, DollarSign, ExternalLink, Trash2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
 import type { ShoppableIngredient, ProductOverride } from '../../../lib/types'
@@ -66,6 +59,8 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
         ...(item.imageUrl && { imageUrl: item.imageUrl }),
         ...(price && { hebPrice: parseFloat(price) }),
         ...(item.hebPriceUnit && { hebPriceUnit: item.hebPriceUnit }),
+        ...(item.hebUnitPrice !== undefined && { hebUnitPrice: item.hebUnitPrice }),
+        ...(item.hebUnitPriceUnit && { hebUnitPriceUnit: item.hebUnitPriceUnit }),
         ...(item.hebSize && { hebSize: item.hebSize }),
         category,
         ...(aisle && { aisle: parseInt(aisle) }),
@@ -128,11 +123,20 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
               </div>
             )}
             <div className="flex-1">
-              <h3 className="font-display text-xl font-bold text-foreground">
-                {item.name}
-              </h3>
+              <h3 className="font-display text-xl font-bold text-foreground">{item.name}</h3>
               {item.hebSize && (
                 <p className="mt-0.5 text-sm text-muted-foreground">{item.hebSize}</p>
+              )}
+              {item.hebPrice && (
+                <p className="mt-0.5 text-sm font-semibold text-green-700 dark:text-green-400">
+                  ${item.hebPrice.toFixed(2)}
+                  {item.hebPriceUnit && ` / ${item.hebPriceUnit}`}
+                  {item.hebUnitPrice && item.hebUnitPriceUnit && (
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      (${item.hebUnitPrice.toFixed(2)}/{item.hebUnitPriceUnit})
+                    </span>
+                  )}
+                </p>
               )}
               {item.storeLocation && (
                 <p className="mt-0.5 text-xs text-muted-foreground">{item.storeLocation}</p>
@@ -148,7 +152,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
 
           {/* Quantity stepper */}
           <div className="mb-5">
-            <label htmlFor="edit-item-qty" className="mb-2 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <label
+              htmlFor="edit-item-qty"
+              className="mb-2 block text-xs font-bold uppercase tracking-wider text-muted-foreground"
+            >
               Quantity
             </label>
             <div className="flex items-center gap-3">
@@ -193,7 +200,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
             <div className="mb-5 space-y-3 rounded-xl border border-border bg-muted/30 p-4">
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label htmlFor="edit-price" className="mb-1 block text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="edit-price"
+                    className="mb-1 block text-xs font-medium text-muted-foreground"
+                  >
                     Price
                   </label>
                   <div className="relative">
@@ -210,7 +220,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
                   </div>
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="edit-unit" className="mb-1 block text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="edit-unit"
+                    className="mb-1 block text-xs font-medium text-muted-foreground"
+                  >
                     Unit
                   </label>
                   <input
@@ -226,7 +239,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
 
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label htmlFor="edit-category" className="mb-1 block text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="edit-category"
+                    className="mb-1 block text-xs font-medium text-muted-foreground"
+                  >
                     Category
                   </label>
                   <select
@@ -243,7 +259,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
                   </select>
                 </div>
                 <div className="w-24">
-                  <label htmlFor="edit-aisle" className="mb-1 block text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="edit-aisle"
+                    className="mb-1 block text-xs font-medium text-muted-foreground"
+                  >
                     Aisle
                   </label>
                   <input
@@ -258,7 +277,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
               </div>
 
               <div>
-                <label htmlFor="edit-location" className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor="edit-location"
+                  className="mb-1 block text-xs font-medium text-muted-foreground"
+                >
                   Store Location
                 </label>
                 <input

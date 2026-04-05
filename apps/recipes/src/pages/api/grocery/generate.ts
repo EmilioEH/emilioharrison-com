@@ -3,11 +3,13 @@ import { formatRecipesForPrompt } from '../../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import type { GroceryList, RecurringGroceryItem, ShoppableIngredient, ProductOverride } from '../../../lib/types'
-import {
-  filterDueRecurringItems,
-  mergeRecurringIntoIngredients,
-} from '../../../lib/grocery-utils'
+import type {
+  GroceryList,
+  RecurringGroceryItem,
+  ShoppableIngredient,
+  ProductOverride,
+} from '../../../lib/types'
+import { filterDueRecurringItems, mergeRecurringIntoIngredients } from '../../../lib/grocery-utils'
 
 const BATCH_SIZE = 5
 
@@ -566,9 +568,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       if (overrides.length > 0) {
         console.log(`[Grocery] Applying ${overrides.length} product overrides`)
-        const overrideMap = new Map(
-          overrides.map((o) => [o.name.toLowerCase().trim(), o]),
-        )
+        const overrideMap = new Map(overrides.map((o) => [o.name.toLowerCase().trim(), o]))
 
         for (const ing of finalIngredients) {
           const override = overrideMap.get(ing.name.toLowerCase().trim())
@@ -582,6 +582,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
             if (override.hebProductUrl) ing.hebProductUrl = override.hebProductUrl
             if (override.hebSize) ing.hebSize = override.hebSize
             if (override.storeLocation) ing.storeLocation = override.storeLocation
+            if (override.hebUnitPrice !== undefined) ing.hebUnitPrice = override.hebUnitPrice
+            if (override.hebUnitPriceUnit) ing.hebUnitPriceUnit = override.hebUnitPriceUnit
           }
         }
       }

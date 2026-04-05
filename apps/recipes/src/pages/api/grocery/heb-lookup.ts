@@ -1,8 +1,7 @@
 import type { APIRoute } from 'astro'
 import {
   parseHebUrl,
-  parseHebProductData,
-  extractNextData,
+  fetchHebProductGraphQL,
   hebProductToIngredientFields,
 } from '../../../lib/heb-url'
 import { searchProducts } from '../../../lib/heb-products'
@@ -14,9 +13,9 @@ import type { HebProduct } from '../../../lib/types'
  * Accepts an HEB product URL and returns enriched product data.
  *
  * Strategy:
- * 1. Parse URL for product ID and slug
- * 2. Attempt to fetch the page and extract __NEXT_DATA__ (may be blocked by WAF)
- * 3. If fetch fails, fall back to URL-derived name + static DB enrichment + CDN image
+ * 1. Parse URL for product ID
+ * 2. Query HEB's GraphQL API for full product data (price, size, location, images)
+ * 3. If GraphQL fails, fall back to URL-derived name + static DB enrichment + CDN image
  */
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -31,44 +30,19 @@ export const POST: APIRoute = async ({ request }) => {
 
     const parsed = parseHebUrl(url)
     if (!parsed) {
-      return new Response(
-        JSON.stringify({ error: 'Not a valid H-E-B product URL' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
-      )
-    }
-
-    // Try to fetch the page for __NEXT_DATA__
-    let product: HebProduct | null = null
-
-    try {
-      const response = await fetch(parsed.originalUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept:
-            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-        },
-        signal: AbortSignal.timeout(10000),
+      return new Response(JSON.stringify({ error: 'Not a valid H-E-B product URL' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
       })
-
-      if (response.ok) {
-        const html = await response.text()
-        const nextData = extractNextData(html)
-        if (nextData) {
-          product = parseHebProductData(nextData)
-        }
-      }
-    } catch (fetchError) {
-      // Expected: WAF may block us. Fall through to static enrichment.
-      console.log('[heb-lookup] Fetch blocked, falling back to static enrichment:', fetchError instanceof Error ? fetchError.message : 'unknown')
     }
 
-    // If we got product data from the page, return it
+    // Primary: query HEB GraphQL API
+    const product = await fetchHebProductGraphQL(parsed.productId)
+
     if (product) {
       return new Response(
         JSON.stringify({
-          source: 'live',
+          source: 'graphql',
           product,
           ingredientFields: hebProductToIngredientFields(product),
         }),
@@ -78,9 +52,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Fallback: enrich from URL parsing + static DB
     const staticResults = searchProducts(parsed.productName, 1)
-    const staticMatch = staticResults.length > 0 && staticResults[0].score >= 10
-      ? staticResults[0].product
-      : null
+    const staticMatch =
+      staticResults.length > 0 && staticResults[0].score >= 10 ? staticResults[0].product : null
 
     const fallbackProduct: HebProduct = {
       productId: parsed.productId,

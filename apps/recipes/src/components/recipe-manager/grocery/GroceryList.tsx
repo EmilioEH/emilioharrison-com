@@ -13,6 +13,7 @@ import {
   DollarSign,
   Tag,
   Repeat,
+  MapPin,
 } from 'lucide-react'
 import { Stack, Inline } from '@/components/ui/layout'
 import {
@@ -208,10 +209,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
   // 9. Recurring Item Toggle
   const handleToggleRecurring = useCallback(
-    async (
-      itemName: string,
-      frequency: 'weekly' | 'biweekly' | 'monthly' | null,
-    ) => {
+    async (itemName: string, frequency: 'weekly' | 'biweekly' | 'monthly' | null) => {
       if (!userId) {
         console.warn('Cannot toggle recurring: missing userId')
         return
@@ -232,8 +230,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         if (getResponse.ok) {
           const { items } = await getResponse.json()
           const recurringItem = items?.find(
-            (i: { name: string }) =>
-              i.name.toLowerCase().trim() === itemName.toLowerCase().trim(),
+            (i: { name: string }) => i.name.toLowerCase().trim() === itemName.toLowerCase().trim(),
           )
           if (recurringItem) {
             await fetch(`${baseUrl}api/grocery/recurring`, {
@@ -301,13 +298,13 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           <Inline spacing="sm">
             <button
               onClick={() => console.log('Filters')}
-              className="bg-muted rounded-full p-2 text-muted-foreground hover:text-foreground"
+              className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
             >
               <ListFilter className="h-5 w-5" />
             </button>
             <button
               onClick={onClose}
-              className="bg-muted rounded-full p-2 text-muted-foreground hover:text-foreground"
+              className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -320,7 +317,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         {/* Empty State */}
         {ingredients.length === 0 && (
           <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
-            <div className="bg-muted mb-4 rounded-full p-6">
+            <div className="mb-4 rounded-full bg-muted p-6">
               <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
             </div>
             <h3 className="font-display text-lg font-bold">All clear!</h3>
@@ -331,8 +328,8 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         )}
         {/* Recipe Sources Header - scrolls with content */}
         {!embedded && !isLoading && recipes.length > 0 && (
-          <div className="bg-muted/30 -mx-4 -mt-4 mb-6 border-b border-border px-6 py-4">
-            <p className="text-muted-foreground text-base font-bold">
+          <div className="-mx-4 -mt-4 mb-6 border-b border-border bg-muted/30 px-6 py-4">
+            <p className="text-base font-bold text-muted-foreground">
               Shopping for {recipes.length} Recipes
             </p>
             <Stack spacing="sm">
@@ -367,7 +364,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                 <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
                   {category.name}
                 </h3>
-                <div className="bg-card border-border overflow-hidden rounded-xl border shadow-sm">
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                   {category.items.map((item) => {
                     const itemKey = `${item.name}-${item.purchaseUnit}`
                     const isChecked = checkedItems.has(item.name)
@@ -378,7 +375,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                     return (
                       <div
                         key={itemKey}
-                        className={`border-border border-b last:border-0 ${isChecked ? 'opacity-50' : ''}`}
+                        className={`border-b border-border last:border-0 ${isChecked ? 'opacity-50' : ''}`}
                       >
                         {/* Main Item Row */}
                         <div className="flex flex-col p-4">
@@ -458,6 +455,11 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                   <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                     <DollarSign className="h-2.5 w-2.5" />
                                     {item.hebPrice.toFixed(2)}
+                                    {item.hebUnitPrice && item.hebUnitPriceUnit && (
+                                      <span className="ml-0.5 font-normal opacity-75">
+                                        ({item.hebUnitPrice.toFixed(2)}/{item.hebUnitPriceUnit})
+                                      </span>
+                                    )}
                                   </span>
                                 )}
                                 {/* Manual Item Badge */}
@@ -479,6 +481,19 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                   </span>
                                 )}
                               </div>
+
+                              {/* Size + Location row */}
+                              {(item.hebSize || item.storeLocation) && (
+                                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
+                                  {item.hebSize && <span>{item.hebSize}</span>}
+                                  {item.storeLocation && (
+                                    <span className="flex items-center gap-0.5">
+                                      <MapPin className="h-2.5 w-2.5" />
+                                      {item.storeLocation}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Source Tags */}
                               <div className="mt-2 flex flex-wrap gap-2">
@@ -528,7 +543,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
                         {/* Expanded Source Details (Only if > 1 source) */}
                         {multipleSources && isExpanded && (
-                          <div className="border-border border-t bg-muted/30 px-4 py-3 pl-14">
+                          <div className="border-t border-border bg-muted/30 px-4 py-3 pl-14">
                             <Stack spacing="xs">
                               {sources.map((source, idx) => {
                                 const recipe = findRecipeById(source.recipeId)
