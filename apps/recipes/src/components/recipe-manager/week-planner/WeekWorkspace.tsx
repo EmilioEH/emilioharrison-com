@@ -56,7 +56,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   onOpenCalendar,
   onSelectRecipe,
   scrollContainer: _scrollContainer,
-  onShare,
+  onShare: _onShare,
   initialTab = 'plan',
   user: _propsUser,
 }) => {
