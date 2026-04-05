@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Search, Plus, X, DollarSign } from 'lucide-react'
+import { Search, Plus, X, DollarSign, Link2, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { searchProducts, type SearchResult } from '../../../lib/heb-products'
+import { isHebUrl } from '../../../lib/heb-url'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
-import type { ShoppableIngredient } from '../../../lib/types'
+import type { ShoppableIngredient, HebProduct } from '../../../lib/types'
 
 interface AddItemInputProps {
   onAddItem: (item: ShoppableIngredient) => Promise<void>
@@ -18,6 +19,11 @@ interface FormState {
   hebPrice?: number
   hebPriceUnit?: string
   aisle?: number
+  hebProductId?: string
+  hebProductUrl?: string
+  imageUrl?: string
+  hebSize?: string
+  storeLocation?: string
 }
 
 const DEFAULT_FORM: FormState = {
@@ -35,7 +41,14 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [submitting, setSubmitting] = useState(false)
 
+  // HEB URL import state
+  const [showUrlInput, setShowUrlInput] = useState(false)
+  const [hebUrl, setHebUrl] = useState('')
+  const [urlLoading, setUrlLoading] = useState(false)
+  const [urlError, setUrlError] = useState('')
+
   const inputRef = useRef<HTMLInputElement>(null)
+  const urlInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -78,6 +91,13 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Focus URL input when shown
+  useEffect(() => {
+    if (showUrlInput) {
+      urlInputRef.current?.focus()
+    }
+  }, [showUrlInput])
+
   const selectProduct = (result: SearchResult) => {
     const { product } = result
     setForm({
@@ -105,6 +125,63 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
     setShowForm(true)
   }
 
+  const handleHebUrlSubmit = async () => {
+    if (!hebUrl.trim()) return
+
+    if (!isHebUrl(hebUrl)) {
+      setUrlError('Please enter a valid H-E-B product URL')
+      return
+    }
+
+    setUrlLoading(true)
+    setUrlError('')
+
+    try {
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+        ? import.meta.env.BASE_URL
+        : `${import.meta.env.BASE_URL}/`
+
+      const response = await fetch(`${baseUrl}api/grocery/heb-lookup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: hebUrl.trim() }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to look up product')
+      }
+
+      const { product, ingredientFields } = (await response.json()) as {
+        source: string
+        product: HebProduct
+        ingredientFields: Partial<ShoppableIngredient>
+      }
+
+      setForm({
+        name: product.name,
+        quantity: '1',
+        unit: product.priceUnit || 'each',
+        category: ingredientFields.category || 'Pantry & Condiments',
+        hebPrice: ingredientFields.hebPrice,
+        hebPriceUnit: ingredientFields.hebPriceUnit,
+        hebProductId: ingredientFields.hebProductId,
+        hebProductUrl: ingredientFields.hebProductUrl,
+        imageUrl: ingredientFields.imageUrl,
+        hebSize: ingredientFields.hebSize,
+        storeLocation: ingredientFields.storeLocation,
+      })
+
+      setHebUrl('')
+      setShowUrlInput(false)
+      setShowForm(true)
+    } catch (err) {
+      setUrlError(err instanceof Error ? err.message : 'Failed to look up product')
+    } finally {
+      setUrlLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim() || submitting) return
@@ -121,6 +198,11 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
       ...(form.hebPrice && { hebPrice: form.hebPrice }),
       ...(form.hebPriceUnit && { hebPriceUnit: form.hebPriceUnit }),
       ...(form.aisle && { aisle: form.aisle }),
+      ...(form.hebProductId && { hebProductId: form.hebProductId }),
+      ...(form.hebProductUrl && { hebProductUrl: form.hebProductUrl }),
+      ...(form.imageUrl && { imageUrl: form.imageUrl }),
+      ...(form.hebSize && { hebSize: form.hebSize }),
+      ...(form.storeLocation && { storeLocation: form.storeLocation }),
     }
 
     setSubmitting(true)
@@ -156,20 +238,102 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
     <div className="relative mb-4" ref={dropdownRef}>
       {/* Search Input */}
       {!showForm && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => query.length >= 2 && results.length > 0 && setShowDropdown(true)}
-            placeholder="Add item to list..."
-            className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            disabled={isLoading}
-          />
-        </div>
+        <>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => query.length >= 2 && results.length > 0 && setShowDropdown(true)}
+              placeholder="Add item to list..."
+              className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* HEB URL Import Toggle */}
+          {!showUrlInput && (
+            <button
+              type="button"
+              onClick={() => setShowUrlInput(true)}
+              className="mt-2 flex items-center gap-1.5 px-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              <Link2 className="h-3 w-3" />
+              Or paste an H-E-B product link
+            </button>
+          )}
+
+          {/* HEB URL Input */}
+          {showUrlInput && (
+            <div className="mt-2 flex gap-2">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  ref={urlInputRef}
+                  type="url"
+                  value={hebUrl}
+                  onChange={(e) => {
+                    setHebUrl(e.target.value)
+                    setUrlError('')
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleHebUrlSubmit()
+                    }
+                    if (e.key === 'Escape') {
+                      setShowUrlInput(false)
+                      setHebUrl('')
+                      setUrlError('')
+                    }
+                  }}
+                  placeholder="https://www.heb.com/product-detail/..."
+                  className={cn(
+                    'w-full rounded-xl border bg-card py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1',
+                    urlError
+                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
+                      : 'border-border focus:border-primary focus:ring-primary',
+                  )}
+                  disabled={urlLoading}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleHebUrlSubmit}
+                disabled={urlLoading || !hebUrl.trim()}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-bold transition-colors',
+                  urlLoading || !hebUrl.trim()
+                    ? 'cursor-not-allowed bg-muted text-muted-foreground'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90',
+                )}
+              >
+                {urlLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUrlInput(false)
+                  setHebUrl('')
+                  setUrlError('')
+                }}
+                className="rounded-xl p-3 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          {urlError && (
+            <p className="mt-1 px-1 text-xs text-red-500">{urlError}</p>
+          )}
+        </>
       )}
 
       {/* Autocomplete Dropdown */}
@@ -217,7 +381,22 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
       {showForm && (
         <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-bold text-foreground">{form.name}</h3>
+            <div className="flex items-center gap-3">
+              {/* Product image thumbnail */}
+              {form.imageUrl && (
+                <img
+                  src={form.imageUrl}
+                  alt={form.name}
+                  className="h-12 w-12 rounded-lg object-cover"
+                />
+              )}
+              <div>
+                <h3 className="font-display text-lg font-bold text-foreground">{form.name}</h3>
+                {form.hebSize && (
+                  <p className="text-xs text-muted-foreground">{form.hebSize}</p>
+                )}
+              </div>
+            </div>
             <button
               type="button"
               onClick={cancelForm}
@@ -227,14 +406,19 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
             </button>
           </div>
 
-          {/* Price badge if available */}
-          {form.hebPrice && (
-            <div className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
-              <DollarSign className="h-3.5 w-3.5" />
-              <span>
-                ${form.hebPrice.toFixed(2)} / {form.hebPriceUnit || 'each'}
-              </span>
-              {form.aisle && <span className="ml-2">• Aisle {form.aisle}</span>}
+          {/* Price & location info */}
+          {(form.hebPrice || form.storeLocation) && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              {form.hebPrice && (
+                <span className="flex items-center gap-0.5">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  ${form.hebPrice.toFixed(2)} / {form.hebPriceUnit || 'each'}
+                </span>
+              )}
+              {form.aisle && <span>• Aisle {form.aisle}</span>}
+              {form.storeLocation && (
+                <span className="text-xs">• {form.storeLocation}</span>
+              )}
             </div>
           )}
 

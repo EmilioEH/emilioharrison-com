@@ -3,7 +3,7 @@ import { formatRecipesForPrompt } from '../../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import type { GroceryList, RecurringGroceryItem, ShoppableIngredient } from '../../../lib/types'
+import type { GroceryList, RecurringGroceryItem, ShoppableIngredient, ProductOverride } from '../../../lib/types'
 import {
   filterDueRecurringItems,
   mergeRecurringIntoIngredients,
@@ -557,6 +557,36 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } catch (recurringError) {
       // Don't fail the whole operation if recurring items fail
       console.error('[Grocery] Failed to inject recurring items:', recurringError)
+    }
+
+    // Apply user product overrides (persistent metadata corrections)
+    try {
+      const overridesPath = `product_overrides/${userId}/items`
+      const overrides = await db.getCollection<ProductOverride>(overridesPath)
+
+      if (overrides.length > 0) {
+        console.log(`[Grocery] Applying ${overrides.length} product overrides`)
+        const overrideMap = new Map(
+          overrides.map((o) => [o.name.toLowerCase().trim(), o]),
+        )
+
+        for (const ing of finalIngredients) {
+          const override = overrideMap.get(ing.name.toLowerCase().trim())
+          if (override) {
+            if (override.hebPrice !== undefined) ing.hebPrice = override.hebPrice
+            if (override.hebPriceUnit) ing.hebPriceUnit = override.hebPriceUnit
+            if (override.category) ing.category = override.category
+            if (override.aisle !== undefined) ing.aisle = override.aisle
+            if (override.imageUrl) ing.imageUrl = override.imageUrl
+            if (override.hebProductId) ing.hebProductId = override.hebProductId
+            if (override.hebProductUrl) ing.hebProductUrl = override.hebProductUrl
+            if (override.hebSize) ing.hebSize = override.hebSize
+            if (override.storeLocation) ing.storeLocation = override.storeLocation
+          }
+        }
+      }
+    } catch (overrideError) {
+      console.error('[Grocery] Failed to apply product overrides:', overrideError)
     }
 
     // Normalize ingredients to ensure all have sources array

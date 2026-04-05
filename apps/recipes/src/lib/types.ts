@@ -160,9 +160,50 @@ export interface ShoppableIngredient {
   isManual?: boolean // true if user-added (not AI-generated)
   hebPrice?: number // price from static DB (e.g., 1.49)
   hebPriceUnit?: string // "each", "lb", "oz", etc.
+  // HEB product fields (from URL import or overrides)
+  hebProductId?: string // HEB product ID (e.g., "8271501")
+  hebProductUrl?: string // full HEB product page URL
+  imageUrl?: string // HEB CDN image URL
+  hebSize?: string // customer-friendly size (e.g., "18 ct")
+  storeLocation?: string // in-store location (e.g., "In Dairy on the Back Wall")
   // Recurring item fields
   isRecurring?: boolean // true if flagged as recurring
   recurringFrequency?: 'weekly' | 'biweekly' | 'monthly'
+}
+
+/** User-saved product metadata that persists across grocery list generations */
+export interface ProductOverride {
+  name: string // normalized product name (key)
+  hebProductId?: string
+  hebProductUrl?: string
+  imageUrl?: string
+  hebPrice?: number
+  hebPriceUnit?: string
+  hebSize?: string
+  category?: string
+  aisle?: number
+  storeLocation?: string
+  updatedAt: string // ISO date
+}
+
+/** Parsed HEB product data from __NEXT_DATA__ */
+export interface HebProduct {
+  productId: string
+  name: string
+  brand: string
+  price: number
+  salePrice?: number
+  priceUnit: string
+  unitPrice?: number
+  unitPriceUnit?: string
+  size: string
+  category: string
+  imageUrl: string
+  imageUrls: string[]
+  storeLocation?: string
+  inStock: boolean
+  productUrl: string
+  upc?: string
 }
 
 export interface Feedback {

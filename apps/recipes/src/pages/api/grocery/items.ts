@@ -26,6 +26,10 @@ interface PatchItemRequest {
   updates: {
     purchaseAmount?: number
     purchaseUnit?: string
+    category?: string
+    hebPrice?: number
+    aisle?: number
+    storeLocation?: string
   }
 }
 
@@ -210,6 +214,18 @@ export const PATCH: APIRoute = async ({ request }) => {
     }
     if (updates.purchaseUnit !== undefined) {
       groceryList.ingredients[itemIndex].purchaseUnit = updates.purchaseUnit
+    }
+    if (updates.category !== undefined) {
+      groceryList.ingredients[itemIndex].category = updates.category
+    }
+    if (updates.hebPrice !== undefined) {
+      groceryList.ingredients[itemIndex].hebPrice = updates.hebPrice
+    }
+    if (updates.aisle !== undefined) {
+      groceryList.ingredients[itemIndex].aisle = updates.aisle
+    }
+    if (updates.storeLocation !== undefined) {
+      groceryList.ingredients[itemIndex].storeLocation = updates.storeLocation
     }
 
     // Save updated list

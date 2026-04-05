@@ -1,0 +1,83 @@
+{
+  "props": {
+    "pageProps": {
+      "product": {
+        "id": "8271501",
+        "storeId": 92,
+        "fullDisplayName": "H-E-B Grade AA Cage Free Extra Large Brown Eggs",
+        "productDescription": "Build your best-ever breakfast tacos.",
+        "productPageURL": "https://www.heb.com/product-detail/h-e-b-grade-aa-cage-free-extra-large-brown-eggs/8271501",
+        "brand": {
+          "name": "H-E-B",
+          "isOwnBrand": true,
+          "__typename": "Brand"
+        },
+        "breadcrumbs": [
+          { "urlPath": "/", "title": "H-E-B", "__typename": "CategoryBreadCrumb" },
+          { "urlPath": "/browse/shop", "title": "Shop", "__typename": "CategoryBreadCrumb" },
+          { "urlPath": "/category/shop/dairy-eggs/2864/490016", "title": "Dairy & eggs", "__typename": "CategoryBreadCrumb" },
+          { "urlPath": "/category/shop/eggs-egg-substitutes/490016/490052", "title": "Eggs & egg substitutes", "__typename": "CategoryBreadCrumb" }
+        ],
+        "carouselImageUrls": [
+          "https://images.heb.com/is/image/HEBGrocery/008271501-1",
+          "https://images.heb.com/is/image/HEBGrocery/008271501-2",
+          "https://images.heb.com/is/image/HEBGrocery/008271501-3",
+          "https://images.heb.com/is/image/HEBGrocery/008271501-4"
+        ],
+        "inventory": {
+          "inventoryState": "IN_STOCK",
+          "__typename": "Inventory"
+        },
+        "productLocation": {
+          "availability": "AVAILABLE",
+          "location": "In Dairy on the Back Wall",
+          "__typename": "ProductLocation"
+        },
+        "SKUs": [
+          {
+            "id": "4122048977",
+            "contextPrices": [
+              {
+                "context": "ONLINE",
+                "isOnSale": false,
+                "isPriceCut": true,
+                "priceType": "EACH",
+                "listPrice": {
+                  "unit": "each",
+                  "formattedAmount": "$4.79",
+                  "amount": 4.79,
+                  "__typename": "DisplayPrice"
+                },
+                "salePrice": {
+                  "unit": "each",
+                  "formattedAmount": "$4.04",
+                  "amount": 4.04,
+                  "__typename": "DisplayPrice"
+                },
+                "unitListPrice": {
+                  "unit": "ct",
+                  "formattedAmount": "$0.27",
+                  "amount": 0.27,
+                  "__typename": "DisplayPrice"
+                },
+                "unitSalePrice": {
+                  "unit": "ct",
+                  "formattedAmount": "$0.22",
+                  "amount": 0.22,
+                  "__typename": "DisplayPrice"
+                },
+                "__typename": "ItemPrice"
+              }
+            ],
+            "twelveDigitUPC": "041220489770",
+            "customerFriendlySize": "18 ct",
+            "__typename": "SKU"
+          }
+        ],
+        "__typename": "Product"
+      }
+    }
+  },
+  "page": "/product-detail/[productId]",
+  "query": { "productId": "8271501" }
+}

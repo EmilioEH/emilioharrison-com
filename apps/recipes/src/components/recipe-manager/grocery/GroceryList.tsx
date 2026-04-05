@@ -20,9 +20,10 @@ import {
   categorizeShoppableIngredients,
 } from '../../../lib/grocery-logic'
 import { confirm } from '../../../lib/dialogStore'
-import type { Recipe, ShoppableIngredient } from '../../../lib/types'
+import type { Recipe, ShoppableIngredient, ProductOverride } from '../../../lib/types'
 import { AddItemInput } from './AddItemInput'
 import { RecurringItemToggle } from './RecurringItemToggle'
+import { GroceryItemEditSheet } from './GroceryItemEditSheet'
 
 interface GroceryListProps {
   ingredients: ShoppableIngredient[]
@@ -70,6 +71,9 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   // 3. Expanded State for accordion items
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
+  // 4. Edit sheet state
+  const [editingItem, setEditingItem] = useState<ShoppableIngredient | null>(null)
+
   // Persist effect
   useEffect(() => {
     localStorage.setItem('grocery-checked', JSON.stringify(Array.from(checkedItems)))
@@ -102,7 +106,13 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     }
   }
 
-  // 4. Manual Item Addition
+  // Base URL helper
+  const getBaseUrl = useCallback(() => {
+    const base = import.meta.env.BASE_URL
+    return base.endsWith('/') ? base : `${base}/`
+  }, [])
+
+  // 5. Manual Item Addition
   const handleAddItem = useCallback(
     async (item: ShoppableIngredient) => {
       if (!weekStartDate || !userId) {
@@ -110,11 +120,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         return
       }
 
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const response = await fetch(`${baseUrl}api/grocery/items`, {
+      const response = await fetch(`${getBaseUrl()}api/grocery/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,10 +138,75 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       // Refresh the list
       onItemAdded?.()
     },
-    [weekStartDate, userId, onItemAdded],
+    [weekStartDate, userId, onItemAdded, getBaseUrl],
   )
 
-  // 5. Recurring Item Toggle
+  // 6. Edit item (update in current list)
+  const handleEditItem = useCallback(
+    async (itemName: string, updates: Partial<ShoppableIngredient>) => {
+      if (!weekStartDate || !userId) return
+
+      const response = await fetch(`${getBaseUrl()}api/grocery/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStartDate,
+          userId,
+          itemName,
+          updates,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update item')
+      }
+
+      onItemAdded?.()
+    },
+    [weekStartDate, userId, onItemAdded, getBaseUrl],
+  )
+
+  // 7. Remove item from current list
+  const handleRemoveItem = useCallback(
+    async (itemName: string) => {
+      if (!weekStartDate || !userId) return
+
+      const response = await fetch(`${getBaseUrl()}api/grocery/items`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStartDate,
+          userId,
+          itemName,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to remove item')
+      }
+
+      onItemAdded?.()
+    },
+    [weekStartDate, userId, onItemAdded, getBaseUrl],
+  )
+
+  // 8. Save product override (persists across weeks)
+  const handleSaveOverride = useCallback(
+    async (override: ProductOverride) => {
+      if (!userId) return
+
+      await fetch(`${getBaseUrl()}api/grocery/overrides`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, override }),
+      })
+    },
+    [userId, getBaseUrl],
+  )
+
+  // 9. Recurring Item Toggle
   const handleToggleRecurring = useCallback(
     async (
       itemName: string,
@@ -146,9 +217,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         return
       }
 
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
+      const baseUrl = getBaseUrl()
 
       // Find the item in the current list to get its details
       const item = ingredients.find(
@@ -201,10 +270,10 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       // Refresh the list to show updated recurring status
       onItemAdded?.()
     },
-    [userId, ingredients, onItemAdded],
+    [userId, ingredients, onItemAdded, getBaseUrl],
   )
 
-  // 6. Sharing
+  // 10. Sharing
 
   // Helper to find recipe by ID for navigation
   const findRecipeById = (id: string): Recipe | undefined => {
@@ -223,8 +292,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       className={cn(
         'flex min-h-0 flex-1 flex-col bg-card transition-colors duration-500',
         embedded ? 'w-full' : 'h-full duration-300 animate-in slide-in-from-right-4',
-        // Optional: Add a subtle tint or border for AI mode?
-        // viewMode === 'ai' && 'bg-primary/5'
       )}
     >
       {/* Header - hidden when embedded */}
@@ -354,9 +421,27 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               </div>
                             </button>
 
-                            {/* Item Details */}
-                            <div
-                              className={`ml-3 flex-1 ${isChecked ? 'text-muted-foreground line-through' : 'text-foreground'}`}
+                            {/* Product thumbnail */}
+                            {item.imageUrl && (
+                              <img
+                                src={item.imageUrl}
+                                alt=""
+                                className="ml-2 mt-0.5 h-9 w-9 rounded-lg object-cover"
+                                loading="lazy"
+                              />
+                            )}
+
+                            {/* Item Details — tappable for edit */}
+                            <button
+                              type="button"
+                              onClick={() => weekStartDate && userId && setEditingItem(item)}
+                              className={cn(
+                                'ml-3 flex-1 text-left',
+                                isChecked
+                                  ? 'text-muted-foreground line-through'
+                                  : 'text-foreground',
+                                weekStartDate && userId && 'cursor-pointer',
+                              )}
                             >
                               <div className="flex flex-wrap items-baseline gap-1">
                                 <span className="font-display text-lg font-bold">
@@ -397,27 +482,36 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
                               {/* Source Tags */}
                               <div className="mt-2 flex flex-wrap gap-2">
-                                {sources.map((source, idx) => {
-                                  // Truncate logic can be CSS based (max-w)
-                                  return (
-                                    <button
-                                      key={`${source.recipeId}-${idx}`}
-                                      onClick={(e) => {
+                                {sources.map((source, idx) => (
+                                  <span
+                                    key={`${source.recipeId}-${idx}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setActiveInfo({
+                                        recipeTitle: source.recipeTitle,
+                                        ingredientAmount: source.originalAmount,
+                                        ingredientName: item.name,
+                                      })
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
                                         e.stopPropagation()
                                         setActiveInfo({
                                           recipeTitle: source.recipeTitle,
                                           ingredientAmount: source.originalAmount,
                                           ingredientName: item.name,
                                         })
-                                      }}
-                                      className="flex max-w-[200px] items-center gap-1 overflow-hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted-foreground/20 hover:text-foreground"
-                                    >
-                                      <span className="truncate">{source.recipeTitle}</span>
-                                    </button>
-                                  )
-                                })}
+                                      }
+                                    }}
+                                    className="flex max-w-[200px] items-center gap-1 overflow-hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted-foreground/20 hover:text-foreground"
+                                  >
+                                    <span className="truncate">{source.recipeTitle}</span>
+                                  </span>
+                                ))}
                               </div>
-                            </div>
+                            </button>
 
                             {/* Recurring Toggle */}
                             {userId && (
@@ -484,6 +578,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           </button>
         </div>
       )}
+
       {/* Info Modal */}
       {activeInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 duration-200 animate-in fade-in">
@@ -525,6 +620,17 @@ export const GroceryList: React.FC<GroceryListProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Edit Bottom Sheet */}
+      {editingItem && (
+        <GroceryItemEditSheet
+          item={editingItem}
+          onSave={(updates) => handleEditItem(editingItem.name, updates)}
+          onRemove={() => handleRemoveItem(editingItem.name)}
+          onSaveOverride={handleSaveOverride}
+          onClose={() => setEditingItem(null)}
+        />
       )}
     </div>
   )
