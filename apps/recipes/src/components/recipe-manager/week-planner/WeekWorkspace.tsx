@@ -396,7 +396,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       </div>
 
       {/* Content area: scrolls everything inside */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-tab-bar">
         {activeTab === 'plan' && (
           <WeekPlanView
             activeWeekStart={activeWeekStart}
@@ -607,6 +607,15 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               recipes={groceryRecipes}
               onOpenRecipe={onSelectRecipe}
               embedded={true}
+              weekStartDate={activeWeekStart}
+              userId={user?.uid}
+              onItemAdded={() => {
+                // Firestore real-time listener auto-updates aiGroceryList.
+                // Switch to Smart List view so the user sees the newly added item.
+                if (hasSmartList || aiGroceryList) {
+                  setViewMode('ai')
+                }
+              }}
             />
           </>
         )}
