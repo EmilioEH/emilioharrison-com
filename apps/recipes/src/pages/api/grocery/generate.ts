@@ -3,7 +3,11 @@ import { formatRecipesForPrompt } from '../../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
-import type { GroceryList } from '../../../lib/types'
+import type { GroceryList, RecurringGroceryItem, ShoppableIngredient } from '../../../lib/types'
+import {
+  filterDueRecurringItems,
+  mergeRecurringIntoIngredients,
+} from '../../../lib/grocery-utils'
 
 const BATCH_SIZE = 5
 
@@ -12,6 +16,7 @@ interface GroceryIngredient {
   purchaseAmount: number
   purchaseUnit: string
   category: string
+  aisle?: number // H-E-B aisle number (undefined for perimeter departments)
   sources: {
     recipeId: string
     recipeTitle: string
@@ -20,7 +25,7 @@ interface GroceryIngredient {
 }
 
 const SYSTEM_PROMPT = `
-You are an expert Grocery Shopping Assistant helping someone prepare a shopping list.
+You are an expert Grocery Shopping Assistant helping someone prepare a shopping list for H-E-B grocery store.
 
 **YOUR CRITICAL TASK:**
 Convert ALL recipe ingredients into STORE-PURCHASABLE units. Think about what you ACTUALLY BUY at a grocery store.
@@ -82,6 +87,38 @@ First combine all amounts of the same ingredient, THEN convert to store units.
 **SOURCE TRACKING:**
 Include ALL recipe IDs and titles that contributed, with their ORIGINAL recipe amounts.
 
+**CATEGORY ASSIGNMENT (H-E-B Store Layout):**
+Assign each item to ONE of these 19 categories (in store walking-path order):
+1. Produce - Fresh fruits, vegetables, herbs (perimeter)
+2. Seafood - Fresh fish, shellfish, shrimp (perimeter)
+3. Meat - Beef, pork, chicken, ground meat (perimeter)
+4. Deli & Prepared - Deli meats, rotisserie, prepared foods (perimeter)
+5. Bakery & Bread - Fresh bread, tortillas, bakery items (perimeter + aisle 4)
+6. Beer & Wine - Alcoholic beverages (aisles 1-3)
+7. Pantry & Condiments - Pasta, rice, sauces, oils, vinegars (aisles 4-5)
+8. Canned & Dry Goods - Canned vegetables, beans, broth, tomatoes (aisle 6)
+9. Baking & Spices - Flour, sugar, spices, extracts, baking supplies (aisle 7)
+10. Breakfast & Cereal - Cereal, oatmeal, syrup, peanut butter, honey (aisle 8)
+11. Snacks - Chips, crackers, nuts, dried fruit (aisles 9-10)
+12. Beverages - Soda, juice, coffee, tea (aisles 11-12)
+13. Paper & Household - Paper towels, foil, plastic wrap, cleaning (aisles 25-28)
+14. Pet - Pet food and supplies (aisles 29-30)
+15. Baby - Baby food, diapers, formula (aisle 31)
+16. Personal Care - Shampoo, soap, dental, razors (aisles 32-35)
+17. Health & Pharmacy - Vitamins, medicine, first aid (aisles 36-38)
+18. Dairy & Eggs - Milk, cheese, yogurt, eggs, butter (perimeter)
+19. Frozen Foods - Frozen vegetables, ice cream, frozen meals (perimeter)
+
+**AISLE ASSIGNMENT:**
+For items in numbered-aisle categories, include the specific aisle number if known:
+- Pantry items: aisles 4-5
+- Canned goods: aisle 6
+- Baking/spices: aisle 7
+- Breakfast: aisle 8
+- Snacks: aisles 9-10
+- Beverages: aisles 11-12
+Leave aisle undefined for perimeter departments (Produce, Meat, Seafood, Deli, Dairy, Frozen).
+
 **OUTPUT FORMAT:**
 {
   "name": "limes",
@@ -91,6 +128,17 @@ Include ALL recipe IDs and titles that contributed, with their ORIGINAL recipe a
   "sources": [
     { "recipeId": "abc", "recipeTitle": "Fish Tacos", "originalAmount": "2 tbsp lime juice" },
     { "recipeId": "xyz", "recipeTitle": "Guacamole", "originalAmount": "squeeze of lime" }
+  ]
+}
+
+{
+  "name": "chicken broth",
+  "purchaseAmount": 2,
+  "purchaseUnit": "cartons",
+  "category": "Canned & Dry Goods",
+  "aisle": 6,
+  "sources": [
+    { "recipeId": "abc", "recipeTitle": "Chicken Soup", "originalAmount": "6 cups broth" }
   ]
 }
 `
@@ -107,6 +155,7 @@ const SCHEMA = {
           purchaseAmount: { type: SchemaType.NUMBER },
           purchaseUnit: { type: SchemaType.STRING },
           category: { type: SchemaType.STRING },
+          aisle: { type: SchemaType.NUMBER }, // Optional: H-E-B aisle number for interior items
           sources: {
             type: SchemaType.ARRAY,
             items: {
@@ -165,12 +214,14 @@ function mergeSourcesIntoExisting(
   existing: GroceryIngredient,
   newSources: GroceryIngredient['sources'],
 ): void {
+  const existingSources = existing.sources ?? []
   for (const src of newSources) {
-    const isDuplicate = !src.recipeId || existing.sources.some((s) => s.recipeId === src.recipeId)
+    const isDuplicate = !src.recipeId || existingSources.some((s) => s.recipeId === src.recipeId)
     if (!isDuplicate) {
-      existing.sources.push(src)
+      existingSources.push(src)
     }
   }
+  existing.sources = existingSources
 }
 
 function mergeIngredients(batches: GroceryIngredient[][]): GroceryIngredient[] {
@@ -473,11 +524,50 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const mergedIngredients = mergeIngredients(results)
 
     // Ensure all ingredients have source attribution from recipe data
-    const combinedIngredients = assignSourcesDeterministically(mergedIngredients, sourceMap)
+    let finalIngredients: ShoppableIngredient[] = assignSourcesDeterministically(
+      mergedIngredients,
+      sourceMap,
+    )
+
+    // Inject recurring items
+    try {
+      const recurringCollectionPath = `recurring_grocery_items/${userId}/items`
+      const recurringItems = await db.getCollection<RecurringGroceryItem>(recurringCollectionPath)
+
+      if (recurringItems.length > 0) {
+        console.log(`[Grocery] Found ${recurringItems.length} recurring items for user ${userId}`)
+
+        const { dueItems, itemsToUpdate } = filterDueRecurringItems(recurringItems, weekStartDate)
+        console.log(`[Grocery] ${dueItems.length} recurring items are due this week`)
+
+        if (dueItems.length > 0) {
+          // Merge recurring items into ingredient list
+          finalIngredients = mergeRecurringIntoIngredients(finalIngredients, dueItems)
+
+          // Update lastAddedWeek for injected items (batch write)
+          const updatePromises = itemsToUpdate.map((item) =>
+            db.updateDocument(recurringCollectionPath, item.id, {
+              lastAddedWeek: weekStartDate,
+            }),
+          )
+          await Promise.all(updatePromises)
+          console.log(`[Grocery] Updated lastAddedWeek for ${itemsToUpdate.length} recurring items`)
+        }
+      }
+    } catch (recurringError) {
+      // Don't fail the whole operation if recurring items fail
+      console.error('[Grocery] Failed to inject recurring items:', recurringError)
+    }
+
+    // Normalize ingredients to ensure all have sources array
+    const normalizedIngredients = finalIngredients.map((ing) => ({
+      ...ing,
+      sources: ing.sources ?? [],
+    }))
 
     // Debug: Log what we're saving
-    console.log(`[Grocery] Saving ${combinedIngredients.length} ingredients`)
-    for (const ing of combinedIngredients.slice(0, 3)) {
+    console.log(`[Grocery] Saving ${normalizedIngredients.length} ingredients`)
+    for (const ing of normalizedIngredients.slice(0, 3)) {
       console.log(
         `  - ${ing.name}: ${ing.sources.length} sources`,
         ing.sources.map((s) => s.recipeTitle),
@@ -487,7 +577,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Update to completion
     await db.updateDocument('grocery_lists', listId, {
       status: 'complete',
-      ingredients: combinedIngredients,
+      ingredients: normalizedIngredients,
       updatedAt: new Date().toISOString(),
     })
 

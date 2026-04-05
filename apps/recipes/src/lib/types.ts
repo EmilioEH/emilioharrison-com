@@ -127,10 +127,25 @@ export interface GroceryList {
 }
 
 /** A single recipe's contribution to a grocery item */
-interface RecipeContribution {
+export interface RecipeContribution {
   recipeId: string
   recipeTitle: string
   originalAmount: string // "1 clove", "4 garlics" - as written in recipe
+}
+
+/** Recurring grocery item stored in Firestore: recurring_grocery_items/{userId}/items/{itemId} */
+export interface RecurringGroceryItem {
+  id: string
+  name: string
+  purchaseAmount: number
+  purchaseUnit: string
+  category: string
+  aisle?: number
+  hebPrice?: number
+  hebPriceUnit?: string
+  frequency: 'weekly' | 'biweekly' | 'monthly'
+  createdAt: string // ISO date
+  lastAddedWeek?: string // weekStartDate of last injection (undefined if never added)
 }
 
 /** Enhanced grocery item with purchasable unit + source breakdown */
@@ -139,7 +154,15 @@ export interface ShoppableIngredient {
   purchaseAmount: number // 1
   purchaseUnit: string // "head"
   category: string // "Produce"
-  sources: RecipeContribution[] // Who needs this and how much
+  sources?: RecipeContribution[] // Who needs this and how much (optional for manual items)
+  aisle?: number // H-E-B Manor aisle number (undefined for perimeter departments)
+  // Manual item fields
+  isManual?: boolean // true if user-added (not AI-generated)
+  hebPrice?: number // price from static DB (e.g., 1.49)
+  hebPriceUnit?: string // "each", "lb", "oz", etc.
+  // Recurring item fields
+  isRecurring?: boolean // true if flagged as recurring
+  recurringFrequency?: 'weekly' | 'biweekly' | 'monthly'
 }
 
 export interface Feedback {
