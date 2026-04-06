@@ -1,8 +1,20 @@
-import React, { useState, useEffect } from 'react'
-import { X, Minus, Plus, DollarSign, ExternalLink, Trash2 } from 'lucide-react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  X,
+  Minus,
+  Plus,
+  DollarSign,
+  ExternalLink,
+  Trash2,
+  Search,
+  Loader2,
+  MapPin,
+  Check,
+} from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
-import type { ShoppableIngredient, ProductOverride } from '../../../lib/types'
+import { hebProductToIngredientFields } from '../../../lib/heb-url'
+import type { ShoppableIngredient, ProductOverride, HebProduct } from '../../../lib/types'
 
 interface GroceryItemEditSheetProps {
   item: ShoppableIngredient
@@ -308,6 +320,14 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
             </a>
           )}
 
+          {/* Find on H-E-B section */}
+          <HebProductSearch
+            item={item}
+            onSave={onSave}
+            onSaveOverride={onSaveOverride}
+            onClose={onClose}
+          />
+
           {/* Source recipes */}
           {sources.length > 0 && (
             <div className="mb-5">
@@ -360,5 +380,189 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
         </div>
       </div>
     </>
+  )
+}
+
+/** Inline HEB product search for re-matching from the edit sheet */
+function HebProductSearch({
+  item,
+  onSave,
+  onSaveOverride,
+  onClose,
+}: {
+  item: ShoppableIngredient
+  onSave: (updates: Partial<ShoppableIngredient>) => Promise<void>
+  onSaveOverride: (override: ProductOverride) => Promise<void>
+  onClose: () => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<HebProduct[]>([])
+  const [searching, setSearching] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const doSearch = useCallback((searchQuery: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    if (searchQuery.length < 2) {
+      setResults([])
+      setSearching(false)
+      return
+    }
+
+    setSearching(true)
+    debounceRef.current = setTimeout(async () => {
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      try {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+
+        const response = await fetch(
+          `${baseUrl}api/grocery/heb-search?q=${encodeURIComponent(searchQuery)}`,
+          { signal: controller.signal },
+        )
+
+        if (!response.ok) throw new Error('Search failed')
+
+        const data = (await response.json()) as {
+          results: Array<{ product: HebProduct }>
+        }
+        if (!controller.signal.aborted) {
+          setResults(data.results.map((r) => r.product).slice(0, 6))
+          setSearching(false)
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        if (!abortRef.current?.signal.aborted) {
+          setSearching(false)
+        }
+      }
+    }, 350)
+  }, [])
+
+  // Auto-search with ingredient name when opened
+  useEffect(() => {
+    if (isOpen && results.length === 0 && !query) {
+      setQuery(item.name)
+      doSearch(item.name)
+    }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      abortRef.current?.abort()
+    }
+  }, [isOpen, item.name, doSearch, query, results.length])
+
+  const handleSelectProduct = async (product: HebProduct) => {
+    setSaving(true)
+    try {
+      const fields = hebProductToIngredientFields(product)
+      await onSave(fields)
+
+      const override: ProductOverride = {
+        name: item.name,
+        ...fields,
+        updatedAt: new Date().toISOString(),
+      }
+      await onSaveOverride(override)
+      onClose()
+    } catch (err) {
+      console.error('Failed to link product:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mb-5">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="mb-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+      >
+        <Search className="h-3.5 w-3.5" />
+        {item.hebProductId ? 'Change H-E-B product' : 'Find on H-E-B'}
+      </button>
+
+      {isOpen && (
+        <div className="rounded-xl border border-border bg-muted/30 p-3">
+          {/* Search input */}
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search H-E-B..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                doSearch(e.target.value)
+              }}
+              className="w-full rounded-lg border border-border bg-background py-2 pl-8 pr-3 text-sm focus:border-primary focus:outline-none"
+            />
+            {searching && (
+              <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          {/* Results */}
+          {results.length > 0 && (
+            <div className="max-h-[200px] space-y-1 overflow-y-auto">
+              {results.map((product) => (
+                <button
+                  key={product.productId}
+                  type="button"
+                  onClick={() => handleSelectProduct(product)}
+                  disabled={saving}
+                  className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-background"
+                >
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt=""
+                      className="h-10 w-10 rounded object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded bg-muted text-sm">
+                      🛒
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium">{product.name}</p>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      {product.price > 0 && (
+                        <span className="font-semibold text-green-600 dark:text-green-400">
+                          ${product.price.toFixed(2)}
+                        </span>
+                      )}
+                      {product.storeLocation && (
+                        <span className="flex items-center gap-0.5">
+                          <MapPin className="h-2 w-2" />
+                          {product.storeLocation}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {saving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5 text-muted-foreground/30" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!searching && query.length >= 2 && results.length === 0 && (
+            <p className="py-2 text-center text-xs text-muted-foreground">No products found</p>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

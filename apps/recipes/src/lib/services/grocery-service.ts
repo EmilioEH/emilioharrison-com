@@ -10,13 +10,14 @@ import { filterDueRecurringItems, mergeRecurringIntoIngredients } from '../groce
 /**
  * Triggers background grocery list generation.
  * Fire-and-forget: The UI should subscribe to the Firestore document for updates.
+ * @param scopeId - familyId ?? userId — determines the Firestore document key
  */
 export async function triggerGroceryGeneration(
   weekStartDate: string,
   recipes: Recipe[],
-  userId: string,
+  scopeId: string,
 ) {
-  const listId = `${userId}_${weekStartDate}`
+  const listId = `${scopeId}_${weekStartDate}`
   const opId = `grocery-${listId}`
 
   // Prevent duplicate operations if already running
@@ -91,7 +92,10 @@ export async function triggerGroceryGeneration(
           message: 'Checking butcher & seafood...',
         })
       }
-      if (!foundStages.has('pantry') && /"category":\s*"(Pantry & Condiments|Canned & Dry Goods|Baking & Spices)"/i.test(result)) {
+      if (
+        !foundStages.has('pantry') &&
+        /"category":\s*"(Pantry & Condiments|Canned & Dry Goods|Baking & Spices)"/i.test(result)
+      ) {
         foundStages.add('pantry')
         updateAiOperation(opId, {
           progress: 60,
@@ -128,14 +132,19 @@ export async function triggerGroceryGeneration(
 
       // Inject recurring items
       try {
-        const recurringRes = await fetch(`${baseUrl}api/grocery/recurring?userId=${encodeURIComponent(userId)}`)
+        const recurringRes = await fetch(`${baseUrl}api/grocery/recurring`)
         if (recurringRes.ok) {
-          const { items: recurringItems } = (await recurringRes.json()) as { items: RecurringGroceryItem[] }
+          const { items: recurringItems } = (await recurringRes.json()) as {
+            items: RecurringGroceryItem[]
+          }
 
           if (recurringItems && recurringItems.length > 0) {
             console.log(`[Grocery] Found ${recurringItems.length} recurring items`)
 
-            const { dueItems, itemsToUpdate } = filterDueRecurringItems(recurringItems, weekStartDate)
+            const { dueItems, itemsToUpdate } = filterDueRecurringItems(
+              recurringItems,
+              weekStartDate,
+            )
             console.log(`[Grocery] ${dueItems.length} recurring items are due this week`)
 
             if (dueItems.length > 0) {
@@ -148,7 +157,6 @@ export async function triggerGroceryGeneration(
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    userId,
                     itemId: item.id,
                     lastAddedWeek: weekStartDate,
                   }),
@@ -174,7 +182,6 @@ export async function triggerGroceryGeneration(
       const listRef = doc(db, 'grocery_lists', listId)
       await setDoc(listRef, {
         id: listId,
-        userId,
         weekStartDate,
         ingredients: finalIngredients,
         status: 'complete',

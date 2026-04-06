@@ -1,4 +1,5 @@
 import type { AstroCookies, APIContext } from 'astro'
+import { db } from './firebase-server'
 // Dynamic import used inside function
 // import { GoogleGenAI } from '@google/genai'
 
@@ -69,4 +70,22 @@ export async function initGeminiClient(locals: APIContext['locals']) {
   }
 
   return new GoogleGenAI({ apiKey })
+}
+
+/**
+ * Resolves the grocery scope ID for the authenticated user.
+ * Uses familyId if the user belongs to a family, otherwise falls back to userId.
+ * All grocery data (lists, overrides, recurring items) is scoped by this ID.
+ */
+export async function getGroceryScopeId(
+  cookies: AstroCookies,
+): Promise<{ userId: string; scopeId: string; familyId?: string } | null> {
+  const userId = getAuthUser(cookies)
+  if (!userId) return null
+
+  const userDoc = await db.getDocument<{ familyId?: string }>('users', userId)
+  const familyId = userDoc?.familyId
+  const scopeId = familyId ?? userId
+
+  return { userId, scopeId, familyId }
 }

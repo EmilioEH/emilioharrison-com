@@ -1,11 +1,14 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
+import { getGroceryScopeId, unauthorizedResponse } from '../../../lib/api-helpers'
+import { setRequestContext } from '../../../lib/request-context'
 import type { RecurringGroceryItem } from '../../../lib/types'
 import { resolveFrequencyWeeks } from '../../../lib/grocery-utils'
 
 /**
  * Recurring grocery items CRUD operations.
- * Collection: recurring_grocery_items/{userId}/items/{itemId}
+ * Collection: recurring_grocery_items/{scopeId}/items/{itemId}
+ * scopeId = familyId ?? userId (shared across family members)
  */
 
 interface CreateRecurringItemRequest {
@@ -21,18 +24,13 @@ interface DeleteRecurringItemRequest {
 /**
  * GET: List all recurring items for a user
  */
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const userId = url.searchParams.get('userId')
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
 
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'Missing userId parameter' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    const collectionPath = `recurring_grocery_items/${userId}/items`
+    const collectionPath = `recurring_grocery_items/${scope.scopeId}/items`
     const rawItems = await db.getCollection<RecurringGroceryItem>(collectionPath)
 
     // Lazy-migrate: resolve frequencyWeeks for legacy items with string frequency
@@ -57,11 +55,15 @@ export const GET: APIRoute = async ({ url }) => {
 /**
  * POST: Create a recurring item from a grocery list item
  */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { userId, item } = (await request.json()) as CreateRecurringItemRequest
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
 
-    if (!userId || !item) {
+    const { item } = (await context.request.json()) as { item: CreateRecurringItemRequest['item'] }
+
+    if (!item) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -80,7 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
       })
     }
 
-    const collectionPath = `recurring_grocery_items/${userId}/items`
+    const collectionPath = `recurring_grocery_items/${scope.scopeId}/items`
 
     // Check if item already exists (by name, case-insensitive)
     const existingItems = await db.getCollection<RecurringGroceryItem>(collectionPath)
@@ -103,6 +105,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Create new recurring item with generated ID
     const itemId = `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+
+    // Get display name for family attribution
+    const userDoc = await db.getDocument<{ displayName?: string }>('users', scope.userId)
+
     const newItem: RecurringGroceryItem = {
       id: itemId,
       name: item.name.trim(),
@@ -111,12 +117,14 @@ export const POST: APIRoute = async ({ request }) => {
       category: item.category,
       frequencyWeeks: item.frequencyWeeks,
       createdAt: new Date().toISOString(),
+      addedBy: scope.userId,
+      addedByName: userDoc?.displayName || 'User',
       ...(item.aisle !== undefined && { aisle: item.aisle }),
       ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
       ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
     }
 
-    await db.addSubDocument('recurring_grocery_items', userId, 'items', itemId, newItem)
+    await db.addSubDocument('recurring_grocery_items', scope.scopeId, 'items', itemId, newItem)
 
     return new Response(JSON.stringify({ success: true, itemId }), {
       status: 201,
@@ -134,18 +142,22 @@ export const POST: APIRoute = async ({ request }) => {
 /**
  * DELETE: Remove a recurring item
  */
-export const DELETE: APIRoute = async ({ request }) => {
+export const DELETE: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { userId, itemId } = (await request.json()) as DeleteRecurringItemRequest
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
 
-    if (!userId || !itemId) {
+    const { itemId } = (await context.request.json()) as DeleteRecurringItemRequest
+
+    if (!itemId) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const collectionPath = `recurring_grocery_items/${userId}/items`
+    const collectionPath = `recurring_grocery_items/${scope.scopeId}/items`
     await db.deleteDocument(collectionPath, itemId)
 
     return new Response(JSON.stringify({ success: true }), {
@@ -164,17 +176,20 @@ export const DELETE: APIRoute = async ({ request }) => {
 /**
  * PATCH: Update a recurring item's frequency or lastAddedWeek
  */
-export const PATCH: APIRoute = async ({ request }) => {
+export const PATCH: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { userId, itemId, frequencyWeeks, lastAddedWeek } = (await request.json()) as {
-      userId: string
+    const { itemId, frequencyWeeks, lastAddedWeek } = (await context.request.json()) as {
       itemId: string
       frequencyWeeks?: number
       lastAddedWeek?: string
     }
 
-    if (!userId || !itemId) {
-      return new Response(JSON.stringify({ error: 'Missing userId or itemId' }), {
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
+
+    if (!itemId) {
+      return new Response(JSON.stringify({ error: 'Missing itemId' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -197,7 +212,7 @@ export const PATCH: APIRoute = async ({ request }) => {
       })
     }
 
-    const collectionPath = `recurring_grocery_items/${userId}/items`
+    const collectionPath = `recurring_grocery_items/${scope.scopeId}/items`
     const updates: Record<string, string | number> = {}
 
     if (frequencyWeeks) updates.frequencyWeeks = frequencyWeeks

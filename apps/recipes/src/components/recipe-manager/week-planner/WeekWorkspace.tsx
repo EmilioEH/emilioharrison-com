@@ -17,18 +17,20 @@ import {
 } from 'lucide-react'
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
+import { $currentFamily } from '../../../lib/familyStore'
 import { buildGroceryItems, calculateCostEstimate } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
+import { ProductPicker } from '../grocery/ProductPicker'
 import { alert } from '../../../lib/dialogStore'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
 import { AiProgressBar } from '../../ui/AiProgressBar'
 import { useAuth } from '../../../lib/authStore'
-import { useFirestoreDocument } from '../../../lib/firestoreHooks'
-import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
+import { useFirestoreDocument, useFirestoreCollection } from '../../../lib/firestoreHooks'
+import type { Recipe, GroceryList as GroceryListType, ProductMatchResult } from '../../../lib/types'
 
 import type { User } from 'firebase/auth'
 
@@ -160,7 +162,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
-  const listId = user ? `${user.uid}_${activeWeekStart}` : null
+  const currentFamily = useStore($currentFamily)
+  const scopeId = currentFamily?.id ?? user?.uid ?? null
+  const listId = scopeId ? `${scopeId}_${activeWeekStart}` : null
 
   // Subscribe to Firestore document for this week's list
   const {
@@ -168,6 +172,11 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     loading: aiLoading,
     error: firestoreError,
   } = useFirestoreDocument<GroceryListType>(listId ? `grocery_lists/${listId}` : null)
+
+  // Subscribe to product match results for Product Picker
+  const { data: productMatches } = useFirestoreCollection<ProductMatchResult>(
+    listId ? `grocery_lists/${listId}/product_matches` : null,
+  )
 
   // Check for stuck processing
   const [isStuck, setIsStuck] = useState(false)
@@ -220,7 +229,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       const needsGeneration = !aiGroceryList && !isProcessing && !isStuck && !firestoreError
 
       if (needsGeneration) {
-        triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
+        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId!)
       }
 
       // Auto-trigger cost estimate (checks cache first)
@@ -461,10 +470,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         size="icon"
                         onClick={() => {
                           handleRefreshCost()
-                          if (user) {
-                            const listId = `${user.uid}_${activeWeekStart}`
+                          if (scopeId) {
                             removeAiOperation(`grocery-${listId}`)
-                            triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
+                            triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId)
                           }
                         }}
                         disabled={isEstimating || isProcessing}
@@ -586,9 +594,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                       // Force retry - reload page for Firestore errors, regenerate for others
                       if (firestoreError) {
                         window.location.reload()
-                      } else if (user) {
+                      } else if (scopeId) {
                         console.log('Retrying grocery generation...')
-                        triggerGroceryGeneration(activeWeekStart, groceryRecipes, user.uid)
+                        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId)
                       }
                     }}
                     className="gap-2"
@@ -600,6 +608,26 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               </div>
             )}
 
+            {/* Product Picker - shown after smart list is ready when items need HEB matching */}
+            {hasSmartList &&
+              scopeId &&
+              aiGroceryList &&
+              aiGroceryList.productPickerStatus &&
+              aiGroceryList.productPickerStatus !== 'complete' && (
+                <div className="px-4 pt-3">
+                  <ProductPicker
+                    ingredients={displayedIngredients}
+                    productMatches={productMatches}
+                    productPickerStatus={aiGroceryList.productPickerStatus}
+                    weekStartDate={activeWeekStart}
+                    userId={scopeId}
+                    onItemMatched={() => {
+                      // Firestore real-time listener auto-updates
+                    }}
+                  />
+                </div>
+              )}
+
             <GroceryList
               ingredients={displayedIngredients}
               isLoading={false}
@@ -608,7 +636,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               onOpenRecipe={onSelectRecipe}
               embedded={true}
               weekStartDate={activeWeekStart}
-              userId={user?.uid}
+              userId={scopeId ?? undefined}
               onItemAdded={() => {
                 // Firestore real-time listener auto-updates aiGroceryList.
                 // Switch to Smart List view so the user sees the newly added item.

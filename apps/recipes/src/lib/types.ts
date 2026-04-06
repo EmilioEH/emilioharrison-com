@@ -117,13 +117,24 @@ interface StructuredIngredient {
 }
 
 export interface GroceryList {
-  id: string // Format: "{userId}_{weekStartDate}"
+  id: string // Format: "{scopeId}_{weekStartDate}" where scopeId = familyId ?? userId
   userId: string
+  familyId?: string // When set, list is shared across all family members
   weekStartDate: string
   ingredients: ShoppableIngredient[]
   status: 'pending' | 'processing' | 'complete' | 'error'
+  productPickerStatus?: 'pending' | 'searching' | 'ready' | 'complete'
+  unmatchedCount?: number
   createdAt: string
   updatedAt: string
+}
+
+/** HEB product search results for a single grocery item, stored in Firestore */
+export interface ProductMatchResult {
+  ingredientName: string
+  results: HebProduct[]
+  selectedProductId?: string
+  status: 'searching' | 'ready' | 'matched' | 'skipped' | 'error'
 }
 
 /** A single recipe's contribution to a grocery item */
@@ -133,7 +144,8 @@ export interface RecipeContribution {
   originalAmount: string // "1 clove", "4 garlics" - as written in recipe
 }
 
-/** Recurring grocery item stored in Firestore: recurring_grocery_items/{userId}/items/{itemId} */
+/** Recurring grocery item stored in Firestore: recurring_grocery_items/{scopeId}/items/{itemId}
+ *  scopeId = familyId ?? userId (shared across family members) */
 export interface RecurringGroceryItem {
   id: string
   name: string
@@ -148,6 +160,8 @@ export interface RecurringGroceryItem {
   frequency?: 'weekly' | 'biweekly' | 'monthly'
   createdAt: string // ISO date
   lastAddedWeek?: string // weekStartDate of last injection (undefined if never added)
+  addedBy?: string // userId who added this recurring item
+  addedByName?: string // display name (e.g. "Emilio")
 }
 
 /** Enhanced grocery item with purchasable unit + source breakdown */

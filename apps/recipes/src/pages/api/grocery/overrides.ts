@@ -1,10 +1,13 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
+import { getGroceryScopeId, unauthorizedResponse } from '../../../lib/api-helpers'
+import { setRequestContext } from '../../../lib/request-context'
 import type { ProductOverride } from '../../../lib/types'
 
 /**
  * Product overrides CRUD.
- * Collection: product_overrides/{userId}/items/{normalizedName}
+ * Collection: product_overrides/{scopeId}/items/{normalizedName}
+ * scopeId = familyId ?? userId (shared across family members)
  * Persists user-edited metadata (price, aisle, image, etc.) across grocery lists.
  */
 
@@ -15,19 +18,15 @@ function normalizeKey(name: string): string {
 /**
  * GET: Fetch all overrides for a user, or a single override by name
  */
-export const GET: APIRoute = async ({ url }) => {
-  const userId = url.searchParams.get('userId')
-  const itemName = url.searchParams.get('name')
+export const GET: APIRoute = async (context) => {
+  setRequestContext(context)
+  const scope = await getGroceryScopeId(context.cookies)
+  if (!scope) return unauthorizedResponse()
 
-  if (!userId) {
-    return new Response(JSON.stringify({ error: 'Missing userId' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+  const itemName = context.url.searchParams.get('name')
 
   try {
-    const collectionPath = `product_overrides/${userId}/items`
+    const collectionPath = `product_overrides/${scope.scopeId}/items`
 
     if (itemName) {
       const key = normalizeKey(itemName)
@@ -46,7 +45,9 @@ export const GET: APIRoute = async ({ url }) => {
   } catch (error) {
     console.error('Get overrides error:', error)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to fetch overrides' }),
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Failed to fetch overrides',
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
@@ -55,21 +56,24 @@ export const GET: APIRoute = async ({ url }) => {
 /**
  * POST: Create or update a product override
  */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { userId, override } = (await request.json()) as {
-      userId: string
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
+
+    const { override } = (await context.request.json()) as {
       override: ProductOverride
     }
 
-    if (!userId || !override?.name) {
-      return new Response(JSON.stringify({ error: 'Missing userId or override.name' }), {
+    if (!override?.name) {
+      return new Response(JSON.stringify({ error: 'Missing override.name' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const collectionPath = `product_overrides/${userId}/items`
+    const collectionPath = `product_overrides/${scope.scopeId}/items`
     const key = normalizeKey(override.name)
 
     const data: ProductOverride = {
@@ -95,21 +99,24 @@ export const POST: APIRoute = async ({ request }) => {
 /**
  * DELETE: Remove a product override
  */
-export const DELETE: APIRoute = async ({ request }) => {
+export const DELETE: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { userId, name } = (await request.json()) as {
-      userId: string
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
+
+    const { name } = (await context.request.json()) as {
       name: string
     }
 
-    if (!userId || !name) {
-      return new Response(JSON.stringify({ error: 'Missing userId or name' }), {
+    if (!name) {
+      return new Response(JSON.stringify({ error: 'Missing name' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const collectionPath = `product_overrides/${userId}/items`
+    const collectionPath = `product_overrides/${scope.scopeId}/items`
     const key = normalizeKey(name)
 
     await db.deleteDocument(collectionPath, key)
@@ -121,7 +128,9 @@ export const DELETE: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Delete override error:', error)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to delete override' }),
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Failed to delete override',
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }

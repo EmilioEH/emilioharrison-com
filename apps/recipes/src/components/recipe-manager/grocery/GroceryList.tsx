@@ -224,9 +224,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
       if (frequencyWeeks === null) {
         // Remove from recurring - need to find the item ID first
-        const getResponse = await fetch(
-          `${baseUrl}api/grocery/recurring?userId=${encodeURIComponent(userId)}`,
-        )
+        const getResponse = await fetch(`${baseUrl}api/grocery/recurring`)
         if (getResponse.ok) {
           const { items } = await getResponse.json()
           const recurringItem = items?.find(
@@ -237,7 +235,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
               method: 'DELETE',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                userId,
                 itemId: recurringItem.id,
               }),
             })
@@ -249,7 +246,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId,
             item: {
               name: item.name,
               purchaseAmount: item.purchaseAmount,
@@ -265,9 +261,24 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       }
 
       // Refresh the list to show updated recurring status
+      if (weekStartDate) {
+        await fetch(`${baseUrl}api/grocery/items`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            weekStartDate,
+            userId,
+            itemName,
+            updates:
+              frequencyWeeks !== null
+                ? { isRecurring: true, recurringFrequencyWeeks: frequencyWeeks }
+                : { isRecurring: false, recurringFrequencyWeeks: undefined },
+          }),
+        })
+      }
       onItemAdded?.()
     },
-    [userId, ingredients, onItemAdded, getBaseUrl],
+    [userId, weekStartDate, ingredients, onItemAdded, getBaseUrl],
   )
 
   // 10. Sharing
@@ -418,15 +429,22 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               </div>
                             </button>
 
-                            {/* Product thumbnail */}
-                            {item.imageUrl && (
+                            {/* Product thumbnail or unmatched indicator */}
+                            {item.imageUrl ? (
                               <img
                                 src={item.imageUrl}
                                 alt=""
                                 className="ml-2 mt-0.5 h-9 w-9 rounded-lg object-cover"
                                 loading="lazy"
                               />
-                            )}
+                            ) : !item.hebProductId && !item.isManual ? (
+                              <div
+                                className="ml-2 mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/50"
+                                title="No H-E-B product linked"
+                              >
+                                <ShoppingBasket className="h-4 w-4" />
+                              </div>
+                            ) : null}
 
                             {/* Item Details — tappable for edit */}
                             <button

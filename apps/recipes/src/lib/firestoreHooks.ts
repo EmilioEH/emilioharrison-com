@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { doc, onSnapshot, getFirestore } from 'firebase/firestore'
+import { doc, collection, onSnapshot, getFirestore } from 'firebase/firestore'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { app, auth } from './firebase-client'
 
@@ -58,6 +58,53 @@ export function useFirestoreDocument<T>(path: string | null) {
       (err) => {
         console.error('[Firestore] Subscription error for', path, ':', err.code, err.message)
         console.error('[Firestore] Current auth uid:', currentUser?.uid)
+        setError(err)
+        setLoading(false)
+      },
+    )
+
+    return () => unsubscribe()
+  }, [path, currentUser])
+
+  return { data, loading, error }
+}
+
+export function useFirestoreCollection<T>(path: string | null) {
+  const [data, setData] = useState<T[]>([])
+  const [loading, setLoading] = useState(!!(path && db && auth?.currentUser))
+  const [error, setError] = useState<Error | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(auth?.currentUser || null)
+
+  useEffect(() => {
+    if (!auth) return
+    const unsubscribe = onAuthStateChanged(auth, (user) => setCurrentUser(user))
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!path || !db) return
+
+    if (!currentUser) {
+      setTimeout(() => setLoading((prev) => (prev ? false : prev)), 0)
+      return
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true)
+    setError(null)
+
+    const colRef = collection(db, path)
+
+    const unsubscribe = onSnapshot(
+      colRef,
+      (snapshot) => {
+        setLoading(false)
+        setError(null)
+        const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as T)
+        setData(docs)
+      },
+      (err) => {
+        console.error('[Firestore] Collection subscription error for', path, ':', err.code)
         setError(err)
         setLoading(false)
       },

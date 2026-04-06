@@ -1,15 +1,24 @@
 import type { APIRoute } from 'astro'
 import { formatRecipesForPrompt } from '../../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
-import { initGeminiClient, serverErrorResponse } from '../../../lib/api-helpers'
+import {
+  initGeminiClient,
+  serverErrorResponse,
+  getGroceryScopeId,
+  unauthorizedResponse,
+} from '../../../lib/api-helpers'
+import { setRequestContext } from '../../../lib/request-context'
 import { db } from '../../../lib/firebase-server'
 import type {
   GroceryList,
   RecurringGroceryItem,
   ShoppableIngredient,
   ProductOverride,
+  ProductMatchResult,
 } from '../../../lib/types'
 import { filterDueRecurringItems, mergeRecurringIntoIngredients } from '../../../lib/grocery-utils'
+import { searchHebProducts } from '../../../lib/heb-url'
+import { searchProducts } from '../../../lib/heb-products'
 
 const BATCH_SIZE = 5
 
@@ -447,22 +456,29 @@ function assignSourcesDeterministically(
   })
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const { weekStartDate, recipes, userId } = await request.json()
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
+  setRequestContext({ locals } as import('astro').APIContext)
 
-  if (!weekStartDate || !recipes || !userId) {
+  const scope = await getGroceryScopeId(cookies)
+  if (!scope) return unauthorizedResponse()
+  const { userId, scopeId, familyId } = scope
+
+  const { weekStartDate, recipes } = await request.json()
+
+  if (!weekStartDate || !recipes) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  const listId = `${userId}_${weekStartDate}`
+  const listId = `${scopeId}_${weekStartDate}`
 
   // 1. Initial Processing State
   const initialList: GroceryList = {
     id: listId,
     userId,
+    ...(familyId && { familyId }),
     weekStartDate,
     ingredients: [],
     status: 'processing',
@@ -533,7 +549,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Inject recurring items
     try {
-      const recurringCollectionPath = `recurring_grocery_items/${userId}/items`
+      const recurringCollectionPath = `recurring_grocery_items/${scopeId}/items`
       const recurringItems = await db.getCollection<RecurringGroceryItem>(recurringCollectionPath)
 
       if (recurringItems.length > 0) {
@@ -563,7 +579,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Apply user product overrides (persistent metadata corrections)
     try {
-      const overridesPath = `product_overrides/${userId}/items`
+      const overridesPath = `product_overrides/${scopeId}/items`
       const overrides = await db.getCollection<ProductOverride>(overridesPath)
 
       if (overrides.length > 0) {
@@ -606,12 +622,110 @@ export const POST: APIRoute = async ({ request, locals }) => {
       )
     }
 
-    // Update to completion
+    // Save grocery list as complete first so the user sees their list
     await db.updateDocument('grocery_lists', listId, {
       status: 'complete',
       ingredients: normalizedIngredients,
+      productPickerStatus: 'searching',
       updatedAt: new Date().toISOString(),
     })
+
+    // Product Picker: batch search HEB for unmatched items (non-blocking)
+    // Run after saving the list so the user sees groceries immediately
+    try {
+      const unmatchedIngredients = normalizedIngredients.filter((ing) => !ing.hebProductId)
+      const unmatchedCount = unmatchedIngredients.length
+
+      if (unmatchedCount > 0) {
+        console.log(`[ProductPicker] Searching HEB for ${unmatchedCount} unmatched items`)
+
+        await db.updateDocument('grocery_lists', listId, {
+          unmatchedCount,
+          productPickerStatus: 'searching',
+          updatedAt: new Date().toISOString(),
+        })
+
+        // Search items in batches of 5 with delay to avoid rate limits
+        const SEARCH_BATCH_SIZE = 5
+        const SEARCH_DELAY_MS = 200
+
+        for (let i = 0; i < unmatchedIngredients.length; i += SEARCH_BATCH_SIZE) {
+          const batch = unmatchedIngredients.slice(i, i + SEARCH_BATCH_SIZE)
+
+          const searchResults = await Promise.all(
+            batch.map(async (ing): Promise<ProductMatchResult> => {
+              try {
+                const products = await searchHebProducts(ing.name)
+                if (products.length > 0) {
+                  return {
+                    ingredientName: ing.name,
+                    results: products.slice(0, 8),
+                    status: 'ready',
+                  }
+                }
+              } catch {
+                // Fall through to static DB
+              }
+
+              // Fallback: static product DB
+              const localResults = searchProducts(ing.name, 8)
+              return {
+                ingredientName: ing.name,
+                results: localResults.map((item) => ({
+                  productId: `static-${item.product.name.toLowerCase().replace(/\s+/g, '-')}`,
+                  name: item.product.name,
+                  brand: item.product.brand || '',
+                  price: item.product.hebPrice || 0,
+                  priceUnit: 'each',
+                  size: '',
+                  category: item.product.category || 'Pantry & Condiments',
+                  imageUrl: '',
+                  imageUrls: [],
+                  inStock: true,
+                  productUrl: '',
+                })),
+                status: localResults.length > 0 ? 'ready' : 'error',
+              }
+            }),
+          )
+
+          // Save each result to Firestore subcollection
+          const matchesPath = `grocery_lists/${listId}/product_matches`
+          for (const result of searchResults) {
+            const docKey = result.ingredientName.toLowerCase().trim().replace(/\s+/g, '-')
+            await db.setDocument(matchesPath, docKey, result)
+          }
+
+          // Delay between batches
+          if (i + SEARCH_BATCH_SIZE < unmatchedIngredients.length) {
+            await new Promise((resolve) => setTimeout(resolve, SEARCH_DELAY_MS))
+          }
+        }
+
+        console.log(`[ProductPicker] Finished searching ${unmatchedCount} items`)
+
+        // Update picker status to ready
+        await db.updateDocument('grocery_lists', listId, {
+          productPickerStatus: 'ready',
+          unmatchedCount,
+          updatedAt: new Date().toISOString(),
+        })
+      } else {
+        // All items already matched via overrides
+        await db.updateDocument('grocery_lists', listId, {
+          productPickerStatus: 'complete',
+          unmatchedCount: 0,
+          updatedAt: new Date().toISOString(),
+        })
+      }
+    } catch (pickerError) {
+      console.error('[ProductPicker] Batch search failed:', pickerError)
+      // Don't fail the whole operation — the grocery list is already saved
+      await db.updateDocument('grocery_lists', listId, {
+        productPickerStatus: 'ready', // Allow manual searching even if batch failed
+        updatedAt: new Date().toISOString(),
+      })
+    }
 
     return new Response(JSON.stringify({ success: true, listId }), {
       status: 200, // OK

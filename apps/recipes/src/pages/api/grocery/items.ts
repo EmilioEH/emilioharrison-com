@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
+import { getGroceryScopeId, unauthorizedResponse } from '../../../lib/api-helpers'
+import { setRequestContext } from '../../../lib/request-context'
 import type { GroceryList, ShoppableIngredient } from '../../../lib/types'
 
 /**
@@ -30,24 +32,30 @@ interface PatchItemRequest {
     hebPrice?: number
     aisle?: number
     storeLocation?: string
+    isRecurring?: boolean
+    recurringFrequencyWeeks?: number
   }
 }
 
 /**
  * POST: Add a manual item to the grocery list
  */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { weekStartDate, userId, item } = (await request.json()) as ManualItemRequest
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
 
-    if (!weekStartDate || !userId || !item) {
+    const { weekStartDate, item } = (await context.request.json()) as ManualItemRequest
+
+    if (!weekStartDate || !item) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const listId = `${userId}_${weekStartDate}`
+    const listId = `${scope.scopeId}_${weekStartDate}`
 
     // Get existing list or create new one
     let groceryList = await db.getDocument<GroceryList>('grocery_lists', listId)
@@ -56,7 +64,8 @@ export const POST: APIRoute = async ({ request }) => {
       // Create new list with the manual item
       groceryList = {
         id: listId,
-        userId,
+        userId: scope.userId,
+        ...(scope.familyId && { familyId: scope.familyId }),
         weekStartDate,
         ingredients: [],
         status: 'complete',
@@ -118,18 +127,22 @@ export const POST: APIRoute = async ({ request }) => {
 /**
  * DELETE: Remove a manual item from the grocery list
  */
-export const DELETE: APIRoute = async ({ request }) => {
+export const DELETE: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { weekStartDate, userId, itemName } = (await request.json()) as DeleteItemRequest
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
 
-    if (!weekStartDate || !userId || !itemName) {
+    const { weekStartDate, itemName } = (await context.request.json()) as DeleteItemRequest
+
+    if (!weekStartDate || !itemName) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const listId = `${userId}_${weekStartDate}`
+    const listId = `${scope.scopeId}_${weekStartDate}`
     const groceryList = await db.getDocument<GroceryList>('grocery_lists', listId)
 
     if (!groceryList) {
@@ -174,18 +187,22 @@ export const DELETE: APIRoute = async ({ request }) => {
 /**
  * PATCH: Edit a manual item's quantity/unit
  */
-export const PATCH: APIRoute = async ({ request }) => {
+export const PATCH: APIRoute = async (context) => {
+  setRequestContext(context)
   try {
-    const { weekStartDate, userId, itemName, updates } = (await request.json()) as PatchItemRequest
+    const scope = await getGroceryScopeId(context.cookies)
+    if (!scope) return unauthorizedResponse()
 
-    if (!weekStartDate || !userId || !itemName || !updates) {
+    const { weekStartDate, itemName, updates } = (await context.request.json()) as PatchItemRequest
+
+    if (!weekStartDate || !itemName || !updates) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const listId = `${userId}_${weekStartDate}`
+    const listId = `${scope.scopeId}_${weekStartDate}`
     const groceryList = await db.getDocument<GroceryList>('grocery_lists', listId)
 
     if (!groceryList) {
@@ -226,6 +243,10 @@ export const PATCH: APIRoute = async ({ request }) => {
     }
     if (updates.storeLocation !== undefined) {
       groceryList.ingredients[itemIndex].storeLocation = updates.storeLocation
+    }
+    if (updates.isRecurring !== undefined) {
+      groceryList.ingredients[itemIndex].isRecurring = updates.isRecurring || undefined
+      groceryList.ingredients[itemIndex].recurringFrequencyWeeks = updates.recurringFrequencyWeeks
     }
 
     // Save updated list
