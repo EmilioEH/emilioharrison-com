@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { cn } from '../../../lib/utils'
 import {
   Check,
@@ -74,6 +74,10 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
   // 4. Edit sheet state
   const [editingItem, setEditingItem] = useState<ShoppableIngredient | null>(null)
+
+  // 4b. Category pill filter state
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   // Persist effect
   useEffect(() => {
@@ -370,6 +374,59 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           <AddItemInput onAddItem={handleAddItem} isLoading={isLoading} />
         )}
 
+        {/* Category pill bar for quick navigation */}
+        {!isLoading && categorizedList.length > 1 && (
+          <div className="-mx-4 -mt-2 mb-2 border-b border-border bg-background/95 backdrop-blur-sm">
+            <div
+              className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-2.5"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                  selectedCategory === null
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                }`}
+              >
+                All
+              </button>
+              {categorizedList.map((category) => {
+                const isActive = selectedCategory === category.name
+                return (
+                  <button
+                    key={category.name}
+                    onClick={() => {
+                      setSelectedCategory(isActive ? null : category.name)
+                      // Scroll to category section
+                      const el = categoryRefs.current.get(category.name)
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }
+                    }}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                      isActive
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background text-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    <span>{category.name}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                        isActive
+                          ? 'bg-primary-foreground/20 text-primary-foreground'
+                          : 'bg-primary/10 text-primary'
+                      }`}
+                    >
+                      {category.items.length}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -377,8 +434,16 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           </div>
         ) : (
           <>
-            {categorizedList.map((category) => (
-              <div key={category.name} className="duration-500 animate-in fade-in">
+            {categorizedList
+              .filter((category) => !selectedCategory || category.name === selectedCategory)
+              .map((category) => (
+              <div
+                key={category.name}
+                ref={(el) => {
+                  if (el) categoryRefs.current.set(category.name, el)
+                }}
+                className="duration-500 animate-in fade-in"
+              >
                 <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
                   {category.name}
                 </h3>
@@ -605,7 +670,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
 
       {/* Floating Action / Footer */}
       {checkedItems.size > 0 && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4">
           <button
             onClick={clearChecked}
             className="pointer-events-auto flex items-center gap-2 rounded-full bg-foreground px-6 py-3 font-medium text-background shadow-lg transition-transform hover:scale-105"

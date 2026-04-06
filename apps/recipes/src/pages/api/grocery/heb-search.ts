@@ -19,7 +19,9 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   try {
+    console.log(`[heb-search] Searching q="${query}" storeId=${storeId ?? 'default'}`)
     const products = await searchHebProducts(query, storeId)
+    console.log(`[heb-search] Got ${products.length} results for q="${query}"`)
 
     const results = products.map((product) => ({
       product,
@@ -30,7 +32,8 @@ export const GET: APIRoute = async ({ url }) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch {
+  } catch (err) {
+    console.error('[heb-search] Endpoint error:', err)
     return new Response(JSON.stringify({ results: [], error: 'Search failed' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

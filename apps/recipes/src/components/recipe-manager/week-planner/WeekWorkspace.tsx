@@ -5,14 +5,14 @@ import { motion } from 'framer-motion'
 import {
   Calendar,
   Check,
-  X,
   ShoppingCart,
   RefreshCw,
   AlertTriangle,
   Share,
   Copy,
   Sparkles,
-  ChevronDown,
+  ChevronLeft,
+  MoreHorizontal,
 } from 'lucide-react'
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
@@ -20,6 +20,12 @@ import { $currentFamily } from '../../../lib/familyStore'
 import { buildGroceryItems, calculateGroceryCost } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../ui/dropdown-menu'
 import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
 import { ProductPicker } from '../grocery/ProductPicker'
@@ -194,19 +200,20 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     currentFamily?.id,
   ])
 
-  // Auto-switch to AI view when ready (only once)
-  useEffect(() => {
-    if (hasSmartList && viewMode === 'programmatic' && !isProcessing && !isStuck) {
-      // Optional: Only auto-switch if user hasn't toggled back manually?
-      // For now, simpler is better: if it completes while looking at it, show toast or just switch?
-      // Let's NOT auto-switch to avoid jarring jump, but show the toggle as enabled/highlighted.
-    }
-  }, [hasSmartList, isProcessing, isStuck, viewMode])
+  // Auto-switch to AI view when smart list becomes ready
+  const [userToggledStandard, setUserToggledStandard] = useState(false)
+
+  // Derived view mode: show Smart List unless user explicitly chose Standard
+  const effectiveViewMode = useMemo(() => {
+    if (userToggledStandard) return viewMode
+    if (hasSmartList) return 'ai'
+    return 'programmatic'
+  }, [userToggledStandard, hasSmartList, viewMode])
 
   // Combined ingredients based on view mode
   const displayedIngredients = useMemo(() => {
     if (
-      viewMode === 'ai' &&
+      effectiveViewMode === 'ai' &&
       hasSmartList &&
       aiGroceryList &&
       Array.isArray(aiGroceryList.ingredients)
@@ -214,7 +221,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       return aiGroceryList.ingredients
     }
     return groceryItems
-  }, [viewMode, hasSmartList, aiGroceryList, groceryItems])
+  }, [effectiveViewMode, hasSmartList, aiGroceryList, groceryItems])
 
   // Share/Copy grocery list
   const buildGroceryText = () => {
@@ -262,27 +269,27 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     >
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-xl">
-        <Stack spacing="xs" className="mx-auto max-w-2xl px-4 py-3">
-          {/* Controls Row: Minimize + Week Toggles + Calendar + Grocery */}
-          <Inline spacing="xs" justify="between">
-            {/* Left: Minimize/Close Button */}
+        <div className="mx-auto max-w-2xl px-4 py-3">
+          {/* Single row: Back + Week/Date + Grocery toggle */}
+          <Inline spacing="xs" justify="between" align="center">
+            {/* Left: Back button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onMinimize || onClose}
-              className="h-11 w-11 rounded-full"
-              title={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
-              aria-label={onMinimize ? 'Minimize to drawer' : 'Back to Library'}
+              className="h-10 w-10 shrink-0 rounded-full"
+              title="Back to Library"
+              aria-label="Back to Library"
             >
-              {onMinimize ? <ChevronDown className="h-4 w-4" /> : <X className="h-4 w-4" />}
+              <ChevronLeft className="h-5 w-5" />
             </Button>
 
-            {/* Center: Week Toggles + Calendar */}
-            <Inline spacing="xs">
+            {/* Center: Week selector with inline date */}
+            <Inline spacing="xs" align="center" className="min-w-0 flex-1 justify-center">
               <div className="flex items-center rounded-lg bg-muted/50 p-1">
                 <button
                   onClick={handleSetThisWeek}
-                  className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold transition-all ${
                     isThisWeek
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -294,7 +301,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 </button>
                 <button
                   onClick={handleSetNextWeek}
-                  className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold transition-all ${
                     isNextWeek
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -306,12 +313,13 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 </button>
               </div>
 
-              {/* Calendar Button */}
+              <span className="text-xs font-bold text-foreground">{dateRangeLabel}</span>
+
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onOpenCalendar}
-                className="h-11 w-11 rounded-full"
+                className="h-9 w-9 shrink-0 rounded-full"
                 title="Select Week"
                 aria-label="Select Week"
               >
@@ -324,7 +332,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               variant={activeTab === 'grocery' ? 'default' : 'secondary'}
               size="sm"
               onClick={() => setActiveTab(activeTab === 'grocery' ? 'plan' : 'grocery')}
-              className="gap-1.5"
+              className="shrink-0 gap-1.5"
               title="View Grocery List"
               aria-label="View Grocery List"
             >
@@ -333,15 +341,11 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             </Button>
           </Inline>
 
-          {/* Info Row */}
-          <Inline spacing="sm" justify="between" className="text-xs text-muted-foreground">
-            <span className="font-bold text-foreground">{dateRangeLabel}</span>
-            <span>
-              <span className="font-bold text-foreground">{currentRecipes.length}</span> meals
-              planned
-            </span>
-          </Inline>
-        </Stack>
+          {/* Meals count - subtle secondary info */}
+          <div className="mt-1 text-center text-[11px] text-muted-foreground">
+            <span className="font-bold text-foreground">{currentRecipes.length}</span> meals planned
+          </div>
+        </div>
       </div>
 
       {/* Content area: scrolls everything inside */}
@@ -358,55 +362,93 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
         {activeTab === 'grocery' && (
           <>
-            {/* Cost Estimate Banner */}
+            {/* Grocery Toolbar: Price pill + View toggle + Overflow menu */}
             {groceryRecipes.length > 0 &&
               (() => {
                 const displayItems = hasSmartList ? aiGroceryList!.ingredients : groceryItems
                 const hebCost = calculateGroceryCost(displayItems)
                 return (
-                  <div className="border-b border-border bg-muted/30 px-4 py-3">
-                    <Inline spacing="md" justify="between" className="mx-auto max-w-2xl">
-                      <Stack spacing="xs">
+                  <div className="border-b border-border bg-muted/20 px-4 py-2.5">
+                    <Inline spacing="sm" justify="between" align="center" className="mx-auto max-w-2xl">
+                      {/* Left: Price pill */}
+                      <div className="shrink-0">
                         {hebCost.hasAnyData ? (
-                          <>
-                            <Inline spacing="xs">
-                              <span
-                                className={`text-lg font-bold ${hebCost.isComplete ? 'text-green-700' : 'text-amber-600'}`}
-                              >
-                                ${hebCost.total.toFixed(2)}
-                              </span>
-                              {!hebCost.isComplete && (
-                                <span className="flex items-center gap-1 text-xs text-amber-600">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  Partial
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                              hebCost.isComplete
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}
+                          >
+                            ${hebCost.total.toFixed(2)}
+                            {!hebCost.isComplete && (
+                              <>
+                                <AlertTriangle className="h-3 w-3" />
+                                <span className="font-medium">
+                                  {hebCost.verifiedCount}/{hebCost.itemCount}
                                 </span>
-                              )}
-                            </Inline>
-                            <span className="text-xs text-muted-foreground">
-                              {hebCost.isComplete
-                                ? `All ${hebCost.verifiedCount} items priced`
-                                : `${hebCost.verifiedCount}/${hebCost.itemCount} items with HEB prices`}
-                            </span>
-                          </>
+                              </>
+                            )}
+                          </span>
                         ) : (
-                          <>
-                            <span className="text-sm font-medium text-muted-foreground">
-                              No price data
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              Prices update when items match HEB products
-                            </span>
-                          </>
+                          <span className="text-xs text-muted-foreground">No prices yet</span>
                         )}
-                      </Stack>
+                      </div>
 
-                      {/* Actions: Icons + View Toggle */}
-                      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-                        <Inline spacing="xs">
+                      {/* Center: Standard / Smart toggle */}
+                      <div className="flex items-center rounded-full border border-border bg-background p-0.5">
+                        <button
+                          onClick={() => {
+                            setViewMode('programmatic')
+                            setUserToggledStandard(true)
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                            effectiveViewMode === 'programmatic'
+                              ? 'bg-foreground text-background shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Standard
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (hasSmartList) {
+                              setViewMode('ai')
+                              setUserToggledStandard(false)
+                            }
+                          }}
+                          disabled={!hasSmartList}
+                          className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                            effectiveViewMode === 'ai'
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'text-muted-foreground'
+                          } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
+                        >
+                          {isProcessing ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          Smart
+                        </button>
+                      </div>
+
+                      {/* Right: Overflow menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
+                            className="h-9 w-9 shrink-0 rounded-full"
+                            title="More Options"
+                            aria-label="More Options"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onSelect={() => {
                               if (scopeId && user) {
                                 removeAiOperation(`grocery-${listId}`)
                                 triggerGroceryGeneration(
@@ -419,68 +461,20 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                               }
                             }}
                             disabled={isProcessing}
-                            className="h-11 w-11 rounded-full"
-                            title="Refresh Grocery List"
-                            aria-label="Refresh Grocery List"
                           >
-                            <RefreshCw
-                              className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
-                            />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleShareGrocery}
-                            className="h-11 w-11 rounded-full"
-                            title="Share"
-                            aria-label="Share Grocery List"
-                          >
-                            <Share className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleCopyGrocery}
-                            className="h-11 w-11 rounded-full"
-                            title="Copy"
-                            aria-label="Copy Grocery List"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </Inline>
-
-                        {/* View Toggle */}
-                        <div className="flex items-center rounded-lg border border-border bg-background p-1 shadow-sm">
-                          <button
-                            onClick={() => setViewMode('programmatic')}
-                            className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
-                              viewMode === 'programmatic'
-                                ? 'bg-muted text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            Standard
-                          </button>
-                          <button
-                            onClick={() => hasSmartList && setViewMode('ai')}
-                            disabled={!hasSmartList}
-                            className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
-                              viewMode === 'ai'
-                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                : 'text-muted-foreground'
-                            } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
-                          >
-                            {isProcessing ? (
-                              <RefreshCw className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Sparkles className="h-3 w-3" />
-                            )}
-                            Smart List
-                          </button>
-                        </div>
-                      </div>
+                            <RefreshCw className={`mr-2 h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`} />
+                            Regenerate List
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={handleShareGrocery}>
+                            <Share className="mr-2 h-4 w-4" />
+                            Share List
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={handleCopyGrocery}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy to Clipboard
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </Inline>
 
                     {/* Progress Indicator */}

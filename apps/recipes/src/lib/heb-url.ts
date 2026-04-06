@@ -164,7 +164,7 @@ const DEFAULT_STORE_ID = '92'
 const HEB_GRAPHQL_HEADERS = {
   'Content-Type': 'application/json',
   'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
   Origin: 'https://www.heb.com',
 }
 
@@ -214,16 +214,28 @@ export async function fetchHebProductGraphQL(
       signal: AbortSignal.timeout(10000),
     })
 
-    if (!response.ok) return null
+    if (!response.ok) {
+      console.error(
+        `[heb-lookup] GraphQL returned ${response.status} for product=${productId} storeId=${storeId}`,
+      )
+      return null
+    }
 
     const json = (await response.json()) as {
       data?: { productDetail?: Record<string, unknown> }
+      errors?: Array<{ message: string }>
     }
+
+    if (json.errors?.length) {
+      console.error('[heb-lookup] GraphQL errors:', json.errors.map((e) => e.message).join('; '))
+    }
+
     const product = json.data?.productDetail
     if (!product) return null
 
     return parseHebGraphQLProduct(product)
-  } catch {
+  } catch (err) {
+    console.error('[heb-lookup] Fetch failed:', err)
     return null
   }
 }
@@ -337,18 +349,33 @@ export async function searchHebProducts(
       signal: AbortSignal.timeout(8000),
     })
 
-    if (!response.ok) return []
+    if (!response.ok) {
+      console.error(
+        `[heb-search] GraphQL returned ${response.status} for query="${query}" storeId=${storeId}`,
+      )
+      return []
+    }
 
     const json = (await response.json()) as {
       data?: { productSearch?: { records?: Array<Record<string, unknown>> } }
+      errors?: Array<{ message: string }>
     }
+
+    if (json.errors?.length) {
+      console.error('[heb-search] GraphQL errors:', json.errors.map((e) => e.message).join('; '))
+    }
+
     const records = json.data?.productSearch?.records
-    if (!records?.length) return []
+    if (!records?.length) {
+      console.warn(`[heb-search] No results for query="${query}" storeId=${storeId}`)
+      return []
+    }
 
     return records
       .map((record) => parseHebSearchResult(record))
       .filter((p): p is HebProduct => p !== null)
-  } catch {
+  } catch (err) {
+    console.error('[heb-search] Fetch failed:', err)
     return []
   }
 }

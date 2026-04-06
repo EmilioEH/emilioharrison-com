@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Search, Plus, X, DollarSign, Loader2, MapPin, Tag } from 'lucide-react'
+import { Plus, X, DollarSign, Loader2, MapPin, Tag } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
 import type { ShoppableIngredient, HebProduct } from '../../../lib/types'
@@ -211,7 +211,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
       {!showForm && (
         <>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Plus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
             <input
               ref={inputRef}
               type="text"
@@ -219,8 +219,8 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => query.length >= 2 && results.length > 0 && setShowDropdown(true)}
-              placeholder="Search H-E-B products..."
-              className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Add item or search H-E-B..."
+              className="w-full rounded-xl border border-dashed border-primary/40 bg-card py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-primary focus:border-solid focus:outline-none focus:ring-1 focus:ring-primary"
               disabled={isLoading}
             />
             {searching && (
