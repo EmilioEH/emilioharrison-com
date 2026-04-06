@@ -26,10 +26,14 @@ export const GET: APIRoute = async ({ url }) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch {
-    return new Response(JSON.stringify({ valid: false, error: 'Verification failed' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  } catch (err) {
+    console.error('[heb-verify-store] Verification error:', err)
+    return new Response(
+      JSON.stringify({ valid: false, error: 'H-E-B is not responding. Try again later.' }),
+      {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
   }
 }

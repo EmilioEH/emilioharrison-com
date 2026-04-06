@@ -11,7 +11,9 @@ export const HebStoreSettings: React.FC = () => {
   const [verified, setVerified] = useState(false)
   const [error, setError] = useState('')
 
-  const baseUrl = import.meta.env.BASE_URL
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`
 
   const handleVerify = async () => {
     const trimmed = storeNumber.trim()
@@ -26,6 +28,13 @@ export const HebStoreSettings: React.FC = () => {
 
     try {
       const res = await fetch(`${baseUrl}api/grocery/heb-verify-store?storeId=${trimmed}`)
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setError(data?.error || 'Verification failed. Please try again.')
+        return
+      }
+
       const data = await res.json()
 
       if (data.valid) {
