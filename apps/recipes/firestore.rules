@@ -9,23 +9,39 @@ service cloud.firestore {
     }
 
     // Grocery Lists
-    // ID Format: "{userId}_{weekStartDate}"
+    // ID Format: "{scopeId}_{weekStartDate}" where scopeId = familyId ?? userId
     match /grocery_lists/{listId} {
       // Allow READ if:
       // 1. Auth is valid AND
       // 2. ID starts with User ID (Owner) OR Document Data has matching userId
+      //    OR Document has a familyId matching the user's family
       allow read: if request.auth != null && (
         listId.split('_')[0] == request.auth.uid || 
-        (resource != null && resource.data.userId == request.auth.uid)
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.familyId != null &&
+         resource.data.familyId == listId.split('_')[0])
       );
 
       // Allow WRITE if:
       // 1. Auth is valid AND
       // 2. ID starts with User ID (Owner) OR New Data has matching userId
+      //    OR writing to a family-scoped list with matching familyId
       allow write: if request.auth != null && (
         listId.split('_')[0] == request.auth.uid ||
-        (request.resource != null && request.resource.data.userId == request.auth.uid)
+        (request.resource != null && request.resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.familyId != null &&
+         request.resource.data.familyId == listId.split('_')[0])
       );
+
+      // Product match results subcollection
+      match /product_matches/{matchId} {
+        allow read, write: if request.auth != null && (
+          listId.split('_')[0] == request.auth.uid ||
+          get(/databases/$(database)/documents/grocery_lists/$(listId)).data.userId == request.auth.uid ||
+          (get(/databases/$(database)/documents/grocery_lists/$(listId)).data.familyId != null &&
+           get(/databases/$(database)/documents/grocery_lists/$(listId)).data.familyId == listId.split('_')[0])
+        );
+      }
     }
   }
 }

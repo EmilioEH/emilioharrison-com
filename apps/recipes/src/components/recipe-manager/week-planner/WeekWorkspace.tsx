@@ -229,7 +229,13 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       const needsGeneration = !aiGroceryList && !isProcessing && !isStuck && !firestoreError
 
       if (needsGeneration) {
-        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId!)
+        triggerGroceryGeneration(
+          activeWeekStart,
+          groceryRecipes,
+          scopeId!,
+          user.uid,
+          currentFamily?.id,
+        )
       }
 
       // Auto-trigger cost estimate (checks cache first)
@@ -470,9 +476,15 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         size="icon"
                         onClick={() => {
                           handleRefreshCost()
-                          if (scopeId) {
+                          if (scopeId && user) {
                             removeAiOperation(`grocery-${listId}`)
-                            triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId)
+                            triggerGroceryGeneration(
+                              activeWeekStart,
+                              groceryRecipes,
+                              scopeId,
+                              user.uid,
+                              currentFamily?.id,
+                            )
                           }
                         }}
                         disabled={isEstimating || isProcessing}
@@ -594,9 +606,15 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                       // Force retry - reload page for Firestore errors, regenerate for others
                       if (firestoreError) {
                         window.location.reload()
-                      } else if (scopeId) {
+                      } else if (scopeId && user) {
                         console.log('Retrying grocery generation...')
-                        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId)
+                        triggerGroceryGeneration(
+                          activeWeekStart,
+                          groceryRecipes,
+                          scopeId,
+                          user.uid,
+                          currentFamily?.id,
+                        )
                       }
                     }}
                     className="gap-2"

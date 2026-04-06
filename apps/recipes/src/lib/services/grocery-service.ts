@@ -4,18 +4,22 @@ import {
   updateAiOperation,
   removeAiOperation,
 } from '../aiOperationStore'
-import type { Recipe, RecurringGroceryItem, ShoppableIngredient } from '../types'
+import type { GroceryList, Recipe, RecurringGroceryItem, ShoppableIngredient } from '../types'
 import { filterDueRecurringItems, mergeRecurringIntoIngredients } from '../grocery-utils'
 
 /**
  * Triggers background grocery list generation.
  * Fire-and-forget: The UI should subscribe to the Firestore document for updates.
  * @param scopeId - familyId ?? userId — determines the Firestore document key
+ * @param userId - The authenticated user's UID (required for Firestore rules)
+ * @param familyId - Optional family ID when in family mode
  */
 export async function triggerGroceryGeneration(
   weekStartDate: string,
   recipes: Recipe[],
   scopeId: string,
+  userId: string,
+  familyId?: string,
 ) {
   const listId = `${scopeId}_${weekStartDate}`
   const opId = `grocery-${listId}`
@@ -182,12 +186,14 @@ export async function triggerGroceryGeneration(
       const listRef = doc(db, 'grocery_lists', listId)
       await setDoc(listRef, {
         id: listId,
+        userId,
+        ...(familyId ? { familyId } : {}),
         weekStartDate,
         ingredients: finalIngredients,
         status: 'complete',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      })
+      } satisfies Omit<GroceryList, 'productPickerStatus' | 'unmatchedCount'>)
 
       console.log('[Grocery] Saved list to Firestore:', listId)
       updateAiOperation(opId, { status: 'complete', progress: 100, message: 'Done!' })
