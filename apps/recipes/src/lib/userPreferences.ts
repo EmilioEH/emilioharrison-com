@@ -70,6 +70,32 @@ export const resetPreferences = () => {
   $userPreferencesRaw.set(JSON.stringify(DEFAULT_PREFERENCES))
 }
 
+// ---------------------------------------------------------------------------
+// H-E-B Store Preference
+// ---------------------------------------------------------------------------
+
+export interface HebStorePreference {
+  storeId: string
+  storeName: string
+}
+
+const $hebStoreRaw = persistentAtom<string>('hebStore', '')
+
+export const $hebStore = computed($hebStoreRaw, (raw): HebStorePreference | null => {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed.storeId && parsed.storeName) return parsed as HebStorePreference
+    return null
+  } catch {
+    return null
+  }
+})
+
+export const setHebStore = (store: HebStorePreference | null) => {
+  $hebStoreRaw.set(store ? JSON.stringify(store) : '')
+}
+
 /**
  * Get the day number for week transition setting
  * Returns: 0 = Sunday, 4 = Thursday, 5 = Friday, 6 = Saturday

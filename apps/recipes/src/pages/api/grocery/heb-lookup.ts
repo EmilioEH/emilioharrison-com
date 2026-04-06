@@ -19,7 +19,7 @@ import type { HebProduct } from '../../../lib/types'
  */
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { url } = (await request.json()) as { url: string }
+    const { url, storeId } = (await request.json()) as { url: string; storeId?: string }
 
     if (!url) {
       return new Response(JSON.stringify({ error: 'Missing url' }), {
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Primary: query HEB GraphQL API
-    const product = await fetchHebProductGraphQL(parsed.productId)
+    const product = await fetchHebProductGraphQL(parsed.productId, storeId)
 
     if (product) {
       return new Response(

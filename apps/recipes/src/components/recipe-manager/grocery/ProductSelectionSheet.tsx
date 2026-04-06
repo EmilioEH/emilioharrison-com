@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { X, Search, Check, MapPin, DollarSign, Loader2, SkipForward } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import type { HebProduct, ShoppableIngredient } from '../../../lib/types'
+import { useHebSearchUrl } from '../../../hooks/useHebSearchUrl'
 
 interface ProductSelectionSheetProps {
   ingredient: ShoppableIngredient
@@ -18,6 +19,7 @@ export const ProductSelectionSheet: React.FC<ProductSelectionSheetProps> = ({
   onSkip,
   onClose,
 }) => {
+  const { buildUrl } = useHebSearchUrl()
   const [results, setResults] = useState<HebProduct[]>(initialResults)
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -54,10 +56,7 @@ export const ProductSelectionSheet: React.FC<ProductSelectionSheetProps> = ({
             ? import.meta.env.BASE_URL
             : `${import.meta.env.BASE_URL}/`
 
-          const response = await fetch(
-            `${baseUrl}api/grocery/heb-search?q=${encodeURIComponent(query)}`,
-            { signal: controller.signal },
-          )
+          const response = await fetch(buildUrl(query, baseUrl), { signal: controller.signal })
 
           if (!response.ok) throw new Error('Search failed')
 
@@ -76,7 +75,7 @@ export const ProductSelectionSheet: React.FC<ProductSelectionSheetProps> = ({
         }
       }, 350)
     },
-    [initialResults],
+    [initialResults, buildUrl],
   )
 
   useEffect(() => {

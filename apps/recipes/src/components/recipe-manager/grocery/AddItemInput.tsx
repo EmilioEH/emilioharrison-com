@@ -3,6 +3,7 @@ import { Search, Plus, X, DollarSign, Loader2, MapPin, Tag } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
 import type { ShoppableIngredient, HebProduct } from '../../../lib/types'
+import { useHebSearchUrl } from '../../../hooks/useHebSearchUrl'
 
 interface AddItemInputProps {
   onAddItem: (item: ShoppableIngredient) => Promise<void>
@@ -40,6 +41,7 @@ const DEFAULT_FORM: FormState = {
 }
 
 export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading }) => {
+  const { buildUrl } = useHebSearchUrl()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<HebSearchResult[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
@@ -80,7 +82,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
           : `${import.meta.env.BASE_URL}/`
 
         const response = await fetch(
-          `${baseUrl}api/grocery/heb-search?q=${encodeURIComponent(searchQuery)}`,
+          buildUrl(searchQuery, baseUrl),
           { signal: controller.signal },
         )
 
@@ -101,7 +103,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
         }
       }
     }, 350)
-  }, [])
+  }, [buildUrl])
 
   useEffect(() => {
     handleSearch(query)

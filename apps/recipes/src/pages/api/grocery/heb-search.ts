@@ -9,6 +9,7 @@ import { searchHebProducts, hebProductToIngredientFields } from '../../../lib/he
  */
 export const GET: APIRoute = async ({ url }) => {
   const query = url.searchParams.get('q')
+  const storeId = url.searchParams.get('storeId') || undefined
 
   if (!query || query.trim().length < 2) {
     return new Response(JSON.stringify({ results: [] }), {
@@ -18,7 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   try {
-    const products = await searchHebProducts(query)
+    const products = await searchHebProducts(query, storeId)
 
     const results = products.map((product) => ({
       product,

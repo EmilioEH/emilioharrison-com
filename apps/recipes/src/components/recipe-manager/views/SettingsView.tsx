@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { X, Download, Upload, Trash2, User, Save, Loader2 } from 'lucide-react'
 import { Stack } from '@/components/ui/layout'
 import { PushNotificationManager } from '../PushNotificationManager'
+import { HebStoreSettings } from '@/components/settings/HebStoreSettings'
 
 interface SettingsViewProps {
   onExport: () => void
@@ -79,6 +80,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
         </section>
+
+        <HebStoreSettings />
 
         <section>
           <PushNotificationManager />

@@ -15,6 +15,7 @@ import { cn } from '../../../lib/utils'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
 import { hebProductToIngredientFields } from '../../../lib/heb-url'
 import type { ShoppableIngredient, ProductOverride, HebProduct } from '../../../lib/types'
+import { useHebSearchUrl } from '../../../hooks/useHebSearchUrl'
 
 interface GroceryItemEditSheetProps {
   item: ShoppableIngredient
@@ -395,6 +396,7 @@ function HebProductSearch({
   onSaveOverride: (override: ProductOverride) => Promise<void>
   onClose: () => void
 }) {
+  const { buildUrl } = useHebSearchUrl()
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<HebProduct[]>([])
@@ -403,48 +405,50 @@ function HebProductSearch({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const doSearch = useCallback((searchQuery: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+  const doSearch = useCallback(
+    (searchQuery: string) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
 
-    if (searchQuery.length < 2) {
-      setResults([])
-      setSearching(false)
-      return
-    }
-
-    setSearching(true)
-    debounceRef.current = setTimeout(async () => {
-      abortRef.current?.abort()
-      const controller = new AbortController()
-      abortRef.current = controller
-
-      try {
-        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-          ? import.meta.env.BASE_URL
-          : `${import.meta.env.BASE_URL}/`
-
-        const response = await fetch(
-          `${baseUrl}api/grocery/heb-search?q=${encodeURIComponent(searchQuery)}`,
-          { signal: controller.signal },
-        )
-
-        if (!response.ok) throw new Error('Search failed')
-
-        const data = (await response.json()) as {
-          results: Array<{ product: HebProduct }>
-        }
-        if (!controller.signal.aborted) {
-          setResults(data.results.map((r) => r.product).slice(0, 6))
-          setSearching(false)
-        }
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return
-        if (!abortRef.current?.signal.aborted) {
-          setSearching(false)
-        }
+      if (searchQuery.length < 2) {
+        setResults([])
+        setSearching(false)
+        return
       }
-    }, 350)
-  }, [])
+
+      setSearching(true)
+      debounceRef.current = setTimeout(async () => {
+        abortRef.current?.abort()
+        const controller = new AbortController()
+        abortRef.current = controller
+
+        try {
+          const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+            ? import.meta.env.BASE_URL
+            : `${import.meta.env.BASE_URL}/`
+
+          const response = await fetch(buildUrl(searchQuery, baseUrl), {
+            signal: controller.signal,
+          })
+
+          if (!response.ok) throw new Error('Search failed')
+
+          const data = (await response.json()) as {
+            results: Array<{ product: HebProduct }>
+          }
+          if (!controller.signal.aborted) {
+            setResults(data.results.map((r) => r.product).slice(0, 6))
+            setSearching(false)
+          }
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'AbortError') return
+          if (!abortRef.current?.signal.aborted) {
+            setSearching(false)
+          }
+        }
+      }, 350)
+    },
+    [buildUrl],
+  )
 
   // Auto-search with ingredient name when opened
   useEffect(() => {

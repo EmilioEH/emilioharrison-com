@@ -9,6 +9,7 @@ const MAX_RESULTS_PER_ITEM = 8
 
 interface BatchSearchRequest {
   ingredients: string[]
+  storeId?: string
 }
 
 interface BatchSearchResult {
@@ -24,9 +25,9 @@ function delay(ms: number): Promise<void> {
 /**
  * Search for a single ingredient, falling back to static DB on failure.
  */
-async function searchSingleIngredient(name: string): Promise<BatchSearchResult> {
+async function searchSingleIngredient(name: string, storeId?: string): Promise<BatchSearchResult> {
   try {
-    const products = await searchHebProducts(name)
+    const products = await searchHebProducts(name, storeId)
     if (products.length > 0) {
       return {
         ingredientName: name,
@@ -85,7 +86,9 @@ export const POST: APIRoute = async ({ request }) => {
   // Process in batches with concurrency limit and delay
   for (let i = 0; i < uniqueNames.length; i += MAX_CONCURRENCY) {
     const batch = uniqueNames.slice(i, i + MAX_CONCURRENCY)
-    const batchResults = await Promise.all(batch.map(searchSingleIngredient))
+    const batchResults = await Promise.all(
+      batch.map((name) => searchSingleIngredient(name, body.storeId)),
+    )
     results.push(...batchResults)
 
     // Add delay between batches to avoid rate limiting
