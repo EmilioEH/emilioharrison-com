@@ -456,11 +456,15 @@ function HebProductSearch({
       setQuery(item.name)
       doSearch(item.name)
     }
+  }, [isOpen, item.name, doSearch, query, results.length])
+
+  // Cleanup on unmount only — doSearch already clears previous timeouts internally
+  useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
       abortRef.current?.abort()
     }
-  }, [isOpen, item.name, doSearch, query, results.length])
+  }, [])
 
   const handleSelectProduct = async (product: HebProduct) => {
     setSaving(true)
