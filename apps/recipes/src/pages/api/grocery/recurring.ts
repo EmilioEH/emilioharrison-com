@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { getGroceryScopeId, unauthorizedResponse } from '../../../lib/api-helpers'
 import { setRequestContext } from '../../../lib/request-context'
-import type { RecurringGroceryItem } from '../../../lib/types'
+import type { ProductOverride, RecurringGroceryItem } from '../../../lib/types'
 import { resolveFrequencyWeeks } from '../../../lib/grocery-utils'
 
 /**
@@ -11,9 +11,20 @@ import { resolveFrequencyWeeks } from '../../../lib/grocery-utils'
  * scopeId = familyId ?? userId (shared across family members)
  */
 
+/** HEB product fields sent alongside the recurring item for override creation */
+interface ProductFields {
+  imageUrl?: string
+  hebProductId?: string
+  hebProductUrl?: string
+  hebSize?: string
+  storeLocation?: string
+  hebUnitPrice?: number
+  hebUnitPriceUnit?: string
+}
+
 interface CreateRecurringItemRequest {
   userId: string
-  item: Omit<RecurringGroceryItem, 'id' | 'createdAt' | 'lastAddedWeek'>
+  item: Omit<RecurringGroceryItem, 'id' | 'createdAt' | 'lastAddedWeek'> & ProductFields
 }
 
 interface DeleteRecurringItemRequest {
@@ -97,6 +108,9 @@ export const POST: APIRoute = async (context) => {
         purchaseUnit: item.purchaseUnit,
       })
 
+      // Upsert product override so future generations get the image
+      await upsertProductOverride(scope.scopeId, item)
+
       return new Response(JSON.stringify({ success: true, itemId: existing.id, updated: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -126,6 +140,9 @@ export const POST: APIRoute = async (context) => {
 
     await db.addSubDocument('recurring_grocery_items', scope.scopeId, 'items', itemId, newItem)
 
+    // Upsert product override so future generations get the image
+    await upsertProductOverride(scope.scopeId, item)
+
     return new Response(JSON.stringify({ success: true, itemId }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
@@ -137,6 +154,38 @@ export const POST: APIRoute = async (context) => {
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
+}
+
+function normalizeKey(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, '-')
+}
+
+async function upsertProductOverride(
+  scopeId: string,
+  item: CreateRecurringItemRequest['item'],
+): Promise<void> {
+  const hasProductData = item.imageUrl || item.hebProductId
+  if (!hasProductData) return
+
+  const collectionPath = `product_overrides/${scopeId}/items`
+  const key = normalizeKey(item.name)
+
+  const override: ProductOverride = {
+    name: item.name.trim(),
+    updatedAt: new Date().toISOString(),
+    ...(item.imageUrl && { imageUrl: item.imageUrl }),
+    ...(item.hebProductId && { hebProductId: item.hebProductId }),
+    ...(item.hebProductUrl && { hebProductUrl: item.hebProductUrl }),
+    ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
+    ...(item.hebPriceUnit && { hebPriceUnit: item.hebPriceUnit }),
+    ...(item.hebSize && { hebSize: item.hebSize }),
+    ...(item.aisle !== undefined && { aisle: item.aisle }),
+    ...(item.storeLocation && { storeLocation: item.storeLocation }),
+    ...(item.hebUnitPrice !== undefined && { hebUnitPrice: item.hebUnitPrice }),
+    ...(item.hebUnitPriceUnit && { hebUnitPriceUnit: item.hebUnitPriceUnit }),
+  }
+
+  await db.setDocument(collectionPath, key, override)
 }
 
 /**

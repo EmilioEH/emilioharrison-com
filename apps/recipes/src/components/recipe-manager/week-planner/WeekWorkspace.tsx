@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useStore } from '@nanostores/react'
 import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek } from 'date-fns'
 import { motion } from 'framer-motion'
@@ -9,7 +9,6 @@ import {
   ShoppingCart,
   RefreshCw,
   AlertTriangle,
-  AlertCircle,
   Share,
   Copy,
   Sparkles,
@@ -18,7 +17,7 @@ import {
 
 import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
-import { buildGroceryItems, calculateCostEstimate } from '../../../lib/grocery-utils'
+import { buildGroceryItems, calculateGroceryCost } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import { WeekPlanView } from './WeekPlanView'
@@ -94,71 +93,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
   // Use extracted utilities to reduce component complexity
   const groceryItems = useMemo(() => buildGroceryItems(groceryRecipes), [groceryRecipes])
-  const costEstimate = useMemo(() => calculateCostEstimate(groceryRecipes), [groceryRecipes])
-
-  // AI-based cost refresh
-  const [aiCost, setAiCost] = useState<number | null>(null)
-  const [isEstimating, setIsEstimating] = useState(false)
-  const [estimateError, setEstimateError] = useState<string | null>(null)
-
-  const handleRefreshCost = useCallback(async () => {
-    if (groceryItems.length === 0) return
-    setIsEstimating(true)
-    setEstimateError(null)
-
-    // Generate a cache key based on sorted items to be order-independent
-    const sortedItems = [...groceryItems].sort((a, b) => a.name.localeCompare(b.name))
-    const cacheKey = `cost_est_${user?.uid}_${JSON.stringify(sortedItems.map((i) => ({ n: i.name, a: i.purchaseAmount, u: i.purchaseUnit })))}`
-
-    // Check cache
-    try {
-      const cached = localStorage.getItem(cacheKey)
-      if (cached) {
-        const data = JSON.parse(cached)
-        if (data.totalCost) {
-          console.log('Using cached cost estimate')
-          setAiCost(data.totalCost)
-          setIsEstimating(false)
-          return
-        }
-      }
-    } catch (e) {
-      console.warn('Cache read failed', e)
-    }
-
-    try {
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const res = await fetch(`${baseUrl}api/estimate-cost`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredients: groceryItems }),
-      })
-      const data = await res.json()
-
-      if (!res.ok || data.error) {
-        throw new Error(data.details || data.error || 'Estimation failed')
-      }
-
-      if (data.totalCost) {
-        setAiCost(data.totalCost)
-        // Save to cache
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(data))
-        } catch (e) {
-          console.warn('Cache write failed', e)
-        }
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not estimate cost'
-      console.error('Cost estimation failed', msg)
-      setEstimateError(msg)
-    } finally {
-      setIsEstimating(false)
-    }
-  }, [groceryItems, user])
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
@@ -193,7 +127,13 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         }
       }, 1000)
     } else {
-      setIsStuck(false)
+      // Avoid calling setState synchronously within an effect
+      setTimeout(() => {
+        setIsStuck((prev) => {
+          if (prev) return false
+          return prev
+        })
+      }, 0)
     }
     return () => clearInterval(interval)
   }, [aiGroceryList])
@@ -239,12 +179,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
           currentFamily?.id,
         )
       }
-
-      // Auto-trigger cost estimate (checks cache first)
-      // Only trigger if we don't have a cost, aren't currently working on it, and haven't failed recently
-      if (!aiCost && !isEstimating && !estimateError) {
-        handleRefreshCost()
-      }
     }
   }, [
     activeTab,
@@ -256,10 +190,8 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     aiLoading,
     isStuck,
     firestoreError,
-    handleRefreshCost,
-    aiCost,
-    isEstimating,
-    estimateError,
+    scopeId,
+    currentFamily?.id,
   ])
 
   // Auto-switch to AI view when ready (only once)
@@ -427,158 +359,151 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         {activeTab === 'grocery' && (
           <>
             {/* Cost Estimate Banner */}
-            {groceryRecipes.length > 0 && (
-              <div className="border-b border-border bg-muted/30 px-4 py-3">
-                <Inline spacing="md" justify="between" className="mx-auto max-w-2xl">
-                  <Stack spacing="xs">
-                    {/* Show AI cost if available, otherwise aggregate */}
-                    {aiCost !== null ? (
-                      <>
-                        <span className="text-lg font-bold text-green-700">
-                          ${aiCost.toFixed(2)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">AI Estimate (HEB)</span>
-                      </>
-                    ) : costEstimate.hasAnyData ? (
-                      <>
-                        <Inline spacing="xs">
-                          <span
-                            className={`text-lg font-bold ${costEstimate.isComplete ? 'text-green-700' : 'text-amber-600'}`}
-                          >
-                            ${costEstimate.total.toFixed(2)}
-                          </span>
-                          {!costEstimate.isComplete && (
-                            <span className="flex items-center gap-1 text-xs text-amber-600">
-                              <AlertTriangle className="h-3 w-3" />
-                              Incomplete
+            {groceryRecipes.length > 0 &&
+              (() => {
+                const displayItems = hasSmartList ? aiGroceryList!.ingredients : groceryItems
+                const hebCost = calculateGroceryCost(displayItems)
+                return (
+                  <div className="border-b border-border bg-muted/30 px-4 py-3">
+                    <Inline spacing="md" justify="between" className="mx-auto max-w-2xl">
+                      <Stack spacing="xs">
+                        {hebCost.hasAnyData ? (
+                          <>
+                            <Inline spacing="xs">
+                              <span
+                                className={`text-lg font-bold ${hebCost.isComplete ? 'text-green-700' : 'text-amber-600'}`}
+                              >
+                                ${hebCost.total.toFixed(2)}
+                              </span>
+                              {!hebCost.isComplete && (
+                                <span className="flex items-center gap-1 text-xs text-amber-600">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Partial
+                                </span>
+                              )}
+                            </Inline>
+                            <span className="text-xs text-muted-foreground">
+                              {hebCost.isComplete
+                                ? `All ${hebCost.verifiedCount} items priced`
+                                : `${hebCost.verifiedCount}/${hebCost.itemCount} items with HEB prices`}
                             </span>
-                          )}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm font-medium text-muted-foreground">
+                              No price data
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Prices update when items match HEB products
+                            </span>
+                          </>
+                        )}
+                      </Stack>
+
+                      {/* Actions: Icons + View Toggle */}
+                      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+                        <Inline spacing="xs">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              if (scopeId && user) {
+                                removeAiOperation(`grocery-${listId}`)
+                                triggerGroceryGeneration(
+                                  activeWeekStart,
+                                  groceryRecipes,
+                                  scopeId,
+                                  user.uid,
+                                  currentFamily?.id,
+                                )
+                              }
+                            }}
+                            disabled={isProcessing}
+                            className="h-11 w-11 rounded-full"
+                            title="Refresh Grocery List"
+                            aria-label="Refresh Grocery List"
+                          >
+                            <RefreshCw
+                              className={`h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
+                            />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleShareGrocery}
+                            className="h-11 w-11 rounded-full"
+                            title="Share"
+                            aria-label="Share Grocery List"
+                          >
+                            <Share className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleCopyGrocery}
+                            className="h-11 w-11 rounded-full"
+                            title="Copy"
+                            aria-label="Copy Grocery List"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
                         </Inline>
-                        <span className="text-xs text-muted-foreground">
-                          From {costEstimate.hasEstimate}/{groceryRecipes.length} recipes
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-medium text-muted-foreground">
-                          No cost data
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          Click refresh to estimate
-                        </span>
-                      </>
-                    )}
-                  </Stack>
 
-                  {/* Actions: Icons + View Toggle */}
-                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-                    <Inline spacing="xs">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          handleRefreshCost()
-                          if (scopeId && user) {
-                            removeAiOperation(`grocery-${listId}`)
-                            triggerGroceryGeneration(
-                              activeWeekStart,
-                              groceryRecipes,
-                              scopeId,
-                              user.uid,
-                              currentFamily?.id,
-                            )
-                          }
-                        }}
-                        disabled={isEstimating || isProcessing}
-                        className="h-11 w-11 rounded-full"
-                        title="Refresh AI & Costs"
-                        aria-label="Refresh AI & Costs"
-                      >
-                        <RefreshCw
-                          className={`h-4 w-4 ${isEstimating || isProcessing ? 'animate-spin' : ''}`}
-                        />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleShareGrocery}
-                        className="h-11 w-11 rounded-full"
-                        title="Share"
-                        aria-label="Share Grocery List"
-                      >
-                        <Share className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCopyGrocery}
-                        className="h-11 w-11 rounded-full"
-                        title="Copy"
-                        aria-label="Copy Grocery List"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                        {/* View Toggle */}
+                        <div className="flex items-center rounded-lg border border-border bg-background p-1 shadow-sm">
+                          <button
+                            onClick={() => setViewMode('programmatic')}
+                            className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                              viewMode === 'programmatic'
+                                ? 'bg-muted text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            Standard
+                          </button>
+                          <button
+                            onClick={() => hasSmartList && setViewMode('ai')}
+                            disabled={!hasSmartList}
+                            className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                              viewMode === 'ai'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'text-muted-foreground'
+                            } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
+                          >
+                            {isProcessing ? (
+                              <RefreshCw className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-3 w-3" />
+                            )}
+                            Smart List
+                          </button>
+                        </div>
+                      </div>
                     </Inline>
 
-                    {/* View Toggle */}
-                    <div className="flex items-center rounded-lg border border-border bg-background p-1 shadow-sm">
-                      <button
-                        onClick={() => setViewMode('programmatic')}
-                        className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
-                          viewMode === 'programmatic'
-                            ? 'bg-muted text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        Standard
-                      </button>
-                      <button
-                        onClick={() => hasSmartList && setViewMode('ai')}
-                        disabled={!hasSmartList}
-                        className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
-                          viewMode === 'ai'
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-muted-foreground'
-                        } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
-                      >
-                        {isProcessing ? (
-                          <RefreshCw className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-3 w-3" />
-                        )}
-                        Smart List
-                      </button>
-                    </div>
-                  </div>
-                </Inline>
+                    {/* Progress Indicator */}
+                    {isProcessing && (
+                      <div className="mt-2 text-primary">
+                        <AiProgressBar
+                          progress={
+                            operations.find((op) => op.id === `grocery-${listId}`)?.progress ||
+                            (aiGroceryList?.status === 'processing' ? 5 : 0)
+                          }
+                          message={
+                            operations.find((op) => op.id === `grocery-${listId}`)?.message ||
+                            (isStuck ? 'Still processing...' : 'Consulting Chef Gemini...')
+                          }
+                          isAnimating={true}
+                        />
+                      </div>
+                    )}
 
-                {/* Progress Indicator */}
-                {isProcessing && (
-                  <div className="mt-2 text-primary">
-                    <AiProgressBar
-                      progress={
-                        operations.find((op) => op.id === `grocery-${listId}`)?.progress ||
-                        (aiGroceryList?.status === 'processing' ? 5 : 0)
-                      }
-                      message={
-                        operations.find((op) => op.id === `grocery-${listId}`)?.message ||
-                        (isStuck ? 'Still processing...' : 'Consulting Chef Gemini...')
-                      }
-                      isAnimating={true}
-                    />
+                    {/* Error State */}
                   </div>
-                )}
-
-                {/* Error State */}
-                {estimateError && (
-                  <p className="mt-2 flex items-center gap-1 text-xs text-red-600">
-                    <AlertCircle className="h-3 w-3" /> {estimateError}
-                  </p>
-                )}
-              </div>
-            )}
+                )
+              })()}
 
             {/* Grocery List */}
             {hasError && (

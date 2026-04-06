@@ -255,6 +255,13 @@ export const GroceryList: React.FC<GroceryListProps> = ({
               ...(item.aisle !== undefined && { aisle: item.aisle }),
               ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
               ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
+              ...(item.imageUrl && { imageUrl: item.imageUrl }),
+              ...(item.hebProductId && { hebProductId: item.hebProductId }),
+              ...(item.hebProductUrl && { hebProductUrl: item.hebProductUrl }),
+              ...(item.hebSize && { hebSize: item.hebSize }),
+              ...(item.storeLocation && { storeLocation: item.storeLocation }),
+              ...(item.hebUnitPrice !== undefined && { hebUnitPrice: item.hebUnitPrice }),
+              ...(item.hebUnitPriceUnit && { hebUnitPriceUnit: item.hebUnitPriceUnit }),
             },
           }),
         })

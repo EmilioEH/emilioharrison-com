@@ -90,28 +90,30 @@ function processBasicIngredients(recipe: Recipe, map: Map<string, ShoppableIngre
 }
 
 /**
- * Aggregates cost estimates across a set of recipes.
+ * Calculates cost from HEB-verified prices on grocery items.
+ * Returns the total of verified items and counts of verified vs unverified.
  */
-export function calculateCostEstimate(recipes: Recipe[]) {
+export function calculateGroceryCost(items: ShoppableIngredient[]) {
   let total = 0
-  let hasEstimate = 0
-  let missingEstimate = 0
+  let verifiedCount = 0
+  let unverifiedCount = 0
 
-  for (const recipe of recipes) {
-    if (typeof recipe.estimatedCost === 'number' && recipe.estimatedCost > 0) {
-      total += recipe.estimatedCost
-      hasEstimate++
+  for (const item of items) {
+    if (typeof item.hebPrice === 'number' && item.hebPrice > 0) {
+      total += item.hebPrice
+      verifiedCount++
     } else {
-      missingEstimate++
+      unverifiedCount++
     }
   }
 
   return {
     total,
-    hasEstimate,
-    missingEstimate,
-    isComplete: missingEstimate === 0 && recipes.length > 0,
-    hasAnyData: hasEstimate > 0,
+    verifiedCount,
+    unverifiedCount,
+    isComplete: unverifiedCount === 0 && items.length > 0,
+    hasAnyData: verifiedCount > 0,
+    itemCount: items.length,
   }
 }
 

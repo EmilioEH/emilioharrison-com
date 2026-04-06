@@ -34,6 +34,12 @@ interface PatchItemRequest {
     storeLocation?: string
     isRecurring?: boolean
     recurringFrequencyWeeks?: number
+    imageUrl?: string
+    hebProductId?: string
+    hebProductUrl?: string
+    hebSize?: string
+    hebUnitPrice?: number
+    hebUnitPriceUnit?: string
   }
 }
 
@@ -243,6 +249,24 @@ export const PATCH: APIRoute = async (context) => {
     }
     if (updates.storeLocation !== undefined) {
       groceryList.ingredients[itemIndex].storeLocation = updates.storeLocation
+    }
+    if (updates.imageUrl !== undefined) {
+      groceryList.ingredients[itemIndex].imageUrl = updates.imageUrl
+    }
+    if (updates.hebProductId !== undefined) {
+      groceryList.ingredients[itemIndex].hebProductId = updates.hebProductId
+    }
+    if (updates.hebProductUrl !== undefined) {
+      groceryList.ingredients[itemIndex].hebProductUrl = updates.hebProductUrl
+    }
+    if (updates.hebSize !== undefined) {
+      groceryList.ingredients[itemIndex].hebSize = updates.hebSize
+    }
+    if (updates.hebUnitPrice !== undefined) {
+      groceryList.ingredients[itemIndex].hebUnitPrice = updates.hebUnitPrice
+    }
+    if (updates.hebUnitPriceUnit !== undefined) {
+      groceryList.ingredients[itemIndex].hebUnitPriceUnit = updates.hebUnitPriceUnit
     }
     if (updates.isRecurring !== undefined) {
       groceryList.ingredients[itemIndex].isRecurring = updates.isRecurring || undefined
