@@ -18,6 +18,7 @@ coherence
 ---
 
 #### IA-1 · WeekSelectorHeader is a duplicate / orphaned component
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/week-planner/WeekSelectorHeader.tsx`
 
@@ -33,6 +34,7 @@ elsewhere, two implementations will silently diverge.
 ---
 
 #### IA-2 · "Add recipe" from week tab loses day context
+
 **Severity: Medium**
 **Files:** `src/components/recipe-manager/RecipeManager.tsx:636`,
 `src/components/recipe-manager/week-planner/WeekWorkspace.tsx:405`
@@ -48,6 +50,7 @@ and return the user to the week tab after saving.
 ---
 
 #### IA-3 · `onShare` in WeekPlanView is a dead prop
+
 **Severity: Low**
 **File:** `src/components/recipe-manager/week-planner/WeekPlanView.tsx:309`
 
@@ -61,6 +64,7 @@ remove the prop entirely to eliminate the false affordance.
 ---
 
 #### IA-4 · No visual link between active cooking session and week plan
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeManager.tsx:724–733`
 
@@ -79,6 +83,7 @@ when a session is active for that recipe ID.
 ---
 
 #### S-1 · GroceryList uses seven phantom design tokens
+
 **Severity: High**
 **File:** `src/components/recipe-manager/grocery/GroceryList.tsx`
 
@@ -86,32 +91,34 @@ The following class names reference tokens that do not exist in `global.css` or
 `tailwind.config.js`. Tailwind silently ignores unknown utilities, so every
 affected element has no background, border, or colour.
 
-| Line(s) | Phantom class | Replace with |
-|---|---|---|
-| 127, 142, 143 | `bg-card-variant` | `bg-muted` |
-| 153 | `bg-card-container` | `bg-muted/30` |
-| 183 | `bg-card-container-low` | `bg-card` |
-| 183 | `border-border-variant` | `border-border` |
-| 193 | `border-border-variant` | `border-border` |
-| 194 | `bg-card-container-high` | *(remove — `opacity-50` alone achieves the dimming)* |
-| 238 | `text-foreground-variant` | `text-muted-foreground` |
-| 280 | `border-border-variant` | `border-border` |
-| 314 | `text-gray-300` | `text-muted-foreground/50` |
+| Line(s)       | Phantom class             | Replace with                                         |
+| ------------- | ------------------------- | ---------------------------------------------------- |
+| 127, 142, 143 | `bg-card-variant`         | `bg-muted`                                           |
+| 153           | `bg-card-container`       | `bg-muted/30`                                        |
+| 183           | `bg-card-container-low`   | `bg-card`                                            |
+| 183           | `border-border-variant`   | `border-border`                                      |
+| 193           | `border-border-variant`   | `border-border`                                      |
+| 194           | `bg-card-container-high`  | _(remove — `opacity-50` alone achieves the dimming)_ |
+| 238           | `text-foreground-variant` | `text-muted-foreground`                              |
+| 280           | `border-border-variant`   | `border-border`                                      |
+| 314           | `text-gray-300`           | `text-muted-foreground/50`                           |
 
 ---
 
 #### S-2 · LibraryRecipeCard hardcoded whites break dark mode
+
 **Severity: High**
 **File:** `src/components/recipe-manager/library/LibraryRecipeCard.tsx`
 
-| Line | Current | Replace with |
-|---|---|---|
-| 37 | `border-gray-400 bg-white/80` | `border-muted-foreground/30 bg-background/80` |
-| 102 | `bg-white/50` | `bg-secondary/50` |
+| Line | Current                       | Replace with                                  |
+| ---- | ----------------------------- | --------------------------------------------- |
+| 37   | `border-gray-400 bg-white/80` | `border-muted-foreground/30 bg-background/80` |
+| 102  | `bg-white/50`                 | `bg-secondary/50`                             |
 
 ---
 
 #### S-3 · DetailHeader favourite button uses light-only tinting
+
 **Severity: Medium**
 **File:** `src/components/recipe-details/DetailHeader.tsx:47`
 
@@ -124,6 +131,7 @@ that works on any surface colour.
 ---
 
 #### S-4 · Sync notification action buttons hardcode white
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeManager.tsx:790,795`
 
@@ -138,6 +146,7 @@ illegible.
 ---
 
 #### S-5 · RecipeLibrary empty state uses raw Tailwind grey
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeLibrary.tsx:158`
 
@@ -146,6 +155,7 @@ illegible.
 ---
 
 #### S-6 · GroceryList fallback uses raw Tailwind grey
+
 **Severity: Low**
 **File:** `src/components/recipe-manager/grocery/GroceryList.tsx:314`
 
@@ -154,6 +164,7 @@ illegible.
 ---
 
 #### S-7 · Selection bar uses raw RGBA custom shadow
+
 **Severity: Low**
 **File:** `src/components/recipe-manager/RecipeManager.tsx:695`
 
@@ -164,6 +175,7 @@ illegible.
 ---
 
 #### S-8 · RecipeLibrary itemVariants uses tween, not spring
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeLibrary.tsx:28–37`
 
@@ -182,6 +194,7 @@ transition: { type: 'spring', bounce: 0, duration: 0.3 }
 ---
 
 #### S-9 · Toast motion.divs default to tween
+
 **Severity: Low**
 **File:** `src/components/recipe-manager/RecipeManager.tsx:757–762,846–851`
 
@@ -199,6 +212,7 @@ to both.
 ---
 
 #### I-1 · "Add to Week" touch target is 24 px — less than half the minimum
+
 **Severity: High**
 **File:** `src/components/recipe-manager/RecipeCard.tsx:241–258`
 
@@ -211,11 +225,12 @@ planning action in the app.
 
 ```tsx
 <button
-  onClick={(e) => { e.stopPropagation(); onToggleThisWeek(recipe.id) }}
+  onClick={(e) => {
+    e.stopPropagation()
+    onToggleThisWeek(recipe.id)
+  }}
   aria-label="Add to Week"
-  className="flex h-11 w-11 items-center justify-center rounded-full
-             text-muted-foreground hover:bg-accent hover:text-foreground
-             active:scale-95 transition-all focus:outline-none"
+  className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus:outline-none active:scale-95"
 >
   <Plus className="h-4 w-4" />
 </button>
@@ -224,6 +239,7 @@ planning action in the app.
 ---
 
 #### I-2 · RecipeCard plannedDates are stale in React.memo
+
 **Severity: High**
 **File:** `src/components/recipe-manager/RecipeCard.tsx:60–96`,
 `src/components/recipe-manager/RecipeLibrary.tsx`
@@ -240,7 +256,7 @@ subscribes) and pass it as a prop:
 ```tsx
 // RecipeLibrary — in the recipe map:
 <RecipeCard
-  plannedDates={getPlannedDatesForRecipe(recipe.id).filter(p => p.isCurrentWeek)}
+  plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
   // ...
 />
 
@@ -251,6 +267,7 @@ subscribes) and pass it as a prop:
 ---
 
 #### I-3 · RecipeManagerView error state shows a spinner icon
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeManagerView.tsx:94`
 
@@ -263,20 +280,22 @@ A `Loader2` spinning icon inside the `destructive/10` error container signals
 ---
 
 #### I-4 · WeekWorkspace header buttons are 32 px
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/week-planner/WeekWorkspace.tsx`
 
-| Line | Element | Current | Correct |
-|---|---|---|---|
-| 321 | Minimize/Back button | `h-8 w-8` | `h-11 w-11` |
-| 362 | Calendar button | `h-8 w-8` | `h-11 w-11` |
-| 462–477 | Refresh icon button | `h-8 w-8` | `h-11 w-11` |
-| 482–490 | Share icon button | `h-8 w-8` | `h-11 w-11` |
-| 493–500 | Copy icon button | `h-8 w-8` | `h-11 w-11` |
+| Line    | Element              | Current   | Correct     |
+| ------- | -------------------- | --------- | ----------- |
+| 321     | Minimize/Back button | `h-8 w-8` | `h-11 w-11` |
+| 362     | Calendar button      | `h-8 w-8` | `h-11 w-11` |
+| 462–477 | Refresh icon button  | `h-8 w-8` | `h-11 w-11` |
+| 482–490 | Share icon button    | `h-8 w-8` | `h-11 w-11` |
+| 493–500 | Copy icon button     | `h-8 w-8` | `h-11 w-11` |
 
 ---
 
 #### I-5 · RecipeControlBar filter button is 40 px
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeControlBar.tsx:70`
 
@@ -285,6 +304,7 @@ A `Loader2` spinning icon inside the `destructive/10` error container signals
 ---
 
 #### I-6 · GlobalBurgerMenu items have no touch feedback
+
 **Severity: Medium**
 **File:** `src/components/layout/GlobalBurgerMenu.tsx:105–234`
 
@@ -297,6 +317,7 @@ className. Optionally wrap in `motion.button whileTap={{ scale: 0.98 }}`.
 ---
 
 #### I-7 · WeekPlanView swipe gesture has no visible affordance
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/week-planner/WeekPlanView.tsx`
 
@@ -317,12 +338,14 @@ of each `SwipeableRecipeCard`:
 ---
 
 #### I-8 · ReminderToast dismiss button has no touch target
+
 **Severity: Medium**
 **File:** `src/components/recipe-manager/RecipeManager.tsx:860–868`
 
 Bare `<button>` with a `size-4` icon and no padding — approximately 16 px.
 
 **Correct behaviour:**
+
 ```tsx
 <button
   onClick={...}
@@ -338,6 +361,7 @@ Bare `<button>` with a `size-4` icon and no padding — approximately 16 px.
 ---
 
 #### I-9 · RecipeCard management button is 32 px
+
 **Severity: Low**
 **File:** `src/components/recipe-manager/RecipeCard.tsx:270`
 
@@ -352,6 +376,7 @@ Issues are grouped to minimise file conflicts between parallel agents.
 ---
 
 ### Agent A — GroceryList phantom tokens
+
 **Files touched:** `GroceryList.tsx` only
 **Fixes:** S-1, S-6
 
@@ -362,6 +387,7 @@ with `text-muted-foreground/50` at line 314. Run a final grep for `card-variant`
 ---
 
 ### Agent B — RecipeCard + RecipeLibrary
+
 **Files touched:** `RecipeCard.tsx`, `RecipeLibrary.tsx`
 **Fixes:** I-1, I-2, I-9, S-5, S-8
 
@@ -380,6 +406,7 @@ with `text-muted-foreground/50` at line 314. Run a final grep for `card-variant`
 ---
 
 ### Agent C — LibraryRecipeCard + DetailHeader
+
 **Files touched:** `library/LibraryRecipeCard.tsx`, `recipe-details/DetailHeader.tsx`
 **Fixes:** S-2, S-3
 
@@ -390,6 +417,7 @@ with `text-muted-foreground/50` at line 314. Run a final grep for `card-variant`
 ---
 
 ### Agent D — RecipeManager.tsx consolidation
+
 **Files touched:** `RecipeManager.tsx` only
 **Fixes:** S-4, S-7, S-9, I-8
 
@@ -407,6 +435,7 @@ with `text-muted-foreground/50` at line 314. Run a final grep for `card-variant`
 ---
 
 ### Agent E — WeekWorkspace + RecipeControlBar + RecipeManagerView
+
 **Files touched:** `week-planner/WeekWorkspace.tsx`, `RecipeControlBar.tsx`,
 `RecipeManagerView.tsx`
 **Fixes:** I-4, I-5, I-3
@@ -421,6 +450,7 @@ with `text-muted-foreground/50` at line 314. Run a final grep for `card-variant`
 ---
 
 ### Agent F — GlobalBurgerMenu + WeekPlanView + WeekSelectorHeader
+
 **Files touched:** `layout/GlobalBurgerMenu.tsx`,
 `week-planner/WeekPlanView.tsx`, `week-planner/WeekSelectorHeader.tsx`
 **Fixes:** I-6, I-7, IA-1, IA-3
@@ -443,10 +473,10 @@ with `text-muted-foreground/50` at line 314. Run a final grep for `card-variant`
 
 ### Top 5 by Impact
 
-| # | Fix | Why first |
-|---|---|---|
-| 1 | S-1 GroceryList phantom tokens | Entire grocery tab is visually broken — missing backgrounds and borders |
-| 2 | I-1 Add to Week 24 px target | Core planning action present on every card but nearly untappable on mobile |
-| 3 | I-2 Stale plannedDates in memo | "Planned" badges show wrong state after plan changes — trust-breaking |
-| 4 | S-2 LibraryRecipeCard hardcoded white | Dark mode broken for this card variant |
-| 5 | S-8 tween→spring on RecipeLibrary | Wrong animation type on the highest-frequency animation in the app |
+| #   | Fix                                   | Why first                                                                  |
+| --- | ------------------------------------- | -------------------------------------------------------------------------- |
+| 1   | S-1 GroceryList phantom tokens        | Entire grocery tab is visually broken — missing backgrounds and borders    |
+| 2   | I-1 Add to Week 24 px target          | Core planning action present on every card but nearly untappable on mobile |
+| 3   | I-2 Stale plannedDates in memo        | "Planned" badges show wrong state after plan changes — trust-breaking      |
+| 4   | S-2 LibraryRecipeCard hardcoded white | Dark mode broken for this card variant                                     |
+| 5   | S-8 tween→spring on RecipeLibrary     | Wrong animation type on the highest-frequency animation in the app         |

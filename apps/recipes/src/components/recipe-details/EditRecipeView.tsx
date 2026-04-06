@@ -173,7 +173,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
             </h3>
 
             <Cluster spacing="md">
-              <div className="min-w-[45%] flex-1 grid gap-2">
+              <div className="grid min-w-[45%] flex-1 gap-2">
                 <Label htmlFor="protein">Protein</Label>
                 <select
                   id="protein"
@@ -182,12 +182,23 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
                 >
                   <option value="">None</option>
-                  {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map((p) => (
-                    <option key={p} value={p}>{p}</option>
+                  {[
+                    'Chicken',
+                    'Beef',
+                    'Pork',
+                    'Fish',
+                    'Seafood',
+                    'Vegetarian',
+                    'Vegan',
+                    'Other',
+                  ].map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
                   ))}
                 </select>
               </div>
-              <div className="min-w-[45%] flex-1 grid gap-2">
+              <div className="grid min-w-[45%] flex-1 gap-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
                 <select
                   id="difficulty"
@@ -197,14 +208,16 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 >
                   <option value="">Select...</option>
                   {(['Easy', 'Medium', 'Hard'] as const).map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
                   ))}
                 </select>
               </div>
             </Cluster>
 
             <Cluster spacing="md">
-              <div className="min-w-[45%] flex-1 grid gap-2">
+              <div className="grid min-w-[45%] flex-1 gap-2">
                 <Label htmlFor="mealType">Meal Type</Label>
                 <select
                   id="mealType"
@@ -214,11 +227,13 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 >
                   <option value="">Select...</option>
                   {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
                   ))}
                 </select>
               </div>
-              <div className="min-w-[45%] flex-1 grid gap-2">
+              <div className="grid min-w-[45%] flex-1 gap-2">
                 <Label htmlFor="dishType">Dish Type</Label>
                 <select
                   id="dishType"
@@ -228,14 +243,16 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 >
                   <option value="">Select...</option>
                   {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
                   ))}
                 </select>
               </div>
             </Cluster>
 
             <Cluster spacing="sm">
-              <div className="min-w-[30%] flex-1 grid gap-2">
+              <div className="grid min-w-[30%] flex-1 gap-2">
                 <Label htmlFor="servings">Servings</Label>
                 <Input
                   id="servings"
@@ -246,7 +263,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   placeholder="4"
                 />
               </div>
-              <div className="min-w-[30%] flex-1 grid gap-2">
+              <div className="grid min-w-[30%] flex-1 gap-2">
                 <Label htmlFor="prepTime">Prep (min)</Label>
                 <Input
                   id="prepTime"
@@ -257,7 +274,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   placeholder="15"
                 />
               </div>
-              <div className="min-w-[30%] flex-1 grid gap-2">
+              <div className="grid min-w-[30%] flex-1 gap-2">
                 <Label htmlFor="cookTime">Cook (min)</Label>
                 <Input
                   id="cookTime"
@@ -271,7 +288,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
             </Cluster>
 
             <Cluster spacing="md">
-              <div className="min-w-[45%] flex-1 grid gap-2">
+              <div className="grid min-w-[45%] flex-1 gap-2">
                 <Label htmlFor="cuisine">Cuisine</Label>
                 <Input
                   id="cuisine"
@@ -280,7 +297,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   placeholder="Italian, Mexican..."
                 />
               </div>
-              <div className="min-w-[45%] flex-1 grid gap-2">
+              <div className="grid min-w-[45%] flex-1 gap-2">
                 <Label htmlFor="estimatedCost">Est. Cost ($)</Label>
                 <Input
                   id="estimatedCost"
@@ -302,7 +319,10 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    dietary: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                    dietary: e.target.value
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                   }))
                 }
                 placeholder="Gluten-Free, Dairy-Free..."
@@ -317,7 +337,10 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    equipment: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                    equipment: e.target.value
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                   }))
                 }
                 placeholder="Air Fryer, Slow Cooker..."
@@ -332,7 +355,10 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    occasion: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                    occasion: e.target.value
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                   }))
                 }
                 placeholder="Weeknight, Party, Meal Prep..."

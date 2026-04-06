@@ -15,8 +15,16 @@
         "breadcrumbs": [
           { "urlPath": "/", "title": "H-E-B", "__typename": "CategoryBreadCrumb" },
           { "urlPath": "/browse/shop", "title": "Shop", "__typename": "CategoryBreadCrumb" },
-          { "urlPath": "/category/shop/dairy-eggs/2864/490016", "title": "Dairy & eggs", "__typename": "CategoryBreadCrumb" },
-          { "urlPath": "/category/shop/eggs-egg-substitutes/490016/490052", "title": "Eggs & egg substitutes", "__typename": "CategoryBreadCrumb" }
+          {
+            "urlPath": "/category/shop/dairy-eggs/2864/490016",
+            "title": "Dairy & eggs",
+            "__typename": "CategoryBreadCrumb"
+          },
+          {
+            "urlPath": "/category/shop/eggs-egg-substitutes/490016/490052",
+            "title": "Eggs & egg substitutes",
+            "__typename": "CategoryBreadCrumb"
+          }
         ],
         "carouselImageUrls": [
           "https://images.heb.com/is/image/HEBGrocery/008271501-1",

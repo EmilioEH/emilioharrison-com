@@ -147,9 +147,7 @@ export function findProduct(name: string): GrocerySuggestion | null {
   const normalizedQuery = name.toLowerCase().trim()
 
   // First try exact match (case-insensitive)
-  const exactMatch = GROCERY_SUGGESTIONS.find(
-    (p) => p.name.toLowerCase() === normalizedQuery,
-  )
+  const exactMatch = GROCERY_SUGGESTIONS.find((p) => p.name.toLowerCase() === normalizedQuery)
   if (exactMatch) {
     return exactMatch
   }
@@ -177,9 +175,7 @@ export function findProduct(name: string): GrocerySuggestion | null {
  * @param name - Product name to look up
  * @returns Price info object, or null if not found
  */
-export function getProductPrice(
-  name: string,
-): { price: number; unit: string } | null {
+export function getProductPrice(name: string): { price: number; unit: string } | null {
   const product = findProduct(name)
   if (!product || product.hebPrice === undefined) {
     return null

@@ -7,26 +7,84 @@ describe('grocery-logic', () => {
   describe('categorizeShoppableIngredients', () => {
     it('should return categories in H-E-B walking-path order', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'milk', purchaseAmount: 1, purchaseUnit: 'gallon', category: 'Dairy & Eggs', sources: [] },
+        {
+          name: 'milk',
+          purchaseAmount: 1,
+          purchaseUnit: 'gallon',
+          category: 'Dairy & Eggs',
+          sources: [],
+        },
         { name: 'chicken', purchaseAmount: 2, purchaseUnit: 'lbs', category: 'Meat', sources: [] },
-        { name: 'lettuce', purchaseAmount: 1, purchaseUnit: 'head', category: 'Produce', sources: [] },
-        { name: 'ice cream', purchaseAmount: 1, purchaseUnit: 'pint', category: 'Frozen Foods', sources: [] },
-        { name: 'pasta', purchaseAmount: 1, purchaseUnit: 'box', category: 'Pantry & Condiments', sources: [] },
+        {
+          name: 'lettuce',
+          purchaseAmount: 1,
+          purchaseUnit: 'head',
+          category: 'Produce',
+          sources: [],
+        },
+        {
+          name: 'ice cream',
+          purchaseAmount: 1,
+          purchaseUnit: 'pint',
+          category: 'Frozen Foods',
+          sources: [],
+        },
+        {
+          name: 'pasta',
+          purchaseAmount: 1,
+          purchaseUnit: 'box',
+          category: 'Pantry & Condiments',
+          sources: [],
+        },
       ]
 
       const result = categorizeShoppableIngredients(ingredients)
       const categoryOrder = result.map((c) => c.name)
 
       // Verify order matches H-E-B walking path
-      expect(categoryOrder).toEqual(['Produce', 'Meat', 'Pantry & Condiments', 'Dairy & Eggs', 'Frozen Foods'])
+      expect(categoryOrder).toEqual([
+        'Produce',
+        'Meat',
+        'Pantry & Condiments',
+        'Dairy & Eggs',
+        'Frozen Foods',
+      ])
     })
 
     it('should sort items within a category by aisle number, then alphabetically', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'vinegar', purchaseAmount: 1, purchaseUnit: 'bottle', category: 'Pantry & Condiments', aisle: 5, sources: [] },
-        { name: 'ketchup', purchaseAmount: 1, purchaseUnit: 'bottle', category: 'Pantry & Condiments', aisle: 4, sources: [] },
-        { name: 'mustard', purchaseAmount: 1, purchaseUnit: 'bottle', category: 'Pantry & Condiments', aisle: 4, sources: [] },
-        { name: 'soy sauce', purchaseAmount: 1, purchaseUnit: 'bottle', category: 'Pantry & Condiments', aisle: 5, sources: [] },
+        {
+          name: 'vinegar',
+          purchaseAmount: 1,
+          purchaseUnit: 'bottle',
+          category: 'Pantry & Condiments',
+          aisle: 5,
+          sources: [],
+        },
+        {
+          name: 'ketchup',
+          purchaseAmount: 1,
+          purchaseUnit: 'bottle',
+          category: 'Pantry & Condiments',
+          aisle: 4,
+          sources: [],
+        },
+        {
+          name: 'mustard',
+          purchaseAmount: 1,
+          purchaseUnit: 'bottle',
+          category: 'Pantry & Condiments',
+          aisle: 4,
+          sources: [],
+        },
+        {
+          name: 'soy sauce',
+          purchaseAmount: 1,
+          purchaseUnit: 'bottle',
+          category: 'Pantry & Condiments',
+          aisle: 5,
+          sources: [],
+        },
       ]
 
       const result = categorizeShoppableIngredients(ingredients)
@@ -39,10 +97,34 @@ describe('grocery-logic', () => {
 
     it('should sort perimeter items (no aisle) alphabetically', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'tomatoes', purchaseAmount: 2, purchaseUnit: 'lbs', category: 'Produce', sources: [] },
-        { name: 'apples', purchaseAmount: 6, purchaseUnit: 'whole', category: 'Produce', sources: [] },
-        { name: 'lettuce', purchaseAmount: 1, purchaseUnit: 'head', category: 'Produce', sources: [] },
-        { name: 'onions', purchaseAmount: 3, purchaseUnit: 'whole', category: 'Produce', sources: [] },
+        {
+          name: 'tomatoes',
+          purchaseAmount: 2,
+          purchaseUnit: 'lbs',
+          category: 'Produce',
+          sources: [],
+        },
+        {
+          name: 'apples',
+          purchaseAmount: 6,
+          purchaseUnit: 'whole',
+          category: 'Produce',
+          sources: [],
+        },
+        {
+          name: 'lettuce',
+          purchaseAmount: 1,
+          purchaseUnit: 'head',
+          category: 'Produce',
+          sources: [],
+        },
+        {
+          name: 'onions',
+          purchaseAmount: 3,
+          purchaseUnit: 'whole',
+          category: 'Produce',
+          sources: [],
+        },
       ]
 
       const result = categorizeShoppableIngredients(ingredients)
@@ -54,9 +136,28 @@ describe('grocery-logic', () => {
 
     it('should handle mixed items with and without aisle numbers', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'bread', purchaseAmount: 1, purchaseUnit: 'loaf', category: 'Bakery & Bread', sources: [] },
-        { name: 'tortillas', purchaseAmount: 1, purchaseUnit: 'pack', category: 'Bakery & Bread', aisle: 4, sources: [] },
-        { name: 'baguette', purchaseAmount: 1, purchaseUnit: 'whole', category: 'Bakery & Bread', sources: [] },
+        {
+          name: 'bread',
+          purchaseAmount: 1,
+          purchaseUnit: 'loaf',
+          category: 'Bakery & Bread',
+          sources: [],
+        },
+        {
+          name: 'tortillas',
+          purchaseAmount: 1,
+          purchaseUnit: 'pack',
+          category: 'Bakery & Bread',
+          aisle: 4,
+          sources: [],
+        },
+        {
+          name: 'baguette',
+          purchaseAmount: 1,
+          purchaseUnit: 'whole',
+          category: 'Bakery & Bread',
+          sources: [],
+        },
       ]
 
       const result = categorizeShoppableIngredients(ingredients)
@@ -106,7 +207,13 @@ describe('grocery-logic', () => {
 
     it('should map legacy "Frozen" category to "Frozen Foods"', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'frozen peas', purchaseAmount: 1, purchaseUnit: 'bag', category: 'Frozen', sources: [] },
+        {
+          name: 'frozen peas',
+          purchaseAmount: 1,
+          purchaseUnit: 'bag',
+          category: 'Frozen',
+          sources: [],
+        },
       ]
 
       const result = categorizeShoppableIngredients(ingredients)
@@ -118,7 +225,13 @@ describe('grocery-logic', () => {
 
     it('should intelligently map legacy "Pantry" items based on item name', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'canned beans', purchaseAmount: 2, purchaseUnit: 'cans', category: 'Pantry', sources: [] },
+        {
+          name: 'canned beans',
+          purchaseAmount: 2,
+          purchaseUnit: 'cans',
+          category: 'Pantry',
+          sources: [],
+        },
         { name: 'flour', purchaseAmount: 1, purchaseUnit: 'bag', category: 'Pantry', sources: [] },
         { name: 'honey', purchaseAmount: 1, purchaseUnit: 'jar', category: 'Pantry', sources: [] },
         { name: 'pasta', purchaseAmount: 1, purchaseUnit: 'box', category: 'Pantry', sources: [] },
@@ -127,13 +240,23 @@ describe('grocery-logic', () => {
       const result = categorizeShoppableIngredients(ingredients)
 
       // Canned beans should go to Canned & Dry Goods
-      expect(result.find((c) => c.name === 'Canned & Dry Goods')?.items.some((i) => i.name === 'canned beans')).toBe(true)
+      expect(
+        result
+          .find((c) => c.name === 'Canned & Dry Goods')
+          ?.items.some((i) => i.name === 'canned beans'),
+      ).toBe(true)
       // Flour should go to Baking & Spices
-      expect(result.find((c) => c.name === 'Baking & Spices')?.items.some((i) => i.name === 'flour')).toBe(true)
+      expect(
+        result.find((c) => c.name === 'Baking & Spices')?.items.some((i) => i.name === 'flour'),
+      ).toBe(true)
       // Honey should go to Breakfast & Cereal
-      expect(result.find((c) => c.name === 'Breakfast & Cereal')?.items.some((i) => i.name === 'honey')).toBe(true)
+      expect(
+        result.find((c) => c.name === 'Breakfast & Cereal')?.items.some((i) => i.name === 'honey'),
+      ).toBe(true)
       // Pasta should fall back to Pantry & Condiments
-      expect(result.find((c) => c.name === 'Pantry & Condiments')?.items.some((i) => i.name === 'pasta')).toBe(true)
+      expect(
+        result.find((c) => c.name === 'Pantry & Condiments')?.items.some((i) => i.name === 'pasta'),
+      ).toBe(true)
     })
 
     it('should handle all 19 H-E-B categories', () => {
@@ -163,7 +286,13 @@ describe('grocery-logic', () => {
 
     it('should not include empty categories in result', () => {
       const ingredients: ShoppableIngredient[] = [
-        { name: 'milk', purchaseAmount: 1, purchaseUnit: 'gallon', category: 'Dairy & Eggs', sources: [] },
+        {
+          name: 'milk',
+          purchaseAmount: 1,
+          purchaseUnit: 'gallon',
+          category: 'Dairy & Eggs',
+          sources: [],
+        },
       ]
 
       const result = categorizeShoppableIngredients(ingredients)

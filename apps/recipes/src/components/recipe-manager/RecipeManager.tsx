@@ -545,9 +545,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
 
         {/* Full-width Header Shell */}
-        {!isSearchMode && (
-          <RecipeHeader onAddRecipe={() => setView('edit')} />
-        )}
+        {!isSearchMode && <RecipeHeader onAddRecipe={() => setView('edit')} />}
 
         <div
           data-search-mode={isSearchMode ? 'true' : undefined}
@@ -645,7 +643,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             </AnimatePresence>
           </main>
         </div>
-
       </RecipeManagerView>
 
       {/* Primary Tab Bar — hidden during selection mode and drilldown views */}
@@ -862,10 +859,10 @@ function ReminderToast() {
           <button
             onClick={() =>
               setDismissed((prev) =>
-                new Set(prev).add(activeReminder.title + activeReminder.scheduledFor)
+                new Set(prev).add(activeReminder.title + activeReminder.scheduledFor),
               )
             }
-            className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
             aria-label="Dismiss reminder"
           >
             <X className="h-4 w-4" />

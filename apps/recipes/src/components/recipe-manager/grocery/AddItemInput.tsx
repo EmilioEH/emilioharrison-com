@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Search, Plus, X, DollarSign, Link2, Loader2, MapPin, Tag } from 'lucide-react'
+import { Search, Plus, X, DollarSign, Loader2, MapPin, Tag } from 'lucide-react'
 import { cn } from '../../../lib/utils'
-import { isHebUrl } from '../../../lib/heb-url'
 import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
 import type { ShoppableIngredient, HebProduct } from '../../../lib/types'
 
@@ -49,14 +48,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [submitting, setSubmitting] = useState(false)
 
-  // HEB URL import state
-  const [showUrlInput, setShowUrlInput] = useState(false)
-  const [hebUrl, setHebUrl] = useState('')
-  const [urlLoading, setUrlLoading] = useState(false)
-  const [urlError, setUrlError] = useState('')
-
   const inputRef = useRef<HTMLInputElement>(null)
-  const urlInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -132,13 +124,6 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Focus URL input when shown
-  useEffect(() => {
-    if (showUrlInput) {
-      urlInputRef.current?.focus()
-    }
-  }, [showUrlInput])
-
   const selectProduct = (result: HebSearchResult) => {
     const { product, ingredientFields } = result
     setForm({
@@ -159,63 +144,6 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
     setQuery('')
     setShowDropdown(false)
     setShowForm(true)
-  }
-
-  const handleHebUrlSubmit = async () => {
-    if (!hebUrl.trim()) return
-
-    if (!isHebUrl(hebUrl)) {
-      setUrlError('Please enter a valid H-E-B product URL')
-      return
-    }
-
-    setUrlLoading(true)
-    setUrlError('')
-
-    try {
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const response = await fetch(`${baseUrl}api/grocery/heb-lookup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: hebUrl.trim() }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to look up product')
-      }
-
-      const { product, ingredientFields } = (await response.json()) as {
-        source: string
-        product: HebProduct
-        ingredientFields: Partial<ShoppableIngredient>
-      }
-
-      setForm({
-        name: product.name,
-        quantity: '1',
-        unit: product.priceUnit || 'each',
-        category: ingredientFields.category || 'Pantry & Condiments',
-        hebPrice: ingredientFields.hebPrice,
-        hebPriceUnit: ingredientFields.hebPriceUnit,
-        hebProductId: ingredientFields.hebProductId,
-        hebProductUrl: ingredientFields.hebProductUrl,
-        imageUrl: ingredientFields.imageUrl,
-        hebSize: ingredientFields.hebSize,
-        storeLocation: ingredientFields.storeLocation,
-      })
-
-      setHebUrl('')
-      setShowUrlInput(false)
-      setShowForm(true)
-    } catch (err) {
-      setUrlError(err instanceof Error ? err.message : 'Failed to look up product')
-    } finally {
-      setUrlLoading(false)
-    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -297,100 +225,6 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
               <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
           </div>
-
-          {/* Action buttons: Custom item | HEB URL */}
-          {!showUrlInput && (
-            <div className="mt-2 flex items-center gap-3 px-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setForm({ ...DEFAULT_FORM, name: query.trim() || '' })
-                  setQuery('')
-                  setShowDropdown(false)
-                  setShowForm(true)
-                }}
-                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Plus className="h-3 w-3" />
-                Add custom item
-              </button>
-              <span className="text-xs text-muted-foreground/40">|</span>
-              <button
-                type="button"
-                onClick={() => setShowUrlInput(true)}
-                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Link2 className="h-3 w-3" />
-                Import from H-E-B URL
-              </button>
-            </div>
-          )}
-
-          {/* HEB URL Input */}
-          {showUrlInput && (
-            <div className="mt-2 flex gap-2">
-              <div className="relative flex-1">
-                <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  ref={urlInputRef}
-                  type="url"
-                  value={hebUrl}
-                  onChange={(e) => {
-                    setHebUrl(e.target.value)
-                    setUrlError('')
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleHebUrlSubmit()
-                    }
-                    if (e.key === 'Escape') {
-                      setShowUrlInput(false)
-                      setHebUrl('')
-                      setUrlError('')
-                    }
-                  }}
-                  placeholder="https://www.heb.com/product-detail/..."
-                  className={cn(
-                    'w-full rounded-xl border bg-card py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1',
-                    urlError
-                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
-                      : 'border-border focus:border-primary focus:ring-primary',
-                  )}
-                  disabled={urlLoading}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleHebUrlSubmit}
-                disabled={urlLoading || !hebUrl.trim()}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-bold transition-colors',
-                  urlLoading || !hebUrl.trim()
-                    ? 'cursor-not-allowed bg-muted text-muted-foreground'
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90',
-                )}
-              >
-                {urlLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUrlInput(false)
-                  setHebUrl('')
-                  setUrlError('')
-                }}
-                className="rounded-xl p-3 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-          {urlError && <p className="mt-1 px-1 text-xs text-red-500">{urlError}</p>}
         </>
       )}
 
@@ -421,7 +255,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
                 )}
                 {/* Product info */}
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-foreground">{product.name}</div>
+                  <div className="text-sm font-medium text-foreground">{product.name}</div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                     {product.storeLocation && (
                       <span className="flex items-center gap-0.5">

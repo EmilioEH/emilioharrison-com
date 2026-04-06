@@ -206,11 +206,12 @@ export const RecipeCard = memo(
               {/* Add to Week button - 44px touch target */}
               {!allowManagement && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); onToggleThisWeek(recipe.id) }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleThisWeek(recipe.id)
+                  }}
                   aria-label="Add to Week"
-                  className="flex h-11 w-11 items-center justify-center rounded-full
-                             text-muted-foreground hover:bg-accent hover:text-foreground
-                             active:scale-95 transition-all focus:outline-none"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus:outline-none active:scale-95"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
