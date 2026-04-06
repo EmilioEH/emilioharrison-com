@@ -225,8 +225,10 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   // Auto-trigger when opening grocery tab if no list exists and not processing
   useEffect(() => {
     if (activeTab === 'grocery' && user && groceryRecipes.length > 0 && !aiLoading) {
-      // Don't auto-generate if there's a Firestore error (likely auth issue)
-      const needsGeneration = !aiGroceryList && !isProcessing && !isStuck && !firestoreError
+      // Allow generation even with firestoreError — the error is often caused by
+      // the document not existing yet (family scope). Once generation creates the
+      // document, the subscription will resolve on its own.
+      const needsGeneration = !aiGroceryList && !isProcessing && !isStuck
 
       if (needsGeneration) {
         triggerGroceryGeneration(
