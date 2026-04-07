@@ -536,12 +536,16 @@ export async function executeAiParse(
 
   const parts = [{ text: prompt }, contentPart]
 
+  // Use flex inference for background enhancements (50% cost savings)
+  const isBackground = style === 'enhanced'
+
   const response = await client.models.generateContent({
     model: 'gemini-2.5-flash',
     config: {
       responseMimeType: 'application/json',
       responseSchema: createRecipeSchema(),
       maxOutputTokens: 65536,
+      ...(isBackground && { serviceTier: 'flex' }),
     },
     contents: [{ role: 'user', parts }],
   })

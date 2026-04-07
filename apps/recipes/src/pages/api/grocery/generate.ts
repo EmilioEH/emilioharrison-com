@@ -202,6 +202,7 @@ async function processBatch(client: any, recipes: any[]): Promise<GroceryIngredi
     config: {
       responseMimeType: 'application/json',
       responseSchema: SCHEMA,
+      serviceTier: 'flex',
     },
   })
 
