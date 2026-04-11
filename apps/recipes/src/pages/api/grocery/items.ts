@@ -18,13 +18,15 @@ interface ManualItemRequest {
 interface DeleteItemRequest {
   weekStartDate: string
   userId: string
-  itemName: string
+  itemName?: string
+  names?: string[]
 }
 
 interface PatchItemRequest {
   weekStartDate: string
   userId: string
-  itemName: string
+  itemName?: string
+  names?: string[]
   updates: {
     purchaseAmount?: number
     purchaseUnit?: string
@@ -40,6 +42,8 @@ interface PatchItemRequest {
     hebSize?: string
     hebUnitPrice?: number
     hebUnitPriceUnit?: string
+    archivedAt?: string | null
+    unneededThisWeek?: boolean | null
   }
 }
 
@@ -139,9 +143,11 @@ export const DELETE: APIRoute = async (context) => {
     const scope = await getGroceryScopeId(context.cookies)
     if (!scope) return unauthorizedResponse()
 
-    const { weekStartDate, itemName } = (await context.request.json()) as DeleteItemRequest
+    const { weekStartDate, itemName, names } = (await context.request.json()) as DeleteItemRequest
 
-    if (!weekStartDate || !itemName) {
+    const targetNames = names && names.length > 0 ? names : itemName ? [itemName] : []
+
+    if (!weekStartDate || targetNames.length === 0) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -158,10 +164,9 @@ export const DELETE: APIRoute = async (context) => {
       })
     }
 
-    // Find and remove the item
-    const normalizedName = itemName.toLowerCase().trim()
+    const normalizedTargets = new Set(targetNames.map((n) => n.toLowerCase().trim()))
     const filteredIngredients = groceryList.ingredients.filter(
-      (ing) => ing.name.toLowerCase().trim() !== normalizedName,
+      (ing) => !normalizedTargets.has(ing.name.toLowerCase().trim()),
     )
 
     if (filteredIngredients.length === groceryList.ingredients.length) {
@@ -199,9 +204,11 @@ export const PATCH: APIRoute = async (context) => {
     const scope = await getGroceryScopeId(context.cookies)
     if (!scope) return unauthorizedResponse()
 
-    const { weekStartDate, itemName, updates } = (await context.request.json()) as PatchItemRequest
+    const { weekStartDate, itemName, names, updates } = (await context.request.json()) as PatchItemRequest
 
-    if (!weekStartDate || !itemName || !updates) {
+    const targetNames = names && names.length > 0 ? names : itemName ? [itemName] : []
+
+    if (!weekStartDate || targetNames.length === 0 || !updates) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -218,59 +225,42 @@ export const PATCH: APIRoute = async (context) => {
       })
     }
 
-    // Find and update the item
-    const normalizedName = itemName.toLowerCase().trim()
-    const itemIndex = groceryList.ingredients.findIndex(
-      (ing) => ing.name.toLowerCase().trim() === normalizedName,
-    )
+    const normalizedTargets = new Set(targetNames.map((n) => n.toLowerCase().trim()))
+    const targetIndices = groceryList.ingredients
+      .map((ing, i) => (normalizedTargets.has(ing.name.toLowerCase().trim()) ? i : -1))
+      .filter((i) => i >= 0)
 
-    if (itemIndex < 0) {
+    if (targetIndices.length === 0) {
       return new Response(JSON.stringify({ error: 'Item not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    // Apply updates
-    if (updates.purchaseAmount !== undefined) {
-      groceryList.ingredients[itemIndex].purchaseAmount = updates.purchaseAmount
-    }
-    if (updates.purchaseUnit !== undefined) {
-      groceryList.ingredients[itemIndex].purchaseUnit = updates.purchaseUnit
-    }
-    if (updates.category !== undefined) {
-      groceryList.ingredients[itemIndex].category = updates.category
-    }
-    if (updates.hebPrice !== undefined) {
-      groceryList.ingredients[itemIndex].hebPrice = updates.hebPrice
-    }
-    if (updates.aisle !== undefined) {
-      groceryList.ingredients[itemIndex].aisle = updates.aisle
-    }
-    if (updates.storeLocation !== undefined) {
-      groceryList.ingredients[itemIndex].storeLocation = updates.storeLocation
-    }
-    if (updates.imageUrl !== undefined) {
-      groceryList.ingredients[itemIndex].imageUrl = updates.imageUrl
-    }
-    if (updates.hebProductId !== undefined) {
-      groceryList.ingredients[itemIndex].hebProductId = updates.hebProductId
-    }
-    if (updates.hebProductUrl !== undefined) {
-      groceryList.ingredients[itemIndex].hebProductUrl = updates.hebProductUrl
-    }
-    if (updates.hebSize !== undefined) {
-      groceryList.ingredients[itemIndex].hebSize = updates.hebSize
-    }
-    if (updates.hebUnitPrice !== undefined) {
-      groceryList.ingredients[itemIndex].hebUnitPrice = updates.hebUnitPrice
-    }
-    if (updates.hebUnitPriceUnit !== undefined) {
-      groceryList.ingredients[itemIndex].hebUnitPriceUnit = updates.hebUnitPriceUnit
-    }
-    if (updates.isRecurring !== undefined) {
-      groceryList.ingredients[itemIndex].isRecurring = updates.isRecurring || undefined
-      groceryList.ingredients[itemIndex].recurringFrequencyWeeks = updates.recurringFrequencyWeeks
+    for (const itemIndex of targetIndices) {
+      const current = groceryList.ingredients[itemIndex]
+      if (updates.purchaseAmount !== undefined) current.purchaseAmount = updates.purchaseAmount
+      if (updates.purchaseUnit !== undefined) current.purchaseUnit = updates.purchaseUnit
+      if (updates.category !== undefined) current.category = updates.category
+      if (updates.hebPrice !== undefined) current.hebPrice = updates.hebPrice
+      if (updates.aisle !== undefined) current.aisle = updates.aisle
+      if (updates.storeLocation !== undefined) current.storeLocation = updates.storeLocation
+      if (updates.imageUrl !== undefined) current.imageUrl = updates.imageUrl
+      if (updates.hebProductId !== undefined) current.hebProductId = updates.hebProductId
+      if (updates.hebProductUrl !== undefined) current.hebProductUrl = updates.hebProductUrl
+      if (updates.hebSize !== undefined) current.hebSize = updates.hebSize
+      if (updates.hebUnitPrice !== undefined) current.hebUnitPrice = updates.hebUnitPrice
+      if (updates.hebUnitPriceUnit !== undefined) current.hebUnitPriceUnit = updates.hebUnitPriceUnit
+      if (updates.isRecurring !== undefined) {
+        current.isRecurring = updates.isRecurring || undefined
+        current.recurringFrequencyWeeks = updates.recurringFrequencyWeeks
+      }
+      if (updates.archivedAt !== undefined) {
+        current.archivedAt = updates.archivedAt ?? undefined
+      }
+      if (updates.unneededThisWeek !== undefined) {
+        current.unneededThisWeek = updates.unneededThisWeek ?? undefined
+      }
     }
 
     // Save updated list

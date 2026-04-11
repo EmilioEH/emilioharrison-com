@@ -14,6 +14,8 @@ import {
   Tag,
   CalendarDays,
   MapPin,
+  ListChecks,
+  Undo2,
 } from 'lucide-react'
 import { Stack, Inline } from '@/components/ui/layout'
 import {
@@ -25,6 +27,10 @@ import type { Recipe, ShoppableIngredient, ProductOverride } from '../../../lib/
 import { AddItemInput } from './AddItemInput'
 import { RecurringItemToggle } from './RecurringItemToggle'
 import { GroceryItemEditSheet } from './GroceryItemEditSheet'
+import { GroceryListSelectionBar } from './GroceryListSelectionBar'
+import { RecurringListSheet } from './RecurringListSheet'
+
+type ListFilterMode = 'default' | 'archived' | 'unneeded'
 
 interface GroceryListProps {
   ingredients: ShoppableIngredient[]
@@ -50,13 +56,34 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   userId,
   onItemAdded,
 }) => {
-  // 1. Merge & Categorize (Memoized)
-  const categorizedList = useMemo(() => {
-    // Safety check: ensure ingredients is an array
-    const validIngredients = Array.isArray(ingredients) ? ingredients : []
-    const merged = mergeShoppableIngredients(validIngredients)
-    return categorizeShoppableIngredients(merged)
+  // 1a. Filter mode: default (hide archived/unneeded) vs archived/unneeded views
+  const [listFilter, setListFilter] = useState<ListFilterMode>('default')
+
+  // 1b. Apply filter before merge+categorize
+  const visibleIngredients = useMemo(() => {
+    const valid = Array.isArray(ingredients) ? ingredients : []
+    if (listFilter === 'archived') return valid.filter((i) => i.archivedAt)
+    if (listFilter === 'unneeded') return valid.filter((i) => i.unneededThisWeek)
+    return valid.filter((i) => !i.archivedAt && !i.unneededThisWeek)
+  }, [ingredients, listFilter])
+
+  // 1c. Counts for filter pills (from full ingredients list, not filtered)
+  const filterCounts = useMemo(() => {
+    const valid = Array.isArray(ingredients) ? ingredients : []
+    let archived = 0
+    let unneeded = 0
+    for (const i of valid) {
+      if (i.archivedAt) archived += 1
+      if (i.unneededThisWeek) unneeded += 1
+    }
+    return { archived, unneeded }
   }, [ingredients])
+
+  // 1d. Merge & Categorize visible ingredients
+  const categorizedList = useMemo(() => {
+    const merged = mergeShoppableIngredients(visibleIngredients)
+    return categorizeShoppableIngredients(merged)
+  }, [visibleIngredients])
 
   // 2. Checked State (Persisted)
   const [checkedItems, setCheckedItems] = useState<Set<string>>(() => {
@@ -78,6 +105,13 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   // 4b. Category pill filter state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  // 4c. Selection mode state
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+
+  // 4d. Recurring sheet state
+  const [showRecurringSheet, setShowRecurringSheet] = useState(false)
 
   // Persist effect
   useEffect(() => {
@@ -292,7 +326,157 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     [userId, weekStartDate, ingredients, onItemAdded, getBaseUrl],
   )
 
-  // 10. Sharing
+  // 10. Selection & bulk actions
+  const toggleSelection = useCallback((itemName: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(itemName)) {
+        next.delete(itemName)
+      } else {
+        next.add(itemName)
+      }
+      return next
+    })
+  }, [])
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false)
+    setSelectedKeys(new Set())
+  }, [])
+
+  const getSelectedIngredients = useCallback((): ShoppableIngredient[] => {
+    return ingredients.filter((ing) => selectedKeys.has(ing.name))
+  }, [ingredients, selectedKeys])
+
+  const handleBulkRecurring = useCallback(
+    async (frequencyWeeks: number) => {
+      if (!userId || selectedKeys.size === 0) return
+      const baseUrl = getBaseUrl()
+      const selectedItems = getSelectedIngredients()
+
+      const recurringPayload = selectedItems.map((item) => ({
+        name: item.name,
+        purchaseAmount: item.purchaseAmount,
+        purchaseUnit: item.purchaseUnit,
+        category: item.category,
+        frequencyWeeks,
+        ...(item.aisle !== undefined && { aisle: item.aisle }),
+        ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
+        ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
+        ...(item.imageUrl && { imageUrl: item.imageUrl }),
+        ...(item.hebProductId && { hebProductId: item.hebProductId }),
+        ...(item.hebProductUrl && { hebProductUrl: item.hebProductUrl }),
+        ...(item.hebSize && { hebSize: item.hebSize }),
+        ...(item.storeLocation && { storeLocation: item.storeLocation }),
+        ...(item.hebUnitPrice !== undefined && { hebUnitPrice: item.hebUnitPrice }),
+        ...(item.hebUnitPriceUnit && { hebUnitPriceUnit: item.hebUnitPriceUnit }),
+      }))
+
+      await fetch(`${baseUrl}api/grocery/recurring`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: recurringPayload }),
+      })
+
+      if (weekStartDate) {
+        await fetch(`${baseUrl}api/grocery/items`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            weekStartDate,
+            userId,
+            names: Array.from(selectedKeys),
+            updates: { isRecurring: true, recurringFrequencyWeeks: frequencyWeeks },
+          }),
+        })
+      }
+
+      exitSelectionMode()
+      onItemAdded?.()
+    },
+    [userId, weekStartDate, selectedKeys, getSelectedIngredients, onItemAdded, getBaseUrl, exitSelectionMode],
+  )
+
+  const handleBulkShopped = useCallback(() => {
+    if (selectedKeys.size === 0) return
+    setCheckedItems((prev) => {
+      const next = new Set(prev)
+      selectedKeys.forEach((name) => next.add(name))
+      return next
+    })
+    exitSelectionMode()
+  }, [selectedKeys, exitSelectionMode])
+
+  const bulkPatchItems = useCallback(
+    async (updates: Record<string, unknown>) => {
+      if (!userId || !weekStartDate || selectedKeys.size === 0) return
+      await fetch(`${getBaseUrl()}api/grocery/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStartDate,
+          userId,
+          names: Array.from(selectedKeys),
+          updates,
+        }),
+      })
+    },
+    [userId, weekStartDate, selectedKeys, getBaseUrl],
+  )
+
+  const handleBulkArchive = useCallback(async () => {
+    await bulkPatchItems({ archivedAt: new Date().toISOString() })
+    exitSelectionMode()
+    onItemAdded?.()
+  }, [bulkPatchItems, exitSelectionMode, onItemAdded])
+
+  const handleBulkUnneeded = useCallback(async () => {
+    await bulkPatchItems({ unneededThisWeek: true })
+    exitSelectionMode()
+    onItemAdded?.()
+  }, [bulkPatchItems, exitSelectionMode, onItemAdded])
+
+  const handleBulkDelete = useCallback(async () => {
+    if (!userId || !weekStartDate || selectedKeys.size === 0) return
+    const count = selectedKeys.size
+    if (!(await confirm(`Delete ${count} item${count === 1 ? '' : 's'}?`))) return
+
+    await fetch(`${getBaseUrl()}api/grocery/items`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        weekStartDate,
+        userId,
+        names: Array.from(selectedKeys),
+      }),
+    })
+
+    exitSelectionMode()
+    onItemAdded?.()
+  }, [userId, weekStartDate, selectedKeys, getBaseUrl, exitSelectionMode, onItemAdded])
+
+  // 11. Restore archived/unneeded item (from filter views)
+  const handleRestoreItem = useCallback(
+    async (itemName: string) => {
+      if (!userId || !weekStartDate) return
+      const updates =
+        listFilter === 'archived'
+          ? { archivedAt: null }
+          : { unneededThisWeek: false }
+      await fetch(`${getBaseUrl()}api/grocery/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStartDate,
+          userId,
+          itemName,
+          updates,
+        }),
+      })
+      onItemAdded?.()
+    },
+    [userId, weekStartDate, listFilter, getBaseUrl, onItemAdded],
+  )
 
   // Helper to find recipe by ID for navigation
   const findRecipeById = (id: string): Recipe | undefined => {
@@ -318,6 +502,26 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         <Inline justify="between" className="px-4 pt-4">
           <h2 className="font-display text-2xl font-bold">Grocery List</h2>
           <Inline spacing="sm">
+            {userId && !selectionMode && listFilter === 'default' && (
+              <button
+                onClick={() => setSelectionMode(true)}
+                className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
+                aria-label="Select items"
+                title="Select items"
+              >
+                <ListChecks className="h-5 w-5" />
+              </button>
+            )}
+            {userId && (
+              <button
+                onClick={() => setShowRecurringSheet(true)}
+                className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
+                aria-label="Recurring items"
+                title="Recurring items"
+              >
+                <CalendarDays className="h-5 w-5" />
+              </button>
+            )}
             <button
               onClick={() => console.log('Filters')}
               className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
@@ -369,28 +573,103 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           </div>
         )}
 
+        {/* Embedded-mode toolbar: Select + Recurring entry points */}
+        {embedded && userId && !isLoading && (
+          <div className="-mt-2 flex items-center gap-2">
+            {!selectionMode && listFilter === 'default' && (
+              <button
+                type="button"
+                onClick={() => setSelectionMode(true)}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ListChecks className="h-3.5 w-3.5" />
+                Select
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowRecurringSheet(true)}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <CalendarDays className="h-3.5 w-3.5" />
+              Recurring
+            </button>
+          </div>
+        )}
+
         {/* Add Item Input - always show when we have weekStartDate and userId */}
-        {weekStartDate && userId && !isLoading && (
+        {weekStartDate && userId && !isLoading && !selectionMode && (
           <AddItemInput onAddItem={handleAddItem} isLoading={isLoading} />
         )}
 
         {/* Category pill bar for quick navigation */}
-        {!isLoading && categorizedList.length > 1 && (
+        {!isLoading && (categorizedList.length > 1 || filterCounts.archived > 0 || filterCounts.unneeded > 0) && (
           <div className="-mx-4 -mt-2 mb-2 border-b border-border bg-background/95 backdrop-blur-sm">
             <div
               className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-2.5"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <button
-                onClick={() => setSelectedCategory(null)}
+                onClick={() => {
+                  setListFilter('default')
+                  setSelectedCategory(null)
+                }}
                 className={`shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
-                  selectedCategory === null
+                  listFilter === 'default' && selectedCategory === null
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
                 }`}
               >
                 All
               </button>
+              {filterCounts.archived > 0 && (
+                <button
+                  onClick={() => {
+                    setListFilter(listFilter === 'archived' ? 'default' : 'archived')
+                    setSelectedCategory(null)
+                  }}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                    listFilter === 'archived'
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  <span>Archived</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                      listFilter === 'archived'
+                        ? 'bg-primary-foreground/20 text-primary-foreground'
+                        : 'bg-primary/10 text-primary'
+                    }`}
+                  >
+                    {filterCounts.archived}
+                  </span>
+                </button>
+              )}
+              {filterCounts.unneeded > 0 && (
+                <button
+                  onClick={() => {
+                    setListFilter(listFilter === 'unneeded' ? 'default' : 'unneeded')
+                    setSelectedCategory(null)
+                  }}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                    listFilter === 'unneeded'
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  <span>Skipped</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                      listFilter === 'unneeded'
+                        ? 'bg-primary-foreground/20 text-primary-foreground'
+                        : 'bg-primary/10 text-primary'
+                    }`}
+                  >
+                    {filterCounts.unneeded}
+                  </span>
+                </button>
+              )}
               {categorizedList.map((category) => {
                 const isActive = selectedCategory === category.name
                 return (
@@ -451,20 +730,26 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                   {category.items.map((item) => {
                     const itemKey = `${item.name}-${item.purchaseUnit}`
                     const isChecked = checkedItems.has(item.name)
+                    const isSelected = selectedKeys.has(item.name)
                     const isExpanded = expandedItems.has(itemKey)
                     const sources = item.sources ?? []
                     const multipleSources = sources.length > 1
+                    const showingRestore = listFilter !== 'default'
 
                     return (
                       <div
                         key={itemKey}
-                        className={`border-b border-border last:border-0 ${isChecked ? 'opacity-50' : ''}`}
+                        className={cn(
+                          'border-b border-border last:border-0',
+                          isChecked && !selectionMode && 'opacity-50',
+                          isSelected && 'bg-primary/10',
+                        )}
                       >
                         {/* Main Item Row */}
                         <div className="flex flex-col p-4">
                           <div className="flex items-start">
-                            {/* Expand/Collapse Toggle (Only if > 1 source) */}
-                            {multipleSources ? (
+                            {/* Expand/Collapse Toggle (Only if > 1 source, hidden in selection mode) */}
+                            {multipleSources && !selectionMode ? (
                               <button
                                 type="button"
                                 onClick={(e) => toggleExpanded(itemKey, e)}
@@ -481,21 +766,29 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               <div className="w-8" /> // Spacer to align with toggle items
                             )}
 
-                            {/* Checkbox */}
+                            {/* Checkbox (toggles shopped by default, selection when in selection mode) */}
                             <button
                               type="button"
-                              onClick={() => toggleItem(item.name)}
-                              aria-pressed={isChecked}
+                              onClick={() =>
+                                selectionMode ? toggleSelection(item.name) : toggleItem(item.name)
+                              }
+                              aria-pressed={selectionMode ? isSelected : isChecked}
                               className="mt-1 flex items-center gap-4"
                             >
                               <div
-                                className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
-                                  isChecked
-                                    ? 'border-primary bg-primary'
-                                    : 'border-border hover:border-primary'
-                                }`}
+                                className={cn(
+                                  'flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors',
+                                  selectionMode
+                                    ? isSelected
+                                      ? 'border-primary bg-primary'
+                                      : 'border-border hover:border-primary'
+                                    : isChecked
+                                      ? 'border-primary bg-primary'
+                                      : 'border-border hover:border-primary',
+                                )}
                               >
-                                {isChecked && (
+                                {((selectionMode && isSelected) ||
+                                  (!selectionMode && isChecked)) && (
                                   <Check className="h-3.5 w-3.5 text-primary-foreground" />
                                 )}
                               </div>
@@ -518,16 +811,22 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               </div>
                             ) : null}
 
-                            {/* Item Details — tappable for edit */}
+                            {/* Item Details — tappable for edit (or select in selection mode) */}
                             <button
                               type="button"
-                              onClick={() => weekStartDate && userId && setEditingItem(item)}
+                              onClick={() => {
+                                if (selectionMode) {
+                                  toggleSelection(item.name)
+                                } else if (weekStartDate && userId) {
+                                  setEditingItem(item)
+                                }
+                              }}
                               className={cn(
                                 'ml-3 flex-1 text-left',
-                                isChecked
+                                isChecked && !selectionMode
                                   ? 'text-muted-foreground line-through'
                                   : 'text-foreground',
-                                weekStartDate && userId && 'cursor-pointer',
+                                (selectionMode || (weekStartDate && userId)) && 'cursor-pointer',
                               )}
                             >
                               <div className="flex flex-wrap items-baseline gap-1">
@@ -614,8 +913,19 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               </div>
                             </button>
 
-                            {/* Recurring Toggle */}
-                            {userId && (
+                            {/* Trailing control: Restore (filter view) / Recurring toggle (default) / hidden (selection mode) */}
+                            {userId && !selectionMode && showingRestore && (
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreItem(item.name)}
+                                className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                aria-label={`Restore ${item.name}`}
+                                title="Restore to list"
+                              >
+                                <Undo2 className="h-4 w-4" />
+                              </button>
+                            )}
+                            {userId && !selectionMode && !showingRestore && (
                               <RecurringItemToggle
                                 itemName={item.name}
                                 isRecurring={item.isRecurring}
@@ -669,7 +979,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       </Stack>
 
       {/* Floating Action / Footer */}
-      {checkedItems.size > 0 && (
+      {checkedItems.size > 0 && !selectionMode && (
         <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4">
           <button
             onClick={clearChecked}
@@ -731,6 +1041,27 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           onRemove={() => handleRemoveItem(editingItem.name)}
           onSaveOverride={handleSaveOverride}
           onClose={() => setEditingItem(null)}
+        />
+      )}
+
+      {/* Recurring Items Bottom Sheet */}
+      {showRecurringSheet && (
+        <RecurringListSheet
+          onClose={() => setShowRecurringSheet(false)}
+          onChange={() => onItemAdded?.()}
+        />
+      )}
+
+      {/* Bulk-action Selection Bar */}
+      {selectionMode && (
+        <GroceryListSelectionBar
+          selectedCount={selectedKeys.size}
+          onCancel={exitSelectionMode}
+          onMarkRecurring={handleBulkRecurring}
+          onMarkShopped={handleBulkShopped}
+          onArchive={handleBulkArchive}
+          onUnneededThisWeek={handleBulkUnneeded}
+          onDelete={handleBulkDelete}
         />
       )}
     </div>

@@ -64,7 +64,8 @@ export const GET: APIRoute = async (context) => {
 }
 
 /**
- * POST: Create a recurring item from a grocery list item
+ * POST: Create or update one or more recurring items.
+ * Accepts either `{ item }` (single) or `{ items: [...] }` (bulk).
  */
 export const POST: APIRoute = async (context) => {
   setRequestContext(context)
@@ -72,78 +73,93 @@ export const POST: APIRoute = async (context) => {
     const scope = await getGroceryScopeId(context.cookies)
     if (!scope) return unauthorizedResponse()
 
-    const { item } = (await context.request.json()) as { item: CreateRecurringItemRequest['item'] }
+    const body = (await context.request.json()) as {
+      item?: CreateRecurringItemRequest['item']
+      items?: CreateRecurringItemRequest['item'][]
+    }
 
-    if (!item) {
+    const inputs = body.items && body.items.length > 0 ? body.items : body.item ? [body.item] : []
+
+    if (inputs.length === 0) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    if (
-      !item.frequencyWeeks ||
-      typeof item.frequencyWeeks !== 'number' ||
-      item.frequencyWeeks < 1 ||
-      item.frequencyWeeks > 52
-    ) {
-      return new Response(JSON.stringify({ error: 'Invalid frequencyWeeks (must be 1-52)' }), {
-        status: 400,
+    for (const input of inputs) {
+      if (
+        !input.frequencyWeeks ||
+        typeof input.frequencyWeeks !== 'number' ||
+        input.frequencyWeeks < 1 ||
+        input.frequencyWeeks > 52
+      ) {
+        return new Response(JSON.stringify({ error: 'Invalid frequencyWeeks (must be 1-52)' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
+    const collectionPath = `recurring_grocery_items/${scope.scopeId}/items`
+    const existingItems = await db.getCollection<RecurringGroceryItem>(collectionPath)
+    const userDoc = await db.getDocument<{ displayName?: string }>('users', scope.userId)
+    const displayName = userDoc?.displayName || 'User'
+
+    const created: string[] = []
+    const updated: string[] = []
+
+    for (const input of inputs) {
+      const normalizedName = input.name.toLowerCase().trim()
+      const existing = existingItems.find((i) => i.name.toLowerCase().trim() === normalizedName)
+
+      if (existing) {
+        await db.updateDocument(collectionPath, existing.id, {
+          frequencyWeeks: input.frequencyWeeks,
+          purchaseAmount: input.purchaseAmount,
+          purchaseUnit: input.purchaseUnit,
+        })
+        await upsertProductOverride(scope.scopeId, input)
+        updated.push(existing.id)
+      } else {
+        const itemId = `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+        const newItem: RecurringGroceryItem = {
+          id: itemId,
+          name: input.name.trim(),
+          purchaseAmount: input.purchaseAmount,
+          purchaseUnit: input.purchaseUnit,
+          category: input.category,
+          frequencyWeeks: input.frequencyWeeks,
+          createdAt: new Date().toISOString(),
+          addedBy: scope.userId,
+          addedByName: displayName,
+          ...(input.aisle !== undefined && { aisle: input.aisle }),
+          ...(input.hebPrice !== undefined && { hebPrice: input.hebPrice }),
+          ...(input.hebPriceUnit !== undefined && { hebPriceUnit: input.hebPriceUnit }),
+        }
+        await db.addSubDocument('recurring_grocery_items', scope.scopeId, 'items', itemId, newItem)
+        await upsertProductOverride(scope.scopeId, input)
+        existingItems.push(newItem)
+        created.push(itemId)
+      }
+    }
+
+    const isBulk = Array.isArray(body.items)
+    if (isBulk) {
+      return new Response(JSON.stringify({ success: true, created, updated }), {
+        status: created.length > 0 && updated.length === 0 ? 201 : 200,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    const collectionPath = `recurring_grocery_items/${scope.scopeId}/items`
-
-    // Check if item already exists (by name, case-insensitive)
-    const existingItems = await db.getCollection<RecurringGroceryItem>(collectionPath)
-    const normalizedName = item.name.toLowerCase().trim()
-    const existing = existingItems.find((i) => i.name.toLowerCase().trim() === normalizedName)
-
-    if (existing) {
-      // Update frequency instead of creating duplicate
-      await db.updateDocument(collectionPath, existing.id, {
-        frequencyWeeks: item.frequencyWeeks,
-        purchaseAmount: item.purchaseAmount,
-        purchaseUnit: item.purchaseUnit,
-      })
-
-      // Upsert product override so future generations get the image
-      await upsertProductOverride(scope.scopeId, item)
-
-      return new Response(JSON.stringify({ success: true, itemId: existing.id, updated: true }), {
+    // Single-item response shape (backwards compat)
+    if (updated.length > 0) {
+      return new Response(JSON.stringify({ success: true, itemId: updated[0], updated: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
     }
-
-    // Create new recurring item with generated ID
-    const itemId = `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-
-    // Get display name for family attribution
-    const userDoc = await db.getDocument<{ displayName?: string }>('users', scope.userId)
-
-    const newItem: RecurringGroceryItem = {
-      id: itemId,
-      name: item.name.trim(),
-      purchaseAmount: item.purchaseAmount,
-      purchaseUnit: item.purchaseUnit,
-      category: item.category,
-      frequencyWeeks: item.frequencyWeeks,
-      createdAt: new Date().toISOString(),
-      addedBy: scope.userId,
-      addedByName: userDoc?.displayName || 'User',
-      ...(item.aisle !== undefined && { aisle: item.aisle }),
-      ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
-      ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
-    }
-
-    await db.addSubDocument('recurring_grocery_items', scope.scopeId, 'items', itemId, newItem)
-
-    // Upsert product override so future generations get the image
-    await upsertProductOverride(scope.scopeId, item)
-
-    return new Response(JSON.stringify({ success: true, itemId }), {
+    return new Response(JSON.stringify({ success: true, itemId: created[0] }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     })

@@ -187,6 +187,9 @@ export interface ShoppableIngredient {
   // Recurring item fields
   isRecurring?: boolean // true if flagged as recurring
   recurringFrequencyWeeks?: number // 1 = weekly, 2 = biweekly, N = custom weeks
+  // Soft-state flags
+  archivedAt?: string // ISO timestamp when soft-deleted; hidden from default view
+  unneededThisWeek?: boolean // hidden from default view for current week only
 }
 
 /** User-saved product metadata that persists across grocery list generations */
