@@ -369,7 +369,12 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 const hebCost = calculateGroceryCost(displayItems)
                 return (
                   <div className="border-b border-border bg-muted/20 px-4 py-2.5">
-                    <Inline spacing="sm" justify="between" align="center" className="mx-auto max-w-2xl">
+                    <Inline
+                      spacing="sm"
+                      justify="between"
+                      align="center"
+                      className="mx-auto max-w-2xl"
+                    >
                       {/* Left: Price pill */}
                       <div className="shrink-0">
                         {hebCost.hasAnyData ? (
@@ -439,7 +444,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 shrink-0 rounded-full"
+                            className="h-11 w-11 shrink-0 rounded-full"
                             title="More Options"
                             aria-label="More Options"
                           >
@@ -462,7 +467,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                             }}
                             disabled={isProcessing}
                           >
-                            <RefreshCw className={`mr-2 h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`} />
+                            <RefreshCw
+                              className={`mr-2 h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
+                            />
                             Regenerate List
                           </DropdownMenuItem>
                           <DropdownMenuItem onSelect={handleShareGrocery}>

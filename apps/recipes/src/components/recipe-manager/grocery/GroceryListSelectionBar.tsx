@@ -75,7 +75,9 @@ export const GroceryListSelectionBar: React.FC<GroceryListSelectionBarProps> = (
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-bold tabular-nums">{selectedCount} of {totalCount} selected</span>
+        <span className="text-sm font-bold tabular-nums">
+          {selectedCount} of {totalCount} selected
+        </span>
 
         <div className="ml-auto flex items-center gap-1">
           <div className="relative">

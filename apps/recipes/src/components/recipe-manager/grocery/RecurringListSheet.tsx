@@ -118,18 +118,15 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
   }, [items, selectedIds.size])
 
   // Long press handlers
-  const handleLongPressStart = useCallback(
-    (id: string) => {
-      longPressTriggered.current = false
-      longPressTimer.current = setTimeout(() => {
-        longPressTriggered.current = true
-        triggerHaptic('medium')
-        setSelectionMode(true)
-        setSelectedIds(new Set([id]))
-      }, LONG_PRESS_MS)
-    },
-    [],
-  )
+  const handleLongPressStart = useCallback((id: string) => {
+    longPressTriggered.current = false
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true
+      triggerHaptic('medium')
+      setSelectionMode(true)
+      setSelectedIds(new Set([id]))
+    }, LONG_PRESS_MS)
+  }, [])
 
   const handleLongPressEnd = useCallback(() => {
     if (longPressTimer.current) {
@@ -164,9 +161,7 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
         body: JSON.stringify({ itemId, frequencyWeeks }),
       })
       if (!res.ok) throw new Error('Failed to update frequency')
-      setItems((prev) =>
-        prev.map((i) => (i.id === itemId ? { ...i, frequencyWeeks } : i)),
-      )
+      setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, frequencyWeeks } : i)))
       setEditingItemId(null)
       onChange?.()
     } catch (err) {
@@ -232,9 +227,7 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
       if (!res.ok) throw new Error('Failed to add items to list')
       // Update lastAddedWeek locally
       setItems((prev) =>
-        prev.map((i) =>
-          selectedIds.has(i.id) ? { ...i, lastAddedWeek: weekStartDate } : i,
-        ),
+        prev.map((i) => (selectedIds.has(i.id) ? { ...i, lastAddedWeek: weekStartDate } : i)),
       )
       exitSelectionMode()
       onChange?.()
@@ -261,7 +254,12 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
 
-        <div className={cn('flex-1 overflow-y-auto px-5', selectionMode && selectedIds.size > 0 ? 'pb-20' : 'pb-8')}>
+        <div
+          className={cn(
+            'flex-1 overflow-y-auto px-5',
+            selectionMode && selectedIds.size > 0 ? 'pb-20' : 'pb-8',
+          )}
+        >
           <div className="mb-5 flex items-start justify-between">
             <div>
               <h3 className="font-display text-xl font-bold text-foreground">Recurring Items</h3>
@@ -355,7 +353,7 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
                         <div
                           key={item.id}
                           className={cn(
-                            'border-b border-border last:border-0 transition-colors',
+                            'border-b border-border transition-colors last:border-0',
                             selectionMode && isSelected && 'bg-primary/5',
                           )}
                         >
@@ -371,7 +369,13 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
                               >
                                 {isSelected && (
                                   <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
-                                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path
+                                      d="M2 6l3 3 5-5"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
                                   </svg>
                                 )}
                               </div>
@@ -457,9 +461,7 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
               >
                 <X className="h-4 w-4" />
               </button>
-              <span className="text-sm font-bold tabular-nums">
-                {selectedIds.size} selected
-              </span>
+              <span className="text-sm font-bold tabular-nums">{selectedIds.size} selected</span>
 
               <div className="ml-auto flex items-center gap-1">
                 {weekStartDate && (

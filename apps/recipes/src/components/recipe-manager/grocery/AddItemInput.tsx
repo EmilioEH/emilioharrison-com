@@ -56,54 +56,56 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
   const abortRef = useRef<AbortController | null>(null)
 
   // Debounced live search via HEB GraphQL API
-  const handleSearch = useCallback((searchQuery: string) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-    }
-
-    if (searchQuery.length < 2) {
-      setResults([])
-      setShowDropdown(false)
-      setSearching(false)
-      return
-    }
-
-    setSearching(true)
-
-    debounceRef.current = setTimeout(async () => {
-      // Cancel any in-flight request
-      abortRef.current?.abort()
-      const controller = new AbortController()
-      abortRef.current = controller
-
-      try {
-        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-          ? import.meta.env.BASE_URL
-          : `${import.meta.env.BASE_URL}/`
-
-        const response = await fetch(
-          buildUrl(searchQuery, baseUrl),
-          { signal: controller.signal },
-        )
-
-        if (!response.ok) throw new Error('Search failed')
-
-        const data = (await response.json()) as { results: HebSearchResult[] }
-        if (!controller.signal.aborted) {
-          setResults(data.results)
-          setShowDropdown(data.results.length > 0)
-          setSearching(false)
-        }
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return
-        if (!controller.signal.aborted) {
-          setResults([])
-          setShowDropdown(false)
-          setSearching(false)
-        }
+  const handleSearch = useCallback(
+    (searchQuery: string) => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
       }
-    }, 350)
-  }, [buildUrl])
+
+      if (searchQuery.length < 2) {
+        setResults([])
+        setShowDropdown(false)
+        setSearching(false)
+        return
+      }
+
+      setSearching(true)
+
+      debounceRef.current = setTimeout(async () => {
+        // Cancel any in-flight request
+        abortRef.current?.abort()
+        const controller = new AbortController()
+        abortRef.current = controller
+
+        try {
+          const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+            ? import.meta.env.BASE_URL
+            : `${import.meta.env.BASE_URL}/`
+
+          const response = await fetch(buildUrl(searchQuery, baseUrl), {
+            signal: controller.signal,
+          })
+
+          if (!response.ok) throw new Error('Search failed')
+
+          const data = (await response.json()) as { results: HebSearchResult[] }
+          if (!controller.signal.aborted) {
+            setResults(data.results)
+            setShowDropdown(data.results.length > 0)
+            setSearching(false)
+          }
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'AbortError') return
+          if (!controller.signal.aborted) {
+            setResults([])
+            setShowDropdown(false)
+            setSearching(false)
+          }
+        }
+      }, 350)
+    },
+    [buildUrl],
+  )
 
   useEffect(() => {
     handleSearch(query)
@@ -220,7 +222,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
               onKeyDown={handleKeyDown}
               onFocus={() => query.length >= 2 && results.length > 0 && setShowDropdown(true)}
               placeholder="Add item or search H-E-B..."
-              className="w-full rounded-xl border border-dashed border-primary/40 bg-card py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-primary focus:border-solid focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl border border-dashed border-primary/40 bg-card py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-solid focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               disabled={isLoading}
             />
             {searching && (

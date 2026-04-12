@@ -278,24 +278,29 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [useContainedScroll, setScrollContainer])
 
   // Lock body scroll when in contained scroll mode (required for iOS Safari)
+  // Uses position:fixed + top:-scrollY pattern to prevent page-jump on iOS.
   useEffect(() => {
     if (useContainedScroll) {
-      // Prevent body scrolling so iOS Safari uses the container scroll
+      const scrollY = window.scrollY
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
       document.body.style.width = '100%'
-      // Don't limit body height, just overflow hidden
     } else {
-      // Restore body scrolling
+      const scrollY = parseInt(document.body.style.top || '0', 10) * -1
       document.body.style.overflow = ''
       document.body.style.position = ''
+      document.body.style.top = ''
       document.body.style.width = ''
+      if (scrollY) window.scrollTo(0, scrollY)
     }
     return () => {
-      // Cleanup on unmount
+      const scrollY = parseInt(document.body.style.top || '0', 10) * -1
       document.body.style.overflow = ''
       document.body.style.position = ''
+      document.body.style.top = ''
       document.body.style.width = ''
+      if (scrollY) window.scrollTo(0, scrollY)
     }
   }, [useContainedScroll])
 

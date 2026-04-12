@@ -74,10 +74,7 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
-    groceryList.ingredients = mergeRecurringIntoIngredients(
-      groceryList.ingredients,
-      shoppableItems,
-    )
+    groceryList.ingredients = mergeRecurringIntoIngredients(groceryList.ingredients, shoppableItems)
 
     // Apply product overrides
     const overridesPath = `product_overrides/${scope.scopeId}/items`
@@ -113,10 +110,10 @@ export const POST: APIRoute = async (context) => {
       ),
     )
 
-    return new Response(
-      JSON.stringify({ success: true, listId, injectedCount: matched.length }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    )
+    return new Response(JSON.stringify({ success: true, listId, injectedCount: matched.length }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (error) {
     console.error('Recurring inject error:', error)
     return new Response(

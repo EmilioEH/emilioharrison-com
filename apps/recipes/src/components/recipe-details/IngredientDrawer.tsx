@@ -54,7 +54,7 @@ export const IngredientDrawer: React.FC<IngredientDrawerProps> = ({
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm duration-200 animate-in fade-in"
+            className="absolute inset-0 cursor-pointer bg-black/40 backdrop-blur-sm duration-200 animate-in fade-in"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />

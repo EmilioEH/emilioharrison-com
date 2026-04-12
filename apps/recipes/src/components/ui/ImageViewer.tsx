@@ -53,7 +53,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center bg-black/95 backdrop-blur-sm"
           onClick={onClose}
         >
           {/* Close Button */}

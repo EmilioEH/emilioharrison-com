@@ -371,18 +371,15 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   }, [])
 
   // Long-press handlers
-  const handleLongPressStart = useCallback(
-    (itemName: string) => {
-      longPressTriggered.current = false
-      longPressTimer.current = setTimeout(() => {
-        longPressTriggered.current = true
-        triggerHaptic('medium')
-        setSelectionMode(true)
-        setSelectedKeys(new Set([itemName]))
-      }, LONG_PRESS_MS)
-    },
-    [],
-  )
+  const handleLongPressStart = useCallback((itemName: string) => {
+    longPressTriggered.current = false
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true
+      triggerHaptic('medium')
+      setSelectionMode(true)
+      setSelectedKeys(new Set([itemName]))
+    }, LONG_PRESS_MS)
+  }, [])
 
   const handleLongPressEnd = useCallback(() => {
     if (longPressTimer.current) {
@@ -462,7 +459,15 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       exitSelectionMode()
       onItemAdded?.()
     },
-    [userId, weekStartDate, selectedKeys, getSelectedIngredients, onItemAdded, getBaseUrl, exitSelectionMode],
+    [
+      userId,
+      weekStartDate,
+      selectedKeys,
+      getSelectedIngredients,
+      onItemAdded,
+      getBaseUrl,
+      exitSelectionMode,
+    ],
   )
 
   const handleBulkShopped = useCallback(() => {
@@ -527,10 +532,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   const handleRestoreItem = useCallback(
     async (itemName: string) => {
       if (!userId || !weekStartDate) return
-      const updates =
-        listFilter === 'archived'
-          ? { archivedAt: null }
-          : { unneededThisWeek: false }
+      const updates = listFilter === 'archived' ? { archivedAt: null } : { unneededThisWeek: false }
       await fetch(`${getBaseUrl()}api/grocery/items`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -637,8 +639,8 @@ export const GroceryList: React.FC<GroceryListProps> = ({
               <>
                 <h3 className="font-display text-lg font-bold">No groceries yet</h3>
                 <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                  You have {recurringCount} recurring item{recurringCount === 1 ? '' : 's'}.
-                  Add them to get started.
+                  You have {recurringCount} recurring item{recurringCount === 1 ? '' : 's'}. Add
+                  them to get started.
                 </p>
                 <button
                   type="button"
@@ -724,108 +726,111 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         )}
 
         {/* Category pill bar for quick navigation */}
-        {!isLoading && (categorizedList.length > 1 || filterCounts.archived > 0 || filterCounts.unneeded > 0) && (
-          <div className="-mx-4 -mt-2 mb-2 border-b border-border bg-background/95 backdrop-blur-sm">
-            <div
-              className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-2.5"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
-              <button
-                onClick={() => {
-                  setListFilter('default')
-                  setSelectedCategory(null)
-                }}
-                className={`shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
-                  listFilter === 'default' && selectedCategory === null
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                }`}
+        {!isLoading &&
+          (categorizedList.length > 1 ||
+            filterCounts.archived > 0 ||
+            filterCounts.unneeded > 0) && (
+            <div className="-mx-4 -mt-2 mb-2 border-b border-border bg-background/95 backdrop-blur-sm">
+              <div
+                className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-2.5"
+                style={{ WebkitOverflowScrolling: 'touch' }}
               >
-                All
-              </button>
-              {filterCounts.archived > 0 && (
                 <button
                   onClick={() => {
-                    setListFilter(listFilter === 'archived' ? 'default' : 'archived')
+                    setListFilter('default')
                     setSelectedCategory(null)
                   }}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
-                    listFilter === 'archived'
+                  className={`shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                    listFilter === 'default' && selectedCategory === null
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
                   }`}
                 >
-                  <span>Archived</span>
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                      listFilter === 'archived'
-                        ? 'bg-primary-foreground/20 text-primary-foreground'
-                        : 'bg-primary/10 text-primary'
-                    }`}
-                  >
-                    {filterCounts.archived}
-                  </span>
+                  All
                 </button>
-              )}
-              {filterCounts.unneeded > 0 && (
-                <button
-                  onClick={() => {
-                    setListFilter(listFilter === 'unneeded' ? 'default' : 'unneeded')
-                    setSelectedCategory(null)
-                  }}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
-                    listFilter === 'unneeded'
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                  }`}
-                >
-                  <span>Skipped</span>
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                      listFilter === 'unneeded'
-                        ? 'bg-primary-foreground/20 text-primary-foreground'
-                        : 'bg-primary/10 text-primary'
-                    }`}
-                  >
-                    {filterCounts.unneeded}
-                  </span>
-                </button>
-              )}
-              {categorizedList.map((category) => {
-                const isActive = selectedCategory === category.name
-                return (
+                {filterCounts.archived > 0 && (
                   <button
-                    key={category.name}
                     onClick={() => {
-                      setSelectedCategory(isActive ? null : category.name)
-                      // Scroll to category section
-                      const el = categoryRefs.current.get(category.name)
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                      }
+                      setListFilter(listFilter === 'archived' ? 'default' : 'archived')
+                      setSelectedCategory(null)
                     }}
                     className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
-                      isActive
+                      listFilter === 'archived'
                         ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-background text-foreground hover:border-primary/50'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
                     }`}
                   >
-                    <span>{category.name}</span>
+                    <span>Archived</span>
                     <span
                       className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                        isActive
+                        listFilter === 'archived'
                           ? 'bg-primary-foreground/20 text-primary-foreground'
                           : 'bg-primary/10 text-primary'
                       }`}
                     >
-                      {category.items.length}
+                      {filterCounts.archived}
                     </span>
                   </button>
-                )
-              })}
+                )}
+                {filterCounts.unneeded > 0 && (
+                  <button
+                    onClick={() => {
+                      setListFilter(listFilter === 'unneeded' ? 'default' : 'unneeded')
+                      setSelectedCategory(null)
+                    }}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                      listFilter === 'unneeded'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                    }`}
+                  >
+                    <span>Skipped</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                        listFilter === 'unneeded'
+                          ? 'bg-primary-foreground/20 text-primary-foreground'
+                          : 'bg-primary/10 text-primary'
+                      }`}
+                    >
+                      {filterCounts.unneeded}
+                    </span>
+                  </button>
+                )}
+                {categorizedList.map((category) => {
+                  const isActive = selectedCategory === category.name
+                  return (
+                    <button
+                      key={category.name}
+                      onClick={() => {
+                        setSelectedCategory(isActive ? null : category.name)
+                        // Scroll to category section
+                        const el = categoryRefs.current.get(category.name)
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                      className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${
+                        isActive
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-background text-foreground hover:border-primary/50'
+                      }`}
+                    >
+                      <span>{category.name}</span>
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                          isActive
+                            ? 'bg-primary-foreground/20 text-primary-foreground'
+                            : 'bg-primary/10 text-primary'
+                        }`}
+                      >
+                        {category.items.length}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
@@ -837,275 +842,282 @@ export const GroceryList: React.FC<GroceryListProps> = ({
             {categorizedList
               .filter((category) => !selectedCategory || category.name === selectedCategory)
               .map((category) => (
-              <div
-                key={category.name}
-                ref={(el) => {
-                  if (el) categoryRefs.current.set(category.name, el)
-                }}
-                className="duration-500 animate-in fade-in"
-              >
-                <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
-                  {category.name}
-                </h3>
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                  {category.items.map((item) => {
-                    const itemKey = `${item.name}-${item.purchaseUnit}`
-                    const isChecked = checkedItems.has(item.name)
-                    const isSelected = selectedKeys.has(item.name)
-                    const isExpanded = expandedItems.has(itemKey)
-                    const sources = item.sources ?? []
-                    const multipleSources = sources.length > 1
-                    const showingRestore = listFilter !== 'default'
+                <div
+                  key={category.name}
+                  ref={(el) => {
+                    if (el) categoryRefs.current.set(category.name, el)
+                  }}
+                  className="duration-500 animate-in fade-in"
+                >
+                  <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wider text-primary">
+                    {category.name}
+                  </h3>
+                  <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    {category.items.map((item) => {
+                      const itemKey = `${item.name}-${item.purchaseUnit}`
+                      const isChecked = checkedItems.has(item.name)
+                      const isSelected = selectedKeys.has(item.name)
+                      const isExpanded = expandedItems.has(itemKey)
+                      const sources = item.sources ?? []
+                      const multipleSources = sources.length > 1
+                      const showingRestore = listFilter !== 'default'
 
-                    return (
-                      <div
-                        key={itemKey}
-                        className={cn(
-                          'border-b border-border last:border-0',
-                          isChecked && !selectionMode && 'opacity-50',
-                          isSelected && 'bg-primary/10',
-                        )}
-                      >
-                        {/* Main Item Row */}
-                        <div className="flex flex-col p-4">
-                          <div className="flex items-start">
-                            {/* Expand/Collapse Toggle (Only if > 1 source, hidden in selection mode) */}
-                            {multipleSources && !selectionMode ? (
+                      return (
+                        <div
+                          key={itemKey}
+                          className={cn(
+                            'border-b border-border last:border-0',
+                            isChecked && !selectionMode && 'opacity-50',
+                            isSelected && 'bg-primary/10',
+                          )}
+                        >
+                          {/* Main Item Row */}
+                          <div className="flex flex-col p-4">
+                            <div className="flex items-start">
+                              {/* Expand/Collapse Toggle (Only if > 1 source, hidden in selection mode) */}
+                              {multipleSources && !selectionMode ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => toggleExpanded(itemKey, e)}
+                                  className="mr-2 mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                </button>
+                              ) : (
+                                <div className="w-8" /> // Spacer to align with toggle items
+                              )}
+
+                              {/* Checkbox (toggles shopped by default, selection when in selection mode) */}
                               <button
                                 type="button"
-                                onClick={(e) => toggleExpanded(itemKey, e)}
-                                className="mr-2 mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                              >
-                                {isExpanded ? (
-                                  <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4" />
-                                )}
-                              </button>
-                            ) : (
-                              <div className="w-8" /> // Spacer to align with toggle items
-                            )}
-
-                            {/* Checkbox (toggles shopped by default, selection when in selection mode) */}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                selectionMode ? toggleSelection(item.name) : toggleItem(item.name)
-                              }
-                              aria-pressed={selectionMode ? isSelected : isChecked}
-                              className="mt-1 flex items-center gap-4"
-                            >
-                              <div
-                                className={cn(
-                                  'flex items-center justify-center border-2 transition-colors',
-                                  selectionMode
-                                    ? 'h-5 w-5 rounded-md'
-                                    : 'h-6 w-6 rounded-full',
-                                  selectionMode
-                                    ? isSelected
-                                      ? 'border-primary bg-primary text-primary-foreground'
-                                      : 'border-muted-foreground/30'
-                                    : isChecked
-                                      ? 'border-primary bg-primary'
-                                      : 'border-border hover:border-primary',
-                                )}
-                              >
-                                {selectionMode && isSelected && (
-                                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
-                                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                )}
-                                {!selectionMode && isChecked && (
-                                  <Check className="h-3.5 w-3.5 text-primary-foreground" />
-                                )}
-                              </div>
-                            </button>
-
-                            {/* Product thumbnail or unmatched indicator */}
-                            {item.imageUrl ? (
-                              <img
-                                src={item.imageUrl}
-                                alt=""
-                                className="ml-2 mt-0.5 h-9 w-9 rounded-lg object-cover"
-                                loading="lazy"
-                              />
-                            ) : !item.hebProductId && !item.isManual ? (
-                              <div
-                                className="ml-2 mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/50"
-                                title="No H-E-B product linked"
-                              >
-                                <ShoppingBasket className="h-4 w-4" />
-                              </div>
-                            ) : null}
-
-                            {/* Item Details — tappable for edit (or select in selection mode), long-press to enter selection */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (longPressTriggered.current) return
-                                if (selectionMode) {
-                                  toggleSelection(item.name)
-                                } else if (weekStartDate && userId) {
-                                  setEditingItem(item)
+                                onClick={() =>
+                                  selectionMode ? toggleSelection(item.name) : toggleItem(item.name)
                                 }
-                              }}
-                              {...(!selectionMode && listFilter === 'default' && userId
-                                ? {
-                                    onTouchStart: () => handleLongPressStart(item.name),
-                                    onTouchEnd: handleLongPressEnd,
-                                    onTouchCancel: handleLongPressEnd,
-                                    onMouseDown: () => handleLongPressStart(item.name),
-                                    onMouseUp: handleLongPressEnd,
-                                    onMouseLeave: handleLongPressEnd,
-                                  }
-                                : {})}
-                              className={cn(
-                                'ml-3 flex-1 text-left',
-                                isChecked && !selectionMode
-                                  ? 'text-muted-foreground line-through'
-                                  : 'text-foreground',
-                                (selectionMode || (weekStartDate && userId)) && 'cursor-pointer',
-                              )}
-                            >
-                              <div className="flex flex-wrap items-baseline gap-1">
-                                <span className="font-display text-lg font-bold">
-                                  {item.purchaseAmount > 0
-                                    ? Math.round(item.purchaseAmount * 100) / 100
-                                    : ''}
-                                </span>
-                                <span className="text-sm font-medium opacity-80">
-                                  {item.purchaseUnit !== 'unit' ? item.purchaseUnit : ''}
-                                </span>
-                                <span className="font-medium capitalize">{item.name}</span>
-                                {/* Price Badge */}
-                                {item.hebPrice && (
-                                  <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                    <DollarSign className="h-2.5 w-2.5" />
-                                    {item.hebPrice.toFixed(2)}
-                                    {item.hebUnitPrice && item.hebUnitPriceUnit && (
-                                      <span className="ml-0.5 font-normal opacity-75">
-                                        ({item.hebUnitPrice.toFixed(2)}/{item.hebUnitPriceUnit})
-                                      </span>
-                                    )}
-                                  </span>
-                                )}
-                                {/* Manual Item Badge */}
-                                {item.isManual && (
-                                  <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-blue-100 px-1 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                    <Tag className="h-2.5 w-2.5" />
-                                    Manual
-                                  </span>
-                                )}
-                                {/* Recurring Item Badge */}
-                                {item.isRecurring && item.recurringFrequencyWeeks && (
-                                  <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                                    <CalendarDays className="h-2.5 w-2.5" />
-                                    {item.recurringFrequencyWeeks}w
-                                  </span>
-                                )}
-                              </div>
+                                aria-pressed={selectionMode ? isSelected : isChecked}
+                                className="mt-1 flex items-center gap-4"
+                              >
+                                <div
+                                  className={cn(
+                                    'flex items-center justify-center border-2 transition-colors',
+                                    selectionMode ? 'h-5 w-5 rounded-md' : 'h-6 w-6 rounded-full',
+                                    selectionMode
+                                      ? isSelected
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-muted-foreground/30'
+                                      : isChecked
+                                        ? 'border-primary bg-primary'
+                                        : 'border-border hover:border-primary',
+                                  )}
+                                >
+                                  {selectionMode && isSelected && (
+                                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                      <path
+                                        d="M2 6l3 3 5-5"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  )}
+                                  {!selectionMode && isChecked && (
+                                    <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                                  )}
+                                </div>
+                              </button>
 
-                              {/* Size + Location row */}
-                              {(item.hebSize || item.storeLocation) && (
-                                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
-                                  {item.hebSize && <span>{item.hebSize}</span>}
-                                  {item.storeLocation && (
-                                    <span className="flex items-center gap-0.5">
-                                      <MapPin className="h-2.5 w-2.5" />
-                                      {item.storeLocation}
+                              {/* Product thumbnail or unmatched indicator */}
+                              {item.imageUrl ? (
+                                <img
+                                  src={item.imageUrl}
+                                  alt=""
+                                  className="ml-2 mt-0.5 h-9 w-9 rounded-lg object-cover"
+                                  loading="lazy"
+                                />
+                              ) : !item.hebProductId && !item.isManual ? (
+                                <div
+                                  className="ml-2 mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/50"
+                                  title="No H-E-B product linked"
+                                >
+                                  <ShoppingBasket className="h-4 w-4" />
+                                </div>
+                              ) : null}
+
+                              {/* Item Details — tappable for edit (or select in selection mode), long-press to enter selection */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (longPressTriggered.current) return
+                                  if (selectionMode) {
+                                    toggleSelection(item.name)
+                                  } else if (weekStartDate && userId) {
+                                    setEditingItem(item)
+                                  }
+                                }}
+                                {...(!selectionMode && listFilter === 'default' && userId
+                                  ? {
+                                      onTouchStart: () => handleLongPressStart(item.name),
+                                      onTouchEnd: handleLongPressEnd,
+                                      onTouchCancel: handleLongPressEnd,
+                                      onMouseDown: () => handleLongPressStart(item.name),
+                                      onMouseUp: handleLongPressEnd,
+                                      onMouseLeave: handleLongPressEnd,
+                                    }
+                                  : {})}
+                                className={cn(
+                                  'ml-3 flex-1 text-left',
+                                  isChecked && !selectionMode
+                                    ? 'text-muted-foreground line-through'
+                                    : 'text-foreground',
+                                  (selectionMode || (weekStartDate && userId)) && 'cursor-pointer',
+                                )}
+                              >
+                                <div className="flex flex-wrap items-baseline gap-1">
+                                  <span className="font-display text-lg font-bold">
+                                    {item.purchaseAmount > 0
+                                      ? Math.round(item.purchaseAmount * 100) / 100
+                                      : ''}
+                                  </span>
+                                  <span className="text-sm font-medium opacity-80">
+                                    {item.purchaseUnit !== 'unit' ? item.purchaseUnit : ''}
+                                  </span>
+                                  <span className="font-medium capitalize">{item.name}</span>
+                                  {/* Price Badge */}
+                                  {item.hebPrice && (
+                                    <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                      <DollarSign className="h-2.5 w-2.5" />
+                                      {item.hebPrice.toFixed(2)}
+                                      {item.hebUnitPrice && item.hebUnitPriceUnit && (
+                                        <span className="ml-0.5 font-normal opacity-75">
+                                          ({item.hebUnitPrice.toFixed(2)}/{item.hebUnitPriceUnit})
+                                        </span>
+                                      )}
+                                    </span>
+                                  )}
+                                  {/* Manual Item Badge */}
+                                  {item.isManual && (
+                                    <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-blue-100 px-1 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                      <Tag className="h-2.5 w-2.5" />
+                                      Manual
+                                    </span>
+                                  )}
+                                  {/* Recurring Item Badge */}
+                                  {item.isRecurring && item.recurringFrequencyWeeks && (
+                                    <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                      <CalendarDays className="h-2.5 w-2.5" />
+                                      {item.recurringFrequencyWeeks}w
                                     </span>
                                   )}
                                 </div>
-                              )}
 
-                              {/* Source Tags */}
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {sources.map((source, idx) => (
-                                  <span
-                                    key={`${source.recipeId}-${idx}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setActiveInfo({
-                                        recipeTitle: source.recipeTitle,
-                                        ingredientAmount: source.originalAmount,
-                                        ingredientName: item.name,
-                                      })
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
+                                {/* Size + Location row */}
+                                {(item.hebSize || item.storeLocation) && (
+                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
+                                    {item.hebSize && <span>{item.hebSize}</span>}
+                                    {item.storeLocation && (
+                                      <span className="flex items-center gap-0.5">
+                                        <MapPin className="h-2.5 w-2.5" />
+                                        {item.storeLocation}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Source Tags */}
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {sources.map((source, idx) => (
+                                    <span
+                                      key={`${source.recipeId}-${idx}`}
+                                      onClick={(e) => {
                                         e.stopPropagation()
                                         setActiveInfo({
                                           recipeTitle: source.recipeTitle,
                                           ingredientAmount: source.originalAmount,
                                           ingredientName: item.name,
                                         })
-                                      }
-                                    }}
-                                    className="flex max-w-[200px] items-center gap-1 overflow-hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted-foreground/20 hover:text-foreground"
-                                  >
-                                    <span className="truncate">{source.recipeTitle}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            </button>
-
-                            {/* Trailing control: Restore (filter view) / Recurring toggle (default) / hidden (selection mode) */}
-                            {userId && !selectionMode && showingRestore && (
-                              <button
-                                type="button"
-                                onClick={() => handleRestoreItem(item.name)}
-                                className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                aria-label={`Restore ${item.name}`}
-                                title="Restore to list"
-                              >
-                                <Undo2 className="h-4 w-4" />
-                              </button>
-                            )}
-                            {userId && !selectionMode && !showingRestore && (
-                              <RecurringItemToggle
-                                itemName={item.name}
-                                isRecurring={item.isRecurring}
-                                recurringFrequencyWeeks={item.recurringFrequencyWeeks}
-                                onToggleRecurring={handleToggleRecurring}
-                                disabled={isChecked}
-                              />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Expanded Source Details (Only if > 1 source) */}
-                        {multipleSources && isExpanded && (
-                          <div className="border-t border-border bg-muted/30 px-4 py-3 pl-14">
-                            <Stack spacing="xs">
-                              {sources.map((source, idx) => {
-                                const recipe = findRecipeById(source.recipeId)
-                                return (
-                                  <div key={`${source.recipeId}-${idx}`} className="mb-2 last:mb-0">
-                                    <button
-                                      onClick={() => recipe && onOpenRecipe?.(recipe)}
-                                      className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-                                      disabled={!recipe}
+                                      }}
+                                      role="button"
+                                      tabIndex={0}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                          e.stopPropagation()
+                                          setActiveInfo({
+                                            recipeTitle: source.recipeTitle,
+                                            ingredientAmount: source.originalAmount,
+                                            ingredientName: item.name,
+                                          })
+                                        }
+                                      }}
+                                      className="flex max-w-[200px] items-center gap-1 overflow-hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted-foreground/20 hover:text-foreground"
                                     >
-                                      {source.recipeTitle}
-                                    </button>
-                                    <p className="ml-4 text-xs text-muted-foreground">
-                                      {source.originalAmount}
-                                    </p>
-                                  </div>
-                                )
-                              })}
-                            </Stack>
+                                      <span className="truncate">{source.recipeTitle}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </button>
+
+                              {/* Trailing control: Restore (filter view) / Recurring toggle (default) / hidden (selection mode) */}
+                              {userId && !selectionMode && showingRestore && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRestoreItem(item.name)}
+                                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                  aria-label={`Restore ${item.name}`}
+                                  title="Restore to list"
+                                >
+                                  <Undo2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              {userId && !selectionMode && !showingRestore && (
+                                <RecurringItemToggle
+                                  itemName={item.name}
+                                  isRecurring={item.isRecurring}
+                                  recurringFrequencyWeeks={item.recurringFrequencyWeeks}
+                                  onToggleRecurring={handleToggleRecurring}
+                                  disabled={isChecked}
+                                />
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    )
-                  })}
+
+                          {/* Expanded Source Details (Only if > 1 source) */}
+                          {multipleSources && isExpanded && (
+                            <div className="border-t border-border bg-muted/30 px-4 py-3 pl-14">
+                              <Stack spacing="xs">
+                                {sources.map((source, idx) => {
+                                  const recipe = findRecipeById(source.recipeId)
+                                  return (
+                                    <div
+                                      key={`${source.recipeId}-${idx}`}
+                                      className="mb-2 last:mb-0"
+                                    >
+                                      <button
+                                        onClick={() => recipe && onOpenRecipe?.(recipe)}
+                                        className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                                        disabled={!recipe}
+                                      >
+                                        {source.recipeTitle}
+                                      </button>
+                                      <p className="ml-4 text-xs text-muted-foreground">
+                                        {source.originalAmount}
+                                      </p>
+                                    </div>
+                                  )
+                                })}
+                              </Stack>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
             {categorizedList.length === 0 && ingredients.length > 0 && (
               <div className="py-20 text-center opacity-50">

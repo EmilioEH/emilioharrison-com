@@ -39,8 +39,7 @@ export const FrequencyPicker: React.FC<FrequencyPickerProps> = ({
     }
   }
 
-  const resolvedLabel =
-    label ?? (currentFrequencyWeeks ? 'Change frequency' : 'Add to recurring')
+  const resolvedLabel = label ?? (currentFrequencyWeeks ? 'Change frequency' : 'Add to recurring')
 
   return (
     <div>

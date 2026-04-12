@@ -54,7 +54,6 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
             className="h-11 w-11 rounded-full"
             title="More Options"
             aria-label="More Options"
-            onClick={() => setOpen((v) => !v)}
           >
             <MoreHorizontal className="h-6 w-6" />
           </Button>

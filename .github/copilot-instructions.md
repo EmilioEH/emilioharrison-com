@@ -130,6 +130,20 @@ Always add mobile-safe margins:
 className = "fixed left-4 right-4 mx-auto ... sm:left-1/2 sm:-translate-x-1/2";
 ```
 
+## iOS / WebKit Compatibility (Critical)
+
+**All iOS browsers (Chrome, Firefox, Edge, Safari) use WebKit.** Android ≠ iOS validation.
+Full rules in `.agent/rules/04-ios-webkit.md`. Key rules:
+
+1. **`cursor-pointer` on every `div` with `onClick`** — iOS won't fire taps on `div`/`span` without it. Applies to backdrop overlays and custom sheet dismissal areas.
+2. **Never `cursor-default` on Radix menu items** — `DropdownMenuItem` etc. are `<div role="menuitem">`. They need `cursor-pointer` or iOS ignores taps.
+3. **No redundant `onClick` on controlled Radix triggers** — `open`+`onOpenChange` is enough. Adding an extra `onClick` toggle causes menu to open-and-immediately-close on iOS.
+4. **`body { position: fixed }` requires scroll-position save** — always pair with `top: -${window.scrollY}px` and restore on unlock, or the page jumps to top on iPhone.
+5. **Minimum `h-11 w-11` (44px) touch targets** — Apple HIG requirement. `h-9 w-9` (36px) misses taps.
+6. **`touch-action: pan-y` (Tailwind: `touch-pan-y`) on swipe containers** — required when using `onTouchMove + e.preventDefault()`, otherwise iOS absorbs the gesture.
+7. **No `user-scalable=no` or `maximum-scale` in viewport meta** — breaks WCAG and interferes with portal tap timing.
+8. **`pointer-events-none` when hiding via transform** — `translate-y-full` hides visually but the hit area may persist on iOS. Add `pointer-events-none` when an element is off-screen.
+
 ## AI Integration (Gemini)
 
 - **SDK**: `@google/genai` with `gemini-2.0-flash` model

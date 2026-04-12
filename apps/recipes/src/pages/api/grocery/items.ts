@@ -204,7 +204,8 @@ export const PATCH: APIRoute = async (context) => {
     const scope = await getGroceryScopeId(context.cookies)
     if (!scope) return unauthorizedResponse()
 
-    const { weekStartDate, itemName, names, updates } = (await context.request.json()) as PatchItemRequest
+    const { weekStartDate, itemName, names, updates } =
+      (await context.request.json()) as PatchItemRequest
 
     const targetNames = names && names.length > 0 ? names : itemName ? [itemName] : []
 
@@ -250,7 +251,8 @@ export const PATCH: APIRoute = async (context) => {
       if (updates.hebProductUrl !== undefined) current.hebProductUrl = updates.hebProductUrl
       if (updates.hebSize !== undefined) current.hebSize = updates.hebSize
       if (updates.hebUnitPrice !== undefined) current.hebUnitPrice = updates.hebUnitPrice
-      if (updates.hebUnitPriceUnit !== undefined) current.hebUnitPriceUnit = updates.hebUnitPriceUnit
+      if (updates.hebUnitPriceUnit !== undefined)
+        current.hebUnitPriceUnit = updates.hebUnitPriceUnit
       if (updates.isRecurring !== undefined) {
         current.isRecurring = updates.isRecurring || undefined
         current.recurringFrequencyWeeks = updates.recurringFrequencyWeeks
