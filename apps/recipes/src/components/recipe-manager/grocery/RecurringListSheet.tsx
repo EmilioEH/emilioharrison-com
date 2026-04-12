@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { X, CalendarDays, Trash2, Loader2, User, ListChecks, Plus, CheckSquare } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { triggerHaptic, LONG_PRESS_MS } from '../../../lib/haptics'
 import { FrequencyPicker } from './FrequencyPicker'
 import type { RecurringGroceryItem } from '../../../lib/types'
 
@@ -14,15 +15,6 @@ const getBaseUrl = (): string => {
   const base = import.meta.env.BASE_URL
   return base.endsWith('/') ? base : `${base}/`
 }
-
-const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
-  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-    const patterns = { light: [10], medium: [20], success: [10, 50, 20] }
-    navigator.vibrate(patterns[style])
-  }
-}
-
-const LONG_PRESS_MS = 500
 
 const formatRelativeDate = (isoDate?: string): string => {
   if (!isoDate) return 'Never added'

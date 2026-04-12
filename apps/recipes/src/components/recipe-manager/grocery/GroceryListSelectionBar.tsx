@@ -5,6 +5,7 @@ import { FrequencyPicker } from './FrequencyPicker'
 
 interface GroceryListSelectionBarProps {
   selectedCount: number
+  totalCount: number
   onCancel: () => void
   onMarkRecurring: (frequencyWeeks: number) => Promise<void>
   onMarkShopped: () => void
@@ -17,6 +18,7 @@ type BarAction = 'recurring' | 'shopped' | 'archive' | 'unneeded' | 'delete'
 
 export const GroceryListSelectionBar: React.FC<GroceryListSelectionBarProps> = ({
   selectedCount,
+  totalCount,
   onCancel,
   onMarkRecurring,
   onMarkShopped,
@@ -73,7 +75,7 @@ export const GroceryListSelectionBar: React.FC<GroceryListSelectionBarProps> = (
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-bold tabular-nums">{selectedCount} selected</span>
+        <span className="text-sm font-bold tabular-nums">{selectedCount} of {totalCount} selected</span>
 
         <div className="ml-auto flex items-center gap-1">
           <div className="relative">

@@ -28,6 +28,7 @@ import { AddItemInput } from './AddItemInput'
 import { RecurringItemToggle } from './RecurringItemToggle'
 import { GroceryItemEditSheet } from './GroceryItemEditSheet'
 import { GroceryListSelectionBar } from './GroceryListSelectionBar'
+import { triggerHaptic, LONG_PRESS_MS } from '../../../lib/haptics'
 import { RecurringListSheet } from './RecurringListSheet'
 
 type ListFilterMode = 'default' | 'archived' | 'unneeded'
@@ -109,6 +110,10 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   // 4c. Selection mode state
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+
+  // 4c-ii. Long-press to enter selection mode
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
+  const longPressTriggered = useRef(false)
 
   // 4d. Recurring sheet state
   const [showRecurringSheet, setShowRecurringSheet] = useState(false)
@@ -365,6 +370,48 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     setSelectedKeys(new Set())
   }, [])
 
+  // Long-press handlers
+  const handleLongPressStart = useCallback(
+    (itemName: string) => {
+      longPressTriggered.current = false
+      longPressTimer.current = setTimeout(() => {
+        longPressTriggered.current = true
+        triggerHaptic('medium')
+        setSelectionMode(true)
+        setSelectedKeys(new Set([itemName]))
+      }, LONG_PRESS_MS)
+    },
+    [],
+  )
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+
+  // Select all visible items
+  const visibleItemNames = useMemo(() => {
+    const names: string[] = []
+    for (const category of categorizedList) {
+      for (const item of category.items) {
+        names.push(item.name)
+      }
+    }
+    return names
+  }, [categorizedList])
+
+  const allSelected = visibleItemNames.length > 0 && selectedKeys.size === visibleItemNames.length
+
+  const handleSelectAll = useCallback(() => {
+    if (allSelected) {
+      setSelectedKeys(new Set())
+    } else {
+      setSelectedKeys(new Set(visibleItemNames))
+    }
+  }, [allSelected, visibleItemNames])
+
   const getSelectedIngredients = useCallback((): ShoppableIngredient[] => {
     return ingredients.filter((ing) => selectedKeys.has(ing.name))
   }, [ingredients, selectedKeys])
@@ -533,6 +580,21 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                 <ListChecks className="h-5 w-5" />
               </button>
             )}
+            {selectionMode && (
+              <button
+                onClick={handleSelectAll}
+                className={cn(
+                  'rounded-full p-2 transition-colors',
+                  allSelected
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}
+                aria-label={allSelected ? 'Deselect all' : 'Select all'}
+                title={allSelected ? 'Deselect all' : 'Select all'}
+              >
+                <CheckSquare className="h-5 w-5" />
+              </button>
+            )}
             {userId && (
               <button
                 onClick={() => setShowRecurringSheet(true)}
@@ -629,6 +691,20 @@ export const GroceryList: React.FC<GroceryListProps> = ({
               >
                 <ListChecks className="h-3.5 w-3.5" />
                 Select
+              </button>
+            )}
+            {selectionMode && (
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold transition-colors hover:text-foreground',
+                  allSelected ? 'text-primary' : 'text-muted-foreground',
+                )}
+                aria-label={allSelected ? 'Deselect all' : 'Select all'}
+              >
+                <CheckSquare className="h-3.5 w-3.5" />
+                {allSelected ? 'Deselect All' : 'Select All'}
               </button>
             )}
             <button
@@ -822,18 +898,25 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                             >
                               <div
                                 className={cn(
-                                  'flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors',
+                                  'flex items-center justify-center border-2 transition-colors',
+                                  selectionMode
+                                    ? 'h-5 w-5 rounded-md'
+                                    : 'h-6 w-6 rounded-full',
                                   selectionMode
                                     ? isSelected
-                                      ? 'border-primary bg-primary'
-                                      : 'border-border hover:border-primary'
+                                      ? 'border-primary bg-primary text-primary-foreground'
+                                      : 'border-muted-foreground/30'
                                     : isChecked
                                       ? 'border-primary bg-primary'
                                       : 'border-border hover:border-primary',
                                 )}
                               >
-                                {((selectionMode && isSelected) ||
-                                  (!selectionMode && isChecked)) && (
+                                {selectionMode && isSelected && (
+                                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                                {!selectionMode && isChecked && (
                                   <Check className="h-3.5 w-3.5 text-primary-foreground" />
                                 )}
                               </div>
@@ -856,16 +939,27 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                               </div>
                             ) : null}
 
-                            {/* Item Details — tappable for edit (or select in selection mode) */}
+                            {/* Item Details — tappable for edit (or select in selection mode), long-press to enter selection */}
                             <button
                               type="button"
                               onClick={() => {
+                                if (longPressTriggered.current) return
                                 if (selectionMode) {
                                   toggleSelection(item.name)
                                 } else if (weekStartDate && userId) {
                                   setEditingItem(item)
                                 }
                               }}
+                              {...(!selectionMode && listFilter === 'default' && userId
+                                ? {
+                                    onTouchStart: () => handleLongPressStart(item.name),
+                                    onTouchEnd: handleLongPressEnd,
+                                    onTouchCancel: handleLongPressEnd,
+                                    onMouseDown: () => handleLongPressStart(item.name),
+                                    onMouseUp: handleLongPressEnd,
+                                    onMouseLeave: handleLongPressEnd,
+                                  }
+                                : {})}
                               className={cn(
                                 'ml-3 flex-1 text-left',
                                 isChecked && !selectionMode
@@ -1102,6 +1196,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       {selectionMode && (
         <GroceryListSelectionBar
           selectedCount={selectedKeys.size}
+          totalCount={visibleItemNames.length}
           onCancel={exitSelectionMode}
           onMarkRecurring={handleBulkRecurring}
           onMarkShopped={handleBulkShopped}
