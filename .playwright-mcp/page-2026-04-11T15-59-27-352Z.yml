@@ -1,0 +1,1958 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip To Content" [ref=e3] [cursor=pointer]:
+      - /url: "#r_body"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - button "Open the navigation menu" [ref=e7] [cursor=pointer]:
+          - img [ref=e10]
+        - link "H-E-B Home page" [ref=e12] [cursor=pointer]:
+          - /url: /
+          - img [ref=e13]
+        - generic [ref=e22]:
+          - generic [ref=e23]: Search H E B.com
+          - combobox "Search H E B.com" [ref=e24]
+          - button "Submit search" [ref=e25] [cursor=pointer]:
+            - img [ref=e28]
+        - button "My account" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - link "Go to Cart page." [ref=e34] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e37]
+      - generic [ref=e41]:
+        - button "In-store at" [ref=e43] [cursor=pointer]:
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - generic [ref=e51]: In-store at
+        - button "Shopping at H‑E‑B Manor. Click to change store." [ref=e52] [cursor=pointer]:
+          - generic [ref=e53]:
+            - img [ref=e54]
+            - generic [ref=e58]: H‑E‑B Manor
+    - main [ref=e59]:
+      - generic [ref=e63]:
+        - alert [ref=e64]:
+          - generic [ref=e66]:
+            - generic [ref=e67]: View-only
+            - generic [ref=e68]: To edit, copy to your lists.
+          - button "Close alert" [ref=e69] [cursor=pointer]:
+            - img [ref=e72]
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - button "Copy to your lists" [ref=e77] [cursor=pointer]:
+                - generic [ref=e78]:
+                  - img [ref=e79]
+                  - text: Copy to your lists
+              - button "print shopping list" [ref=e81] [cursor=pointer]:
+                - img [ref=e84]
+            - generic [ref=e87]:
+              - paragraph [ref=e88]: View-only
+              - heading "Weekly" [level=1] [ref=e89]
+              - button "List for H-E-B Manor" [ref=e90] [cursor=pointer]:
+                - generic [ref=e91]:
+                  - paragraph [ref=e93]:
+                    - generic [ref=e94]: List for
+                    - text: H-E-B Manor
+                  - img [ref=e95]
+              - generic [ref=e97]:
+                - paragraph [ref=e98]: $551.96 estimated total
+                - button "estimated total tooltip information" [ref=e99]:
+                  - button "estimated total tooltip information" [ref=e100]
+            - generic [ref=e102]:
+              - generic [ref=e103]: Currently sorted by Category
+              - generic [ref=e104]:
+                - generic [ref=e106]: Sort by
+                - combobox [ref=e108]:
+                  - option "Category" [selected]
+                  - option "Most efficient route"
+                  - option "Most efficient route (reverse)"
+                  - option "A - Z"
+                  - option "Z - A"
+          - generic [ref=e109]:
+            - toolbar "Manage items" [ref=e111]:
+              - generic [ref=e112]:
+                - checkbox "select all items" [ref=e114] [cursor=pointer]
+                - generic [ref=e115] [cursor=pointer]: 95 items
+              - generic [ref=e117]:
+                - generic [ref=e118]: no items selected, select one or more items to enable this button
+                - button "Add to cart" [disabled] [ref=e119]:
+                  - generic [ref=e120]:
+                    - img [ref=e121]
+                    - text: Add to cart
+                - button "Add to another list" [disabled] [ref=e123]:
+                  - generic [ref=e124]:
+                    - img [ref=e125]
+                    - text: Add to another list
+            - paragraph [ref=e129]: Shopping list reflects in-store prices. Prices may vary when moving items to cart for curbside or delivery.
+            - list [ref=e130]:
+              - listitem [ref=e131]:
+                - heading "Bakery & bread" [level=2] [ref=e133]
+                - list [ref=e134]:
+                  - listitem [ref=e135]:
+                    - generic [ref=e136]: H-E-B Bakery Flour Tortillas, 20 ct, $4.88 each. $0.24 per ct.
+                    - generic [ref=e137]:
+                      - generic [ref=e139] [cursor=pointer]:
+                        - checkbox "Select H-E-B Bakery Flour Tortillas, 20 ct for add to cart" [ref=e141]
+                        - generic [ref=e142]: Select H-E-B Bakery Flour Tortillas, 20 ct for add to cart
+                      - link [ref=e144] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-bakery-flour-tortillas/465325
+                        - img [ref=e145]
+                      - generic [ref=e146]:
+                        - generic [ref=e147]:
+                          - link "H-E-B Bakery Flour Tortillas, 20 ct" [ref=e148]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-bakery-flour-tortillas/465325
+                          - paragraph [ref=e149]: SNAP EBT
+                          - button "On the Right Edge of Bakery" [ref=e150] [cursor=pointer]:
+                            - generic [ref=e151]:
+                              - img [ref=e152]
+                              - generic [ref=e155]: On the Right Edge of Bakery
+                        - generic [ref=e157]:
+                          - generic [ref=e158]: $4.88
+                          - generic [ref=e159]: "Qty: 1"
+                  - listitem [ref=e160]:
+                    - generic [ref=e161]: H-E-B Everything Bagels, 6 ct, $3.38 each. $0.17 per oz.
+                    - generic [ref=e162]:
+                      - generic [ref=e164] [cursor=pointer]:
+                        - checkbox "Select H-E-B Everything Bagels, 6 ct for add to cart" [ref=e166]
+                        - generic [ref=e167]: Select H-E-B Everything Bagels, 6 ct for add to cart
+                      - link [ref=e169] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-everything-bagels/11245536
+                        - img [ref=e170]
+                      - generic [ref=e171]:
+                        - generic [ref=e172]:
+                          - link "H-E-B Everything Bagels, 6 ct" [ref=e173]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-everything-bagels/11245536
+                          - paragraph [ref=e174]: SNAP EBT
+                          - button "Aisle 4" [ref=e175] [cursor=pointer]:
+                            - generic [ref=e176]:
+                              - img [ref=e177]
+                              - generic [ref=e180]: Aisle 4
+                        - generic [ref=e182]:
+                          - generic [ref=e183]: $3.38
+                          - generic [ref=e184]: "Qty: 1"
+                  - listitem [ref=e185]:
+                    - generic [ref=e186]: H-E-B Round Top Large White Enriched Sliced Bread, 20 oz, Price Cut $2.18 each, Regularly $2.48 each. $0.11 per oz.
+                    - generic [ref=e187]:
+                      - generic [ref=e189] [cursor=pointer]:
+                        - checkbox "Select H-E-B Round Top Large White Enriched Sliced Bread, 20 oz for add to cart" [ref=e191]
+                        - generic [ref=e192]: Select H-E-B Round Top Large White Enriched Sliced Bread, 20 oz for add to cart
+                      - link [ref=e194] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-round-top-large-white-enriched-sliced-nbsp-bread/395830
+                        - img [ref=e195]
+                      - generic [ref=e196]:
+                        - paragraph [ref=e198]: Price cut
+                        - generic [ref=e199]:
+                          - link "H-E-B Round Top Large White Enriched Sliced Bread, 20 oz" [ref=e200]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-round-top-large-white-enriched-sliced-nbsp-bread/395830
+                          - paragraph [ref=e201]: SNAP EBT
+                          - button "Aisle 4" [ref=e202] [cursor=pointer]:
+                            - generic [ref=e203]:
+                              - img [ref=e204]
+                              - generic [ref=e207]: Aisle 4
+                        - generic [ref=e209]:
+                          - generic [ref=e210]: $2.48
+                          - generic [ref=e211]: "Qty: 1"
+                  - listitem [ref=e212]:
+                    - generic [ref=e213]: H-E-B 100% Whole Wheat Sliced Bread, 20 oz, $2.68 each. $0.13 per oz.
+                    - generic [ref=e214]:
+                      - generic [ref=e216] [cursor=pointer]:
+                        - checkbox "Select H-E-B 100% Whole Wheat Sliced Bread, 20 oz for add to cart" [ref=e218]
+                        - generic [ref=e219]: Select H-E-B 100% Whole Wheat Sliced Bread, 20 oz for add to cart
+                      - link [ref=e221] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-100-whole-wheat-sliced-bread/672611
+                        - img [ref=e222]
+                      - generic [ref=e223]:
+                        - generic [ref=e224]:
+                          - link "H-E-B 100% Whole Wheat Sliced Bread, 20 oz" [ref=e225]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-100-whole-wheat-sliced-bread/672611
+                          - paragraph [ref=e226]: SNAP EBT
+                          - button "Aisle 4" [ref=e227] [cursor=pointer]:
+                            - generic [ref=e228]:
+                              - img [ref=e229]
+                              - generic [ref=e232]: Aisle 4
+                        - generic [ref=e234]:
+                          - generic [ref=e235]: $2.68
+                          - generic [ref=e236]: "Qty: 1"
+                  - listitem [ref=e237]:
+                    - generic [ref=e238]: Kikkoman Japanese-Style Panko Bread Crumbs, 8 oz, $2.24 each. $0.28 per oz.
+                    - generic [ref=e239]:
+                      - generic [ref=e241] [cursor=pointer]:
+                        - checkbox "Select Kikkoman Japanese-Style Panko Bread Crumbs, 8 oz for add to cart" [ref=e243]
+                        - generic [ref=e244]: Select Kikkoman Japanese-Style Panko Bread Crumbs, 8 oz for add to cart
+                      - link [ref=e246] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/kikkoman-japanese-style-panko-bread-crumbs/957113
+                        - img [ref=e247]
+                      - generic [ref=e248]:
+                        - generic [ref=e249]:
+                          - link "Kikkoman Japanese-Style Panko Bread Crumbs, 8 oz" [ref=e250]:
+                            - /url: https://www.heb.com/product-detail/kikkoman-japanese-style-panko-bread-crumbs/957113
+                          - paragraph [ref=e251]: SNAP EBT
+                          - button "Aisle 7" [ref=e252] [cursor=pointer]:
+                            - generic [ref=e253]:
+                              - img [ref=e254]
+                              - generic [ref=e257]: Aisle 7
+                          - generic "Out of stock" [ref=e259]:
+                            - img [ref=e260]
+                            - generic [ref=e263]: Out of stock
+                        - generic [ref=e265]:
+                          - generic [ref=e266]: $2.24
+                          - generic [ref=e267]: "Qty: 1"
+              - listitem [ref=e268]:
+                - heading "Beverages" [level=2] [ref=e270]
+                - list [ref=e271]:
+                  - listitem [ref=e272]:
+                    - generic [ref=e273]: Austin Eastciders Cider Variety 12 pk Cans, 12 oz, $18.27 each. $0.13 per oz.
+                    - generic [ref=e274]:
+                      - generic [ref=e276] [cursor=pointer]:
+                        - checkbox "Select Austin Eastciders Cider Variety 12 pk Cans, 12 oz for add to cart" [ref=e278]
+                        - generic [ref=e279]: Select Austin Eastciders Cider Variety 12 pk Cans, 12 oz for add to cart
+                      - link [ref=e281] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/austin-eastciders-cider-variety-12-pk-cans/2114780
+                        - img [ref=e282]
+                      - generic [ref=e283]:
+                        - generic [ref=e284]:
+                          - link "Austin Eastciders Cider Variety 12 pk Cans, 12 oz" [ref=e285]:
+                            - /url: https://www.heb.com/product-detail/austin-eastciders-cider-variety-12-pk-cans/2114780
+                          - button "Aisle 1" [ref=e286] [cursor=pointer]:
+                            - generic [ref=e287]:
+                              - img [ref=e288]
+                              - generic [ref=e291]: Aisle 1
+                        - generic [ref=e293]:
+                          - generic [ref=e294]: $73.08
+                          - generic [ref=e295]: $18.27 / each
+                          - generic [ref=e296]: "Qty: 4"
+                  - listitem [ref=e297]:
+                    - generic [ref=e298]: Coca-Cola Zero Sugar Soda Soft Drink Fridge Pack 12 pk Cans, 12 oz, $8.42 each. $0.06 per oz.
+                    - generic [ref=e299]:
+                      - generic [ref=e301] [cursor=pointer]:
+                        - checkbox "Select Coca-Cola Zero Sugar Soda Soft Drink Fridge Pack 12 pk Cans, 12 oz for add to cart" [ref=e303]
+                        - generic [ref=e304]: Select Coca-Cola Zero Sugar Soda Soft Drink Fridge Pack 12 pk Cans, 12 oz for add to cart
+                      - link [ref=e306] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/coca-cola-zero-sugar-soda-soft-drink-fridge-pack-12-pk-cans/773861
+                        - img [ref=e307]
+                      - generic [ref=e308]:
+                        - generic [ref=e309]:
+                          - link "Coca-Cola Zero Sugar Soda Soft Drink Fridge Pack 12 pk Cans, 12 oz" [ref=e310]:
+                            - /url: https://www.heb.com/product-detail/coca-cola-zero-sugar-soda-soft-drink-fridge-pack-12-pk-cans/773861
+                          - button "Aisle 11" [ref=e311] [cursor=pointer]:
+                            - generic [ref=e312]:
+                              - img [ref=e313]
+                              - generic [ref=e316]: Aisle 11
+                        - generic [ref=e318]:
+                          - generic [ref=e319]: $8.42
+                          - generic [ref=e320]: "Qty: 1"
+                  - listitem [ref=e321]:
+                    - generic [ref=e322]: H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans, 12 oz, Price Cut $4.00 each, Regularly $4.25 each. $0.03 per oz.
+                    - generic [ref=e323]:
+                      - generic [ref=e325] [cursor=pointer]:
+                        - checkbox "Select H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans, 12 oz for add to cart" [ref=e327]
+                        - generic [ref=e328]: Select H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans, 12 oz for add to cart
+                      - link [ref=e330] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-unsweetened-lemon-sparkling-water-12-pk-cans/909595
+                      - generic [ref=e331]:
+                        - paragraph [ref=e333]: Price cut
+                        - generic [ref=e334]:
+                          - link "H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans, 12 oz" [ref=e335]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-unsweetened-lemon-sparkling-water-12-pk-cans/909595
+                          - paragraph [ref=e336]: SNAP EBT
+                          - button "Aisle 11" [ref=e337] [cursor=pointer]:
+                            - generic [ref=e338]:
+                              - img [ref=e339]
+                              - generic [ref=e342]: Aisle 11
+                        - generic [ref=e344]:
+                          - generic [ref=e345]: $12.75
+                          - generic [ref=e346]: $4.25 / each
+                          - generic [ref=e347]: "Qty: 3"
+                  - listitem [ref=e348]:
+                    - generic [ref=e349]: H-E-B 100% Orange Juice - No Pulp, 52 oz, $3.79 each. $0.07 per oz.
+                    - generic [ref=e350]:
+                      - generic [ref=e352] [cursor=pointer]:
+                        - checkbox "Select H-E-B 100% Orange Juice - No Pulp, 52 oz for add to cart" [ref=e354]
+                        - generic [ref=e355]: Select H-E-B 100% Orange Juice - No Pulp, 52 oz for add to cart
+                      - link [ref=e357] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-100-orange-juice-no-pulp/2297015
+                      - generic [ref=e358]:
+                        - generic [ref=e359]:
+                          - link "H-E-B 100% Orange Juice - No Pulp, 52 oz" [ref=e360]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-100-orange-juice-no-pulp/2297015
+                          - paragraph [ref=e361]: SNAP EBT
+                          - button "In Dairy on the Back Wall" [ref=e362] [cursor=pointer]:
+                            - generic [ref=e363]:
+                              - img [ref=e364]
+                              - generic [ref=e367]: In Dairy on the Back Wall
+                        - generic [ref=e369]:
+                          - generic [ref=e370]: $3.79
+                          - generic [ref=e371]: "Qty: 1"
+                  - listitem [ref=e372]:
+                    - generic [ref=e373]: Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee, 24 oz, $19.98 each. $0.83 per oz.
+                    - generic [ref=e374]:
+                      - generic [ref=e376] [cursor=pointer]:
+                        - checkbox "Select Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee, 24 oz for add to cart" [ref=e378]
+                        - generic [ref=e379]: Select Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee, 24 oz for add to cart
+                      - link [ref=e381] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/independence-coffee-madalyn-s-backyard-pecan-whole-bean-coffee/1359726
+                      - generic [ref=e382]:
+                        - generic [ref=e383]:
+                          - link "Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee, 24 oz" [ref=e384]:
+                            - /url: https://www.heb.com/product-detail/independence-coffee-madalyn-s-backyard-pecan-whole-bean-coffee/1359726
+                          - paragraph [ref=e385]: SNAP EBT
+                          - button "Aisle 23" [ref=e386] [cursor=pointer]:
+                            - generic [ref=e387]:
+                              - img [ref=e388]
+                              - generic [ref=e391]: Aisle 23
+                        - generic [ref=e393]:
+                          - generic [ref=e394]: $19.98
+                          - generic [ref=e395]: "Qty: 1"
+              - listitem [ref=e396]:
+                - heading "Dairy & eggs" [level=2] [ref=e398]
+                - list [ref=e399]:
+                  - listitem [ref=e400]:
+                    - generic [ref=e401]: Central Market Organics 2% Reduced Fat Milk, 1/2 gal, $4.04 each. $0.06 per oz.
+                    - generic [ref=e402]:
+                      - generic [ref=e404] [cursor=pointer]:
+                        - checkbox "Select Central Market Organics 2% Reduced Fat Milk, 1/2 gal for add to cart" [ref=e406]
+                        - generic [ref=e407]: Select Central Market Organics 2% Reduced Fat Milk, 1/2 gal for add to cart
+                      - link [ref=e409] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/central-market-organics-2-reduced-fat-milk/690987
+                      - generic [ref=e410]:
+                        - generic [ref=e411]:
+                          - link "Central Market Organics 2% Reduced Fat Milk, 1/2 gal" [ref=e412]:
+                            - /url: https://www.heb.com/product-detail/central-market-organics-2-reduced-fat-milk/690987
+                          - paragraph [ref=e413]: SNAP EBT
+                          - button "In Dairy on the Back Wall" [ref=e414] [cursor=pointer]:
+                            - generic [ref=e415]:
+                              - img [ref=e416]
+                              - generic [ref=e419]: In Dairy on the Back Wall
+                        - generic [ref=e421]:
+                          - generic [ref=e422]: $12.12
+                          - generic [ref=e423]: $4.04 / each
+                          - generic [ref=e424]: "Qty: 3"
+                  - listitem [ref=e425]:
+                    - generic [ref=e426]: H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, $4.79 each. $0.27 per ct.
+                    - generic [ref=e427]:
+                      - generic [ref=e429] [cursor=pointer]:
+                        - checkbox "Select H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct for add to cart" [ref=e431]
+                        - generic [ref=e432]: Select H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct for add to cart
+                      - link [ref=e434] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-grade-aa-cage-free-extra-large-brown-eggs/8271501
+                      - generic [ref=e435]:
+                        - generic [ref=e436]:
+                          - link "H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct" [ref=e437]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-grade-aa-cage-free-extra-large-brown-eggs/8271501
+                          - paragraph [ref=e438]: SNAP EBT
+                          - button "In Dairy on the Right Wall" [ref=e439] [cursor=pointer]:
+                            - generic [ref=e440]:
+                              - img [ref=e441]
+                              - generic [ref=e444]: In Dairy on the Right Wall
+                        - generic [ref=e446]:
+                          - generic [ref=e447]: $4.79
+                          - generic [ref=e448]: "Qty: 1"
+                  - listitem [ref=e449]:
+                    - generic [ref=e450]: H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese, 16 oz, $2.98 each. $0.19 per oz.
+                    - generic [ref=e451]:
+                      - generic [ref=e453] [cursor=pointer]:
+                        - checkbox "Select H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese, 16 oz for add to cart" [ref=e455]
+                        - generic [ref=e456]: Select H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese, 16 oz for add to cart
+                      - link [ref=e458] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-mootopia-lactose-free-small-curd-cottage-cheese/4947501
+                      - generic [ref=e459]:
+                        - generic [ref=e460]:
+                          - link "H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese, 16 oz" [ref=e461]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-mootopia-lactose-free-small-curd-cottage-cheese/4947501
+                          - paragraph [ref=e462]: SNAP EBT
+                          - button "In Dairy on the Right Wall" [ref=e463] [cursor=pointer]:
+                            - generic [ref=e464]:
+                              - img [ref=e465]
+                              - generic [ref=e468]: In Dairy on the Right Wall
+                        - generic [ref=e470]:
+                          - generic [ref=e471]: $2.98
+                          - generic [ref=e472]: "Qty: 1"
+                  - listitem [ref=e473]:
+                    - generic [ref=e474]: H-E-B Salted Sweet Cream Spreadable Butter, 15 oz, $3.45 each. $0.23 per oz.
+                    - generic [ref=e475]:
+                      - generic [ref=e477] [cursor=pointer]:
+                        - checkbox "Select H-E-B Salted Sweet Cream Spreadable Butter, 15 oz for add to cart" [ref=e479]
+                        - generic [ref=e480]: Select H-E-B Salted Sweet Cream Spreadable Butter, 15 oz for add to cart
+                      - link [ref=e482] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-salted-sweet-cream-spreadable-butter/1587476
+                      - generic [ref=e483]:
+                        - generic [ref=e484]:
+                          - link "H-E-B Salted Sweet Cream Spreadable Butter, 15 oz" [ref=e485]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-salted-sweet-cream-spreadable-butter/1587476
+                          - paragraph [ref=e486]: SNAP EBT
+                          - button "In Dairy on the Right Wall" [ref=e487] [cursor=pointer]:
+                            - generic [ref=e488]:
+                              - img [ref=e489]
+                              - generic [ref=e492]: In Dairy on the Right Wall
+                        - generic [ref=e494]:
+                          - generic [ref=e495]: $3.45
+                          - generic [ref=e496]: "Qty: 1"
+                  - listitem [ref=e497]:
+                    - generic [ref=e498]: H-E-B Sweet Cream Unsalted Butter Sticks, 4 ct, Price Cut $3.78 each, Regularly $3.98 each. $0.24 per oz.
+                    - generic [ref=e499]:
+                      - generic [ref=e501] [cursor=pointer]:
+                        - checkbox "Select H-E-B Sweet Cream Unsalted Butter Sticks, 4 ct for add to cart" [ref=e503]
+                        - generic [ref=e504]: Select H-E-B Sweet Cream Unsalted Butter Sticks, 4 ct for add to cart
+                      - link [ref=e506] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-sweet-cream-unsalted-butter-sticks/310756
+                      - generic [ref=e507]:
+                        - paragraph [ref=e509]: Price cut
+                        - generic [ref=e510]:
+                          - link "H-E-B Sweet Cream Unsalted Butter Sticks, 4 ct" [ref=e511]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-sweet-cream-unsalted-butter-sticks/310756
+                          - paragraph [ref=e512]: SNAP EBT
+                          - button "In Dairy on the Right Wall" [ref=e513] [cursor=pointer]:
+                            - generic [ref=e514]:
+                              - img [ref=e515]
+                              - generic [ref=e518]: In Dairy on the Right Wall
+                        - generic [ref=e520]:
+                          - generic [ref=e521]: $3.98
+                          - generic [ref=e522]: "Qty: 1"
+                  - listitem [ref=e523]:
+                    - generic [ref=e524]: H-E-B Whipped Plain Cream Cheese Spread, 12 oz, $2.92 each. $0.24 per oz.
+                    - generic [ref=e525]:
+                      - generic [ref=e527] [cursor=pointer]:
+                        - checkbox "Select H-E-B Whipped Plain Cream Cheese Spread, 12 oz for add to cart" [ref=e529]
+                        - generic [ref=e530]: Select H-E-B Whipped Plain Cream Cheese Spread, 12 oz for add to cart
+                      - link [ref=e532] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-whipped-plain-cream-cheese-spread/1239241
+                      - generic [ref=e533]:
+                        - generic [ref=e534]:
+                          - link "H-E-B Whipped Plain Cream Cheese Spread, 12 oz" [ref=e535]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-whipped-plain-cream-cheese-spread/1239241
+                          - paragraph [ref=e536]: SNAP EBT
+                          - button "In Dairy on the Right Wall" [ref=e537] [cursor=pointer]:
+                            - generic [ref=e538]:
+                              - img [ref=e539]
+                              - generic [ref=e542]: In Dairy on the Right Wall
+                        - generic [ref=e544]:
+                          - generic [ref=e545]: $2.92
+                          - generic [ref=e546]: "Qty: 1"
+                  - listitem [ref=e547]:
+                    - generic [ref=e548]: H-E-B Whole Milk Ricotta Cheese, 15 oz, $2.89 each. $0.19 per oz.
+                    - generic [ref=e549]:
+                      - generic [ref=e551] [cursor=pointer]:
+                        - checkbox "Select H-E-B Whole Milk Ricotta Cheese, 15 oz for add to cart" [ref=e553]
+                        - generic [ref=e554]: Select H-E-B Whole Milk Ricotta Cheese, 15 oz for add to cart
+                      - link [ref=e556] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-whole-milk-ricotta-cheese/515646
+                      - generic [ref=e557]:
+                        - generic [ref=e558]:
+                          - link "H-E-B Whole Milk Ricotta Cheese, 15 oz" [ref=e559]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-whole-milk-ricotta-cheese/515646
+                          - paragraph [ref=e560]: SNAP EBT
+                          - button "In Meat Market on the Back Wall" [ref=e561] [cursor=pointer]:
+                            - generic [ref=e562]:
+                              - img [ref=e563]
+                              - generic [ref=e566]: In Meat Market on the Back Wall
+                        - generic [ref=e568]:
+                          - generic [ref=e569]: $2.89
+                          - generic [ref=e570]: "Qty: 1"
+              - listitem [ref=e571]:
+                - heading "Deli & prepared food" [level=2] [ref=e573]
+                - list [ref=e574]:
+                  - listitem [ref=e575]:
+                    - generic [ref=e576]: H-E-B Deli Roasted Red Pepper Hummus, 16 oz, $4.48 each. $0.28 per oz.
+                    - generic [ref=e577]:
+                      - generic [ref=e579] [cursor=pointer]:
+                        - checkbox "Select H-E-B Deli Roasted Red Pepper Hummus, 16 oz for add to cart" [ref=e581]
+                        - generic [ref=e582]: Select H-E-B Deli Roasted Red Pepper Hummus, 16 oz for add to cart
+                      - link [ref=e584] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-deli-roasted-red-pepper-hummus/1837111
+                      - generic [ref=e585]:
+                        - generic [ref=e586]:
+                          - link "H-E-B Deli Roasted Red Pepper Hummus, 16 oz" [ref=e587]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-deli-roasted-red-pepper-hummus/1837111
+                          - paragraph [ref=e588]: SNAP EBT
+                          - button "Back Edge of Deli" [ref=e589] [cursor=pointer]:
+                            - generic [ref=e590]:
+                              - img [ref=e591]
+                              - generic [ref=e594]: Back Edge of Deli
+                        - generic [ref=e596]:
+                          - generic [ref=e597]: $4.48
+                          - generic [ref=e598]: "Qty: 1"
+                  - listitem [ref=e599]:
+                    - generic [ref=e600]: H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat, 16 oz, $15.99 each. $1.00 per oz.
+                    - generic [ref=e601]:
+                      - generic [ref=e603] [cursor=pointer]:
+                        - checkbox "Select H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat, 16 oz for add to cart" [ref=e605]
+                        - generic [ref=e606]: Select H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat, 16 oz for add to cart
+                      - link [ref=e608] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-mi-tienda-fully-cooked-barbacoa-seasoned-beef-cheek-meat/1833487
+                      - generic [ref=e609]:
+                        - generic [ref=e610]:
+                          - link "H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat, 16 oz" [ref=e611]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-mi-tienda-fully-cooked-barbacoa-seasoned-beef-cheek-meat/1833487
+                          - paragraph [ref=e612]: SNAP EBT
+                          - button "Back Edge of Deli" [ref=e613] [cursor=pointer]:
+                            - generic [ref=e614]:
+                              - img [ref=e615]
+                              - generic [ref=e618]: Back Edge of Deli
+                        - generic [ref=e620]:
+                          - generic [ref=e621]: $15.99
+                          - generic [ref=e622]: "Qty: 1"
+                  - listitem [ref=e623]:
+                    - generic [ref=e624]: P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar, 2.3 oz, $1.96 each. $0.85 per oz.
+                    - generic [ref=e625]:
+                      - generic [ref=e627] [cursor=pointer]:
+                        - checkbox "Select P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar, 2.3 oz for add to cart" [ref=e629]
+                        - generic [ref=e630]: Select P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar, 2.3 oz for add to cart
+                      - link [ref=e632] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/p3-portable-protein-pack-snack-tray-turkey-ham-cheddar/2022127
+                      - generic [ref=e633]:
+                        - generic [ref=e634]:
+                          - link "P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar, 2.3 oz" [ref=e635]:
+                            - /url: https://www.heb.com/product-detail/p3-portable-protein-pack-snack-tray-turkey-ham-cheddar/2022127
+                          - paragraph [ref=e636]: SNAP EBT
+                          - button "In Meat Market on the Back Wall" [ref=e637] [cursor=pointer]:
+                            - generic [ref=e638]:
+                              - img [ref=e639]
+                              - generic [ref=e642]: In Meat Market on the Back Wall
+                        - generic [ref=e644]:
+                          - generic [ref=e645]: $5.88
+                          - generic [ref=e646]: $1.96 / each
+                          - generic [ref=e647]: "Qty: 3"
+              - listitem [ref=e648]:
+                - heading "Everyday essentials" [level=2] [ref=e650]
+                - list [ref=e651]:
+                  - listitem [ref=e652]:
+                    - generic [ref=e653]: Cascade Free & Clear Dishwasher Detergent Liquid Gel, Lemon Scent, 75 oz, $9.94 each. $0.13 per oz.
+                    - generic [ref=e654]:
+                      - generic [ref=e656] [cursor=pointer]:
+                        - checkbox "Select Cascade Free & Clear Dishwasher Detergent Liquid Gel, Lemon Scent, 75 oz for add to cart" [ref=e658]
+                        - generic [ref=e659]: Select Cascade Free & Clear Dishwasher Detergent Liquid Gel, Lemon Scent, 75 oz for add to cart
+                      - link [ref=e661] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/cascade-free-clear-dishwasher-detergent-liquid-gel-lemon-scent/9037013
+                      - generic [ref=e662]:
+                        - generic [ref=e663]:
+                          - link "Cascade Free & Clear Dishwasher Detergent Liquid Gel, Lemon Scent, 75 oz" [ref=e664]:
+                            - /url: https://www.heb.com/product-detail/cascade-free-clear-dishwasher-detergent-liquid-gel-lemon-scent/9037013
+                          - button "Aisle 27" [ref=e665] [cursor=pointer]:
+                            - generic [ref=e666]:
+                              - img [ref=e667]
+                              - generic [ref=e670]: Aisle 27
+                        - generic [ref=e672]:
+                          - generic [ref=e673]: $9.94
+                          - generic [ref=e674]: "Qty: 1"
+                  - listitem [ref=e675]:
+                    - generic [ref=e676]: H-E-B Our Finest Invent-A-Size Paper Towels, 12 Double Rolls, $16.29 each. $0.03 per sq ft.
+                    - generic [ref=e677]:
+                      - generic [ref=e679] [cursor=pointer]:
+                        - checkbox "Select H-E-B Our Finest Invent-A-Size Paper Towels, 12 Double Rolls for add to cart" [ref=e681]
+                        - generic [ref=e682]: Select H-E-B Our Finest Invent-A-Size Paper Towels, 12 Double Rolls for add to cart
+                      - link [ref=e684] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-our-finest-invent-a-size-paper-towels/2034188
+                      - generic [ref=e685]:
+                        - generic [ref=e686]:
+                          - link "H-E-B Our Finest Invent-A-Size Paper Towels, 12 Double Rolls" [ref=e687]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-our-finest-invent-a-size-paper-towels/2034188
+                          - button "Aisle 26" [ref=e688] [cursor=pointer]:
+                            - generic [ref=e689]:
+                              - img [ref=e690]
+                              - generic [ref=e693]: Aisle 26
+                        - generic [ref=e695]:
+                          - generic [ref=e696]: $16.29
+                          - generic [ref=e697]: "Qty: 1"
+                  - listitem [ref=e698]:
+                    - generic [ref=e699]: H-E-B Our Finest Ultra Strong Toilet Paper - Texas-Size Pack, 36 Mega Rolls, $29.98 each. $0.03 per sq ft.
+                    - generic [ref=e700]:
+                      - generic [ref=e702] [cursor=pointer]:
+                        - checkbox "Select H-E-B Our Finest Ultra Strong Toilet Paper - Texas-Size Pack, 36 Mega Rolls for add to cart" [ref=e704]
+                        - generic [ref=e705]: Select H-E-B Our Finest Ultra Strong Toilet Paper - Texas-Size Pack, 36 Mega Rolls for add to cart
+                      - link [ref=e707] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-our-finest-ultra-strong-toilet-paper-texas-size-pack/6299121
+                      - generic [ref=e708]:
+                        - generic [ref=e709]:
+                          - link "H-E-B Our Finest Ultra Strong Toilet Paper - Texas-Size Pack, 36 Mega Rolls" [ref=e710]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-our-finest-ultra-strong-toilet-paper-texas-size-pack/6299121
+                          - button "Aisle 26" [ref=e711] [cursor=pointer]:
+                            - generic [ref=e712]:
+                              - img [ref=e713]
+                              - generic [ref=e716]: Aisle 26
+                        - generic [ref=e718]:
+                          - generic [ref=e719]: $29.98
+                          - generic [ref=e720]: "Qty: 1"
+                  - listitem [ref=e721]:
+                    - generic [ref=e722]: H-E-B Texas Tough Parchment Paper, 45 sq ft, $2.79 each. $0.06 per sq ft.
+                    - generic [ref=e723]:
+                      - generic [ref=e725] [cursor=pointer]:
+                        - checkbox "Select H-E-B Texas Tough Parchment Paper, 45 sq ft for add to cart" [ref=e727]
+                        - generic [ref=e728]: Select H-E-B Texas Tough Parchment Paper, 45 sq ft for add to cart
+                      - link [ref=e730] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-texas-tough-parchment-paper/1801169
+                      - generic [ref=e731]:
+                        - generic [ref=e732]:
+                          - link "H-E-B Texas Tough Parchment Paper, 45 sq ft" [ref=e733]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-texas-tough-parchment-paper/1801169
+                          - button "Aisle 25" [ref=e734] [cursor=pointer]:
+                            - generic [ref=e735]:
+                              - img [ref=e736]
+                              - generic [ref=e739]: Aisle 25
+                        - generic [ref=e741]:
+                          - generic [ref=e742]: $2.79
+                          - generic [ref=e743]: "Qty: 1"
+                  - listitem [ref=e744]:
+                    - generic [ref=e745]: H-E-B Texas Tough Tall Kitchen Flex Trash Bags, 13 Gallon - Fresh Scent, 80 ct, $11.22 each. $0.14 per ct.
+                    - generic [ref=e746]:
+                      - generic [ref=e748] [cursor=pointer]:
+                        - checkbox "Select H-E-B Texas Tough Tall Kitchen Flex Trash Bags, 13 Gallon - Fresh Scent, 80 ct for add to cart" [ref=e750]
+                        - generic [ref=e751]: Select H-E-B Texas Tough Tall Kitchen Flex Trash Bags, 13 Gallon - Fresh Scent, 80 ct for add to cart
+                      - link [ref=e753] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-texas-tough-tall-kitchen-flex-trash-bags-13-gallon-fresh-scent/5734015
+                      - generic [ref=e754]:
+                        - generic [ref=e755]:
+                          - link "H-E-B Texas Tough Tall Kitchen Flex Trash Bags, 13 Gallon - Fresh Scent, 80 ct" [ref=e756]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-texas-tough-tall-kitchen-flex-trash-bags-13-gallon-fresh-scent/5734015
+                          - button "Aisle 25" [ref=e757] [cursor=pointer]:
+                            - generic [ref=e758]:
+                              - img [ref=e759]
+                              - generic [ref=e762]: Aisle 25
+                        - generic [ref=e764]:
+                          - generic [ref=e765]: $11.22
+                          - generic [ref=e766]: "Qty: 1"
+                  - listitem [ref=e767]:
+                    - generic [ref=e768]: Tide Free & Gentle Liquid Laundry Detergent, 100 Loads, 132 oz, $19.94 each. $0.20 per load. Coupon available.
+                    - generic [ref=e769]:
+                      - generic [ref=e771] [cursor=pointer]:
+                        - checkbox "Select Tide Free & Gentle Liquid Laundry Detergent, 100 Loads, 132 oz for add to cart" [ref=e773]
+                        - generic [ref=e774]: Select Tide Free & Gentle Liquid Laundry Detergent, 100 Loads, 132 oz for add to cart
+                      - link [ref=e776] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/tide-free-gentle-liquid-laundry-detergent-100-loads/6320083
+                      - generic [ref=e777]:
+                        - paragraph [ref=e779]: Coupon
+                        - generic [ref=e780]:
+                          - link "Tide Free & Gentle Liquid Laundry Detergent, 100 Loads, 132 oz" [ref=e781]:
+                            - /url: https://www.heb.com/product-detail/tide-free-gentle-liquid-laundry-detergent-100-loads/6320083
+                          - button "Aisle 28" [ref=e782] [cursor=pointer]:
+                            - generic [ref=e783]:
+                              - img [ref=e784]
+                              - generic [ref=e787]: Aisle 28
+                        - generic [ref=e789]:
+                          - generic [ref=e790]: $19.94
+                          - generic [ref=e791]: "Qty: 1"
+              - listitem [ref=e792]:
+                - heading "Frozen food" [level=2] [ref=e794]
+                - list [ref=e795]:
+                  - listitem [ref=e796]:
+                    - generic [ref=e797]: Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp, 41 - 50 ct/lb, 2 lbs, $13.96 each. $0.44 per oz.
+                    - generic [ref=e798]:
+                      - generic [ref=e800] [cursor=pointer]:
+                        - checkbox "Select Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp, 41 - 50 ct/lb, 2 lbs for add to cart" [ref=e802]
+                        - generic [ref=e803]: Select Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp, 41 - 50 ct/lb, 2 lbs for add to cart
+                      - link [ref=e805] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/great-catch-frozen-peeled-deveined-tail-off-large-raw-shrimp-41-50-ct-lb/899288
+                      - generic [ref=e806]:
+                        - generic [ref=e807]:
+                          - link "Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp, 41 - 50 ct/lb, 2 lbs" [ref=e808]:
+                            - /url: https://www.heb.com/product-detail/great-catch-frozen-peeled-deveined-tail-off-large-raw-shrimp-41-50-ct-lb/899288
+                          - paragraph [ref=e809]: SNAP EBT
+                          - button "In Seafood on the Left Wall" [ref=e810] [cursor=pointer]:
+                            - generic [ref=e811]:
+                              - img [ref=e812]
+                              - generic [ref=e815]: In Seafood on the Left Wall
+                        - generic [ref=e817]:
+                          - generic [ref=e818]: $13.96
+                          - generic [ref=e819]: "Qty: 1"
+                  - listitem [ref=e820]:
+                    - generic [ref=e821]: H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal, 9 oz, Price Cut $2.97 each, Regularly $3.98 each. $0.33 per oz.
+                    - generic [ref=e822]:
+                      - generic [ref=e824] [cursor=pointer]:
+                        - checkbox "Select H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal, 9 oz for add to cart" [ref=e826]
+                        - generic [ref=e827]: Select H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal, 9 oz for add to cart
+                      - link [ref=e829] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-chicken-bacon-ranch-mac-cheese-bowl-frozen-meal/6589005
+                      - generic [ref=e830]:
+                        - paragraph [ref=e832]: Price cut
+                        - generic [ref=e833]:
+                          - link "H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal, 9 oz" [ref=e834]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-chicken-bacon-ranch-mac-cheese-bowl-frozen-meal/6589005
+                          - paragraph [ref=e835]: SNAP EBT
+                          - button "Aisle 14" [ref=e836] [cursor=pointer]:
+                            - generic [ref=e837]:
+                              - img [ref=e838]
+                              - generic [ref=e841]: Aisle 14
+                        - generic [ref=e843]:
+                          - generic [ref=e844]: $3.98
+                          - generic [ref=e845]: "Qty: 1"
+                  - listitem [ref=e846]:
+                    - generic [ref=e847]: H-E-B Frozen Baby Broccoli Florets, 16 oz, $1.98 each. $0.12 per oz.
+                    - generic [ref=e848]:
+                      - generic [ref=e850] [cursor=pointer]:
+                        - checkbox "Select H-E-B Frozen Baby Broccoli Florets, 16 oz for add to cart" [ref=e852]
+                        - generic [ref=e853]: Select H-E-B Frozen Baby Broccoli Florets, 16 oz for add to cart
+                      - link [ref=e855] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-frozen-baby-broccoli-florets/902097
+                      - generic [ref=e856]:
+                        - generic [ref=e857]:
+                          - link "H-E-B Frozen Baby Broccoli Florets, 16 oz" [ref=e858]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-frozen-baby-broccoli-florets/902097
+                          - paragraph [ref=e859]: SNAP EBT
+                          - button "Aisle 15" [ref=e860] [cursor=pointer]:
+                            - generic [ref=e861]:
+                              - img [ref=e862]
+                              - generic [ref=e865]: Aisle 15
+                        - generic [ref=e867]:
+                          - generic [ref=e868]: $1.98
+                          - generic [ref=e869]: "Qty: 1"
+                  - listitem [ref=e870]:
+                    - generic [ref=e871]: H-E-B Frozen Chopped Spinach, 16 oz, $1.26 each. $0.08 per oz.
+                    - generic [ref=e872]:
+                      - generic [ref=e874] [cursor=pointer]:
+                        - checkbox "Select H-E-B Frozen Chopped Spinach, 16 oz for add to cart" [ref=e876]
+                        - generic [ref=e877]: Select H-E-B Frozen Chopped Spinach, 16 oz for add to cart
+                      - link [ref=e879] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-frozen-chopped-spinach/716418
+                      - generic [ref=e880]:
+                        - generic [ref=e881]:
+                          - link "H-E-B Frozen Chopped Spinach, 16 oz" [ref=e882]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-frozen-chopped-spinach/716418
+                          - paragraph [ref=e883]: SNAP EBT
+                          - button "Aisle 15" [ref=e884] [cursor=pointer]:
+                            - generic [ref=e885]:
+                              - img [ref=e886]
+                              - generic [ref=e889]: Aisle 15
+                        - generic [ref=e891]:
+                          - generic [ref=e892]: $1.26
+                          - generic [ref=e893]: "Qty: 1"
+                  - listitem [ref=e894]:
+                    - generic [ref=e895]: H-E-B Frozen Steamable Petite Peas, 12 oz, $1.58 each. $0.13 per oz.
+                    - generic [ref=e896]:
+                      - generic [ref=e898] [cursor=pointer]:
+                        - checkbox "Select H-E-B Frozen Steamable Petite Peas, 12 oz for add to cart" [ref=e900]
+                        - generic [ref=e901]: Select H-E-B Frozen Steamable Petite Peas, 12 oz for add to cart
+                      - link [ref=e903] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-frozen-steamable-petite-peas/939779
+                      - generic [ref=e904]:
+                        - generic [ref=e905]:
+                          - link "H-E-B Frozen Steamable Petite Peas, 12 oz" [ref=e906]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-frozen-steamable-petite-peas/939779
+                          - paragraph [ref=e907]: SNAP EBT
+                          - button "Aisle 15" [ref=e908] [cursor=pointer]:
+                            - generic [ref=e909]:
+                              - img [ref=e910]
+                              - generic [ref=e913]: Aisle 15
+                        - generic [ref=e915]:
+                          - generic [ref=e916]: $1.58
+                          - generic [ref=e917]: "Qty: 1"
+                  - listitem [ref=e918]:
+                    - generic [ref=e919]: H-E-B Frozen Steamable Whole Green Beans, 12 oz, $1.48 each. $0.12 per oz.
+                    - generic [ref=e920]:
+                      - generic [ref=e922] [cursor=pointer]:
+                        - checkbox "Select H-E-B Frozen Steamable Whole Green Beans, 12 oz for add to cart" [ref=e924]
+                        - generic [ref=e925]: Select H-E-B Frozen Steamable Whole Green Beans, 12 oz for add to cart
+                      - link [ref=e927] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-frozen-steamable-whole-green-beans/1431730
+                      - generic [ref=e928]:
+                        - generic [ref=e929]:
+                          - link "H-E-B Frozen Steamable Whole Green Beans, 12 oz" [ref=e930]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-frozen-steamable-whole-green-beans/1431730
+                          - paragraph [ref=e931]: SNAP EBT
+                          - button "Aisle 15" [ref=e932] [cursor=pointer]:
+                            - generic [ref=e933]:
+                              - img [ref=e934]
+                              - generic [ref=e937]: Aisle 15
+                        - generic [ref=e939]:
+                          - generic [ref=e940]: $1.48
+                          - generic [ref=e941]: "Qty: 1"
+                  - listitem [ref=e942]:
+                    - generic [ref=e943]: H-E-B Frozen Waffles - Buttermilk, 10 ct, $2.15 each. $0.21 per ct.
+                    - generic [ref=e944]:
+                      - generic [ref=e946] [cursor=pointer]:
+                        - checkbox "Select H-E-B Frozen Waffles - Buttermilk, 10 ct for add to cart" [ref=e948]
+                        - generic [ref=e949]: Select H-E-B Frozen Waffles - Buttermilk, 10 ct for add to cart
+                      - link [ref=e951] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-frozen-waffles-buttermilk/123856
+                      - generic [ref=e952]:
+                        - generic [ref=e953]:
+                          - link "H-E-B Frozen Waffles - Buttermilk, 10 ct" [ref=e954]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-frozen-waffles-buttermilk/123856
+                          - paragraph [ref=e955]: SNAP EBT
+                          - button "Aisle 15" [ref=e956] [cursor=pointer]:
+                            - generic [ref=e957]:
+                              - img [ref=e958]
+                              - generic [ref=e961]: Aisle 15
+                        - generic [ref=e963]:
+                          - generic [ref=e964]: $2.15
+                          - generic [ref=e965]: "Qty: 1"
+                  - listitem [ref=e966]:
+                    - generic [ref=e967]: H-E-B Poblano Chicken Lasagna Frozen Meal, 11.4 oz, Price Cut $2.82 each, Regularly $3.48 each. $0.25 per oz.
+                    - generic [ref=e968]:
+                      - generic [ref=e970] [cursor=pointer]:
+                        - checkbox "Select H-E-B Poblano Chicken Lasagna Frozen Meal, 11.4 oz for add to cart" [ref=e972]
+                        - generic [ref=e973]: Select H-E-B Poblano Chicken Lasagna Frozen Meal, 11.4 oz for add to cart
+                      - link [ref=e975] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-poblano-chicken-lasagna-frozen-meal/2803502
+                      - generic [ref=e976]:
+                        - paragraph [ref=e978]: Price cut
+                        - generic [ref=e979]:
+                          - link "H-E-B Poblano Chicken Lasagna Frozen Meal, 11.4 oz" [ref=e980]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-poblano-chicken-lasagna-frozen-meal/2803502
+                          - paragraph [ref=e981]: SNAP EBT
+                          - button "Aisle 14" [ref=e982] [cursor=pointer]:
+                            - generic [ref=e983]:
+                              - img [ref=e984]
+                              - generic [ref=e987]: Aisle 14
+                        - generic [ref=e989]:
+                          - generic [ref=e990]: $3.48
+                          - generic [ref=e991]: "Qty: 1"
+                  - listitem [ref=e992]:
+                    - generic [ref=e993]: H-E-B Rising Crust Frozen Pizza - Cheese, 28.6 oz, Price Cut $4.08 each, Regularly $4.28 each. $0.14 per oz.
+                    - generic [ref=e994]:
+                      - generic [ref=e996] [cursor=pointer]:
+                        - checkbox "Select H-E-B Rising Crust Frozen Pizza - Cheese, 28.6 oz for add to cart" [ref=e998]
+                        - generic [ref=e999]: Select H-E-B Rising Crust Frozen Pizza - Cheese, 28.6 oz for add to cart
+                      - link [ref=e1001] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-rising-crust-frozen-pizza-cheese/288582
+                      - generic [ref=e1002]:
+                        - paragraph [ref=e1004]: Price cut
+                        - generic [ref=e1005]:
+                          - link "H-E-B Rising Crust Frozen Pizza - Cheese, 28.6 oz" [ref=e1006]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-rising-crust-frozen-pizza-cheese/288582
+                          - paragraph [ref=e1007]: SNAP EBT
+                          - button "Aisle 13" [ref=e1008] [cursor=pointer]:
+                            - generic [ref=e1009]:
+                              - img [ref=e1010]
+                              - generic [ref=e1013]: Aisle 13
+                        - generic [ref=e1015]:
+                          - generic [ref=e1016]: $4.28
+                          - generic [ref=e1017]: "Qty: 1"
+                  - listitem [ref=e1018]:
+                    - generic [ref=e1019]: H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal, 9 oz, Price Cut $2.97 each, Regularly $3.98 each. $0.33 per oz.
+                    - generic [ref=e1020]:
+                      - generic [ref=e1022] [cursor=pointer]:
+                        - checkbox "Select H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal, 9 oz for add to cart" [ref=e1024]
+                        - generic [ref=e1025]: Select H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal, 9 oz for add to cart
+                      - link [ref=e1027] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-smoked-brisket-mac-cheese-bowl-frozen-meal/6589003
+                      - generic [ref=e1028]:
+                        - paragraph [ref=e1030]: Price cut
+                        - generic [ref=e1031]:
+                          - link "H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal, 9 oz" [ref=e1032]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-smoked-brisket-mac-cheese-bowl-frozen-meal/6589003
+                          - paragraph [ref=e1033]: SNAP EBT
+                          - button "Aisle 14" [ref=e1034] [cursor=pointer]:
+                            - generic [ref=e1035]:
+                              - img [ref=e1036]
+                              - generic [ref=e1039]: Aisle 14
+                        - generic [ref=e1041]:
+                          - generic [ref=e1042]: $3.98
+                          - generic [ref=e1043]: "Qty: 1"
+                  - listitem [ref=e1044]:
+                    - generic [ref=e1045]: H-E-B Vegetable Lasagna Frozen Meal, 11.4 oz, Price Cut $2.82 each, Regularly $3.48 each. $0.25 per oz.
+                    - generic [ref=e1046]:
+                      - generic [ref=e1048] [cursor=pointer]:
+                        - checkbox "Select H-E-B Vegetable Lasagna Frozen Meal, 11.4 oz for add to cart" [ref=e1050]
+                        - generic [ref=e1051]: Select H-E-B Vegetable Lasagna Frozen Meal, 11.4 oz for add to cart
+                      - link [ref=e1053] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-vegetable-lasagna-frozen-meal/2803503
+                      - generic [ref=e1054]:
+                        - paragraph [ref=e1056]: Price cut
+                        - generic [ref=e1057]:
+                          - link "H-E-B Vegetable Lasagna Frozen Meal, 11.4 oz" [ref=e1058]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-vegetable-lasagna-frozen-meal/2803503
+                          - paragraph [ref=e1059]: SNAP EBT
+                          - button "Aisle 14" [ref=e1060] [cursor=pointer]:
+                            - generic [ref=e1061]:
+                              - img [ref=e1062]
+                              - generic [ref=e1065]: Aisle 14
+                        - generic [ref=e1067]:
+                          - generic [ref=e1068]: $3.48
+                          - generic [ref=e1069]: "Qty: 1"
+                  - listitem [ref=e1070]:
+                    - generic [ref=e1071]: Marie Callender's Chicken Pot Pie, 10 oz, $2.77 each. $0.28 per oz.
+                    - generic [ref=e1072]:
+                      - generic [ref=e1074] [cursor=pointer]:
+                        - checkbox "Select Marie Callender's Chicken Pot Pie, 10 oz for add to cart" [ref=e1076]
+                        - generic [ref=e1077]: Select Marie Callender's Chicken Pot Pie, 10 oz for add to cart
+                      - link [ref=e1079] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/marie-callender-s-chicken-pot-pie/81714
+                      - generic [ref=e1080]:
+                        - generic [ref=e1081]:
+                          - link "Marie Callender's Chicken Pot Pie, 10 oz" [ref=e1082]:
+                            - /url: https://www.heb.com/product-detail/marie-callender-s-chicken-pot-pie/81714
+                          - paragraph [ref=e1083]: SNAP EBT
+                          - button "Aisle 14" [ref=e1084] [cursor=pointer]:
+                            - generic [ref=e1085]:
+                              - img [ref=e1086]
+                              - generic [ref=e1089]: Aisle 14
+                        - generic [ref=e1091]:
+                          - generic [ref=e1092]: $5.54
+                          - generic [ref=e1093]: $2.77 / each
+                          - generic [ref=e1094]: "Qty: 2"
+                  - listitem [ref=e1095]:
+                    - generic [ref=e1096]: Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza, 13.8 oz, $6.48 each. $0.47 per oz.
+                    - generic [ref=e1097]:
+                      - generic [ref=e1099] [cursor=pointer]:
+                        - checkbox "Select Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza, 13.8 oz for add to cart" [ref=e1101]
+                        - generic [ref=e1102]: Select Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza, 13.8 oz for add to cart
+                      - link [ref=e1104] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-amalfi-coast-stone-baked-italian-pizza/2894529
+                      - generic [ref=e1105]:
+                        - generic [ref=e1106]:
+                          - link "Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza, 13.8 oz" [ref=e1107]:
+                            - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-amalfi-coast-stone-baked-italian-pizza/2894529
+                          - paragraph [ref=e1108]: SNAP EBT
+                          - button "Aisle 13" [ref=e1109] [cursor=pointer]:
+                            - generic [ref=e1110]:
+                              - img [ref=e1111]
+                              - generic [ref=e1114]: Aisle 13
+                        - generic [ref=e1116]:
+                          - generic [ref=e1117]: $6.48
+                          - generic [ref=e1118]: "Qty: 1"
+                  - listitem [ref=e1119]:
+                    - generic [ref=e1120]: Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza, 14.8 oz, $6.48 each. $0.44 per oz.
+                    - generic [ref=e1121]:
+                      - generic [ref=e1123] [cursor=pointer]:
+                        - checkbox "Select Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza, 14.8 oz for add to cart" [ref=e1125]
+                        - generic [ref=e1126]: Select Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza, 14.8 oz for add to cart
+                      - link [ref=e1128] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-goat-cheese-roasted-veggie-stone-baked-italian-pizza/2894522
+                      - generic [ref=e1129]:
+                        - generic [ref=e1130]:
+                          - link "Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza, 14.8 oz" [ref=e1131]:
+                            - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-goat-cheese-roasted-veggie-stone-baked-italian-pizza/2894522
+                          - paragraph [ref=e1132]: SNAP EBT
+                          - button "Aisle 13" [ref=e1133] [cursor=pointer]:
+                            - generic [ref=e1134]:
+                              - img [ref=e1135]
+                              - generic [ref=e1138]: Aisle 13
+                        - generic [ref=e1140]:
+                          - generic [ref=e1141]: $6.48
+                          - generic [ref=e1142]: "Qty: 1"
+                  - listitem [ref=e1143]:
+                    - generic [ref=e1144]: MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza, 10.3 oz, Price Cut $5.48 each, Regularly $5.68 each. $0.53 per oz.
+                    - generic [ref=e1145]:
+                      - generic [ref=e1147] [cursor=pointer]:
+                        - checkbox "Select MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza, 10.3 oz for add to cart" [ref=e1149]
+                        - generic [ref=e1150]: Select MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza, 10.3 oz for add to cart
+                      - link [ref=e1152] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/mightycrust-by-h-e-b-italian-sausage-red-peppers-cauliflower-crust-gluten-free-frozen-pizza/5684029
+                      - generic [ref=e1153]:
+                        - paragraph [ref=e1155]: Price cut
+                        - generic [ref=e1156]:
+                          - link "MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza, 10.3 oz" [ref=e1157]:
+                            - /url: https://www.heb.com/product-detail/mightycrust-by-h-e-b-italian-sausage-red-peppers-cauliflower-crust-gluten-free-frozen-pizza/5684029
+                          - paragraph [ref=e1158]: SNAP EBT
+                          - button "Aisle 13" [ref=e1159] [cursor=pointer]:
+                            - generic [ref=e1160]:
+                              - img [ref=e1161]
+                              - generic [ref=e1164]: Aisle 13
+                        - generic [ref=e1166]:
+                          - generic [ref=e1167]: $5.68
+                          - generic [ref=e1168]: "Qty: 1"
+                  - listitem [ref=e1169]:
+                    - generic [ref=e1170]: Tyson Frozen Baked Chicken Breast Nuggets, 25 oz, $6.46 each. $0.26 per oz.
+                    - generic [ref=e1171]:
+                      - generic [ref=e1173] [cursor=pointer]:
+                        - checkbox "Select Tyson Frozen Baked Chicken Breast Nuggets, 25 oz for add to cart" [ref=e1175]
+                        - generic [ref=e1176]: Select Tyson Frozen Baked Chicken Breast Nuggets, 25 oz for add to cart
+                      - link [ref=e1178] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/tyson-frozen-baked-chicken-breast-nuggets/3284110
+                      - generic [ref=e1179]:
+                        - generic [ref=e1180]:
+                          - link "Tyson Frozen Baked Chicken Breast Nuggets, 25 oz" [ref=e1181]:
+                            - /url: https://www.heb.com/product-detail/tyson-frozen-baked-chicken-breast-nuggets/3284110
+                          - paragraph [ref=e1182]: SNAP EBT
+                          - button "In Meat Market on the Back Wall" [ref=e1183] [cursor=pointer]:
+                            - generic [ref=e1184]:
+                              - img [ref=e1185]
+                              - generic [ref=e1188]: In Meat Market on the Back Wall
+                        - generic [ref=e1190]:
+                          - generic [ref=e1191]: $6.46
+                          - generic [ref=e1192]: "Qty: 1"
+              - listitem [ref=e1193]:
+                - heading "Fruit & vegetables" [level=2] [ref=e1195]
+                - list [ref=e1196]:
+                  - listitem [ref=e1197]:
+                    - generic [ref=e1198]: Fresh Blueberries, 11 oz, $4.69 each. $0.43 per oz.
+                    - generic [ref=e1199]:
+                      - generic [ref=e1201] [cursor=pointer]:
+                        - checkbox "Select Fresh Blueberries, 11 oz for add to cart" [ref=e1203]
+                        - generic [ref=e1204]: Select Fresh Blueberries, 11 oz for add to cart
+                      - link [ref=e1206] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/fresh-blueberries/1146492
+                      - generic [ref=e1207]:
+                        - generic [ref=e1208]:
+                          - link "Fresh Blueberries, 11 oz" [ref=e1209]:
+                            - /url: https://www.heb.com/product-detail/fresh-blueberries/1146492
+                          - paragraph [ref=e1210]: SNAP EBT
+                          - button "In Produce" [ref=e1211] [cursor=pointer]:
+                            - generic [ref=e1212]:
+                              - img [ref=e1213]
+                              - generic [ref=e1216]: In Produce
+                        - generic [ref=e1218]:
+                          - generic [ref=e1219]: $4.69
+                          - generic [ref=e1220]: "Qty: 1"
+                  - listitem [ref=e1221]:
+                    - generic [ref=e1222]: Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, $1.20 each. $0.50 per lb.
+                    - generic [ref=e1223]:
+                      - generic [ref=e1225] [cursor=pointer]:
+                        - checkbox "Select Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs for add to cart" [ref=e1227]
+                        - generic [ref=e1228]: Select Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs for add to cart
+                      - link [ref=e1230] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/fresh-bunch-of-bananas-4-7-bananas/377497
+                      - generic [ref=e1231]:
+                        - generic [ref=e1232]:
+                          - link "Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs" [ref=e1233]:
+                            - /url: https://www.heb.com/product-detail/fresh-bunch-of-bananas-4-7-bananas/377497
+                          - paragraph [ref=e1234]: SNAP EBT
+                          - button "In Produce" [ref=e1235] [cursor=pointer]:
+                            - generic [ref=e1236]:
+                              - img [ref=e1237]
+                              - generic [ref=e1240]: In Produce
+                        - generic [ref=e1242]:
+                          - generic [ref=e1243]: $1.20
+                          - generic [ref=e1244]: "Qty: 1"
+                  - listitem [ref=e1245]:
+                    - generic [ref=e1246]: Fresh Gala Apple, Avg. 0.46 lb, $0.86 each. $1.87 per lb.
+                    - generic [ref=e1247]:
+                      - generic [ref=e1249] [cursor=pointer]:
+                        - checkbox "Select Fresh Gala Apple, Avg. 0.46 lb for add to cart" [ref=e1251]
+                        - generic [ref=e1252]: Select Fresh Gala Apple, Avg. 0.46 lb for add to cart
+                      - link [ref=e1254] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/fresh-gala-apple/375146
+                      - generic [ref=e1255]:
+                        - generic [ref=e1256]:
+                          - link "Fresh Gala Apple, Avg. 0.46 lb" [ref=e1257]:
+                            - /url: https://www.heb.com/product-detail/fresh-gala-apple/375146
+                          - paragraph [ref=e1258]: SNAP EBT
+                          - button "In Produce" [ref=e1259] [cursor=pointer]:
+                            - generic [ref=e1260]:
+                              - img [ref=e1261]
+                              - generic [ref=e1264]: In Produce
+                        - generic [ref=e1266]:
+                          - generic [ref=e1267]: $0.86
+                          - generic [ref=e1268]: "Qty: 1"
+                  - listitem [ref=e1269]:
+                    - generic [ref=e1270]: Fresh Gold Potatoes, 5 lb bag, $3.99 each. $0.05 per oz.
+                    - generic [ref=e1271]:
+                      - generic [ref=e1273] [cursor=pointer]:
+                        - checkbox "Select Fresh Gold Potatoes, 5 lb bag for add to cart" [ref=e1275]
+                        - generic [ref=e1276]: Select Fresh Gold Potatoes, 5 lb bag for add to cart
+                      - link [ref=e1278] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/fresh-gold-potatoes/591301
+                      - generic [ref=e1279]:
+                        - generic [ref=e1280]:
+                          - link "Fresh Gold Potatoes, 5 lb bag" [ref=e1281]:
+                            - /url: https://www.heb.com/product-detail/fresh-gold-potatoes/591301
+                          - paragraph [ref=e1282]: SNAP EBT
+                          - button "Back Edge of Produce" [ref=e1283] [cursor=pointer]:
+                            - generic [ref=e1284]:
+                              - img [ref=e1285]
+                              - generic [ref=e1288]: Back Edge of Produce
+                        - generic [ref=e1290]:
+                          - generic [ref=e1291]: $3.99
+                          - generic [ref=e1292]: "Qty: 1"
+                  - listitem [ref=e1293]:
+                    - generic [ref=e1294]: Fresh Small Hass Avocado, Each, $0.55 each.
+                    - generic [ref=e1295]:
+                      - generic [ref=e1297] [cursor=pointer]:
+                        - checkbox "Select Fresh Small Hass Avocado, Each for add to cart" [ref=e1299]
+                        - generic [ref=e1300]: Select Fresh Small Hass Avocado, Each for add to cart
+                      - link [ref=e1302] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/fresh-small-hass-avocado/377478
+                      - generic [ref=e1303]:
+                        - generic [ref=e1304]:
+                          - link "Fresh Small Hass Avocado, Each" [ref=e1305]:
+                            - /url: https://www.heb.com/product-detail/fresh-small-hass-avocado/377478
+                          - paragraph [ref=e1306]: SNAP EBT
+                          - button "In Produce" [ref=e1307] [cursor=pointer]:
+                            - generic [ref=e1308]:
+                              - img [ref=e1309]
+                              - generic [ref=e1312]: In Produce
+                        - generic [ref=e1314]:
+                          - generic [ref=e1315]: $1.65
+                          - generic [ref=e1316]: $0.55 / each
+                          - generic [ref=e1317]: "Qty: 3"
+                  - listitem [ref=e1318]:
+                    - generic [ref=e1319]: Fresh Strawberries, 1 lb, $2.29 each. $0.14 per oz.
+                    - generic [ref=e1320]:
+                      - generic [ref=e1322] [cursor=pointer]:
+                        - checkbox "Select Fresh Strawberries, 1 lb for add to cart" [ref=e1324]
+                        - generic [ref=e1325]: Select Fresh Strawberries, 1 lb for add to cart
+                      - link [ref=e1327] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/fresh-strawberries/321286
+                      - generic [ref=e1328]:
+                        - generic [ref=e1329]:
+                          - link "Fresh Strawberries, 1 lb" [ref=e1330]:
+                            - /url: https://www.heb.com/product-detail/fresh-strawberries/321286
+                          - paragraph [ref=e1331]: SNAP EBT
+                          - button "In Produce" [ref=e1332] [cursor=pointer]:
+                            - generic [ref=e1333]:
+                              - img [ref=e1334]
+                              - generic [ref=e1337]: In Produce
+                        - generic [ref=e1339]:
+                          - generic [ref=e1340]: $2.29
+                          - generic [ref=e1341]: "Qty: 1"
+                  - listitem [ref=e1342]:
+                    - generic [ref=e1343]: H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct, $2.38 each. $0.79 per ct.
+                    - generic [ref=e1344]:
+                      - generic [ref=e1346] [cursor=pointer]:
+                        - checkbox "Select H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct for add to cart" [ref=e1348]
+                        - generic [ref=e1349]: Select H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct for add to cart
+                      - link [ref=e1351] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-mi-tienda-fresh-mexican-mesa-garlic/8075021
+                      - generic [ref=e1352]:
+                        - generic [ref=e1353]:
+                          - link "H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct" [ref=e1354]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-mi-tienda-fresh-mexican-mesa-garlic/8075021
+                          - paragraph [ref=e1355]: SNAP EBT
+                          - button "In Produce" [ref=e1356] [cursor=pointer]:
+                            - generic [ref=e1357]:
+                              - img [ref=e1358]
+                              - generic [ref=e1361]: In Produce
+                        - generic [ref=e1363]:
+                          - generic [ref=e1364]: $2.38
+                          - generic [ref=e1365]: "Qty: 1"
+                  - listitem [ref=e1366]:
+                    - generic [ref=e1367]: H-E-B Organics Fresh Baby Spring Mix Lettuce - Texas-Size Pack, 16 oz, $4.89 each. $0.31 per oz. Coupon available.
+                    - generic [ref=e1368]:
+                      - generic [ref=e1370] [cursor=pointer]:
+                        - checkbox "Select H-E-B Organics Fresh Baby Spring Mix Lettuce - Texas-Size Pack, 16 oz for add to cart" [ref=e1372]
+                        - generic [ref=e1373]: Select H-E-B Organics Fresh Baby Spring Mix Lettuce - Texas-Size Pack, 16 oz for add to cart
+                      - link [ref=e1375] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-organics-fresh-baby-spring-mix-lettuce-texas-size-pack/900947
+                      - generic [ref=e1376]:
+                        - paragraph [ref=e1378]: Coupon
+                        - generic [ref=e1379]:
+                          - link "H-E-B Organics Fresh Baby Spring Mix Lettuce - Texas-Size Pack, 16 oz" [ref=e1380]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-organics-fresh-baby-spring-mix-lettuce-texas-size-pack/900947
+                          - paragraph [ref=e1381]: SNAP EBT
+                          - button "In Produce on the Left Wall" [ref=e1382] [cursor=pointer]:
+                            - generic [ref=e1383]:
+                              - img [ref=e1384]
+                              - generic [ref=e1387]: In Produce on the Left Wall
+                        - generic [ref=e1389]:
+                          - generic [ref=e1390]: $4.89
+                          - generic [ref=e1391]: "Qty: 1"
+                  - listitem [ref=e1392]:
+                    - generic [ref=e1393]: H-E-B Texas Roots Fresh Yellow Onions, 3 lb bag, $2.49 each. $0.05 per oz.
+                    - generic [ref=e1394]:
+                      - generic [ref=e1396] [cursor=pointer]:
+                        - checkbox "Select H-E-B Texas Roots Fresh Yellow Onions, 3 lb bag for add to cart" [ref=e1398]
+                        - generic [ref=e1399]: Select H-E-B Texas Roots Fresh Yellow Onions, 3 lb bag for add to cart
+                      - link [ref=e1401] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-texas-roots-fresh-yellow-onions/449732
+                      - generic [ref=e1402]:
+                        - generic [ref=e1403]:
+                          - link "H-E-B Texas Roots Fresh Yellow Onions, 3 lb bag" [ref=e1404]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-texas-roots-fresh-yellow-onions/449732
+                          - paragraph [ref=e1405]: SNAP EBT
+                          - button "In Produce" [ref=e1406] [cursor=pointer]:
+                            - generic [ref=e1407]:
+                              - img [ref=e1408]
+                              - generic [ref=e1411]: In Produce
+                        - generic [ref=e1413]:
+                          - generic [ref=e1414]: $2.49
+                          - generic [ref=e1415]: "Qty: 1"
+              - listitem [ref=e1416]:
+                - heading "Health & beauty" [level=2] [ref=e1418]
+                - list [ref=e1419]:
+                  - listitem [ref=e1420]:
+                    - generic [ref=e1421]: Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla, 32 oz, $6.48 each. $0.20 per oz.
+                    - generic [ref=e1422]:
+                      - generic [ref=e1424] [cursor=pointer]:
+                        - checkbox "Select Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla, 32 oz for add to cart" [ref=e1426]
+                        - generic [ref=e1427]: Select Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla, 32 oz for add to cart
+                      - link [ref=e1429] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/field-future-by-h-e-b-foaming-hand-soap-refill-lavender-vanilla/6257503
+                      - generic [ref=e1430]:
+                        - generic [ref=e1431]:
+                          - link "Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla, 32 oz" [ref=e1432]:
+                            - /url: https://www.heb.com/product-detail/field-future-by-h-e-b-foaming-hand-soap-refill-lavender-vanilla/6257503
+                          - button "Aisle 34" [ref=e1433] [cursor=pointer]:
+                            - generic [ref=e1434]:
+                              - img [ref=e1435]
+                              - generic [ref=e1438]: Aisle 34
+                        - generic [ref=e1440]:
+                          - generic [ref=e1441]: $6.48
+                          - generic [ref=e1442]: "Qty: 1"
+                  - listitem [ref=e1443]:
+                    - generic [ref=e1444]: Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt, 32 oz, $6.48 each. $0.20 per oz.
+                    - generic [ref=e1445]:
+                      - generic [ref=e1447] [cursor=pointer]:
+                        - checkbox "Select Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt, 32 oz for add to cart" [ref=e1449]
+                        - generic [ref=e1450]: Select Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt, 32 oz for add to cart
+                      - link [ref=e1452] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/field-future-by-h-e-b-foaming-hand-soap-refill-white-jasmine-sea-salt/6257502
+                      - generic [ref=e1453]:
+                        - generic [ref=e1454]:
+                          - link "Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt, 32 oz" [ref=e1455]:
+                            - /url: https://www.heb.com/product-detail/field-future-by-h-e-b-foaming-hand-soap-refill-white-jasmine-sea-salt/6257502
+                          - button "Aisle 34" [ref=e1456] [cursor=pointer]:
+                            - generic [ref=e1457]:
+                              - img [ref=e1458]
+                              - generic [ref=e1461]: Aisle 34
+                        - generic [ref=e1463]:
+                          - generic [ref=e1464]: $6.48
+                          - generic [ref=e1465]: "Qty: 1"
+              - listitem [ref=e1466]:
+                - heading "Meat & seafood" [level=2] [ref=e1468]
+                - list [ref=e1469]:
+                  - listitem [ref=e1470]:
+                    - generic [ref=e1471]: Hill Country Fare Boneless Skinless Chicken Thighs, Avg. 3.11 lbs, $10.01 each. $3.22 per lb.
+                    - generic [ref=e1472]:
+                      - generic [ref=e1474] [cursor=pointer]:
+                        - checkbox "Select Hill Country Fare Boneless Skinless Chicken Thighs, Avg. 3.11 lbs for add to cart" [ref=e1476]
+                        - generic [ref=e1477]: Select Hill Country Fare Boneless Skinless Chicken Thighs, Avg. 3.11 lbs for add to cart
+                      - link [ref=e1479] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/hill-country-fare-boneless-skinless-chicken-thighs/313259
+                      - generic [ref=e1480]:
+                        - generic [ref=e1481]:
+                          - link "Hill Country Fare Boneless Skinless Chicken Thighs, Avg. 3.11 lbs" [ref=e1482]:
+                            - /url: https://www.heb.com/product-detail/hill-country-fare-boneless-skinless-chicken-thighs/313259
+                          - paragraph [ref=e1483]: SNAP EBT
+                          - button "In Meat Market on the Back Wall" [ref=e1484] [cursor=pointer]:
+                            - generic [ref=e1485]:
+                              - img [ref=e1486]
+                              - generic [ref=e1489]: In Meat Market on the Back Wall
+                        - generic [ref=e1491]:
+                          - generic [ref=e1492]: $10.01
+                          - generic [ref=e1493]: "Qty: 1"
+                  - listitem [ref=e1494]:
+                    - generic [ref=e1495]: H-E-B Natural Applewood Smoked Uncured Bacon, 12 oz, $5.99 each. $0.50 per oz.
+                    - generic [ref=e1496]:
+                      - generic [ref=e1498] [cursor=pointer]:
+                        - checkbox "Select H-E-B Natural Applewood Smoked Uncured Bacon, 12 oz for add to cart" [ref=e1500]
+                        - generic [ref=e1501]: Select H-E-B Natural Applewood Smoked Uncured Bacon, 12 oz for add to cart
+                      - link [ref=e1503] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-natural-applewood-smoked-uncured-bacon/1556680
+                      - generic [ref=e1504]:
+                        - generic [ref=e1505]:
+                          - link "H-E-B Natural Applewood Smoked Uncured Bacon, 12 oz" [ref=e1506]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-natural-applewood-smoked-uncured-bacon/1556680
+                          - paragraph [ref=e1507]: SNAP EBT
+                          - button "In Meat Market on the Back Wall" [ref=e1508] [cursor=pointer]:
+                            - generic [ref=e1509]:
+                              - img [ref=e1510]
+                              - generic [ref=e1513]: In Meat Market on the Back Wall
+                        - generic [ref=e1515]:
+                          - generic [ref=e1516]: $5.99
+                          - generic [ref=e1517]: "Qty: 1"
+                  - listitem [ref=e1518]:
+                    - generic [ref=e1519]: H-E-B Smoked Atlantic Salmon - Traditional, 4 oz, $6.48 each. $1.62 per oz.
+                    - generic [ref=e1520]:
+                      - generic [ref=e1522] [cursor=pointer]:
+                        - checkbox "Select H-E-B Smoked Atlantic Salmon - Traditional, 4 oz for add to cart" [ref=e1524]
+                        - generic [ref=e1525]: Select H-E-B Smoked Atlantic Salmon - Traditional, 4 oz for add to cart
+                      - link [ref=e1527] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-smoked-atlantic-salmon-traditional/2234526
+                      - generic [ref=e1528]:
+                        - generic [ref=e1529]:
+                          - link "H-E-B Smoked Atlantic Salmon - Traditional, 4 oz" [ref=e1530]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-smoked-atlantic-salmon-traditional/2234526
+                          - paragraph [ref=e1531]: SNAP EBT
+                          - button "In Seafood on the Left Wall" [ref=e1532] [cursor=pointer]:
+                            - generic [ref=e1533]:
+                              - img [ref=e1534]
+                              - generic [ref=e1537]: In Seafood on the Left Wall
+                        - generic [ref=e1539]:
+                          - generic [ref=e1540]: $6.48
+                          - generic [ref=e1541]: "Qty: 1"
+              - listitem [ref=e1542]:
+                - heading "Pantry" [level=2] [ref=e1544]
+                - list [ref=e1545]:
+                  - listitem [ref=e1546]:
+                    - generic [ref=e1547]: Aji-No-Moto Monosodium Glutamate MSG Umami Seasoning, 1 lb, $4.48 each. $0.28 per oz.
+                    - generic [ref=e1548]:
+                      - generic [ref=e1550] [cursor=pointer]:
+                        - checkbox "Select Aji-No-Moto Monosodium Glutamate MSG Umami Seasoning, 1 lb for add to cart" [ref=e1552]
+                        - generic [ref=e1553]: Select Aji-No-Moto Monosodium Glutamate MSG Umami Seasoning, 1 lb for add to cart
+                      - link [ref=e1555] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/aji-no-moto-monosodium-glutamate-msg-umami-seasoning/169804
+                      - generic [ref=e1556]:
+                        - generic [ref=e1557]:
+                          - link "Aji-No-Moto Monosodium Glutamate MSG Umami Seasoning, 1 lb" [ref=e1558]:
+                            - /url: https://www.heb.com/product-detail/aji-no-moto-monosodium-glutamate-msg-umami-seasoning/169804
+                          - paragraph [ref=e1559]: SNAP EBT
+                          - button "Aisle 5" [ref=e1560] [cursor=pointer]:
+                            - generic [ref=e1561]:
+                              - img [ref=e1562]
+                              - generic [ref=e1565]: Aisle 5
+                        - generic [ref=e1567]:
+                          - generic [ref=e1568]: $4.48
+                          - generic [ref=e1569]: "Qty: 1"
+                  - listitem [ref=e1570]:
+                    - generic [ref=e1571]: Better Than Bouillon Premium Roasted Beef Base, 8 oz, $4.82 each. $0.60 per oz.
+                    - generic [ref=e1572]:
+                      - generic [ref=e1574] [cursor=pointer]:
+                        - checkbox "Select Better Than Bouillon Premium Roasted Beef Base, 8 oz for add to cart" [ref=e1576]
+                        - generic [ref=e1577]: Select Better Than Bouillon Premium Roasted Beef Base, 8 oz for add to cart
+                      - link [ref=e1579] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/better-than-bouillon-premium-roasted-beef-base/228701
+                      - generic [ref=e1580]:
+                        - generic [ref=e1581]:
+                          - link "Better Than Bouillon Premium Roasted Beef Base, 8 oz" [ref=e1582]:
+                            - /url: https://www.heb.com/product-detail/better-than-bouillon-premium-roasted-beef-base/228701
+                          - paragraph [ref=e1583]: SNAP EBT
+                          - button "Aisle 6" [ref=e1584] [cursor=pointer]:
+                            - generic [ref=e1585]:
+                              - img [ref=e1586]
+                              - generic [ref=e1589]: Aisle 6
+                        - generic [ref=e1591]:
+                          - generic [ref=e1592]: $4.82
+                          - generic [ref=e1593]: "Qty: 1"
+                  - listitem [ref=e1594]:
+                    - generic [ref=e1595]: Better Than Bouillon Premium Roasted Chicken Base, 8 oz, $4.82 each. $0.60 per oz.
+                    - generic [ref=e1596]:
+                      - generic [ref=e1598] [cursor=pointer]:
+                        - checkbox "Select Better Than Bouillon Premium Roasted Chicken Base, 8 oz for add to cart" [ref=e1600]
+                        - generic [ref=e1601]: Select Better Than Bouillon Premium Roasted Chicken Base, 8 oz for add to cart
+                      - link [ref=e1603] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/better-than-bouillon-premium-roasted-chicken-base/228700
+                      - generic [ref=e1604]:
+                        - generic [ref=e1605]:
+                          - link "Better Than Bouillon Premium Roasted Chicken Base, 8 oz" [ref=e1606]:
+                            - /url: https://www.heb.com/product-detail/better-than-bouillon-premium-roasted-chicken-base/228700
+                          - paragraph [ref=e1607]: SNAP EBT
+                          - button "Aisle 6" [ref=e1608] [cursor=pointer]:
+                            - generic [ref=e1609]:
+                              - img [ref=e1610]
+                              - generic [ref=e1613]: Aisle 6
+                        - generic [ref=e1615]:
+                          - generic [ref=e1616]: $4.82
+                          - generic [ref=e1617]: "Qty: 1"
+                  - listitem [ref=e1618]:
+                    - generic [ref=e1619]: Cheez-It Original Cheese Crackers, 21 oz, $5.97 each. $0.28 per oz.
+                    - generic [ref=e1620]:
+                      - generic [ref=e1622] [cursor=pointer]:
+                        - checkbox "Select Cheez-It Original Cheese Crackers, 21 oz for add to cart" [ref=e1624]
+                        - generic [ref=e1625]: Select Cheez-It Original Cheese Crackers, 21 oz for add to cart
+                      - link [ref=e1627] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/cheez-it-original-cheese-crackers/1916310
+                      - generic [ref=e1628]:
+                        - generic [ref=e1629]:
+                          - link "Cheez-It Original Cheese Crackers, 21 oz" [ref=e1630]:
+                            - /url: https://www.heb.com/product-detail/cheez-it-original-cheese-crackers/1916310
+                          - paragraph [ref=e1631]: SNAP EBT
+                          - button "Aisle 10" [ref=e1632] [cursor=pointer]:
+                            - generic [ref=e1633]:
+                              - img [ref=e1634]
+                              - generic [ref=e1637]: Aisle 10
+                        - generic [ref=e1639]:
+                          - generic [ref=e1640]: $5.97
+                          - generic [ref=e1641]: "Qty: 1"
+                  - listitem [ref=e1642]:
+                    - generic [ref=e1643]: Hill Country Fare Pure Baking Soda, 64 oz, $2.98 each. $0.05 per oz.
+                    - generic [ref=e1644]:
+                      - generic [ref=e1646] [cursor=pointer]:
+                        - checkbox "Select Hill Country Fare Pure Baking Soda, 64 oz for add to cart" [ref=e1648]
+                        - generic [ref=e1649]: Select Hill Country Fare Pure Baking Soda, 64 oz for add to cart
+                      - link [ref=e1651] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/hill-country-fare-pure-baking-soda/126145
+                      - generic [ref=e1652]:
+                        - generic [ref=e1653]:
+                          - link "Hill Country Fare Pure Baking Soda, 64 oz" [ref=e1654]:
+                            - /url: https://www.heb.com/product-detail/hill-country-fare-pure-baking-soda/126145
+                          - paragraph [ref=e1655]: SNAP EBT
+                          - button "Aisle 7" [ref=e1656] [cursor=pointer]:
+                            - generic [ref=e1657]:
+                              - img [ref=e1658]
+                              - generic [ref=e1661]: Aisle 7
+                        - generic [ref=e1663]:
+                          - generic [ref=e1664]: $2.98
+                          - generic [ref=e1665]: "Qty: 1"
+                  - listitem [ref=e1666]:
+                    - generic [ref=e1667]: Honey Maid Cinnamon Graham Crackers, 14.4 oz, Price Cut $3.97 each, Regularly $4.68 each. $0.28 per oz.
+                    - generic [ref=e1668]:
+                      - generic [ref=e1670] [cursor=pointer]:
+                        - checkbox "Select Honey Maid Cinnamon Graham Crackers, 14.4 oz for add to cart" [ref=e1672]
+                        - generic [ref=e1673]: Select Honey Maid Cinnamon Graham Crackers, 14.4 oz for add to cart
+                      - link [ref=e1675] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/honey-maid-cinnamon-graham-crackers/462008
+                      - generic [ref=e1676]:
+                        - paragraph [ref=e1678]: Price cut
+                        - generic [ref=e1679]:
+                          - link "Honey Maid Cinnamon Graham Crackers, 14.4 oz" [ref=e1680]:
+                            - /url: https://www.heb.com/product-detail/honey-maid-cinnamon-graham-crackers/462008
+                          - paragraph [ref=e1681]: SNAP EBT
+                          - button "Aisle 10" [ref=e1682] [cursor=pointer]:
+                            - generic [ref=e1683]:
+                              - img [ref=e1684]
+                              - generic [ref=e1687]: Aisle 10
+                        - generic [ref=e1689]:
+                          - generic [ref=e1690]: $4.68
+                          - generic [ref=e1691]: "Qty: 1"
+                  - listitem [ref=e1692]:
+                    - generic [ref=e1693]: H-E-B Angel Hair Capellini Pasta Noodles, 16 oz, $0.98 each. $0.06 per oz. Coupon available.
+                    - generic [ref=e1694]:
+                      - generic [ref=e1696] [cursor=pointer]:
+                        - checkbox "Select H-E-B Angel Hair Capellini Pasta Noodles, 16 oz for add to cart" [ref=e1698]
+                        - generic [ref=e1699]: Select H-E-B Angel Hair Capellini Pasta Noodles, 16 oz for add to cart
+                      - link [ref=e1701] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-angel-hair-capellini-pasta-noodles/1567291
+                      - generic [ref=e1702]:
+                        - paragraph [ref=e1704]: Coupon
+                        - generic [ref=e1705]:
+                          - link "H-E-B Angel Hair Capellini Pasta Noodles, 16 oz" [ref=e1706]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-angel-hair-capellini-pasta-noodles/1567291
+                          - paragraph [ref=e1707]: SNAP EBT
+                          - button "Aisle 5" [ref=e1708] [cursor=pointer]:
+                            - generic [ref=e1709]:
+                              - img [ref=e1710]
+                              - generic [ref=e1713]: Aisle 5
+                        - generic [ref=e1715]:
+                          - generic [ref=e1716]: $0.98
+                          - generic [ref=e1717]: "Qty: 1"
+                  - listitem [ref=e1718]:
+                    - generic [ref=e1719]: H-E-B Enriched Long Grain White Rice, 5 lbs, $3.37 each. $0.04 per oz.
+                    - generic [ref=e1720]:
+                      - generic [ref=e1722] [cursor=pointer]:
+                        - checkbox "Select H-E-B Enriched Long Grain White Rice, 5 lbs for add to cart" [ref=e1724]
+                        - generic [ref=e1725]: Select H-E-B Enriched Long Grain White Rice, 5 lbs for add to cart
+                      - link [ref=e1727] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-enriched-long-grain-white-rice/125348
+                      - generic [ref=e1728]:
+                        - generic [ref=e1729]:
+                          - link "H-E-B Enriched Long Grain White Rice, 5 lbs" [ref=e1730]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-enriched-long-grain-white-rice/125348
+                          - paragraph [ref=e1731]: SNAP EBT
+                          - button "Aisle 5" [ref=e1732] [cursor=pointer]:
+                            - generic [ref=e1733]:
+                              - img [ref=e1734]
+                              - generic [ref=e1737]: Aisle 5
+                        - generic [ref=e1739]:
+                          - generic [ref=e1740]: $3.37
+                          - generic [ref=e1741]: "Qty: 1"
+                  - listitem [ref=e1742]:
+                    - generic [ref=e1743]: H-E-B Made in Texas Creamy Peanut Butter, 28 oz, $3.79 each. $0.14 per oz.
+                    - generic [ref=e1744]:
+                      - generic [ref=e1746] [cursor=pointer]:
+                        - checkbox "Select H-E-B Made in Texas Creamy Peanut Butter, 28 oz for add to cart" [ref=e1748]
+                        - generic [ref=e1749]: Select H-E-B Made in Texas Creamy Peanut Butter, 28 oz for add to cart
+                      - link [ref=e1751] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-made-in-texas-creamy-peanut-butter/1657047
+                      - generic [ref=e1752]:
+                        - generic [ref=e1753]:
+                          - link "H-E-B Made in Texas Creamy Peanut Butter, 28 oz" [ref=e1754]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-made-in-texas-creamy-peanut-butter/1657047
+                          - paragraph [ref=e1755]: SNAP EBT
+                          - button "Aisle 4" [ref=e1756] [cursor=pointer]:
+                            - generic [ref=e1757]:
+                              - img [ref=e1758]
+                              - generic [ref=e1761]: Aisle 4
+                        - generic [ref=e1763]:
+                          - generic [ref=e1764]: $3.79
+                          - generic [ref=e1765]: "Qty: 1"
+                  - listitem [ref=e1766]:
+                    - generic [ref=e1767]: H-E-B Microwave Popcorn - Butter, 6 ct, $3.98 each. $0.66 per ct.
+                    - generic [ref=e1768]:
+                      - generic [ref=e1770] [cursor=pointer]:
+                        - checkbox "Select H-E-B Microwave Popcorn - Butter, 6 ct for add to cart" [ref=e1772]
+                        - generic [ref=e1773]: Select H-E-B Microwave Popcorn - Butter, 6 ct for add to cart
+                      - link [ref=e1775] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-microwave-popcorn-butter/10017010
+                      - generic [ref=e1776]:
+                        - generic [ref=e1777]:
+                          - link "H-E-B Microwave Popcorn - Butter, 6 ct" [ref=e1778]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-microwave-popcorn-butter/10017010
+                          - paragraph [ref=e1779]: SNAP EBT
+                          - button "Aisle 10" [ref=e1780] [cursor=pointer]:
+                            - generic [ref=e1781]:
+                              - img [ref=e1782]
+                              - generic [ref=e1785]: Aisle 10
+                        - generic [ref=e1787]:
+                          - generic [ref=e1788]: $3.98
+                          - generic [ref=e1789]: "Qty: 1"
+                  - listitem [ref=e1790]:
+                    - generic [ref=e1791]: H-E-B Organics Powdered Sugar, 24 oz, $3.48 each. $0.14 per oz. Coupon available.
+                    - generic [ref=e1792]:
+                      - generic [ref=e1794] [cursor=pointer]:
+                        - checkbox "Select H-E-B Organics Powdered Sugar, 24 oz for add to cart" [ref=e1796]
+                        - generic [ref=e1797]: Select H-E-B Organics Powdered Sugar, 24 oz for add to cart
+                      - link [ref=e1799] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-organics-powdered-sugar/1203414
+                      - generic [ref=e1800]:
+                        - paragraph [ref=e1802]: Coupon
+                        - generic [ref=e1803]:
+                          - link "H-E-B Organics Powdered Sugar, 24 oz" [ref=e1804]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-organics-powdered-sugar/1203414
+                          - paragraph [ref=e1805]: SNAP EBT
+                          - button "Aisle 7" [ref=e1806] [cursor=pointer]:
+                            - generic [ref=e1807]:
+                              - img [ref=e1808]
+                              - generic [ref=e1811]: Aisle 7
+                        - generic [ref=e1813]:
+                          - generic [ref=e1814]: $3.48
+                          - generic [ref=e1815]: "Qty: 1"
+                  - listitem [ref=e1816]:
+                    - generic [ref=e1817]: H-E-B Organics Strawberry Fruit Spread, 17 oz, $4.19 each. $0.25 per oz. Coupon available.
+                    - generic [ref=e1818]:
+                      - generic [ref=e1820] [cursor=pointer]:
+                        - checkbox "Select H-E-B Organics Strawberry Fruit Spread, 17 oz for add to cart" [ref=e1822]
+                        - generic [ref=e1823]: Select H-E-B Organics Strawberry Fruit Spread, 17 oz for add to cart
+                      - link [ref=e1825] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-organics-strawberry-fruit-spread/1707980
+                      - generic [ref=e1826]:
+                        - paragraph [ref=e1828]: Coupon
+                        - generic [ref=e1829]:
+                          - link "H-E-B Organics Strawberry Fruit Spread, 17 oz" [ref=e1830]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-organics-strawberry-fruit-spread/1707980
+                          - paragraph [ref=e1831]: SNAP EBT
+                          - button "Aisle 4" [ref=e1832] [cursor=pointer]:
+                            - generic [ref=e1833]:
+                              - img [ref=e1834]
+                              - generic [ref=e1837]: Aisle 4
+                        - generic [ref=e1839]:
+                          - generic [ref=e1840]: $4.19
+                          - generic [ref=e1841]: "Qty: 1"
+                  - listitem [ref=e1842]:
+                    - generic [ref=e1843]: H-E-B Organics Whole Grain Animal Cookies, 16 oz, $5.48 each. $0.34 per oz. Coupon available.
+                    - generic [ref=e1844]:
+                      - generic [ref=e1846] [cursor=pointer]:
+                        - checkbox "Select H-E-B Organics Whole Grain Animal Cookies, 16 oz for add to cart" [ref=e1848]
+                        - generic [ref=e1849]: Select H-E-B Organics Whole Grain Animal Cookies, 16 oz for add to cart
+                      - link [ref=e1851] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-organics-whole-grain-animal-cookies/1725746
+                      - generic [ref=e1852]:
+                        - paragraph [ref=e1854]: Coupon
+                        - generic [ref=e1855]:
+                          - link "H-E-B Organics Whole Grain Animal Cookies, 16 oz" [ref=e1856]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-organics-whole-grain-animal-cookies/1725746
+                          - paragraph [ref=e1857]: SNAP EBT
+                          - button "Aisle 10" [ref=e1858] [cursor=pointer]:
+                            - generic [ref=e1859]:
+                              - img [ref=e1860]
+                              - generic [ref=e1863]: Aisle 10
+                        - generic [ref=e1865]:
+                          - generic [ref=e1866]: $5.48
+                          - generic [ref=e1867]: "Qty: 1"
+                  - listitem [ref=e1868]:
+                    - generic [ref=e1869]: H-E-B Pure Cane Extra Fine Granulated Sugar, 2 lbs, $2.48 each. $0.08 per oz.
+                    - generic [ref=e1870]:
+                      - generic [ref=e1872] [cursor=pointer]:
+                        - checkbox "Select H-E-B Pure Cane Extra Fine Granulated Sugar, 2 lbs for add to cart" [ref=e1874]
+                        - generic [ref=e1875]: Select H-E-B Pure Cane Extra Fine Granulated Sugar, 2 lbs for add to cart
+                      - link [ref=e1877] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-pure-cane-extra-fine-granulated-sugar/1110197
+                      - generic [ref=e1878]:
+                        - generic [ref=e1879]:
+                          - link "H-E-B Pure Cane Extra Fine Granulated Sugar, 2 lbs" [ref=e1880]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-pure-cane-extra-fine-granulated-sugar/1110197
+                          - paragraph [ref=e1881]: SNAP EBT
+                          - button "Aisle 7" [ref=e1882] [cursor=pointer]:
+                            - generic [ref=e1883]:
+                              - img [ref=e1884]
+                              - generic [ref=e1887]: Aisle 7
+                        - generic [ref=e1889]:
+                          - generic [ref=e1890]: $2.48
+                          - generic [ref=e1891]: "Qty: 1"
+                  - listitem [ref=e1892]:
+                    - generic [ref=e1893]: H-E-B The Baker's Scoop Unbleached All-Purpose Flour, 5 lbs, $3.78 each. $0.05 per oz.
+                    - generic [ref=e1894]:
+                      - generic [ref=e1896] [cursor=pointer]:
+                        - checkbox "Select H-E-B The Baker's Scoop Unbleached All-Purpose Flour, 5 lbs for add to cart" [ref=e1898]
+                        - generic [ref=e1899]: Select H-E-B The Baker's Scoop Unbleached All-Purpose Flour, 5 lbs for add to cart
+                      - link [ref=e1901] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/h-e-b-the-baker-s-scoop-unbleached-all-purpose-flour/958887
+                      - generic [ref=e1902]:
+                        - generic [ref=e1903]:
+                          - link "H-E-B The Baker's Scoop Unbleached All-Purpose Flour, 5 lbs" [ref=e1904]:
+                            - /url: https://www.heb.com/product-detail/h-e-b-the-baker-s-scoop-unbleached-all-purpose-flour/958887
+                          - paragraph [ref=e1905]: SNAP EBT
+                          - button "Aisle 7" [ref=e1906] [cursor=pointer]:
+                            - generic [ref=e1907]:
+                              - img [ref=e1908]
+                              - generic [ref=e1911]: Aisle 7
+                        - generic [ref=e1913]:
+                          - generic [ref=e1914]: $3.78
+                          - generic [ref=e1915]: "Qty: 1"
+                  - listitem [ref=e1916]:
+                    - generic [ref=e1917]: Kikkoman 100% Pure Sesame Oil, 5 oz, $3.48 each. $0.70 per oz.
+                    - generic [ref=e1918]:
+                      - generic [ref=e1920] [cursor=pointer]:
+                        - checkbox "Select Kikkoman 100% Pure Sesame Oil, 5 oz for add to cart" [ref=e1922]
+                        - generic [ref=e1923]: Select Kikkoman 100% Pure Sesame Oil, 5 oz for add to cart
+                      - link [ref=e1925] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/kikkoman-100-pure-sesame-oil/2166842
+                      - generic [ref=e1926]:
+                        - generic [ref=e1927]:
+                          - link "Kikkoman 100% Pure Sesame Oil, 5 oz" [ref=e1928]:
+                            - /url: https://www.heb.com/product-detail/kikkoman-100-pure-sesame-oil/2166842
+                          - paragraph [ref=e1929]: SNAP EBT
+                          - button "Aisle 5" [ref=e1930] [cursor=pointer]:
+                            - generic [ref=e1931]:
+                              - img [ref=e1932]
+                              - generic [ref=e1935]: Aisle 5
+                        - generic [ref=e1937]:
+                          - generic [ref=e1938]: $3.48
+                          - generic [ref=e1939]: "Qty: 1"
+                  - listitem [ref=e1940]:
+                    - generic [ref=e1941]: Knox Original Unflavored Gelatine Mix, 4 ct, $2.74 each. $2.74 per oz.
+                    - generic [ref=e1942]:
+                      - generic [ref=e1944] [cursor=pointer]:
+                        - checkbox "Select Knox Original Unflavored Gelatine Mix, 4 ct for add to cart" [ref=e1946]
+                        - generic [ref=e1947]: Select Knox Original Unflavored Gelatine Mix, 4 ct for add to cart
+                      - link [ref=e1949] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/knox-original-unflavored-gelatine-mix/122617
+                      - generic [ref=e1950]:
+                        - generic [ref=e1951]:
+                          - link "Knox Original Unflavored Gelatine Mix, 4 ct" [ref=e1952]:
+                            - /url: https://www.heb.com/product-detail/knox-original-unflavored-gelatine-mix/122617
+                          - paragraph [ref=e1953]: SNAP EBT
+                          - button "Aisle 7" [ref=e1954] [cursor=pointer]:
+                            - generic [ref=e1955]:
+                              - img [ref=e1956]
+                              - generic [ref=e1959]: Aisle 7
+                        - generic [ref=e1961]:
+                          - generic [ref=e1962]: $2.74
+                          - generic [ref=e1963]: "Qty: 1"
+                  - listitem [ref=e1964]:
+                    - generic [ref=e1965]: Midtown by H-E-B Bronze Cut Penne Rigate Pasta, 16 oz, $1.89 each. $0.12 per oz. Coupon available.
+                    - generic [ref=e1966]:
+                      - generic [ref=e1968] [cursor=pointer]:
+                        - checkbox "Select Midtown by H-E-B Bronze Cut Penne Rigate Pasta, 16 oz for add to cart" [ref=e1970]
+                        - generic [ref=e1971]: Select Midtown by H-E-B Bronze Cut Penne Rigate Pasta, 16 oz for add to cart
+                      - link [ref=e1973] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-bronze-cut-penne-rigate-pasta/15450532
+                      - generic [ref=e1974]:
+                        - paragraph [ref=e1976]: Coupon
+                        - generic [ref=e1977]:
+                          - link "Midtown by H-E-B Bronze Cut Penne Rigate Pasta, 16 oz" [ref=e1978]:
+                            - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-bronze-cut-penne-rigate-pasta/15450532
+                          - paragraph [ref=e1979]: SNAP EBT
+                          - button "Aisle 5" [ref=e1980] [cursor=pointer]:
+                            - generic [ref=e1981]:
+                              - img [ref=e1982]
+                              - generic [ref=e1985]: Aisle 5
+                        - generic [ref=e1987]:
+                          - generic [ref=e1988]: $1.89
+                          - generic [ref=e1989]: "Qty: 1"
+                  - listitem [ref=e1990]:
+                    - generic [ref=e1991]: Midtown by H-E-B Tomato Romano Pasta Sauce, 16 oz, $4.48 each. $0.28 per oz. Coupon available.
+                    - generic [ref=e1992]:
+                      - generic [ref=e1994] [cursor=pointer]:
+                        - checkbox "Select Midtown by H-E-B Tomato Romano Pasta Sauce, 16 oz for add to cart" [ref=e1996]
+                        - generic [ref=e1997]: Select Midtown by H-E-B Tomato Romano Pasta Sauce, 16 oz for add to cart
+                      - link [ref=e1999] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-tomato-romano-pasta-sauce/10767508
+                      - generic [ref=e2000]:
+                        - paragraph [ref=e2002]: Coupon
+                        - generic [ref=e2003]:
+                          - link "Midtown by H-E-B Tomato Romano Pasta Sauce, 16 oz" [ref=e2004]:
+                            - /url: https://www.heb.com/product-detail/midtown-by-h-e-b-tomato-romano-pasta-sauce/10767508
+                          - paragraph [ref=e2005]: SNAP EBT
+                          - button "Aisle 5" [ref=e2006] [cursor=pointer]:
+                            - generic [ref=e2007]:
+                              - img [ref=e2008]
+                              - generic [ref=e2011]: Aisle 5
+                        - generic [ref=e2013]:
+                          - generic [ref=e2014]: $4.48
+                          - generic [ref=e2015]: "Qty: 1"
+                  - listitem [ref=e2016]:
+                    - generic [ref=e2017]: Nongshim Shin Black Noodle Soup Family Pack, 4 ct, $8.76 each. $0.48 per oz.
+                    - generic [ref=e2018]:
+                      - generic [ref=e2020] [cursor=pointer]:
+                        - checkbox "Select Nongshim Shin Black Noodle Soup Family Pack, 4 ct for add to cart" [ref=e2022]
+                        - generic [ref=e2023]: Select Nongshim Shin Black Noodle Soup Family Pack, 4 ct for add to cart
+                      - link [ref=e2025] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/nongshim-shin-black-noodle-soup-family-pack/2041499
+                      - generic [ref=e2026]:
+                        - generic [ref=e2027]:
+                          - link "Nongshim Shin Black Noodle Soup Family Pack, 4 ct" [ref=e2028]:
+                            - /url: https://www.heb.com/product-detail/nongshim-shin-black-noodle-soup-family-pack/2041499
+                          - paragraph [ref=e2029]: SNAP EBT
+                          - button "Aisle 6" [ref=e2030] [cursor=pointer]:
+                            - generic [ref=e2031]:
+                              - img [ref=e2032]
+                              - generic [ref=e2035]: Aisle 6
+                        - generic [ref=e2037]:
+                          - generic [ref=e2038]: $8.76
+                          - generic [ref=e2039]: "Qty: 1"
+                  - listitem [ref=e2040]:
+                    - generic [ref=e2041]: Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup, 4 ct, $8.76 each. $0.48 per oz.
+                    - generic [ref=e2042]:
+                      - generic [ref=e2044] [cursor=pointer]:
+                        - checkbox "Select Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup, 4 ct for add to cart" [ref=e2046]
+                        - generic [ref=e2047]: Select Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup, 4 ct for add to cart
+                      - link [ref=e2049] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/nongshim-shin-ramyun-gold-chicken-broth-noodle-soup/10258011
+                      - generic [ref=e2050]:
+                        - generic [ref=e2051]:
+                          - link "Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup, 4 ct" [ref=e2052]:
+                            - /url: https://www.heb.com/product-detail/nongshim-shin-ramyun-gold-chicken-broth-noodle-soup/10258011
+                          - paragraph [ref=e2053]: SNAP EBT
+                          - button "Aisle 6" [ref=e2054] [cursor=pointer]:
+                            - generic [ref=e2055]:
+                              - img [ref=e2056]
+                              - generic [ref=e2059]: Aisle 6
+                        - generic [ref=e2061]:
+                          - generic [ref=e2062]: $8.76
+                          - generic [ref=e2063]: "Qty: 1"
+                  - listitem [ref=e2064]:
+                    - generic [ref=e2065]: Nutella Hazelnut Spread with Cocoa, 13 oz, $4.95 each. $0.38 per oz.
+                    - generic [ref=e2066]:
+                      - generic [ref=e2068] [cursor=pointer]:
+                        - checkbox "Select Nutella Hazelnut Spread with Cocoa, 13 oz for add to cart" [ref=e2070]
+                        - generic [ref=e2071]: Select Nutella Hazelnut Spread with Cocoa, 13 oz for add to cart
+                      - link [ref=e2073] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/nutella-hazelnut-spread-with-cocoa/20563
+                      - generic [ref=e2074]:
+                        - generic [ref=e2075]:
+                          - link "Nutella Hazelnut Spread with Cocoa, 13 oz" [ref=e2076]:
+                            - /url: https://www.heb.com/product-detail/nutella-hazelnut-spread-with-cocoa/20563
+                          - paragraph [ref=e2077]: SNAP EBT
+                          - button "Aisle 4" [ref=e2078] [cursor=pointer]:
+                            - generic [ref=e2079]:
+                              - img [ref=e2080]
+                              - generic [ref=e2083]: Aisle 4
+                        - generic [ref=e2085]:
+                          - generic [ref=e2086]: $4.95
+                          - generic [ref=e2087]: "Qty: 1"
+                  - listitem [ref=e2088]:
+                    - generic [ref=e2089]: Pearl River Bridge Superior Light Soy Sauce, 16.9 oz, $4.84 each. $0.29 per oz.
+                    - generic [ref=e2090]:
+                      - generic [ref=e2092] [cursor=pointer]:
+                        - checkbox "Select Pearl River Bridge Superior Light Soy Sauce, 16.9 oz for add to cart" [ref=e2094]
+                        - generic [ref=e2095]: Select Pearl River Bridge Superior Light Soy Sauce, 16.9 oz for add to cart
+                      - link [ref=e2097] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/pearl-river-bridge-superior-light-soy-sauce/255980
+                      - generic [ref=e2098]:
+                        - generic [ref=e2099]:
+                          - link "Pearl River Bridge Superior Light Soy Sauce, 16.9 oz" [ref=e2100]:
+                            - /url: https://www.heb.com/product-detail/pearl-river-bridge-superior-light-soy-sauce/255980
+                          - paragraph [ref=e2101]: SNAP EBT
+                          - button "Aisle 5" [ref=e2102] [cursor=pointer]:
+                            - generic [ref=e2103]:
+                              - img [ref=e2104]
+                              - generic [ref=e2107]: Aisle 5
+                        - generic [ref=e2109]:
+                          - generic [ref=e2110]: $4.84
+                          - generic [ref=e2111]: "Qty: 1"
+                  - listitem [ref=e2112]:
+                    - generic [ref=e2113]: Pirate's Booty Aged White Cheddar Rice & Corn Puffs, 10 oz, $6.98 each. $0.70 per oz.
+                    - generic [ref=e2114]:
+                      - generic [ref=e2116] [cursor=pointer]:
+                        - checkbox "Select Pirate's Booty Aged White Cheddar Rice & Corn Puffs, 10 oz for add to cart" [ref=e2118]
+                        - generic [ref=e2119]: Select Pirate's Booty Aged White Cheddar Rice & Corn Puffs, 10 oz for add to cart
+                      - link [ref=e2121] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/pirate-s-booty-aged-white-cheddar-rice-corn-puffs/1420193
+                      - generic [ref=e2122]:
+                        - generic [ref=e2123]:
+                          - link "Pirate's Booty Aged White Cheddar Rice & Corn Puffs, 10 oz" [ref=e2124]:
+                            - /url: https://www.heb.com/product-detail/pirate-s-booty-aged-white-cheddar-rice-corn-puffs/1420193
+                          - paragraph [ref=e2125]: SNAP EBT
+                          - button "Aisle 9" [ref=e2126] [cursor=pointer]:
+                            - generic [ref=e2127]:
+                              - img [ref=e2128]
+                              - generic [ref=e2131]: Aisle 9
+                        - generic [ref=e2133]:
+                          - generic [ref=e2134]: $6.98
+                          - generic [ref=e2135]: "Qty: 1"
+                  - listitem [ref=e2136]:
+                    - generic [ref=e2137]: Post Honey Bunches of Oats with Almonds Cereal - Mega Size, 28 oz, $5.97 each. $0.21 per oz.
+                    - generic [ref=e2138]:
+                      - generic [ref=e2140] [cursor=pointer]:
+                        - checkbox "Select Post Honey Bunches of Oats with Almonds Cereal - Mega Size, 28 oz for add to cart" [ref=e2142]
+                        - generic [ref=e2143]: Select Post Honey Bunches of Oats with Almonds Cereal - Mega Size, 28 oz for add to cart
+                      - link [ref=e2145] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/post-honey-bunches-of-oats-with-almonds-cereal-mega-size/2179865
+                      - generic [ref=e2146]:
+                        - generic [ref=e2147]:
+                          - link "Post Honey Bunches of Oats with Almonds Cereal - Mega Size, 28 oz" [ref=e2148]:
+                            - /url: https://www.heb.com/product-detail/post-honey-bunches-of-oats-with-almonds-cereal-mega-size/2179865
+                          - paragraph [ref=e2149]: SNAP EBT
+                          - button "Aisle 8" [ref=e2150] [cursor=pointer]:
+                            - generic [ref=e2151]:
+                              - img [ref=e2152]
+                              - generic [ref=e2155]: Aisle 8
+                        - generic [ref=e2157]:
+                          - generic [ref=e2158]: $5.97
+                          - generic [ref=e2159]: "Qty: 1"
+                  - listitem [ref=e2160]:
+                    - generic [ref=e2161]: Rao's Homemade Roasted Garlic Alfredo Sauce, 15 oz, $6.98 each. $0.47 per oz.
+                    - generic [ref=e2162]:
+                      - generic [ref=e2164] [cursor=pointer]:
+                        - checkbox "Select Rao's Homemade Roasted Garlic Alfredo Sauce, 15 oz for add to cart" [ref=e2166]
+                        - generic [ref=e2167]: Select Rao's Homemade Roasted Garlic Alfredo Sauce, 15 oz for add to cart
+                      - link [ref=e2169] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/rao-s-homemade-roasted-garlic-alfredo-sauce/4392557
+                      - generic [ref=e2170]:
+                        - generic [ref=e2171]:
+                          - link "Rao's Homemade Roasted Garlic Alfredo Sauce, 15 oz" [ref=e2172]:
+                            - /url: https://www.heb.com/product-detail/rao-s-homemade-roasted-garlic-alfredo-sauce/4392557
+                          - paragraph [ref=e2173]: SNAP EBT
+                          - button "Aisle 5" [ref=e2174] [cursor=pointer]:
+                            - generic [ref=e2175]:
+                              - img [ref=e2176]
+                              - generic [ref=e2179]: Aisle 5
+                        - generic [ref=e2181]:
+                          - generic [ref=e2182]: $6.98
+                          - generic [ref=e2183]: "Qty: 1"
+                  - listitem [ref=e2184]:
+                    - generic [ref=e2185]: Rao's Homestyle Bolognese Sauce, 24 oz, $6.89 each. $0.29 per oz.
+                    - generic [ref=e2186]:
+                      - generic [ref=e2188] [cursor=pointer]:
+                        - checkbox "Select Rao's Homestyle Bolognese Sauce, 24 oz for add to cart" [ref=e2190]
+                        - generic [ref=e2191]: Select Rao's Homestyle Bolognese Sauce, 24 oz for add to cart
+                      - link [ref=e2193] [cursor=pointer]:
+                        - /url: https://www.heb.com/product-detail/rao-s-homestyle-bolognese-sauce/8254056
+                      - generic [ref=e2194]:
+                        - generic [ref=e2195]:
+                          - link "Rao's Homestyle Bolognese Sauce, 24 oz" [ref=e2196]:
+                            - /url: https://www.heb.com/product-detail/rao-s-homestyle-bolognese-sauce/8254056
+                          - paragraph [ref=e2197]: SNAP EBT
+                          - button "Aisle 5" [ref=e2198] [cursor=pointer]:
+                            - generic [ref=e2199]:
+                              - img [ref=e2200]
+                              - generic [ref=e2203]: Aisle 5
+                        - generic [ref=e2205]:
+                          - generic [ref=e2206]: $6.89
+                          - generic [ref=e2207]: "Qty: 1"
+    - contentinfo [ref=e2208]:
+      - generic [ref=e2209]:
+        - generic [ref=e2210]:
+          - generic [ref=e2211]:
+            - heading "Company" [level=2] [ref=e2212]
+            - list [ref=e2213]:
+              - listitem [ref=e2214]:
+                - link "Find a store" [ref=e2215] [cursor=pointer]:
+                  - /url: /store-locations
+              - listitem [ref=e2216]:
+                - link "About us" [ref=e2217] [cursor=pointer]:
+                  - /url: https://careers.heb.com/about-us
+              - listitem [ref=e2218]:
+                - link "Careers" [ref=e2219] [cursor=pointer]:
+                  - /url: https://careers.heb.com/careers-home
+              - listitem [ref=e2220]:
+                - link "Community" [ref=e2221] [cursor=pointer]:
+                  - /url: /static-page/Community-Involvement
+              - listitem [ref=e2222]:
+                - link "Newsroom" [ref=e2223] [cursor=pointer]:
+                  - /url: https://newsroom.heb.com/
+              - listitem [ref=e2224]:
+                - link "Sustainability" [ref=e2225] [cursor=pointer]:
+                  - /url: https://ourtexasourfuture.com/
+              - listitem [ref=e2226]:
+                - link "Our brands" [ref=e2227] [cursor=pointer]:
+                  - /url: /static-page/Our-Family-of-Brands
+              - listitem [ref=e2228]:
+                - link "Store openings" [ref=e2229] [cursor=pointer]:
+                  - /url: /static-page/Our-Stores
+              - listitem [ref=e2230]:
+                - link "Suppliers" [ref=e2231] [cursor=pointer]:
+                  - /url: https://supplier.heb.com/
+          - generic [ref=e2232]:
+            - heading "Our services" [level=2] [ref=e2233]
+            - list [ref=e2234]:
+              - listitem [ref=e2235]:
+                - link "H-E-B credit card" [ref=e2236] [cursor=pointer]:
+                  - /url: /discover/credit?int=curbside-discover-footer
+              - listitem [ref=e2237]:
+                - link "Pharmacy" [ref=e2238] [cursor=pointer]:
+                  - /url: /pharmacy/common/landing
+              - listitem [ref=e2239]:
+                - link "Restaurants" [ref=e2240] [cursor=pointer]:
+                  - /url: /static-page/restaurants-and-food-to-go-at-heb
+              - listitem [ref=e2241]:
+                - link "H-E-B services" [ref=e2242] [cursor=pointer]:
+                  - /url: /discover/services-business-center
+              - listitem [ref=e2243]:
+                - link "Gift cards" [ref=e2244] [cursor=pointer]:
+                  - /url: /giftcards/
+              - listitem [ref=e2245]:
+                - link "H-E-B commercial real estate" [ref=e2246] [cursor=pointer]:
+                  - /url: https://www.hebdevelopment.com/
+              - listitem [ref=e2247]:
+                - link "Nutrition services" [ref=e2248] [cursor=pointer]:
+                  - /url: https://www.heb.com/static-page/Nutrition-Services
+              - listitem [ref=e2249]:
+                - link "Custom cakes & catering" [ref=e2250] [cursor=pointer]:
+                  - /url: /discover/catering-and-party-planning
+          - generic [ref=e2252]:
+            - generic [ref=e2253]:
+              - heading "Customer service" [level=2] [ref=e2254]
+              - list [ref=e2255]:
+                - listitem [ref=e2256]:
+                  - link "Accessibility statement" [ref=e2257] [cursor=pointer]:
+                    - /url: /accessibility-statement
+                - listitem [ref=e2258]:
+                  - link "Help & FAQs" [ref=e2259] [cursor=pointer]:
+                    - /url: /help
+                - listitem [ref=e2260]:
+                  - button "Review our website" [ref=e2261] [cursor=pointer]
+                - listitem [ref=e2262]:
+                  - link "Coupon policy" [ref=e2263] [cursor=pointer]:
+                    - /url: /static-page/article-template/H-E-B-Coupon-Policy
+                - listitem [ref=e2264]:
+                  - link "Refund policy" [ref=e2265] [cursor=pointer]:
+                    - /url: /static-page/article-template/H-E-B-Refund-Policy
+                - listitem [ref=e2266]:
+                  - link "Product recalls" [ref=e2267] [cursor=pointer]:
+                    - /url: /static-page/article-template/Recalls
+            - generic [ref=e2268]:
+              - heading "More from H-E-B" [level=2] [ref=e2269]
+              - list [ref=e2270]:
+                - listitem [ref=e2271]:
+                  - link "All recipes & cooking" [ref=e2272] [cursor=pointer]:
+                    - /url: /recipe
+                - listitem [ref=e2273]:
+                  - link "Meal Simple" [ref=e2274] [cursor=pointer]:
+                    - /url: /discover/meal-simple
+                - listitem [ref=e2275]:
+                  - link "Sushiya Sushi" [ref=e2276] [cursor=pointer]:
+                    - /url: /static-page/sushi
+          - generic [ref=e2277]:
+            - list [ref=e2278]:
+              - listitem [ref=e2279]:
+                - link "Facebook" [ref=e2280] [cursor=pointer]:
+                  - /url: https://facebook.com/heb
+                  - img [ref=e2283]
+              - listitem [ref=e2285]:
+                - link "Instagram" [ref=e2286] [cursor=pointer]:
+                  - /url: https://www.instagram.com/heb/
+                  - img [ref=e2289]
+              - listitem [ref=e2291]:
+                - link "YouTube" [ref=e2292] [cursor=pointer]:
+                  - /url: https://www.youtube.com/user/HEB
+                  - img [ref=e2295]
+              - listitem [ref=e2297]:
+                - link "Pinterest" [ref=e2298] [cursor=pointer]:
+                  - /url: https://www.pinterest.com/mytexaslife/
+                  - img [ref=e2301]
+              - listitem [ref=e2303]:
+                - link "Twitter" [ref=e2304] [cursor=pointer]:
+                  - /url: https://twitter.com/heb
+                  - img [ref=e2307]
+            - link "Get it on Google Play" [ref=e2309] [cursor=pointer]:
+              - /url: https://play.google.com/store/apps/details?id=com.heb.myheb
+              - img "Get it on Google Play" [ref=e2310]
+            - link "Download on the App Store" [ref=e2311] [cursor=pointer]:
+              - /url: https://apps.apple.com/app/id1477891300
+              - img "Download on the App Store" [ref=e2312]
+        - generic [ref=e2313]:
+          - paragraph [ref=e2314]: Copyright © 2026 H‑E‑B, LP
+          - paragraph [ref=e2315]:
+            - button "Your Privacy Choices" [ref=e2316] [cursor=pointer]
+            - text: "|"
+            - link "Privacy Policy" [ref=e2317] [cursor=pointer]:
+              - /url: /privacy
+            - text: "|"
+            - link "Terms & Conditions" [ref=e2318] [cursor=pointer]:
+              - /url: /terms
+            - text: "|"
+            - link "Site map" [ref=e2319] [cursor=pointer]:
+              - /url: /static-page/Sitemap
+          - paragraph [ref=e2320]:
+            - link "Partners" [ref=e2321] [cursor=pointer]:
+              - /url: /static-page/H-E-B-partner-services
+          - paragraph [ref=e2322]:
+            - link "H-E-B, LP Mexico |" [ref=e2323] [cursor=pointer]:
+              - /url: https://www.heb.com.mx/
+            - link "Central Market |" [ref=e2324] [cursor=pointer]:
+              - /url: https://www.centralmarket.com/
+            - link "Mi Tienda |" [ref=e2325] [cursor=pointer]:
+              - /url: https://mitiendatx.com/
+            - link "Joe V's Smart Shop |" [ref=e2326] [cursor=pointer]:
+              - /url: https://www.joevsmartshop.com/
+            - link "Favor Delivery" [ref=e2327] [cursor=pointer]:
+              - /url: https://www.favordelivery.com/
+          - paragraph [ref=e2328]: "H‑E‑B Corporate Office: 646 S. Flores St., San Antonio, TX 78204"
+  - alert [ref=e2330]
+  - dialog "Current shopping store dialog" [ref=e2331]:
+    - generic [ref=e2332]:
+      - generic [ref=e2333]:
+        - paragraph [ref=e2334]: You're shopping H‑E‑B Manor
+        - button "Close current shopping store dialog" [active] [ref=e2335] [cursor=pointer]:
+          - img [ref=e2338]
+      - paragraph [ref=e2341]: Not your H-E-B? Select your preferred location.

@@ -1,0 +1,184 @@
+- generic [ref=e1]:
+  - generic [ref=e9]:
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e51]:
+          - link "Home" [ref=e52] [cursor=pointer]:
+            - /url: /protected/recipes
+            - text: CHEFBOARD
+          - generic [ref=e53]:
+            - button "Add Recipe" [ref=e54] [cursor=pointer]:
+              - img
+              - generic [ref=e55]: Add
+            - button "Menu" [ref=e56] [cursor=pointer]:
+              - img [ref=e57]
+        - main [ref=e68]:
+          - generic [ref=e6372]:
+            - generic [ref=e6374]:
+              - generic [ref=e6375]:
+                - button "Back to Library" [ref=e6376] [cursor=pointer]:
+                  - img
+                - generic [ref=e6377]:
+                  - generic [ref=e6378]:
+                    - button "This Week" [ref=e6379] [cursor=pointer]: This
+                    - button "Next Week" [ref=e6380] [cursor=pointer]: Next
+                  - generic [ref=e6381]: Mar 2 - 8
+                  - button "Select Week" [ref=e6382] [cursor=pointer]:
+                    - img
+                - button "View Grocery List" [ref=e6383] [cursor=pointer]:
+                  - img
+                  - generic [ref=e6384]: Grocery
+              - generic [ref=e6385]: 4 meals planned
+            - generic [ref=e6387]:
+              - generic [ref=e6389]:
+                - generic [ref=e6391]:
+                  - generic [ref=e6392]: Monday
+                  - generic [ref=e6393]: Mar 2
+                - generic [ref=e6394]:
+                  - generic [ref=e6395]:
+                    - generic [ref=e6396]:
+                      - img [ref=e6397]
+                      - generic [ref=e6399]: Cook
+                    - generic [ref=e6400]:
+                      - button "Move recipe" [ref=e6401] [cursor=pointer]:
+                        - img [ref=e6402]
+                      - button "Delete recipe" [ref=e6404] [cursor=pointer]:
+                        - img [ref=e6405]
+                  - generic [ref=e6408] [cursor=pointer]:
+                    - img "Baked Ziti with Spinach and Sausage" [ref=e6410]
+                    - generic [ref=e6411]:
+                      - generic [ref=e6412]: Baked Ziti with Spinach and Sausage
+                      - generic [ref=e6413]:
+                        - generic [ref=e6414]:
+                          - img [ref=e6415]
+                          - text: 50 min
+                        - generic [ref=e6418]:
+                          - img [ref=e6419]
+                          - text: Emilio
+                        - generic [ref=e6422]: Pork
+              - generic [ref=e6428]:
+                - generic [ref=e6430]:
+                  - generic [ref=e6431]: Tuesday
+                  - generic [ref=e6432]: Mar 3
+                - button "Add a recipe" [ref=e6433] [cursor=pointer]:
+                  - img [ref=e6434]
+                  - generic [ref=e6435]: Add a recipe
+              - generic [ref=e6437]:
+                - generic [ref=e6439]:
+                  - generic [ref=e6440]: Wednesday
+                  - generic [ref=e6441]: Mar 4
+                - generic [ref=e6442]:
+                  - generic [ref=e6443]:
+                    - generic [ref=e6444]:
+                      - img [ref=e6445]
+                      - generic [ref=e6447]: Cook
+                    - generic [ref=e6448]:
+                      - button "Move recipe" [ref=e6449] [cursor=pointer]:
+                        - img [ref=e6450]
+                      - button "Delete recipe" [ref=e6452] [cursor=pointer]:
+                        - img [ref=e6453]
+                  - generic [ref=e6456] [cursor=pointer]:
+                    - img "Chicken Thighs in Mediterranean Orzo" [ref=e6458]
+                    - generic [ref=e6459]:
+                      - generic [ref=e6460]: Chicken Thighs in Mediterranean Orzo
+                      - generic [ref=e6461]:
+                        - generic [ref=e6462]:
+                          - img [ref=e6463]
+                          - text: 40 min
+                        - generic [ref=e6466]:
+                          - img [ref=e6467]
+                          - text: Megan
+                        - generic [ref=e6470]: Chicken
+              - generic [ref=e6476]:
+                - generic [ref=e6478]:
+                  - generic [ref=e6479]: Thursday
+                  - generic [ref=e6480]: Mar 5
+                - generic [ref=e6481]:
+                  - generic [ref=e6482]:
+                    - generic [ref=e6483]:
+                      - img [ref=e6484]
+                      - generic [ref=e6486]: Cook
+                    - generic [ref=e6487]:
+                      - button "Move recipe" [ref=e6488] [cursor=pointer]:
+                        - img [ref=e6489]
+                      - button "Delete recipe" [ref=e6491] [cursor=pointer]:
+                        - img [ref=e6492]
+                  - generic [ref=e6495] [cursor=pointer]:
+                    - img "Bacon-Wrapped Pork Tenderloin Medallions with Sweet Potatoes" [ref=e6497]
+                    - generic [ref=e6498]:
+                      - generic [ref=e6499]: Bacon-Wrapped Pork Tenderloin Medallions with Sweet Potatoes
+                      - generic [ref=e6500]:
+                        - generic [ref=e6501]:
+                          - img [ref=e6502]
+                          - text: 60 min
+                        - generic [ref=e6505]:
+                          - img [ref=e6506]
+                          - text: Megan
+                        - generic [ref=e6509]: Pork
+              - generic [ref=e6515]:
+                - generic [ref=e6517]:
+                  - generic [ref=e6518]: Friday
+                  - generic [ref=e6519]: Mar 6
+                - generic [ref=e6520]:
+                  - generic [ref=e6521]:
+                    - generic [ref=e6522]:
+                      - img [ref=e6523]
+                      - generic [ref=e6525]: Cook
+                    - generic [ref=e6526]:
+                      - button "Move recipe" [ref=e6527] [cursor=pointer]:
+                        - img [ref=e6528]
+                      - button "Delete recipe" [ref=e6530] [cursor=pointer]:
+                        - img [ref=e6531]
+                  - generic [ref=e6534] [cursor=pointer]:
+                    - img "Chicken and Leek Soup with Parmesan Dumplings" [ref=e6536]
+                    - generic [ref=e6537]:
+                      - generic [ref=e6538]: Chicken and Leek Soup with Parmesan Dumplings
+                      - generic [ref=e6539]:
+                        - generic [ref=e6540]:
+                          - img [ref=e6541]
+                          - text: 40 min
+                        - generic [ref=e6544]:
+                          - img [ref=e6545]
+                          - text: Megan
+                        - generic [ref=e6548]: Chicken
+              - generic [ref=e6554]:
+                - generic [ref=e6556]:
+                  - generic [ref=e6557]: Saturday
+                  - generic [ref=e6558]: Mar 7
+                - button "Add a recipe" [ref=e6559] [cursor=pointer]:
+                  - img [ref=e6560]
+                  - generic [ref=e6561]: Add a recipe
+              - generic [ref=e6563]:
+                - generic [ref=e6565]:
+                  - generic [ref=e6566]: Sunday
+                  - generic [ref=e6567]: Mar 8
+                - button "Add a recipe" [ref=e6568] [cursor=pointer]:
+                  - img [ref=e6569]
+                  - generic [ref=e6570]: Add a recipe
+        - generic [ref=e16]:
+          - button "Library" [ref=e17] [cursor=pointer]:
+            - img [ref=e19]
+            - generic [ref=e22]: Library
+          - button "This Week" [active] [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+            - generic [ref=e26]: This Week
+    - generic [ref=e4]:
+      - generic [ref=e6]: Beta Preview
+      - button "Send Feedback" [ref=e7] [cursor=pointer]:
+        - generic [ref=e8]: Give Feedback
+        - img
+  - generic [ref=e29]:
+    - button "Menu" [ref=e30]:
+      - img [ref=e32]
+      - generic: Menu
+    - button "Inspect" [ref=e36]:
+      - img [ref=e38]
+      - generic: Inspect
+    - button "Audit" [ref=e40]:
+      - generic [ref=e41]:
+        - img [ref=e42]
+        - img [ref=e6573]
+      - generic: Audit
+    - button "Settings" [ref=e45]:
+      - img [ref=e47]
+      - generic: Settings

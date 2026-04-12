@@ -1,0 +1,1106 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e32]:
+    - main [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e36]:
+          - link "Home" [ref=e37] [cursor=pointer]:
+            - /url: /protected/recipes
+            - text: CHEFBOARD
+          - generic [ref=e38]:
+            - button "Add Recipe" [ref=e39] [cursor=pointer]:
+              - img
+              - generic [ref=e40]: Add
+            - button "Menu" [ref=e41] [cursor=pointer]:
+              - img [ref=e42]
+        - main [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e47]:
+              - generic [ref=e48]:
+                - button "Back to Library" [ref=e49] [cursor=pointer]:
+                  - img
+                - generic [ref=e50]:
+                  - generic [ref=e51]:
+                    - button "This Week" [ref=e52] [cursor=pointer]: This
+                    - button "Next Week" [ref=e53] [cursor=pointer]:
+                      - text: Next
+                      - img [ref=e54]
+                  - generic [ref=e56]: Apr 13 - 19
+                  - button "Select Week" [ref=e57] [cursor=pointer]:
+                    - img
+                - button "View Grocery List" [ref=e58] [cursor=pointer]:
+                  - img
+                  - generic [ref=e59]: Grocery
+              - generic [ref=e60]: 0 meals planned
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - generic [ref=e140]:
+                  - img [ref=e142]
+                  - heading "No groceries yet" [level=3] [ref=e144]
+                  - paragraph [ref=e145]: You have 90 recurring items. Add them to get started.
+                  - button "Browse recurring items" [ref=e146] [cursor=pointer]:
+                    - img [ref=e147]
+                    - text: Browse recurring items
+                - generic [ref=e149]:
+                  - button "Select" [ref=e150] [cursor=pointer]:
+                    - img [ref=e151]
+                    - text: Select
+                  - button "Recurring" [ref=e154] [cursor=pointer]:
+                    - img [ref=e155]
+                    - text: Recurring
+                - generic [ref=e158]:
+                  - img [ref=e159]
+                  - textbox "Add item or search H-E-B..." [ref=e160]
+              - button "Close recurring items sheet" [ref=e161] [cursor=pointer]
+              - generic [ref=e162]:
+                - generic [ref=e165]:
+                  - generic [ref=e166]:
+                    - generic [ref=e167]:
+                      - heading "Recurring Items" [level=3] [ref=e168]
+                      - paragraph [ref=e169]: 3 of 90 selected
+                    - generic [ref=e170]:
+                      - button "Select all" [ref=e1809] [cursor=pointer]:
+                        - img [ref=e1810]
+                      - button "Cancel selection" [ref=e1813] [cursor=pointer]:
+                        - img [ref=e176]
+                  - generic [ref=e179]:
+                    - generic [ref=e180]:
+                      - heading "Weekly" [level=4] [ref=e181]
+                      - generic [ref=e182]:
+                        - generic [ref=e184]:
+                          - img [ref=e1815]
+                          - 'button "H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct 1w Last added: 6d ago Emilio" [ref=e185] [cursor=pointer]':
+                            - generic [ref=e186]:
+                              - generic [ref=e187]: H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct
+                              - generic [ref=e188]:
+                                - img [ref=e189]
+                                - text: 1w
+                            - generic [ref=e191]:
+                              - generic [ref=e192]: "Last added: 6d ago"
+                              - generic [ref=e193]:
+                                - img [ref=e194]
+                                - text: Emilio
+                        - generic [ref=e202]:
+                          - img [ref=e1818]
+                          - 'button "Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs 1w Last added: Never added Emilio" [ref=e203] [cursor=pointer]':
+                            - generic [ref=e204]:
+                              - generic [ref=e205]: Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs
+                              - generic [ref=e206]:
+                                - img [ref=e207]
+                                - text: 1w
+                            - generic [ref=e209]:
+                              - generic [ref=e210]: "Last added: Never added"
+                              - generic [ref=e211]:
+                                - img [ref=e212]
+                                - text: Emilio
+                        - generic [ref=e220]:
+                          - img [ref=e1821]
+                          - 'button "H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz 1w Last added: Never added Emilio" [ref=e221] [cursor=pointer]':
+                            - generic [ref=e222]:
+                              - generic [ref=e223]: H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz
+                              - generic [ref=e224]:
+                                - img [ref=e225]
+                                - text: 1w
+                            - generic [ref=e227]:
+                              - generic [ref=e228]: "Last added: Never added"
+                              - generic [ref=e229]:
+                                - img [ref=e230]
+                                - text: Emilio
+                        - 'button "H-E-B Bakery Flour Tortillas 1w Last added: Never added Emilio" [ref=e239] [cursor=pointer]':
+                          - generic [ref=e240]:
+                            - generic [ref=e241]: H-E-B Bakery Flour Tortillas
+                            - generic [ref=e242]:
+                              - img [ref=e243]
+                              - text: 1w
+                          - generic [ref=e245]:
+                            - generic [ref=e246]: "Last added: Never added"
+                            - generic [ref=e247]:
+                              - img [ref=e248]
+                              - text: Emilio
+                        - 'button "H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans 1w Last added: Never added Emilio" [ref=e257] [cursor=pointer]':
+                          - generic [ref=e258]:
+                            - generic [ref=e259]: H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans
+                            - generic [ref=e260]:
+                              - img [ref=e261]
+                              - text: 1w
+                          - generic [ref=e263]:
+                            - generic [ref=e264]: "Last added: Never added"
+                            - generic [ref=e265]:
+                              - img [ref=e266]
+                              - text: Emilio
+                        - 'button "Central Market Organics 2% Reduced Fat Milk 1w Last added: Never added Emilio" [ref=e275] [cursor=pointer]':
+                          - generic [ref=e276]:
+                            - generic [ref=e277]: Central Market Organics 2% Reduced Fat Milk
+                            - generic [ref=e278]:
+                              - img [ref=e279]
+                              - text: 1w
+                          - generic [ref=e281]:
+                            - generic [ref=e282]: "Last added: Never added"
+                            - generic [ref=e283]:
+                              - img [ref=e284]
+                              - text: Emilio
+                        - 'button "H-E-B Grade AA Cage Free Extra Large Brown Eggs 1w Last added: Never added Emilio" [ref=e293] [cursor=pointer]':
+                          - generic [ref=e294]:
+                            - generic [ref=e295]: H-E-B Grade AA Cage Free Extra Large Brown Eggs
+                            - generic [ref=e296]:
+                              - img [ref=e297]
+                              - text: 1w
+                          - generic [ref=e299]:
+                            - generic [ref=e300]: "Last added: Never added"
+                            - generic [ref=e301]:
+                              - img [ref=e302]
+                              - text: Emilio
+                        - 'button "P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar 1w Last added: Never added Emilio" [ref=e311] [cursor=pointer]':
+                          - generic [ref=e312]:
+                            - generic [ref=e313]: P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar
+                            - generic [ref=e314]:
+                              - img [ref=e315]
+                              - text: 1w
+                          - generic [ref=e317]:
+                            - generic [ref=e318]: "Last added: Never added"
+                            - generic [ref=e319]:
+                              - img [ref=e320]
+                              - text: Emilio
+                        - 'button "Fresh Blueberries 1w Last added: Never added Emilio" [ref=e329] [cursor=pointer]':
+                          - generic [ref=e330]:
+                            - generic [ref=e331]: Fresh Blueberries
+                            - generic [ref=e332]:
+                              - img [ref=e333]
+                              - text: 1w
+                          - generic [ref=e335]:
+                            - generic [ref=e336]: "Last added: Never added"
+                            - generic [ref=e337]:
+                              - img [ref=e338]
+                              - text: Emilio
+                        - 'button "Fresh Bunch of Bananas 1w Last added: Never added Emilio" [ref=e347] [cursor=pointer]':
+                          - generic [ref=e348]:
+                            - generic [ref=e349]: Fresh Bunch of Bananas
+                            - generic [ref=e350]:
+                              - img [ref=e351]
+                              - text: 1w
+                          - generic [ref=e353]:
+                            - generic [ref=e354]: "Last added: Never added"
+                            - generic [ref=e355]:
+                              - img [ref=e356]
+                              - text: Emilio
+                        - 'button "Fresh Gala Apples 1w Last added: Never added Emilio" [ref=e365] [cursor=pointer]':
+                          - generic [ref=e366]:
+                            - generic [ref=e367]: Fresh Gala Apples
+                            - generic [ref=e368]:
+                              - img [ref=e369]
+                              - text: 1w
+                          - generic [ref=e371]:
+                            - generic [ref=e372]: "Last added: Never added"
+                            - generic [ref=e373]:
+                              - img [ref=e374]
+                              - text: Emilio
+                        - 'button "Fresh Small Hass Avocado 1w Last added: Never added Emilio" [ref=e383] [cursor=pointer]':
+                          - generic [ref=e384]:
+                            - generic [ref=e385]: Fresh Small Hass Avocado
+                            - generic [ref=e386]:
+                              - img [ref=e387]
+                              - text: 1w
+                          - generic [ref=e389]:
+                            - generic [ref=e390]: "Last added: Never added"
+                            - generic [ref=e391]:
+                              - img [ref=e392]
+                              - text: Emilio
+                        - 'button "Fresh Strawberries 1w Last added: Never added Emilio" [ref=e401] [cursor=pointer]':
+                          - generic [ref=e402]:
+                            - generic [ref=e403]: Fresh Strawberries
+                            - generic [ref=e404]:
+                              - img [ref=e405]
+                              - text: 1w
+                          - generic [ref=e407]:
+                            - generic [ref=e408]: "Last added: Never added"
+                            - generic [ref=e409]:
+                              - img [ref=e410]
+                              - text: Emilio
+                        - 'button "H-E-B Organics Fresh Baby Spring Mix Lettuce Texas-Size Pack 1w Last added: Never added Emilio" [ref=e419] [cursor=pointer]':
+                          - generic [ref=e420]:
+                            - generic [ref=e421]: H-E-B Organics Fresh Baby Spring Mix Lettuce Texas-Size Pack
+                            - generic [ref=e422]:
+                              - img [ref=e423]
+                              - text: 1w
+                          - generic [ref=e425]:
+                            - generic [ref=e426]: "Last added: Never added"
+                            - generic [ref=e427]:
+                              - img [ref=e428]
+                              - text: Emilio
+                        - 'button "Hill Country Fare Boneless Skinless Chicken Thighs 1w Last added: Never added Emilio" [ref=e437] [cursor=pointer]':
+                          - generic [ref=e438]:
+                            - generic [ref=e439]: Hill Country Fare Boneless Skinless Chicken Thighs
+                            - generic [ref=e440]:
+                              - img [ref=e441]
+                              - text: 1w
+                          - generic [ref=e443]:
+                            - generic [ref=e444]: "Last added: Never added"
+                            - generic [ref=e445]:
+                              - img [ref=e446]
+                              - text: Emilio
+                    - generic [ref=e453]:
+                      - heading "Every 2 weeks" [level=4] [ref=e454]
+                      - generic [ref=e455]:
+                        - 'button "Fresh Fuji Apple, Avg. 0.62 lb, Avg. 0.62 lb 2w Last added: Never added Emilio" [ref=e458] [cursor=pointer]':
+                          - generic [ref=e459]:
+                            - generic [ref=e460]: Fresh Fuji Apple, Avg. 0.62 lb, Avg. 0.62 lb
+                            - generic [ref=e461]:
+                              - img [ref=e462]
+                              - text: 2w
+                          - generic [ref=e464]:
+                            - generic [ref=e465]: "Last added: Never added"
+                            - generic [ref=e466]:
+                              - img [ref=e467]
+                              - text: Emilio
+                        - 'button "Fresh Jumbo Blueberries, 9.8 oz, 9.8 oz 2w Last added: Never added Emilio" [ref=e476] [cursor=pointer]':
+                          - generic [ref=e477]:
+                            - generic [ref=e478]: Fresh Jumbo Blueberries, 9.8 oz, 9.8 oz
+                            - generic [ref=e479]:
+                              - img [ref=e480]
+                              - text: 2w
+                          - generic [ref=e482]:
+                            - generic [ref=e483]: "Last added: Never added"
+                            - generic [ref=e484]:
+                              - img [ref=e485]
+                              - text: Emilio
+                        - 'button "Fresh Strawberries, 1 lb, 1 lb 2w Last added: Never added Emilio" [ref=e494] [cursor=pointer]':
+                          - generic [ref=e495]:
+                            - generic [ref=e496]: Fresh Strawberries, 1 lb, 1 lb
+                            - generic [ref=e497]:
+                              - img [ref=e498]
+                              - text: 2w
+                          - generic [ref=e500]:
+                            - generic [ref=e501]: "Last added: Never added"
+                            - generic [ref=e502]:
+                              - img [ref=e503]
+                              - text: Emilio
+                        - 'button "H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct, 3 ct 2w Last added: Never added Emilio" [ref=e512] [cursor=pointer]':
+                          - generic [ref=e513]:
+                            - generic [ref=e514]: H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct, 3 ct
+                            - generic [ref=e515]:
+                              - img [ref=e516]
+                              - text: 2w
+                          - generic [ref=e518]:
+                            - generic [ref=e519]: "Last added: Never added"
+                            - generic [ref=e520]:
+                              - img [ref=e521]
+                              - text: Emilio
+                        - 'button "H-E-B Everything Bagels 2w Last added: Never added Emilio" [ref=e530] [cursor=pointer]':
+                          - generic [ref=e531]:
+                            - generic [ref=e532]: H-E-B Everything Bagels
+                            - generic [ref=e533]:
+                              - img [ref=e534]
+                              - text: 2w
+                          - generic [ref=e536]:
+                            - generic [ref=e537]: "Last added: Never added"
+                            - generic [ref=e538]:
+                              - img [ref=e539]
+                              - text: Emilio
+                        - 'button "H-E-B Round Top Large White Enriched Sliced Bread 2w Last added: Never added Emilio" [ref=e548] [cursor=pointer]':
+                          - generic [ref=e549]:
+                            - generic [ref=e550]: H-E-B Round Top Large White Enriched Sliced Bread
+                            - generic [ref=e551]:
+                              - img [ref=e552]
+                              - text: 2w
+                          - generic [ref=e554]:
+                            - generic [ref=e555]: "Last added: Never added"
+                            - generic [ref=e556]:
+                              - img [ref=e557]
+                              - text: Emilio
+                        - 'button "H-E-B 100% Whole Wheat Sliced Bread 2w Last added: Never added Emilio" [ref=e566] [cursor=pointer]':
+                          - generic [ref=e567]:
+                            - generic [ref=e568]: H-E-B 100% Whole Wheat Sliced Bread
+                            - generic [ref=e569]:
+                              - img [ref=e570]
+                              - text: 2w
+                          - generic [ref=e572]:
+                            - generic [ref=e573]: "Last added: Never added"
+                            - generic [ref=e574]:
+                              - img [ref=e575]
+                              - text: Emilio
+                        - 'button "Austin Eastciders Cider Variety 12 pk Cans 2w Last added: Never added Emilio" [ref=e584] [cursor=pointer]':
+                          - generic [ref=e585]:
+                            - generic [ref=e586]: Austin Eastciders Cider Variety 12 pk Cans
+                            - generic [ref=e587]:
+                              - img [ref=e588]
+                              - text: 2w
+                          - generic [ref=e590]:
+                            - generic [ref=e591]: "Last added: Never added"
+                            - generic [ref=e592]:
+                              - img [ref=e593]
+                              - text: Emilio
+                        - 'button "Coca-Cola Zero Sugar Soda Fridge Pack 12 pk Cans 2w Last added: Never added Emilio" [ref=e602] [cursor=pointer]':
+                          - generic [ref=e603]:
+                            - generic [ref=e604]: Coca-Cola Zero Sugar Soda Fridge Pack 12 pk Cans
+                            - generic [ref=e605]:
+                              - img [ref=e606]
+                              - text: 2w
+                          - generic [ref=e608]:
+                            - generic [ref=e609]: "Last added: Never added"
+                            - generic [ref=e610]:
+                              - img [ref=e611]
+                              - text: Emilio
+                        - 'button "H-E-B 100% Orange Juice - No Pulp 2w Last added: Never added Emilio" [ref=e620] [cursor=pointer]':
+                          - generic [ref=e621]:
+                            - generic [ref=e622]: H-E-B 100% Orange Juice - No Pulp
+                            - generic [ref=e623]:
+                              - img [ref=e624]
+                              - text: 2w
+                          - generic [ref=e626]:
+                            - generic [ref=e627]: "Last added: Never added"
+                            - generic [ref=e628]:
+                              - img [ref=e629]
+                              - text: Emilio
+                        - 'button "H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese 2w Last added: Never added Emilio" [ref=e638] [cursor=pointer]':
+                          - generic [ref=e639]:
+                            - generic [ref=e640]: H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese
+                            - generic [ref=e641]:
+                              - img [ref=e642]
+                              - text: 2w
+                          - generic [ref=e644]:
+                            - generic [ref=e645]: "Last added: Never added"
+                            - generic [ref=e646]:
+                              - img [ref=e647]
+                              - text: Emilio
+                        - 'button "H-E-B Deli Roasted Red Pepper Hummus 2w Last added: Never added Emilio" [ref=e656] [cursor=pointer]':
+                          - generic [ref=e657]:
+                            - generic [ref=e658]: H-E-B Deli Roasted Red Pepper Hummus
+                            - generic [ref=e659]:
+                              - img [ref=e660]
+                              - text: 2w
+                          - generic [ref=e662]:
+                            - generic [ref=e663]: "Last added: Never added"
+                            - generic [ref=e664]:
+                              - img [ref=e665]
+                              - text: Emilio
+                        - 'button "H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal 2w Last added: Never added Emilio" [ref=e674] [cursor=pointer]':
+                          - generic [ref=e675]:
+                            - generic [ref=e676]: H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal
+                            - generic [ref=e677]:
+                              - img [ref=e678]
+                              - text: 2w
+                          - generic [ref=e680]:
+                            - generic [ref=e681]: "Last added: Never added"
+                            - generic [ref=e682]:
+                              - img [ref=e683]
+                              - text: Emilio
+                        - 'button "H-E-B Frozen Baby Broccoli Florets 2w Last added: Never added Emilio" [ref=e692] [cursor=pointer]':
+                          - generic [ref=e693]:
+                            - generic [ref=e694]: H-E-B Frozen Baby Broccoli Florets
+                            - generic [ref=e695]:
+                              - img [ref=e696]
+                              - text: 2w
+                          - generic [ref=e698]:
+                            - generic [ref=e699]: "Last added: Never added"
+                            - generic [ref=e700]:
+                              - img [ref=e701]
+                              - text: Emilio
+                        - 'button "H-E-B Frozen Chopped Spinach 2w Last added: Never added Emilio" [ref=e710] [cursor=pointer]':
+                          - generic [ref=e711]:
+                            - generic [ref=e712]: H-E-B Frozen Chopped Spinach
+                            - generic [ref=e713]:
+                              - img [ref=e714]
+                              - text: 2w
+                          - generic [ref=e716]:
+                            - generic [ref=e717]: "Last added: Never added"
+                            - generic [ref=e718]:
+                              - img [ref=e719]
+                              - text: Emilio
+                        - 'button "H-E-B Frozen Steamable Petite Peas 2w Last added: Never added Emilio" [ref=e728] [cursor=pointer]':
+                          - generic [ref=e729]:
+                            - generic [ref=e730]: H-E-B Frozen Steamable Petite Peas
+                            - generic [ref=e731]:
+                              - img [ref=e732]
+                              - text: 2w
+                          - generic [ref=e734]:
+                            - generic [ref=e735]: "Last added: Never added"
+                            - generic [ref=e736]:
+                              - img [ref=e737]
+                              - text: Emilio
+                        - 'button "H-E-B Frozen Steamable Whole Green Beans 2w Last added: Never added Emilio" [ref=e746] [cursor=pointer]':
+                          - generic [ref=e747]:
+                            - generic [ref=e748]: H-E-B Frozen Steamable Whole Green Beans
+                            - generic [ref=e749]:
+                              - img [ref=e750]
+                              - text: 2w
+                          - generic [ref=e752]:
+                            - generic [ref=e753]: "Last added: Never added"
+                            - generic [ref=e754]:
+                              - img [ref=e755]
+                              - text: Emilio
+                        - 'button "H-E-B Frozen Waffles - Buttermilk 2w Last added: Never added Emilio" [ref=e764] [cursor=pointer]':
+                          - generic [ref=e765]:
+                            - generic [ref=e766]: H-E-B Frozen Waffles - Buttermilk
+                            - generic [ref=e767]:
+                              - img [ref=e768]
+                              - text: 2w
+                          - generic [ref=e770]:
+                            - generic [ref=e771]: "Last added: Never added"
+                            - generic [ref=e772]:
+                              - img [ref=e773]
+                              - text: Emilio
+                        - 'button "H-E-B Poblano Chicken Lasagna Frozen Meal 2w Last added: Never added Emilio" [ref=e782] [cursor=pointer]':
+                          - generic [ref=e783]:
+                            - generic [ref=e784]: H-E-B Poblano Chicken Lasagna Frozen Meal
+                            - generic [ref=e785]:
+                              - img [ref=e786]
+                              - text: 2w
+                          - generic [ref=e788]:
+                            - generic [ref=e789]: "Last added: Never added"
+                            - generic [ref=e790]:
+                              - img [ref=e791]
+                              - text: Emilio
+                        - 'button "H-E-B Rising Crust Frozen Pizza - Cheese 2w Last added: Never added Emilio" [ref=e800] [cursor=pointer]':
+                          - generic [ref=e801]:
+                            - generic [ref=e802]: H-E-B Rising Crust Frozen Pizza - Cheese
+                            - generic [ref=e803]:
+                              - img [ref=e804]
+                              - text: 2w
+                          - generic [ref=e806]:
+                            - generic [ref=e807]: "Last added: Never added"
+                            - generic [ref=e808]:
+                              - img [ref=e809]
+                              - text: Emilio
+                        - 'button "H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal 2w Last added: Never added Emilio" [ref=e818] [cursor=pointer]':
+                          - generic [ref=e819]:
+                            - generic [ref=e820]: H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal
+                            - generic [ref=e821]:
+                              - img [ref=e822]
+                              - text: 2w
+                          - generic [ref=e824]:
+                            - generic [ref=e825]: "Last added: Never added"
+                            - generic [ref=e826]:
+                              - img [ref=e827]
+                              - text: Emilio
+                        - 'button "H-E-B Vegetable Lasagna Frozen Meal 2w Last added: Never added Emilio" [ref=e836] [cursor=pointer]':
+                          - generic [ref=e837]:
+                            - generic [ref=e838]: H-E-B Vegetable Lasagna Frozen Meal
+                            - generic [ref=e839]:
+                              - img [ref=e840]
+                              - text: 2w
+                          - generic [ref=e842]:
+                            - generic [ref=e843]: "Last added: Never added"
+                            - generic [ref=e844]:
+                              - img [ref=e845]
+                              - text: Emilio
+                        - 'button "Marie Callender''s Chicken Pot Pie 2w Last added: Never added Emilio" [ref=e854] [cursor=pointer]':
+                          - generic [ref=e855]:
+                            - generic [ref=e856]: Marie Callender's Chicken Pot Pie
+                            - generic [ref=e857]:
+                              - img [ref=e858]
+                              - text: 2w
+                          - generic [ref=e860]:
+                            - generic [ref=e861]: "Last added: Never added"
+                            - generic [ref=e862]:
+                              - img [ref=e863]
+                              - text: Emilio
+                        - 'button "Tyson Frozen Baked Chicken Breast Nuggets 2w Last added: Never added Emilio" [ref=e872] [cursor=pointer]':
+                          - generic [ref=e873]:
+                            - generic [ref=e874]: Tyson Frozen Baked Chicken Breast Nuggets
+                            - generic [ref=e875]:
+                              - img [ref=e876]
+                              - text: 2w
+                          - generic [ref=e878]:
+                            - generic [ref=e879]: "Last added: Never added"
+                            - generic [ref=e880]:
+                              - img [ref=e881]
+                              - text: Emilio
+                        - 'button "Fresh Gold Potatoes 2w Last added: Never added Emilio" [ref=e890] [cursor=pointer]':
+                          - generic [ref=e891]:
+                            - generic [ref=e892]: Fresh Gold Potatoes
+                            - generic [ref=e893]:
+                              - img [ref=e894]
+                              - text: 2w
+                          - generic [ref=e896]:
+                            - generic [ref=e897]: "Last added: Never added"
+                            - generic [ref=e898]:
+                              - img [ref=e899]
+                              - text: Emilio
+                        - 'button "H-E-B Texas Roots Fresh Yellow Onions 2w Last added: Never added Emilio" [ref=e908] [cursor=pointer]':
+                          - generic [ref=e909]:
+                            - generic [ref=e910]: H-E-B Texas Roots Fresh Yellow Onions
+                            - generic [ref=e911]:
+                              - img [ref=e912]
+                              - text: 2w
+                          - generic [ref=e914]:
+                            - generic [ref=e915]: "Last added: Never added"
+                            - generic [ref=e916]:
+                              - img [ref=e917]
+                              - text: Emilio
+                        - 'button "H-E-B Natural Applewood Smoked Uncured Bacon 2w Last added: Never added Emilio" [ref=e926] [cursor=pointer]':
+                          - generic [ref=e927]:
+                            - generic [ref=e928]: H-E-B Natural Applewood Smoked Uncured Bacon
+                            - generic [ref=e929]:
+                              - img [ref=e930]
+                              - text: 2w
+                          - generic [ref=e932]:
+                            - generic [ref=e933]: "Last added: Never added"
+                            - generic [ref=e934]:
+                              - img [ref=e935]
+                              - text: Emilio
+                        - 'button "Cheez-It Original Cheese Crackers 2w Last added: Never added Emilio" [ref=e944] [cursor=pointer]':
+                          - generic [ref=e945]:
+                            - generic [ref=e946]: Cheez-It Original Cheese Crackers
+                            - generic [ref=e947]:
+                              - img [ref=e948]
+                              - text: 2w
+                          - generic [ref=e950]:
+                            - generic [ref=e951]: "Last added: Never added"
+                            - generic [ref=e952]:
+                              - img [ref=e953]
+                              - text: Emilio
+                        - 'button "H-E-B Organics Whole Grain Animal Cookies 2w Last added: Never added Emilio" [ref=e962] [cursor=pointer]':
+                          - generic [ref=e963]:
+                            - generic [ref=e964]: H-E-B Organics Whole Grain Animal Cookies
+                            - generic [ref=e965]:
+                              - img [ref=e966]
+                              - text: 2w
+                          - generic [ref=e968]:
+                            - generic [ref=e969]: "Last added: Never added"
+                            - generic [ref=e970]:
+                              - img [ref=e971]
+                              - text: Emilio
+                    - generic [ref=e978]:
+                      - heading "Custom" [level=4] [ref=e979]
+                      - generic [ref=e980]:
+                        - 'button "Kikkoman Japanese-Style Panko Bread Crumbs 8w Last added: Never added Emilio" [ref=e983] [cursor=pointer]':
+                          - generic [ref=e984]:
+                            - generic [ref=e985]: Kikkoman Japanese-Style Panko Bread Crumbs
+                            - generic [ref=e986]:
+                              - img [ref=e987]
+                              - text: 8w
+                          - generic [ref=e989]:
+                            - generic [ref=e990]: "Last added: Never added"
+                            - generic [ref=e991]:
+                              - img [ref=e992]
+                              - text: Emilio
+                        - 'button "Independence Coffee Madalyn''s Backyard Pecan Whole Bean Coffee 4w Last added: Never added Emilio" [ref=e1001] [cursor=pointer]':
+                          - generic [ref=e1002]:
+                            - generic [ref=e1003]: Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee
+                            - generic [ref=e1004]:
+                              - img [ref=e1005]
+                              - text: 4w
+                          - generic [ref=e1007]:
+                            - generic [ref=e1008]: "Last added: Never added"
+                            - generic [ref=e1009]:
+                              - img [ref=e1010]
+                              - text: Emilio
+                        - 'button "H-E-B Salted Sweet Cream Spreadable Butter 3w Last added: Never added Emilio" [ref=e1019] [cursor=pointer]':
+                          - generic [ref=e1020]:
+                            - generic [ref=e1021]: H-E-B Salted Sweet Cream Spreadable Butter
+                            - generic [ref=e1022]:
+                              - img [ref=e1023]
+                              - text: 3w
+                          - generic [ref=e1025]:
+                            - generic [ref=e1026]: "Last added: Never added"
+                            - generic [ref=e1027]:
+                              - img [ref=e1028]
+                              - text: Emilio
+                        - 'button "H-E-B Sweet Cream Unsalted Butter Sticks 4w Last added: Never added Emilio" [ref=e1037] [cursor=pointer]':
+                          - generic [ref=e1038]:
+                            - generic [ref=e1039]: H-E-B Sweet Cream Unsalted Butter Sticks
+                            - generic [ref=e1040]:
+                              - img [ref=e1041]
+                              - text: 4w
+                          - generic [ref=e1043]:
+                            - generic [ref=e1044]: "Last added: Never added"
+                            - generic [ref=e1045]:
+                              - img [ref=e1046]
+                              - text: Emilio
+                        - 'button "H-E-B Whipped Plain Cream Cheese Spread 3w Last added: Never added Emilio" [ref=e1055] [cursor=pointer]':
+                          - generic [ref=e1056]:
+                            - generic [ref=e1057]: H-E-B Whipped Plain Cream Cheese Spread
+                            - generic [ref=e1058]:
+                              - img [ref=e1059]
+                              - text: 3w
+                          - generic [ref=e1061]:
+                            - generic [ref=e1062]: "Last added: Never added"
+                            - generic [ref=e1063]:
+                              - img [ref=e1064]
+                              - text: Emilio
+                        - 'button "H-E-B Whole Milk Ricotta Cheese 4w Last added: Never added Emilio" [ref=e1073] [cursor=pointer]':
+                          - generic [ref=e1074]:
+                            - generic [ref=e1075]: H-E-B Whole Milk Ricotta Cheese
+                            - generic [ref=e1076]:
+                              - img [ref=e1077]
+                              - text: 4w
+                          - generic [ref=e1079]:
+                            - generic [ref=e1080]: "Last added: Never added"
+                            - generic [ref=e1081]:
+                              - img [ref=e1082]
+                              - text: Emilio
+                        - 'button "H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat 3w Last added: Never added Emilio" [ref=e1091] [cursor=pointer]':
+                          - generic [ref=e1092]:
+                            - generic [ref=e1093]: H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat
+                            - generic [ref=e1094]:
+                              - img [ref=e1095]
+                              - text: 3w
+                          - generic [ref=e1097]:
+                            - generic [ref=e1098]: "Last added: Never added"
+                            - generic [ref=e1099]:
+                              - img [ref=e1100]
+                              - text: Emilio
+                        - 'button "Cascade Free & Clear Dishwasher Detergent Liquid Gel 8w Last added: Never added Emilio" [ref=e1109] [cursor=pointer]':
+                          - generic [ref=e1110]:
+                            - generic [ref=e1111]: Cascade Free & Clear Dishwasher Detergent Liquid Gel
+                            - generic [ref=e1112]:
+                              - img [ref=e1113]
+                              - text: 8w
+                          - generic [ref=e1115]:
+                            - generic [ref=e1116]: "Last added: Never added"
+                            - generic [ref=e1117]:
+                              - img [ref=e1118]
+                              - text: Emilio
+                        - 'button "H-E-B Our Finest Invent-A-Size Paper Towels 4w Last added: Never added Emilio" [ref=e1127] [cursor=pointer]':
+                          - generic [ref=e1128]:
+                            - generic [ref=e1129]: H-E-B Our Finest Invent-A-Size Paper Towels
+                            - generic [ref=e1130]:
+                              - img [ref=e1131]
+                              - text: 4w
+                          - generic [ref=e1133]:
+                            - generic [ref=e1134]: "Last added: Never added"
+                            - generic [ref=e1135]:
+                              - img [ref=e1136]
+                              - text: Emilio
+                        - 'button "H-E-B Our Finest Ultra Strong Toilet Paper Texas-Size Pack 8w Last added: Never added Emilio" [ref=e1145] [cursor=pointer]':
+                          - generic [ref=e1146]:
+                            - generic [ref=e1147]: H-E-B Our Finest Ultra Strong Toilet Paper Texas-Size Pack
+                            - generic [ref=e1148]:
+                              - img [ref=e1149]
+                              - text: 8w
+                          - generic [ref=e1151]:
+                            - generic [ref=e1152]: "Last added: Never added"
+                            - generic [ref=e1153]:
+                              - img [ref=e1154]
+                              - text: Emilio
+                        - 'button "H-E-B Texas Tough Parchment Paper 12w Last added: Never added Emilio" [ref=e1163] [cursor=pointer]':
+                          - generic [ref=e1164]:
+                            - generic [ref=e1165]: H-E-B Texas Tough Parchment Paper
+                            - generic [ref=e1166]:
+                              - img [ref=e1167]
+                              - text: 12w
+                          - generic [ref=e1169]:
+                            - generic [ref=e1170]: "Last added: Never added"
+                            - generic [ref=e1171]:
+                              - img [ref=e1172]
+                              - text: Emilio
+                        - 'button "H-E-B Texas Tough Tall Kitchen Flex Trash Bags 13 Gallon 8w Last added: Never added Emilio" [ref=e1181] [cursor=pointer]':
+                          - generic [ref=e1182]:
+                            - generic [ref=e1183]: H-E-B Texas Tough Tall Kitchen Flex Trash Bags 13 Gallon
+                            - generic [ref=e1184]:
+                              - img [ref=e1185]
+                              - text: 8w
+                          - generic [ref=e1187]:
+                            - generic [ref=e1188]: "Last added: Never added"
+                            - generic [ref=e1189]:
+                              - img [ref=e1190]
+                              - text: Emilio
+                        - 'button "Tide Free & Gentle Liquid Laundry Detergent 8w Last added: Never added Emilio" [ref=e1199] [cursor=pointer]':
+                          - generic [ref=e1200]:
+                            - generic [ref=e1201]: Tide Free & Gentle Liquid Laundry Detergent
+                            - generic [ref=e1202]:
+                              - img [ref=e1203]
+                              - text: 8w
+                          - generic [ref=e1205]:
+                            - generic [ref=e1206]: "Last added: Never added"
+                            - generic [ref=e1207]:
+                              - img [ref=e1208]
+                              - text: Emilio
+                        - 'button "Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp 4w Last added: Never added Emilio" [ref=e1217] [cursor=pointer]':
+                          - generic [ref=e1218]:
+                            - generic [ref=e1219]: Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp
+                            - generic [ref=e1220]:
+                              - img [ref=e1221]
+                              - text: 4w
+                          - generic [ref=e1223]:
+                            - generic [ref=e1224]: "Last added: Never added"
+                            - generic [ref=e1225]:
+                              - img [ref=e1226]
+                              - text: Emilio
+                        - 'button "Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza 3w Last added: Never added Emilio" [ref=e1235] [cursor=pointer]':
+                          - generic [ref=e1236]:
+                            - generic [ref=e1237]: Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza
+                            - generic [ref=e1238]:
+                              - img [ref=e1239]
+                              - text: 3w
+                          - generic [ref=e1241]:
+                            - generic [ref=e1242]: "Last added: Never added"
+                            - generic [ref=e1243]:
+                              - img [ref=e1244]
+                              - text: Emilio
+                        - 'button "Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza 3w Last added: Never added Emilio" [ref=e1253] [cursor=pointer]':
+                          - generic [ref=e1254]:
+                            - generic [ref=e1255]: Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza
+                            - generic [ref=e1256]:
+                              - img [ref=e1257]
+                              - text: 3w
+                          - generic [ref=e1259]:
+                            - generic [ref=e1260]: "Last added: Never added"
+                            - generic [ref=e1261]:
+                              - img [ref=e1262]
+                              - text: Emilio
+                        - 'button "MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza 3w Last added: Never added Emilio" [ref=e1271] [cursor=pointer]':
+                          - generic [ref=e1272]:
+                            - generic [ref=e1273]: MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza
+                            - generic [ref=e1274]:
+                              - img [ref=e1275]
+                              - text: 3w
+                          - generic [ref=e1277]:
+                            - generic [ref=e1278]: "Last added: Never added"
+                            - generic [ref=e1279]:
+                              - img [ref=e1280]
+                              - text: Emilio
+                        - 'button "H-E-B Mi Tienda Fresh Mexican Mesa Garlic 4w Last added: Never added Emilio" [ref=e1289] [cursor=pointer]':
+                          - generic [ref=e1290]:
+                            - generic [ref=e1291]: H-E-B Mi Tienda Fresh Mexican Mesa Garlic
+                            - generic [ref=e1292]:
+                              - img [ref=e1293]
+                              - text: 4w
+                          - generic [ref=e1295]:
+                            - generic [ref=e1296]: "Last added: Never added"
+                            - generic [ref=e1297]:
+                              - img [ref=e1298]
+                              - text: Emilio
+                        - 'button "Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla 6w Last added: Never added Emilio" [ref=e1307] [cursor=pointer]':
+                          - generic [ref=e1308]:
+                            - generic [ref=e1309]: Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla
+                            - generic [ref=e1310]:
+                              - img [ref=e1311]
+                              - text: 6w
+                          - generic [ref=e1313]:
+                            - generic [ref=e1314]: "Last added: Never added"
+                            - generic [ref=e1315]:
+                              - img [ref=e1316]
+                              - text: Emilio
+                        - 'button "Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt 6w Last added: Never added Emilio" [ref=e1325] [cursor=pointer]':
+                          - generic [ref=e1326]:
+                            - generic [ref=e1327]: Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt
+                            - generic [ref=e1328]:
+                              - img [ref=e1329]
+                              - text: 6w
+                          - generic [ref=e1331]:
+                            - generic [ref=e1332]: "Last added: Never added"
+                            - generic [ref=e1333]:
+                              - img [ref=e1334]
+                              - text: Emilio
+                        - 'button "H-E-B Smoked Atlantic Salmon - Traditional 3w Last added: Never added Emilio" [ref=e1343] [cursor=pointer]':
+                          - generic [ref=e1344]:
+                            - generic [ref=e1345]: H-E-B Smoked Atlantic Salmon - Traditional
+                            - generic [ref=e1346]:
+                              - img [ref=e1347]
+                              - text: 3w
+                          - generic [ref=e1349]:
+                            - generic [ref=e1350]: "Last added: Never added"
+                            - generic [ref=e1351]:
+                              - img [ref=e1352]
+                              - text: Emilio
+                        - 'button "Aji-No-Moto MSG Umami Seasoning 16w Last added: Never added Emilio" [ref=e1361] [cursor=pointer]':
+                          - generic [ref=e1362]:
+                            - generic [ref=e1363]: Aji-No-Moto MSG Umami Seasoning
+                            - generic [ref=e1364]:
+                              - img [ref=e1365]
+                              - text: 16w
+                          - generic [ref=e1367]:
+                            - generic [ref=e1368]: "Last added: Never added"
+                            - generic [ref=e1369]:
+                              - img [ref=e1370]
+                              - text: Emilio
+                        - 'button "Better Than Bouillon Premium Roasted Beef Base 8w Last added: Never added Emilio" [ref=e1379] [cursor=pointer]':
+                          - generic [ref=e1380]:
+                            - generic [ref=e1381]: Better Than Bouillon Premium Roasted Beef Base
+                            - generic [ref=e1382]:
+                              - img [ref=e1383]
+                              - text: 8w
+                          - generic [ref=e1385]:
+                            - generic [ref=e1386]: "Last added: Never added"
+                            - generic [ref=e1387]:
+                              - img [ref=e1388]
+                              - text: Emilio
+                        - 'button "Better Than Bouillon Premium Roasted Chicken Base 8w Last added: Never added Emilio" [ref=e1397] [cursor=pointer]':
+                          - generic [ref=e1398]:
+                            - generic [ref=e1399]: Better Than Bouillon Premium Roasted Chicken Base
+                            - generic [ref=e1400]:
+                              - img [ref=e1401]
+                              - text: 8w
+                          - generic [ref=e1403]:
+                            - generic [ref=e1404]: "Last added: Never added"
+                            - generic [ref=e1405]:
+                              - img [ref=e1406]
+                              - text: Emilio
+                        - 'button "Hill Country Fare Pure Baking Soda 16w Last added: Never added Emilio" [ref=e1415] [cursor=pointer]':
+                          - generic [ref=e1416]:
+                            - generic [ref=e1417]: Hill Country Fare Pure Baking Soda
+                            - generic [ref=e1418]:
+                              - img [ref=e1419]
+                              - text: 16w
+                          - generic [ref=e1421]:
+                            - generic [ref=e1422]: "Last added: Never added"
+                            - generic [ref=e1423]:
+                              - img [ref=e1424]
+                              - text: Emilio
+                        - 'button "Honey Maid Cinnamon Graham Crackers 3w Last added: Never added Emilio" [ref=e1433] [cursor=pointer]':
+                          - generic [ref=e1434]:
+                            - generic [ref=e1435]: Honey Maid Cinnamon Graham Crackers
+                            - generic [ref=e1436]:
+                              - img [ref=e1437]
+                              - text: 3w
+                          - generic [ref=e1439]:
+                            - generic [ref=e1440]: "Last added: Never added"
+                            - generic [ref=e1441]:
+                              - img [ref=e1442]
+                              - text: Emilio
+                        - 'button "H-E-B Angel Hair Capellini Pasta Noodles 3w Last added: Never added Emilio" [ref=e1451] [cursor=pointer]':
+                          - generic [ref=e1452]:
+                            - generic [ref=e1453]: H-E-B Angel Hair Capellini Pasta Noodles
+                            - generic [ref=e1454]:
+                              - img [ref=e1455]
+                              - text: 3w
+                          - generic [ref=e1457]:
+                            - generic [ref=e1458]: "Last added: Never added"
+                            - generic [ref=e1459]:
+                              - img [ref=e1460]
+                              - text: Emilio
+                        - 'button "H-E-B Enriched Long Grain White Rice 4w Last added: Never added Emilio" [ref=e1469] [cursor=pointer]':
+                          - generic [ref=e1470]:
+                            - generic [ref=e1471]: H-E-B Enriched Long Grain White Rice
+                            - generic [ref=e1472]:
+                              - img [ref=e1473]
+                              - text: 4w
+                          - generic [ref=e1475]:
+                            - generic [ref=e1476]: "Last added: Never added"
+                            - generic [ref=e1477]:
+                              - img [ref=e1478]
+                              - text: Emilio
+                        - 'button "H-E-B Made in Texas Creamy Peanut Butter 4w Last added: Never added Emilio" [ref=e1487] [cursor=pointer]':
+                          - generic [ref=e1488]:
+                            - generic [ref=e1489]: H-E-B Made in Texas Creamy Peanut Butter
+                            - generic [ref=e1490]:
+                              - img [ref=e1491]
+                              - text: 4w
+                          - generic [ref=e1493]:
+                            - generic [ref=e1494]: "Last added: Never added"
+                            - generic [ref=e1495]:
+                              - img [ref=e1496]
+                              - text: Emilio
+                        - 'button "H-E-B Microwave Popcorn - Butter 3w Last added: Never added Emilio" [ref=e1505] [cursor=pointer]':
+                          - generic [ref=e1506]:
+                            - generic [ref=e1507]: H-E-B Microwave Popcorn - Butter
+                            - generic [ref=e1508]:
+                              - img [ref=e1509]
+                              - text: 3w
+                          - generic [ref=e1511]:
+                            - generic [ref=e1512]: "Last added: Never added"
+                            - generic [ref=e1513]:
+                              - img [ref=e1514]
+                              - text: Emilio
+                        - 'button "H-E-B Organics Powdered Sugar 12w Last added: Never added Emilio" [ref=e1523] [cursor=pointer]':
+                          - generic [ref=e1524]:
+                            - generic [ref=e1525]: H-E-B Organics Powdered Sugar
+                            - generic [ref=e1526]:
+                              - img [ref=e1527]
+                              - text: 12w
+                          - generic [ref=e1529]:
+                            - generic [ref=e1530]: "Last added: Never added"
+                            - generic [ref=e1531]:
+                              - img [ref=e1532]
+                              - text: Emilio
+                        - 'button "H-E-B Organics Strawberry Fruit Spread 4w Last added: Never added Emilio" [ref=e1541] [cursor=pointer]':
+                          - generic [ref=e1542]:
+                            - generic [ref=e1543]: H-E-B Organics Strawberry Fruit Spread
+                            - generic [ref=e1544]:
+                              - img [ref=e1545]
+                              - text: 4w
+                          - generic [ref=e1547]:
+                            - generic [ref=e1548]: "Last added: Never added"
+                            - generic [ref=e1549]:
+                              - img [ref=e1550]
+                              - text: Emilio
+                        - 'button "H-E-B Pure Cane Extra Fine Granulated Sugar 8w Last added: Never added Emilio" [ref=e1559] [cursor=pointer]':
+                          - generic [ref=e1560]:
+                            - generic [ref=e1561]: H-E-B Pure Cane Extra Fine Granulated Sugar
+                            - generic [ref=e1562]:
+                              - img [ref=e1563]
+                              - text: 8w
+                          - generic [ref=e1565]:
+                            - generic [ref=e1566]: "Last added: Never added"
+                            - generic [ref=e1567]:
+                              - img [ref=e1568]
+                              - text: Emilio
+                        - 'button "H-E-B The Baker''s Scoop Unbleached All-Purpose Flour 8w Last added: Never added Emilio" [ref=e1577] [cursor=pointer]':
+                          - generic [ref=e1578]:
+                            - generic [ref=e1579]: H-E-B The Baker's Scoop Unbleached All-Purpose Flour
+                            - generic [ref=e1580]:
+                              - img [ref=e1581]
+                              - text: 8w
+                          - generic [ref=e1583]:
+                            - generic [ref=e1584]: "Last added: Never added"
+                            - generic [ref=e1585]:
+                              - img [ref=e1586]
+                              - text: Emilio
+                        - 'button "Kikkoman 100% Pure Sesame Oil 12w Last added: Never added Emilio" [ref=e1595] [cursor=pointer]':
+                          - generic [ref=e1596]:
+                            - generic [ref=e1597]: Kikkoman 100% Pure Sesame Oil
+                            - generic [ref=e1598]:
+                              - img [ref=e1599]
+                              - text: 12w
+                          - generic [ref=e1601]:
+                            - generic [ref=e1602]: "Last added: Never added"
+                            - generic [ref=e1603]:
+                              - img [ref=e1604]
+                              - text: Emilio
+                        - 'button "Knox Original Unflavored Gelatine Mix 16w Last added: Never added Emilio" [ref=e1613] [cursor=pointer]':
+                          - generic [ref=e1614]:
+                            - generic [ref=e1615]: Knox Original Unflavored Gelatine Mix
+                            - generic [ref=e1616]:
+                              - img [ref=e1617]
+                              - text: 16w
+                          - generic [ref=e1619]:
+                            - generic [ref=e1620]: "Last added: Never added"
+                            - generic [ref=e1621]:
+                              - img [ref=e1622]
+                              - text: Emilio
+                        - 'button "Midtown by H-E-B Bronze Cut Penne Rigate Pasta 3w Last added: Never added Emilio" [ref=e1631] [cursor=pointer]':
+                          - generic [ref=e1632]:
+                            - generic [ref=e1633]: Midtown by H-E-B Bronze Cut Penne Rigate Pasta
+                            - generic [ref=e1634]:
+                              - img [ref=e1635]
+                              - text: 3w
+                          - generic [ref=e1637]:
+                            - generic [ref=e1638]: "Last added: Never added"
+                            - generic [ref=e1639]:
+                              - img [ref=e1640]
+                              - text: Emilio
+                        - 'button "Midtown by H-E-B Tomato Romano Pasta Sauce 3w Last added: Never added Emilio" [ref=e1649] [cursor=pointer]':
+                          - generic [ref=e1650]:
+                            - generic [ref=e1651]: Midtown by H-E-B Tomato Romano Pasta Sauce
+                            - generic [ref=e1652]:
+                              - img [ref=e1653]
+                              - text: 3w
+                          - generic [ref=e1655]:
+                            - generic [ref=e1656]: "Last added: Never added"
+                            - generic [ref=e1657]:
+                              - img [ref=e1658]
+                              - text: Emilio
+                        - 'button "Nongshim Shin Black Noodle Soup Family Pack 4w Last added: Never added Emilio" [ref=e1667] [cursor=pointer]':
+                          - generic [ref=e1668]:
+                            - generic [ref=e1669]: Nongshim Shin Black Noodle Soup Family Pack
+                            - generic [ref=e1670]:
+                              - img [ref=e1671]
+                              - text: 4w
+                          - generic [ref=e1673]:
+                            - generic [ref=e1674]: "Last added: Never added"
+                            - generic [ref=e1675]:
+                              - img [ref=e1676]
+                              - text: Emilio
+                        - 'button "Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup 4w Last added: Never added Emilio" [ref=e1685] [cursor=pointer]':
+                          - generic [ref=e1686]:
+                            - generic [ref=e1687]: Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup
+                            - generic [ref=e1688]:
+                              - img [ref=e1689]
+                              - text: 4w
+                          - generic [ref=e1691]:
+                            - generic [ref=e1692]: "Last added: Never added"
+                            - generic [ref=e1693]:
+                              - img [ref=e1694]
+                              - text: Emilio
+                        - 'button "Nutella Hazelnut Spread with Cocoa 4w Last added: Never added Emilio" [ref=e1703] [cursor=pointer]':
+                          - generic [ref=e1704]:
+                            - generic [ref=e1705]: Nutella Hazelnut Spread with Cocoa
+                            - generic [ref=e1706]:
+                              - img [ref=e1707]
+                              - text: 4w
+                          - generic [ref=e1709]:
+                            - generic [ref=e1710]: "Last added: Never added"
+                            - generic [ref=e1711]:
+                              - img [ref=e1712]
+                              - text: Emilio
+                        - 'button "Pearl River Bridge Superior Light Soy Sauce 12w Last added: Never added Emilio" [ref=e1721] [cursor=pointer]':
+                          - generic [ref=e1722]:
+                            - generic [ref=e1723]: Pearl River Bridge Superior Light Soy Sauce
+                            - generic [ref=e1724]:
+                              - img [ref=e1725]
+                              - text: 12w
+                          - generic [ref=e1727]:
+                            - generic [ref=e1728]: "Last added: Never added"
+                            - generic [ref=e1729]:
+                              - img [ref=e1730]
+                              - text: Emilio
+                        - 'button "Pirate''s Booty Aged White Cheddar Rice & Corn Puffs 3w Last added: Never added Emilio" [ref=e1739] [cursor=pointer]':
+                          - generic [ref=e1740]:
+                            - generic [ref=e1741]: Pirate's Booty Aged White Cheddar Rice & Corn Puffs
+                            - generic [ref=e1742]:
+                              - img [ref=e1743]
+                              - text: 3w
+                          - generic [ref=e1745]:
+                            - generic [ref=e1746]: "Last added: Never added"
+                            - generic [ref=e1747]:
+                              - img [ref=e1748]
+                              - text: Emilio
+                        - 'button "Post Honey Bunches of Oats with Almonds Cereal - Mega Size 3w Last added: Never added Emilio" [ref=e1757] [cursor=pointer]':
+                          - generic [ref=e1758]:
+                            - generic [ref=e1759]: Post Honey Bunches of Oats with Almonds Cereal - Mega Size
+                            - generic [ref=e1760]:
+                              - img [ref=e1761]
+                              - text: 3w
+                          - generic [ref=e1763]:
+                            - generic [ref=e1764]: "Last added: Never added"
+                            - generic [ref=e1765]:
+                              - img [ref=e1766]
+                              - text: Emilio
+                        - 'button "Rao''s Homemade Roasted Garlic Alfredo Sauce 4w Last added: Never added Emilio" [ref=e1775] [cursor=pointer]':
+                          - generic [ref=e1776]:
+                            - generic [ref=e1777]: Rao's Homemade Roasted Garlic Alfredo Sauce
+                            - generic [ref=e1778]:
+                              - img [ref=e1779]
+                              - text: 4w
+                          - generic [ref=e1781]:
+                            - generic [ref=e1782]: "Last added: Never added"
+                            - generic [ref=e1783]:
+                              - img [ref=e1784]
+                              - text: Emilio
+                        - 'button "Rao''s Homestyle Bolognese Sauce 4w Last added: Never added Emilio" [ref=e1793] [cursor=pointer]':
+                          - generic [ref=e1794]:
+                            - generic [ref=e1795]: Rao's Homestyle Bolognese Sauce
+                            - generic [ref=e1796]:
+                              - img [ref=e1797]
+                              - text: 4w
+                          - generic [ref=e1799]:
+                            - generic [ref=e1800]: "Last added: Never added"
+                            - generic [ref=e1801]:
+                              - img [ref=e1802]
+                              - text: Emilio
+                - generic [ref=e1911]:
+                  - button "Cancel selection" [ref=e1912] [cursor=pointer]:
+                    - img [ref=e1913]
+                  - generic [ref=e1916]: 3 selected
+                  - generic [ref=e1917]:
+                    - button "Add to this week" [ref=e1918] [cursor=pointer]:
+                      - img [ref=e1919]
+                      - generic [ref=e1920]: Add
+                    - button "Delete selected" [ref=e1921] [cursor=pointer]:
+                      - img [ref=e1922]
+                      - generic [ref=e1925]: Delete
+        - generic [ref=e127]:
+          - button "Library" [ref=e128] [cursor=pointer]:
+            - img [ref=e129]
+            - generic [ref=e132]: Library
+          - button "This Week" [ref=e133] [cursor=pointer]:
+            - img [ref=e135]
+            - generic [ref=e137]: This Week
+    - generic [ref=e4]:
+      - generic [ref=e6]: Beta Preview
+      - button "Send Feedback" [ref=e7] [cursor=pointer]:
+        - generic [ref=e8]: Give Feedback
+        - img
+  - generic [ref=e11]:
+    - button "Menu" [ref=e12]:
+      - img [ref=e14]
+      - generic: Menu
+    - button "Inspect" [ref=e18]:
+      - img [ref=e20]
+      - generic: Inspect
+    - button "Audit" [ref=e22]:
+      - img [ref=e24]
+      - generic: Audit
+    - button "Settings" [ref=e27]:
+      - img [ref=e29]
+      - generic: Settings

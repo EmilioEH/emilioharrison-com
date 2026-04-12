@@ -1,0 +1,21 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - main
+    - generic [ref=e4]:
+      - generic [ref=e6]: Beta Preview
+      - button "Send Feedback" [ref=e7] [cursor=pointer]:
+        - generic [ref=e8]: Give Feedback
+        - img
+  - generic [ref=e11]:
+    - button "Menu" [ref=e12]:
+      - img [ref=e14]
+      - generic: Menu
+    - button "Inspect" [ref=e18]:
+      - img [ref=e20]
+      - generic: Inspect
+    - button "Audit" [ref=e22]:
+      - img [ref=e24]
+      - generic: Audit
+    - button "Settings" [ref=e27]:
+      - img [ref=e29]
+      - generic: Settings

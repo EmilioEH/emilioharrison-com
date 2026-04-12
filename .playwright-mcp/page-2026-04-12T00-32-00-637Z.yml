@@ -1,0 +1,150 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e51]:
+          - link "Home" [ref=e52] [cursor=pointer]:
+            - /url: /protected/recipes
+            - text: CHEFBOARD
+          - generic [ref=e53]:
+            - button "Add Recipe" [ref=e54] [cursor=pointer]:
+              - img
+              - generic [ref=e55]: Add
+            - button "Menu" [ref=e56] [cursor=pointer]:
+              - img [ref=e57]
+        - main [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - button "Back to Library" [ref=e64] [cursor=pointer]:
+                  - img
+                - generic [ref=e65]:
+                  - generic [ref=e66]:
+                    - button "This Week" [ref=e67] [cursor=pointer]: This
+                    - button "Next Week" [ref=e68] [cursor=pointer]:
+                      - text: Next
+                      - img [ref=e69]
+                  - generic [ref=e71]: Apr 13 - 19
+                  - button "Select Week" [ref=e72] [cursor=pointer]:
+                    - img
+                - button "View Grocery List" [ref=e73] [cursor=pointer]:
+                  - img
+                  - generic [ref=e74]: Grocery
+              - generic [ref=e75]: 0 meals planned
+            - generic [ref=e78]:
+              - generic [ref=e88]:
+                - button "Select" [ref=e89] [cursor=pointer]:
+                  - img [ref=e90]
+                  - text: Select
+                - button "Recurring" [ref=e93] [cursor=pointer]:
+                  - img [ref=e94]
+                  - text: Recurring
+              - generic [ref=e97]:
+                - img [ref=e98]
+                - textbox "Add item or search H-E-B..." [ref=e99]
+              - generic [ref=e1501]:
+                - button "All" [ref=e1502] [cursor=pointer]
+                - button "Produce 1" [ref=e1503] [cursor=pointer]:
+                  - generic [ref=e1504]: Produce
+                  - generic [ref=e1505]: "1"
+                - button "Meat 1" [ref=e1506] [cursor=pointer]:
+                  - generic [ref=e1507]: Meat
+                  - generic [ref=e1508]: "1"
+                - button "Dairy & Eggs 1" [ref=e1509] [cursor=pointer]:
+                  - generic [ref=e1510]: Dairy & Eggs
+                  - generic [ref=e1511]: "1"
+              - generic [ref=e1512]:
+                - heading "Produce" [level=3] [ref=e1513]
+                - generic [ref=e1517]:
+                  - button [ref=e1518] [cursor=pointer]
+                  - button "1 each Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs 1.20 (0.50/lb) 1w Avg. 2.4 lbs In Produce" [ref=e1520] [cursor=pointer]:
+                    - generic [ref=e1521]:
+                      - generic [ref=e1522]: "1"
+                      - generic [ref=e1523]: each
+                      - generic [ref=e1524]: Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs
+                      - generic [ref=e1525]:
+                        - img [ref=e1526]
+                        - text: "1.20"
+                        - generic [ref=e1528]: (0.50/lb)
+                      - generic [ref=e1529]:
+                        - img [ref=e1530]
+                        - text: 1w
+                    - generic [ref=e1532]:
+                      - generic [ref=e1533]: Avg. 2.4 lbs
+                      - generic [ref=e1534]:
+                        - img [ref=e1535]
+                        - text: In Produce
+                  - button "Recurring every 1 week(s)" [ref=e1539] [cursor=pointer]:
+                    - img [ref=e1540]
+                    - generic [ref=e1542]: "1"
+              - generic [ref=e1543]:
+                - heading "Meat" [level=3] [ref=e1544]
+                - generic [ref=e1548]:
+                  - button [ref=e1549] [cursor=pointer]
+                  - button "1 each H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz 2.89 (0.19/oz) 1w 15 oz In Meat Market on the Back Wall" [ref=e1551] [cursor=pointer]:
+                    - generic [ref=e1552]:
+                      - generic [ref=e1553]: "1"
+                      - generic [ref=e1554]: each
+                      - generic [ref=e1555]: H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz
+                      - generic [ref=e1556]:
+                        - img [ref=e1557]
+                        - text: "2.89"
+                        - generic [ref=e1559]: (0.19/oz)
+                      - generic [ref=e1560]:
+                        - img [ref=e1561]
+                        - text: 1w
+                    - generic [ref=e1563]:
+                      - generic [ref=e1564]: 15 oz
+                      - generic [ref=e1565]:
+                        - img [ref=e1566]
+                        - text: In Meat Market on the Back Wall
+                  - button "Recurring every 1 week(s)" [ref=e1570] [cursor=pointer]:
+                    - img [ref=e1571]
+                    - generic [ref=e1573]: "1"
+              - generic [ref=e1574]:
+                - heading "Dairy & Eggs" [level=3] [ref=e1575]
+                - generic [ref=e1579]:
+                  - button [ref=e1580] [cursor=pointer]
+                  - generic "No H-E-B product linked" [ref=e1582]:
+                    - img [ref=e1583]
+                  - button "1 each H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct 4.04 1w" [ref=e1589] [cursor=pointer]:
+                    - generic [ref=e1590]:
+                      - generic [ref=e1591]: "1"
+                      - generic [ref=e1592]: each
+                      - generic [ref=e1593]: H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct
+                      - generic [ref=e1594]:
+                        - img [ref=e1595]
+                        - text: "4.04"
+                      - generic [ref=e1597]:
+                        - img [ref=e1598]
+                        - text: 1w
+                  - button "Recurring every 1 week(s)" [ref=e1601] [cursor=pointer]:
+                    - img [ref=e1602]
+                    - generic [ref=e1604]: "1"
+        - generic [ref=e9]:
+          - button "Library" [ref=e10] [cursor=pointer]:
+            - img [ref=e11]
+            - generic [ref=e14]: Library
+          - button "This Week" [ref=e15] [cursor=pointer]:
+            - img [ref=e17]
+            - generic [ref=e19]: This Week
+    - generic [ref=e22]:
+      - generic [ref=e24]: Beta Preview
+      - button "Send Feedback" [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: Give Feedback
+        - img
+  - generic [ref=e29]:
+    - button "Menu" [ref=e30]:
+      - img [ref=e32]
+      - generic: Menu
+    - button "Inspect" [ref=e36]:
+      - img [ref=e38]
+      - generic: Inspect
+    - button "Audit" [ref=e40]:
+      - generic [ref=e41]:
+        - img [ref=e42]
+        - img [ref=e1976]
+      - generic: Audit
+    - button "Settings" [ref=e45]:
+      - img [ref=e47]
+      - generic: Settings

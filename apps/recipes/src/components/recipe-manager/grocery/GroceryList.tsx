@@ -113,6 +113,9 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   // 4d. Recurring sheet state
   const [showRecurringSheet, setShowRecurringSheet] = useState(false)
 
+  // 4e. Recurring item count for empty state
+  const [recurringCount, setRecurringCount] = useState<number | null>(null)
+
   // Persist effect
   useEffect(() => {
     localStorage.setItem('grocery-checked', JSON.stringify(Array.from(checkedItems)))
@@ -150,6 +153,24 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     const base = import.meta.env.BASE_URL
     return base.endsWith('/') ? base : `${base}/`
   }, [])
+
+  // Fetch recurring count when list is empty
+  const shouldFetchRecurring = ingredients.length === 0 && !!userId
+  useEffect(() => {
+    if (!shouldFetchRecurring) return
+    let cancelled = false
+    fetch(`${getBaseUrl()}api/grocery/recurring`)
+      .then((res) => res.json())
+      .then((data: { items?: { id: string }[] }) => {
+        if (!cancelled) setRecurringCount(data.items?.length ?? 0)
+      })
+      .catch(() => {
+        if (!cancelled) setRecurringCount(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [shouldFetchRecurring, getBaseUrl])
 
   // 5. Manual Item Addition
   const handleAddItem = useCallback(
@@ -544,12 +565,36 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         {ingredients.length === 0 && (
           <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
             <div className="mb-4 rounded-full bg-muted p-6">
-              <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
+              {recurringCount && recurringCount > 0 ? (
+                <CalendarDays className="h-10 w-10 text-primary/60" />
+              ) : (
+                <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
+              )}
             </div>
-            <h3 className="font-display text-lg font-bold">All clear!</h3>
-            <p className="max-w-xs text-sm text-muted-foreground">
-              You haven't added any recipes to your plan yet.
-            </p>
+            {recurringCount && recurringCount > 0 ? (
+              <>
+                <h3 className="font-display text-lg font-bold">No groceries yet</h3>
+                <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+                  You have {recurringCount} recurring item{recurringCount === 1 ? '' : 's'}.
+                  Add them to get started.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowRecurringSheet(true)}
+                  className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Browse recurring items
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="font-display text-lg font-bold">All clear!</h3>
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  You haven't added any recipes to your plan yet.
+                </p>
+              </>
+            )}
           </div>
         )}
         {/* Recipe Sources Header - scrolls with content */}
@@ -1049,6 +1094,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         <RecurringListSheet
           onClose={() => setShowRecurringSheet(false)}
           onChange={() => onItemAdded?.()}
+          weekStartDate={weekStartDate}
         />
       )}
 

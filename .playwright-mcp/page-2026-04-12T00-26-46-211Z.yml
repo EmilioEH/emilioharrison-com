@@ -1,0 +1,1358 @@
+- generic [ref=e1]:
+  - generic [ref=e9]:
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e51]:
+          - link "Home" [ref=e52] [cursor=pointer]:
+            - /url: /protected/recipes
+            - text: CHEFBOARD
+          - generic [ref=e53]:
+            - button "Add Recipe" [ref=e54] [cursor=pointer]:
+              - img
+              - generic [ref=e55]: Add
+            - button "Menu" [ref=e56] [cursor=pointer]:
+              - img [ref=e57]
+        - main [ref=e68]:
+          - generic [ref=e6372]:
+            - generic [ref=e6374]:
+              - generic [ref=e6375]:
+                - button "Back to Library" [ref=e6376] [cursor=pointer]:
+                  - img
+                - generic [ref=e6377]:
+                  - generic [ref=e6378]:
+                    - button "This Week" [ref=e6379] [cursor=pointer]: This
+                    - button "Next Week" [ref=e6380] [cursor=pointer]:
+                      - text: Next
+                      - img [ref=e6577]
+                  - generic [ref=e6381]: Apr 13 - 19
+                  - button "Select Week" [ref=e6382] [cursor=pointer]:
+                    - img
+                - button "View Grocery List" [ref=e6383] [cursor=pointer]:
+                  - img
+                  - generic [ref=e6384]: Grocery
+              - generic [ref=e6385]: 0 meals planned
+            - generic [ref=e6611]:
+              - generic [ref=e6612]:
+                - generic [ref=e6613]:
+                  - img [ref=e6615]
+                  - heading "No groceries yet" [level=3] [ref=e6617]
+                  - paragraph [ref=e6618]: You have 90 recurring items. Add them to get started.
+                  - button "Browse recurring items" [ref=e6619] [cursor=pointer]:
+                    - img [ref=e6620]
+                    - text: Browse recurring items
+                - generic [ref=e6622]:
+                  - button "Select" [ref=e6623] [cursor=pointer]:
+                    - img [ref=e6624]
+                    - text: Select
+                  - button "Recurring" [ref=e6627] [cursor=pointer]:
+                    - img [ref=e6628]
+                    - text: Recurring
+                - generic [ref=e6631]:
+                  - img [ref=e6632]
+                  - textbox "Add item or search H-E-B..." [ref=e6633]
+              - button "Close recurring items sheet" [ref=e6634] [cursor=pointer]
+              - generic [ref=e6638]:
+                - generic [ref=e6639]:
+                  - generic [ref=e6640]:
+                    - heading "Recurring Items" [level=3] [ref=e6641]
+                    - paragraph [ref=e6642]: 90 items configured
+                  - generic [ref=e6643]:
+                    - button "Enter selection mode" [ref=e6644] [cursor=pointer]:
+                      - img [ref=e6645]
+                    - button "Close" [ref=e6648] [cursor=pointer]:
+                      - img [ref=e6649]
+                - generic [ref=e6652]:
+                  - generic [ref=e6653]:
+                    - heading "Weekly" [level=4] [ref=e6654]
+                    - generic [ref=e6655]:
+                      - generic [ref=e6657]:
+                        - 'button "H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct 1w Last added: 6d ago Emilio" [ref=e6658] [cursor=pointer]':
+                          - generic [ref=e6659]:
+                            - generic [ref=e6660]: H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct
+                            - generic [ref=e6661]:
+                              - img [ref=e6662]
+                              - text: 1w
+                          - generic [ref=e6664]:
+                            - generic [ref=e6665]: "Last added: 6d ago"
+                            - generic [ref=e6666]:
+                              - img [ref=e6667]
+                              - text: Emilio
+                        - button "Remove H-E-B Grade AA Cage Free Extra Large Brown Eggs, 18 ct, 18 ct from recurring" [ref=e6670] [cursor=pointer]:
+                          - img [ref=e6671]
+                      - generic [ref=e6675]:
+                        - 'button "Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs 1w Last added: Never added Emilio" [ref=e6676] [cursor=pointer]':
+                          - generic [ref=e6677]:
+                            - generic [ref=e6678]: Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs
+                            - generic [ref=e6679]:
+                              - img [ref=e6680]
+                              - text: 1w
+                          - generic [ref=e6682]:
+                            - generic [ref=e6683]: "Last added: Never added"
+                            - generic [ref=e6684]:
+                              - img [ref=e6685]
+                              - text: Emilio
+                        - button "Remove Fresh Bunch of Bananas, 4-7 Bananas, Avg. 2.4 lbs, Avg. 2.4 lbs from recurring" [ref=e6688] [cursor=pointer]:
+                          - img [ref=e6689]
+                      - generic [ref=e6693]:
+                        - 'button "H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz 1w Last added: Never added Emilio" [ref=e6694] [cursor=pointer]':
+                          - generic [ref=e6695]:
+                            - generic [ref=e6696]: H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz
+                            - generic [ref=e6697]:
+                              - img [ref=e6698]
+                              - text: 1w
+                          - generic [ref=e6700]:
+                            - generic [ref=e6701]: "Last added: Never added"
+                            - generic [ref=e6702]:
+                              - img [ref=e6703]
+                              - text: Emilio
+                        - button "Remove H-E-B Whole Milk Ricotta Cheese, 15 oz, 15 oz from recurring" [ref=e6706] [cursor=pointer]:
+                          - img [ref=e6707]
+                      - generic [ref=e6711]:
+                        - 'button "H-E-B Bakery Flour Tortillas 1w Last added: Never added Emilio" [ref=e6712] [cursor=pointer]':
+                          - generic [ref=e6713]:
+                            - generic [ref=e6714]: H-E-B Bakery Flour Tortillas
+                            - generic [ref=e6715]:
+                              - img [ref=e6716]
+                              - text: 1w
+                          - generic [ref=e6718]:
+                            - generic [ref=e6719]: "Last added: Never added"
+                            - generic [ref=e6720]:
+                              - img [ref=e6721]
+                              - text: Emilio
+                        - button "Remove H-E-B Bakery Flour Tortillas from recurring" [ref=e6724] [cursor=pointer]:
+                          - img [ref=e6725]
+                      - generic [ref=e6729]:
+                        - 'button "H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans 1w Last added: Never added Emilio" [ref=e6730] [cursor=pointer]':
+                          - generic [ref=e6731]:
+                            - generic [ref=e6732]: H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans
+                            - generic [ref=e6733]:
+                              - img [ref=e6734]
+                              - text: 1w
+                          - generic [ref=e6736]:
+                            - generic [ref=e6737]: "Last added: Never added"
+                            - generic [ref=e6738]:
+                              - img [ref=e6739]
+                              - text: Emilio
+                        - button "Remove H-E-B Unsweetened Lemon Sparkling Water 12 pk Cans from recurring" [ref=e6742] [cursor=pointer]:
+                          - img [ref=e6743]
+                      - generic [ref=e6747]:
+                        - 'button "Central Market Organics 2% Reduced Fat Milk 1w Last added: Never added Emilio" [ref=e6748] [cursor=pointer]':
+                          - generic [ref=e6749]:
+                            - generic [ref=e6750]: Central Market Organics 2% Reduced Fat Milk
+                            - generic [ref=e6751]:
+                              - img [ref=e6752]
+                              - text: 1w
+                          - generic [ref=e6754]:
+                            - generic [ref=e6755]: "Last added: Never added"
+                            - generic [ref=e6756]:
+                              - img [ref=e6757]
+                              - text: Emilio
+                        - button "Remove Central Market Organics 2% Reduced Fat Milk from recurring" [ref=e6760] [cursor=pointer]:
+                          - img [ref=e6761]
+                      - generic [ref=e6765]:
+                        - 'button "H-E-B Grade AA Cage Free Extra Large Brown Eggs 1w Last added: Never added Emilio" [ref=e6766] [cursor=pointer]':
+                          - generic [ref=e6767]:
+                            - generic [ref=e6768]: H-E-B Grade AA Cage Free Extra Large Brown Eggs
+                            - generic [ref=e6769]:
+                              - img [ref=e6770]
+                              - text: 1w
+                          - generic [ref=e6772]:
+                            - generic [ref=e6773]: "Last added: Never added"
+                            - generic [ref=e6774]:
+                              - img [ref=e6775]
+                              - text: Emilio
+                        - button "Remove H-E-B Grade AA Cage Free Extra Large Brown Eggs from recurring" [ref=e6778] [cursor=pointer]:
+                          - img [ref=e6779]
+                      - generic [ref=e6783]:
+                        - 'button "P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar 1w Last added: Never added Emilio" [ref=e6784] [cursor=pointer]':
+                          - generic [ref=e6785]:
+                            - generic [ref=e6786]: P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar
+                            - generic [ref=e6787]:
+                              - img [ref=e6788]
+                              - text: 1w
+                          - generic [ref=e6790]:
+                            - generic [ref=e6791]: "Last added: Never added"
+                            - generic [ref=e6792]:
+                              - img [ref=e6793]
+                              - text: Emilio
+                        - button "Remove P3 Portable Protein Pack Snack Tray - Turkey, Ham & Cheddar from recurring" [ref=e6796] [cursor=pointer]:
+                          - img [ref=e6797]
+                      - generic [ref=e6801]:
+                        - 'button "Fresh Blueberries 1w Last added: Never added Emilio" [ref=e6802] [cursor=pointer]':
+                          - generic [ref=e6803]:
+                            - generic [ref=e6804]: Fresh Blueberries
+                            - generic [ref=e6805]:
+                              - img [ref=e6806]
+                              - text: 1w
+                          - generic [ref=e6808]:
+                            - generic [ref=e6809]: "Last added: Never added"
+                            - generic [ref=e6810]:
+                              - img [ref=e6811]
+                              - text: Emilio
+                        - button "Remove Fresh Blueberries from recurring" [ref=e6814] [cursor=pointer]:
+                          - img [ref=e6815]
+                      - generic [ref=e6819]:
+                        - 'button "Fresh Bunch of Bananas 1w Last added: Never added Emilio" [ref=e6820] [cursor=pointer]':
+                          - generic [ref=e6821]:
+                            - generic [ref=e6822]: Fresh Bunch of Bananas
+                            - generic [ref=e6823]:
+                              - img [ref=e6824]
+                              - text: 1w
+                          - generic [ref=e6826]:
+                            - generic [ref=e6827]: "Last added: Never added"
+                            - generic [ref=e6828]:
+                              - img [ref=e6829]
+                              - text: Emilio
+                        - button "Remove Fresh Bunch of Bananas from recurring" [ref=e6832] [cursor=pointer]:
+                          - img [ref=e6833]
+                      - generic [ref=e6837]:
+                        - 'button "Fresh Gala Apples 1w Last added: Never added Emilio" [ref=e6838] [cursor=pointer]':
+                          - generic [ref=e6839]:
+                            - generic [ref=e6840]: Fresh Gala Apples
+                            - generic [ref=e6841]:
+                              - img [ref=e6842]
+                              - text: 1w
+                          - generic [ref=e6844]:
+                            - generic [ref=e6845]: "Last added: Never added"
+                            - generic [ref=e6846]:
+                              - img [ref=e6847]
+                              - text: Emilio
+                        - button "Remove Fresh Gala Apples from recurring" [ref=e6850] [cursor=pointer]:
+                          - img [ref=e6851]
+                      - generic [ref=e6855]:
+                        - 'button "Fresh Small Hass Avocado 1w Last added: Never added Emilio" [ref=e6856] [cursor=pointer]':
+                          - generic [ref=e6857]:
+                            - generic [ref=e6858]: Fresh Small Hass Avocado
+                            - generic [ref=e6859]:
+                              - img [ref=e6860]
+                              - text: 1w
+                          - generic [ref=e6862]:
+                            - generic [ref=e6863]: "Last added: Never added"
+                            - generic [ref=e6864]:
+                              - img [ref=e6865]
+                              - text: Emilio
+                        - button "Remove Fresh Small Hass Avocado from recurring" [ref=e6868] [cursor=pointer]:
+                          - img [ref=e6869]
+                      - generic [ref=e6873]:
+                        - 'button "Fresh Strawberries 1w Last added: Never added Emilio" [ref=e6874] [cursor=pointer]':
+                          - generic [ref=e6875]:
+                            - generic [ref=e6876]: Fresh Strawberries
+                            - generic [ref=e6877]:
+                              - img [ref=e6878]
+                              - text: 1w
+                          - generic [ref=e6880]:
+                            - generic [ref=e6881]: "Last added: Never added"
+                            - generic [ref=e6882]:
+                              - img [ref=e6883]
+                              - text: Emilio
+                        - button "Remove Fresh Strawberries from recurring" [ref=e6886] [cursor=pointer]:
+                          - img [ref=e6887]
+                      - generic [ref=e6891]:
+                        - 'button "H-E-B Organics Fresh Baby Spring Mix Lettuce Texas-Size Pack 1w Last added: Never added Emilio" [ref=e6892] [cursor=pointer]':
+                          - generic [ref=e6893]:
+                            - generic [ref=e6894]: H-E-B Organics Fresh Baby Spring Mix Lettuce Texas-Size Pack
+                            - generic [ref=e6895]:
+                              - img [ref=e6896]
+                              - text: 1w
+                          - generic [ref=e6898]:
+                            - generic [ref=e6899]: "Last added: Never added"
+                            - generic [ref=e6900]:
+                              - img [ref=e6901]
+                              - text: Emilio
+                        - button "Remove H-E-B Organics Fresh Baby Spring Mix Lettuce Texas-Size Pack from recurring" [ref=e6904] [cursor=pointer]:
+                          - img [ref=e6905]
+                      - generic [ref=e6909]:
+                        - 'button "Hill Country Fare Boneless Skinless Chicken Thighs 1w Last added: Never added Emilio" [ref=e6910] [cursor=pointer]':
+                          - generic [ref=e6911]:
+                            - generic [ref=e6912]: Hill Country Fare Boneless Skinless Chicken Thighs
+                            - generic [ref=e6913]:
+                              - img [ref=e6914]
+                              - text: 1w
+                          - generic [ref=e6916]:
+                            - generic [ref=e6917]: "Last added: Never added"
+                            - generic [ref=e6918]:
+                              - img [ref=e6919]
+                              - text: Emilio
+                        - button "Remove Hill Country Fare Boneless Skinless Chicken Thighs from recurring" [ref=e6922] [cursor=pointer]:
+                          - img [ref=e6923]
+                  - generic [ref=e6926]:
+                    - heading "Every 2 weeks" [level=4] [ref=e6927]
+                    - generic [ref=e6928]:
+                      - generic [ref=e6930]:
+                        - 'button "Fresh Fuji Apple, Avg. 0.62 lb, Avg. 0.62 lb 2w Last added: Never added Emilio" [ref=e6931] [cursor=pointer]':
+                          - generic [ref=e6932]:
+                            - generic [ref=e6933]: Fresh Fuji Apple, Avg. 0.62 lb, Avg. 0.62 lb
+                            - generic [ref=e6934]:
+                              - img [ref=e6935]
+                              - text: 2w
+                          - generic [ref=e6937]:
+                            - generic [ref=e6938]: "Last added: Never added"
+                            - generic [ref=e6939]:
+                              - img [ref=e6940]
+                              - text: Emilio
+                        - button "Remove Fresh Fuji Apple, Avg. 0.62 lb, Avg. 0.62 lb from recurring" [ref=e6943] [cursor=pointer]:
+                          - img [ref=e6944]
+                      - generic [ref=e6948]:
+                        - 'button "Fresh Jumbo Blueberries, 9.8 oz, 9.8 oz 2w Last added: Never added Emilio" [ref=e6949] [cursor=pointer]':
+                          - generic [ref=e6950]:
+                            - generic [ref=e6951]: Fresh Jumbo Blueberries, 9.8 oz, 9.8 oz
+                            - generic [ref=e6952]:
+                              - img [ref=e6953]
+                              - text: 2w
+                          - generic [ref=e6955]:
+                            - generic [ref=e6956]: "Last added: Never added"
+                            - generic [ref=e6957]:
+                              - img [ref=e6958]
+                              - text: Emilio
+                        - button "Remove Fresh Jumbo Blueberries, 9.8 oz, 9.8 oz from recurring" [ref=e6961] [cursor=pointer]:
+                          - img [ref=e6962]
+                      - generic [ref=e6966]:
+                        - 'button "Fresh Strawberries, 1 lb, 1 lb 2w Last added: Never added Emilio" [ref=e6967] [cursor=pointer]':
+                          - generic [ref=e6968]:
+                            - generic [ref=e6969]: Fresh Strawberries, 1 lb, 1 lb
+                            - generic [ref=e6970]:
+                              - img [ref=e6971]
+                              - text: 2w
+                          - generic [ref=e6973]:
+                            - generic [ref=e6974]: "Last added: Never added"
+                            - generic [ref=e6975]:
+                              - img [ref=e6976]
+                              - text: Emilio
+                        - button "Remove Fresh Strawberries, 1 lb, 1 lb from recurring" [ref=e6979] [cursor=pointer]:
+                          - img [ref=e6980]
+                      - generic [ref=e6984]:
+                        - 'button "H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct, 3 ct 2w Last added: Never added Emilio" [ref=e6985] [cursor=pointer]':
+                          - generic [ref=e6986]:
+                            - generic [ref=e6987]: H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct, 3 ct
+                            - generic [ref=e6988]:
+                              - img [ref=e6989]
+                              - text: 2w
+                          - generic [ref=e6991]:
+                            - generic [ref=e6992]: "Last added: Never added"
+                            - generic [ref=e6993]:
+                              - img [ref=e6994]
+                              - text: Emilio
+                        - button "Remove H-E-B Mi Tienda Fresh Mexican Mesa Garlic, 3 ct, 3 ct from recurring" [ref=e6997] [cursor=pointer]:
+                          - img [ref=e6998]
+                      - generic [ref=e7002]:
+                        - 'button "H-E-B Everything Bagels 2w Last added: Never added Emilio" [ref=e7003] [cursor=pointer]':
+                          - generic [ref=e7004]:
+                            - generic [ref=e7005]: H-E-B Everything Bagels
+                            - generic [ref=e7006]:
+                              - img [ref=e7007]
+                              - text: 2w
+                          - generic [ref=e7009]:
+                            - generic [ref=e7010]: "Last added: Never added"
+                            - generic [ref=e7011]:
+                              - img [ref=e7012]
+                              - text: Emilio
+                        - button "Remove H-E-B Everything Bagels from recurring" [ref=e7015] [cursor=pointer]:
+                          - img [ref=e7016]
+                      - generic [ref=e7020]:
+                        - 'button "H-E-B Round Top Large White Enriched Sliced Bread 2w Last added: Never added Emilio" [ref=e7021] [cursor=pointer]':
+                          - generic [ref=e7022]:
+                            - generic [ref=e7023]: H-E-B Round Top Large White Enriched Sliced Bread
+                            - generic [ref=e7024]:
+                              - img [ref=e7025]
+                              - text: 2w
+                          - generic [ref=e7027]:
+                            - generic [ref=e7028]: "Last added: Never added"
+                            - generic [ref=e7029]:
+                              - img [ref=e7030]
+                              - text: Emilio
+                        - button "Remove H-E-B Round Top Large White Enriched Sliced Bread from recurring" [ref=e7033] [cursor=pointer]:
+                          - img [ref=e7034]
+                      - generic [ref=e7038]:
+                        - 'button "H-E-B 100% Whole Wheat Sliced Bread 2w Last added: Never added Emilio" [ref=e7039] [cursor=pointer]':
+                          - generic [ref=e7040]:
+                            - generic [ref=e7041]: H-E-B 100% Whole Wheat Sliced Bread
+                            - generic [ref=e7042]:
+                              - img [ref=e7043]
+                              - text: 2w
+                          - generic [ref=e7045]:
+                            - generic [ref=e7046]: "Last added: Never added"
+                            - generic [ref=e7047]:
+                              - img [ref=e7048]
+                              - text: Emilio
+                        - button "Remove H-E-B 100% Whole Wheat Sliced Bread from recurring" [ref=e7051] [cursor=pointer]:
+                          - img [ref=e7052]
+                      - generic [ref=e7056]:
+                        - 'button "Austin Eastciders Cider Variety 12 pk Cans 2w Last added: Never added Emilio" [ref=e7057] [cursor=pointer]':
+                          - generic [ref=e7058]:
+                            - generic [ref=e7059]: Austin Eastciders Cider Variety 12 pk Cans
+                            - generic [ref=e7060]:
+                              - img [ref=e7061]
+                              - text: 2w
+                          - generic [ref=e7063]:
+                            - generic [ref=e7064]: "Last added: Never added"
+                            - generic [ref=e7065]:
+                              - img [ref=e7066]
+                              - text: Emilio
+                        - button "Remove Austin Eastciders Cider Variety 12 pk Cans from recurring" [ref=e7069] [cursor=pointer]:
+                          - img [ref=e7070]
+                      - generic [ref=e7074]:
+                        - 'button "Coca-Cola Zero Sugar Soda Fridge Pack 12 pk Cans 2w Last added: Never added Emilio" [ref=e7075] [cursor=pointer]':
+                          - generic [ref=e7076]:
+                            - generic [ref=e7077]: Coca-Cola Zero Sugar Soda Fridge Pack 12 pk Cans
+                            - generic [ref=e7078]:
+                              - img [ref=e7079]
+                              - text: 2w
+                          - generic [ref=e7081]:
+                            - generic [ref=e7082]: "Last added: Never added"
+                            - generic [ref=e7083]:
+                              - img [ref=e7084]
+                              - text: Emilio
+                        - button "Remove Coca-Cola Zero Sugar Soda Fridge Pack 12 pk Cans from recurring" [ref=e7087] [cursor=pointer]:
+                          - img [ref=e7088]
+                      - generic [ref=e7092]:
+                        - 'button "H-E-B 100% Orange Juice - No Pulp 2w Last added: Never added Emilio" [ref=e7093] [cursor=pointer]':
+                          - generic [ref=e7094]:
+                            - generic [ref=e7095]: H-E-B 100% Orange Juice - No Pulp
+                            - generic [ref=e7096]:
+                              - img [ref=e7097]
+                              - text: 2w
+                          - generic [ref=e7099]:
+                            - generic [ref=e7100]: "Last added: Never added"
+                            - generic [ref=e7101]:
+                              - img [ref=e7102]
+                              - text: Emilio
+                        - button "Remove H-E-B 100% Orange Juice - No Pulp from recurring" [ref=e7105] [cursor=pointer]:
+                          - img [ref=e7106]
+                      - generic [ref=e7110]:
+                        - 'button "H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese 2w Last added: Never added Emilio" [ref=e7111] [cursor=pointer]':
+                          - generic [ref=e7112]:
+                            - generic [ref=e7113]: H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese
+                            - generic [ref=e7114]:
+                              - img [ref=e7115]
+                              - text: 2w
+                          - generic [ref=e7117]:
+                            - generic [ref=e7118]: "Last added: Never added"
+                            - generic [ref=e7119]:
+                              - img [ref=e7120]
+                              - text: Emilio
+                        - button "Remove H-E-B Mootopia Lactose-Free Small Curd Cottage Cheese from recurring" [ref=e7123] [cursor=pointer]:
+                          - img [ref=e7124]
+                      - generic [ref=e7128]:
+                        - 'button "H-E-B Deli Roasted Red Pepper Hummus 2w Last added: Never added Emilio" [ref=e7129] [cursor=pointer]':
+                          - generic [ref=e7130]:
+                            - generic [ref=e7131]: H-E-B Deli Roasted Red Pepper Hummus
+                            - generic [ref=e7132]:
+                              - img [ref=e7133]
+                              - text: 2w
+                          - generic [ref=e7135]:
+                            - generic [ref=e7136]: "Last added: Never added"
+                            - generic [ref=e7137]:
+                              - img [ref=e7138]
+                              - text: Emilio
+                        - button "Remove H-E-B Deli Roasted Red Pepper Hummus from recurring" [ref=e7141] [cursor=pointer]:
+                          - img [ref=e7142]
+                      - generic [ref=e7146]:
+                        - 'button "H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal 2w Last added: Never added Emilio" [ref=e7147] [cursor=pointer]':
+                          - generic [ref=e7148]:
+                            - generic [ref=e7149]: H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal
+                            - generic [ref=e7150]:
+                              - img [ref=e7151]
+                              - text: 2w
+                          - generic [ref=e7153]:
+                            - generic [ref=e7154]: "Last added: Never added"
+                            - generic [ref=e7155]:
+                              - img [ref=e7156]
+                              - text: Emilio
+                        - button "Remove H-E-B Chicken Bacon Ranch Mac & Cheese Bowl Frozen Meal from recurring" [ref=e7159] [cursor=pointer]:
+                          - img [ref=e7160]
+                      - generic [ref=e7164]:
+                        - 'button "H-E-B Frozen Baby Broccoli Florets 2w Last added: Never added Emilio" [ref=e7165] [cursor=pointer]':
+                          - generic [ref=e7166]:
+                            - generic [ref=e7167]: H-E-B Frozen Baby Broccoli Florets
+                            - generic [ref=e7168]:
+                              - img [ref=e7169]
+                              - text: 2w
+                          - generic [ref=e7171]:
+                            - generic [ref=e7172]: "Last added: Never added"
+                            - generic [ref=e7173]:
+                              - img [ref=e7174]
+                              - text: Emilio
+                        - button "Remove H-E-B Frozen Baby Broccoli Florets from recurring" [ref=e7177] [cursor=pointer]:
+                          - img [ref=e7178]
+                      - generic [ref=e7182]:
+                        - 'button "H-E-B Frozen Chopped Spinach 2w Last added: Never added Emilio" [ref=e7183] [cursor=pointer]':
+                          - generic [ref=e7184]:
+                            - generic [ref=e7185]: H-E-B Frozen Chopped Spinach
+                            - generic [ref=e7186]:
+                              - img [ref=e7187]
+                              - text: 2w
+                          - generic [ref=e7189]:
+                            - generic [ref=e7190]: "Last added: Never added"
+                            - generic [ref=e7191]:
+                              - img [ref=e7192]
+                              - text: Emilio
+                        - button "Remove H-E-B Frozen Chopped Spinach from recurring" [ref=e7195] [cursor=pointer]:
+                          - img [ref=e7196]
+                      - generic [ref=e7200]:
+                        - 'button "H-E-B Frozen Steamable Petite Peas 2w Last added: Never added Emilio" [ref=e7201] [cursor=pointer]':
+                          - generic [ref=e7202]:
+                            - generic [ref=e7203]: H-E-B Frozen Steamable Petite Peas
+                            - generic [ref=e7204]:
+                              - img [ref=e7205]
+                              - text: 2w
+                          - generic [ref=e7207]:
+                            - generic [ref=e7208]: "Last added: Never added"
+                            - generic [ref=e7209]:
+                              - img [ref=e7210]
+                              - text: Emilio
+                        - button "Remove H-E-B Frozen Steamable Petite Peas from recurring" [ref=e7213] [cursor=pointer]:
+                          - img [ref=e7214]
+                      - generic [ref=e7218]:
+                        - 'button "H-E-B Frozen Steamable Whole Green Beans 2w Last added: Never added Emilio" [ref=e7219] [cursor=pointer]':
+                          - generic [ref=e7220]:
+                            - generic [ref=e7221]: H-E-B Frozen Steamable Whole Green Beans
+                            - generic [ref=e7222]:
+                              - img [ref=e7223]
+                              - text: 2w
+                          - generic [ref=e7225]:
+                            - generic [ref=e7226]: "Last added: Never added"
+                            - generic [ref=e7227]:
+                              - img [ref=e7228]
+                              - text: Emilio
+                        - button "Remove H-E-B Frozen Steamable Whole Green Beans from recurring" [ref=e7231] [cursor=pointer]:
+                          - img [ref=e7232]
+                      - generic [ref=e7236]:
+                        - 'button "H-E-B Frozen Waffles - Buttermilk 2w Last added: Never added Emilio" [ref=e7237] [cursor=pointer]':
+                          - generic [ref=e7238]:
+                            - generic [ref=e7239]: H-E-B Frozen Waffles - Buttermilk
+                            - generic [ref=e7240]:
+                              - img [ref=e7241]
+                              - text: 2w
+                          - generic [ref=e7243]:
+                            - generic [ref=e7244]: "Last added: Never added"
+                            - generic [ref=e7245]:
+                              - img [ref=e7246]
+                              - text: Emilio
+                        - button "Remove H-E-B Frozen Waffles - Buttermilk from recurring" [ref=e7249] [cursor=pointer]:
+                          - img [ref=e7250]
+                      - generic [ref=e7254]:
+                        - 'button "H-E-B Poblano Chicken Lasagna Frozen Meal 2w Last added: Never added Emilio" [ref=e7255] [cursor=pointer]':
+                          - generic [ref=e7256]:
+                            - generic [ref=e7257]: H-E-B Poblano Chicken Lasagna Frozen Meal
+                            - generic [ref=e7258]:
+                              - img [ref=e7259]
+                              - text: 2w
+                          - generic [ref=e7261]:
+                            - generic [ref=e7262]: "Last added: Never added"
+                            - generic [ref=e7263]:
+                              - img [ref=e7264]
+                              - text: Emilio
+                        - button "Remove H-E-B Poblano Chicken Lasagna Frozen Meal from recurring" [ref=e7267] [cursor=pointer]:
+                          - img [ref=e7268]
+                      - generic [ref=e7272]:
+                        - 'button "H-E-B Rising Crust Frozen Pizza - Cheese 2w Last added: Never added Emilio" [ref=e7273] [cursor=pointer]':
+                          - generic [ref=e7274]:
+                            - generic [ref=e7275]: H-E-B Rising Crust Frozen Pizza - Cheese
+                            - generic [ref=e7276]:
+                              - img [ref=e7277]
+                              - text: 2w
+                          - generic [ref=e7279]:
+                            - generic [ref=e7280]: "Last added: Never added"
+                            - generic [ref=e7281]:
+                              - img [ref=e7282]
+                              - text: Emilio
+                        - button "Remove H-E-B Rising Crust Frozen Pizza - Cheese from recurring" [ref=e7285] [cursor=pointer]:
+                          - img [ref=e7286]
+                      - generic [ref=e7290]:
+                        - 'button "H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal 2w Last added: Never added Emilio" [ref=e7291] [cursor=pointer]':
+                          - generic [ref=e7292]:
+                            - generic [ref=e7293]: H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal
+                            - generic [ref=e7294]:
+                              - img [ref=e7295]
+                              - text: 2w
+                          - generic [ref=e7297]:
+                            - generic [ref=e7298]: "Last added: Never added"
+                            - generic [ref=e7299]:
+                              - img [ref=e7300]
+                              - text: Emilio
+                        - button "Remove H-E-B Smoked Brisket Mac & Cheese Bowl Frozen Meal from recurring" [ref=e7303] [cursor=pointer]:
+                          - img [ref=e7304]
+                      - generic [ref=e7308]:
+                        - 'button "H-E-B Vegetable Lasagna Frozen Meal 2w Last added: Never added Emilio" [ref=e7309] [cursor=pointer]':
+                          - generic [ref=e7310]:
+                            - generic [ref=e7311]: H-E-B Vegetable Lasagna Frozen Meal
+                            - generic [ref=e7312]:
+                              - img [ref=e7313]
+                              - text: 2w
+                          - generic [ref=e7315]:
+                            - generic [ref=e7316]: "Last added: Never added"
+                            - generic [ref=e7317]:
+                              - img [ref=e7318]
+                              - text: Emilio
+                        - button "Remove H-E-B Vegetable Lasagna Frozen Meal from recurring" [ref=e7321] [cursor=pointer]:
+                          - img [ref=e7322]
+                      - generic [ref=e7326]:
+                        - 'button "Marie Callender''s Chicken Pot Pie 2w Last added: Never added Emilio" [ref=e7327] [cursor=pointer]':
+                          - generic [ref=e7328]:
+                            - generic [ref=e7329]: Marie Callender's Chicken Pot Pie
+                            - generic [ref=e7330]:
+                              - img [ref=e7331]
+                              - text: 2w
+                          - generic [ref=e7333]:
+                            - generic [ref=e7334]: "Last added: Never added"
+                            - generic [ref=e7335]:
+                              - img [ref=e7336]
+                              - text: Emilio
+                        - button "Remove Marie Callender's Chicken Pot Pie from recurring" [ref=e7339] [cursor=pointer]:
+                          - img [ref=e7340]
+                      - generic [ref=e7344]:
+                        - 'button "Tyson Frozen Baked Chicken Breast Nuggets 2w Last added: Never added Emilio" [ref=e7345] [cursor=pointer]':
+                          - generic [ref=e7346]:
+                            - generic [ref=e7347]: Tyson Frozen Baked Chicken Breast Nuggets
+                            - generic [ref=e7348]:
+                              - img [ref=e7349]
+                              - text: 2w
+                          - generic [ref=e7351]:
+                            - generic [ref=e7352]: "Last added: Never added"
+                            - generic [ref=e7353]:
+                              - img [ref=e7354]
+                              - text: Emilio
+                        - button "Remove Tyson Frozen Baked Chicken Breast Nuggets from recurring" [ref=e7357] [cursor=pointer]:
+                          - img [ref=e7358]
+                      - generic [ref=e7362]:
+                        - 'button "Fresh Gold Potatoes 2w Last added: Never added Emilio" [ref=e7363] [cursor=pointer]':
+                          - generic [ref=e7364]:
+                            - generic [ref=e7365]: Fresh Gold Potatoes
+                            - generic [ref=e7366]:
+                              - img [ref=e7367]
+                              - text: 2w
+                          - generic [ref=e7369]:
+                            - generic [ref=e7370]: "Last added: Never added"
+                            - generic [ref=e7371]:
+                              - img [ref=e7372]
+                              - text: Emilio
+                        - button "Remove Fresh Gold Potatoes from recurring" [ref=e7375] [cursor=pointer]:
+                          - img [ref=e7376]
+                      - generic [ref=e7380]:
+                        - 'button "H-E-B Texas Roots Fresh Yellow Onions 2w Last added: Never added Emilio" [ref=e7381] [cursor=pointer]':
+                          - generic [ref=e7382]:
+                            - generic [ref=e7383]: H-E-B Texas Roots Fresh Yellow Onions
+                            - generic [ref=e7384]:
+                              - img [ref=e7385]
+                              - text: 2w
+                          - generic [ref=e7387]:
+                            - generic [ref=e7388]: "Last added: Never added"
+                            - generic [ref=e7389]:
+                              - img [ref=e7390]
+                              - text: Emilio
+                        - button "Remove H-E-B Texas Roots Fresh Yellow Onions from recurring" [ref=e7393] [cursor=pointer]:
+                          - img [ref=e7394]
+                      - generic [ref=e7398]:
+                        - 'button "H-E-B Natural Applewood Smoked Uncured Bacon 2w Last added: Never added Emilio" [ref=e7399] [cursor=pointer]':
+                          - generic [ref=e7400]:
+                            - generic [ref=e7401]: H-E-B Natural Applewood Smoked Uncured Bacon
+                            - generic [ref=e7402]:
+                              - img [ref=e7403]
+                              - text: 2w
+                          - generic [ref=e7405]:
+                            - generic [ref=e7406]: "Last added: Never added"
+                            - generic [ref=e7407]:
+                              - img [ref=e7408]
+                              - text: Emilio
+                        - button "Remove H-E-B Natural Applewood Smoked Uncured Bacon from recurring" [ref=e7411] [cursor=pointer]:
+                          - img [ref=e7412]
+                      - generic [ref=e7416]:
+                        - 'button "Cheez-It Original Cheese Crackers 2w Last added: Never added Emilio" [ref=e7417] [cursor=pointer]':
+                          - generic [ref=e7418]:
+                            - generic [ref=e7419]: Cheez-It Original Cheese Crackers
+                            - generic [ref=e7420]:
+                              - img [ref=e7421]
+                              - text: 2w
+                          - generic [ref=e7423]:
+                            - generic [ref=e7424]: "Last added: Never added"
+                            - generic [ref=e7425]:
+                              - img [ref=e7426]
+                              - text: Emilio
+                        - button "Remove Cheez-It Original Cheese Crackers from recurring" [ref=e7429] [cursor=pointer]:
+                          - img [ref=e7430]
+                      - generic [ref=e7434]:
+                        - 'button "H-E-B Organics Whole Grain Animal Cookies 2w Last added: Never added Emilio" [ref=e7435] [cursor=pointer]':
+                          - generic [ref=e7436]:
+                            - generic [ref=e7437]: H-E-B Organics Whole Grain Animal Cookies
+                            - generic [ref=e7438]:
+                              - img [ref=e7439]
+                              - text: 2w
+                          - generic [ref=e7441]:
+                            - generic [ref=e7442]: "Last added: Never added"
+                            - generic [ref=e7443]:
+                              - img [ref=e7444]
+                              - text: Emilio
+                        - button "Remove H-E-B Organics Whole Grain Animal Cookies from recurring" [ref=e7447] [cursor=pointer]:
+                          - img [ref=e7448]
+                  - generic [ref=e7451]:
+                    - heading "Custom" [level=4] [ref=e7452]
+                    - generic [ref=e7453]:
+                      - generic [ref=e7455]:
+                        - 'button "Kikkoman Japanese-Style Panko Bread Crumbs 8w Last added: Never added Emilio" [ref=e7456] [cursor=pointer]':
+                          - generic [ref=e7457]:
+                            - generic [ref=e7458]: Kikkoman Japanese-Style Panko Bread Crumbs
+                            - generic [ref=e7459]:
+                              - img [ref=e7460]
+                              - text: 8w
+                          - generic [ref=e7462]:
+                            - generic [ref=e7463]: "Last added: Never added"
+                            - generic [ref=e7464]:
+                              - img [ref=e7465]
+                              - text: Emilio
+                        - button "Remove Kikkoman Japanese-Style Panko Bread Crumbs from recurring" [ref=e7468] [cursor=pointer]:
+                          - img [ref=e7469]
+                      - generic [ref=e7473]:
+                        - 'button "Independence Coffee Madalyn''s Backyard Pecan Whole Bean Coffee 4w Last added: Never added Emilio" [ref=e7474] [cursor=pointer]':
+                          - generic [ref=e7475]:
+                            - generic [ref=e7476]: Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee
+                            - generic [ref=e7477]:
+                              - img [ref=e7478]
+                              - text: 4w
+                          - generic [ref=e7480]:
+                            - generic [ref=e7481]: "Last added: Never added"
+                            - generic [ref=e7482]:
+                              - img [ref=e7483]
+                              - text: Emilio
+                        - button "Remove Independence Coffee Madalyn's Backyard Pecan Whole Bean Coffee from recurring" [ref=e7486] [cursor=pointer]:
+                          - img [ref=e7487]
+                      - generic [ref=e7491]:
+                        - 'button "H-E-B Salted Sweet Cream Spreadable Butter 3w Last added: Never added Emilio" [ref=e7492] [cursor=pointer]':
+                          - generic [ref=e7493]:
+                            - generic [ref=e7494]: H-E-B Salted Sweet Cream Spreadable Butter
+                            - generic [ref=e7495]:
+                              - img [ref=e7496]
+                              - text: 3w
+                          - generic [ref=e7498]:
+                            - generic [ref=e7499]: "Last added: Never added"
+                            - generic [ref=e7500]:
+                              - img [ref=e7501]
+                              - text: Emilio
+                        - button "Remove H-E-B Salted Sweet Cream Spreadable Butter from recurring" [ref=e7504] [cursor=pointer]:
+                          - img [ref=e7505]
+                      - generic [ref=e7509]:
+                        - 'button "H-E-B Sweet Cream Unsalted Butter Sticks 4w Last added: Never added Emilio" [ref=e7510] [cursor=pointer]':
+                          - generic [ref=e7511]:
+                            - generic [ref=e7512]: H-E-B Sweet Cream Unsalted Butter Sticks
+                            - generic [ref=e7513]:
+                              - img [ref=e7514]
+                              - text: 4w
+                          - generic [ref=e7516]:
+                            - generic [ref=e7517]: "Last added: Never added"
+                            - generic [ref=e7518]:
+                              - img [ref=e7519]
+                              - text: Emilio
+                        - button "Remove H-E-B Sweet Cream Unsalted Butter Sticks from recurring" [ref=e7522] [cursor=pointer]:
+                          - img [ref=e7523]
+                      - generic [ref=e7527]:
+                        - 'button "H-E-B Whipped Plain Cream Cheese Spread 3w Last added: Never added Emilio" [ref=e7528] [cursor=pointer]':
+                          - generic [ref=e7529]:
+                            - generic [ref=e7530]: H-E-B Whipped Plain Cream Cheese Spread
+                            - generic [ref=e7531]:
+                              - img [ref=e7532]
+                              - text: 3w
+                          - generic [ref=e7534]:
+                            - generic [ref=e7535]: "Last added: Never added"
+                            - generic [ref=e7536]:
+                              - img [ref=e7537]
+                              - text: Emilio
+                        - button "Remove H-E-B Whipped Plain Cream Cheese Spread from recurring" [ref=e7540] [cursor=pointer]:
+                          - img [ref=e7541]
+                      - generic [ref=e7545]:
+                        - 'button "H-E-B Whole Milk Ricotta Cheese 4w Last added: Never added Emilio" [ref=e7546] [cursor=pointer]':
+                          - generic [ref=e7547]:
+                            - generic [ref=e7548]: H-E-B Whole Milk Ricotta Cheese
+                            - generic [ref=e7549]:
+                              - img [ref=e7550]
+                              - text: 4w
+                          - generic [ref=e7552]:
+                            - generic [ref=e7553]: "Last added: Never added"
+                            - generic [ref=e7554]:
+                              - img [ref=e7555]
+                              - text: Emilio
+                        - button "Remove H-E-B Whole Milk Ricotta Cheese from recurring" [ref=e7558] [cursor=pointer]:
+                          - img [ref=e7559]
+                      - generic [ref=e7563]:
+                        - 'button "H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat 3w Last added: Never added Emilio" [ref=e7564] [cursor=pointer]':
+                          - generic [ref=e7565]:
+                            - generic [ref=e7566]: H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat
+                            - generic [ref=e7567]:
+                              - img [ref=e7568]
+                              - text: 3w
+                          - generic [ref=e7570]:
+                            - generic [ref=e7571]: "Last added: Never added"
+                            - generic [ref=e7572]:
+                              - img [ref=e7573]
+                              - text: Emilio
+                        - button "Remove H-E-B Mi Tienda Fully Cooked Barbacoa Seasoned Beef Cheek Meat from recurring" [ref=e7576] [cursor=pointer]:
+                          - img [ref=e7577]
+                      - generic [ref=e7581]:
+                        - 'button "Cascade Free & Clear Dishwasher Detergent Liquid Gel 8w Last added: Never added Emilio" [ref=e7582] [cursor=pointer]':
+                          - generic [ref=e7583]:
+                            - generic [ref=e7584]: Cascade Free & Clear Dishwasher Detergent Liquid Gel
+                            - generic [ref=e7585]:
+                              - img [ref=e7586]
+                              - text: 8w
+                          - generic [ref=e7588]:
+                            - generic [ref=e7589]: "Last added: Never added"
+                            - generic [ref=e7590]:
+                              - img [ref=e7591]
+                              - text: Emilio
+                        - button "Remove Cascade Free & Clear Dishwasher Detergent Liquid Gel from recurring" [ref=e7594] [cursor=pointer]:
+                          - img [ref=e7595]
+                      - generic [ref=e7599]:
+                        - 'button "H-E-B Our Finest Invent-A-Size Paper Towels 4w Last added: Never added Emilio" [ref=e7600] [cursor=pointer]':
+                          - generic [ref=e7601]:
+                            - generic [ref=e7602]: H-E-B Our Finest Invent-A-Size Paper Towels
+                            - generic [ref=e7603]:
+                              - img [ref=e7604]
+                              - text: 4w
+                          - generic [ref=e7606]:
+                            - generic [ref=e7607]: "Last added: Never added"
+                            - generic [ref=e7608]:
+                              - img [ref=e7609]
+                              - text: Emilio
+                        - button "Remove H-E-B Our Finest Invent-A-Size Paper Towels from recurring" [ref=e7612] [cursor=pointer]:
+                          - img [ref=e7613]
+                      - generic [ref=e7617]:
+                        - 'button "H-E-B Our Finest Ultra Strong Toilet Paper Texas-Size Pack 8w Last added: Never added Emilio" [ref=e7618] [cursor=pointer]':
+                          - generic [ref=e7619]:
+                            - generic [ref=e7620]: H-E-B Our Finest Ultra Strong Toilet Paper Texas-Size Pack
+                            - generic [ref=e7621]:
+                              - img [ref=e7622]
+                              - text: 8w
+                          - generic [ref=e7624]:
+                            - generic [ref=e7625]: "Last added: Never added"
+                            - generic [ref=e7626]:
+                              - img [ref=e7627]
+                              - text: Emilio
+                        - button "Remove H-E-B Our Finest Ultra Strong Toilet Paper Texas-Size Pack from recurring" [ref=e7630] [cursor=pointer]:
+                          - img [ref=e7631]
+                      - generic [ref=e7635]:
+                        - 'button "H-E-B Texas Tough Parchment Paper 12w Last added: Never added Emilio" [ref=e7636] [cursor=pointer]':
+                          - generic [ref=e7637]:
+                            - generic [ref=e7638]: H-E-B Texas Tough Parchment Paper
+                            - generic [ref=e7639]:
+                              - img [ref=e7640]
+                              - text: 12w
+                          - generic [ref=e7642]:
+                            - generic [ref=e7643]: "Last added: Never added"
+                            - generic [ref=e7644]:
+                              - img [ref=e7645]
+                              - text: Emilio
+                        - button "Remove H-E-B Texas Tough Parchment Paper from recurring" [ref=e7648] [cursor=pointer]:
+                          - img [ref=e7649]
+                      - generic [ref=e7653]:
+                        - 'button "H-E-B Texas Tough Tall Kitchen Flex Trash Bags 13 Gallon 8w Last added: Never added Emilio" [ref=e7654] [cursor=pointer]':
+                          - generic [ref=e7655]:
+                            - generic [ref=e7656]: H-E-B Texas Tough Tall Kitchen Flex Trash Bags 13 Gallon
+                            - generic [ref=e7657]:
+                              - img [ref=e7658]
+                              - text: 8w
+                          - generic [ref=e7660]:
+                            - generic [ref=e7661]: "Last added: Never added"
+                            - generic [ref=e7662]:
+                              - img [ref=e7663]
+                              - text: Emilio
+                        - button "Remove H-E-B Texas Tough Tall Kitchen Flex Trash Bags 13 Gallon from recurring" [ref=e7666] [cursor=pointer]:
+                          - img [ref=e7667]
+                      - generic [ref=e7671]:
+                        - 'button "Tide Free & Gentle Liquid Laundry Detergent 8w Last added: Never added Emilio" [ref=e7672] [cursor=pointer]':
+                          - generic [ref=e7673]:
+                            - generic [ref=e7674]: Tide Free & Gentle Liquid Laundry Detergent
+                            - generic [ref=e7675]:
+                              - img [ref=e7676]
+                              - text: 8w
+                          - generic [ref=e7678]:
+                            - generic [ref=e7679]: "Last added: Never added"
+                            - generic [ref=e7680]:
+                              - img [ref=e7681]
+                              - text: Emilio
+                        - button "Remove Tide Free & Gentle Liquid Laundry Detergent from recurring" [ref=e7684] [cursor=pointer]:
+                          - img [ref=e7685]
+                      - generic [ref=e7689]:
+                        - 'button "Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp 4w Last added: Never added Emilio" [ref=e7690] [cursor=pointer]':
+                          - generic [ref=e7691]:
+                            - generic [ref=e7692]: Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp
+                            - generic [ref=e7693]:
+                              - img [ref=e7694]
+                              - text: 4w
+                          - generic [ref=e7696]:
+                            - generic [ref=e7697]: "Last added: Never added"
+                            - generic [ref=e7698]:
+                              - img [ref=e7699]
+                              - text: Emilio
+                        - button "Remove Great Catch Frozen Peeled Deveined Tail-Off Large Raw Shrimp from recurring" [ref=e7702] [cursor=pointer]:
+                          - img [ref=e7703]
+                      - generic [ref=e7707]:
+                        - 'button "Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza 3w Last added: Never added Emilio" [ref=e7708] [cursor=pointer]':
+                          - generic [ref=e7709]:
+                            - generic [ref=e7710]: Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza
+                            - generic [ref=e7711]:
+                              - img [ref=e7712]
+                              - text: 3w
+                          - generic [ref=e7714]:
+                            - generic [ref=e7715]: "Last added: Never added"
+                            - generic [ref=e7716]:
+                              - img [ref=e7717]
+                              - text: Emilio
+                        - button "Remove Midtown by H-E-B Amalfi Coast Stone Baked Italian Pizza from recurring" [ref=e7720] [cursor=pointer]:
+                          - img [ref=e7721]
+                      - generic [ref=e7725]:
+                        - 'button "Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza 3w Last added: Never added Emilio" [ref=e7726] [cursor=pointer]':
+                          - generic [ref=e7727]:
+                            - generic [ref=e7728]: Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza
+                            - generic [ref=e7729]:
+                              - img [ref=e7730]
+                              - text: 3w
+                          - generic [ref=e7732]:
+                            - generic [ref=e7733]: "Last added: Never added"
+                            - generic [ref=e7734]:
+                              - img [ref=e7735]
+                              - text: Emilio
+                        - button "Remove Midtown by H-E-B Goat Cheese & Roasted Veggie Stone Baked Italian Pizza from recurring" [ref=e7738] [cursor=pointer]:
+                          - img [ref=e7739]
+                      - generic [ref=e7743]:
+                        - 'button "MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza 3w Last added: Never added Emilio" [ref=e7744] [cursor=pointer]':
+                          - generic [ref=e7745]:
+                            - generic [ref=e7746]: MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza
+                            - generic [ref=e7747]:
+                              - img [ref=e7748]
+                              - text: 3w
+                          - generic [ref=e7750]:
+                            - generic [ref=e7751]: "Last added: Never added"
+                            - generic [ref=e7752]:
+                              - img [ref=e7753]
+                              - text: Emilio
+                        - button "Remove MightyCrust by H-E-B Italian Sausage & Red Peppers Cauliflower Crust Gluten Free Frozen Pizza from recurring" [ref=e7756] [cursor=pointer]:
+                          - img [ref=e7757]
+                      - generic [ref=e7761]:
+                        - 'button "H-E-B Mi Tienda Fresh Mexican Mesa Garlic 4w Last added: Never added Emilio" [ref=e7762] [cursor=pointer]':
+                          - generic [ref=e7763]:
+                            - generic [ref=e7764]: H-E-B Mi Tienda Fresh Mexican Mesa Garlic
+                            - generic [ref=e7765]:
+                              - img [ref=e7766]
+                              - text: 4w
+                          - generic [ref=e7768]:
+                            - generic [ref=e7769]: "Last added: Never added"
+                            - generic [ref=e7770]:
+                              - img [ref=e7771]
+                              - text: Emilio
+                        - button "Remove H-E-B Mi Tienda Fresh Mexican Mesa Garlic from recurring" [ref=e7774] [cursor=pointer]:
+                          - img [ref=e7775]
+                      - generic [ref=e7779]:
+                        - 'button "Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla 6w Last added: Never added Emilio" [ref=e7780] [cursor=pointer]':
+                          - generic [ref=e7781]:
+                            - generic [ref=e7782]: Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla
+                            - generic [ref=e7783]:
+                              - img [ref=e7784]
+                              - text: 6w
+                          - generic [ref=e7786]:
+                            - generic [ref=e7787]: "Last added: Never added"
+                            - generic [ref=e7788]:
+                              - img [ref=e7789]
+                              - text: Emilio
+                        - button "Remove Field & Future by H-E-B Foaming Hand Soap Refill - Lavender & Vanilla from recurring" [ref=e7792] [cursor=pointer]:
+                          - img [ref=e7793]
+                      - generic [ref=e7797]:
+                        - 'button "Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt 6w Last added: Never added Emilio" [ref=e7798] [cursor=pointer]':
+                          - generic [ref=e7799]:
+                            - generic [ref=e7800]: Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt
+                            - generic [ref=e7801]:
+                              - img [ref=e7802]
+                              - text: 6w
+                          - generic [ref=e7804]:
+                            - generic [ref=e7805]: "Last added: Never added"
+                            - generic [ref=e7806]:
+                              - img [ref=e7807]
+                              - text: Emilio
+                        - button "Remove Field & Future by H-E-B Foaming Hand Soap Refill - White Jasmine & Sea Salt from recurring" [ref=e7810] [cursor=pointer]:
+                          - img [ref=e7811]
+                      - generic [ref=e7815]:
+                        - 'button "H-E-B Smoked Atlantic Salmon - Traditional 3w Last added: Never added Emilio" [ref=e7816] [cursor=pointer]':
+                          - generic [ref=e7817]:
+                            - generic [ref=e7818]: H-E-B Smoked Atlantic Salmon - Traditional
+                            - generic [ref=e7819]:
+                              - img [ref=e7820]
+                              - text: 3w
+                          - generic [ref=e7822]:
+                            - generic [ref=e7823]: "Last added: Never added"
+                            - generic [ref=e7824]:
+                              - img [ref=e7825]
+                              - text: Emilio
+                        - button "Remove H-E-B Smoked Atlantic Salmon - Traditional from recurring" [ref=e7828] [cursor=pointer]:
+                          - img [ref=e7829]
+                      - generic [ref=e7833]:
+                        - 'button "Aji-No-Moto MSG Umami Seasoning 16w Last added: Never added Emilio" [ref=e7834] [cursor=pointer]':
+                          - generic [ref=e7835]:
+                            - generic [ref=e7836]: Aji-No-Moto MSG Umami Seasoning
+                            - generic [ref=e7837]:
+                              - img [ref=e7838]
+                              - text: 16w
+                          - generic [ref=e7840]:
+                            - generic [ref=e7841]: "Last added: Never added"
+                            - generic [ref=e7842]:
+                              - img [ref=e7843]
+                              - text: Emilio
+                        - button "Remove Aji-No-Moto MSG Umami Seasoning from recurring" [ref=e7846] [cursor=pointer]:
+                          - img [ref=e7847]
+                      - generic [ref=e7851]:
+                        - 'button "Better Than Bouillon Premium Roasted Beef Base 8w Last added: Never added Emilio" [ref=e7852] [cursor=pointer]':
+                          - generic [ref=e7853]:
+                            - generic [ref=e7854]: Better Than Bouillon Premium Roasted Beef Base
+                            - generic [ref=e7855]:
+                              - img [ref=e7856]
+                              - text: 8w
+                          - generic [ref=e7858]:
+                            - generic [ref=e7859]: "Last added: Never added"
+                            - generic [ref=e7860]:
+                              - img [ref=e7861]
+                              - text: Emilio
+                        - button "Remove Better Than Bouillon Premium Roasted Beef Base from recurring" [ref=e7864] [cursor=pointer]:
+                          - img [ref=e7865]
+                      - generic [ref=e7869]:
+                        - 'button "Better Than Bouillon Premium Roasted Chicken Base 8w Last added: Never added Emilio" [ref=e7870] [cursor=pointer]':
+                          - generic [ref=e7871]:
+                            - generic [ref=e7872]: Better Than Bouillon Premium Roasted Chicken Base
+                            - generic [ref=e7873]:
+                              - img [ref=e7874]
+                              - text: 8w
+                          - generic [ref=e7876]:
+                            - generic [ref=e7877]: "Last added: Never added"
+                            - generic [ref=e7878]:
+                              - img [ref=e7879]
+                              - text: Emilio
+                        - button "Remove Better Than Bouillon Premium Roasted Chicken Base from recurring" [ref=e7882] [cursor=pointer]:
+                          - img [ref=e7883]
+                      - generic [ref=e7887]:
+                        - 'button "Hill Country Fare Pure Baking Soda 16w Last added: Never added Emilio" [ref=e7888] [cursor=pointer]':
+                          - generic [ref=e7889]:
+                            - generic [ref=e7890]: Hill Country Fare Pure Baking Soda
+                            - generic [ref=e7891]:
+                              - img [ref=e7892]
+                              - text: 16w
+                          - generic [ref=e7894]:
+                            - generic [ref=e7895]: "Last added: Never added"
+                            - generic [ref=e7896]:
+                              - img [ref=e7897]
+                              - text: Emilio
+                        - button "Remove Hill Country Fare Pure Baking Soda from recurring" [ref=e7900] [cursor=pointer]:
+                          - img [ref=e7901]
+                      - generic [ref=e7905]:
+                        - 'button "Honey Maid Cinnamon Graham Crackers 3w Last added: Never added Emilio" [ref=e7906] [cursor=pointer]':
+                          - generic [ref=e7907]:
+                            - generic [ref=e7908]: Honey Maid Cinnamon Graham Crackers
+                            - generic [ref=e7909]:
+                              - img [ref=e7910]
+                              - text: 3w
+                          - generic [ref=e7912]:
+                            - generic [ref=e7913]: "Last added: Never added"
+                            - generic [ref=e7914]:
+                              - img [ref=e7915]
+                              - text: Emilio
+                        - button "Remove Honey Maid Cinnamon Graham Crackers from recurring" [ref=e7918] [cursor=pointer]:
+                          - img [ref=e7919]
+                      - generic [ref=e7923]:
+                        - 'button "H-E-B Angel Hair Capellini Pasta Noodles 3w Last added: Never added Emilio" [ref=e7924] [cursor=pointer]':
+                          - generic [ref=e7925]:
+                            - generic [ref=e7926]: H-E-B Angel Hair Capellini Pasta Noodles
+                            - generic [ref=e7927]:
+                              - img [ref=e7928]
+                              - text: 3w
+                          - generic [ref=e7930]:
+                            - generic [ref=e7931]: "Last added: Never added"
+                            - generic [ref=e7932]:
+                              - img [ref=e7933]
+                              - text: Emilio
+                        - button "Remove H-E-B Angel Hair Capellini Pasta Noodles from recurring" [ref=e7936] [cursor=pointer]:
+                          - img [ref=e7937]
+                      - generic [ref=e7941]:
+                        - 'button "H-E-B Enriched Long Grain White Rice 4w Last added: Never added Emilio" [ref=e7942] [cursor=pointer]':
+                          - generic [ref=e7943]:
+                            - generic [ref=e7944]: H-E-B Enriched Long Grain White Rice
+                            - generic [ref=e7945]:
+                              - img [ref=e7946]
+                              - text: 4w
+                          - generic [ref=e7948]:
+                            - generic [ref=e7949]: "Last added: Never added"
+                            - generic [ref=e7950]:
+                              - img [ref=e7951]
+                              - text: Emilio
+                        - button "Remove H-E-B Enriched Long Grain White Rice from recurring" [ref=e7954] [cursor=pointer]:
+                          - img [ref=e7955]
+                      - generic [ref=e7959]:
+                        - 'button "H-E-B Made in Texas Creamy Peanut Butter 4w Last added: Never added Emilio" [ref=e7960] [cursor=pointer]':
+                          - generic [ref=e7961]:
+                            - generic [ref=e7962]: H-E-B Made in Texas Creamy Peanut Butter
+                            - generic [ref=e7963]:
+                              - img [ref=e7964]
+                              - text: 4w
+                          - generic [ref=e7966]:
+                            - generic [ref=e7967]: "Last added: Never added"
+                            - generic [ref=e7968]:
+                              - img [ref=e7969]
+                              - text: Emilio
+                        - button "Remove H-E-B Made in Texas Creamy Peanut Butter from recurring" [ref=e7972] [cursor=pointer]:
+                          - img [ref=e7973]
+                      - generic [ref=e7977]:
+                        - 'button "H-E-B Microwave Popcorn - Butter 3w Last added: Never added Emilio" [ref=e7978] [cursor=pointer]':
+                          - generic [ref=e7979]:
+                            - generic [ref=e7980]: H-E-B Microwave Popcorn - Butter
+                            - generic [ref=e7981]:
+                              - img [ref=e7982]
+                              - text: 3w
+                          - generic [ref=e7984]:
+                            - generic [ref=e7985]: "Last added: Never added"
+                            - generic [ref=e7986]:
+                              - img [ref=e7987]
+                              - text: Emilio
+                        - button "Remove H-E-B Microwave Popcorn - Butter from recurring" [ref=e7990] [cursor=pointer]:
+                          - img [ref=e7991]
+                      - generic [ref=e7995]:
+                        - 'button "H-E-B Organics Powdered Sugar 12w Last added: Never added Emilio" [ref=e7996] [cursor=pointer]':
+                          - generic [ref=e7997]:
+                            - generic [ref=e7998]: H-E-B Organics Powdered Sugar
+                            - generic [ref=e7999]:
+                              - img [ref=e8000]
+                              - text: 12w
+                          - generic [ref=e8002]:
+                            - generic [ref=e8003]: "Last added: Never added"
+                            - generic [ref=e8004]:
+                              - img [ref=e8005]
+                              - text: Emilio
+                        - button "Remove H-E-B Organics Powdered Sugar from recurring" [ref=e8008] [cursor=pointer]:
+                          - img [ref=e8009]
+                      - generic [ref=e8013]:
+                        - 'button "H-E-B Organics Strawberry Fruit Spread 4w Last added: Never added Emilio" [ref=e8014] [cursor=pointer]':
+                          - generic [ref=e8015]:
+                            - generic [ref=e8016]: H-E-B Organics Strawberry Fruit Spread
+                            - generic [ref=e8017]:
+                              - img [ref=e8018]
+                              - text: 4w
+                          - generic [ref=e8020]:
+                            - generic [ref=e8021]: "Last added: Never added"
+                            - generic [ref=e8022]:
+                              - img [ref=e8023]
+                              - text: Emilio
+                        - button "Remove H-E-B Organics Strawberry Fruit Spread from recurring" [ref=e8026] [cursor=pointer]:
+                          - img [ref=e8027]
+                      - generic [ref=e8031]:
+                        - 'button "H-E-B Pure Cane Extra Fine Granulated Sugar 8w Last added: Never added Emilio" [ref=e8032] [cursor=pointer]':
+                          - generic [ref=e8033]:
+                            - generic [ref=e8034]: H-E-B Pure Cane Extra Fine Granulated Sugar
+                            - generic [ref=e8035]:
+                              - img [ref=e8036]
+                              - text: 8w
+                          - generic [ref=e8038]:
+                            - generic [ref=e8039]: "Last added: Never added"
+                            - generic [ref=e8040]:
+                              - img [ref=e8041]
+                              - text: Emilio
+                        - button "Remove H-E-B Pure Cane Extra Fine Granulated Sugar from recurring" [ref=e8044] [cursor=pointer]:
+                          - img [ref=e8045]
+                      - generic [ref=e8049]:
+                        - 'button "H-E-B The Baker''s Scoop Unbleached All-Purpose Flour 8w Last added: Never added Emilio" [ref=e8050] [cursor=pointer]':
+                          - generic [ref=e8051]:
+                            - generic [ref=e8052]: H-E-B The Baker's Scoop Unbleached All-Purpose Flour
+                            - generic [ref=e8053]:
+                              - img [ref=e8054]
+                              - text: 8w
+                          - generic [ref=e8056]:
+                            - generic [ref=e8057]: "Last added: Never added"
+                            - generic [ref=e8058]:
+                              - img [ref=e8059]
+                              - text: Emilio
+                        - button "Remove H-E-B The Baker's Scoop Unbleached All-Purpose Flour from recurring" [ref=e8062] [cursor=pointer]:
+                          - img [ref=e8063]
+                      - generic [ref=e8067]:
+                        - 'button "Kikkoman 100% Pure Sesame Oil 12w Last added: Never added Emilio" [ref=e8068] [cursor=pointer]':
+                          - generic [ref=e8069]:
+                            - generic [ref=e8070]: Kikkoman 100% Pure Sesame Oil
+                            - generic [ref=e8071]:
+                              - img [ref=e8072]
+                              - text: 12w
+                          - generic [ref=e8074]:
+                            - generic [ref=e8075]: "Last added: Never added"
+                            - generic [ref=e8076]:
+                              - img [ref=e8077]
+                              - text: Emilio
+                        - button "Remove Kikkoman 100% Pure Sesame Oil from recurring" [ref=e8080] [cursor=pointer]:
+                          - img [ref=e8081]
+                      - generic [ref=e8085]:
+                        - 'button "Knox Original Unflavored Gelatine Mix 16w Last added: Never added Emilio" [ref=e8086] [cursor=pointer]':
+                          - generic [ref=e8087]:
+                            - generic [ref=e8088]: Knox Original Unflavored Gelatine Mix
+                            - generic [ref=e8089]:
+                              - img [ref=e8090]
+                              - text: 16w
+                          - generic [ref=e8092]:
+                            - generic [ref=e8093]: "Last added: Never added"
+                            - generic [ref=e8094]:
+                              - img [ref=e8095]
+                              - text: Emilio
+                        - button "Remove Knox Original Unflavored Gelatine Mix from recurring" [ref=e8098] [cursor=pointer]:
+                          - img [ref=e8099]
+                      - generic [ref=e8103]:
+                        - 'button "Midtown by H-E-B Bronze Cut Penne Rigate Pasta 3w Last added: Never added Emilio" [ref=e8104] [cursor=pointer]':
+                          - generic [ref=e8105]:
+                            - generic [ref=e8106]: Midtown by H-E-B Bronze Cut Penne Rigate Pasta
+                            - generic [ref=e8107]:
+                              - img [ref=e8108]
+                              - text: 3w
+                          - generic [ref=e8110]:
+                            - generic [ref=e8111]: "Last added: Never added"
+                            - generic [ref=e8112]:
+                              - img [ref=e8113]
+                              - text: Emilio
+                        - button "Remove Midtown by H-E-B Bronze Cut Penne Rigate Pasta from recurring" [ref=e8116] [cursor=pointer]:
+                          - img [ref=e8117]
+                      - generic [ref=e8121]:
+                        - 'button "Midtown by H-E-B Tomato Romano Pasta Sauce 3w Last added: Never added Emilio" [ref=e8122] [cursor=pointer]':
+                          - generic [ref=e8123]:
+                            - generic [ref=e8124]: Midtown by H-E-B Tomato Romano Pasta Sauce
+                            - generic [ref=e8125]:
+                              - img [ref=e8126]
+                              - text: 3w
+                          - generic [ref=e8128]:
+                            - generic [ref=e8129]: "Last added: Never added"
+                            - generic [ref=e8130]:
+                              - img [ref=e8131]
+                              - text: Emilio
+                        - button "Remove Midtown by H-E-B Tomato Romano Pasta Sauce from recurring" [ref=e8134] [cursor=pointer]:
+                          - img [ref=e8135]
+                      - generic [ref=e8139]:
+                        - 'button "Nongshim Shin Black Noodle Soup Family Pack 4w Last added: Never added Emilio" [ref=e8140] [cursor=pointer]':
+                          - generic [ref=e8141]:
+                            - generic [ref=e8142]: Nongshim Shin Black Noodle Soup Family Pack
+                            - generic [ref=e8143]:
+                              - img [ref=e8144]
+                              - text: 4w
+                          - generic [ref=e8146]:
+                            - generic [ref=e8147]: "Last added: Never added"
+                            - generic [ref=e8148]:
+                              - img [ref=e8149]
+                              - text: Emilio
+                        - button "Remove Nongshim Shin Black Noodle Soup Family Pack from recurring" [ref=e8152] [cursor=pointer]:
+                          - img [ref=e8153]
+                      - generic [ref=e8157]:
+                        - 'button "Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup 4w Last added: Never added Emilio" [ref=e8158] [cursor=pointer]':
+                          - generic [ref=e8159]:
+                            - generic [ref=e8160]: Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup
+                            - generic [ref=e8161]:
+                              - img [ref=e8162]
+                              - text: 4w
+                          - generic [ref=e8164]:
+                            - generic [ref=e8165]: "Last added: Never added"
+                            - generic [ref=e8166]:
+                              - img [ref=e8167]
+                              - text: Emilio
+                        - button "Remove Nongshim Shin Ramyun Gold Chicken Broth Noodle Soup from recurring" [ref=e8170] [cursor=pointer]:
+                          - img [ref=e8171]
+                      - generic [ref=e8175]:
+                        - 'button "Nutella Hazelnut Spread with Cocoa 4w Last added: Never added Emilio" [ref=e8176] [cursor=pointer]':
+                          - generic [ref=e8177]:
+                            - generic [ref=e8178]: Nutella Hazelnut Spread with Cocoa
+                            - generic [ref=e8179]:
+                              - img [ref=e8180]
+                              - text: 4w
+                          - generic [ref=e8182]:
+                            - generic [ref=e8183]: "Last added: Never added"
+                            - generic [ref=e8184]:
+                              - img [ref=e8185]
+                              - text: Emilio
+                        - button "Remove Nutella Hazelnut Spread with Cocoa from recurring" [ref=e8188] [cursor=pointer]:
+                          - img [ref=e8189]
+                      - generic [ref=e8193]:
+                        - 'button "Pearl River Bridge Superior Light Soy Sauce 12w Last added: Never added Emilio" [ref=e8194] [cursor=pointer]':
+                          - generic [ref=e8195]:
+                            - generic [ref=e8196]: Pearl River Bridge Superior Light Soy Sauce
+                            - generic [ref=e8197]:
+                              - img [ref=e8198]
+                              - text: 12w
+                          - generic [ref=e8200]:
+                            - generic [ref=e8201]: "Last added: Never added"
+                            - generic [ref=e8202]:
+                              - img [ref=e8203]
+                              - text: Emilio
+                        - button "Remove Pearl River Bridge Superior Light Soy Sauce from recurring" [ref=e8206] [cursor=pointer]:
+                          - img [ref=e8207]
+                      - generic [ref=e8211]:
+                        - 'button "Pirate''s Booty Aged White Cheddar Rice & Corn Puffs 3w Last added: Never added Emilio" [ref=e8212] [cursor=pointer]':
+                          - generic [ref=e8213]:
+                            - generic [ref=e8214]: Pirate's Booty Aged White Cheddar Rice & Corn Puffs
+                            - generic [ref=e8215]:
+                              - img [ref=e8216]
+                              - text: 3w
+                          - generic [ref=e8218]:
+                            - generic [ref=e8219]: "Last added: Never added"
+                            - generic [ref=e8220]:
+                              - img [ref=e8221]
+                              - text: Emilio
+                        - button "Remove Pirate's Booty Aged White Cheddar Rice & Corn Puffs from recurring" [ref=e8224] [cursor=pointer]:
+                          - img [ref=e8225]
+                      - generic [ref=e8229]:
+                        - 'button "Post Honey Bunches of Oats with Almonds Cereal - Mega Size 3w Last added: Never added Emilio" [ref=e8230] [cursor=pointer]':
+                          - generic [ref=e8231]:
+                            - generic [ref=e8232]: Post Honey Bunches of Oats with Almonds Cereal - Mega Size
+                            - generic [ref=e8233]:
+                              - img [ref=e8234]
+                              - text: 3w
+                          - generic [ref=e8236]:
+                            - generic [ref=e8237]: "Last added: Never added"
+                            - generic [ref=e8238]:
+                              - img [ref=e8239]
+                              - text: Emilio
+                        - button "Remove Post Honey Bunches of Oats with Almonds Cereal - Mega Size from recurring" [ref=e8242] [cursor=pointer]:
+                          - img [ref=e8243]
+                      - generic [ref=e8247]:
+                        - 'button "Rao''s Homemade Roasted Garlic Alfredo Sauce 4w Last added: Never added Emilio" [ref=e8248] [cursor=pointer]':
+                          - generic [ref=e8249]:
+                            - generic [ref=e8250]: Rao's Homemade Roasted Garlic Alfredo Sauce
+                            - generic [ref=e8251]:
+                              - img [ref=e8252]
+                              - text: 4w
+                          - generic [ref=e8254]:
+                            - generic [ref=e8255]: "Last added: Never added"
+                            - generic [ref=e8256]:
+                              - img [ref=e8257]
+                              - text: Emilio
+                        - button "Remove Rao's Homemade Roasted Garlic Alfredo Sauce from recurring" [ref=e8260] [cursor=pointer]:
+                          - img [ref=e8261]
+                      - generic [ref=e8265]:
+                        - 'button "Rao''s Homestyle Bolognese Sauce 4w Last added: Never added Emilio" [ref=e8266] [cursor=pointer]':
+                          - generic [ref=e8267]:
+                            - generic [ref=e8268]: Rao's Homestyle Bolognese Sauce
+                            - generic [ref=e8269]:
+                              - img [ref=e8270]
+                              - text: 4w
+                          - generic [ref=e8272]:
+                            - generic [ref=e8273]: "Last added: Never added"
+                            - generic [ref=e8274]:
+                              - img [ref=e8275]
+                              - text: Emilio
+                        - button "Remove Rao's Homestyle Bolognese Sauce from recurring" [ref=e8278] [cursor=pointer]:
+                          - img [ref=e8279]
+        - generic [ref=e16]:
+          - button "Library" [ref=e17] [cursor=pointer]:
+            - img [ref=e19]
+            - generic [ref=e22]: Library
+          - button "This Week" [active] [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+            - generic [ref=e26]: This Week
+    - generic [ref=e4]:
+      - generic [ref=e6]: Beta Preview
+      - button "Send Feedback" [ref=e7] [cursor=pointer]:
+        - generic [ref=e8]: Give Feedback
+        - img
+  - generic [ref=e29]:
+    - button "Menu" [ref=e30]:
+      - img [ref=e32]
+      - generic: Menu
+    - button "Inspect" [ref=e36]:
+      - img [ref=e38]
+      - generic: Inspect
+    - button "Audit" [ref=e40]:
+      - img [ref=e42]
+      - generic: Audit
+    - button "Settings" [ref=e45]:
+      - img [ref=e47]
+      - generic: Settings

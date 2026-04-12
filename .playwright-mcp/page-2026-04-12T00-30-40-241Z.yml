@@ -1,0 +1,30 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e6]
+        - generic [ref=e9]:
+          - button "Library" [ref=e10] [cursor=pointer]:
+            - img [ref=e11]
+            - generic [ref=e14]: Library
+          - button "This Week" [ref=e15] [cursor=pointer]:
+            - img [ref=e17]
+            - generic [ref=e19]: This Week
+    - generic [ref=e22]:
+      - generic [ref=e24]: Beta Preview
+      - button "Send Feedback" [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: Give Feedback
+        - img
+  - generic [ref=e29]:
+    - button "Menu" [ref=e30]:
+      - img [ref=e32]
+      - generic: Menu
+    - button "Inspect" [ref=e36]:
+      - img [ref=e38]
+      - generic: Inspect
+    - button "Audit" [ref=e40]:
+      - img [ref=e42]
+      - generic: Audit
+    - button "Settings" [ref=e45]:
+      - img [ref=e47]
+      - generic: Settings

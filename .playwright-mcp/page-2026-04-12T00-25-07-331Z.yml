@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - main
+    - generic [ref=e4]:
+      - generic [ref=e6]: Beta Preview
+      - button "Send Feedback" [ref=e7] [cursor=pointer]:
+        - generic [ref=e8]: Give Feedback
+        - img

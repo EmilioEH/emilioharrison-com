@@ -1,19 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { X, CalendarDays, Trash2, Loader2, User } from 'lucide-react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { X, CalendarDays, Trash2, Loader2, User, ListChecks, Plus, CheckSquare } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { FrequencyPicker } from './FrequencyPicker'
 import type { RecurringGroceryItem } from '../../../lib/types'
 
 interface RecurringListSheetProps {
   onClose: () => void
-  /** Called after any successful change so parent can refresh derived state. */
   onChange?: () => void
+  weekStartDate?: string
 }
 
 const getBaseUrl = (): string => {
   const base = import.meta.env.BASE_URL
   return base.endsWith('/') ? base : `${base}/`
 }
+
+const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    const patterns = { light: [10], medium: [20], success: [10, 50, 20] }
+    navigator.vibrate(patterns[style])
+  }
+}
+
+const LONG_PRESS_MS = 500
 
 const formatRelativeDate = (isoDate?: string): string => {
   if (!isoDate) return 'Never added'
@@ -48,12 +57,25 @@ const groupItemsByFrequency = (
   return groups
 }
 
-export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose, onChange }) => {
+type ActionType = 'addToWeek' | 'delete'
+
+export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({
+  onClose,
+  onChange,
+  weekStartDate,
+}) => {
   const [items, setItems] = useState<RecurringGroceryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [pendingItemId, setPendingItemId] = useState<string | null>(null)
+
+  // Selection mode
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [loadingAction, setLoadingAction] = useState<ActionType | null>(null)
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
+  const longPressTriggered = useRef(false)
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -81,6 +103,62 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose,
     }
   }, [])
 
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+  }, [])
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(items.map((i) => i.id)))
+    }
+  }, [items, selectedIds.size])
+
+  // Long press handlers
+  const handleLongPressStart = useCallback(
+    (id: string) => {
+      longPressTriggered.current = false
+      longPressTimer.current = setTimeout(() => {
+        longPressTriggered.current = true
+        triggerHaptic('medium')
+        setSelectionMode(true)
+        setSelectedIds(new Set([id]))
+      }, LONG_PRESS_MS)
+    },
+    [],
+  )
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+
+  const handleItemTap = useCallback(
+    (id: string) => {
+      if (longPressTriggered.current) return
+      if (selectionMode) {
+        toggleSelected(id)
+      } else {
+        setEditingItemId((prev) => (prev === id ? null : id))
+      }
+    },
+    [selectionMode, toggleSelected],
+  )
+
+  // Actions
   const handleChangeFrequency = async (itemId: string, frequencyWeeks: number | null) => {
     if (!frequencyWeeks) {
       setEditingItemId(null)
@@ -106,7 +184,7 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose,
     }
   }
 
-  const handleDelete = async (itemId: string) => {
+  const handleDeleteSingle = async (itemId: string) => {
     setPendingItemId(itemId)
     try {
       const res = await fetch(`${getBaseUrl()}api/grocery/recurring`, {
@@ -124,37 +202,118 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose,
     }
   }
 
+  const handleBulkDelete = async () => {
+    setLoadingAction('delete')
+    try {
+      const ids = Array.from(selectedIds)
+      await Promise.all(
+        ids.map((itemId) =>
+          fetch(`${getBaseUrl()}api/grocery/recurring`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId }),
+          }),
+        ),
+      )
+      setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)))
+      exitSelectionMode()
+      onChange?.()
+    } catch (err) {
+      console.error('Bulk delete failed:', err)
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
+  const handleAddToWeek = async () => {
+    if (!weekStartDate) return
+    setLoadingAction('addToWeek')
+    try {
+      const res = await fetch(`${getBaseUrl()}api/grocery/recurring-inject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStartDate,
+          recurringItemIds: Array.from(selectedIds),
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to add items to list')
+      // Update lastAddedWeek locally
+      setItems((prev) =>
+        prev.map((i) =>
+          selectedIds.has(i.id) ? { ...i, lastAddedWeek: weekStartDate } : i,
+        ),
+      )
+      exitSelectionMode()
+      onChange?.()
+    } catch (err) {
+      console.error('Add to week failed:', err)
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
   const groups = groupItemsByFrequency(items)
+  const allSelected = items.length > 0 && selectedIds.size === items.length
 
   return (
     <>
       <button
         type="button"
         className="fixed inset-0 z-50 bg-black/50 duration-200 animate-in fade-in"
-        onClick={onClose}
+        onClick={selectionMode ? exitSelectionMode : onClose}
         aria-label="Close recurring items sheet"
       />
-      <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-border bg-card shadow-xl duration-300 animate-in slide-in-from-bottom">
+      <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl border-t border-border bg-card shadow-xl duration-300 animate-in slide-in-from-bottom">
         <div className="sticky top-0 z-10 flex justify-center bg-card pb-2 pt-3">
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
 
-        <div className="px-5 pb-8">
+        <div className={cn('flex-1 overflow-y-auto px-5', selectionMode && selectedIds.size > 0 ? 'pb-20' : 'pb-8')}>
           <div className="mb-5 flex items-start justify-between">
             <div>
               <h3 className="font-display text-xl font-bold text-foreground">Recurring Items</h3>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {items.length} item{items.length === 1 ? '' : 's'} configured
+                {selectionMode
+                  ? `${selectedIds.size} of ${items.length} selected`
+                  : `${items.length} item${items.length === 1 ? '' : 's'} configured`}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              {!selectionMode && items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectionMode(true)}
+                  className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Enter selection mode"
+                >
+                  <ListChecks className="h-5 w-5" />
+                </button>
+              )}
+              {selectionMode && (
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className={cn(
+                    'rounded-full p-1.5 transition-colors',
+                    allSelected
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                  aria-label={allSelected ? 'Deselect all' : 'Select all'}
+                >
+                  <CheckSquare className="h-5 w-5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={selectionMode ? exitSelectionMode : onClose}
+                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={selectionMode ? 'Cancel selection' : 'Close'}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {loading && (
@@ -197,17 +356,43 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose,
                   </h4>
                   <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     {group.items.map((item) => {
-                      const isEditing = editingItemId === item.id
+                      const isEditing = editingItemId === item.id && !selectionMode
                       const isPending = pendingItemId === item.id
+                      const isSelected = selectedIds.has(item.id)
                       return (
                         <div
                           key={item.id}
-                          className="border-b border-border last:border-0"
+                          className={cn(
+                            'border-b border-border last:border-0 transition-colors',
+                            selectionMode && isSelected && 'bg-primary/5',
+                          )}
                         >
                           <div className="flex items-center gap-3 p-3">
+                            {selectionMode && (
+                              <div
+                                className={cn(
+                                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors',
+                                  isSelected
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-muted-foreground/30',
+                                )}
+                              >
+                                {isSelected && (
+                                  <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </div>
+                            )}
                             <button
                               type="button"
-                              onClick={() => setEditingItemId(isEditing ? null : item.id)}
+                              onClick={() => handleItemTap(item.id)}
+                              onTouchStart={() => !selectionMode && handleLongPressStart(item.id)}
+                              onTouchEnd={handleLongPressEnd}
+                              onTouchCancel={handleLongPressEnd}
+                              onMouseDown={() => !selectionMode && handleLongPressStart(item.id)}
+                              onMouseUp={handleLongPressEnd}
+                              onMouseLeave={handleLongPressEnd}
                               className="flex-1 text-left"
                               disabled={isPending}
                             >
@@ -228,22 +413,24 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose,
                                 )}
                               </div>
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(item.id)}
-                              disabled={isPending}
-                              className={cn(
-                                'rounded-full p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive',
-                                isPending && 'opacity-40',
-                              )}
-                              aria-label={`Remove ${item.name} from recurring`}
-                            >
-                              {isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
-                            </button>
+                            {!selectionMode && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSingle(item.id)}
+                                disabled={isPending}
+                                className={cn(
+                                  'rounded-full p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive',
+                                  isPending && 'opacity-40',
+                                )}
+                                aria-label={`Remove ${item.name} from recurring`}
+                              >
+                                {isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            )}
                           </div>
                           {isEditing && (
                             <div className="border-t border-border bg-muted/30 px-3 py-3">
@@ -265,6 +452,66 @@ export const RecurringListSheet: React.FC<RecurringListSheetProps> = ({ onClose,
             </div>
           )}
         </div>
+
+        {/* Selection Action Bar */}
+        {selectionMode && selectedIds.size > 0 && (
+          <div className="shrink-0 border-t border-border bg-card/95 pb-20 shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2 px-4 py-3">
+              <button
+                type="button"
+                onClick={exitSelectionMode}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                aria-label="Cancel selection"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-bold tabular-nums">
+                {selectedIds.size} selected
+              </span>
+
+              <div className="ml-auto flex items-center gap-1">
+                {weekStartDate && (
+                  <button
+                    type="button"
+                    onClick={handleAddToWeek}
+                    disabled={loadingAction !== null}
+                    className={cn(
+                      'flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors',
+                      'text-primary hover:bg-primary/10',
+                      loadingAction !== null && 'cursor-not-allowed opacity-40',
+                    )}
+                    aria-label="Add to this week"
+                  >
+                    {loadingAction === 'addToWeek' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    <span>Add</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={loadingAction !== null}
+                  className={cn(
+                    'flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors',
+                    'text-destructive hover:bg-destructive/10',
+                    loadingAction !== null && 'cursor-not-allowed opacity-40',
+                  )}
+                  aria-label="Delete selected"
+                >
+                  {loadingAction === 'delete' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
