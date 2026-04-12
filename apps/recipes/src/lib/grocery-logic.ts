@@ -113,15 +113,20 @@ function sortWithinCategory(items: ShoppableIngredient[], categoryName: string):
           return isFrozen ? locB.number - locA.number : locA.number - locB.number
         }
         return a.name.localeCompare(b.name)
-      }
-
-      // Perimeter locations come before numbered aisles within the same category
-      if (locA.type === 'perimeter' && locB.type === 'aisle') return -1
-      if (locA.type === 'aisle' && locB.type === 'perimeter') return 1
-
-      // Both are perimeter — group by location string, then alpha
-      if (locA.location !== locB.location) {
-        return locA.location.localeCompare(locB.location)
+      } else if (locA.type === 'perimeter' && locB.type === 'aisle') {
+        // Perimeter locations come before numbered aisles within the same category
+        return -1
+      } else if (locA.type === 'aisle' && locB.type === 'perimeter') {
+        // Numbered aisles come after perimeter locations
+        return 1
+      } else if (locA.type === 'perimeter' && locB.type === 'perimeter') {
+        // Both are perimeter — group by location string, then alpha
+        const locAPerim = locA as { type: 'perimeter'; location: string }
+        const locBPerim = locB as { type: 'perimeter'; location: string }
+        if (locAPerim.location !== locBPerim.location) {
+          return locAPerim.location.localeCompare(locBPerim.location)
+        }
+        return a.name.localeCompare(b.name)
       }
       return a.name.localeCompare(b.name)
     }
