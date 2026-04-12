@@ -128,10 +128,10 @@ export const GroceryItemEditSheet: React.FC<GroceryItemEditSheetProps> = ({
               <img
                 src={item.imageUrl}
                 alt={item.name}
-                className="h-20 w-20 rounded-xl object-cover shadow-sm"
+                className="h-24 w-24 rounded-xl object-cover shadow-sm"
               />
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-muted text-2xl">
+              <div className="flex h-24 w-24 items-center justify-center rounded-xl bg-muted text-2xl">
                 🛒
               </div>
             )}

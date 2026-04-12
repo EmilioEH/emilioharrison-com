@@ -168,11 +168,11 @@ export const ProductSelectionSheet: React.FC<ProductSelectionSheetProps> = ({
                         <img
                           src={product.imageUrl}
                           alt=""
-                          className="h-16 w-16 rounded-lg object-cover"
+                          className="h-24 w-24 rounded-lg object-cover"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted text-2xl">
+                        <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-muted text-2xl">
                           🛒
                         </div>
                       )}

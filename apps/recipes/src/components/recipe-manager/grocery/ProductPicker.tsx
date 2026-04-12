@@ -205,11 +205,11 @@ export const ProductPicker: React.FC<ProductPickerProps> = ({
                       <img
                         src={topResult.imageUrl}
                         alt=""
-                        className="h-12 w-12 rounded-lg object-cover"
+                        className="h-24 w-24 rounded-lg object-cover"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-lg">
+                      <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-muted text-lg">
                         🔍
                       </div>
                     )}

@@ -936,12 +936,12 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                 <img
                                   src={item.imageUrl}
                                   alt=""
-                                  className="ml-2 mt-0.5 h-9 w-9 rounded-lg object-cover"
+                                  className="ml-2 h-24 w-24 rounded-lg object-cover"
                                   loading="lazy"
                                 />
                               ) : !item.hebProductId && !item.isManual ? (
                                 <div
-                                  className="ml-2 mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/50"
+                                  className="ml-2 flex h-24 w-24 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/50"
                                   title="No H-E-B product linked"
                                 >
                                   <ShoppingBasket className="h-4 w-4" />
