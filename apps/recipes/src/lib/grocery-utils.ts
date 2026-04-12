@@ -203,6 +203,11 @@ function recurringItemToShoppable(item: RecurringGroceryItem): ShoppableIngredie
  * Filters recurring items to those that are due, and returns:
  * - dueItems: ShoppableIngredient[] to merge into the grocery list
  * - itemsToUpdate: RecurringGroceryItem[] that need lastAddedWeek updated
+ *
+ * Items where lastAddedWeek === currentWeekStart were already injected this week
+ * and must still be included in dueItems so that re-generation (setDoc overwrite)
+ * doesn't silently drop them. They are excluded from itemsToUpdate so we don't
+ * redundantly write lastAddedWeek again.
  */
 export function filterDueRecurringItems(
   recurringItems: RecurringGroceryItem[],
@@ -215,7 +220,11 @@ export function filterDueRecurringItems(
   const itemsToUpdate: RecurringGroceryItem[] = []
 
   for (const item of recurringItems) {
-    if (isRecurringItemDue(item, currentWeekStart)) {
+    const alreadyAddedThisWeek = item.lastAddedWeek === currentWeekStart
+    if (alreadyAddedThisWeek) {
+      // Re-generation: preserve the item in the new list without updating lastAddedWeek
+      dueItems.push(recurringItemToShoppable(item))
+    } else if (isRecurringItemDue(item, currentWeekStart)) {
       dueItems.push(recurringItemToShoppable(item))
       itemsToUpdate.push(item)
     }

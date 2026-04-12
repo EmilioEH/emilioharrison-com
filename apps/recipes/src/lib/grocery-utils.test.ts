@@ -118,7 +118,24 @@ describe('grocery-utils - Recurring Items', () => {
   })
 
   describe('filterDueRecurringItems', () => {
-    it('should filter out items not due', () => {
+    it('should include new due items in both dueItems and itemsToUpdate', () => {
+      const items: RecurringGroceryItem[] = [
+        createRecurringItem({
+          id: 'item-1',
+          name: 'Weekly Item',
+          frequencyWeeks: 1,
+        }),
+      ]
+
+      const { dueItems, itemsToUpdate } = filterDueRecurringItems(items, '2026-04-07')
+
+      expect(dueItems).toHaveLength(1)
+      expect(dueItems[0].name).toBe('Weekly Item')
+      expect(itemsToUpdate).toHaveLength(1)
+      expect(itemsToUpdate[0].id).toBe('item-1')
+    })
+
+    it('should re-include already-added items in dueItems but not itemsToUpdate (re-generation safe)', () => {
       const items: RecurringGroceryItem[] = [
         createRecurringItem({
           id: 'item-1',
@@ -135,10 +152,30 @@ describe('grocery-utils - Recurring Items', () => {
 
       const { dueItems, itemsToUpdate } = filterDueRecurringItems(items, '2026-04-07')
 
-      expect(dueItems).toHaveLength(1)
-      expect(dueItems[0].name).toBe('Weekly Item')
+      // Both items should appear in the list (re-generation preserves already-added items)
+      expect(dueItems).toHaveLength(2)
+      expect(dueItems.map((i) => i.name)).toContain('Weekly Item')
+      expect(dueItems.map((i) => i.name)).toContain('Already Added')
+      // Only the newly-due item needs lastAddedWeek updated
       expect(itemsToUpdate).toHaveLength(1)
       expect(itemsToUpdate[0].id).toBe('item-1')
+    })
+
+    it('should exclude items that are genuinely not due yet', () => {
+      const items: RecurringGroceryItem[] = [
+        createRecurringItem({
+          id: 'item-1',
+          name: 'Biweekly Item',
+          frequencyWeeks: 2,
+          createdAt: '2026-04-07T00:00:00.000Z', // week 0
+        }),
+      ]
+
+      // One week later — not due yet for biweekly
+      const { dueItems, itemsToUpdate } = filterDueRecurringItems(items, '2026-04-14')
+
+      expect(dueItems).toHaveLength(0)
+      expect(itemsToUpdate).toHaveLength(0)
     })
 
     it('should convert RecurringGroceryItem to ShoppableIngredient', () => {
