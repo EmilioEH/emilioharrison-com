@@ -1,26 +1,17 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useStore } from '@nanostores/react'
-import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek, getDay } from 'date-fns'
-import { ChevronUp, ChevronDown, X, ShoppingCart, Calendar, ChefHat } from 'lucide-react'
+import { format, parseISO, addDays, isSameWeek, addWeeks } from 'date-fns'
+import { ChevronUp, ChevronDown, X, ShoppingCart, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 import {
   weekState,
-  switchWeekContext,
   currentWeekRecipes,
   removeRecipeFromDay,
   DAYS_OF_WEEK,
-  allPlannedRecipes,
 } from '../../../lib/weekStore'
 import { $recipes } from '../../../lib/recipeStore'
 import type { Recipe } from '../../../lib/types'
-import {
-  getNextUpcomingMeal,
-  formatTimeUntilMeal,
-  formatMealLabel,
-  getContextMode,
-} from '../../../lib/weekContextHelpers'
-import { $userPreferences, getWeekTransitionDayNumber } from '../../../lib/userPreferences'
 
 interface WeekContextBarProps {
   onViewWeek: () => void
@@ -28,20 +19,6 @@ interface WeekContextBarProps {
   onSelectRecipe?: (recipe: Recipe) => void
   defaultExpanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
-}
-
-/**
- * Get smart default week based on current day of week and user preference
- * Uses user's preferred day to start planning next week
- */
-const getSmartDefaultWeek = (transitionDay: number): 'this' | 'next' => {
-  const day = getDay(new Date()) // 0 = Sunday, 1 = Monday, ...
-  // If today is on or after the transition day, show next week
-  // Handle Sunday (0) specially - it wraps around
-  if (transitionDay === 0) {
-    return day === 0 ? 'next' : 'this'
-  }
-  return day >= transitionDay ? 'next' : 'this'
 }
 
 /**
@@ -63,24 +40,9 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
 }) => {
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
-  const plannedRecipes = useStore(allPlannedRecipes)
   const allRecipes = useStore($recipes)
-  const preferences = useStore($userPreferences)
 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
-
-  // Calculate next upcoming meal and context mode using user preferences
-  const nextMeal = useMemo(
-    () =>
-      getNextUpcomingMeal(
-        plannedRecipes,
-        allRecipes,
-        preferences.cookingModeThreshold,
-        preferences.defaultMealTimes,
-      ),
-    [plannedRecipes, allRecipes, preferences.cookingModeThreshold, preferences.defaultMealTimes],
-  )
-  const contextMode = useMemo(() => getContextMode(nextMeal), [nextMeal])
 
   // Sync with external control
   useEffect(() => {
@@ -95,8 +57,6 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
 
   const activeDate = parseISO(activeWeekStart)
   const today = new Date()
-  const currentWeekStarts = startOfWeek(today, { weekStartsOn: 1 })
-  const nextWeekStarts = addWeeks(currentWeekStarts, 1)
 
   const isThisWeek = isSameWeek(activeDate, today, { weekStartsOn: 1 })
   const isNextWeek = isSameWeek(activeDate, addWeeks(today, 1), { weekStartsOn: 1 })
@@ -113,18 +73,6 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
       : `Week of ${format(activeDate, 'MMM d')}`
 
   // Handlers
-  const handleSetNextWeek = () => switchWeekContext(format(nextWeekStarts, 'yyyy-MM-dd'))
-
-  // Apply smart default on mount if needed
-  useEffect(() => {
-    const transitionDay = getWeekTransitionDayNumber(preferences.planNextWeekStartDay)
-    const smartDefault = getSmartDefaultWeek(transitionDay)
-    if (smartDefault === 'next' && isThisWeek) {
-      handleSetNextWeek()
-    }
-    // Only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Scroll-aware logic: collapse to pill on scroll down, expand on scroll up
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -234,43 +182,21 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={handlePillClick}
             className="pb-safe fixed inset-x-0 bottom-10 z-40 mx-auto flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-2 shadow-lg hover:scale-105 active:scale-95"
-            aria-label={
-              nextMeal && (contextMode === 'cooking' || contextMode === 'pre-cooking')
-                ? `${nextMeal.recipe.title} ${formatTimeUntilMeal(nextMeal.minutesUntil)}`
-                : `${plannedCount} meals planned this week`
-            }
+            aria-label={`${plannedCount} meals planned this week`}
           >
-            {/* Contextual Content */}
-            {nextMeal && (contextMode === 'cooking' || contextMode === 'pre-cooking') ? (
-              // COOKING/PRE-COOKING MODE: Show next meal
-              <>
-                <ChefHat className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">
-                  {nextMeal.isToday ? 'Tonight' : nextMeal.isTomorrow ? 'Tomorrow' : 'Soon'}:{' '}
-                  {nextMeal.recipe.title}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatTimeUntilMeal(nextMeal.minutesUntil)}
-                </span>
-              </>
-            ) : (
-              // PLANNING MODE: Show week status
-              <>
-                <Calendar className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">{plannedCount} planned</span>
-                {/* Day Dots */}
-                <div className="flex items-center gap-0.5">
-                  {dayData.map((d) => (
-                    <div
-                      key={d.day}
-                      className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                        d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+            <Calendar className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">{plannedCount} planned</span>
+            {/* Day Dots */}
+            <div className="flex items-center gap-0.5">
+              {dayData.map((d) => (
+                <div
+                  key={d.day}
+                  className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                    d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
+            </div>
           </motion.button>
         )}
       </AnimatePresence>
@@ -292,146 +218,66 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
           >
             {/* Collapsed/Medium View - CONTEXTUAL */}
             <div className="mx-auto max-w-2xl px-4">
-              {!isExpanded &&
-              nextMeal &&
-              (contextMode === 'cooking' || contextMode === 'pre-cooking') ? (
-                // COOKING/PRE-COOKING MODE: Show meal preview with quick actions
-                <div className="py-3">
-                  {/* Meal Preview Header */}
-                  <button
-                    onClick={() => handleSetExpanded(!isExpanded)}
-                    className="mb-2 flex w-full items-center justify-between"
-                    aria-label="Expand meal details"
-                  >
-                    <div className="flex items-center gap-2">
-                      <ChefHat className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-bold text-foreground">
-                        {formatMealLabel(nextMeal)}
-                      </span>
-                    </div>
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                  </button>
-
-                  {/* Recipe Title & Time */}
-                  <div className="mb-3">
-                    <div className="text-base font-bold text-foreground">
-                      {nextMeal.recipe.title}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatTimeUntilMeal(nextMeal.minutesUntil)}
-                      {nextMeal.recipe.prepTime && nextMeal.recipe.cookTime && (
-                        <span>
-                          {' '}
-                          • {nextMeal.recipe.prepTime + nextMeal.recipe.cookTime} min total
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Quick Action Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        if (onSelectRecipe) {
-                          onSelectRecipe(nextMeal.recipe)
-                        }
-                      }}
-                      disabled={!onSelectRecipe}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      <ChefHat className="h-4 w-4" />
-                      {contextMode === 'cooking' ? 'Start Cooking' : 'View Recipe'}
-                    </button>
-
-                    <button
-                      onClick={handleGroceryClick}
-                      className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Week Status Footer */}
-                  <div className="mt-2 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                    <span>{weekLabel}</span>
-                    <span>•</span>
-                    <span>
+              {/* Standard week overview */}
+              <>
+                <button
+                  onClick={() => handleSetExpanded(!isExpanded)}
+                  className="flex w-full items-center justify-between py-3"
+                  aria-expanded={isExpanded}
+                  aria-label={isExpanded ? 'Collapse meal plan' : 'Expand meal plan'}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-foreground">{weekLabel}</span>
+                    <span className="text-xs text-muted-foreground">
                       {plannedCount}/{DAYS_OF_WEEK.length} days
                     </span>
-                    <div className="flex items-center gap-0.5">
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Day Dots */}
+                    <div className="flex items-center gap-1">
                       {dayData.map((d) => (
                         <div
                           key={d.day}
-                          className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                          className={`h-2 w-2 rounded-full transition-colors ${
                             d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
                           }`}
+                          title={`${d.day}${d.recipe ? `: ${d.recipe.title}` : ''}`}
                         />
                       ))}
                     </div>
+
+                    {/* Expand/Collapse Icon */}
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </div>
-                </div>
-              ) : (
-                // PLANNING MODE: Standard week overview
-                <>
-                  <button
-                    onClick={() => handleSetExpanded(!isExpanded)}
-                    className="flex w-full items-center justify-between py-3"
-                    aria-expanded={isExpanded}
-                    aria-label={isExpanded ? 'Collapse meal plan' : 'Expand meal plan'}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-foreground">{weekLabel}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {plannedCount}/{DAYS_OF_WEEK.length} days
-                      </span>
-                    </div>
+                </button>
 
-                    <div className="flex items-center gap-2">
-                      {/* Day Dots */}
-                      <div className="flex items-center gap-1">
-                        {dayData.map((d) => (
-                          <div
-                            key={d.day}
-                            className={`h-2 w-2 rounded-full transition-colors ${
-                              d.isPlanned ? 'bg-primary' : 'bg-muted-foreground/30'
-                            }`}
-                            title={`${d.day}${d.recipe ? `: ${d.recipe.title}` : ''}`}
-                          />
-                        ))}
-                      </div>
-
-                      {/* Expand/Collapse Icon */}
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Planning Mode Quick Actions (only when not expanded) */}
-                  {!isExpanded && plannedCount > 0 && (
-                    <div className="flex gap-2 pb-2">
-                      <button
-                        onClick={handleGroceryClick}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                      >
-                        <ShoppingCart className="h-3.5 w-3.5" />
-                        Grocery List
-                      </button>
-                      <button
-                        onClick={() => {
-                          onViewWeek()
-                        }}
-                        className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                      >
-                        <Calendar className="h-3.5 w-3.5" />
-                        Full View
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
+                {/* Quick Actions (only when not expanded) */}
+                {!isExpanded && plannedCount > 0 && (
+                  <div className="flex gap-2 pb-2">
+                    <button
+                      onClick={handleGroceryClick}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      Grocery List
+                    </button>
+                    <button
+                      onClick={() => {
+                        onViewWeek()
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      Full View
+                    </button>
+                  </div>
+                )}
+              </>
 
               {/* Expanded Content */}
               {isExpanded && (
@@ -439,78 +285,7 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
                   {/* Date Range Subheader */}
                   <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
                     <span>{dateRangeLabel}</span>
-                    {nextMeal && (contextMode === 'cooking' || contextMode === 'pre-cooking') && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                        {formatTimeUntilMeal(nextMeal.minutesUntil)}
-                      </span>
-                    )}
                   </div>
-
-                  {/* Next Meal Highlight (Cooking Mode) */}
-                  {nextMeal && (contextMode === 'cooking' || contextMode === 'pre-cooking') && (
-                    <div className="mb-4 rounded-lg border-2 border-primary/30 bg-primary/5 p-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <ChefHat className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-bold uppercase tracking-wide text-primary">
-                          {contextMode === 'cooking' ? 'Ready to Cook' : 'Coming Up'}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          if (onSelectRecipe) {
-                            onSelectRecipe(nextMeal.recipe)
-                            handleSetExpanded(false)
-                          }
-                        }}
-                        className="w-full text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                            {getRecipeImage(nextMeal.recipe) ? (
-                              <img
-                                src={getRecipeImage(nextMeal.recipe)!}
-                                alt={nextMeal.recipe.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-2xl">
-                                🍽️
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="mb-1 font-bold text-foreground">
-                              {nextMeal.recipe.title}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {formatMealLabel(nextMeal)}
-                              {nextMeal.recipe.prepTime && nextMeal.recipe.cookTime && (
-                                <span>
-                                  {' '}
-                                  • {nextMeal.recipe.prepTime + nextMeal.recipe.cookTime} min
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={() => {
-                            if (onSelectRecipe) {
-                              onSelectRecipe(nextMeal.recipe)
-                              handleSetExpanded(false)
-                            }
-                          }}
-                          disabled={!onSelectRecipe}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                        >
-                          <ChefHat className="h-4 w-4" />
-                          {contextMode === 'cooking' ? 'Start Cooking' : 'View Recipe'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Scrollable Recipe List */}
                   <div className="scrollbar-hide mb-4 flex-1 overflow-y-auto">
@@ -518,19 +293,7 @@ export const WeekContextBar: React.FC<WeekContextBarProps> = ({
                     {plannedCount > 0 && (
                       <div className="mb-4 space-y-2">
                         {dayData
-                          .filter((d) => {
-                            // Filter out the next meal if it's being shown in the highlight
-                            if (
-                              d.isPlanned &&
-                              d.recipe &&
-                              nextMeal &&
-                              (contextMode === 'cooking' || contextMode === 'pre-cooking') &&
-                              d.recipeId === nextMeal.recipe.id
-                            ) {
-                              return false
-                            }
-                            return d.isPlanned && d.recipe
-                          })
+                          .filter((d) => d.isPlanned && d.recipe)
                           .map((d) => (
                             <div
                               key={d.day}

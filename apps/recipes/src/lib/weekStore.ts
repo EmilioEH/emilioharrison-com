@@ -48,6 +48,16 @@ export const weekState = persistentMap<WeekState>('weekState', {
   activeWeekStart: format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
 })
 
+// On load, advance a stale stored week to the current week.
+// The default value above only applies on first ever load; after that localStorage
+// holds the previous value, so the planner would stay stuck in the past.
+{
+  const thisWeek = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd')
+  if (weekState.get().activeWeekStart < thisWeek) {
+    weekState.setKey('activeWeekStart', thisWeek)
+  }
+}
+
 // --- Computed Helpers ---
 
 // Get all planned recipes derived from the family data store

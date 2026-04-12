@@ -61,7 +61,7 @@ describe('grocery-utils - Recurring Items', () => {
     })
 
     describe('every 2 weeks (frequencyWeeks: 2)', () => {
-      it('should return true on even weeks from creation', () => {
+      it('should return true on weeks that are a multiple of 2 Saturdays from creation', () => {
         const item = createRecurringItem({
           frequencyWeeks: 2,
           createdAt: '2026-01-06T00:00:00.000Z', // Week 2
@@ -72,7 +72,7 @@ describe('grocery-utils - Recurring Items', () => {
         expect(isRecurringItemDue(item, '2026-02-03')).toBe(true)
       })
 
-      it('should return false on odd weeks from creation', () => {
+      it('should return false on weeks that are not a multiple of 2 Saturdays from creation', () => {
         const item = createRecurringItem({
           frequencyWeeks: 2,
           createdAt: '2026-01-06T00:00:00.000Z', // Week 2
@@ -93,7 +93,7 @@ describe('grocery-utils - Recurring Items', () => {
     })
 
     describe('custom weeks (frequencyWeeks: 3)', () => {
-      it('should return true every 3 weeks from creation', () => {
+      it('should return true every 3 Saturdays from creation', () => {
         const item = createRecurringItem({
           frequencyWeeks: 3,
           createdAt: '2026-01-06T00:00:00.000Z', // Week 2
@@ -104,7 +104,7 @@ describe('grocery-utils - Recurring Items', () => {
         expect(isRecurringItemDue(item, '2026-02-17')).toBe(true)
       })
 
-      it('should return false on non-multiple weeks from creation', () => {
+      it('should return false on non-multiple Saturdays from creation', () => {
         const item = createRecurringItem({
           frequencyWeeks: 3,
           createdAt: '2026-01-06T00:00:00.000Z', // Week 2

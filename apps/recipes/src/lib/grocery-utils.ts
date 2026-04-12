@@ -122,15 +122,16 @@ export function calculateGroceryCost(items: ShoppableIngredient[]) {
 // ============================================================================
 
 /**
- * Calculates the ISO week number for a date.
- * Used for frequency calculation.
+ * Returns the most recent Saturday on or before the given date.
+ * Saturday is the anchor day for recurring item frequency calculations —
+ * each Saturday marks the start of a new shopping week.
  */
-function getISOWeekNumber(date: Date): number {
+function getMostRecentSaturday(date: Date): Date {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+  const dayOfWeek = d.getUTCDay() // 0=Sun, 1=Mon, ..., 6=Sat
+  const daysBack = dayOfWeek === 6 ? 0 : dayOfWeek + 1
+  d.setUTCDate(d.getUTCDate() - daysBack)
+  return d
 }
 
 /**
@@ -171,15 +172,11 @@ export function isRecurringItemDue(item: RecurringGroceryItem, currentWeekStart:
     return true
   }
 
-  const currentWeekDate = new Date(currentWeekStart)
-  const createdAtDate = new Date(item.createdAt)
+  const currentSaturday = getMostRecentSaturday(new Date(currentWeekStart))
+  const createdSaturday = getMostRecentSaturday(new Date(item.createdAt))
 
-  const createdWeek = getISOWeekNumber(createdAtDate)
-  const currentWeek = getISOWeekNumber(currentWeekDate)
-  const createdYear = createdAtDate.getFullYear()
-  const currentYear = currentWeekDate.getFullYear()
-
-  const weeksDiff = (currentYear - createdYear) * 52 + (currentWeek - createdWeek)
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000
+  const weeksDiff = Math.round((currentSaturday.getTime() - createdSaturday.getTime()) / msPerWeek)
 
   return weeksDiff >= 0 && weeksDiff % weeks === 0
 }
