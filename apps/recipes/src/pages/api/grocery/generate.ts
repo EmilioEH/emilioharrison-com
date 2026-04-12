@@ -601,6 +601,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
             if (override.storeLocation) ing.storeLocation = override.storeLocation
             if (override.hebUnitPrice !== undefined) ing.hebUnitPrice = override.hebUnitPrice
             if (override.hebUnitPriceUnit) ing.hebUnitPriceUnit = override.hebUnitPriceUnit
+            // Stamp staleness timestamp so client knows when HEB data was last validated
+            if (override.updatedAt) ing.hebRefreshedAt = override.updatedAt
           }
         }
       }

@@ -1,0 +1,182 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip To Content" [ref=e3] [cursor=pointer]:
+      - /url: "#r_body"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - button "Open the navigation menu" [ref=e7] [cursor=pointer]:
+          - img [ref=e10]
+        - link "H-E-B Home page" [ref=e12] [cursor=pointer]:
+          - /url: /
+          - img [ref=e13]
+        - generic [ref=e22]:
+          - generic [ref=e23]: Search H E B.com
+          - combobox "Search H E B.com" [ref=e24]
+          - button "Submit search" [ref=e25] [cursor=pointer]:
+            - img [ref=e28]
+        - button "My account" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+        - link "Go to Cart page." [ref=e34] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e37]
+      - generic [ref=e41]:
+        - button "In-store at" [ref=e43] [cursor=pointer]:
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - generic [ref=e51]: In-store at
+        - button "Shopping at H‑E‑B Manor. Click to change store." [ref=e52] [cursor=pointer]:
+          - generic [ref=e53]:
+            - img [ref=e54]
+            - generic [ref=e58]: H‑E‑B Manor
+    - main [ref=e59]:
+      - status "loading indicator" [ref=e1848]
+    - contentinfo [ref=e1723]:
+      - generic [ref=e1724]:
+        - generic [ref=e1725]:
+          - generic [ref=e1726]:
+            - heading "Company" [level=2] [ref=e1727]
+            - list [ref=e1728]:
+              - listitem [ref=e1729]:
+                - link "Find a store" [ref=e1730] [cursor=pointer]:
+                  - /url: /store-locations
+              - listitem [ref=e1731]:
+                - link "About us" [ref=e1732] [cursor=pointer]:
+                  - /url: https://careers.heb.com/about-us
+              - listitem [ref=e1733]:
+                - link "Careers" [ref=e1734] [cursor=pointer]:
+                  - /url: https://careers.heb.com/careers-home
+              - listitem [ref=e1735]:
+                - link "Community" [ref=e1736] [cursor=pointer]:
+                  - /url: /static-page/Community-Involvement
+              - listitem [ref=e1737]:
+                - link "Newsroom" [ref=e1738] [cursor=pointer]:
+                  - /url: https://newsroom.heb.com/
+              - listitem [ref=e1739]:
+                - link "Sustainability" [ref=e1740] [cursor=pointer]:
+                  - /url: https://ourtexasourfuture.com/
+              - listitem [ref=e1741]:
+                - link "Our brands" [ref=e1742] [cursor=pointer]:
+                  - /url: /static-page/Our-Family-of-Brands
+              - listitem [ref=e1743]:
+                - link "Store openings" [ref=e1744] [cursor=pointer]:
+                  - /url: /static-page/Our-Stores
+              - listitem [ref=e1745]:
+                - link "Suppliers" [ref=e1746] [cursor=pointer]:
+                  - /url: https://supplier.heb.com/
+          - generic [ref=e1747]:
+            - heading "Our services" [level=2] [ref=e1748]
+            - list [ref=e1749]:
+              - listitem [ref=e1750]:
+                - link "H-E-B credit card" [ref=e1751] [cursor=pointer]:
+                  - /url: /discover/credit?int=curbside-discover-footer
+              - listitem [ref=e1752]:
+                - link "Pharmacy" [ref=e1753] [cursor=pointer]:
+                  - /url: /pharmacy/common/landing
+              - listitem [ref=e1754]:
+                - link "Restaurants" [ref=e1755] [cursor=pointer]:
+                  - /url: /static-page/restaurants-and-food-to-go-at-heb
+              - listitem [ref=e1756]:
+                - link "H-E-B services" [ref=e1757] [cursor=pointer]:
+                  - /url: /discover/services-business-center
+              - listitem [ref=e1758]:
+                - link "Gift cards" [ref=e1759] [cursor=pointer]:
+                  - /url: /giftcards/
+              - listitem [ref=e1760]:
+                - link "H-E-B commercial real estate" [ref=e1761] [cursor=pointer]:
+                  - /url: https://www.hebdevelopment.com/
+              - listitem [ref=e1762]:
+                - link "Nutrition services" [ref=e1763] [cursor=pointer]:
+                  - /url: https://www.heb.com/static-page/Nutrition-Services
+              - listitem [ref=e1764]:
+                - link "Custom cakes & catering" [ref=e1765] [cursor=pointer]:
+                  - /url: /discover/catering-and-party-planning
+          - generic [ref=e1767]:
+            - generic [ref=e1768]:
+              - heading "Customer service" [level=2] [ref=e1769]
+              - list [ref=e1770]:
+                - listitem [ref=e1771]:
+                  - link "Accessibility statement" [ref=e1772] [cursor=pointer]:
+                    - /url: /accessibility-statement
+                - listitem [ref=e1773]:
+                  - link "Help & FAQs" [ref=e1774] [cursor=pointer]:
+                    - /url: /help
+                - listitem [ref=e1775]:
+                  - button "Review our website" [ref=e1776] [cursor=pointer]
+                - listitem [ref=e1777]:
+                  - link "Coupon policy" [ref=e1778] [cursor=pointer]:
+                    - /url: /static-page/article-template/H-E-B-Coupon-Policy
+                - listitem [ref=e1779]:
+                  - link "Refund policy" [ref=e1780] [cursor=pointer]:
+                    - /url: /static-page/article-template/H-E-B-Refund-Policy
+                - listitem [ref=e1781]:
+                  - link "Product recalls" [ref=e1782] [cursor=pointer]:
+                    - /url: /static-page/article-template/Recalls
+            - generic [ref=e1783]:
+              - heading "More from H-E-B" [level=2] [ref=e1784]
+              - list [ref=e1785]:
+                - listitem [ref=e1786]:
+                  - link "All recipes & cooking" [ref=e1787] [cursor=pointer]:
+                    - /url: /recipe
+                - listitem [ref=e1788]:
+                  - link "Meal Simple" [ref=e1789] [cursor=pointer]:
+                    - /url: /discover/meal-simple
+                - listitem [ref=e1790]:
+                  - link "Sushiya Sushi" [ref=e1791] [cursor=pointer]:
+                    - /url: /static-page/sushi
+          - generic [ref=e1792]:
+            - list [ref=e1793]:
+              - listitem [ref=e1794]:
+                - link "Facebook" [ref=e1795] [cursor=pointer]:
+                  - /url: https://facebook.com/heb
+                  - img [ref=e1798]
+              - listitem [ref=e1800]:
+                - link "Instagram" [ref=e1801] [cursor=pointer]:
+                  - /url: https://www.instagram.com/heb/
+                  - img [ref=e1804]
+              - listitem [ref=e1806]:
+                - link "YouTube" [ref=e1807] [cursor=pointer]:
+                  - /url: https://www.youtube.com/user/HEB
+                  - img [ref=e1810]
+              - listitem [ref=e1812]:
+                - link "Pinterest" [ref=e1813] [cursor=pointer]:
+                  - /url: https://www.pinterest.com/mytexaslife/
+                  - img [ref=e1816]
+              - listitem [ref=e1818]:
+                - link "Twitter" [ref=e1819] [cursor=pointer]:
+                  - /url: https://twitter.com/heb
+                  - img [ref=e1822]
+            - link "Get it on Google Play" [ref=e1824] [cursor=pointer]:
+              - /url: https://play.google.com/store/apps/details?id=com.heb.myheb
+              - img "Get it on Google Play" [ref=e1825]
+            - link "Download on the App Store" [ref=e1826] [cursor=pointer]:
+              - /url: https://apps.apple.com/app/id1477891300
+              - img "Download on the App Store" [ref=e1827]
+        - generic [ref=e1828]:
+          - paragraph [ref=e1829]: Copyright © 2026 H‑E‑B, LP
+          - paragraph [ref=e1830]:
+            - button "Your Privacy Choices" [ref=e1831] [cursor=pointer]
+            - text: "|"
+            - link "Privacy Policy" [ref=e1832] [cursor=pointer]:
+              - /url: /privacy
+            - text: "|"
+            - link "Terms & Conditions" [ref=e1833] [cursor=pointer]:
+              - /url: /terms
+            - text: "|"
+            - link "Site map" [ref=e1834] [cursor=pointer]:
+              - /url: /static-page/Sitemap
+          - paragraph [ref=e1835]:
+            - link "Partners" [ref=e1836] [cursor=pointer]:
+              - /url: /static-page/H-E-B-partner-services
+          - paragraph [ref=e1837]:
+            - link "H-E-B, LP Mexico |" [ref=e1838] [cursor=pointer]:
+              - /url: https://www.heb.com.mx/
+            - link "Central Market |" [ref=e1839] [cursor=pointer]:
+              - /url: https://www.centralmarket.com/
+            - link "Mi Tienda |" [ref=e1840] [cursor=pointer]:
+              - /url: https://mitiendatx.com/
+            - link "Joe V's Smart Shop |" [ref=e1841] [cursor=pointer]:
+              - /url: https://www.joevsmartshop.com/
+            - link "Favor Delivery" [ref=e1842] [cursor=pointer]:
+              - /url: https://www.favordelivery.com/
+          - paragraph [ref=e1843]: "H‑E‑B Corporate Office: 646 S. Flores St., San Antonio, TX 78204"
+  - alert [ref=e1845]

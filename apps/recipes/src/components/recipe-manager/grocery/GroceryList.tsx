@@ -30,6 +30,7 @@ import { GroceryItemEditSheet } from './GroceryItemEditSheet'
 import { GroceryListSelectionBar } from './GroceryListSelectionBar'
 import { triggerHaptic, LONG_PRESS_MS } from '../../../lib/haptics'
 import { RecurringListSheet } from './RecurringListSheet'
+import { useHebPriceRefresh } from '../../../hooks/useHebPriceRefresh'
 
 type ListFilterMode = 'default' | 'archived' | 'unneeded'
 
@@ -158,6 +159,9 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     const base = import.meta.env.BASE_URL
     return base.endsWith('/') ? base : `${base}/`
   }, [])
+
+  // Background HEB price refresh (silent, stale items only, 12h threshold)
+  useHebPriceRefresh(ingredients, weekStartDate, userId, getBaseUrl())
 
   // Fetch recurring count when list is empty
   const shouldFetchRecurring = ingredients.length === 0 && !!userId

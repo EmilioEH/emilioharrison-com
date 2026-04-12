@@ -178,6 +178,34 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
     setSubmitting(true)
     try {
       await onAddItem(item)
+      // Fire-and-forget: persist as product override so future lists pick up this product match
+      if (item.hebProductId) {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+        const override = {
+          name: item.name,
+          hebProductId: item.hebProductId,
+          hebProductUrl: item.hebProductUrl,
+          imageUrl: item.imageUrl,
+          hebPrice: item.hebPrice,
+          hebPriceUnit: item.hebPriceUnit,
+          hebUnitPrice: item.hebUnitPrice,
+          hebUnitPriceUnit: item.hebUnitPriceUnit,
+          hebSize: item.hebSize,
+          category: item.category,
+          aisle: item.aisle,
+          storeLocation: item.storeLocation,
+          updatedAt: new Date().toISOString(),
+        }
+        fetch(`${baseUrl}api/grocery/overrides`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ override }),
+        }).catch(() => {
+          // Intentionally silent — override persistence is best-effort
+        })
+      }
       setForm(DEFAULT_FORM)
       setShowForm(false)
     } catch (err) {
@@ -253,7 +281,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
                   <img
                     src={product.imageUrl}
                     alt=""
-                    className="mt-0.5 h-10 w-10 flex-shrink-0 rounded-lg object-cover"
+                    className="h-24 w-24 flex-shrink-0 rounded-lg object-cover"
                     loading="lazy"
                   />
                 )}
@@ -303,7 +331,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
                 <img
                   src={form.imageUrl}
                   alt={form.name}
-                  className="h-12 w-12 rounded-lg object-cover"
+                  className="h-24 w-24 rounded-lg object-cover"
                 />
               )}
               <div>

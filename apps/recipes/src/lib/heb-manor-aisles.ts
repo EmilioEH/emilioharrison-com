@@ -9,10 +9,10 @@
  */
 export const HEB_CATEGORY_ORDER = [
   'Produce',
+  'Bakery & Bread',
   'Seafood',
   'Meat',
   'Deli & Prepared',
-  'Bakery & Bread',
   'Beer & Wine',
   'Pantry & Condiments',
   'Canned & Dry Goods',
@@ -20,12 +20,12 @@ export const HEB_CATEGORY_ORDER = [
   'Breakfast & Cereal',
   'Snacks',
   'Beverages',
+  'Dairy & Eggs',
   'Paper & Household',
   'Pet',
   'Baby',
   'Personal Care',
   'Health & Pharmacy',
-  'Dairy & Eggs',
   'Frozen Foods',
 ] as const
 

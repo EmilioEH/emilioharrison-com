@@ -190,6 +190,8 @@ export interface ShoppableIngredient {
   // Soft-state flags
   archivedAt?: string // ISO timestamp when soft-deleted; hidden from default view
   unneededThisWeek?: boolean // hidden from default view for current week only
+  // Background refresh tracking
+  hebRefreshedAt?: string // ISO timestamp of last successful HEB price refresh
 }
 
 /** User-saved product metadata that persists across grocery list generations */

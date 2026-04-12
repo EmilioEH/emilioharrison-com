@@ -67,20 +67,75 @@ export const mergeShoppableIngredients = (
 }
 
 /**
- * Sorts items within a category by aisle number (ascending), then alphabetically.
- * Perimeter items (no aisle) are sorted alphabetically.
+ * Parse a storeLocation string into a structured form for sorting.
+ * "Aisle 5" → { type: 'aisle', number: 5 }
+ * "In Produce on the Front Wall" → { type: 'perimeter', location: '...' }
  */
-function sortWithinCategory(items: ShoppableIngredient[]): ShoppableIngredient[] {
+export function parseStoreLocation(loc: string): { type: 'aisle'; number: number } | { type: 'perimeter'; location: string } {
+  const aisleMatch = loc.match(/^Aisle\s+(\d+)$/i)
+  if (aisleMatch) {
+    return { type: 'aisle', number: parseInt(aisleMatch[1], 10) }
+  }
+  return { type: 'perimeter', location: loc }
+}
+
+/**
+ * Sorts items within a category using storeLocation when available.
+ *
+ * Priority:
+ * 1. Items with storeLocation (sorted by parsed location)
+ * 2. Items without storeLocation (fallback to aisle → alphabetical)
+ *
+ * For numbered aisles: sort ascending, except Frozen Foods which sorts descending
+ * (you approach frozen from the pharmacy side and walk back: 15→14→13).
+ *
+ * For perimeter locations: group by location string, then alphabetically within group.
+ */
+function sortWithinCategory(items: ShoppableIngredient[], categoryName: string): ShoppableIngredient[] {
+  const isFrozen = categoryName === 'Frozen Foods'
+
   return [...items].sort((a, b) => {
-    // Items with aisle numbers come first, sorted by aisle
-    if (a.aisle !== undefined && b.aisle !== undefined) {
-      if (a.aisle !== b.aisle) return a.aisle - b.aisle
-    } else if (a.aisle !== undefined) {
-      return -1 // a has aisle, b doesn't → a comes first
-    } else if (b.aisle !== undefined) {
-      return 1 // b has aisle, a doesn't → b comes first
+    const hasLocA = !!a.storeLocation
+    const hasLocB = !!b.storeLocation
+
+    // Items with storeLocation come before items without
+    if (hasLocA && !hasLocB) return -1
+    if (!hasLocA && hasLocB) return 1
+
+    // Both have storeLocation — sort by parsed location
+    if (hasLocA && hasLocB) {
+      const locA = parseStoreLocation(a.storeLocation!)
+      const locB = parseStoreLocation(b.storeLocation!)
+
+      // Both are numbered aisles
+      if (locA.type === 'aisle' && locB.type === 'aisle') {
+        if (locA.number !== locB.number) {
+          return isFrozen ? locB.number - locA.number : locA.number - locB.number
+        }
+        return a.name.localeCompare(b.name)
+      }
+
+      // Perimeter locations come before numbered aisles within the same category
+      if (locA.type === 'perimeter' && locB.type === 'aisle') return -1
+      if (locA.type === 'aisle' && locB.type === 'perimeter') return 1
+
+      // Both are perimeter — group by location string, then alpha
+      if (locA.location !== locB.location) {
+        return locA.location.localeCompare(locB.location)
+      }
+      return a.name.localeCompare(b.name)
     }
-    // Same aisle (or both undefined) → sort alphabetically
+
+    // Neither has storeLocation — fall back to aisle number → alphabetical
+    if (a.aisle !== undefined && b.aisle !== undefined) {
+      if (a.aisle !== b.aisle) {
+        return isFrozen ? b.aisle - a.aisle : a.aisle - b.aisle
+      }
+    } else if (a.aisle !== undefined) {
+      return -1
+    } else if (b.aisle !== undefined) {
+      return 1
+    }
     return a.name.localeCompare(b.name)
   })
 }
@@ -117,8 +172,7 @@ export const categorizeShoppableIngredients = (
   for (const catName of HEB_CATEGORY_ORDER) {
     const items = categories.get(catName)
     if (items && items.length > 0) {
-      // Sort items within category by aisle, then alphabetically
-      result.push({ name: catName, items: sortWithinCategory(items) })
+      result.push({ name: catName, items: sortWithinCategory(items, catName) })
       categories.delete(catName)
     }
   }
@@ -126,7 +180,7 @@ export const categorizeShoppableIngredients = (
   // Add any remaining categories (shouldn't happen with proper mapping)
   for (const [catName, items] of categories.entries()) {
     if (items.length > 0) {
-      result.push({ name: catName, items: sortWithinCategory(items) })
+      result.push({ name: catName, items: sortWithinCategory(items, catName) })
     }
   }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { categorizeShoppableIngredients, mergeShoppableIngredients } from './grocery-logic'
+import { categorizeShoppableIngredients, mergeShoppableIngredients, parseStoreLocation } from './grocery-logic'
 import { HEB_CATEGORY_ORDER, mapLegacyCategory, getItemAisle } from './heb-manor-aisles'
 import type { ShoppableIngredient } from './types'
 
@@ -260,13 +260,13 @@ describe('grocery-logic', () => {
     })
 
     it('should handle all 19 H-E-B categories', () => {
-      // Verify all categories are in the expected order
+      // Verify all categories are in the expected order (HEB Manor walking path)
       expect(HEB_CATEGORY_ORDER).toEqual([
         'Produce',
+        'Bakery & Bread',
         'Seafood',
         'Meat',
         'Deli & Prepared',
-        'Bakery & Bread',
         'Beer & Wine',
         'Pantry & Condiments',
         'Canned & Dry Goods',
@@ -274,12 +274,12 @@ describe('grocery-logic', () => {
         'Breakfast & Cereal',
         'Snacks',
         'Beverages',
+        'Dairy & Eggs',
         'Paper & Household',
         'Pet',
         'Baby',
         'Personal Care',
         'Health & Pharmacy',
-        'Dairy & Eggs',
         'Frozen Foods',
       ])
     })
@@ -436,6 +436,169 @@ describe('grocery-logic', () => {
       it('should be case-insensitive', () => {
         expect(getItemAisle('KETCHUP')).toBe(4)
         expect(getItemAisle('Soy Sauce')).toBe(5)
+      })
+    })
+  })
+
+  describe('storeLocation sorting', () => {
+    it('should sort items with storeLocation before items without', () => {
+      const ingredients: ShoppableIngredient[] = [
+        {
+          name: 'red onion',
+          purchaseAmount: 1,
+          purchaseUnit: 'whole',
+          category: 'Produce',
+          sources: [],
+        },
+        {
+          name: 'mushrooms',
+          purchaseAmount: 1,
+          purchaseUnit: 'pack',
+          category: 'Produce',
+          storeLocation: 'In Produce on the Front Wall',
+          sources: [],
+        },
+      ]
+
+      const result = categorizeShoppableIngredients(ingredients)
+      const items = result.find((c) => c.name === 'Produce')!.items
+      expect(items.map((i) => i.name)).toEqual(['mushrooms', 'red onion'])
+    })
+
+    it('should sort numbered aisles ascending within a category', () => {
+      const ingredients: ShoppableIngredient[] = [
+        {
+          name: 'pasta',
+          purchaseAmount: 1,
+          purchaseUnit: 'box',
+          category: 'Pantry & Condiments',
+          storeLocation: 'Aisle 5',
+          sources: [],
+        },
+        {
+          name: 'bbq sauce',
+          purchaseAmount: 1,
+          purchaseUnit: 'bottle',
+          category: 'Pantry & Condiments',
+          storeLocation: 'Aisle 4',
+          sources: [],
+        },
+      ]
+
+      const result = categorizeShoppableIngredients(ingredients)
+      const items = result.find((c) => c.name === 'Pantry & Condiments')!.items
+      expect(items.map((i) => i.name)).toEqual(['bbq sauce', 'pasta'])
+    })
+
+    it('should sort frozen aisles in reverse order (descending)', () => {
+      const ingredients: ShoppableIngredient[] = [
+        {
+          name: 'frozen pizza',
+          purchaseAmount: 1,
+          purchaseUnit: 'box',
+          category: 'Frozen Foods',
+          storeLocation: 'Aisle 13',
+          sources: [],
+        },
+        {
+          name: 'frozen waffles',
+          purchaseAmount: 1,
+          purchaseUnit: 'box',
+          category: 'Frozen Foods',
+          storeLocation: 'Aisle 15',
+          sources: [],
+        },
+        {
+          name: 'frozen meals',
+          purchaseAmount: 1,
+          purchaseUnit: 'box',
+          category: 'Frozen Foods',
+          storeLocation: 'Aisle 14',
+          sources: [],
+        },
+      ]
+
+      const result = categorizeShoppableIngredients(ingredients)
+      const items = result.find((c) => c.name === 'Frozen Foods')!.items
+      // Walk frozen aisles 15→14→13 (approaching from pharmacy side)
+      expect(items.map((i) => i.name)).toEqual(['frozen waffles', 'frozen meals', 'frozen pizza'])
+    })
+
+    it('should group perimeter items by storeLocation string', () => {
+      const ingredients: ShoppableIngredient[] = [
+        {
+          name: 'cilantro',
+          purchaseAmount: 1,
+          purchaseUnit: 'bunch',
+          category: 'Produce',
+          storeLocation: 'In Produce on the Left Wall',
+          sources: [],
+        },
+        {
+          name: 'basil',
+          purchaseAmount: 1,
+          purchaseUnit: 'pack',
+          category: 'Produce',
+          storeLocation: 'In Produce on the Front Wall',
+          sources: [],
+        },
+        {
+          name: 'spinach',
+          purchaseAmount: 1,
+          purchaseUnit: 'bag',
+          category: 'Produce',
+          storeLocation: 'In Produce on the Left Wall',
+          sources: [],
+        },
+      ]
+
+      const result = categorizeShoppableIngredients(ingredients)
+      const items = result.find((c) => c.name === 'Produce')!.items
+      // Front Wall items clustered together, Left Wall items clustered together
+      expect(items.map((i) => i.name)).toEqual(['basil', 'cilantro', 'spinach'])
+    })
+
+    it('should sort perimeter locations before numbered aisles within same category', () => {
+      const ingredients: ShoppableIngredient[] = [
+        {
+          name: 'sandwich bread',
+          purchaseAmount: 1,
+          purchaseUnit: 'loaf',
+          category: 'Bakery & Bread',
+          storeLocation: 'Aisle 4',
+          sources: [],
+        },
+        {
+          name: 'baguette',
+          purchaseAmount: 1,
+          purchaseUnit: 'whole',
+          category: 'Bakery & Bread',
+          storeLocation: 'On the Right Edge of Bakery',
+          sources: [],
+        },
+      ]
+
+      const result = categorizeShoppableIngredients(ingredients)
+      const items = result.find((c) => c.name === 'Bakery & Bread')!.items
+      // Perimeter location comes before aisle
+      expect(items.map((i) => i.name)).toEqual(['baguette', 'sandwich bread'])
+    })
+  })
+
+  describe('parseStoreLocation', () => {
+    it('should parse numbered aisles', () => {
+      expect(parseStoreLocation('Aisle 5')).toEqual({ type: 'aisle', number: 5 })
+      expect(parseStoreLocation('Aisle 13')).toEqual({ type: 'aisle', number: 13 })
+    })
+
+    it('should parse perimeter locations', () => {
+      expect(parseStoreLocation('In Produce on the Front Wall')).toEqual({
+        type: 'perimeter',
+        location: 'In Produce on the Front Wall',
+      })
+      expect(parseStoreLocation('In Dairy on the Back Wall')).toEqual({
+        type: 'perimeter',
+        location: 'In Dairy on the Back Wall',
       })
     })
   })
