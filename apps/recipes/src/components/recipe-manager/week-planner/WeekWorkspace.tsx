@@ -268,7 +268,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       className="flex min-h-0 flex-1 flex-col bg-background"
     >
       {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-xl">
+      <div className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto max-w-2xl px-4 py-3">
           {/* Single row: Back + Week/Date + Grocery toggle */}
           <Inline spacing="xs" justify="between" align="center">
@@ -348,6 +348,145 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         </div>
       </div>
 
+      {/* Grocery Toolbar — lives outside the scroll container so iOS touch events
+           are never intercepted by scroll disambiguation on the overflow-y-auto parent */}
+      {activeTab === 'grocery' &&
+        groceryRecipes.length > 0 &&
+        (() => {
+          const displayItems = hasSmartList ? aiGroceryList!.ingredients : groceryItems
+          const hebCost = calculateGroceryCost(displayItems)
+          return (
+            <div className="touch-manipulation border-b border-border bg-muted/20 px-4 py-2.5">
+              <Inline spacing="sm" justify="between" align="center" className="mx-auto max-w-2xl">
+                {/* Left: Price pill */}
+                <div className="shrink-0">
+                  {hebCost.hasAnyData ? (
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                        hebCost.isComplete
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      }`}
+                    >
+                      ${hebCost.total.toFixed(2)}
+                      {!hebCost.isComplete && (
+                        <>
+                          <AlertTriangle className="h-3 w-3" />
+                          <span className="font-medium">
+                            {hebCost.verifiedCount}/{hebCost.itemCount}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No prices yet</span>
+                  )}
+                </div>
+
+                {/* Center: Standard / Smart toggle */}
+                <div className="flex items-center rounded-full border border-border bg-background p-0.5">
+                  <button
+                    onClick={() => {
+                      setViewMode('programmatic')
+                      setUserToggledStandard(true)
+                    }}
+                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                      effectiveViewMode === 'programmatic'
+                        ? 'bg-foreground text-background shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Standard
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (hasSmartList) {
+                        setViewMode('ai')
+                        setUserToggledStandard(false)
+                      }
+                    }}
+                    disabled={!hasSmartList}
+                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                      effectiveViewMode === 'ai'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground'
+                    } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
+                  >
+                    {isProcessing ? (
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    Smart
+                  </button>
+                </div>
+
+                {/* Right: Overflow menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-11 w-11 shrink-0 rounded-full"
+                      title="More Options"
+                      aria-label="More Options"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        if (scopeId && user) {
+                          removeAiOperation(`grocery-${listId}`)
+                          triggerGroceryGeneration(
+                            activeWeekStart,
+                            groceryRecipes,
+                            scopeId,
+                            user.uid,
+                            currentFamily?.id,
+                          )
+                        }
+                      }}
+                      disabled={isProcessing}
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`} />
+                      Regenerate List
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={handleShareGrocery}>
+                      <Share className="mr-2 h-4 w-4" />
+                      Share List
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={handleCopyGrocery}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy to Clipboard
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Inline>
+
+              {/* Progress Indicator */}
+              {isProcessing && (
+                <div className="mt-2 text-primary">
+                  <AiProgressBar
+                    progress={
+                      operations.find((op) => op.id === `grocery-${listId}`)?.progress ||
+                      (aiGroceryList?.status === 'processing' ? 5 : 0)
+                    }
+                    message={
+                      operations.find((op) => op.id === `grocery-${listId}`)?.message ||
+                      (isStuck ? 'Still processing...' : 'Consulting Chef Gemini...')
+                    }
+                    isAnimating={true}
+                  />
+                </div>
+              )}
+
+              {/* Error State */}
+            </div>
+          )
+        })()}
+
       {/* Content area: scrolls everything inside */}
       <div className="flex-1 overflow-y-auto pb-tab-bar">
         {activeTab === 'plan' && (
@@ -362,151 +501,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
         {activeTab === 'grocery' && (
           <>
-            {/* Grocery Toolbar: Price pill + View toggle + Overflow menu */}
-            {groceryRecipes.length > 0 &&
-              (() => {
-                const displayItems = hasSmartList ? aiGroceryList!.ingredients : groceryItems
-                const hebCost = calculateGroceryCost(displayItems)
-                return (
-                  <div className="border-b border-border bg-muted/20 px-4 py-2.5">
-                    <Inline
-                      spacing="sm"
-                      justify="between"
-                      align="center"
-                      className="mx-auto max-w-2xl"
-                    >
-                      {/* Left: Price pill */}
-                      <div className="shrink-0">
-                        {hebCost.hasAnyData ? (
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                              hebCost.isComplete
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            }`}
-                          >
-                            ${hebCost.total.toFixed(2)}
-                            {!hebCost.isComplete && (
-                              <>
-                                <AlertTriangle className="h-3 w-3" />
-                                <span className="font-medium">
-                                  {hebCost.verifiedCount}/{hebCost.itemCount}
-                                </span>
-                              </>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No prices yet</span>
-                        )}
-                      </div>
-
-                      {/* Center: Standard / Smart toggle */}
-                      <div className="flex items-center rounded-full border border-border bg-background p-0.5">
-                        <button
-                          onClick={() => {
-                            setViewMode('programmatic')
-                            setUserToggledStandard(true)
-                          }}
-                          className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                            effectiveViewMode === 'programmatic'
-                              ? 'bg-foreground text-background shadow-sm'
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Standard
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (hasSmartList) {
-                              setViewMode('ai')
-                              setUserToggledStandard(false)
-                            }
-                          }}
-                          disabled={!hasSmartList}
-                          className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                            effectiveViewMode === 'ai'
-                              ? 'bg-primary text-primary-foreground shadow-sm'
-                              : 'text-muted-foreground'
-                          } ${!hasSmartList ? 'cursor-not-allowed opacity-50' : 'hover:text-foreground'}`}
-                        >
-                          {isProcessing ? (
-                            <RefreshCw className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-3 w-3" />
-                          )}
-                          Smart
-                        </button>
-                      </div>
-
-                      {/* Right: Overflow menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-11 w-11 shrink-0 rounded-full"
-                            title="More Options"
-                            aria-label="More Options"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              if (scopeId && user) {
-                                removeAiOperation(`grocery-${listId}`)
-                                triggerGroceryGeneration(
-                                  activeWeekStart,
-                                  groceryRecipes,
-                                  scopeId,
-                                  user.uid,
-                                  currentFamily?.id,
-                                )
-                              }
-                            }}
-                            disabled={isProcessing}
-                          >
-                            <RefreshCw
-                              className={`mr-2 h-4 w-4 ${isProcessing ? 'animate-spin' : ''}`}
-                            />
-                            Regenerate List
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={handleShareGrocery}>
-                            <Share className="mr-2 h-4 w-4" />
-                            Share List
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={handleCopyGrocery}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy to Clipboard
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Inline>
-
-                    {/* Progress Indicator */}
-                    {isProcessing && (
-                      <div className="mt-2 text-primary">
-                        <AiProgressBar
-                          progress={
-                            operations.find((op) => op.id === `grocery-${listId}`)?.progress ||
-                            (aiGroceryList?.status === 'processing' ? 5 : 0)
-                          }
-                          message={
-                            operations.find((op) => op.id === `grocery-${listId}`)?.message ||
-                            (isStuck ? 'Still processing...' : 'Consulting Chef Gemini...')
-                          }
-                          isAnimating={true}
-                        />
-                      </div>
-                    )}
-
-                    {/* Error State */}
-                  </div>
-                )
-              })()}
-
-            {/* Grocery List */}
             {hasError && (
               <div className="m-4 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
                 <Inline spacing="sm">
