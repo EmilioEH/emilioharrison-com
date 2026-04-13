@@ -71,7 +71,9 @@ export const mergeShoppableIngredients = (
  * "Aisle 5" → { type: 'aisle', number: 5 }
  * "In Produce on the Front Wall" → { type: 'perimeter', location: '...' }
  */
-export function parseStoreLocation(loc: string): { type: 'aisle'; number: number } | { type: 'perimeter'; location: string } {
+export function parseStoreLocation(
+  loc: string,
+): { type: 'aisle'; number: number } | { type: 'perimeter'; location: string } {
   const aisleMatch = loc.match(/^Aisle\s+(\d+)$/i)
   if (aisleMatch) {
     return { type: 'aisle', number: parseInt(aisleMatch[1], 10) }
@@ -91,7 +93,10 @@ export function parseStoreLocation(loc: string): { type: 'aisle'; number: number
  *
  * For perimeter locations: group by location string, then alphabetically within group.
  */
-function sortWithinCategory(items: ShoppableIngredient[], categoryName: string): ShoppableIngredient[] {
+function sortWithinCategory(
+  items: ShoppableIngredient[],
+  categoryName: string,
+): ShoppableIngredient[] {
   const isFrozen = categoryName === 'Frozen Foods'
 
   return [...items].sort((a, b) => {
