@@ -60,6 +60,8 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
     ingredientEdits: Record<number, string>
     stepEdits: Record<number, string>
   }) => {
+    const errors: string[] = []
+
     try {
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
         ? import.meta.env.BASE_URL
@@ -68,7 +70,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
       const recipeId = session.recipe.id
 
       // 1. Save Notes & Difficulty (Family Data)
-      await fetch(`${baseUrl}api/recipes/${recipeId}/family-data`, {
+      const familyRes = await fetch(`${baseUrl}api/recipes/${recipeId}/family-data`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,44 +79,31 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
           stepNotes: data.stepNotes,
         }),
       })
-
-      // 2. Save Rating (NEW)
-      await fetch(`${baseUrl}api/recipes/${recipeId}/rating`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: data.rating }),
-      })
-
-      // 3. Upload Finished Photo (NEW)
-      if (data.finishedPhoto) {
-        // Process image
-        const { processImage } = await import('../../lib/image-optimization')
-        const blob = await fetch(data.finishedPhoto).then((r) => r.blob())
-        const file = new File([blob], 'finished-dish.jpg', { type: 'image/jpeg' })
-        const optimizedFile = await processImage(file)
-
-        // Upload to storage
-        const formData = new FormData()
-        formData.append('file', optimizedFile)
-        const uploadRes = await fetch(`${baseUrl}api/uploads`, {
-          method: 'POST',
-          body: formData,
-        })
-        const { key } = await uploadRes.json()
-        const uploadedUrl = `${baseUrl}api/uploads/${key}`
-
-        // Add to recipe images array
-        const currentImages = session.recipe.images || []
-        await fetch(`${baseUrl}api/recipes/${recipeId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            images: [uploadedUrl, ...currentImages],
-          }),
-        })
+      if (!familyRes.ok) {
+        errors.push('Failed to save notes')
       }
 
-      // 4. Save Recipe Edits (If any)
+      // 2. Submit Review (rating + optional photo + difficulty — replaces legacy /rating call)
+      // The reviews endpoint handles photo upload and attaches it to both the review record
+      // and the recipe images array, ensuring the photo is properly stored.
+      if (data.rating > 0) {
+        const reviewRes = await fetch(`${baseUrl}api/recipes/${recipeId}/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rating: data.rating,
+            difficulty: data.difficulty,
+            photoBase64: data.finishedPhoto || undefined,
+            source: 'cooking',
+          }),
+        })
+        if (!reviewRes.ok) {
+          const payload = await reviewRes.json().catch(() => ({}))
+          errors.push(payload.error || 'Failed to save review')
+        }
+      }
+
+      // 3. Save Recipe Edits (If any)
       const hasIngredientEdits = Object.keys(data.ingredientEdits).length > 0
       const hasStepEdits = Object.keys(data.stepEdits).length > 0
 
@@ -158,7 +147,7 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
           }
         })
 
-        await fetch(`${baseUrl}api/recipes/${recipeId}`, {
+        const editsRes = await fetch(`${baseUrl}api/recipes/${recipeId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -166,13 +155,23 @@ export const CookingContainer: React.FC<CookingContainerProps> = ({ onClose }) =
             steps: currentSteps,
           }),
         })
+        if (!editsRes.ok) {
+          errors.push('Failed to save recipe edits')
+        }
       }
     } catch (error) {
       console.error('Failed to save review data:', error)
+      errors.push('An unexpected error occurred')
     } finally {
       cookingSessionActions.endSession()
       // Removed onClose() to stay on the recipe overview after finishing.
-      // Removed refresh to avoid test flakiness and improve UX. State should update via store.
+
+      if (errors.length > 0) {
+        // Use a small delay to allow the session UI to close before showing the alert
+        setTimeout(() => {
+          alert(`Some items couldn't be saved:\n• ${errors.join('\n• ')}`)
+        }, 300)
+      }
     }
   }
 

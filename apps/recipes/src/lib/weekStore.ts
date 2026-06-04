@@ -1,4 +1,4 @@
-import { computed } from 'nanostores'
+import { atom, computed } from 'nanostores'
 import { persistentMap } from '@nanostores/persistent'
 import { startOfWeek, addWeeks, format, parseISO, addDays } from 'date-fns'
 import { $recipeFamilyData, familyActions } from './familyStore'
@@ -47,6 +47,13 @@ export const DAYS_OF_WEEK: DayOfWeek[] = [
 export const weekState = persistentMap<WeekState>('weekState', {
   activeWeekStart: format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
 })
+
+/**
+ * Signals that the grocery list for the stored week start needs regeneration.
+ * Set to a week start string (e.g. "2026-05-25") when a recipe is added to that week.
+ * Cleared by WeekWorkspace after triggering regeneration.
+ */
+export const $groceryNeedsRegen = atom<string | null>(null)
 
 // On load, advance a stale stored week to the current week.
 // The default value above only applies on first ever load; after that localStorage
@@ -182,6 +189,9 @@ export const addRecipeToDay = async (recipeId: string, day: DayOfWeek): Promise<
 
     if (data.success && data.data) {
       familyActions.setRecipeFamilyData(recipeId, data.data)
+      // Signal that the grocery list for this week needs regeneration,
+      // since a new recipe was added and the cached list is now stale.
+      $groceryNeedsRegen.set(activeStart)
       return true
     } else {
       console.warn('[WeekStore] API success but no data?', data)

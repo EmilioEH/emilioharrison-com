@@ -27,6 +27,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabChan
               onClick={() => onTabChange(id)}
               aria-label={label}
               aria-current={isActive ? 'page' : undefined}
+              style={{ touchAction: 'manipulation' }}
               className={`relative flex flex-1 flex-col items-center justify-center gap-1 py-3 transition-colors ${
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}

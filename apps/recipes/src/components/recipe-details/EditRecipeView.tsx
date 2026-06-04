@@ -364,6 +364,24 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                 placeholder="Weeknight, Party, Meal Prep..."
               />
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="tags">Tags</Label>
+              <Input
+                id="tags"
+                value={formData.tags?.join(', ') || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    tags: e.target.value
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  }))
+                }
+                placeholder="Quick, Comfort Food, Kid-Friendly..."
+              />
+            </div>
           </Stack>
 
           {/* Images */}

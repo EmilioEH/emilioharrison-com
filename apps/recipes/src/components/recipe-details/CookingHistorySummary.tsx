@@ -221,8 +221,8 @@ export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
         </Inline>
       </button>
 
-      {/* Add Review Section - Show if current user hasn't reviewed */}
-      {currentUserId && !currentUserReview && (
+      {/* Add/Edit Review Section - Show if no review yet, OR if user is actively editing their existing review */}
+      {currentUserId && (!currentUserReview || editingReviewId !== null) && (
         <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
           <Stack spacing="md">
             <p className="text-sm font-medium text-foreground">Leave a review</p>

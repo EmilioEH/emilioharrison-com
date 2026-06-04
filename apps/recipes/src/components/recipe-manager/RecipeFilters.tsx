@@ -27,7 +27,12 @@ interface FilterChipProps {
 }
 
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
-  <button onClick={onClick} className="focus:outline-none" aria-pressed={active}>
+  <button
+    onClick={onClick}
+    className="focus:outline-none"
+    aria-pressed={active}
+    style={{ touchAction: 'manipulation' }}
+  >
     <Badge
       variant={active ? 'active' : 'inactive'}
       size="lg"

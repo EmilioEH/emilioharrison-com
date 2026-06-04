@@ -1,13 +1,16 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../../lib/api-helpers'
 import { db } from '../../../../lib/firebase-server'
+import { setRequestContext } from '../../../../lib/request-context'
 import type { UserRating, FamilyRecipeData } from '../../../../lib/types'
 
 /**
  * POST /api/recipes/[id]/rating
  * Add or update a rating for a recipe (family-scoped)
  */
-export const POST: APIRoute = async ({ params, request, cookies }) => {
+export const POST: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { params, request, cookies } = context
   const userId = getAuthUser(cookies)
   const recipeId = params.id
 

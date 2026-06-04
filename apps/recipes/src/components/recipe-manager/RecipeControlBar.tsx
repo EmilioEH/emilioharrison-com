@@ -49,7 +49,7 @@ export const RecipeControlBar: React.FC<RecipeControlBarProps> = ({
               }
             }}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="h-10 w-full rounded-full border border-border bg-secondary/50 pl-9 pr-8 text-sm shadow-sm transition-all focus:border-primary focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-10 w-full rounded-full border border-border bg-secondary/50 pl-9 pr-8 text-base shadow-sm transition-all focus:border-primary focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
           />
           {searchQuery && (
             <button

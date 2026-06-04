@@ -1,10 +1,24 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../../lib/firebase-server'
-import { serverErrorResponse } from '../../../../lib/api-helpers'
+import { getAuthUser, unauthorizedResponse, serverErrorResponse } from '../../../../lib/api-helpers'
+import { setRequestContext } from '../../../../lib/request-context'
 import type { Recipe, RecipeVersion, Ingredient } from '../../../../lib/types'
 import { executeAiParse } from '../../../../lib/services/ai-parser'
 
-export const POST: APIRoute = async ({ params, locals }) => {
+/** Normalize any thrown value to an Error so message extraction is reliable */
+const toError = (e: unknown): Error => {
+  if (e instanceof Error) return e
+  return new Error(typeof e === 'string' ? e : JSON.stringify(e) || 'Unknown error')
+}
+
+export const POST: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { params, cookies, locals } = context
+
+  // Auth guard — refresh is a privileged operation
+  const userId = getAuthUser(cookies)
+  if (!userId) return unauthorizedResponse()
+
   const { id } = params
   if (!id) return serverErrorResponse('Recipe ID required')
 
@@ -76,7 +90,8 @@ ${recipe.steps.join('\n')}
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('[Refresh] Error occurred:', error)
+    const err = toError(error)
+    console.error('[Refresh] Error occurred:', err.message)
     // Fallback to text-based if source failed
     if (recipe.sourceUrl || recipe.sourceImage) {
       console.warn('[Refresh] Source refresh failed, trying text fallback...')
@@ -97,10 +112,9 @@ ${recipe.steps.join('\n')}
           headers: { 'Content-Type': 'application/json' },
         })
       } catch (fallbackError) {
-        console.error('[Refresh] Fallback also failed:', fallbackError)
+        console.error('[Refresh] Fallback also failed:', toError(fallbackError).message)
       }
     }
-    const errorMessage = error instanceof Error ? error.message : 'Refresh failed'
-    return serverErrorResponse(errorMessage)
+    return serverErrorResponse(err.message)
   }
 }

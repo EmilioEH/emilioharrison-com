@@ -1,13 +1,16 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
+import { setRequestContext } from '../../../lib/request-context'
 import type { FamilyRecipeData } from '../../../lib/types'
 
 /**
  * GET /api/week/planned
  * Get all recipes planned for the current or upcoming week (family-scoped)
  */
-export const GET: APIRoute = async ({ cookies }) => {
+export const GET: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { cookies } = context
   const userId = getAuthUser(cookies)
 
   if (!userId) {

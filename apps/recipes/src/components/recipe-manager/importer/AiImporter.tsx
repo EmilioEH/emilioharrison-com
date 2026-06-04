@@ -141,7 +141,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                     <input
                       id="dish-name"
                       type="text"
-                      className="w-full rounded-lg border border-border bg-background p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                       placeholder="e.g. Pad Thai, Beef Bourguignon"
                       value={dishName}
                       onChange={(e) => setDishName(e.target.value)}
@@ -175,7 +175,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                           <input
                             id="cuisine"
                             type="text"
-                            className="w-full rounded-lg border border-border bg-background p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                             placeholder="Italian, Thai..."
                             value={cuisine}
                             onChange={(e) => setCuisine(e.target.value)}
@@ -191,7 +191,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                           <input
                             id="taste-profile"
                             type="text"
-                            className="w-full rounded-lg border border-border bg-background p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                             placeholder="Spicy, Sweet..."
                             value={tasteProfile}
                             onChange={(e) => setTasteProfile(e.target.value)}
@@ -208,7 +208,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                         </label>
                         <textarea
                           id="known-ingredients"
-                          className="min-h-[60px] w-full rounded-lg border border-border bg-background p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="min-h-[60px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                           placeholder="Shrimp, lemongrass, peanuts..."
                           value={knownIngredients}
                           onChange={(e) => setKnownIngredients(e.target.value)}
@@ -225,7 +225,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                         <input
                           id="dietary-notes"
                           type="text"
-                          className="w-full rounded-lg border border-border bg-background p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                           placeholder="Gluten-Free, Dairy-Free..."
                           value={dietaryNotes}
                           onChange={(e) => setDietaryNotes(e.target.value)}
@@ -271,7 +271,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               </label>
               <textarea
                 id="pasted-text"
-                className="min-h-[200px] w-full rounded-lg border border-border bg-background p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="min-h-[200px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="Paste the recipe ingredients and instructions here..."
                 value={pastedText}
                 onChange={(e) => setPastedText(e.target.value)}

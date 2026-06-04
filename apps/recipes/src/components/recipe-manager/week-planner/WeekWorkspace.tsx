@@ -15,7 +15,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
-import { weekState, switchWeekContext, currentWeekRecipes } from '../../../lib/weekStore'
+import { weekState, switchWeekContext, currentWeekRecipes, $groceryNeedsRegen } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
 import { buildGroceryItems, calculateGroceryCost } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
@@ -70,6 +70,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
+  const groceryNeedsRegen = useStore($groceryNeedsRegen)
   const [viewMode, setViewMode] = useState<'programmatic' | 'ai'>('programmatic')
   const { user: authUser } = useAuth()
 
@@ -168,15 +169,21 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     !isStuck &&
     !hasLocalError
 
-  // Auto-trigger when opening grocery tab if no list exists and not processing
+  // Auto-trigger when opening grocery tab if no list exists and not processing,
+  // or when a new recipe was added to the current week (groceryNeedsRegen flag).
   useEffect(() => {
     if (activeTab === 'grocery' && user && groceryRecipes.length > 0 && !aiLoading) {
       // Allow generation even with firestoreError — the error is often caused by
       // the document not existing yet (family scope). Once generation creates the
       // document, the subscription will resolve on its own.
-      const needsGeneration = !aiGroceryList && !isProcessing && !isStuck
+      const weekNeedsRegen = groceryNeedsRegen === activeWeekStart
+      const needsGeneration = (!aiGroceryList || weekNeedsRegen) && !isProcessing && !isStuck
 
       if (needsGeneration) {
+        // Clear the regen flag before triggering so we don't loop
+        if (weekNeedsRegen) {
+          $groceryNeedsRegen.set(null)
+        }
         triggerGroceryGeneration(
           activeWeekStart,
           groceryRecipes,
@@ -198,6 +205,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     firestoreError,
     scopeId,
     currentFamily?.id,
+    groceryNeedsRegen,
   ])
 
   // Auto-switch to AI view when smart list becomes ready

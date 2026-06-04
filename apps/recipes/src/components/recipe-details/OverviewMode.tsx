@@ -5,6 +5,8 @@ import {
   Users,
   Flame,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Play,
   DollarSign,
   Sparkles,
@@ -31,6 +33,7 @@ import {
   hasUsefulStepIngredientMappings,
   areStepIngredientMappingsEqual,
 } from '../../lib/step-ingredient-mapping'
+import { renderHighlightedInstruction } from '../../lib/instruction-utils'
 import type {
   Recipe,
   FamilyRecipeData,
@@ -99,6 +102,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   )
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
+  const [ingredientsOpen, setIngredientsOpen] = useState(true)
 
   // Derived: is the user actively cooking from the overview?
   const isActivelyCooking = checkedIngredientsList.length > 0 || checkedStepsList.length > 0
@@ -593,13 +597,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
 
           {/* Ingredients */}
           <div className="mb-8" data-testid="overview-ingredients-section">
-            <Inline
-              as="h2"
-              spacing="none"
-              justify="between"
-              className="mb-4 font-display text-xl font-bold text-foreground"
+            <button
+              onClick={() => setIngredientsOpen((o) => !o)}
+              className="mb-4 flex w-full items-center justify-between transition-opacity hover:opacity-80"
+              aria-expanded={ingredientsOpen}
             >
-              <Inline spacing="sm">
+              <Inline as="span" spacing="sm" className="font-display text-xl font-bold text-foreground">
                 Ingredients
                 {checkedIngredientsList.length > 0 ? (
                   <span className="font-body text-sm font-normal text-primary">
@@ -611,10 +614,15 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   </span>
                 )}
               </Inline>
-            </Inline>
+              {ingredientsOpen ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </button>
 
             {/* Grouped Ingredients Display */}
-            {displayGroups.length === 1 && displayGroups[0].items.length === 0 ? (
+            {ingredientsOpen && (displayGroups.length === 1 && displayGroups[0].items.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                 No ingredients listed yet.
               </div>
@@ -646,10 +654,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                   </div>
                 ))}
               </Stack>
-            )}
+            ))}
           </div>
-
-          {/* Steps */}
           <div className="mb-8" data-testid="overview-instructions-section">
             <Inline
               as="h2"
@@ -673,7 +679,46 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                 No instructions listed yet.
               </div>
+            ) : viewMode === 'enhanced' &&
+              displaySteps.length > 0 &&
+              displaySteps[0].title !== undefined ? (
+              // Enhanced (AI) mode: render structured steps as prose paragraphs
+              // with phase titles and bolded verbs — easier to read than numbered cards.
+              <Stack spacing="md" data-testid="instructions-group">
+                {displayStepGroups.map((group, gIdx) => (
+                  <React.Fragment key={gIdx}>
+                    {group.header && (
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        {group.header}
+                      </h3>
+                    )}
+                    {group.items.map((step, idx) => (
+                      <div
+                        key={group.startIndex + idx}
+                        className="rounded-lg bg-muted/20 p-4"
+                      >
+                        {step.title && (
+                          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-primary">
+                            {step.title}
+                          </p>
+                        )}
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {step.highlightedText
+                            ? renderHighlightedInstruction(step.highlightedText)
+                            : step.text}
+                        </p>
+                        {step.tip && (
+                          <p className="mt-2 text-xs italic text-muted-foreground">
+                            Tip: {step.tip}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </Stack>
             ) : (
+              // Original mode: render as numbered, checkable InstructionCards
               <div className="rounded-lg bg-muted/20 p-3" data-testid="instructions-group">
                 <Stack spacing="xs">
                   {displayStepGroups.map((group, gIdx) => (

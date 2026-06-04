@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import * as FuseModule from 'fuse.js'
 import type { Recipe } from '../../../lib/types'
 
@@ -16,6 +16,27 @@ export interface Filters {
   equipment?: string[]
   occasion?: string[]
   onlyFavorites?: boolean
+}
+
+// Session-level cache so filters survive in-app navigation and browser back button
+// (cleared on full page reload, which is the appropriate expected behavior)
+const SESSION_KEY = 'recipeFilterState'
+
+const readFilterCache = (): { filters: Filters; sort: string } | null => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+const writeFilterCache = (filters: Filters, sort: string) => {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ filters, sort }))
+  } catch {
+    // sessionStorage may be unavailable in some contexts — fail silently
+  }
 }
 
 // Helper: Check if single-value field matches filter (e.g., protein, mealType)
@@ -39,10 +60,17 @@ const matchesArrayFilter = (
 }
 
 export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
+  const cached = useMemo(() => readFilterCache(), [])
+
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false)
-  const [filters, setFilters] = useState<Filters>({})
-  const [sort, setSort] = useState<string>('protein')
+  const [filters, setFilters] = useState<Filters>(cached?.filters ?? {})
+  const [sort, setSort] = useState<string>(cached?.sort ?? 'protein')
   const [searchQuery, setSearchQuery] = useState<string>('')
+
+  // Persist filters and sort to sessionStorage whenever they change
+  useEffect(() => {
+    writeFilterCache(filters, sort)
+  }, [filters, sort])
 
   // Initialize Fuse.js for fuzzy search
   const fuse = useMemo(() => {

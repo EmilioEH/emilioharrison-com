@@ -1,8 +1,11 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { getAuthUser } from '../../../lib/api-helpers'
+import { setRequestContext } from '../../../lib/request-context'
 
-export const GET: APIRoute = async ({ params, cookies }) => {
+export const GET: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { params, cookies } = context
   const { id } = params
 
   const userId = getAuthUser(cookies)
@@ -33,7 +36,9 @@ export const GET: APIRoute = async ({ params, cookies }) => {
   }
 }
 
-export const PUT: APIRoute = async ({ request, cookies, params }) => {
+export const PUT: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { request, cookies, params } = context
   const { id } = params
   const user = getAuthUser(cookies)
 
@@ -114,7 +119,9 @@ export const PUT: APIRoute = async ({ request, cookies, params }) => {
   }
 }
 
-export const DELETE: APIRoute = async ({ params, cookies }) => {
+export const DELETE: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { params, cookies } = context
   const { id } = params
 
   const userId = getAuthUser(cookies)
