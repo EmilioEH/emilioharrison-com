@@ -1,3 +1,65 @@
+/**
+ * Attempts to parse a possibly-truncated JSON string from the AI stream.
+ * - Tries JSON.parse directly first
+ * - If that fails, attempts to close unclosed strings, arrays, and objects
+ *   to recover partial recipe data from a truncated response
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function tryParseRecipeJson(text: string): any {
+  try {
+    return JSON.parse(text)
+  } catch {
+    // Attempt repair on truncated JSON
+  }
+
+  // Replace literal newlines with spaces — JSON strings cannot contain real newlines,
+  // but Gemini occasionally emits them (e.g. in highlightedText or step text).
+  // This is safe because whitespace between JSON tokens can be any whitespace.
+  let repaired = text.replace(/\n/g, ' ')
+
+  // Close unterminated string (odd number of double-quotes)
+  const quoteCount = (repaired.match(/"/g) || []).length
+  if (quoteCount % 2 !== 0) {
+    repaired += '"'
+  }
+
+  // Close unclosed objects and arrays
+  const openBraces = (repaired.match(/\{/g) || []).length
+  const closeBraces = (repaired.match(/\}/g) || []).length
+  const openBrackets = (repaired.match(/\[/g) || []).length
+  const closeBrackets = (repaired.match(/\]/g) || []).length
+
+  repaired += '}'.repeat(Math.max(0, openBraces - closeBraces))
+  repaired += ']'.repeat(Math.max(0, openBrackets - closeBrackets))
+
+  try {
+    return JSON.parse(repaired)
+  } catch {
+    // Fall through to truncation approach
+  }
+
+  // Progressive truncation: find the longest valid JSON prefix
+  for (let end = text.lastIndexOf('}'); end > 0; end = text.lastIndexOf('}', end - 1)) {
+    const prefix = text.slice(0, end + 1)
+    try {
+      return JSON.parse(prefix)
+    } catch {
+      continue
+    }
+  }
+
+  for (let end = text.lastIndexOf(']'); end > 0; end = text.lastIndexOf(']', end - 1)) {
+    const prefix = text.slice(0, end + 1)
+    try {
+      return JSON.parse(prefix)
+    } catch {
+      continue
+    }
+  }
+
+  throw new SyntaxError('Unable to parse recipe response — the response was incomplete')
+}
+
 export async function uploadImage(file: File, baseUrl: string): Promise<string | null> {
   try {
     const formData = new FormData()
@@ -135,15 +197,36 @@ export async function parseRecipe(
       }
 
       // Final parse and merge source URL
-      const parsed = JSON.parse(result)
+      const parsed = tryParseRecipeJson(result)
       if (sourceUrl) {
         parsed.sourceUrl = sourceUrl
       }
       return { data: parsed, candidateImages }
     } catch (err) {
       console.warn('Stream parsing failed, falling back to text parsing if possible', err)
-      // If JSON parse failed, it might be incomplete or error
-      throw err
+
+      // Attempt JSON repair on the raw result
+      if (err instanceof SyntaxError) {
+        try {
+          const repaired = tryParseRecipeJson(result)
+          if (repaired && sourceUrl) {
+            repaired.sourceUrl = sourceUrl
+          }
+          return { data: repaired, candidateImages }
+        } catch {
+          // Repair also failed — throw a user-friendly error below
+        }
+      }
+
+      // Map JSON parse errors to user-friendly messages; rethrow everything else
+      const isJsonError = err instanceof SyntaxError
+      throw new Error(
+        isJsonError
+          ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
+          : err instanceof Error
+            ? err.message
+            : 'Something went wrong',
+      )
     }
   }
 

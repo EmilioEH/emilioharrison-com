@@ -109,6 +109,15 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       return
     }
 
+    // Ensure JSON parse / SyntaxErrors show a clean message
+    if (err instanceof SyntaxError || (err instanceof Error && err.message.includes('Unable to parse recipe response'))) {
+      setErrorMsg(
+        'The AI response was incomplete. Please try again — if this persists, try a smaller or clearer photo.',
+      )
+      setStatus('error')
+      return
+    }
+
     setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
     setStatus('error')
   }
