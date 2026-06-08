@@ -1,7 +1,10 @@
 import type { APIRoute } from 'astro'
 import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 import {
+  createBaseRecipeSchema,
   createRecipeSchema,
+  isRecipeComplete,
+  tryRepairJson,
   resolveInput,
   buildInferencePrompt,
   INGREDIENT_PARSING_RULES,
@@ -105,45 +108,105 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 }
 
+function extractChunkText(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  chunk: any,
+): string {
+  if (typeof chunk.text === 'function') return chunk.text()
+  if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) return chunk.candidates[0].content.parts[0].text
+  if ('text' in chunk && typeof chunk.text === 'string') return chunk.text
+  if (typeof chunk === 'string') return chunk
+  return ''
+}
+
 async function generateRecipeStream(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   client: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parts: any[],
 ): Promise<ReadableStream> {
-  const schema = createRecipeSchema()
+  const baseSchema = createBaseRecipeSchema()
+  const fullSchema = createRecipeSchema()
   const encoder = new TextEncoder()
-
-  const result = await client.models.generateContentStream({
-    model: 'gemini-2.5-flash',
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: schema,
-      maxOutputTokens: 65536,
-    },
-    contents: [{ role: 'user', parts }],
-  })
 
   return new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of result) {
-          let text = ''
+        // ── Phase 1: Extract base recipe with simpler schema ──
+        let phase1Text = ''
+        const result1 = await client.models.generateContentStream({
+          model: 'gemini-2.5-flash',
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: baseSchema,
+            maxOutputTokens: 65536,
+          },
+          contents: [{ role: 'user', parts }],
+        })
 
-          if (typeof chunk.text === 'function') {
-            text = chunk.text()
-          } else if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
-            text = chunk.candidates[0].content.parts[0].text
-          } else if ('text' in chunk && typeof chunk.text === 'string') {
-            text = chunk.text
-          } else if (typeof chunk === 'string') {
-            text = chunk
+        for await (const chunk of result1) {
+          const text = extractChunkText(chunk)
+          if (text) phase1Text += text
+        }
+
+        // Parse Phase 1 result
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let merged: Record<string, any> | null = null
+        try {
+          const parsed = tryRepairJson(phase1Text)
+          if (parsed && typeof parsed === 'object') {
+            merged = parsed as Record<string, unknown>
           }
+        } catch {
+          // Phase 1 failed entirely — fall through to Phase 2
+        }
 
+        // ── Phase 2: Enhance with full schema if incomplete ──
+        if (!merged || !isRecipeComplete(merged)) {
+          const contextPrompt = merged
+            ? `I have a partial recipe extracted from an image. Create a complete enhanced version filling in all missing details and adding structured data.\n\nPartial recipe:\n${JSON.stringify(merged, null, 2)}\n\nUse the original image below to fill in any gaps.`
+            : `Parse this recipe completely with all structured fields. Refer to the image below.`
+
+          const result2 = await client.models.generateContent({
+            model: 'gemini-2.5-flash',
+            config: {
+              responseMimeType: 'application/json',
+              responseSchema: fullSchema,
+              maxOutputTokens: 65536,
+            },
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { text: contextPrompt },
+                  ...parts.slice(1),
+                ],
+              },
+            ],
+          })
+
+          const text = result2.text
           if (text) {
-            controller.enqueue(encoder.encode(text))
+            try {
+              const enhanced = tryRepairJson(text)
+              if (enhanced && typeof enhanced === 'object') {
+                merged = {
+                  ...(merged || {}),
+                  ...(enhanced as Record<string, unknown>),
+                }
+              }
+            } catch {
+              // Phase 2 failed — keep Phase 1 result
+            }
           }
         }
+
+        if (!merged) {
+          controller.error(new Error('Failed to parse recipe from image'))
+          return
+        }
+
+        controller.enqueue(encoder.encode(JSON.stringify(merged)))
         controller.close()
       } catch (err) {
         controller.error(err)

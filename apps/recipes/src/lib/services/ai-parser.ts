@@ -569,7 +569,7 @@ export async function executeAiParse(
  * Handles: markdown code fences, control chars, trailing commas,
  * unbalanced quotes/braces/brackets, and progressive truncation.
  */
-function tryRepairJson(text: string): unknown | undefined {
+export function tryRepairJson(text: string): unknown | undefined {
   if (!text || text.trim().length === 0) {
     return undefined
   }
@@ -636,7 +636,53 @@ function tryRepairJson(text: string): unknown | undefined {
 }
 
 /**
- * Creates recipe schema for structured output
+ * Simplified recipe schema for the initial parse phase.
+ * Only includes essential fields: title, servings, times, ingredients, steps.
+ * This is easier for Gemini to complete reliably in one shot.
+ */
+export function createBaseRecipeSchema() {
+  return {
+    type: SchemaType.OBJECT,
+    properties: {
+      title: { type: SchemaType.STRING },
+      description: { type: SchemaType.STRING, nullable: true },
+      servings: { type: SchemaType.NUMBER },
+      prepTime: { type: SchemaType.NUMBER },
+      cookTime: { type: SchemaType.NUMBER },
+      ingredients: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            name: { type: SchemaType.STRING },
+            amount: { type: SchemaType.STRING },
+            prep: { type: SchemaType.STRING, nullable: true },
+          },
+          required: ['name', 'amount'],
+        },
+      },
+      steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    },
+    required: ['title', 'ingredients', 'steps'],
+  }
+}
+
+/**
+ * Returns true if the recipe has enough data to be useful without enhancement.
+ */
+export function isRecipeComplete(data: unknown): boolean {
+  if (!data || typeof data !== 'object') return false
+  const r = data as Record<string, unknown>
+  if (!r.title || typeof r.title !== 'string') return false
+  const ingredients = r.ingredients
+  if (!Array.isArray(ingredients) || ingredients.length < 2) return false
+  const steps = r.steps
+  if (!Array.isArray(steps) || steps.length === 0) return false
+  return true
+}
+
+/**
+ * Full recipe schema for structured output (used for enhancement phase).
  */
 export function createRecipeSchema() {
   return {
