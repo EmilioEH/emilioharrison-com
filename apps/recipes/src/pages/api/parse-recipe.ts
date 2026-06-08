@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro'
 import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 import {
-  createBaseRecipeSchema,
-  createRecipeSchema,
-  isRecipeComplete,
+  createPhase1Schema,
+  createPhase2Schema,
+  createPhase3Schema,
   tryRepairJson,
   resolveInput,
   buildInferencePrompt,
@@ -108,15 +108,56 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 }
 
-function extractChunkText(
+/**
+ * Runs a single Gemini phase: streams the response, buffers it, and returns the parsed JSON.
+ * Uses generateContentStream for all phases so we get content as soon as it's ready.
+ */
+async function runPhase(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chunk: any,
-): string {
-  if (typeof chunk.text === 'function') return chunk.text()
-  if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) return chunk.candidates[0].content.parts[0].text
-  if ('text' in chunk && typeof chunk.text === 'string') return chunk.text
-  if (typeof chunk === 'string') return chunk
-  return ''
+  client: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: any,
+  prompt: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  imageParts: any[],
+): Promise<Record<string, unknown> | null> {
+  try {
+    const result = await client.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: schema,
+        maxOutputTokens: 65536,
+      },
+      contents: [{ role: 'user', parts: [{ text: prompt }, ...imageParts] }],
+    })
+
+    let buffer = ''
+    for await (const chunk of result) {
+      let text = ''
+      if (typeof chunk.text === 'function') text = chunk.text()
+      else if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) text = chunk.candidates[0].content.parts[0].text
+      else if ('text' in chunk && typeof chunk.text === 'string') text = chunk.text
+      else if (typeof chunk === 'string') text = chunk
+      if (text) buffer += text
+    }
+
+    const parsed = tryRepairJson(buffer)
+    if (parsed && typeof parsed === 'object') return parsed as Record<string, unknown>
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Ingredient names helper for context prompts.
+ */
+function ingredientNames(phase1: Record<string, unknown> | null): string {
+  if (!phase1) return ''
+  const ings = phase1.ingredients
+  if (!Array.isArray(ings)) return ''
+  return ings.map((i: Record<string, unknown>) => i.name || '').filter(Boolean).join(', ')
 }
 
 async function generateRecipeStream(
@@ -125,88 +166,52 @@ async function generateRecipeStream(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parts: any[],
 ): Promise<ReadableStream> {
-  const baseSchema = createBaseRecipeSchema()
-  const fullSchema = createRecipeSchema()
   const encoder = new TextEncoder()
+  const imageParts = parts.slice(1)
 
   return new ReadableStream({
     async start(controller) {
       try {
-        // ── Phase 1: Extract base recipe with simpler schema ──
-        let phase1Text = ''
-        const result1 = await client.models.generateContentStream({
-          model: 'gemini-2.5-flash',
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: baseSchema,
-            maxOutputTokens: 65536,
-          },
-          contents: [{ role: 'user', parts }],
-        })
+        // ── Phase 1: Title + Ingredients ──
+        const phase1 = await runPhase(
+          client,
+          createPhase1Schema(),
+          'Extract the recipe title, description, servings, prep time, cook time, and ALL ingredients with amounts from this image. Include EVERY ingredient visible.',
+          imageParts,
+        )
 
-        for await (const chunk of result1) {
-          const text = extractChunkText(chunk)
-          if (text) phase1Text += text
-        }
-
-        // Parse Phase 1 result
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let merged: Record<string, any> | null = null
-        try {
-          const parsed = tryRepairJson(phase1Text)
-          if (parsed && typeof parsed === 'object') {
-            merged = parsed as Record<string, unknown>
-          }
-        } catch {
-          // Phase 1 failed entirely — fall through to Phase 2
-        }
-
-        // ── Phase 2: Enhance with full schema if incomplete ──
-        if (!merged || !isRecipeComplete(merged)) {
-          const contextPrompt = merged
-            ? `I have a partial recipe extracted from an image. Create a complete enhanced version filling in all missing details and adding structured data.\n\nPartial recipe:\n${JSON.stringify(merged, null, 2)}\n\nUse the original image below to fill in any gaps.`
-            : `Parse this recipe completely with all structured fields. Refer to the image below.`
-
-          const result2 = await client.models.generateContent({
-            model: 'gemini-2.5-flash',
-            config: {
-              responseMimeType: 'application/json',
-              responseSchema: fullSchema,
-              maxOutputTokens: 65536,
-            },
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  { text: contextPrompt },
-                  ...parts.slice(1),
-                ],
-              },
-            ],
-          })
-
-          const text = result2.text
-          if (text) {
-            try {
-              const enhanced = tryRepairJson(text)
-              if (enhanced && typeof enhanced === 'object') {
-                merged = {
-                  ...(merged || {}),
-                  ...(enhanced as Record<string, unknown>),
-                }
-              }
-            } catch {
-              // Phase 2 failed — keep Phase 1 result
-            }
-          }
-        }
-
-        if (!merged) {
+        if (!phase1) {
           controller.error(new Error('Failed to parse recipe from image'))
           return
         }
 
-        controller.enqueue(encoder.encode(JSON.stringify(merged)))
+        controller.enqueue(encoder.encode(JSON.stringify({ _p: 1, ...phase1 }) + '\n'))
+
+        // ── Phase 2: Instructions ──
+        const names = ingredientNames(phase1)
+        const phase2 = await runPhase(
+          client,
+          createPhase2Schema(),
+          `Extract the step-by-step cooking instructions from this image.\n\nThe recipe title is: ${phase1.title || 'Unknown'}\nIts ingredients are: ${names || 'Unknown'}\n\nInclude: step-by-step text (steps), structured steps with titles and highlighted text, step-to-ingredient mappings, and optional step groups. Make each step clear and detailed.`,
+          imageParts,
+        )
+
+        if (phase2) {
+          controller.enqueue(encoder.encode(JSON.stringify({ _p: 2, ...phase2 }) + '\n'))
+        }
+
+        // ── Phase 3: Metadata ──
+        const phase3 = await runPhase(
+          client,
+          createPhase3Schema(),
+          `Extract all remaining metadata for this recipe.\n\nTitle: ${phase1.title || 'Unknown'}\nIngredients: ${names || 'Unknown'}\n\nInclude: structured ingredient data (normalized amounts/units/categories), ingredient groupings, dietary info, cuisine, difficulty, equipment, occasion, protein type, meal type, dish type, and any other metadata visible in the image.`,
+          imageParts,
+        )
+
+        if (phase3) {
+          controller.enqueue(encoder.encode(JSON.stringify({ _p: 3, ...phase3 }) + '\n'))
+        }
+
         controller.close()
       } catch (err) {
         controller.error(err)

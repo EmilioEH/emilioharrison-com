@@ -636,11 +636,10 @@ export function tryRepairJson(text: string): unknown | undefined {
 }
 
 /**
- * Simplified recipe schema for the initial parse phase.
- * Only includes essential fields: title, servings, times, ingredients, steps.
- * This is easier for Gemini to complete reliably in one shot.
+ * Phase 1: Extract basic recipe identity + ingredients.
+ * Smallest schema — title, times, servings, and ingredient list.
  */
-export function createBaseRecipeSchema() {
+export function createPhase1Schema() {
   return {
     type: SchemaType.OBJECT,
     properties: {
@@ -661,24 +660,130 @@ export function createBaseRecipeSchema() {
           required: ['name', 'amount'],
         },
       },
-      steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
     },
-    required: ['title', 'ingredients', 'steps'],
+    required: ['title', 'ingredients'],
   }
 }
 
 /**
- * Returns true if the recipe has enough data to be useful without enhancement.
+ * Phase 2: Extract step-by-step instructions.
+ * Separate call so Gemini focuses only on instructions.
  */
-export function isRecipeComplete(data: unknown): boolean {
-  if (!data || typeof data !== 'object') return false
-  const r = data as Record<string, unknown>
-  if (!r.title || typeof r.title !== 'string') return false
-  const ingredients = r.ingredients
-  if (!Array.isArray(ingredients) || ingredients.length < 2) return false
-  const steps = r.steps
-  if (!Array.isArray(steps) || steps.length === 0) return false
-  return true
+export function createPhase2Schema() {
+  return {
+    type: SchemaType.OBJECT,
+    properties: {
+      steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      structuredSteps: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            title: { type: SchemaType.STRING, nullable: true },
+            text: { type: SchemaType.STRING },
+            highlightedText: { type: SchemaType.STRING },
+            tip: { type: SchemaType.STRING, nullable: true },
+            substeps: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  text: { type: SchemaType.STRING },
+                  action: { type: SchemaType.STRING },
+                  targets: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                },
+                required: ['text', 'action'],
+              },
+            },
+          },
+          required: ['text', 'highlightedText'],
+        },
+      },
+      stepIngredients: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            indices: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.NUMBER },
+            },
+          },
+          required: ['indices'],
+        },
+      },
+      stepGroups: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            header: { type: SchemaType.STRING },
+            startIndex: { type: SchemaType.NUMBER },
+            endIndex: { type: SchemaType.NUMBER },
+          },
+          required: ['header', 'startIndex', 'endIndex'],
+        },
+      },
+    },
+    required: ['steps'],
+  }
+}
+
+/**
+ * Phase 3: Extract all remaining metadata.
+ * Structured ingredients, groups, dietary, cuisine, difficulty, etc.
+ */
+export function createPhase3Schema() {
+  return {
+    type: SchemaType.OBJECT,
+    properties: {
+      structuredIngredients: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            original: { type: SchemaType.STRING },
+            name: { type: SchemaType.STRING },
+            amount: { type: SchemaType.NUMBER },
+            unit: { type: SchemaType.STRING },
+            category: { type: SchemaType.STRING },
+          },
+          required: ['original', 'name', 'amount', 'unit', 'category'],
+        },
+      },
+      ingredientGroups: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            header: { type: SchemaType.STRING },
+            startIndex: { type: SchemaType.NUMBER },
+            endIndex: { type: SchemaType.NUMBER },
+          },
+          required: ['header', 'startIndex', 'endIndex'],
+        },
+      },
+      notes: { type: SchemaType.STRING, nullable: true },
+      protein: {
+        type: SchemaType.STRING,
+        enum: PROTEIN_OPTIONS,
+      },
+      mealType: {
+        type: SchemaType.STRING,
+        enum: ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
+      },
+      dishType: {
+        type: SchemaType.STRING,
+        enum: ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'],
+      },
+      equipment: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      occasion: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      dietary: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      difficulty: { type: SchemaType.STRING },
+      cuisine: { type: SchemaType.STRING },
+    },
+    required: [],
+  }
 }
 
 /**

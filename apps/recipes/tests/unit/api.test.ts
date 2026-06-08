@@ -123,8 +123,24 @@ describe('API Tests', () => {
         typeof parseRecipe
       >[0])
       expect(response.status).toBe(200)
-      const data = await response.json()
+
+      // Response is NDJSON (newline-delimited JSON from multi-phase parsing)
+      const text = await response.text()
+      const lines = text.trim().split('\n')
+      expect(lines.length).toBeGreaterThanOrEqual(1)
+
+      // Merge all NDJSON lines into a single object
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: Record<string, any> = {}
+      for (const line of lines) {
+        const parsed = JSON.parse(line)
+        delete parsed._p
+        Object.assign(data, parsed)
+      }
+
       expect(data.title).toBe('Mock Recipe')
+      expect(Array.isArray(data.ingredients)).toBe(true)
+      expect(data.ingredients.length).toBeGreaterThan(0)
     })
   })
 

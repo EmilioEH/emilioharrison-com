@@ -1,81 +1,3 @@
-import { closeBalanced } from '../../../lib/api-utils'
-
-function tryParseRecipeJson(text: string): unknown {
-  if (!text || text.trim().length === 0) {
-    throw new SyntaxError('Empty response — the AI generated no content')
-  }
-
-  // Step 1: Try direct parse (fast path)
-  try {
-    return JSON.parse(text)
-  } catch {
-    // Attempt repair
-  }
-
-  // Step 2: Strip markdown code fences (```json ... ```)
-  let cleaned = text.trim()
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```$/, '')
-  }
-
-  if (!cleaned) {
-    throw new SyntaxError('Empty response — the AI generated no content')
-  }
-
-  // Step 3: Replace control characters that break JSON.parse.
-  // \n, \r, \t are handled above; strip remaining Cc category chars.
-  // Uses Unicode property escape to avoid ESLint no-control-regex.
-  cleaned = cleaned
-    .replace(/\r/g, ' ')
-    .replace(/\n/g, ' ')
-    .replace(/\t/g, ' ')
-    .replace(/\p{Cc}/gu, ' ')
-
-  // Step 4: Remove trailing commas before closing brackets/braces
-  // (common AI behavior especially in large arrays)
-  cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1')
-
-  try {
-    return JSON.parse(cleaned)
-  } catch {
-    // Fall through to deeper repair
-  }
-
-  // Step 5: Close unterminated string (odd number of double-quotes)
-  const quoteCount = (cleaned.match(/"/g) || []).length
-  let repaired = quoteCount % 2 !== 0 ? cleaned + '"' : cleaned
-
-  // Step 6: Close unclosed objects and arrays in correct LIFO order
-  repaired = closeBalanced(repaired)
-
-  try {
-    return JSON.parse(repaired)
-  } catch {
-    // Fall through to progressive truncation
-  }
-
-  // Step 7: Progressive truncation — try shorter valid prefixes
-  for (let end = repaired.lastIndexOf('}'); end > 0; end = repaired.lastIndexOf('}', end - 1)) {
-    const prefix = repaired.slice(0, end + 1)
-    try {
-      return JSON.parse(prefix)
-    } catch {
-      continue
-    }
-  }
-
-  for (let end = repaired.lastIndexOf(']'); end > 0; end = repaired.lastIndexOf(']', end - 1)) {
-    const prefix = repaired.slice(0, end + 1)
-    try {
-      return JSON.parse(prefix)
-    } catch {
-      continue
-    }
-  }
-
-  throw new SyntaxError('Unable to parse recipe response — the response was incomplete')
-}
-
 export async function uploadImage(file: File, baseUrl: string): Promise<string | null> {
   try {
     const formData = new FormData()
@@ -149,107 +71,118 @@ export async function parseRecipe(
     // Invalid JSON in header, ignore
   }
 
+  // Ensure we have a body to read
   if (!res.body) {
-    const data = await res.json()
-    return { data, candidateImages }
+    const text = await res.text()
+    const merged = parseNdjsonLines(text, onProgress)
+    if (Object.keys(merged).length === 0) {
+      throw new SyntaxError('Empty response — the AI generated no content')
+    }
+    if (sourceUrl) (merged as Record<string, unknown>).sourceUrl = sourceUrl
+    return { data: merged, candidateImages }
   }
 
-  // If stream processing is requested via callback
-  if (onProgress) {
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let result = ''
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const merged: Record<string, any> = {}
 
-    // Track stages found to avoid repetitive updates
-    const foundStages = new Set<string>()
-    let stageCount = 0
-    const totalStages = 5 // start, title, ingredients, steps, meta
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
 
-    try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+      buffer += decoder.decode(value, { stream: true })
 
-        const chunk = decoder.decode(value, { stream: true })
-        result += chunk
-
-        // Simple heuristics based on JSON keys appearing in the stream
-        if (!foundStages.has('start') && result.length > 10) {
-          foundStages.add('start')
-          stageCount++
-          onProgress(
-            `Connected to Chef Gemini... (${Math.round((stageCount / totalStages) * 100)}%)`,
-          )
-        }
-        if (!foundStages.has('title') && result.includes('"title":')) {
-          foundStages.add('title')
-          stageCount++
-          onProgress(
-            `Extracting recipe details... (${Math.round((stageCount / totalStages) * 100)}%)`,
-          )
-        }
-        if (!foundStages.has('ingredients') && result.includes('"ingredients":')) {
-          foundStages.add('ingredients')
-          stageCount++
-          onProgress(
-            `Identifying ingredients... (${Math.round((stageCount / totalStages) * 100)}%)`,
-          )
-        }
-        if (!foundStages.has('steps') && result.includes('"steps":')) {
-          foundStages.add('steps')
-          stageCount++
-          onProgress(
-            `Structuring instructions... (${Math.round((stageCount / totalStages) * 100)}%)`,
-          )
-        }
-        if (
-          !foundStages.has('meta') &&
-          (result.includes('"dietary":') || result.includes('"cuisine":'))
-        ) {
-          foundStages.add('meta')
-          stageCount++
-          onProgress(`Finalizing metadata... (${Math.round((stageCount / totalStages) * 100)}%)`)
-        }
-      }
-
-      // Final parse and merge source URL
-      const parsed = tryParseRecipeJson(result)
-      if (sourceUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(parsed as any).sourceUrl = sourceUrl
-      }
-      return { data: parsed, candidateImages }
-    } catch (err) {
-      console.warn('Stream error — attempting to salvage partial response', err)
-
-      // Always try to parse whatever text was accumulated, regardless of error type.
-      // Stream errors (network, Gemini safety filter, etc.) are rarely SyntaxError,
-      // but the accumulated `result` may still contain usable partial JSON.
-      try {
-        const salvaged = tryParseRecipeJson(result)
-        if (salvaged) {
-          if (sourceUrl) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(salvaged as any).sourceUrl = sourceUrl
+      // Process complete NDJSON lines as they arrive
+      const newlineIdx = buffer.lastIndexOf('\n')
+      if (newlineIdx >= 0) {
+        const complete = buffer.slice(0, newlineIdx)
+        buffer = buffer.slice(newlineIdx + 1)
+        for (const line of complete.split('\n')) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+          try {
+            const phaseData = JSON.parse(trimmed)
+            const p = phaseData._p
+            if (p && onProgress) {
+              const msgs = [
+                '',
+                'Extracting ingredients... (33%)',
+                'Structuring instructions... (66%)',
+                'Finalizing recipe details... (100%)',
+              ]
+              if (msgs[p]) onProgress(msgs[p])
+            }
+            delete phaseData._p
+            Object.assign(merged, phaseData)
+          } catch {
+            // Skip partial/unparseable lines
           }
-          return { data: salvaged, candidateImages }
         }
-      } catch {
-        // Salvage also failed — fall through to user-friendly error
       }
+    }
 
-      const userMessage =
-        err instanceof SyntaxError && err.message.includes('Empty response')
-          ? 'The AI couldn\u2019t process this image. Try a different photo or upload a clearer image.'
-          : err instanceof SyntaxError
-            ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
-            : err instanceof Error
-              ? err.message
-              : 'Something went wrong'
-      throw new Error(userMessage)
+    // Process any remaining buffer
+    if (buffer.trim()) {
+      try {
+        const phaseData = JSON.parse(buffer.trim())
+        delete phaseData._p
+        Object.assign(merged, phaseData)
+      } catch {
+        // ignore
+      }
+    }
+
+    if (Object.keys(merged).length === 0) {
+      throw new SyntaxError('Empty response — the AI generated no content')
+    }
+
+    if (sourceUrl) merged.sourceUrl = sourceUrl
+    return { data: merged, candidateImages }
+  } catch (err) {
+    console.warn('Stream error — attempting to salvage partial response', err)
+
+    // Try to salvage whatever we have
+    if (Object.keys(merged).length > 0) {
+      if (sourceUrl) merged.sourceUrl = sourceUrl
+      return { data: merged, candidateImages }
+    }
+
+    const userMessage =
+      err instanceof SyntaxError && err.message.includes('Empty response')
+        ? 'The AI couldn\u2019t process this image. Try a different photo or upload a clearer image.'
+        : err instanceof SyntaxError
+          ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
+          : err instanceof Error
+            ? err.message
+            : 'Something went wrong'
+    throw new Error(userMessage)
+  }
+}
+
+function parseNdjsonLines(text: string, onProgress?: (msg: string) => void): Record<string, unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const merged: Record<string, any> = {}
+  const msgs = [
+    '',
+    'Extracting ingredients... (33%)',
+    'Structuring instructions... (66%)',
+    'Finalizing recipe details... (100%)',
+  ]
+  for (const line of text.trim().split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    try {
+      const phaseData = JSON.parse(trimmed)
+      const p = phaseData._p
+      if (p && onProgress && msgs[p]) onProgress(msgs[p])
+      delete phaseData._p
+      Object.assign(merged, phaseData)
+    } catch {
+      // skip bad lines
     }
   }
-
-  const data = await res.json()
-  return { data, candidateImages }
+  return merged
 }
