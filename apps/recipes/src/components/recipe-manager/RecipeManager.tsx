@@ -39,6 +39,7 @@ import { CalendarPicker } from './week-planner/CalendarPicker'
 import { WeekWorkspace } from './week-planner/WeekWorkspace'
 import { BottomTabBar } from './BottomTabBar'
 
+import { OnboardingFlow } from '../onboarding/OnboardingFlow'
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 import { WeekPlannerSettings } from '../settings/WeekPlannerSettings'
 import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
@@ -518,6 +519,15 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [setIsSelectionMode])
 
   // --- RENDER ---
+
+  if (!isOnboardingComplete) {
+    return (
+      <div className="fixed inset-0 z-[60]">
+        <OnboardingFlow onComplete={() => setIsOnboardingComplete(true)} />
+      </div>
+    )
+  }
+
   return (
     <>
       <RecipeManagerView
@@ -525,11 +535,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         loading={loading}
         initialized={initialized}
         error={error}
-        showOnboarding={!isOnboardingComplete}
         selectedRecipe={selectedRecipe}
         user={user ?? undefined}
         isAdmin={!!computedIsAdmin}
-        handleOnboardingComplete={() => setIsOnboardingComplete(true)}
         handleUpdateRecipe={handleUpdateRecipe}
         handleDeleteRecipe={handleDeleteRecipe}
         handleAddToWeek={handleAddToWeek}

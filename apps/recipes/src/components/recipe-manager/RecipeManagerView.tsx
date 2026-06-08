@@ -1,6 +1,5 @@
 import React from 'react'
 import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react'
-import { OnboardingFlow } from '../onboarding/OnboardingFlow'
 import { RecipeDetail } from './RecipeDetail'
 import { NotificationSettingsView } from './views/NotificationSettingsView'
 import { SettingsView } from './views/SettingsView'
@@ -18,13 +17,11 @@ interface RecipeManagerViewProps {
   loading: boolean
   initialized: boolean
   error: string | null
-  showOnboarding: boolean
   selectedRecipe: Recipe | null
   user: string | null | undefined
   isAdmin: boolean
   family: Family | null
 
-  handleOnboardingComplete: () => void
   handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent') => void
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
@@ -46,13 +43,11 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   loading,
   initialized,
   error,
-  showOnboarding,
   selectedRecipe,
   user,
   isAdmin,
   family,
 
-  handleOnboardingComplete,
   handleUpdateRecipe,
   handleDeleteRecipe,
   handleAddToWeek,
@@ -72,10 +67,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
       setView('library')
     }
   }, [view, isAdmin, setView])
-
-  if (showOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />
-  }
 
   if (loading) {
     return (

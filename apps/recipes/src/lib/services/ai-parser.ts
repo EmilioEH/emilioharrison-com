@@ -556,21 +556,79 @@ export async function executeAiParse(
   try {
     return JSON.parse(text)
   } catch {
-    // Attempt to repair truncation (unescaped newlines, missing closing brackets)
-    const cleaned = text.replace(/\n/g, ' ')
-    const quoteCount = (cleaned.match(/"/g) || []).length
-    const fixed = quoteCount % 2 !== 0 ? cleaned + '"' : cleaned
-    const openB = (fixed.match(/\{/g) || []).length
-    const closeB = (fixed.match(/\}/g) || []).length
-    const openA = (fixed.match(/\[/g) || []).length
-    const closeA = (fixed.match(/\]/g) || []).length
-    const closed = fixed + '}'.repeat(Math.max(0, openB - closeB)) + ']'.repeat(Math.max(0, openA - closeA))
+    // Attempt to repair the JSON
+    const result = tryRepairJson(text)
+    if (result !== undefined) return result
+    throw new Error('The AI response was incomplete. Please try again.')
+  }
+}
+
+/**
+ * Attempts to repair a malformed JSON string from Gemini.
+ * Handles: markdown code fences, control chars, trailing commas,
+ * unbalanced quotes/braces/brackets, and progressive truncation.
+ */
+function tryRepairJson(text: string): unknown | undefined {
+  // Strip markdown code fences (```json ... ```)
+  let cleaned = text.trim()
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```$/, '')
+  }
+
+  // Replace control characters that break JSON.parse.
+  // \n, \r, \t are handled above; strip remaining Cc category chars.
+  // Uses Unicode property escape to avoid ESLint no-control-regex.
+  cleaned = cleaned
+    .replace(/\r/g, ' ')
+    .replace(/\n/g, ' ')
+    .replace(/\t/g, ' ')
+    .replace(/\p{Cc}/gu, ' ')
+
+  // Remove trailing commas before closing brackets/braces
+  cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1')
+
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    // Fall through to deeper repair
+  }
+
+  // Balance quotes
+  const quoteCount = (cleaned.match(/"/g) || []).length
+  let repaired = quoteCount % 2 !== 0 ? cleaned + '"' : cleaned
+
+  // Balance braces and brackets
+  const openB = (repaired.match(/\{/g) || []).length
+  const closeB = (repaired.match(/\}/g) || []).length
+  const openA = (repaired.match(/\[/g) || []).length
+  const closeA = (repaired.match(/\]/g) || []).length
+  repaired += '}'.repeat(Math.max(0, openB - closeB))
+  repaired += ']'.repeat(Math.max(0, openA - closeA))
+
+  try {
+    return JSON.parse(repaired)
+  } catch {
+    // Fall through to truncation
+  }
+
+  // Progressive truncation
+  for (let end = cleaned.lastIndexOf('}'); end > 0; end = cleaned.lastIndexOf('}', end - 1)) {
     try {
-      return JSON.parse(closed)
+      return JSON.parse(cleaned.slice(0, end + 1))
     } catch {
-      throw new Error('The AI response was incomplete. Please try again.')
+      continue
     }
   }
+
+  for (let end = cleaned.lastIndexOf(']'); end > 0; end = cleaned.lastIndexOf(']', end - 1)) {
+    try {
+      return JSON.parse(cleaned.slice(0, end + 1))
+    } catch {
+      continue
+    }
+  }
+
+  return undefined
 }
 
 /**

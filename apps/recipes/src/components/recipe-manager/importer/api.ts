@@ -1,21 +1,45 @@
 /**
  * Attempts to parse a possibly-truncated JSON string from the AI stream.
  * - Tries JSON.parse directly first
- * - If that fails, attempts to close unclosed strings, arrays, and objects
- *   to recover partial recipe data from a truncated response
+ * - If that fails, strips markdown code fences, control characters, trailing commas
+ * - Then attempts to close unclosed strings, arrays, and objects
+ * - Progressive truncation as a last resort
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function tryParseRecipeJson(text: string): any {
+  // Step 1: Try direct parse (fast path)
   try {
     return JSON.parse(text)
   } catch {
-    // Attempt repair on truncated JSON
+    // Attempt repair
   }
 
-  // Replace literal newlines with spaces — JSON strings cannot contain real newlines,
-  // but Gemini occasionally emits them (e.g. in highlightedText or step text).
-  // This is safe because whitespace between JSON tokens can be any whitespace.
-  let repaired = text.replace(/\n/g, ' ')
+  // Step 2: Strip markdown code fences (```json ... ```)
+  let cleaned = text.trim()
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```$/, '')
+  }
+
+  // Step 3: Replace control characters that break JSON.parse.
+  // \n, \r, \t are handled above; strip remaining Cc category chars.
+  // Uses Unicode property escape to avoid ESLint no-control-regex.
+  cleaned = cleaned
+    .replace(/\r/g, ' ')
+    .replace(/\n/g, ' ')
+    .replace(/\t/g, ' ')
+    .replace(/\p{Cc}/gu, ' ')
+
+  // Step 4: Remove trailing commas before closing brackets/braces
+  // (common AI behavior especially in large arrays)
+  cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1')
+
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    // Fall through to deeper repair
+  }
+
+  let repaired = cleaned
 
   // Close unterminated string (odd number of double-quotes)
   const quoteCount = (repaired.match(/"/g) || []).length
@@ -39,8 +63,8 @@ function tryParseRecipeJson(text: string): any {
   }
 
   // Progressive truncation: find the longest valid JSON prefix
-  for (let end = text.lastIndexOf('}'); end > 0; end = text.lastIndexOf('}', end - 1)) {
-    const prefix = text.slice(0, end + 1)
+  for (let end = cleaned.lastIndexOf('}'); end > 0; end = cleaned.lastIndexOf('}', end - 1)) {
+    const prefix = cleaned.slice(0, end + 1)
     try {
       return JSON.parse(prefix)
     } catch {
@@ -48,8 +72,8 @@ function tryParseRecipeJson(text: string): any {
     }
   }
 
-  for (let end = text.lastIndexOf(']'); end > 0; end = text.lastIndexOf(']', end - 1)) {
-    const prefix = text.slice(0, end + 1)
+  for (let end = cleaned.lastIndexOf(']'); end > 0; end = cleaned.lastIndexOf(']', end - 1)) {
+    const prefix = cleaned.slice(0, end + 1)
     try {
       return JSON.parse(prefix)
     } catch {
@@ -203,30 +227,30 @@ export async function parseRecipe(
       }
       return { data: parsed, candidateImages }
     } catch (err) {
-      console.warn('Stream parsing failed, falling back to text parsing if possible', err)
+      console.warn('Stream error — attempting to salvage partial response', err)
 
-      // Attempt JSON repair on the raw result
-      if (err instanceof SyntaxError) {
-        try {
-          const repaired = tryParseRecipeJson(result)
-          if (repaired && sourceUrl) {
-            repaired.sourceUrl = sourceUrl
+      // Always try to parse whatever text was accumulated, regardless of error type.
+      // Stream errors (network, Gemini safety filter, etc.) are rarely SyntaxError,
+      // but the accumulated `result` may still contain usable partial JSON.
+      try {
+        const salvaged = tryParseRecipeJson(result)
+        if (salvaged) {
+          if (sourceUrl) {
+            salvaged.sourceUrl = sourceUrl
           }
-          return { data: repaired, candidateImages }
-        } catch {
-          // Repair also failed — throw a user-friendly error below
+          return { data: salvaged, candidateImages }
         }
+      } catch {
+        // Salvage also failed — fall through to user-friendly error
       }
 
-      // Map JSON parse errors to user-friendly messages; rethrow everything else
-      const isJsonError = err instanceof SyntaxError
-      throw new Error(
-        isJsonError
+      const userMessage =
+        err instanceof SyntaxError
           ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
           : err instanceof Error
             ? err.message
-            : 'Something went wrong',
-      )
+            : 'Something went wrong'
+      throw new Error(userMessage)
     }
   }
 
