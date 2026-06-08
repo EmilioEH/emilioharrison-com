@@ -679,53 +679,15 @@ export function createPhase2Schema() {
         items: {
           type: SchemaType.OBJECT,
           properties: {
-            title: { type: SchemaType.STRING, nullable: true },
             text: { type: SchemaType.STRING },
             highlightedText: { type: SchemaType.STRING },
             tip: { type: SchemaType.STRING, nullable: true },
-            substeps: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  text: { type: SchemaType.STRING },
-                  action: { type: SchemaType.STRING },
-                  targets: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-                },
-                required: ['text', 'action'],
-              },
-            },
           },
           required: ['text', 'highlightedText'],
         },
       },
-      stepIngredients: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            indices: {
-              type: SchemaType.ARRAY,
-              items: { type: SchemaType.NUMBER },
-            },
-          },
-          required: ['indices'],
-        },
-      },
-      stepGroups: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            header: { type: SchemaType.STRING },
-            startIndex: { type: SchemaType.NUMBER },
-            endIndex: { type: SchemaType.NUMBER },
-          },
-          required: ['header', 'startIndex', 'endIndex'],
-        },
-      },
     },
-    required: ['steps', 'structuredSteps'],
+    required: ['steps'],
   }
 }
 

@@ -192,7 +192,7 @@ async function generateRecipeStream(
         const phase2 = await runPhase(
           client,
           createPhase2Schema(),
-          `Extract ALL cooking instructions from this image, step by step.\n\nThe recipe title is: ${phase1.title || 'Unknown'}\nIts ingredients are: ${names || 'Unknown'}\n\nFor each step, include BOTH a plain-text entry in "steps" AND a detailed entry in "structuredSteps" with full text, highlighted text, and optional substeps. Extract every single step — do not combine, skip, or truncate any step. List each step as a separate array element. Be thorough and detailed for each instruction.\n\nAlso map each step to the ingredient indices it uses (stepIngredients) and group steps into logical sections if applicable (stepGroups).`,
+          `Extract ALL cooking instructions from this image. The recipe title is: ${phase1.title || 'Unknown'}.\n\nIMPORTANT: Extract EVERY single instruction paragraph as a separate element in the "steps" array. Do NOT combine paragraphs. Do NOT skip any text. Each paragraph in the image is one step.\n\nFor each step, also create a matching entry in "structuredSteps" with the same text and a highlighted version that bolds key actions and ingredients.\n\nList every instruction you can see — there are multiple paragraphs of instructions in this image.`,
           imageParts,
         )
 
