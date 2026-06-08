@@ -1,6 +1,7 @@
 import { Type as SchemaType } from '@google/genai'
 import { load } from 'cheerio'
 import { initGeminiClient } from '../api-helpers'
+import { closeBalanced } from '../api-utils'
 
 export const PROTEIN_OPTIONS = [
   'Chicken',
@@ -569,10 +570,18 @@ export async function executeAiParse(
  * unbalanced quotes/braces/brackets, and progressive truncation.
  */
 function tryRepairJson(text: string): unknown | undefined {
+  if (!text || text.trim().length === 0) {
+    return undefined
+  }
+
   // Strip markdown code fences (```json ... ```)
   let cleaned = text.trim()
   if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```$/, '')
+  }
+
+  if (!cleaned) {
+    return undefined
   }
 
   // Replace control characters that break JSON.parse.
@@ -597,32 +606,27 @@ function tryRepairJson(text: string): unknown | undefined {
   const quoteCount = (cleaned.match(/"/g) || []).length
   let repaired = quoteCount % 2 !== 0 ? cleaned + '"' : cleaned
 
-  // Balance braces and brackets
-  const openB = (repaired.match(/\{/g) || []).length
-  const closeB = (repaired.match(/\}/g) || []).length
-  const openA = (repaired.match(/\[/g) || []).length
-  const closeA = (repaired.match(/\]/g) || []).length
-  repaired += '}'.repeat(Math.max(0, openB - closeB))
-  repaired += ']'.repeat(Math.max(0, openA - closeA))
+  // Balance braces and brackets in correct LIFO order
+  repaired = closeBalanced(repaired)
 
   try {
     return JSON.parse(repaired)
   } catch {
-    // Fall through to truncation
+    // Fall through to progressive truncation
   }
 
-  // Progressive truncation
-  for (let end = cleaned.lastIndexOf('}'); end > 0; end = cleaned.lastIndexOf('}', end - 1)) {
+  // Progressive truncation — try shorter valid prefixes
+  for (let end = repaired.lastIndexOf('}'); end > 0; end = repaired.lastIndexOf('}', end - 1)) {
     try {
-      return JSON.parse(cleaned.slice(0, end + 1))
+      return JSON.parse(repaired.slice(0, end + 1))
     } catch {
       continue
     }
   }
 
-  for (let end = cleaned.lastIndexOf(']'); end > 0; end = cleaned.lastIndexOf(']', end - 1)) {
+  for (let end = repaired.lastIndexOf(']'); end > 0; end = repaired.lastIndexOf(']', end - 1)) {
     try {
-      return JSON.parse(cleaned.slice(0, end + 1))
+      return JSON.parse(repaired.slice(0, end + 1))
     } catch {
       continue
     }

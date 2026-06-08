@@ -1,12 +1,10 @@
-/**
- * Attempts to parse a possibly-truncated JSON string from the AI stream.
- * - Tries JSON.parse directly first
- * - If that fails, strips markdown code fences, control characters, trailing commas
- * - Then attempts to close unclosed strings, arrays, and objects
- * - Progressive truncation as a last resort
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function tryParseRecipeJson(text: string): any {
+import { closeBalanced } from '../../../lib/api-utils'
+
+function tryParseRecipeJson(text: string): unknown {
+  if (!text || text.trim().length === 0) {
+    throw new SyntaxError('Empty response — the AI generated no content')
+  }
+
   // Step 1: Try direct parse (fast path)
   try {
     return JSON.parse(text)
@@ -18,6 +16,10 @@ function tryParseRecipeJson(text: string): any {
   let cleaned = text.trim()
   if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```$/, '')
+  }
+
+  if (!cleaned) {
+    throw new SyntaxError('Empty response — the AI generated no content')
   }
 
   // Step 3: Replace control characters that break JSON.parse.
@@ -39,32 +41,22 @@ function tryParseRecipeJson(text: string): any {
     // Fall through to deeper repair
   }
 
-  let repaired = cleaned
+  // Step 5: Close unterminated string (odd number of double-quotes)
+  const quoteCount = (cleaned.match(/"/g) || []).length
+  let repaired = quoteCount % 2 !== 0 ? cleaned + '"' : cleaned
 
-  // Close unterminated string (odd number of double-quotes)
-  const quoteCount = (repaired.match(/"/g) || []).length
-  if (quoteCount % 2 !== 0) {
-    repaired += '"'
-  }
-
-  // Close unclosed objects and arrays
-  const openBraces = (repaired.match(/\{/g) || []).length
-  const closeBraces = (repaired.match(/\}/g) || []).length
-  const openBrackets = (repaired.match(/\[/g) || []).length
-  const closeBrackets = (repaired.match(/\]/g) || []).length
-
-  repaired += '}'.repeat(Math.max(0, openBraces - closeBraces))
-  repaired += ']'.repeat(Math.max(0, openBrackets - closeBrackets))
+  // Step 6: Close unclosed objects and arrays in correct LIFO order
+  repaired = closeBalanced(repaired)
 
   try {
     return JSON.parse(repaired)
   } catch {
-    // Fall through to truncation approach
+    // Fall through to progressive truncation
   }
 
-  // Progressive truncation: find the longest valid JSON prefix
-  for (let end = cleaned.lastIndexOf('}'); end > 0; end = cleaned.lastIndexOf('}', end - 1)) {
-    const prefix = cleaned.slice(0, end + 1)
+  // Step 7: Progressive truncation — try shorter valid prefixes
+  for (let end = repaired.lastIndexOf('}'); end > 0; end = repaired.lastIndexOf('}', end - 1)) {
+    const prefix = repaired.slice(0, end + 1)
     try {
       return JSON.parse(prefix)
     } catch {
@@ -72,8 +64,8 @@ function tryParseRecipeJson(text: string): any {
     }
   }
 
-  for (let end = cleaned.lastIndexOf(']'); end > 0; end = cleaned.lastIndexOf(']', end - 1)) {
-    const prefix = cleaned.slice(0, end + 1)
+  for (let end = repaired.lastIndexOf(']'); end > 0; end = repaired.lastIndexOf(']', end - 1)) {
+    const prefix = repaired.slice(0, end + 1)
     try {
       return JSON.parse(prefix)
     } catch {
@@ -223,7 +215,8 @@ export async function parseRecipe(
       // Final parse and merge source URL
       const parsed = tryParseRecipeJson(result)
       if (sourceUrl) {
-        parsed.sourceUrl = sourceUrl
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(parsed as any).sourceUrl = sourceUrl
       }
       return { data: parsed, candidateImages }
     } catch (err) {
@@ -236,7 +229,8 @@ export async function parseRecipe(
         const salvaged = tryParseRecipeJson(result)
         if (salvaged) {
           if (sourceUrl) {
-            salvaged.sourceUrl = sourceUrl
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(salvaged as any).sourceUrl = sourceUrl
           }
           return { data: salvaged, candidateImages }
         }
@@ -245,11 +239,13 @@ export async function parseRecipe(
       }
 
       const userMessage =
-        err instanceof SyntaxError
-          ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
-          : err instanceof Error
-            ? err.message
-            : 'Something went wrong'
+        err instanceof SyntaxError && err.message.includes('Empty response')
+          ? 'The AI couldn\u2019t process this image. Try a different photo or upload a clearer image.'
+          : err instanceof SyntaxError
+            ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
+            : err instanceof Error
+              ? err.message
+              : 'Something went wrong'
       throw new Error(userMessage)
     }
   }

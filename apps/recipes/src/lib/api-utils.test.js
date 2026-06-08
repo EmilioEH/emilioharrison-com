@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as fc from 'fast-check'
-import { cleanGeminiResponse, formatRecipesForPrompt } from './api-utils'
+import { cleanGeminiResponse, formatRecipesForPrompt, closeBalanced } from './api-utils'
 
 describe('api-utils', () => {
   describe('cleanGeminiResponse', () => {
@@ -22,6 +22,54 @@ describe('api-utils', () => {
     it('should handle empty input', () => {
       expect(cleanGeminiResponse('')).toBe('')
       expect(cleanGeminiResponse(null)).toBe('')
+    })
+  })
+
+  describe('closeBalanced', () => {
+    it('should close unclosed objects and arrays in correct LIFO order', () => {
+      // Objects inside array: should close ] then } not } then ]
+      const input = '{"ingredients": [{"name": "Chicken"'
+      const result = closeBalanced(input)
+      expect(result).toBe('{"ingredients": [{"name": "Chicken"}]}')
+      expect(() => JSON.parse(result)).not.toThrow()
+    })
+
+    it('should handle deeply nested structures', () => {
+      const input = '{"a": {"b": {"c": [1,2,3'
+      const result = closeBalanced(input)
+      expect(result).toBe('{"a": {"b": {"c": [1,2,3]}}}')
+      expect(() => JSON.parse(result)).not.toThrow()
+    })
+
+    it('should handle multiple objects in an array', () => {
+      const input = '{"ingredients": [{"name": "Flour"},{"name": "Yeast"},{"name": "Water"'
+      const result = closeBalanced(input)
+      expect(result).toBe('{"ingredients": [{"name": "Flour"},{"name": "Yeast"},{"name": "Water"}]}')
+      expect(() => JSON.parse(result)).not.toThrow()
+    })
+
+    it('should handle empty object', () => {
+      expect(closeBalanced('{')).toBe('{}')
+      expect(closeBalanced('')).toBe('')
+    })
+
+    it('should skip string content including escaped quotes', () => {
+      const input = '{"title": "hello \\"world\\" test"'
+      const result = closeBalanced(input)
+      expect(result).toBe('{"title": "hello \\"world\\" test"}')
+      expect(() => JSON.parse(result)).not.toThrow()
+    })
+
+    it('should not modify already valid JSON', () => {
+      const input = '{"a": 1, "b": [1, 2, 3]}'
+      expect(closeBalanced(input)).toBe(input)
+    })
+
+    it('should close arrays with objects inside in correct order', () => {
+      const input = '{"recipe": {"steps": ["step1", {"name": "sub"}'
+      const result = closeBalanced(input)
+      expect(result).toBe('{"recipe": {"steps": ["step1", {"name": "sub"}]}}')
+      expect(() => JSON.parse(result)).not.toThrow()
     })
   })
 
