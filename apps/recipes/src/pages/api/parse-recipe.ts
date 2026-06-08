@@ -150,16 +150,6 @@ async function runPhase(
   }
 }
 
-/**
- * Ingredient names helper for context prompts.
- */
-function ingredientNames(phase1: Record<string, unknown> | null): string {
-  if (!phase1) return ''
-  const ings = phase1.ingredients
-  if (!Array.isArray(ings)) return ''
-  return ings.map((i: Record<string, unknown>) => i.name || '').filter(Boolean).join(', ')
-}
-
 async function generateRecipeStream(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   client: any,
@@ -172,11 +162,11 @@ async function generateRecipeStream(
   return new ReadableStream({
     async start(controller) {
       try {
-        // ── Phase 1: Title + Ingredients ──
+        // ── Phase 1: OCR ingredients (raw text) ──
         const phase1 = await runPhase(
           client,
           createPhase1Schema(),
-          'Extract the recipe title, description, servings, prep time, cook time, and ALL ingredients with amounts from this image. Include EVERY ingredient visible.',
+          'Extract ALL ingredient lines from this image. Return each ingredient as a separate string in the array. Include amounts, units, and preparation notes. Do not combine or skip any ingredients.',
           imageParts,
         )
 
@@ -187,12 +177,11 @@ async function generateRecipeStream(
 
         controller.enqueue(encoder.encode(JSON.stringify({ _p: 1, ...phase1 }) + '\n'))
 
-        // ── Phase 2: Instructions ──
-        const names = ingredientNames(phase1)
+        // ── Phase 2: OCR instructions (raw text) ──
         const phase2 = await runPhase(
           client,
           createPhase2Schema(),
-          `Extract ALL cooking instructions from this image. The recipe title is: ${phase1.title || 'Unknown'}.\n\nIMPORTANT: Extract EVERY single instruction paragraph as a separate element in the "steps" array. Do NOT combine paragraphs. Do NOT skip any text. Each paragraph in the image is one step.\n\nFor each step, also create a matching entry in "structuredSteps" with the same text and a highlighted version that bolds key actions and ingredients.\n\nList every instruction you can see — there are multiple paragraphs of instructions in this image.`,
+          'Extract ALL cooking instruction paragraphs from this image. Return each paragraph as a separate string in the steps array. Do NOT combine paragraphs. Do NOT skip any text. Each paragraph is one step.',
           imageParts,
         )
 
@@ -200,11 +189,14 @@ async function generateRecipeStream(
           controller.enqueue(encoder.encode(JSON.stringify({ _p: 2, ...phase2 }) + '\n'))
         }
 
-        // ── Phase 3: Metadata ──
+        // ── Phase 3: Structure everything from OCR'd text + image ──
+        const ingredientList = Array.isArray(phase1.ingredients) ? phase1.ingredients.join('\n') : ''
+        const stepList = phase2 && Array.isArray(phase2.steps) ? phase2.steps.join('\n') : ''
+
         const phase3 = await runPhase(
           client,
           createPhase3Schema(),
-          `Extract all remaining metadata for this recipe.\n\nTitle: ${phase1.title || 'Unknown'}\nIngredients: ${names || 'Unknown'}\n\nInclude: structured ingredient data (normalized amounts/units/categories), ingredient groupings, dietary info, cuisine, difficulty, equipment, occasion, protein type, meal type, dish type, and any other metadata visible in the image.`,
+          `Structure this recipe. Use the OCR'd text below as the source of truth — do not re-read the image for ingredients or instructions.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\nProduce:\n- title, description, servings, prepTime, cookTime\n- ingredients (parsed into name/amount/prep objects)\n- structuredIngredients (with normalized amounts/units/categories)\n- structuredSteps (with text and highlightedText)\n- metadata: dietary, cuisine, difficulty, protein, mealType, dishType, equipment, occasion`,
           imageParts,
         )
 
