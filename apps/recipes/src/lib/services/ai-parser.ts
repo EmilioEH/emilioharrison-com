@@ -725,7 +725,7 @@ export function createPhase2Schema() {
         },
       },
     },
-    required: ['steps'],
+    required: ['steps', 'structuredSteps'],
   }
 }
 
