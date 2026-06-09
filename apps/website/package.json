@@ -15,7 +15,6 @@
     "check:hygiene": "npx knip && npx depcheck && npx jscpd src/",
     "check:full": "npm run check:safety && npm run check:hygiene && npm run test && npm run scan",
     "sync": "git add . && git commit -m \"Auto-sync: $(date)\" && git push",
-
     "scan": "npm audit --audit-level=high",
     "format": "prettier --write .",
     "prepare": "husky"
@@ -37,6 +36,7 @@
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.554.0",
     "nanostores": "^1.1.0",
+    "openai": "^6.42.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.4.0"

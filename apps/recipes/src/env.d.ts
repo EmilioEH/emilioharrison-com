@@ -18,7 +18,7 @@ declare global {
     interface Locals {
       runtime: {
         env: {
-          GEMINI_API_KEY?: string
+          OPENROUTER_API_KEY?: string
           SESSION: import('@cloudflare/workers-types').KVNamespace
           PUBLIC_FIREBASE_API_KEY: string
           PUBLIC_FIREBASE_AUTH_DOMAIN: string

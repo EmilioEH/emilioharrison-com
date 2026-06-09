@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro'
 import { formatRecipesForPrompt } from '../../lib/api-utils'
-import { Type as SchemaType } from '@google/genai'
-import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
+import { createOpenRouterClient, serverErrorResponse } from '../../lib/api-helpers'
 
 const SYSTEM_PROMPT = `
 You are an expert Grocery Shopping Assistant helping someone prepare a shopping list for H-E-B grocery store.
@@ -100,65 +99,35 @@ Leave aisle undefined for perimeter departments (Produce, Meat, Seafood, Deli, D
 
 **OUTPUT FORMAT:**
 {
-  "name": "limes",
-  "purchaseAmount": 3,
-  "purchaseUnit": "whole",
-  "category": "Produce",
-  "sources": [
-    { "recipeId": "abc", "recipeTitle": "Fish Tacos", "originalAmount": "2 tbsp lime juice" },
-    { "recipeId": "xyz", "recipeTitle": "Guacamole", "originalAmount": "squeeze of lime" }
-  ]
-}
-
-{
-  "name": "chicken broth",
-  "purchaseAmount": 2,
-  "purchaseUnit": "cartons",
-  "category": "Canned & Dry Goods",
-  "aisle": 6,
-  "sources": [
-    { "recipeId": "abc", "recipeTitle": "Chicken Soup", "originalAmount": "6 cups broth" }
+  "ingredients": [
+    {
+      "name": "limes",
+      "purchaseAmount": 3,
+      "purchaseUnit": "whole",
+      "category": "Produce",
+      "sources": [
+        { "recipeId": "abc", "recipeTitle": "Fish Tacos", "originalAmount": "2 tbsp lime juice" },
+        { "recipeId": "xyz", "recipeTitle": "Guacamole", "originalAmount": "squeeze of lime" }
+      ]
+    },
+    {
+      "name": "chicken broth",
+      "purchaseAmount": 2,
+      "purchaseUnit": "cartons",
+      "category": "Canned & Dry Goods",
+      "aisle": 6,
+      "sources": [
+        { "recipeId": "abc", "recipeTitle": "Chicken Soup", "originalAmount": "6 cups broth" }
+      ]
+    }
   ]
 }
 `
 
-const SCHEMA = {
-  type: SchemaType.OBJECT,
-  properties: {
-    ingredients: {
-      type: SchemaType.ARRAY,
-      items: {
-        type: SchemaType.OBJECT,
-        properties: {
-          name: { type: SchemaType.STRING },
-          purchaseAmount: { type: SchemaType.NUMBER },
-          purchaseUnit: { type: SchemaType.STRING },
-          category: { type: SchemaType.STRING },
-          aisle: { type: SchemaType.NUMBER }, // Optional: H-E-B aisle number for interior items
-          sources: {
-            type: SchemaType.ARRAY,
-            items: {
-              type: SchemaType.OBJECT,
-              properties: {
-                recipeId: { type: SchemaType.STRING },
-                recipeTitle: { type: SchemaType.STRING },
-                originalAmount: { type: SchemaType.STRING },
-              },
-              required: ['recipeId', 'recipeTitle', 'originalAmount'],
-            },
-          },
-        },
-        required: ['name', 'purchaseAmount', 'purchaseUnit', 'category', 'sources'],
-      },
-    },
-  },
-  required: ['ingredients'],
-}
-
 export const POST: APIRoute = async ({ request, locals }) => {
   let client
   try {
-    client = await initGeminiClient(locals)
+    client = createOpenRouterClient(locals)
   } catch {
     return serverErrorResponse('Missing API Key')
   }
@@ -173,39 +142,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    // Single Stream - No Batching (Gemini 2.5 Flash has 1M token context)
     const inputList = formatRecipesForPrompt(recipes)
 
-    const streamResponse = await client.models.generateContentStream({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
-        },
+    const response = await client.chat.completions.create({
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Recipes to Process:\n${inputList}` },
       ],
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: SCHEMA,
-      },
+      response_format: { type: 'json_object' },
+      stream: true,
     })
 
-    // Create a readable stream that pipes the raw text chunks to the client
     const encoder = new TextEncoder()
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of streamResponse) {
-            let text = ''
-            // Handle various chunk formats from the SDK
-            if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
-              text = chunk.candidates[0].content.parts[0].text
-            } else if ('text' in chunk && typeof (chunk as { text: string }).text === 'string') {
-              text = (chunk as { text: string }).text
-            } else if (typeof chunk === 'string') {
-              text = chunk
-            }
-
+          for await (const chunk of response) {
+            const text = chunk.choices?.[0]?.delta?.content
             if (text) {
               controller.enqueue(encoder.encode(text))
             }
@@ -225,7 +179,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       },
     })
   } catch (error) {
-    console.error('Gemini API Error:', error)
+    console.error('OpenRouter API Error:', error)
     return serverErrorResponse(error instanceof Error ? error.message : 'Failed to generate list')
   }
 }

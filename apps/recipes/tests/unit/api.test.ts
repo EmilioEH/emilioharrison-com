@@ -2,101 +2,81 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { POST as parseRecipe } from '../../src/pages/api/parse-recipe'
 import { POST as generateGroceryList } from '../../src/pages/api/generate-grocery-list'
 
-// Mock dependencies
-vi.mock('@google/genai', () => {
-  return {
-    GoogleGenAI: class {
-      models = {
-        generateContentStream: vi.fn((args) => {
-          const prompt = JSON.stringify(args)
-          const isGrocery = prompt.includes('Grocery') || prompt.includes('shopping list')
+function determineContent(messages: Array<{ role: string; content: string }>) {
+  const allContent = messages.map((m) => m.content ?? '').join(' ')
+  if (allContent.includes('Grocery') || allContent.includes('shopping list')) {
+    return JSON.stringify({
+      ingredients: [
+        {
+          name: 'Test Ingredient',
+          purchaseAmount: 2,
+          purchaseUnit: 'unit',
+          category: 'Produce',
+          sources: [
+            { recipeId: 'r0', recipeTitle: 'Recipe 0', originalAmount: '1 item' },
+            { recipeId: 'r1', recipeTitle: 'Recipe 1', originalAmount: '1 item' },
+          ],
+        },
+      ],
+    })
+  }
+  return JSON.stringify({
+    title: 'Mock Recipe',
+    ingredients: [{ name: 'Test Ingredient', amount: '1 cup' }],
+    steps: ['Step 1', 'Step 2'],
+    protein: 'Chicken',
+    prepTime: 10,
+    cookTime: 20,
+    servings: 4,
+    structuredIngredients: [],
+    ingredientGroups: [{ header: 'Main', startIndex: 0, endIndex: 1 }],
+    stepGroups: [{ header: 'Cook', startIndex: 0, endIndex: 2 }],
+    structuredSteps: [
+      { text: 'Step 1', highlightedText: 'Step 1' },
+      { text: 'Step 2', highlightedText: 'Step 2' },
+    ],
+    description: 'A mock recipe.',
+  })
+}
 
-          return (async function* () {
-            if (isGrocery) {
-              yield {
-                text: JSON.stringify({
-                  ingredients: [
-                    {
-                      name: 'Test Ingredient',
-                      purchaseAmount: 2,
-                      purchaseUnit: 'unit',
-                      category: 'Produce',
-                      sources: [
-                        { recipeId: 'r0', recipeTitle: 'Recipe 0', originalAmount: '1 item' },
-                        { recipeId: 'r1', recipeTitle: 'Recipe 1', originalAmount: '1 item' },
-                      ],
-                    },
-                  ],
-                }),
+async function* createStream(content: string) {
+  yield { choices: [{ delta: { content } }] }
+}
+
+vi.mock('openai', () => {
+  return {
+    default: class {
+      chat = {
+        completions: {
+          create: vi.fn(
+            ({
+              messages,
+              stream,
+            }: {
+              messages: Array<{ role: string; content: string }>
+              stream?: boolean
+            }) => {
+              const content = determineContent(messages)
+              if (stream) {
+                return createStream(content)
               }
-            } else {
-              yield {
-                text: JSON.stringify({
-                  title: 'Mock Recipe',
-                  ingredients: [{ name: 'Test Ingredient', amount: '1 cup' }],
-                  steps: ['Step 1', 'Step 2'],
-                  protein: 'Chicken',
-                  prepTime: 10,
-                  cookTime: 20,
-                  servings: 4,
-                  structuredIngredients: [],
-                  ingredientGroups: [{ header: 'Main', startIndex: 0, endIndex: 1 }],
-                  stepGroups: [{ header: 'Cook', startIndex: 0, endIndex: 2 }],
-                  structuredSteps: [
-                    { text: 'Step 1', highlightedText: 'Step 1' },
-                    { text: 'Step 2', highlightedText: 'Step 2' },
-                  ],
-                  description: 'A mock recipe.',
-                }),
-              }
-            }
-          })()
-        }),
-        generateContent: vi.fn(() => ({
-          get text() {
-            return JSON.stringify({
-              ingredients: [
-                {
-                  name: 'Test Ingredient',
-                  purchaseAmount: 1,
-                  purchaseUnit: 'unit',
-                  category: 'Produce',
-                  sources: [{ recipeId: '1', recipeTitle: 'T', originalAmount: '1' }],
-                },
-              ],
-            })
-          },
-        })),
+              return Promise.resolve({
+                choices: [{ message: { content } }],
+              })
+            },
+          ),
+        },
       }
-    },
-    Type: {
-      STRING: 'STRING',
-      NUMBER: 'NUMBER',
-      OBJECT: 'OBJECT',
-      ARRAY: 'ARRAY',
     },
   }
 })
 
-// Helper to mock fetch for generate-grocery-list
-const originalFetch = global.fetch
-
 describe('API Tests', () => {
   beforeEach(() => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            candidates: [{ content: { parts: [{ text: JSON.stringify([]) }] } }],
-          }),
-        text: () => Promise.resolve(''),
-      } as unknown as Response),
-    )
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
-    global.fetch = originalFetch
     vi.clearAllMocks()
   })
 
@@ -106,19 +86,19 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({}),
       })
-      const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
       const response = await parseRecipe({ request, locals } as unknown as Parameters<
         typeof parseRecipe
       >[0])
       expect(response.status).toBe(400)
     })
 
-    it('should call Gemini and return structured data on valid query', async () => {
+    it('should call OpenAI and return structured data on valid query', async () => {
       const request = new Request('http://localhost/api/parse-recipe', {
         method: 'POST',
         body: JSON.stringify({ url: 'https://example.com' }),
       })
-      const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
       const response = await parseRecipe({ request, locals } as unknown as Parameters<
         typeof parseRecipe
       >[0])
@@ -150,7 +130,7 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({}), // Missing recipes
       })
-      const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
       const response = await generateGroceryList({ request, locals } as unknown as Parameters<
         typeof generateGroceryList
       >[0])
@@ -173,7 +153,7 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({ recipes }),
       })
-      const locals = { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
 
       const response = await generateGroceryList({ request, locals } as unknown as Parameters<
         typeof generateGroceryList

@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro'
-import { Type as SchemaType } from '@google/genai'
-import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
+import { createOpenRouterClient, serverErrorResponse } from '../../lib/api-helpers'
 
 const COST_SYSTEM_PROMPT = `
 You are an expert Grocery Cost Estimator for Austin, Texas. Your task is to estimate the current grocery store cost for the provided list of ingredients in Austin, TX.
@@ -18,7 +17,7 @@ Rules:
 export const POST: APIRoute = async ({ request, locals }) => {
   let client
   try {
-    client = await initGeminiClient(locals)
+    client = createOpenRouterClient(locals)
   } catch {
     return serverErrorResponse('Missing API Key')
   }
@@ -33,36 +32,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       })
     }
 
-    // Client initialized above
-
-    const schema = {
-      type: SchemaType.OBJECT,
-      properties: {
-        totalCost: { type: SchemaType.NUMBER, description: 'Total estimated cost in USD' },
-        items: {
-          type: SchemaType.ARRAY,
-          items: {
-            type: SchemaType.OBJECT,
-            properties: {
-              name: { type: SchemaType.STRING },
-              price: {
-                type: SchemaType.NUMBER,
-                description: 'Estimated price for this specific amount',
-              },
-              estimated: { type: SchemaType.BOOLEAN },
-              note: {
-                type: SchemaType.STRING,
-                description: "Brief explanation of calculation, e.g. '$3.00/lb avg'",
-              },
-            },
-            required: ['name', 'price', 'estimated'],
-          },
-        },
-      },
-      required: ['totalCost', 'items'],
-    }
-
-    // Format ingredients for the prompt
     const ingredientsList = ingredients
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((i: any) => {
@@ -72,25 +41,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       })
       .join('\n')
 
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: schema,
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: COST_SYSTEM_PROMPT },
-            { text: `Estimate the cost for these ingredients:\n${ingredientsList}` },
-          ],
-        },
+    const response = await client.chat.completions.create({
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      messages: [
+        { role: 'system', content: COST_SYSTEM_PROMPT },
+        { role: 'user', content: `Estimate the cost for these ingredients:\n${ingredientsList}` },
       ],
+      response_format: { type: 'json_object' },
     })
 
-    const resultText = response.text
-    if (!resultText) throw new Error('No content from Gemini')
+    const resultText = response.choices?.[0]?.message?.content
+    if (!resultText) throw new Error('No content from AI')
 
     const data = JSON.parse(resultText)
 
