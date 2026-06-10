@@ -3,8 +3,8 @@ import OpenAI from 'openai'
 import { createOpenRouterClient, serverErrorResponse } from '../../lib/api-helpers'
 import { tryRepairJson, resolveInput } from '../../lib/services/ai-parser'
 
-const VISION_MODEL = 'google/gemma-4-26b-a4b-it:free'
-const TEXT_MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
+const VISION_MODEL = 'google/gemma-4-26b-a4b-it'
+const TEXT_MODEL = 'mistralai/mistral-small-3.2-24b-instruct'
 
 /**
  * Maps raw errors to user-friendly messages.

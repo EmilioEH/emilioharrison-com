@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro'
 import { formatRecipesForPrompt } from '../../../lib/api-utils'
+import { Type as SchemaType } from '@google/genai'
 import {
-  createOpenRouterClient,
+  initGeminiClient,
   serverErrorResponse,
   getGroceryScopeId,
   unauthorizedResponse,
@@ -153,20 +154,59 @@ Leave aisle undefined for perimeter departments (Produce, Meat, Seafood, Deli, D
 }
 `
 
+const SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    ingredients: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          name: { type: SchemaType.STRING },
+          purchaseAmount: { type: SchemaType.NUMBER },
+          purchaseUnit: { type: SchemaType.STRING },
+          category: { type: SchemaType.STRING },
+          aisle: { type: SchemaType.NUMBER },
+          sources: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                recipeId: { type: SchemaType.STRING },
+                recipeTitle: { type: SchemaType.STRING },
+                originalAmount: { type: SchemaType.STRING },
+              },
+              required: ['recipeId', 'recipeTitle', 'originalAmount'],
+            },
+          },
+        },
+        required: ['name', 'purchaseAmount', 'purchaseUnit', 'category', 'sources'],
+      },
+    },
+  },
+  required: ['ingredients'],
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function processBatch(client: any, recipes: any[]): Promise<GroceryIngredient[]> {
   const inputList = formatRecipesForPrompt(recipes)
 
-  const response = await client.chat.completions.create({
-    model: 'meta-llama/llama-3.3-70b-instruct:free',
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Recipes to Process:\n${inputList}` },
+  const response = await client.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
+      },
     ],
-    response_format: { type: 'json_object' },
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: SCHEMA,
+      serviceTier: 'flex',
+    },
   })
 
-  const resultText = response.choices?.[0]?.message?.content
+  const resultText = response.text
   if (!resultText) throw new Error('No content generated')
 
   const parsed = JSON.parse(resultText)
@@ -469,7 +509,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     let client
     try {
-      client = createOpenRouterClient(locals)
+      client = await initGeminiClient(locals)
     } catch {
       await db.updateDocument('grocery_lists', listId, {
         status: 'error',

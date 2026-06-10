@@ -1,28 +1,22 @@
-import OpenAI from 'openai'
-
-export const POST = async ({ request }: { request: Request }) => {
-  const apiKey = import.meta.env.OPENROUTER_API_KEY
+// @ts-expect-error - Request type definition is complex in Astro
+export const POST = async ({ request }) => {
+  const apiKey = import.meta.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Missing API Key' }), {
+    return new Response(JSON.stringify({ error: "Missing API Key" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  const { recipes } = await request.json()
+  const { recipes } = await request.json();
 
   if (!recipes || recipes.length === 0) {
-    return new Response(JSON.stringify({ text: '# Grocery List\n\nNo recipes selected.' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return new Response(JSON.stringify({ text: "# Grocery List\n\nNo recipes selected." }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
   }
-
-  const client = new OpenAI({
-    baseURL: 'https://openrouter.ai/api/v1',
-    apiKey,
-  })
 
   const GROCERY_SYSTEM_PROMPT = `<role>You are an expert Grocery List Generator specializing in consolidating recipe ingredients into organized shopping lists.</role>
 <task>Process user-provided recipes and output a categorized grocery list in Markdown format. Begin output directly with the "# Consolidated Grocery List" heading—no introductory text, explanations, or commentary.</task>
@@ -54,35 +48,47 @@ When only one item exists for an ingredient across all recipes, list directly wi
 ## [Category Name]
 [Ingredients]
 </output_structure>
-`
+`;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inputList = recipes.map((r: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ingredientsList = r.ingredients.map((i: any) => `• ${i.amount} ${i.name}`).join('\n')
-    return `${r.title}\nIngredients:\n${ingredientsList}`
-  }).join('\n\n')
+    const ingredientsList = r.ingredients.map((i: any) => `• ${i.amount} ${i.name}`).join('\n');
+    return `${r.title}\nIngredients:\n${ingredientsList}`;
+  }).join('\n\n');
 
   try {
-    const response = await client.chat.completions.create({
-      model: 'meta-llama/llama-3.3-70b-instruct:free',
-      messages: [
-        { role: 'system', content: GROCERY_SYSTEM_PROMPT },
-        { role: 'user', content: inputList },
-      ],
-    })
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: inputList }] }],
+          systemInstruction: { parts: [{ text: GROCERY_SYSTEM_PROMPT }] }
+        }),
+      }
+    );
 
-    const text = response.choices?.[0]?.message?.content || '# Error\nCould not generate list.'
+    if (!response.ok) {
+        throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "# Error\nCould not generate list.";
 
     return new Response(JSON.stringify({ text }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+      headers: { "Content-Type": "application/json" },
+    });
+
   } catch (error) {
-    console.error('OpenRouter API Error:', error)
-    return new Response(JSON.stringify({ error: 'Failed to generate list' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    console.error("Gemini API Error:", error);
+    return new Response(JSON.stringify({ error: "Failed to generate list" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
   }
-}
+};

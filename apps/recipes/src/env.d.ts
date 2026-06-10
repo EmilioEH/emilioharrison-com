@@ -19,6 +19,7 @@ declare global {
       runtime: {
         env: {
           OPENROUTER_API_KEY?: string
+          GEMINI_API_KEY?: string
           SESSION: import('@cloudflare/workers-types').KVNamespace
           PUBLIC_FIREBASE_API_KEY: string
           PUBLIC_FIREBASE_AUTH_DOMAIN: string

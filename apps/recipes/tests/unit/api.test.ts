@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { POST as parseRecipe } from '../../src/pages/api/parse-recipe'
 import { POST as generateGroceryList } from '../../src/pages/api/generate-grocery-list'
 
+// Mock for parse-recipe (OpenRouter via openai)
 function determineContent(messages: Array<{ role: string; content: string }>) {
   const allContent = messages.map((m) => m.content ?? '').join(' ')
   if (allContent.includes('Grocery') || allContent.includes('shopping list')) {
@@ -71,6 +72,57 @@ vi.mock('openai', () => {
   }
 })
 
+// Mock for generate-grocery-list (Gemini via @google/genai)
+vi.mock('@google/genai', () => {
+  let streamYields = 0
+  return {
+    GoogleGenAI: class {
+      models = {
+        generateContentStream: vi.fn(() => {
+          streamYields = 0
+          return (async function* () {
+            if (streamYields === 0) {
+              streamYields++
+              yield {
+                candidates: [
+                  {
+                    content: {
+                      parts: [
+                        {
+                          text: JSON.stringify({
+                            ingredients: [
+                              {
+                                name: 'Test Ingredient',
+                                purchaseAmount: 2,
+                                purchaseUnit: 'unit',
+                                category: 'Produce',
+                                sources: [
+                                  { recipeId: 'r0', recipeTitle: 'Recipe 0', originalAmount: '1 item' },
+                                  { recipeId: 'r1', recipeTitle: 'Recipe 1', originalAmount: '1 item' },
+                                ],
+                              },
+                            ],
+                          }),
+                        },
+                      ],
+                    },
+                  },
+                ],
+              }
+            }
+          })()
+        }),
+      }
+    },
+    Type: {
+      STRING: 'STRING',
+      NUMBER: 'NUMBER',
+      OBJECT: 'OBJECT',
+      ARRAY: 'ARRAY',
+    },
+  }
+})
+
 describe('API Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -86,7 +138,7 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({}),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
       const response = await parseRecipe({ request, locals } as unknown as Parameters<
         typeof parseRecipe
       >[0])
@@ -98,18 +150,16 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({ url: 'https://example.com' }),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
       const response = await parseRecipe({ request, locals } as unknown as Parameters<
         typeof parseRecipe
       >[0])
       expect(response.status).toBe(200)
 
-      // Response is NDJSON (newline-delimited JSON from multi-phase parsing)
       const text = await response.text()
       const lines = text.trim().split('\n')
       expect(lines.length).toBeGreaterThanOrEqual(1)
 
-      // Merge all NDJSON lines into a single object
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: Record<string, any> = {}
       for (const line of lines) {
@@ -128,18 +178,16 @@ describe('API Tests', () => {
     it('should return 200 if recipes list is empty', async () => {
       const request = new Request('http://localhost/api/generate-grocery-list', {
         method: 'POST',
-        body: JSON.stringify({}), // Missing recipes
+        body: JSON.stringify({}),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
       const response = await generateGroceryList({ request, locals } as unknown as Parameters<
         typeof generateGroceryList
       >[0])
-      // Current implementation returns 200 for missing recipes
       expect(response.status).toBe(200)
     })
 
     it('should process multiple recipes in a single stream', async () => {
-      // Create 6 dummy recipes
       const recipes = Array(6)
         .fill(null)
         .map((_, i) => ({
@@ -153,7 +201,7 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({ recipes }),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key' } } }
+      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
 
       const response = await generateGroceryList({ request, locals } as unknown as Parameters<
         typeof generateGroceryList
@@ -161,10 +209,6 @@ describe('API Tests', () => {
 
       expect(response.status).toBe(200)
       const data = await response.json()
-
-      // Verification:
-      // Single stream aggregation.
-      // Mock returns purchaseAmount = 2.
       expect(data.ingredients).toHaveLength(1)
       expect(data.ingredients[0].name).toBe('Test Ingredient')
       expect(data.ingredients[0].purchaseAmount).toBe(2)

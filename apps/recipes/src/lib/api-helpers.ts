@@ -56,6 +56,22 @@ export function badRequestResponse(message: string): Response {
 }
 
 /**
+ * Initializes the Google Generative AI client using the environment from locals or import.meta.
+ * Throws an error if the API key is missing.
+ */
+export async function initGeminiClient(locals: App.Locals) {
+  const { GoogleGenAI } = await import('@google/genai')
+  const env = getCloudflareEnv(locals)
+  const apiKey = env.GEMINI_API_KEY
+
+  if (!apiKey) {
+    throw new Error('Missing GEMINI_API_KEY configuration')
+  }
+
+  return new GoogleGenAI({ apiKey })
+}
+
+/**
  * Creates an OpenAI-compatible client pointed at OpenRouter.
  * The apiKey is read from locals.runtime.env (Cloudflare) or import.meta.env (dev).
  */

@@ -552,7 +552,7 @@ export async function executeAiParse(
   }
 
   const response = await client.chat.completions.create({
-    model: 'meta-llama/llama-3.3-70b-instruct:free',
+    model: 'mistralai/mistral-small-3.2-24b-instruct',
     messages: messages as Array<OpenAI.Chat.ChatCompletionMessageParam>,
     response_format: { type: 'json_object' },
     max_tokens: 65536,
