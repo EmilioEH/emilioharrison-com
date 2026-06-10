@@ -60,11 +60,26 @@ export function badRequestResponse(message: string): Response {
  * The apiKey is read from locals.runtime.env (Cloudflare) or import.meta.env (dev).
  */
 export function createOpenRouterClient(locals: App.Locals): OpenAI {
-  const env = getCloudflareEnv(locals)
-  const apiKey = env.OPENROUTER_API_KEY
+  // Try Cloudflare runtime env (from .dev.vars via adapter)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const runtime = (locals as any).runtime
+  let apiKey = runtime?.env?.OPENROUTER_API_KEY
+
+  // Fallback to process.env (Node.js/CI)
+  if (!apiKey && typeof process !== 'undefined') {
+    apiKey = process.env.OPENROUTER_API_KEY
+  }
+
+  // Fallback to import.meta.env (Vite SSR, .env.local)
+  if (!apiKey) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    apiKey = (import.meta.env as any).OPENROUTER_API_KEY
+  }
 
   if (!apiKey) {
-    throw new Error('Missing OPENROUTER_API_KEY configuration')
+    throw new Error(
+      'Missing OPENROUTER_API_KEY — set it in .dev.vars (Cloudflare dev) or .env.local (Vite fallback)',
+    )
   }
 
   return new OpenAI({
