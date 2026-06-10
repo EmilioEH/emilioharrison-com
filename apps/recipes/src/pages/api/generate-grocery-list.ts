@@ -150,7 +150,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `Recipes to Process:\n${inputList}` },
       ],
-      response_format: { type: 'json_object' },
       stream: true,
     })
 
