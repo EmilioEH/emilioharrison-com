@@ -107,14 +107,14 @@ A MessageChannel polyfill is injected at build time for Cloudflare Workers compa
 - **Do NOT add new `src/pages/*.astro` files for app features.** `src/pages/[...path].astro` is a catch-all fallback that always renders the SPA entry point.
 - To add a feature, add a new `ViewMode` to `RecipeManager.tsx` and render a conditional component instead. This preserves app-like feel, in-memory state (e.g. scroll position), and offline capability.
 
-**AI Integration** — split across two providers, do not conflate them:
+**AI Integration** — split across two providers by task, do not conflate them:
 
-- **Recipe parsing/enhancement** (`src/lib/services/ai-parser.ts`, `pages/api/parse-recipe.ts`): goes through **OpenRouter** via an OpenAI-compatible client (`createOpenRouterClient` in `src/lib/api-helpers.ts`, `OPENROUTER_API_KEY`). This was migrated off direct Gemini calls because `@google/genai` v1.52.0 breaks the Cloudflare Workers runtime — the dependency is pinned to `1.34.0` in `apps/recipes/package.json`; do not bump it without verifying Workers compatibility.
+- **OpenRouter** (`createOpenRouterClient` in `src/lib/api-helpers.ts`, OpenAI-compatible client, `OPENROUTER_API_KEY`): used **only** for the initial photo-scan flow (`pages/api/parse-recipe.ts`), which OCRs a recipe-card photo in three phases (ingredients, instructions, then structuring). All three phases use a single model, `qwen/qwen3.5-9b` — do not split vision/text models here again without updating this doc.
+- **Gemini** (`initGeminiClient` in `src/lib/api-helpers.ts`, `@google/genai`, `GEMINI_API_KEY`): used for everything else — `executeAiParse()` in `src/lib/services/ai-parser.ts` (AI Refresh and background Enhancement), grocery list generation, and grocery cost estimation. Model: `gemini-2.5-flash`. The dependency is pinned to `1.34.0` in `apps/recipes/package.json` because `@google/genai` v1.52.0 breaks the Cloudflare Workers runtime — do not bump it without verifying Workers compatibility.
   - `style='strict'`: initial import (transcription only, fast path so the user can save immediately).
   - `style='enhanced'`: background "Kenji-style" restructuring (scientific step grouping, descriptive paragraphs, standardized units). Triggered automatically after save via a **Total Reparse** from the original `sourceUrl`/`sourceImage` when available, not a text-to-text touch-up.
-  - Never force enhancement on initial import — both styles must keep working when touching `parse-recipe.ts`.
-- **Other AI endpoints** (e.g. grocery cost estimation) still call **Gemini directly** via `@google/genai` (`GEMINI_API_KEY`).
-- Always use `response_mime_type: "application/json"` with an explicit `response_schema`/schema validation — `ai-parser.ts` includes JSON-repair handling for malformed model output.
+  - Never force enhancement on initial import — both styles must keep working when touching `ai-parser.ts`.
+- Always request structured output (`responseMimeType`/`response_format: json_object`, plus an explicit schema where the provider supports it) — `ai-parser.ts` includes JSON-repair handling (`tryRepairJson`) for malformed model output from either provider.
 
 **Storage Proxy**: Never use the Firebase Client SDK (`firebase/storage`) in the browser. All uploads go through `POST /api/uploads`, which uses a server-side `FirebaseRestService` authenticated with the Service Account — this avoids CORS/auth complexity on the client.
 
