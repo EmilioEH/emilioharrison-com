@@ -19,6 +19,7 @@ import {
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { openFeedbackModal } from '../../lib/feedbackStore'
 import { $pendingInvites } from '../../lib/familyStore'
+import { clearPersistedRecipes } from '../../lib/recipeStore'
 
 interface GlobalBurgerMenuProps {
   user?: string
@@ -63,6 +64,15 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const handleManageFamily = () => {
     closeBurgerMenu()
     window.dispatchEvent(new CustomEvent('navigate-to-family-settings'))
+  }
+
+  const handleLogout = () => {
+    // Clear this user's persisted recipe cache before the browser navigates to /logout (a plain
+    // server-rendered redirect — no client JS runs there, so this is the last chance to do it).
+    // Per-user cache keys already prevent a *different* user from ever reading this data, but
+    // clearing it here keeps storage tidy and satisfies "logout clears the cached recipes"
+    // literally rather than just structurally. See recipeStore.ts for details.
+    clearPersistedRecipes()
   }
 
   return (
@@ -227,6 +237,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               <a
                 role="menuitem"
                 href="/protected/recipes/logout"
+                onClick={handleLogout}
                 className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
               >
                 <LogOut className="h-5 w-5 text-muted-foreground" />
