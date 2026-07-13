@@ -607,6 +607,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               recipes={groceryRecipes}
               onOpenRecipe={onSelectRecipe}
               embedded={true}
+              weekStart={activeWeekStart}
             />
           </>
         )}

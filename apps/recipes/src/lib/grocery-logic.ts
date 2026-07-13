@@ -1,8 +1,11 @@
 import type { ShoppableIngredient } from './types'
+import { GROCERY_CATEGORY_ORDER } from './grocery-suggestions'
+import { mapToHebCategory, getCategoryAisle } from './grocery-matcher'
 
-interface ShoppableCategory {
+export interface ShoppableCategory {
   name: string
   items: ShoppableIngredient[]
+  aisleInfo?: string
 }
 
 /**
@@ -51,9 +54,9 @@ export const mergeShoppableIngredients = (
         }
       }
     } else {
-      // Clone the ingredient and its sources array
       mergedMap.set(key, {
         ...ing,
+        category: mapToHebCategory(ing.category),
         sources: sources.map((s) => ({ ...s })),
       })
     }
@@ -64,28 +67,15 @@ export const mergeShoppableIngredients = (
 
 /**
  * Groups shoppable ingredients by category for store-aisle organization.
+ * Uses H-E-B Manor 19-category walking order.
  */
 export const categorizeShoppableIngredients = (
   ingredients: ShoppableIngredient[],
 ): ShoppableCategory[] => {
   const categories = new Map<string, ShoppableIngredient[]>()
 
-  const DESIRED_ORDER = [
-    'Produce',
-    'Meat',
-    'Dairy',
-    'Bakery',
-    'Frozen',
-    'Pantry',
-    'Spices',
-    'Other',
-  ]
-
-  // Initialize with empty arrays for desired order
-  DESIRED_ORDER.forEach((cat) => categories.set(cat, []))
-
   for (const ing of ingredients) {
-    const cat = ing.category || 'Other'
+    const cat = mapToHebCategory(ing.category || 'Other')
     let list = categories.get(cat)
     if (!list) {
       list = []
@@ -96,19 +86,18 @@ export const categorizeShoppableIngredients = (
 
   const result: ShoppableCategory[] = []
 
-  // First, add known categories in order
-  for (const catName of DESIRED_ORDER) {
+  const sortedKeys = Array.from(categories.keys()).sort(
+    (a, b) => (GROCERY_CATEGORY_ORDER[a] ?? 99) - (GROCERY_CATEGORY_ORDER[b] ?? 99),
+  )
+
+  for (const catName of sortedKeys) {
     const items = categories.get(catName)
     if (items && items.length > 0) {
-      result.push({ name: catName, items })
-      categories.delete(catName)
-    }
-  }
-
-  // Then add any remaining categories
-  for (const [catName, items] of categories.entries()) {
-    if (items.length > 0) {
-      result.push({ name: catName, items })
+      result.push({
+        name: catName,
+        items,
+        aisleInfo: getCategoryAisle(catName),
+      })
     }
   }
 
