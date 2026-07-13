@@ -46,13 +46,13 @@ Independent of each other; do in either order or in parallel. Together they chan
 
 **Acceptance criteria:**
 
-- [ ] Entry chunk (`RecipeManager.[hash].js`) ≤ 200 KB gzip on a production build.
-- [ ] `grep -c "PDFDocument\|Helvetica" dist/.../RecipeManager.*.js` returns 0 — no PDF engine in the entry chunk.
-- [ ] Cooking mode, week planner, onboarding, settings, and admin views each land in their own lazy chunk (verify in build output / visualizer).
-- [ ] Sharing a recipe as PDF still works end-to-end (existing or new Playwright test covers opening ShareRecipeDialog and generating the PDF).
-- [ ] Switching to each lazy view shows content or a suspense fallback — never a blank screen or error (Playwright: visit every `ViewMode` once, chromium project).
-- [ ] Deep links (`?view=detail&recipe=…`, `?view=week`, etc.) still resolve correctly on hard refresh.
-- [ ] No regression in offline behavior for views already visited in-session.
+- [x] Entry chunk (`RecipeManager.[hash].js`) ≤ 200 KB gzip on a production build. — 59.4 KB gzip (193.4 KB raw), down from 665 KB gzip.
+- [x] `grep -c "PDFDocument\|Helvetica" dist/.../RecipeManager.*.js` returns 0 — no PDF engine in the entry chunk.
+- [x] Cooking mode, week planner, onboarding, settings, and admin views each land in their own lazy chunk (verify in build output / visualizer). — plus RecipeDetail, RecipeEditor, BulkRecipeImporter, FeedbackDashboard, InviteView, FamilyManagementView, NotificationSettingsView, and the `@react-pdf/renderer` engine itself.
+- [x] Sharing a recipe as PDF still works end-to-end (existing or new Playwright test covers opening ShareRecipeDialog and generating the PDF). — `tests/recipe-share.spec.ts`.
+- [x] Switching to each lazy view shows content or a suspense fallback — never a blank screen or error (Playwright: visit every `ViewMode` once, chromium project). — `tests/lazy-view-modes.spec.ts`. Two pre-existing, out-of-scope gaps surfaced during verification (not regressions — confirmed identical on the unmodified branch): `admin-dashboard` redirects TestUser to library because `isAdmin` is resolved server-side and can't be forced true from client-side test mocks; `grocery` is a valid `ViewMode` with no renderer at all in `RecipeManager`/`RecipeManagerView`. Both are covered with lenient "doesn't crash" assertions and flagged for separate follow-up.
+- [x] Deep links (`?view=detail&recipe=…`, `?view=week`, etc.) still resolve correctly on hard refresh.
+- [x] No regression in offline behavior for views already visited in-session. — lazy chunks are cached via the same browser HTTP cache as any other `_astro/*.js` asset; not regression-tested with real offline simulation (see P4 for real SW caching).
 
 ### P2. Persist the recipe store — stale-while-revalidate
 
@@ -62,12 +62,14 @@ Independent of each other; do in either order or in parallel. Together they chan
 
 **Acceptance criteria:**
 
-- [ ] Warm launch (recipes cached): library list is visible on first render without waiting for the network — no `loading-indicator` shown when cached data exists (Playwright: load app, reload, assert cards render before the `/api/recipes` response resolves, e.g. by delaying the route).
-- [ ] Background refresh updates the UI when the server payload differs from cache (Playwright: mutate a recipe server-side/mock, reload, assert updated title appears without user action).
-- [ ] Cold launch (no cache) behaves exactly as today: spinner, then data.
-- [ ] Logout clears the cached recipes; logging in as a different user never shows the previous user's recipes (unit + E2E).
-- [ ] Recipe create/update/delete write through to the persisted cache (no stale flash on next launch after an edit).
-- [ ] A corrupt/oversized cache entry falls back to network fetch without crashing (unit test with garbage in the storage key).
+- [x] Warm launch (recipes cached): library list is visible on first render without waiting for the network — no `loading-indicator` shown when cached data exists (Playwright: load app, reload, assert cards render before the `/api/recipes` response resolves, e.g. by delaying the route). — `tests/recipe-cache-persistence.spec.ts`.
+- [x] Background refresh updates the UI when the server payload differs from cache (Playwright: mutate a recipe server-side/mock, reload, assert updated title appears without user action).
+- [x] Cold launch (no cache) behaves exactly as today: spinner, then data.
+- [x] Logout clears the cached recipes; logging in as a different user never shows the previous user's recipes (unit + E2E). — cache is keyed per-user via `localStorage` (`chefboard:recipesCache:<userId>`, derived from the non-`httpOnly` `site_user` cookie); admin-impersonation isolation covered by a unit test (no usable multi-account E2E fixture exists for impersonation — `admin-impersonation.spec.ts` is itself `describe.skip`).
+- [x] Recipe create/update/delete write through to the persisted cache (no stale flash on next launch after an edit).
+- [x] A corrupt/oversized cache entry falls back to network fetch without crashing (unit test with garbage in the storage key). — malformed JSON, wrong shape, oversized payload (>4 MB ceiling), and a simulated quota-exceeded write error are all covered in `recipeStore.test.ts`.
+
+Implementation note: persistence uses a hand-rolled `localStorage` layer in `recipeStore.ts` rather than `@nanostores/persistent`, because that helper bakes its storage key in at atom-creation time and this cache must be keyed dynamically per authenticated user.
 
 ---
 
