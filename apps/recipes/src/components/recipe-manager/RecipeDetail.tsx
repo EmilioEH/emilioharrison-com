@@ -26,6 +26,19 @@ const CookingModeLoadingFallback: React.FC = () => (
   </div>
 )
 
+// Shown only for a recipe that arrived as a slim list-view record (see PERFORMANCE-PLAN.md P3 —
+// GET /api/recipes no longer ships `steps`/ingredient detail) and hasn't been hydrated into the
+// full document yet. Brief in practice — a single-document fetch — and only ever seen the first
+// time a given recipe is opened in a session.
+const RecipeDetailLoadingFallback: React.FC = () => (
+  <div
+    data-testid="recipe-detail-loading"
+    className="fixed inset-0 z-50 flex items-center justify-center bg-card animate-in fade-in"
+  >
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+)
+
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
   useEffect(() => {
@@ -50,7 +63,7 @@ const useWakeLock = (enabled: boolean) => {
 interface RecipeDetailProps {
   recipe: Recipe
   onClose: () => void
-  onUpdate: (recipe: Recipe, action: 'save' | 'edit' | 'silent') => void
+  onUpdate: (recipe: Recipe, action: 'save' | 'edit' | 'silent' | 'hydrate') => void
   onDelete: (id: string) => void
   onToggleThisWeek: (id?: string) => void
   onToggleFavorite?: () => void
@@ -68,8 +81,23 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
   const isCooking = session.isActive && session.recipeId === recipe.id
 
-  // SWR Revalidation: Fetch fresh data on mount to catch background AI updates
+  // The library list endpoint (GET /api/recipes) now ships a slim projection of each recipe — no
+  // `steps`, `structuredSteps`, or ingredient-mapping data (see PERFORMANCE-PLAN.md P3). `steps`
+  // being absent is the signal that `recipe` is that slim record rather than the full document.
+  // Without this, a recipe that has never been through AI enhancement would never trip the old
+  // "hasNewEnhanced"/"isNewer" checks below, the merge-back would never fire, and this component
+  // — which renders directly from the `recipe` prop with no other local state — would show a
+  // permanently ingredient-less, instruction-less view.
+  const [isHydrating, setIsHydrating] = useState(() => recipe.steps === undefined)
+
+  // SWR Revalidation: fetch the full document on mount, both to catch background AI updates and
+  // to hydrate a slim list record into the full document before rendering.
   useEffect(() => {
+    const wasSlim = recipe.steps === undefined
+    setIsHydrating(wasSlim)
+
+    let cancelled = false
+
     const revalidate = async () => {
       try {
         const baseUrl = import.meta.env.BASE_URL.endsWith('/')
@@ -88,17 +116,26 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             // Or if updatedAt has simply changed
             const isNewer = updatedRecipe.updatedAt && updatedRecipe.updatedAt !== recipe.updatedAt
 
-            if (hasNewEnhanced || isNewer) {
-              onUpdate(updatedRecipe, 'silent')
+            if (wasSlim || hasNewEnhanced || isNewer) {
+              // Pure client-side sync: we already have the authoritative document the server
+              // just gave us, no network write needed (see 'hydrate' in useRecipeHandlers.ts).
+              onUpdate(updatedRecipe, 'hydrate')
             }
           }
         }
       } catch (error) {
         console.warn('Failed to revalidate recipe:', error)
+      } finally {
+        // Stop blocking on hydration even if the fetch failed — better to show the (possibly
+        // still-slim) recipe we have than spin forever.
+        if (!cancelled) setIsHydrating(false)
       }
     }
 
     revalidate()
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipe.id]) // Only run on mount/id change to prevent loop
 
@@ -145,7 +182,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         const data = await res.json()
         const updatedRecipe = data.recipe || data
         if (updatedRecipe && updatedRecipe.id === recipe.id) {
-          onUpdate(updatedRecipe, 'silent')
+          // Pure re-sync (the review that triggered this already persisted server-side).
+          onUpdate(updatedRecipe, 'hydrate')
         }
       }
     } catch (error) {
@@ -159,6 +197,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         <CookingContainer onClose={onClose} />
       </Suspense>
     )
+  }
+
+  if (isHydrating) {
+    return <RecipeDetailLoadingFallback />
   }
 
   if (isEditing) {
@@ -250,7 +292,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
             if (res.ok) {
               const data = await res.json()
-              if (data.recipe) onUpdate(data.recipe, 'silent')
+              // Pure re-sync (the restore already persisted server-side via /restore).
+              if (data.recipe) onUpdate(data.recipe, 'hydrate')
             }
           }
           fetchFresh()

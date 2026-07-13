@@ -26,6 +26,7 @@ import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
+import { recipeActions } from '../../lib/recipeStore'
 import { alert, confirm } from '../../lib/dialogStore'
 // --- Sub-Components ---
 import { RecipeManagerView } from './RecipeManagerView'
@@ -343,6 +344,30 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     setDayPickerRecipeId(recipeId)
   }
 
+  // `recipe` here comes straight from the library/week store, which since PERFORMANCE-PLAN.md P3
+  // may be a slim list record (no `steps`/full `ingredients`). This dialog is reachable directly
+  // from the library/week management sheets — bypassing RecipeDetail's own hydration gate — and
+  // both the text share and PDF export (share-recipe.ts, RecipePdfDocument.tsx) read
+  // `recipe.steps` unconditionally, so hydrate first if needed.
+  const handleShareRecipe = async (recipe: Recipe) => {
+    if (recipe.steps === undefined) {
+      try {
+        const res = await fetch(`${getBaseUrl()}api/recipes/${recipe.id}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.recipe) {
+            recipeActions.updateRecipe(data.recipe)
+            setShareRecipe(data.recipe)
+            return
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to hydrate recipe before sharing:', error)
+      }
+    }
+    setShareRecipe(recipe)
+  }
+
   const family = useStore($currentFamily)
 
   // Listen for settings navigation from burger menu
@@ -645,7 +670,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                     selectedIds={selectedIds}
                     hasSearch={!!searchQuery}
                     scrollContainer={scrollContainer}
-                    onShare={(recipe) => setShareRecipe(recipe)}
+                    onShare={handleShareRecipe}
                     isContainedScroll={useContainedScroll}
                   />
                 </div>
@@ -664,7 +689,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
                     onOpenCalendar={() => setIsCalendarOpen(true)}
                     onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                     scrollContainer={scrollContainer}
-                    onShare={(recipe) => setShareRecipe(recipe)}
+                    onShare={handleShareRecipe}
                     initialTab="plan"
                     user={currentUser}
                   />

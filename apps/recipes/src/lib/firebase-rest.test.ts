@@ -89,4 +89,87 @@ describe('FirebaseRestService', () => {
     expect(logsList).toHaveLength(2)
     expect(logsList[0].mapValue.fields.type).toEqual({ stringValue: 'info' })
   })
+
+  describe('runQuery', () => {
+    it('builds a structured query against :runQuery, not a full collection GET', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      })
+      global.fetch = fetchMock
+
+      await service.runQuery('recipes', { field: 'createdBy', op: 'IN', value: ['user-1'] })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [url, init] = fetchMock.mock.calls[0]
+      expect(url).toBe(
+        'https://firestore.googleapis.com/v1/projects/test-project/databases/(default)/documents:runQuery',
+      )
+      expect(init.method).toBe('POST')
+
+      const body = JSON.parse(init.body)
+      expect(body.structuredQuery.from).toEqual([{ collectionId: 'recipes' }])
+      expect(body.structuredQuery.where.fieldFilter).toEqual({
+        field: { fieldPath: 'createdBy' },
+        op: 'IN',
+        value: { arrayValue: { values: [{ stringValue: 'user-1' }] } },
+      })
+    })
+
+    it('encodes an EQUAL/null filter as a unaryFilter (for legacy-recipe backfilled documents)', async () => {
+      // Firestore's REST API rejects a plain fieldFilter/EQUAL comparison against null with a
+      // 400 — it must be expressed as unaryFilter/IS_NULL instead. This is the one wire-format
+      // detail a mocked-fetch test can't verify against real Firestore, but it at least locks in
+      // the correct shape so a future refactor can't silently regress it back to fieldFilter.
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] })
+      global.fetch = fetchMock
+
+      await service.runQuery('recipes', { field: 'createdBy', op: 'EQUAL', value: null })
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+      expect(body.structuredQuery.where.unaryFilter).toEqual({
+        field: { fieldPath: 'createdBy' },
+        op: 'IS_NULL',
+      })
+      expect(body.structuredQuery.where.fieldFilter).toBeUndefined()
+    })
+
+    it('maps Firestore runQuery response documents into plain objects with an id', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            document: {
+              name: 'projects/test-project/databases/(default)/documents/recipes/abc',
+              fields: { title: { stringValue: 'Tacos' } },
+            },
+          },
+          // Firestore can include result entries with no `document` (e.g. skipped results) —
+          // these must be filtered out, not crash the mapping.
+          {},
+        ],
+      })
+      global.fetch = fetchMock
+
+      const results = await service.runQuery('recipes', {
+        field: 'createdBy',
+        op: 'IN',
+        value: ['user-1'],
+      })
+
+      expect(results).toEqual([{ id: 'abc', title: 'Tacos' }])
+    })
+
+    it('throws when the request fails', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        text: async () => 'index not found',
+      })
+      global.fetch = fetchMock
+
+      await expect(
+        service.runQuery('recipes', { field: 'createdBy', op: 'IN', value: ['user-1'] }),
+      ).rejects.toThrow('index not found')
+    })
+  })
 })

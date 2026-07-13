@@ -1,6 +1,7 @@
 import type { Recipe, PendingInvite } from '../../../lib/types'
 import { alert, confirm } from '../../../lib/dialogStore'
 import { familyActions, $pendingInvites } from '../../../lib/familyStore'
+import { recipeActions } from '../../../lib/recipeStore'
 
 import type { ViewMode } from './useRouter'
 import { useRecipeVersions } from './useRecipeVersions'
@@ -132,10 +133,21 @@ export function useRecipeHandlers({
     }
   }
 
-  const handleUpdateRecipe = (updatedRecipe: Recipe, mode: 'save' | 'edit' | 'silent' = 'save') => {
+  const handleUpdateRecipe = (
+    updatedRecipe: Recipe,
+    mode: 'save' | 'edit' | 'silent' | 'hydrate' = 'save',
+  ) => {
     if (mode === 'edit') {
       setRecipe(updatedRecipe.id)
       setView('edit')
+    } else if (mode === 'hydrate') {
+      // Pure client-side sync — the caller already fetched the authoritative full document from
+      // the server (e.g. RecipeDetail's mount-time revalidation merging a slim list record into
+      // the full doc, or re-syncing after a restore/review that persisted elsewhere). There's
+      // nothing to write: re-PUTting data the server just gave us would be a redundant network
+      // write, bump `updatedAt` again, and add a spurious version-history snapshot. Just update
+      // the local store directly (see PERFORMANCE-PLAN.md P3 / recipeStore.ts's `updateRecipe`).
+      recipeActions.updateRecipe(updatedRecipe)
     } else if (mode === 'silent') {
       // In-place update without navigation (for AI refresh, cost updates, etc.)
       const changes = { ...updatedRecipe, updatedAt: new Date().toISOString() }

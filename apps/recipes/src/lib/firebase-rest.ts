@@ -209,6 +209,67 @@ export class FirebaseRestService {
     }
   }
 
+  /**
+   * Scoped Firestore query via the REST `:runQuery` endpoint (structured query), instead of
+   * paging through an entire collection and filtering in worker memory (see `getCollection`).
+   *
+   * Only supports a single top-level field filter for now (`EQUAL` or `IN`) — that's all
+   * `GET /api/recipes` needs (`createdBy IN [...]` / `createdBy == null`). Extend with
+   * `compositeFilter`/`OR` support if a future caller needs more.
+   *
+   * NOTE: Firestore cannot filter for "field does not exist" server-side (not even via `!=` —
+   * documents missing a field are excluded from every filter type, including inequality/not-in).
+   * Callers relying on `EQUAL` against `null` need documents to have that field explicitly set to
+   * `null` — see `scripts/backfill-legacy-created-by.ts` for the one-time migration this project
+   * uses to convert legacy "field is simply absent" recipes into `createdBy: null`.
+   *
+   * Firestore's structured query API also rejects a plain `fieldFilter`/`EQUAL` comparison
+   * against `null` (and `NaN`) — the REST API 400s unless it's expressed as a dedicated
+   * `unaryFilter` (`IS_NULL`/`IS_NAN`). `EQUAL` against `null` is special-cased below for that
+   * reason; a mocked-fetch unit test wouldn't have caught the wire-format difference.
+   */
+  async runQuery<T = any>(
+    collectionId: string,
+    filter: { field: string; op: 'EQUAL' | 'IN'; value: unknown },
+    options?: { limit?: number },
+  ): Promise<T[]> {
+    const token = await this.getAccessToken()
+    const url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents:runQuery`
+
+    const where =
+      filter.op === 'EQUAL' && filter.value === null
+        ? { unaryFilter: { field: { fieldPath: filter.field }, op: 'IS_NULL' } }
+        : {
+            fieldFilter: {
+              field: { fieldPath: filter.field },
+              op: filter.op,
+              value: this.toFirestoreValue(filter.value),
+            },
+          }
+
+    const structuredQuery: any = { from: [{ collectionId }], where }
+    if (options?.limit) structuredQuery.limit = options.limit
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ structuredQuery }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`Firestore QUERY failed: ${text}`)
+    }
+
+    const data = (await res.json()) as Array<{ document?: any }>
+    if (!Array.isArray(data)) return []
+
+    return data.filter((r) => r.document).map((r) => this.mapFirestoreDoc(r.document)) as T[]
+  }
+
   async getDocument<T = any>(collection: string, id: string) {
     const token = await this.getAccessToken()
     const url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents/${collection}/${id}`

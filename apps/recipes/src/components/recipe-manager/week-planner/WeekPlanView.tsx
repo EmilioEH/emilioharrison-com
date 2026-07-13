@@ -11,6 +11,7 @@ import {
 } from '../../../lib/weekStore'
 import type { Recipe } from '../../../lib/types'
 import { cookingSessionActions } from '../../../stores/cookingSession'
+import { recipeActions } from '../../../lib/recipeStore'
 import { DayPicker } from './DayPicker'
 
 interface WeekPlanViewProps {
@@ -348,9 +349,36 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
   }
 
   // Handle start cooking
-  const handleStartCooking = (recipe: Recipe) => {
-    cookingSessionActions.startSession(recipe)
-    onSelectRecipe(recipe) // Navigate to recipe detail which will show cooking mode
+  //
+  // `recipe` here comes from `allRecipes` — the library store, which since PERFORMANCE-PLAN.md P3
+  // holds slim list records (no `steps`/`ingredients` detail) until a detail view hydrates them.
+  // Cooking mode reads `session.recipe.steps`/`.ingredients` directly (see cookingSession.ts,
+  // CookingContainer.tsx et al.) and this entry point skips RecipeDetail's own hydration gate
+  // entirely, so we have to fetch the full document ourselves before starting the session —
+  // otherwise cooking mode would crash or render blank on a recipe that's never been opened yet.
+  const handleStartCooking = async (recipe: Recipe) => {
+    let fullRecipe = recipe
+    if (recipe.steps === undefined) {
+      try {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.recipe) {
+            fullRecipe = data.recipe
+            // Populate the shared store too, so the detail view we're about to navigate to
+            // doesn't need to re-fetch the same document.
+            recipeActions.updateRecipe(fullRecipe)
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to hydrate recipe before starting cooking mode:', error)
+      }
+    }
+    cookingSessionActions.startSession(fullRecipe)
+    onSelectRecipe(fullRecipe) // Navigate to recipe detail which will show cooking mode
   }
 
   // Handle move recipe - opens day picker
