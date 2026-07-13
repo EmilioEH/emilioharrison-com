@@ -88,6 +88,7 @@ const db = new Proxy({} as FirebaseDbProxy, {
     if (
       [
         'getCollection',
+        'runQuery',
         'getDocument',
         'createDocument',
         'setDocument',
