@@ -3,8 +3,7 @@ import OpenAI from 'openai'
 import { createOpenRouterClient, serverErrorResponse } from '../../lib/api-helpers'
 import { tryRepairJson, resolveInput } from '../../lib/services/ai-parser'
 
-const VISION_MODEL = 'google/gemma-4-26b-a4b-it'
-const TEXT_MODEL = 'mistralai/mistral-small-3.2-24b-instruct'
+const MODEL = 'qwen/qwen3.5-9b'
 
 /**
  * Maps raw errors to user-friendly messages.
@@ -100,7 +99,7 @@ async function runPhase(
   systemPrompt: string,
   userPrompt: string,
   contentPart: Record<string, unknown> | undefined,
-  model: string = VISION_MODEL,
+  model: string = MODEL,
 ): Promise<Record<string, unknown> | null> {
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = []
@@ -149,7 +148,7 @@ async function generateRecipeStream(
           '',
           `Extract ALL ingredient lines from this image. Return JSON with an "ingredients" array where each element is one ingredient line as a string. Include amounts and units. Do not combine or skip any ingredients.`,
           contentPart,
-          VISION_MODEL,
+          MODEL,
         )
 
         if (!phase1) {
@@ -165,7 +164,7 @@ async function generateRecipeStream(
           '',
           `Extract ALL cooking instruction paragraphs from this image. Return JSON with a "steps" array where each element is one complete paragraph as a string. Do NOT combine paragraphs. Do NOT skip any text.`,
           contentPart,
-          VISION_MODEL,
+          MODEL,
         )
 
         if (phase2) {
@@ -181,7 +180,7 @@ async function generateRecipeStream(
           'You are a recipe parser. Structure the OCR text into a complete recipe JSON object.',
           `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?})\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
           undefined,
-          TEXT_MODEL,
+          MODEL,
         )
 
         if (phase3) {
