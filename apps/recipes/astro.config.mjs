@@ -4,6 +4,14 @@ import tailwind from '@astrojs/tailwind'
 import cloudflare from '@astrojs/cloudflare'
 import markdoc from '@astrojs/markdoc'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { visualizer } from 'rollup-plugin-visualizer'
+
+// Bundle analysis: `npm run analyze` sets ANALYZE=true and produces a treemap report
+// at dist/protected/recipes/stats.html. Gated behind the env var so normal builds are
+// unaffected. Astro runs the vite pipeline once for the client bundle and once for the
+// SSR/server bundle; `apply` restricts the report to the client build, since that's
+// where the code-split entry chunk we care about lives.
+const isAnalyze = process.env.ANALYZE === 'true'
 
 // https://astro.build/config
 // Force restart: 2
@@ -25,6 +33,19 @@ export default defineConfig({
       //           process: true,
       //         },
       //       }),
+      ...(isAnalyze
+        ? [
+            {
+              ...visualizer({
+                filename: 'dist/protected/recipes/stats.html',
+                gzipSize: true,
+                brotliSize: true,
+                template: 'treemap',
+              }),
+              apply: (_config, env) => !env.isSsrBuild,
+            },
+          ]
+        : []),
     ],
     build: {
       rollupOptions: {

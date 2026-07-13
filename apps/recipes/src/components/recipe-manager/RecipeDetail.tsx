@@ -1,18 +1,30 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react'
+import React, { useEffect, useMemo, useState, useCallback, Suspense } from 'react'
 import { useRecipeActions } from './useRecipeActions'
 import { computed } from 'nanostores'
 import { useStore } from '@nanostores/react'
 import { DetailHeader } from '../recipe-details/DetailHeader'
 import { Stack, Inline } from '../ui/layout'
-import { CookingContainer } from '../cooking-mode/CookingContainer'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
 import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
-import { Play, Check, ListPlus } from 'lucide-react'
+import { Play, Check, ListPlus, Loader2 } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { VersionHistoryModal } from '../recipe-details/VersionHistoryModal'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
+
+// Cooking mode (step-by-step timers/wake lock UI) is a distinct heavy feature only
+// entered when the user taps "Start Cooking" — code-split separately from the
+// (much more frequently visited) recipe overview/detail screen above it.
+const CookingContainer = React.lazy(() =>
+  import('../cooking-mode/CookingContainer').then((m) => ({ default: m.CookingContainer })),
+)
+
+const CookingModeLoadingFallback: React.FC = () => (
+  <div data-testid="loading-indicator" className="flex h-full items-center justify-center bg-card">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+)
 
 // Wake Lock Helper
 const useWakeLock = (enabled: boolean) => {
@@ -142,7 +154,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   }
 
   if (isCooking) {
-    return <CookingContainer onClose={onClose} />
+    return (
+      <Suspense fallback={<CookingModeLoadingFallback />}>
+        <CookingContainer onClose={onClose} />
+      </Suspense>
+    )
   }
 
   if (isEditing) {

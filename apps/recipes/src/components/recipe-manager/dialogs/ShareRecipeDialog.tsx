@@ -20,8 +20,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Stack, Inline } from '@/components/ui/layout'
-import { pdf } from '@react-pdf/renderer'
-import { RecipePdfDocument } from '../../recipe-pdf/RecipePdfDocument'
 import {
   shareRecipeText,
   shareRecipePdf,
@@ -78,6 +76,15 @@ export const ShareRecipeDialog: React.FC<ShareRecipeDialogProps> = ({
 
     setIsGenerating(true)
     try {
+      // Dynamic import: @react-pdf/renderer (pdfkit, layout engine, embedded font-metric
+      // tables) is heavy and only needed when the user actually exports a PDF. Loading it
+      // on demand keeps it out of the main entry chunk (same pattern as html2canvas in
+      // FeedbackModal.tsx). isGenerating stays true for the import as well as the render.
+      const [{ pdf }, { RecipePdfDocument }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../../recipe-pdf/RecipePdfDocument'),
+      ])
+
       // Generate PDF blob
       const doc = <RecipePdfDocument recipe={recipe} familyData={familyData} options={options} />
       const blob = await pdf(doc).toBlob()

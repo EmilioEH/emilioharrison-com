@@ -245,6 +245,38 @@ test.describe('Recipe Share Feature', () => {
     await expect(page.getByText('Recipe copied to clipboard!')).toBeVisible({ timeout: 5000 })
   })
 
+  test('should generate and download a PDF (exercises the lazy-loaded @react-pdf/renderer chunk)', async ({
+    page,
+  }) => {
+    // Navigate to the app
+    await page.goto('/protected/recipes')
+
+    // Open the recipe
+    const recipeCard = page.getByRole('button').filter({ hasText: 'Shareable Test Recipe' })
+    await recipeCard.click()
+
+    // Wait for details
+    await expect(page.getByRole('heading', { name: 'Shareable Test Recipe' })).toBeVisible()
+
+    // Open Share dialog
+    await page.getByRole('button', { name: 'Share Recipe' }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    // Click "Share as PDF" — this triggers the dynamic import() of @react-pdf/renderer and
+    // RecipePdfDocument (see ShareRecipeDialog.tsx), which previously shipped statically in
+    // the entry bundle. The button should show a loading state covering the import time,
+    // then fall back to a browser download (no Web Share API in headless Chromium).
+    const pdfButton = page.getByText('Share as PDF')
+    const downloadPromise = page.waitForEvent('download', { timeout: 15000 })
+    await pdfButton.click()
+
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/)
+
+    await expect(page.getByText('PDF downloaded!')).toBeVisible({ timeout: 5000 })
+  })
+
   test('should close share dialog when cancelled', async ({ page }) => {
     // Navigate to the app
     await page.goto('/protected/recipes')
