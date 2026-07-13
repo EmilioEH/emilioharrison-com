@@ -95,6 +95,8 @@ vi.mock('lucide-react', () => ({
   Play: () => <span>PlayIcon</span>,
   Check: () => <span>CheckIcon</span>,
   ListPlus: () => <span>ListIcon</span>,
+  // Used by the Suspense fallback shown while the lazy-loaded CookingContainer chunk resolves
+  Loader2: () => <span>LoaderIcon</span>,
 }))
 
 const mockRecipe: Recipe = {
@@ -162,7 +164,8 @@ describe('RecipeDetail', () => {
       />,
     )
 
-    expect(screen.getByTestId('cooking-container')).toBeInTheDocument()
+    // CookingContainer is React.lazy-loaded, so it resolves asynchronously — wait for it.
+    expect(await screen.findByTestId('cooking-container')).toBeInTheDocument()
     expect(screen.queryByTestId('detail-header')).not.toBeInTheDocument()
   })
 

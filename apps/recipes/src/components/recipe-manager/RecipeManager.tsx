@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
+import { Loader2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { VarietyWarning } from './VarietyWarning'
 
-import { RecipeEditor } from './RecipeEditor'
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './dialogs/BulkEditModal'
 import { FamilySetup } from './FamilySetup'
@@ -36,16 +36,32 @@ import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 
 import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
-import { WeekWorkspace } from './week-planner/WeekWorkspace'
 import { BottomTabBar } from './BottomTabBar'
 
-import { OnboardingFlow } from '../onboarding/OnboardingFlow'
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 import { WeekPlannerSettings } from '../settings/WeekPlannerSettings'
 import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
 import { $cookingSession } from '../../stores/cookingSession'
 
 // ViewMode is now imported from useRouter
+
+// Code-split: week planner, the recipe editor, and onboarding are each only needed
+// once the user navigates away from (or hasn't yet reached) the library view.
+const WeekWorkspace = React.lazy(() =>
+  import('./week-planner/WeekWorkspace').then((m) => ({ default: m.WeekWorkspace })),
+)
+const RecipeEditor = React.lazy(() =>
+  import('./RecipeEditor').then((m) => ({ default: m.RecipeEditor })),
+)
+const OnboardingFlow = React.lazy(() =>
+  import('../onboarding/OnboardingFlow').then((m) => ({ default: m.OnboardingFlow })),
+)
+
+const ViewLoadingFallback: React.FC = () => (
+  <div data-testid="loading-indicator" className="flex h-full items-center justify-center bg-card">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+)
 
 interface ProteinWarning {
   protein: string
@@ -523,7 +539,9 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   if (!isOnboardingComplete) {
     return (
       <div className="fixed inset-0 z-[60]">
-        <OnboardingFlow onComplete={() => setIsOnboardingComplete(true)} />
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <OnboardingFlow onComplete={() => setIsOnboardingComplete(true)} />
+        </Suspense>
       </div>
     )
   }
@@ -637,18 +655,20 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             {/* Week View with slide-up animation */}
             <AnimatePresence>
               {view === 'week' && (
-                <WeekWorkspace
-                  recipes={processedRecipes}
-                  allRecipes={recipes}
-                  onClose={() => setView('library')}
-                  onMinimize={() => setView('library')}
-                  onOpenCalendar={() => setIsCalendarOpen(true)}
-                  onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
-                  scrollContainer={scrollContainer}
-                  onShare={(recipe) => setShareRecipe(recipe)}
-                  initialTab="plan"
-                  user={currentUser}
-                />
+                <Suspense fallback={<ViewLoadingFallback />}>
+                  <WeekWorkspace
+                    recipes={processedRecipes}
+                    allRecipes={recipes}
+                    onClose={() => setView('library')}
+                    onMinimize={() => setView('library')}
+                    onOpenCalendar={() => setIsCalendarOpen(true)}
+                    onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
+                    scrollContainer={scrollContainer}
+                    onShare={(recipe) => setShareRecipe(recipe)}
+                    initialTab="plan"
+                    user={currentUser}
+                  />
+                </Suspense>
               )}
             </AnimatePresence>
           </main>
@@ -678,14 +698,16 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         onClose={() => setView('library')}
         title={selectedRecipe?.id ? 'Edit Recipe' : 'New Recipe'}
       >
-        <RecipeEditor
-          recipe={selectedRecipe || {}}
-          onSave={handleSaveRecipe}
-          onCancel={() => setView('library')}
-          onDelete={handleDeleteRecipe}
-          isEmbedded={true}
-          onView={(id) => setRoute({ activeRecipeId: id, view: 'detail' })}
-        />
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <RecipeEditor
+            recipe={selectedRecipe || {}}
+            onSave={handleSaveRecipe}
+            onCancel={() => setView('library')}
+            onDelete={handleDeleteRecipe}
+            isEmbedded={true}
+            onView={(id) => setRoute({ activeRecipeId: id, view: 'detail' })}
+          />
+        </Suspense>
       </ResponsiveModal>
 
       {/* Meal Planner Modals */}

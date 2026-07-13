@@ -1,16 +1,42 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react'
-import { RecipeDetail } from './RecipeDetail'
-import { NotificationSettingsView } from './views/NotificationSettingsView'
-import { SettingsView } from './views/SettingsView'
-import { BulkRecipeImporter } from './importer/BulkRecipeImporter'
-import FeedbackDashboard from './views/FeedbackDashboard'
-import { AdminDashboard } from '../admin/AdminDashboard'
-import { InviteView } from './views/InviteView'
-
-import { FamilyManagementView } from './views/FamilyManagementView'
 import type { Recipe, Family } from '../../lib/types'
 import type { ViewMode } from './hooks/useRouter'
+
+// Non-library views are code-split: each is only fetched when the user actually
+// navigates to it, keeping the entry chunk limited to the library view.
+const RecipeDetail = React.lazy(() =>
+  import('./RecipeDetail').then((m) => ({ default: m.RecipeDetail })),
+)
+const NotificationSettingsView = React.lazy(() =>
+  import('./views/NotificationSettingsView').then((m) => ({
+    default: m.NotificationSettingsView,
+  })),
+)
+const SettingsView = React.lazy(() =>
+  import('./views/SettingsView').then((m) => ({ default: m.SettingsView })),
+)
+const BulkRecipeImporter = React.lazy(() =>
+  import('./importer/BulkRecipeImporter').then((m) => ({ default: m.BulkRecipeImporter })),
+)
+const FeedbackDashboard = React.lazy(() => import('./views/FeedbackDashboard'))
+const AdminDashboard = React.lazy(() =>
+  import('../admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
+)
+const InviteView = React.lazy(() =>
+  import('./views/InviteView').then((m) => ({ default: m.InviteView })),
+)
+const FamilyManagementView = React.lazy(() =>
+  import('./views/FamilyManagementView').then((m) => ({ default: m.FamilyManagementView })),
+)
+
+// Shared fallback while a lazy view's chunk loads — visually identical to the
+// top-level data loading indicator below (same testid; the two never render at once).
+const ViewLoadingFallback: React.FC = () => (
+  <div data-testid="loading-indicator" className="flex h-full items-center justify-center bg-card">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+)
 
 interface RecipeManagerViewProps {
   view: string
@@ -99,15 +125,17 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
 
   if (view === 'detail' && selectedRecipe) {
     return (
-      <RecipeDetail
-        key={selectedRecipe.id}
-        recipe={selectedRecipe}
-        onClose={() => setView('library')}
-        onUpdate={handleUpdateRecipe}
-        onDelete={(id) => handleDeleteRecipe(id)}
-        onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
-        onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
-      />
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <RecipeDetail
+          key={selectedRecipe.id}
+          recipe={selectedRecipe}
+          onClose={() => setView('library')}
+          onUpdate={handleUpdateRecipe}
+          onDelete={(id) => handleDeleteRecipe(id)}
+          onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
+          onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
+        />
+      </Suspense>
     )
   }
 
@@ -146,28 +174,36 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   }
 
   if (view === 'notifications') {
-    return <NotificationSettingsView onClose={() => setView('library')} />
+    return (
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <NotificationSettingsView onClose={() => setView('library')} />
+      </Suspense>
+    )
   }
 
   if (view === 'settings') {
     return (
-      <SettingsView
-        onClose={() => setView('library')}
-        onExport={handleExport}
-        onImport={handleImport}
-        onDeleteAccount={handleDeleteAll}
-        currentName={user ?? undefined}
-        onUpdateProfile={handleUpdateProfile}
-      />
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <SettingsView
+          onClose={() => setView('library')}
+          onExport={handleExport}
+          onImport={handleImport}
+          onDeleteAccount={handleDeleteAll}
+          currentName={user ?? undefined}
+          onUpdateProfile={handleUpdateProfile}
+        />
+      </Suspense>
     )
   }
 
   if (view === 'bulk-import') {
     return (
-      <BulkRecipeImporter
-        onClose={() => setView('library')}
-        onRecipesParsed={handleBulkImportSave}
-      />
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <BulkRecipeImporter
+          onClose={() => setView('library')}
+          onRecipesParsed={handleBulkImportSave}
+        />
+      </Suspense>
     )
   }
 
@@ -180,7 +216,9 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
           </button>
         </div>
         <div className="flex-1 overflow-hidden">
-          <FeedbackDashboard />
+          <Suspense fallback={<ViewLoadingFallback />}>
+            <FeedbackDashboard />
+          </Suspense>
         </div>
       </div>
     )
@@ -190,15 +228,27 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     if (!isAdmin) {
       return null
     }
-    return <AdminDashboard onClose={() => setView('library')} />
+    return (
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <AdminDashboard onClose={() => setView('library')} />
+      </Suspense>
+    )
   }
 
   if (view === 'invite') {
-    return <InviteView onClose={() => setView('library')} />
+    return (
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <InviteView onClose={() => setView('library')} />
+      </Suspense>
+    )
   }
 
   if (view === 'family-settings') {
-    return <FamilyManagementView onClose={() => setView('library')} family={family} />
+    return (
+      <Suspense fallback={<ViewLoadingFallback />}>
+        <FamilyManagementView onClose={() => setView('library')} family={family} />
+      </Suspense>
+    )
   }
 
   return <>{children}</>

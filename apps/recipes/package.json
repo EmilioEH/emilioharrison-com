@@ -9,6 +9,7 @@
     "start": "astro dev",
     "build": "astro build",
     "build:test": "PUBLIC_TEST_MODE=true astro build",
+    "analyze": "ANALYZE=true astro build",
     "preview": "astro preview",
     "preview:wrangler": "wrangler pages dev dist --port 8788",
     "lint": "eslint --cache .",
