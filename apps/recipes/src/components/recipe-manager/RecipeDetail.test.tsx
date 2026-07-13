@@ -186,4 +186,78 @@ describe('RecipeDetail', () => {
 
     expect(screen.getByTestId('edit-view')).toBeInTheDocument()
   })
+
+  describe('hydration gate (PERFORMANCE-PLAN.md P3 — slim list payload)', () => {
+    // GET /api/recipes now ships a slim projection with no `steps` — `steps === undefined` is
+    // the signal that `recipe` is that slim record rather than the full document.
+    const slimRecipe = { ...mockRecipe, steps: undefined } as unknown as Recipe
+
+    it('renders content immediately for an already-full recipe (steps present)', () => {
+      global.fetch = vi.fn()
+
+      render(
+        <RecipeDetail
+          recipe={mockRecipe}
+          onClose={onClose}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onToggleThisWeek={onToggleThisWeek}
+          onToggleFavorite={onToggleFavorite}
+        />,
+      )
+
+      expect(screen.getByTestId('overview-mode')).toBeInTheDocument()
+      expect(screen.queryByTestId('recipe-detail-loading')).not.toBeInTheDocument()
+    })
+
+    it('blocks render behind a loading fallback for a slim record, then hydrates via GET /api/recipes/[id]', async () => {
+      const fullRecipe = { ...mockRecipe, steps: ['Step 1'] }
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ recipe: fullRecipe }),
+      })
+
+      render(
+        <RecipeDetail
+          recipe={slimRecipe}
+          onClose={onClose}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onToggleThisWeek={onToggleThisWeek}
+          onToggleFavorite={onToggleFavorite}
+        />,
+      )
+
+      // Blocked immediately — never flashes ingredient/instruction-less content.
+      expect(screen.getByTestId('recipe-detail-loading')).toBeInTheDocument()
+      expect(screen.queryByTestId('overview-mode')).not.toBeInTheDocument()
+
+      // Once the full document arrives, the gate lifts and the fetched doc is synced back via
+      // the non-network-writing 'hydrate' mode (not 'silent', which would PUT it right back).
+      await vi.waitFor(() => {
+        expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ id: 'recipe-123' }), 'hydrate')
+      })
+    })
+
+    it('stops blocking even if the hydration fetch fails, rather than spinning forever', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('network error'))
+
+      render(
+        <RecipeDetail
+          recipe={slimRecipe}
+          onClose={onClose}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onToggleThisWeek={onToggleThisWeek}
+          onToggleFavorite={onToggleFavorite}
+        />,
+      )
+
+      expect(screen.getByTestId('recipe-detail-loading')).toBeInTheDocument()
+
+      await vi.waitFor(() => {
+        expect(screen.queryByTestId('recipe-detail-loading')).not.toBeInTheDocument()
+      })
+    })
+  })
 })

@@ -116,18 +116,22 @@ describe('FirebaseRestService', () => {
       })
     })
 
-    it('encodes an EQUAL/null filter (for legacy-recipe backfilled documents)', async () => {
+    it('encodes an EQUAL/null filter as a unaryFilter (for legacy-recipe backfilled documents)', async () => {
+      // Firestore's REST API rejects a plain fieldFilter/EQUAL comparison against null with a
+      // 400 — it must be expressed as unaryFilter/IS_NULL instead. This is the one wire-format
+      // detail a mocked-fetch test can't verify against real Firestore, but it at least locks in
+      // the correct shape so a future refactor can't silently regress it back to fieldFilter.
       const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] })
       global.fetch = fetchMock
 
       await service.runQuery('recipes', { field: 'createdBy', op: 'EQUAL', value: null })
 
       const body = JSON.parse(fetchMock.mock.calls[0][1].body)
-      expect(body.structuredQuery.where.fieldFilter).toEqual({
+      expect(body.structuredQuery.where.unaryFilter).toEqual({
         field: { fieldPath: 'createdBy' },
-        op: 'EQUAL',
-        value: { nullValue: null },
+        op: 'IS_NULL',
       })
+      expect(body.structuredQuery.where.fieldFilter).toBeUndefined()
     })
 
     it('maps Firestore runQuery response documents into plain objects with an id', async () => {

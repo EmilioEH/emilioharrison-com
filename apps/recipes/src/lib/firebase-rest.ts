@@ -222,6 +222,11 @@ export class FirebaseRestService {
    * Callers relying on `EQUAL` against `null` need documents to have that field explicitly set to
    * `null` — see `scripts/backfill-legacy-created-by.ts` for the one-time migration this project
    * uses to convert legacy "field is simply absent" recipes into `createdBy: null`.
+   *
+   * Firestore's structured query API also rejects a plain `fieldFilter`/`EQUAL` comparison
+   * against `null` (and `NaN`) — the REST API 400s unless it's expressed as a dedicated
+   * `unaryFilter` (`IS_NULL`/`IS_NAN`). `EQUAL` against `null` is special-cased below for that
+   * reason; a mocked-fetch unit test wouldn't have caught the wire-format difference.
    */
   async runQuery<T = any>(
     collectionId: string,
@@ -231,16 +236,18 @@ export class FirebaseRestService {
     const token = await this.getAccessToken()
     const url = `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents:runQuery`
 
-    const structuredQuery: any = {
-      from: [{ collectionId }],
-      where: {
-        fieldFilter: {
-          field: { fieldPath: filter.field },
-          op: filter.op,
-          value: this.toFirestoreValue(filter.value),
-        },
-      },
-    }
+    const where =
+      filter.op === 'EQUAL' && filter.value === null
+        ? { unaryFilter: { field: { fieldPath: filter.field }, op: 'IS_NULL' } }
+        : {
+            fieldFilter: {
+              field: { fieldPath: filter.field },
+              op: filter.op,
+              value: this.toFirestoreValue(filter.value),
+            },
+          }
+
+    const structuredQuery: any = { from: [{ collectionId }], where }
     if (options?.limit) structuredQuery.limit = options.limit
 
     const res = await fetch(url, {
