@@ -6,16 +6,16 @@
 
 ## Baseline (measured)
 
-| Metric | Value today | Target after plan |
-| --- | --- | --- |
-| Entry chunk `RecipeManager.[hash].js` | 2,128 KB raw / **665 KB gzip** | ≤ 200 KB gzip |
-| Critical-path JS (entry + firebase-client + react + framer-motion) | ~850 KB gzip | ≤ 350 KB gzip |
-| Total `_astro/*.js` shipped | 4.3 MB (30 files) | n/a (split, mostly lazy) |
-| `GET /api/recipes` Firestore reads | Entire `recipes` collection (all users), 4 sequential REST calls | Only caller's + family's recipes, parallel calls |
-| Repeat-visit recipe paint | Spinner until network completes | Instant paint from local cache |
-| Service worker asset caching | 3 icon files only | All hashed `_astro/*` assets |
-| Mount-time API round trips | 5 (partly serialized, 1 duplicated) | 1–2 |
-| List card image size | Up to 1920 px stored image per card | ~400 px thumbnail per card |
+| Metric                                                             | Value today                                                      | Target after plan                                |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------ |
+| Entry chunk `RecipeManager.[hash].js`                              | 2,128 KB raw / **665 KB gzip**                                   | ≤ 200 KB gzip                                    |
+| Critical-path JS (entry + firebase-client + react + framer-motion) | ~850 KB gzip                                                     | ≤ 350 KB gzip                                    |
+| Total `_astro/*.js` shipped                                        | 4.3 MB (30 files)                                                | n/a (split, mostly lazy)                         |
+| `GET /api/recipes` Firestore reads                                 | Entire `recipes` collection (all users), 4 sequential REST calls | Only caller's + family's recipes, parallel calls |
+| Repeat-visit recipe paint                                          | Spinner until network completes                                  | Instant paint from local cache                   |
+| Service worker asset caching                                       | 3 icon files only                                                | All hashed `_astro/*` assets                     |
+| Mount-time API round trips                                         | 5 (partly serialized, 1 duplicated)                              | 1–2                                              |
+| List card image size                                               | Up to 1920 px stored image per card                              | ~400 px thumbnail per card                       |
 
 **How to reproduce the baseline numbers:**
 
@@ -195,14 +195,14 @@ Small independent items; pick up opportunistically.
 
 ## Sequencing summary
 
-| Order | Item | Why this order |
-| --- | --- | --- |
-| 1 | P1 bundle split | Biggest first-load lever; independent; easy to verify |
-| 1 | P2 persisted store | Biggest repeat-load lever; independent of P1 |
-| 2 | P3 API query + slim payload | Scaling/latency fix; P2's cache absorbs any payload-shape churn |
-| 3 | P4 SW caching | Depends on stable chunking from P1 |
-| 3 | P5 thumbnails | Independent; pairs with P3's slim payload (`thumbUrl` in list fields) |
-| 4 | P6+P7 bootstrap + shell | Touches SSR page, stores, and several endpoints — land after the data layer settles |
-| 5 | P8–P11 | Polish + regression guardrails (P10 should land immediately after P1) |
+| Order | Item                        | Why this order                                                                      |
+| ----- | --------------------------- | ----------------------------------------------------------------------------------- |
+| 1     | P1 bundle split             | Biggest first-load lever; independent; easy to verify                               |
+| 1     | P2 persisted store          | Biggest repeat-load lever; independent of P1                                        |
+| 2     | P3 API query + slim payload | Scaling/latency fix; P2's cache absorbs any payload-shape churn                     |
+| 3     | P4 SW caching               | Depends on stable chunking from P1                                                  |
+| 3     | P5 thumbnails               | Independent; pairs with P3's slim payload (`thumbUrl` in list fields)               |
+| 4     | P6+P7 bootstrap + shell     | Touches SSR page, stores, and several endpoints — land after the data layer settles |
+| 5     | P8–P11                      | Polish + regression guardrails (P10 should land immediately after P1)               |
 
 Each phase is a separate PR with before/after measurements in the description, using the commands in the Baseline section.

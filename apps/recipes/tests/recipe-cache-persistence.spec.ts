@@ -81,28 +81,43 @@ test.describe('Recipe cache — stale-while-revalidate (P2)', () => {
   test('background refresh updates the UI when the server payload differs from the cache', async ({
     page,
   }) => {
-    let currentTitle = 'Stale Cached Title'
-
+    // First visit — cache the "stale" title via a normal, immediate response.
     await page.route('**/api/recipes', async (route) => {
       if (route.request().method() !== 'GET') return route.continue()
       await route.fulfill({
-        json: { recipes: [{ ...TEST_RECIPES[0], title: currentTitle }] },
+        json: { recipes: [{ ...TEST_RECIPES[0], title: 'Stale Cached Title' }] },
       })
     })
-
-    // First visit — cache the "stale" title.
     await page.goto('/protected/recipes')
     await expect(page.getByText('Stale Cached Title')).toBeVisible()
 
-    // Server now has a different title; reload without user interaction.
-    currentTitle = 'Fresh Server Title'
+    // Server now has a different title. Gate the reload's background refetch so we can assert
+    // the stale-from-cache paint happens first — otherwise an unthrottled mock response can
+    // resolve before Playwright's first poll and the transition is never observably distinct
+    // (see the "warm launch" test above for the same gating pattern).
+    let releaseResponse: () => void
+    const gate = new Promise<void>((resolve) => {
+      releaseResponse = resolve
+    })
+    await page.unroute('**/api/recipes')
+    await page.route('**/api/recipes', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue()
+      await gate
+      await route.fulfill({
+        json: { recipes: [{ ...TEST_RECIPES[0], title: 'Fresh Server Title' }] },
+      })
+    })
+
     await page.reload()
 
-    // Cached (stale) title paints immediately from local cache...
+    // Cached (stale) title paints immediately from local cache, while the background refresh
+    // is still held back...
     await expect(page.getByText('Stale Cached Title')).toBeVisible()
-    // ...then the silent background refresh reconciles it with the server's title.
-    await expect(page.getByText('Fresh Server Title')).toBeVisible({ timeout: 10000 })
     await expect(page.getByTestId('loading-indicator')).not.toBeVisible()
+
+    // ...then the silent background refresh reconciles it with the server's title once released.
+    releaseResponse!()
+    await expect(page.getByText('Fresh Server Title')).toBeVisible({ timeout: 10000 })
   })
 
   test('logout clears the persisted recipe cache', async ({ page }) => {
