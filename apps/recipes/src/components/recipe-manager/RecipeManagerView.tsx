@@ -48,7 +48,7 @@ interface RecipeManagerViewProps {
   isAdmin: boolean
   family: Family | null
 
-  handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent') => void
+  handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent' | 'hydrate') => void
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
   handleToggleFavorite: (recipe: Recipe) => void

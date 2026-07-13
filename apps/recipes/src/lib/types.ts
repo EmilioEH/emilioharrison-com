@@ -98,6 +98,43 @@ export interface Recipe {
   versions?: RecipeVersion[]
 }
 
+/**
+ * Slim projection of `Recipe` returned by `GET /api/recipes` (the library list endpoint) — see
+ * PERFORMANCE-PLAN.md P3. Contains only the fields `RecipeCard.tsx`/`RecipeLibrary.tsx` render,
+ * `useFilteredRecipes.ts` filters/sorts/searches by, and `isFavorite`. Notably excludes `steps`,
+ * `structuredSteps`/`structuredIngredients`, step-ingredient mappings, notes, and version history
+ * — those only ship on the full document from `GET /api/recipes/[id]`.
+ *
+ * Client code treats list records as `Recipe` (the existing app-wide type) for convenience, since
+ * every field here is also a valid, optional `Recipe` field — but `steps` being absent is exactly
+ * the signal `RecipeDetail.tsx` uses to know it must fetch the full document before rendering
+ * (see the "SWR Revalidation" effect there).
+ */
+export type RecipeListItem = Pick<
+  Recipe,
+  | 'id'
+  | 'title'
+  | 'images'
+  | 'finishedImage'
+  | 'sourceImage'
+  | 'prepTime'
+  | 'cookTime'
+  | 'servings'
+  | 'protein'
+  | 'cuisine'
+  | 'difficulty'
+  | 'rating'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'dishType'
+  | 'estimatedCost'
+  | 'mealType'
+  | 'dietary'
+  | 'equipment'
+  | 'occasion'
+  | 'ingredients'
+> & { isFavorite: boolean }
+
 export interface RecipeVersion {
   id: string
   recipeId: string
