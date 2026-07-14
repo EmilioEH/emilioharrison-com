@@ -497,6 +497,78 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
       }
     }
 
+    // --- BOOTSTRAP API (PERFORMANCE-PLAN.md P6+P7) ---
+    // Consolidates recipes + planned + family + user identity into one response, matching
+    // `GET /api/bootstrap`'s real shape (see src/pages/api/bootstrap.ts) so RecipeManager's
+    // `useBootstrap` hook gets everything it needs from a single mocked route in tests, exactly
+    // as it would from a single real round trip in production.
+    //
+    // Rather than hardcoding a response here (which would silently ignore any test-specific
+    // `page.route('**/api/recipes' | '**/week/planned' | '**/families/current', ...)` override —
+    // and there are ~20 spec files across the suite that do exactly that to control what the
+    // library shows), this delegates back into the *same page's* routing table via
+    // `page.evaluate(() => fetch(...))`. A `fetch()` issued from inside the page goes through
+    // Playwright's normal route interception, so it naturally picks up whatever the test already
+    // registered for those individual endpoints — this mock composes them the same way the real
+    // `GET /api/bootstrap` endpoint composes the real individual endpoints' query logic.
+    if (url.includes('/api/bootstrap')) {
+      if (method === 'GET') {
+        // `page.evaluate` itself (not just the fetch it runs) can reject — e.g. "Execution
+        // context was destroyed" if a test deliberately delays one of these endpoints across a
+        // `page.reload()`/navigation to test loading/cache-fallback timing (see
+        // recipe-cache-persistence.spec.ts). That's a Playwright-binding-level rejection, not a
+        // fetch failure, so it isn't caught by the `.catch()` *inside* the evaluated function —
+        // each call needs its own outer fallback too.
+        const [recipesData, plannedData, familyData] = await Promise.all([
+          page
+            .evaluate(() =>
+              fetch('/protected/recipes/api/recipes')
+                .then((r) => r.json())
+                .catch(() => ({ recipes: [] })),
+            )
+            .catch(() => ({ recipes: [] })),
+          page
+            .evaluate(() =>
+              fetch('/protected/recipes/api/week/planned')
+                .then((r) => r.json())
+                .catch(() => ({ planned: [] })),
+            )
+            .catch(() => ({ planned: [] })),
+          page
+            .evaluate(() =>
+              fetch('/protected/recipes/api/families/current')
+                .then((r) => r.json())
+                .catch(() => ({ family: null, members: [], currentUserId: 'TestUser' })),
+            )
+            .catch(() => ({ family: null, members: [], currentUserId: 'TestUser' })),
+        ])
+
+        try {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              user: { displayName: 'Emilio', isAdmin: true, hasOnboarded: true },
+              recipes: recipesData.recipes || [],
+              planned: plannedData.planned || [],
+              family: {
+                family: familyData.family ?? null,
+                members: familyData.members ?? [],
+                currentUserId: familyData.currentUserId ?? 'TestUser',
+                incomingInvites: familyData.incomingInvites ?? [],
+                outgoingInvites: familyData.outgoingInvites ?? [],
+              },
+            }),
+          })
+        } catch {
+          // The page navigated away (reload/unload) while this was in flight — nothing to
+          // fulfill anymore, and Playwright already discards the request in that case.
+        }
+        return
+      }
+    }
+
     // --- ADMIN FAMILIES API ---
     if (url.includes('/api/admin/families')) {
       if (method === 'DELETE') {

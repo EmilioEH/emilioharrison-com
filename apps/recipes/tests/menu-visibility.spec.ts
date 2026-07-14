@@ -9,7 +9,11 @@ test.describe('Global Menu Visibility', () => {
       { name: 'site_email', value: 'emilioeh1991@gmail.com', domain: 'localhost', path: '/' },
     ])
 
-    // 0. Mock Recipes API
+    // 0. Mock Recipes API. Note: the library's initial recipe list now comes from
+    // `GET /api/bootstrap`, not a standalone `GET /api/recipes` call (see PERFORMANCE-PLAN.md
+    // P6+P7) — but msw-setup.ts's shared `/api/bootstrap` mock composes its response by calling
+    // back into this same page's routes (`/api/recipes`, `/api/week/planned`,
+    // `/api/families/current`), so mocking `/api/recipes` here is still sufficient.
     await page.route('**/api/recipes', async (route) => {
       await route.fulfill({
         status: 200,

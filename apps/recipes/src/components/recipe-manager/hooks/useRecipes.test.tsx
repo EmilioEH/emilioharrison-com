@@ -154,4 +154,32 @@ describe('useRecipes — stale-while-revalidate mount behavior', () => {
     await waitFor(() => expect(result.current.error).not.toBeNull())
     expect(result.current.loading).toBe(false)
   })
+
+  it('skipInitialFetch: never fires its own mount-time /api/recipes fetch (bootstrap owns it — P6+P7)', async () => {
+    const fetchMock = vi.fn()
+    global.fetch = fetchMock
+
+    const { result } = renderHook(() => useRecipes({ skipInitialFetch: true }))
+
+    // Give any stray effect a tick to fire before asserting it never did.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    // The hook still reflects whatever recipeStore is (or becomes) — it just doesn't fetch it.
+    expect(result.current.recipes).toEqual([])
+  })
+
+  it('skipInitialFetch: still reflects data another caller (bootstrap) writes into the store', async () => {
+    const fetchMock = vi.fn()
+    global.fetch = fetchMock
+
+    const { result, rerender } = renderHook(() => useRecipes({ skipInitialFetch: true }))
+
+    resetStoreToWarm([mockRecipe('r1', { title: 'From Bootstrap' })])
+    rerender()
+
+    expect(result.current.recipes[0].title).toBe('From Bootstrap')
+    expect(result.current.loading).toBe(false)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })

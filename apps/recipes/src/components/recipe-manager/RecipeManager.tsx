@@ -11,6 +11,8 @@ import type { Recipe, FamilyRecipeData } from '../../lib/types'
 
 // --- Hooks ---
 import { useRecipes } from './hooks/useRecipes'
+import { useBootstrap } from './hooks/useBootstrap'
+import { useIdentityResolution } from './hooks/useIdentityResolution'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
 import { useFirebaseAuthSync } from '../../lib/useFirebaseAuthSync'
 
@@ -79,35 +81,31 @@ interface RecipeManagerProps {
 
 // --- MAIN COMPONENT ---
 const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
-  const [currentUser, setCurrentUser] = useState(user)
-  const isTestUser = user === 'TestUser' || user === 'test_user'
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(hasOnboarded || isTestUser)
-  const computedIsAdmin =
-    isAdmin ||
-    (isTestUser &&
-      typeof window !== 'undefined' &&
-      (window as unknown as { isPlaywright: boolean }).isPlaywright)
-
-  // Sync prop changes
-  useEffect(() => {
-    if (user) setCurrentUser(user)
-  }, [user])
-
-  useEffect(() => {
-    const isTest = user === 'TestUser' || user === 'test_user'
-    let state = hasOnboarded || isTest
-
-    if (typeof window !== 'undefined') {
-      const { search } = window.location
-      if (search.includes('force_onboarding=true')) state = false
-      else if (search.includes('skip_onboarding=true')) state = true
-    }
-
-    setIsOnboardingComplete(state)
-  }, [hasOnboarded, user])
+  // Boot-time data (recipes, planned, family, user identity) now all come from a single
+  // `GET /api/bootstrap` call — see PERFORMANCE-PLAN.md P6+P7. `user`/`isAdmin`/`hasOnboarded`
+  // are SSR defaults from `[...path].astro` (which no longer blocks on Firestore — `user` is just
+  // the raw `site_user` cookie value, `isAdmin` is a cheap cookie-derived best guess, and
+  // `hasOnboarded` is usually omitted/unknown); `useIdentityResolution` reconciles those
+  // placeholders with the Firestore-verified `bootstrapUser` once it arrives, without ever
+  // flashing the wrong screen for a returning user (see that hook for the exact decision matrix,
+  // including the `force_onboarding`/`skip_onboarding` query-param overrides).
+  const { user: bootstrapUser, bootstrapped } = useBootstrap()
+  const {
+    currentUser,
+    setCurrentUser,
+    isAdmin: computedIsAdmin,
+    isOnboardingComplete,
+    setIsOnboardingComplete,
+  } = useIdentityResolution({
+    initialUser: user,
+    initialIsAdmin: isAdmin,
+    initialHasOnboarded: hasOnboarded,
+    bootstrapped,
+    bootstrapUser,
+  })
 
   const { recipes, setRecipes, loading, initialized, error, refreshRecipes, getBaseUrl } =
-    useRecipes()
+    useRecipes({ skipInitialFetch: true })
 
   // Sync server session with Firebase client SDK for Firestore subscriptions
   useFirebaseAuthSync()
@@ -115,27 +113,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   // Use the extracted family sync logic
   const { showFamilySetup, setShowFamilySetup, showSyncNotification, setShowSyncNotification } =
     useFamilySync()
-
-  // Load planned recipes logic (kept in component for now as it's recipe-specific)
-  useEffect(() => {
-    if (loading) return
-
-    const loadPlannedRecipes = async () => {
-      try {
-        const res = await fetch('/protected/recipes/api/week/planned')
-        const data = await res.json()
-        if (data.success && data.planned) {
-          data.planned.forEach((item: FamilyRecipeData) => {
-            familyActions.setRecipeFamilyData(item.id, item)
-          })
-        }
-      } catch (e) {
-        console.error('Failed to load planned recipes:', e)
-      }
-    }
-
-    loadPlannedRecipes()
-  }, [loading])
 
   // Track last known family update timestamp for efficient sync
   const [lastKnownUpdate, setLastKnownUpdate] = useState<string | null>(null)
@@ -535,6 +512,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [setIsSelectionMode])
 
   // --- RENDER ---
+
+  // Onboarding status isn't known yet (cold launch, still waiting on bootstrap, and no query-param
+  // override) — show the same loading affordance used elsewhere rather than guessing either way.
+  if (isOnboardingComplete === null) {
+    return <ViewLoadingFallback />
+  }
 
   if (!isOnboardingComplete) {
     return (

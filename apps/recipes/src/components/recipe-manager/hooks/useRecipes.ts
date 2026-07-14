@@ -14,7 +14,19 @@ const getBaseUrl = (): string => {
   return base.endsWith('/') ? base : `${base}/`
 }
 
-export const useRecipes = () => {
+interface UseRecipesOptions {
+  /**
+   * Skip the mount-time `GET /api/recipes` fetch entirely. Set this when a caller (currently
+   * `useBootstrap`, see PERFORMANCE-PLAN.md P6+P7) already seeds `recipeStore` via a consolidated
+   * `/api/bootstrap` call — without this, both hooks would fire their own boot-time fetch and
+   * reintroduce the redundant round trip bootstrap exists to eliminate. `refreshRecipes` (used
+   * for background polling, post-mutation refetches, etc.) is unaffected either way.
+   */
+  skipInitialFetch?: boolean
+}
+
+export const useRecipes = (options: UseRecipesOptions = {}) => {
+  const { skipInitialFetch = false } = options
   const recipes = useStore($recipes)
   const loading = useStore($recipesLoading)
   const initialized = useStore($recipesInitialized)
@@ -68,6 +80,8 @@ export const useRecipes = () => {
   useEffect(() => {
     if (hasMountedRef.current) return
     hasMountedRef.current = true
+
+    if (skipInitialFetch) return
 
     if (initialized) {
       // Warm launch: stale-while-revalidate — data is already on screen, just refresh quietly.

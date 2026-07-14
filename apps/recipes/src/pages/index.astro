@@ -1,37 +1,40 @@
 ---
 import RecipeLayout from '../layouts/RecipeLayout.astro'
 import RecipeManagerClient from '../components/recipe-manager/RecipeManager'
-import { db } from '../lib/firebase-server'
 import { getEmailList } from '../lib/env'
 
+// This is the root `/protected/recipes/` route (Astro's `index.astro` takes precedence over the
+// `[...path].astro` catch-all for the exact index path within the same directory) — it used to
+// duplicate that file's now-removed blocking `await db.getDocument('users', userId)` call. See
+// PERFORMANCE-PLAN.md P6+P7 and `[...path].astro` (kept in sync with this file): the shell now
+// renders immediately with cheap/default values, and the client's `useBootstrap()` hook (in
+// RecipeManager.tsx) resolves the real `displayName`/`isAdmin`/`hasOnboarded` from
+// `GET /api/bootstrap` right after mount, updating RecipeManager's state once it arrives.
 const userId = Astro.cookies.get('site_user')?.value
-let displayName = userId
+const displayName = userId
 let isAdmin = false
-let hasOnboarded = false
+// `undefined` = "not yet known" (see RecipeManager.tsx's onboarding-gating effect, which treats
+// this the same as "wait for bootstrap" rather than assuming either onboarded or not).
+let hasOnboarded: boolean | undefined
 
-if (userId) {
-  try {
-    const userDoc = await db.getDocument('users', userId)
-    if (userDoc) {
-      if (typeof userDoc.displayName === 'string') {
-        displayName = userDoc.displayName
-      }
-      if (typeof userDoc.email === 'string') {
-        const adminEmails = getEmailList(Astro, 'ADMIN_EMAILS')
-        if (adminEmails.includes(userDoc.email.toLowerCase())) {
-          isAdmin = true
-        }
-      }
-      if (typeof userDoc.hasOnboarded === 'boolean') {
-        hasOnboarded = userDoc.hasOnboarded
-      } else {
-        // If the field is missing (existing user), treat as onboarded
-        // to avoid disrupting them.
-        hasOnboarded = true
-      }
-    }
-  } catch (e) {
-    // Ignore errors (profile strictly optional)
+const isTestMode = import.meta.env.PUBLIC_TEST_MODE === 'true'
+const isTestUser = userId === 'TestUser' || userId === 'test_user'
+
+if (isTestMode && isTestUser) {
+  // BYPASS: In Test Mode, trust the TestUser completely to avoid "Split Brain" issues
+  // between Client Mocks (MSW) and Server Real DB (Firestore)
+  isAdmin = true
+  hasOnboarded = true
+} else if (userId) {
+  // Cheap, synchronous admin check derived from the `site_email` cookie — the same pattern
+  // already used server-side elsewhere for admin gating without a Firestore round trip (see
+  // the PATCH/DELETE handlers in api/families/current.ts). `displayName`/`hasOnboarded` aren't
+  // derivable this cheaply, so they stay at their defaults above until bootstrap resolves the
+  // Firestore-verified values client-side.
+  const email = Astro.cookies.get('site_email')?.value
+  if (email) {
+    const adminEmails = getEmailList(Astro, 'ADMIN_EMAILS')
+    isAdmin = adminEmails.includes(email.toLowerCase())
   }
 }
 ---
@@ -39,7 +42,7 @@ if (userId) {
 <RecipeLayout title="My Recipes" isAdmin={isAdmin}>
   <RecipeManagerClient
     client:only="react"
-    user={displayName || userId}
+    user={displayName}
     isAdmin={isAdmin}
     hasOnboarded={hasOnboarded}
   />

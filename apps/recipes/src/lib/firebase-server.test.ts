@@ -19,6 +19,8 @@ describe('firebase-server db proxy', () => {
     // proxy in the first place, so they're excluded here rather than added to the allowlist.
     const privateMethodNames = new Set([
       'getAccessToken',
+      'getSessionKv',
+      'tokenCacheKey',
       'fetchCollectionPage',
       'mapFirestoreDoc',
       'fromFirestoreFields',
