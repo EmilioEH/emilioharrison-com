@@ -138,46 +138,29 @@ const isImpersonating = Astro.cookies.has('admin_mask')
             // Check for updates immediately
             registration.update()
 
-            // Listen for new SW taking control (after skipWaiting + clients.claim)
+            // Listen for a new SW taking control (after skipWaiting + clients.claim).
+            //
+            // This used to force `window.location.reload()` here (deferred via a
+            // sessionStorage flag if the user was viewing a recipe detail, to avoid
+            // yanking them back to the library mid-cook). That whole dance is removed now
+            // that hashed assets (`/_astro/*`) are cached properly by the SW (see
+            // public/sw.js) — new code is picked up naturally the next time the user
+            // reopens the installed PWA or does a normal navigation, which is far less
+            // jarring in a home-screen-installed, chrome-less standalone PWA than a
+            // surprise forced reload.
+            //
+            // Removing the reload doesn't reintroduce the "kicked back to library" bug it
+            // was guarding against: that bug was a race caused by the reload itself firing
+            // while `useRouter` (src/components/recipe-manager/hooks/useRouter.ts) hadn't
+            // yet pushed `?view=detail&recipe=...` into the URL for a just-clicked recipe.
+            // With no forced reload, there's no reload to race against. `useRouter` also
+            // already restores `view`/`recipe` from the URL on mount, so a normal
+            // (non-forced) reload/reopen still lands back on whatever recipe was open.
+            //
+            // Just log for now; a future non-blocking "update available" toast could listen
+            // for this event without navigating anyone away.
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-              console.log('New SW activated')
-
-              // Wait for any in-progress navigation to complete before checking
-              // This prevents race conditions where the URL hasn't been updated yet
-              // by React Router when users are clicking to open a recipe
-              requestAnimationFrame(() => {
-                setTimeout(() => {
-                  // Don't reload if user is viewing a recipe detail - this prevents
-                  // the bug where users get unexpectedly kicked back to the library
-                  const params = new URLSearchParams(window.location.search)
-                  const isViewingRecipe = params.get('view') === 'detail' && params.get('recipe')
-
-                  // Also check history state as a backup (React Router sets this)
-                  const historyState = window.history.state
-                  const isNavigatingToRecipe =
-                    historyState?.view === 'detail' && historyState?.activeRecipeId
-
-                  // Debug logging to help diagnose any remaining issues
-                  console.log('SW reload check:', {
-                    url: window.location.search,
-                    urlView: params.get('view'),
-                    urlRecipe: params.get('recipe'),
-                    historyView: historyState?.view,
-                    historyRecipeId: historyState?.activeRecipeId,
-                    willDefer: isViewingRecipe || isNavigatingToRecipe,
-                  })
-
-                  if (isViewingRecipe || isNavigatingToRecipe) {
-                    console.log('Deferring SW reload - user viewing recipe detail')
-                    // Store flag to reload on next natural navigation
-                    sessionStorage.setItem('sw_update_pending', 'true')
-                    return
-                  }
-
-                  console.log('Reloading for fresh SW state...')
-                  window.location.reload()
-                }, 100) // Small delay to let navigation complete
-              })
+              console.log('New SW activated — new assets will be used on next navigation/reopen')
             })
           } catch (registrationError) {
             console.log('SW registration failed: ', registrationError)

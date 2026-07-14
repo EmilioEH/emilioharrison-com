@@ -73,6 +73,13 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
     // clearing it here keeps storage tidy and satisfies "logout clears the cached recipes"
     // literally rather than just structurally. See recipeStore.ts for details.
     clearPersistedRecipes()
+
+    // Also clear the service worker's cached app shell (see public/sw.js). The shell HTML is
+    // network-first (so it's not usually served stale while online), but it IS served from
+    // cache when offline — and it embeds this user's displayName/isAdmin/hasOnboarded. Without
+    // this, a different user logging in on the same device and going offline before their
+    // first successful page load could briefly see this user's cached shell.
+    navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_SHELL_CACHE' })
   }
 
   return (
