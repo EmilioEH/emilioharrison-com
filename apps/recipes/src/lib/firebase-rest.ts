@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ServiceAccount } from './types'
+import { getRequestContext } from './request-context'
 
 // Helper to base64url encode
 const base64UrlEncode = (str: string) => {
@@ -8,6 +9,23 @@ const base64UrlEncode = (str: string) => {
 
 const base64UrlEncodeBuffer = (buf: ArrayBuffer) => {
   return base64UrlEncode(String.fromCharCode(...new Uint8Array(buf)))
+}
+
+/**
+ * OAuth access tokens minted for the service account are valid for `expires_in` seconds
+ * (Google's Firestore/Storage tokens are typically ~3600s) — this buffer makes the *KV* cache
+ * entry expire well before the token's real expiry, so a Worker isolate can never read back a
+ * token from KV that Google has already invalidated (or is about to, mid-request). The in-memory
+ * check in `getAccessToken` uses a much smaller 30s buffer since it's re-checked on every call
+ * within the same isolate; KV reads cross isolate/region boundaries and can be briefly stale
+ * (eventual consistency), so this buffer is intentionally larger.
+ */
+const TOKEN_KV_TTL_BUFFER_SECONDS = 300
+const TOKEN_KV_MIN_TTL_SECONDS = 60 // Cloudflare KV's own floor for `expirationTtl`.
+
+interface CachedToken {
+  token: string
+  expiresAt: number
 }
 
 /**
@@ -35,6 +53,25 @@ export class FirebaseRestService {
     const now = Math.floor(Date.now() / 1000)
     if (this.token && this.tokenExpiresAt > now + 30) {
       return this.token
+    }
+
+    // Cross-isolate cache (see PERFORMANCE-PLAN.md P6+P7): a cold Worker isolate has no
+    // in-memory token, but a *different* isolate may have minted one recently. Check the
+    // `SESSION` KV binding before paying for a fresh JWT-sign + OAuth-exchange round trip.
+    const kv = this.getSessionKv()
+    if (kv) {
+      try {
+        const cached = await kv.get<CachedToken>(this.tokenCacheKey(), 'json')
+        if (cached?.token && cached.expiresAt > now + 30) {
+          this.token = cached.token
+          this.tokenExpiresAt = cached.expiresAt
+          return this.token
+        }
+      } catch (e) {
+        // KV unavailable/misconfigured (e.g. local dev without the binding) — fall through to
+        // minting a fresh token exactly as before this cache existed.
+        console.warn('[FirebaseRestService] KV token cache read failed, minting a new token', e)
+      }
     }
 
     const alg = 'RS256'
@@ -97,7 +134,41 @@ export class FirebaseRestService {
     const data = await res.json()
     this.token = data.access_token
     this.tokenExpiresAt = now + data.expires_in
+
+    if (kv && this.token) {
+      // TTL is deliberately shorter than the token's real remaining lifetime (see
+      // TOKEN_KV_TTL_BUFFER_SECONDS above) — never log `this.token`/`data` here.
+      const ttl = Math.max(TOKEN_KV_MIN_TTL_SECONDS, data.expires_in - TOKEN_KV_TTL_BUFFER_SECONDS)
+      try {
+        await kv.put(
+          this.tokenCacheKey(),
+          JSON.stringify({ token: this.token, expiresAt: this.tokenExpiresAt } as CachedToken),
+          { expirationTtl: ttl },
+        )
+      } catch (e) {
+        console.warn('[FirebaseRestService] Failed to write token to KV cache', e)
+      }
+    }
+
     return this.token!
+  }
+
+  /** Reads the `SESSION` KV binding from the current request context, if any (see
+   * `firebase-server.ts`'s `getServiceAccount()` for the same request-context-fallback pattern).
+   * Returns `null` in any environment where it isn't available (local dev without the binding,
+   * a request that never set the context, etc.) so callers can gracefully skip the cache. */
+  private getSessionKv(): import('@cloudflare/workers-types').KVNamespace | null {
+    try {
+      const context = getRequestContext()
+      const env = (context as any)?.locals?.runtime?.env
+      return env?.SESSION ?? null
+    } catch {
+      return null
+    }
+  }
+
+  private tokenCacheKey(): string {
+    return `firestore_access_token:${this.projectId}`
   }
 
   // --- Firestore ---

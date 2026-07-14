@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FirebaseRestService } from './firebase-rest'
+import { getRequestContext } from './request-context'
+
+vi.mock('./request-context', () => ({
+  getRequestContext: vi.fn(() => null),
+}))
 
 // Mock crypto
 Object.defineProperty(global, 'crypto', {
@@ -11,11 +16,57 @@ Object.defineProperty(global, 'crypto', {
   },
 })
 
+const FAKE_SERVICE_ACCOUNT = {
+  project_id: 'test-project',
+  client_email: 'test@example.com',
+  // Must be valid base64 (no placeholder "..." like the fixture below) — these tests exercise
+  // the real getAccessToken() signing path (`atob`), unlike the outer describe block's `service`,
+  // which pre-seeds `token`/`tokenExpiresAt` and never reaches this code.
+  private_key:
+    '-----BEGIN PRIVATE KEY-----\nZHVtbXktcHJpdmF0ZS1rZXktbWF0ZXJpYWwtZm9yLXRlc3RzLTAxMjM0NTY3ODk=\n-----END PRIVATE KEY-----',
+  token_uri: 'https://oauth2.googleapis.com/token',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any
+
+/** Minimal in-memory fake of the Cloudflare KV binding, shared across service instances the way
+ * a real `SESSION` KV namespace would be shared across Worker isolates. */
+function makeFakeKv() {
+  const store = new Map<string, string>()
+  const ttlByKey = new Map<string, number | undefined>()
+  return {
+    get: vi.fn(async (key: string, type?: string) => {
+      const raw = store.get(key)
+      if (raw === undefined) return null
+      return type === 'json' ? JSON.parse(raw) : raw
+    }),
+    put: vi.fn(async (key: string, value: string, options?: { expirationTtl?: number }) => {
+      store.set(key, value)
+      ttlByKey.set(key, options?.expirationTtl)
+    }),
+    ttlByKey,
+  }
+}
+
+function docResponse(id: string) {
+  return {
+    ok: true,
+    json: async () => ({
+      name: `projects/test-project/databases/(default)/documents/recipes/${id}`,
+      fields: {},
+    }),
+  }
+}
+
+function oauthResponse(accessToken: string) {
+  return { ok: true, json: async () => ({ access_token: accessToken, expires_in: 3600 }) }
+}
+
 describe('FirebaseRestService', () => {
   let service: FirebaseRestService
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getRequestContext).mockReturnValue(null)
     service = new FirebaseRestService({
       project_id: 'test-project',
       client_email: 'test@example.com',
@@ -170,6 +221,154 @@ describe('FirebaseRestService', () => {
       await expect(
         service.runQuery('recipes', { field: 'createdBy', op: 'IN', value: ['user-1'] }),
       ).rejects.toThrow('index not found')
+    })
+  })
+
+  // KV-cached OAuth token (PERFORMANCE-PLAN.md P6+P7). These tests construct *fresh*
+  // FirebaseRestService instances (no pre-seeded `token`/`tokenExpiresAt`, unlike `service` in
+  // the outer `beforeEach`) so `getAccessToken()`'s real cold-start logic actually runs.
+  describe('KV-cached access token', () => {
+    it('mints a token and writes it to KV when nothing is cached yet', async () => {
+      const fakeKv = makeFakeKv()
+      vi.mocked(getRequestContext).mockReturnValue({
+        locals: { runtime: { env: { SESSION: fakeKv } } },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ access_token: 'freshly-minted-token', expires_in: 3600 }),
+        })
+        .mockResolvedValueOnce(docResponse('doc1'))
+      global.fetch = fetchMock
+
+      const cold = new FirebaseRestService(FAKE_SERVICE_ACCOUNT)
+      await cold.getDocument('recipes', 'doc1')
+
+      // First fetch call is the OAuth exchange, Authorization header on the second (Firestore)
+      // call proves the newly-minted token was actually used.
+      expect(fetchMock.mock.calls[0][0]).toBe('https://oauth2.googleapis.com/token')
+      expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer freshly-minted-token')
+
+      expect(fakeKv.put).toHaveBeenCalledTimes(1)
+      const [key, value, options] = fakeKv.put.mock.calls[0]
+      expect(key).toContain('test-project')
+      const stored = JSON.parse(value)
+      expect(stored.token).toBe('freshly-minted-token')
+      // TTL must be strictly shorter than the token's real 3600s expiry.
+      expect(options?.expirationTtl).toBeLessThan(3600)
+      expect(options?.expirationTtl).toBe(3300) // 3600 - the 300s safety buffer
+    })
+
+    it('reads a cached token from KV instead of minting a new one', async () => {
+      const fakeKv = makeFakeKv()
+      const now = Math.floor(Date.now() / 1000)
+      await fakeKv.put(
+        'firestore_access_token:test-project',
+        JSON.stringify({ token: 'kv-cached-token', expiresAt: now + 3000 }),
+      )
+      fakeKv.put.mockClear()
+
+      vi.mocked(getRequestContext).mockReturnValue({
+        locals: { runtime: { env: { SESSION: fakeKv } } },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      const fetchMock = vi.fn().mockResolvedValue(docResponse('doc1'))
+      global.fetch = fetchMock
+
+      const cold = new FirebaseRestService(FAKE_SERVICE_ACCOUNT)
+      await cold.getDocument('recipes', 'doc1')
+
+      // Only the Firestore GET happened — no OAuth exchange — and it used the cached token.
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock.mock.calls[0][0]).not.toBe('https://oauth2.googleapis.com/token')
+      expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer kv-cached-token')
+      expect(fakeKv.put).not.toHaveBeenCalled()
+    })
+
+    it('two consecutive requests on cold isolates mint at most one real OAuth token', async () => {
+      const fakeKv = makeFakeKv()
+      vi.mocked(getRequestContext).mockReturnValue({
+        locals: { runtime: { env: { SESSION: fakeKv } } },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      let oauthCalls = 0
+      const fetchMock = vi.fn(async (url: string) => {
+        if (url === 'https://oauth2.googleapis.com/token') {
+          oauthCalls++
+          return oauthResponse('shared-token')
+        }
+        return docResponse('doc1')
+      })
+      global.fetch = fetchMock as unknown as typeof fetch
+
+      // Two independent instances simulate two separate (cold) Worker isolates that only share
+      // the KV namespace, not in-memory state.
+      const isolateA = new FirebaseRestService(FAKE_SERVICE_ACCOUNT)
+      await isolateA.getDocument('recipes', 'doc1')
+
+      const isolateB = new FirebaseRestService(FAKE_SERVICE_ACCOUNT)
+      await isolateB.getDocument('recipes', 'doc1')
+
+      expect(oauthCalls).toBe(1)
+      expect(fakeKv.put).toHaveBeenCalledTimes(1)
+    })
+
+    it('never logs the token itself', async () => {
+      const fakeKv = makeFakeKv()
+      vi.mocked(getRequestContext).mockReturnValue({
+        locals: { runtime: { env: { SESSION: fakeKv } } },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ access_token: 'super-secret-token', expires_in: 3600 }),
+        })
+        .mockResolvedValueOnce(docResponse('doc1'))
+      global.fetch = fetchMock
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const cold = new FirebaseRestService(FAKE_SERVICE_ACCOUNT)
+      await cold.getDocument('recipes', 'doc1')
+
+      const allLoggedArgs = [...logSpy.mock.calls, ...warnSpy.mock.calls, ...errorSpy.mock.calls]
+        .flat()
+        .map((arg) => JSON.stringify(arg))
+        .join(' ')
+      expect(allLoggedArgs).not.toContain('super-secret-token')
+
+      logSpy.mockRestore()
+      warnSpy.mockRestore()
+      errorSpy.mockRestore()
+    })
+
+    it('falls back to minting normally when there is no KV binding available', async () => {
+      vi.mocked(getRequestContext).mockReturnValue(null)
+
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ access_token: 'no-kv-token', expires_in: 3600 }),
+        })
+        .mockResolvedValueOnce(docResponse('doc1'))
+      global.fetch = fetchMock
+
+      const cold = new FirebaseRestService(FAKE_SERVICE_ACCOUNT)
+      const doc = await cold.getDocument('recipes', 'doc1')
+
+      expect(doc).toBeTruthy()
+      expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer no-kv-token')
     })
   })
 })
