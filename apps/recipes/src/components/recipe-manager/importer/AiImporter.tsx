@@ -15,7 +15,7 @@ import { PhotoUploader } from './PhotoUploader'
 import { Stack, Cluster } from '@/components/ui/layout'
 import { AiProgressBar } from '@/components/ui/AiProgressBar'
 import { uploadImage } from './api'
-import { processImage } from '../../../lib/image-optimization'
+import { processImage, createThumbnail } from '../../../lib/image-optimization'
 import type { Recipe } from '../../../lib/types'
 // Removed blocking LoadingOverlay - using inline feedback instead
 
@@ -35,6 +35,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     setImagePreview,
     imageData,
     setImageData,
+    setThumbUrl,
     status,
     errorMsg,
     setErrorMsg,
@@ -69,6 +70,9 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     try {
       // Optimize image: 1024px max dimension, 0.7 quality
       const file = await processImage(originalFile, 1024, 0.7)
+      // Also generate the small library-card thumbnail (P5), from the original file so it isn't
+      // a re-compression of an already-downsized JPEG.
+      const thumbFile = await createThumbnail(originalFile)
 
       // Read as base64 for preview and fallback
       const reader = new FileReader()
@@ -84,7 +88,10 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
-      const publicUrl = await uploadImage(file, baseUrl)
+      const [publicUrl, publicThumbUrl] = await Promise.all([
+        uploadImage(file, baseUrl),
+        uploadImage(thumbFile, baseUrl),
+      ])
       if (publicUrl) {
         // Only update preview with the uploaded URL (for display & sourceImage).
         // imageData stays as base64 — Gemini needs raw bytes, not a URL path.
@@ -92,6 +99,9 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
       } else {
         console.error('Failed to upload image - base64 will be used directly')
       }
+      // Thumbnail upload is best-effort: if it fails, the recipe simply has no thumbUrl yet and
+      // RecipeCard.tsx falls back to the full image — never a broken card.
+      setThumbUrl(publicThumbUrl)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -141,7 +151,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                     <input
                       id="dish-name"
                       type="text"
-                      className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
                       placeholder="e.g. Pad Thai, Beef Bourguignon"
                       value={dishName}
                       onChange={(e) => setDishName(e.target.value)}
@@ -175,7 +185,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                           <input
                             id="cuisine"
                             type="text"
-                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
                             placeholder="Italian, Thai..."
                             value={cuisine}
                             onChange={(e) => setCuisine(e.target.value)}
@@ -191,7 +201,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                           <input
                             id="taste-profile"
                             type="text"
-                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
                             placeholder="Spicy, Sweet..."
                             value={tasteProfile}
                             onChange={(e) => setTasteProfile(e.target.value)}
@@ -208,7 +218,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                         </label>
                         <textarea
                           id="known-ingredients"
-                          className="min-h-[60px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="min-h-[60px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
                           placeholder="Shrimp, lemongrass, peanuts..."
                           value={knownIngredients}
                           onChange={(e) => setKnownIngredients(e.target.value)}
@@ -225,7 +235,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
                         <input
                           id="dietary-notes"
                           type="text"
-                          className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
                           placeholder="Gluten-Free, Dairy-Free..."
                           value={dietaryNotes}
                           onChange={(e) => setDietaryNotes(e.target.value)}
@@ -271,7 +281,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               </label>
               <textarea
                 id="pasted-text"
-                className="min-h-[200px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 md:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="min-h-[200px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
                 placeholder="Paste the recipe ingredients and instructions here..."
                 value={pastedText}
                 onChange={(e) => setPastedText(e.target.value)}

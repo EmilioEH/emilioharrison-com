@@ -101,6 +101,7 @@ While Astro handles the initial load, the app functions as a **Single Page Appli
 - **Constraint:** Do **NOT** use the Firebase Client SDK (`firebase/storage`) in the browser.
 - **Pattern:** All file uploads must go through the `POST /api/uploads` endpoint.
 - **Why:** The app uses a custom `FirebaseRestService` on the server to handle authentication with a Service Account, avoiding complex CORS/Auth setup on the client.
+- **Library-card thumbnails (`Recipe.thumbUrl`)**: When a photo is uploaded (initial photo-scan import, bulk import, or adding a photo to an existing recipe), the client generates and uploads a second, small (~420px, `THUMBNAIL_MAX_DIMENSION` in `src/lib/image-optimization.ts`) JPEG variant alongside the full image, using the same `processImage()`/`createThumbnail()` machinery. `RecipeCard.tsx` renders `thumbUrl` first, falling back to `images[0]`/`finishedImage`/`sourceImage` for recipes saved before this field existed — there is no backfill, legacy recipes simply keep loading their full-size image in the list until re-uploaded. `RecipeDetail`/`OverviewMode`/`Carousel` always use the full-size image fields; `thumbUrl` is library-list-only.
 
 ### 5. Real-time Synchronization (Firestore Hooks)
 

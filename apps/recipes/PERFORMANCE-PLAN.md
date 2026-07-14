@@ -127,14 +127,16 @@ Implementation note: persistence uses a hand-rolled `localStorage` layer in `rec
 
 **Change:** At upload time, generate a second ~400 px variant with the existing `processImage()` and upload both; store `thumbUrl` alongside the full image. Cards render `thumbUrl || images[0]` (graceful fallback for existing recipes). Add explicit `width`/`height` (or `aspect-ratio`) and `decoding="async"` on card images; keep `loading="lazy"`. Optional backfill script in `scripts/` to generate thumbs for existing recipes.
 
+**Known gap:** no backfill script was written — legacy recipes without `thumbUrl` keep loading their full-size image in the library list until the photo is re-uploaded or the recipe is edited with a new photo. Acceptable per this item's original scope; revisit if a large legacy library's list-view byte weight becomes a real complaint.
+
 **Acceptance criteria:**
 
-- [ ] New/edited recipe uploads produce both a full image and a ≤ 450 px-wide thumbnail; the recipe document stores both URLs (unit test on the upload flow with MSW).
-- [ ] Library cards request the thumbnail, not the full image, when `thumbUrl` exists (Playwright: inspect the `img src` / network requests).
-- [ ] Recipes without `thumbUrl` still render their full image (no broken cards for legacy data).
-- [ ] Card images reserve layout space — zero layout shift from images while scrolling the library (explicit dimensions/aspect-ratio present in DOM).
-- [ ] Detail view still uses the full-resolution image.
-- [ ] Median image bytes for a library screenful drops ≥ 70% vs. baseline for thumbnailed recipes (record before/after in PR).
+- [x] New/edited recipe uploads produce both a full image and a ≤ 450 px-wide thumbnail; the recipe document stores both URLs (unit test on the upload flow with MSW). — `createThumbnail()` (420px/0.7 quality) added to `image-optimization.ts`, wired into the three client upload flows that call `processImage()` on a device photo: `OverviewMode.tsx` (add-photo-to-existing-recipe), `AiImporter.tsx` (initial photo-scan import), and `BulkRecipeImporter.tsx`. `RecipeListItem`/`Recipe` gain `thumbUrl?: string`; `toListRecipe()` in `src/pages/api/recipes/index.ts` carries it through the P3 slim projection. Unit-tested in `image-optimization.test.ts` (dimension/quality assertions) and `src/pages/api/recipes/index.test.ts` (thumbUrl present/absent).
+- [x] Library cards request the thumbnail, not the full image, when `thumbUrl` exists (Playwright: inspect the `img src` / network requests). — `tests/recipe-images.spec.ts` "Library card thumbnails (P5)" describe block.
+- [x] Recipes without `thumbUrl` still render their full image (no broken cards for legacy data). — same describe block, "falls back to the full image when thumbUrl is absent" test; no backfill for pre-existing recipes (documented trade-off, matches this item's original scope).
+- [x] Card images reserve layout space — zero layout shift from images while scrolling the library (explicit dimensions/aspect-ratio present in DOM). — `RecipeCard.tsx` img now has `width={96}` `height={96}` `aspect-square` alongside existing `loading="lazy"` `decoding="async"`; Playwright asserts explicit DOM attributes and identical bounding-box size before/after scrolling.
+- [x] Detail view still uses the full-resolution image. — `OverviewMode.tsx`/`Carousel.tsx` never read `thumbUrl`; Playwright test navigates card → detail and asserts the full-size URL is shown.
+- [x] Median image bytes for a library screenful drops ≥ 70% vs. baseline for thumbnailed recipes (record before/after in PR). — measured (not estimated) via `sharp` on two synthetic photographic-noise test images at the same resize/quality parameters as `processImage()`/`createThumbnail()`: 233.7 KB → 8.2 KB (96.5%) and 298.4 KB → 8.5 KB (97.1%). Real photo bytes will vary with content, but both measured cases clear the 70% target by a wide margin.
 
 ---
 

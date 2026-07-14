@@ -222,33 +222,44 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     if (!file) return
 
     try {
-      // 1. Optimize
+      // 1. Optimize: full-size variant plus a small library-card thumbnail (P5), both generated
+      // from the original file via the same processImage() machinery.
       // Dynamically import to avoid server-side issues if any (though this is client component)
-      const { processImage } = await import('../../lib/image-optimization')
-      const optimizedFile = await processImage(file)
-
-      // 2. Upload
-      const formData = new FormData()
-      formData.append('file', optimizedFile)
+      const { processImage, createThumbnail } = await import('../../lib/image-optimization')
+      const [optimizedFile, thumbFile] = await Promise.all([
+        processImage(file),
+        createThumbnail(file),
+      ])
 
       const baseUrl = import.meta.env.BASE_URL.endsWith('/')
         ? import.meta.env.BASE_URL
         : `${import.meta.env.BASE_URL}/`
 
-      const uploadRes = await fetch(`${baseUrl}api/uploads`, {
-        method: 'POST',
-        body: formData,
-      })
+      const uploadOne = async (fileToUpload: File): Promise<string> => {
+        const formData = new FormData()
+        formData.append('file', fileToUpload)
 
-      if (!uploadRes.ok) {
-        const errData = await uploadRes.json().catch(() => ({}))
-        console.error('Server Upload Error:', errData)
-        throw new Error(errData.error || 'Upload failed')
+        const uploadRes = await fetch(`${baseUrl}api/uploads`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}))
+          console.error('Server Upload Error:', errData)
+          throw new Error(errData.error || 'Upload failed')
+        }
+
+        const { key } = await uploadRes.json()
+        // Construct full URL with baseUrl (aligned with importer/api.ts pattern)
+        return `${baseUrl}api/uploads/${key}`
       }
 
-      const { key } = await uploadRes.json()
-      // Construct full URL with baseUrl (aligned with importer/api.ts pattern)
-      const uploadedUrl = `${baseUrl}api/uploads/${key}`
+      // 2. Upload both variants
+      const [uploadedUrl, uploadedThumbUrl] = await Promise.all([
+        uploadOne(optimizedFile),
+        uploadOne(thumbFile),
+      ])
 
       // 3. Update Recipe
       const currentImages = recipe.images || []
@@ -272,10 +283,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
       // For now, let's just do the API call. The user might need to refresh or we wait for SWR/store update.
       // Wait, `recipe` comes from parent.
 
+      // thumbUrl tracks the newest/primary photo (images[0]) — the card renders it in place of the
+      // full image. Existing recipes without a thumbUrl keep falling back to the full image
+      // (RecipeCard.tsx) until a photo is (re-)uploaded here.
       await fetch(`${baseUrl}api/recipes/${recipe.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...recipe, images: newImages }),
+        body: JSON.stringify({ ...recipe, images: newImages, thumbUrl: uploadedThumbUrl }),
       })
 
       // Reload to show changes (simplest for now without full store refactor)
@@ -602,7 +616,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               className="mb-4 flex w-full items-center justify-between transition-opacity hover:opacity-80"
               aria-expanded={ingredientsOpen}
             >
-              <Inline as="span" spacing="sm" className="font-display text-xl font-bold text-foreground">
+              <Inline
+                as="span"
+                spacing="sm"
+                className="font-display text-xl font-bold text-foreground"
+              >
                 Ingredients
                 {checkedIngredientsList.length > 0 ? (
                   <span className="font-body text-sm font-normal text-primary">
@@ -622,39 +640,40 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </button>
 
             {/* Grouped Ingredients Display */}
-            {ingredientsOpen && (displayGroups.length === 1 && displayGroups[0].items.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                No ingredients listed yet.
-              </div>
-            ) : (
-              <Stack spacing="lg">
-                {displayGroups.map((group, gIdx) => (
-                  <div key={gIdx} className="rounded-lg bg-muted/20 p-3">
-                    {group.header && (
-                      <h3
-                        className="mb-3 border-b border-border/70 pb-2 text-base font-semibold uppercase tracking-wide text-foreground/80"
-                        data-testid="ingredients-group-header"
-                      >
-                        {group.header}
-                      </h3>
-                    )}
-                    <Stack spacing="xs">
-                      {group.items.map((ing, idx) => {
-                        const globalIdx = group.startIndex + idx
-                        return (
-                          <IngredientRow
-                            key={globalIdx}
-                            ingredient={ing}
-                            isChecked={checkedIngredientsList.includes(globalIdx)}
-                            onToggle={() => handleToggleIngredient(globalIdx)}
-                          />
-                        )
-                      })}
-                    </Stack>
-                  </div>
-                ))}
-              </Stack>
-            ))}
+            {ingredientsOpen &&
+              (displayGroups.length === 1 && displayGroups[0].items.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  No ingredients listed yet.
+                </div>
+              ) : (
+                <Stack spacing="lg">
+                  {displayGroups.map((group, gIdx) => (
+                    <div key={gIdx} className="rounded-lg bg-muted/20 p-3">
+                      {group.header && (
+                        <h3
+                          className="mb-3 border-b border-border/70 pb-2 text-base font-semibold uppercase tracking-wide text-foreground/80"
+                          data-testid="ingredients-group-header"
+                        >
+                          {group.header}
+                        </h3>
+                      )}
+                      <Stack spacing="xs">
+                        {group.items.map((ing, idx) => {
+                          const globalIdx = group.startIndex + idx
+                          return (
+                            <IngredientRow
+                              key={globalIdx}
+                              ingredient={ing}
+                              isChecked={checkedIngredientsList.includes(globalIdx)}
+                              onToggle={() => handleToggleIngredient(globalIdx)}
+                            />
+                          )
+                        })}
+                      </Stack>
+                    </div>
+                  ))}
+                </Stack>
+              ))}
           </div>
           <div className="mb-8" data-testid="overview-instructions-section">
             <Inline
@@ -693,10 +712,7 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                       </h3>
                     )}
                     {group.items.map((step, idx) => (
-                      <div
-                        key={group.startIndex + idx}
-                        className="rounded-lg bg-muted/20 p-4"
-                      >
+                      <div key={group.startIndex + idx} className="rounded-lg bg-muted/20 p-4">
                         {step.title && (
                           <p className="mb-2 text-xs font-bold uppercase tracking-widest text-primary">
                             {step.title}

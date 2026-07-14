@@ -3,7 +3,7 @@ import { Loader2, ChefHat, FolderUp, FileText, CheckCircle, AlertCircle, X } fro
 import { Button } from '@/components/ui/button'
 import { Stack } from '@/components/ui/layout'
 import type { Recipe } from '../../../lib/types'
-import { processImage } from '../../../lib/image-optimization'
+import { processImage, createThumbnail } from '../../../lib/image-optimization'
 import { uploadImage, parseRecipe } from './api'
 
 interface BulkRecipeImporterProps {
@@ -95,14 +95,21 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
         const textContent = await readFileAsText(mdFile)
         let imageBase64: string | undefined
         let uploadedImageUrl: string | undefined
+        let uploadedThumbUrl: string | undefined
 
         if (associatedImage) {
           try {
-            // Optimize image
+            // Optimize image, plus a small library-card thumbnail (P5)
             const processedImg = await processImage(associatedImage)
+            const thumbImg = await createThumbnail(associatedImage)
             imageBase64 = await readFileAsBase64(processedImg)
-            // Upload to get public URL
-            uploadedImageUrl = (await uploadImage(processedImg, baseUrl)) || undefined
+            // Upload to get public URLs
+            const [fullUrl, thumbUrl] = await Promise.all([
+              uploadImage(processedImg, baseUrl),
+              uploadImage(thumbImg, baseUrl),
+            ])
+            uploadedImageUrl = fullUrl || undefined
+            uploadedThumbUrl = thumbUrl || undefined
           } catch (e) {
             console.warn('Failed to process associated image for ' + mdFile.name, e)
           }
@@ -115,6 +122,8 @@ export const BulkRecipeImporter: React.FC<BulkRecipeImporterProps> = ({
         results.push({
           ...(recipeData as object),
           sourceImage: uploadedImageUrl,
+          images: uploadedImageUrl ? [uploadedImageUrl] : undefined,
+          thumbUrl: uploadedThumbUrl,
           // If no title parsed, fallback to filename
           title: recipeData.title || mdFile.name.replace('.md', ''),
         } as Recipe)
