@@ -421,31 +421,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     checkAndRunRollover()
   }, [])
 
-  // Handle pending Service Worker updates when navigating away from recipe detail
-  // This applies deferred SW updates that were postponed to avoid interrupting the user
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    // Only trigger on navigation AWAY from detail view
-    // Also ensure we're not just temporarily in a loading/transition state
-    if (view !== 'detail') {
-      const hasPendingUpdate = sessionStorage.getItem('sw_update_pending')
-      if (hasPendingUpdate) {
-        // Add a small delay to ensure we're in a stable state
-        // This prevents reloading during rapid view transitions
-        const timeoutId = setTimeout(() => {
-          // Double-check we're still not in detail view
-          if (new URLSearchParams(window.location.search).get('view') !== 'detail') {
-            sessionStorage.removeItem('sw_update_pending')
-            console.log('Applying deferred SW update, reloading...')
-            window.location.reload()
-          }
-        }, 500)
-        return () => clearTimeout(timeoutId)
-      }
-    }
-  }, [view])
-
   // Self-Correction: Clean up ghost recipes from week plan
   // If a recipe is in the plan but not in the loaded recipes list, remove it.
   useEffect(() => {

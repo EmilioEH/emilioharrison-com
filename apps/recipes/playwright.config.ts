@@ -54,6 +54,20 @@ export default defineConfig({
       use: { ...devices['iPhone 12'] },
     },
 
+    /* Android Chrome — the app's actual real-world usage pattern is a home-screen-installed
+     * standalone PWA on Android Chrome (see manifest.json's `display: "standalone"`), which
+     * cold-starts the service worker far more than a typical bookmarked-tab user. `chromium`
+     * above already shares the same rendering/SW engine (just a desktop viewport/UA), so core
+     * SW caching logic isn't fundamentally different — this project is scoped to only the
+     * service-worker spec via `testMatch` so it doesn't multiply the runtime of the full
+     * ~250-test suite (see the 5-minute globalTimeout below) for the other ~250 unrelated
+     * specs that don't touch SW behavior. */
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+      testMatch: /service-worker-caching\.spec\.ts/,
+    },
+
     /* Test against branded browsers. */
     // {
     //   name: 'Microsoft Edge',

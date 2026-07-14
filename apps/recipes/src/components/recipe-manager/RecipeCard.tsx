@@ -91,10 +91,17 @@ export const RecipeCard = memo(
       >
         {/* Square Thumbnail with border for contrast */}
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm ring-1 ring-black/5">
-          {recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage ? (
+          {recipe.thumbUrl || recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage ? (
             <img
-              src={recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage}
-              className="h-full w-full object-cover"
+              // Prefer the small ~420px thumbUrl generated at upload time (P5) — cheaper to fetch
+              // and decode than the full up-to-1920px image for a 96px card. Recipes saved before
+              // thumbUrl existed (no backfill) fall back to the full-size fields.
+              src={
+                recipe.thumbUrl || recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage
+              }
+              width={96}
+              height={96}
+              className="aspect-square h-full w-full object-cover"
               alt=""
               loading="lazy"
               decoding="async"

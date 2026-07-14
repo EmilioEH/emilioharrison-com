@@ -17,6 +17,9 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   const [url, setUrl] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageData, setImageData] = useState<string | null>(null)
+  // Small library-card variant of imagePreview's upload, set alongside it when a photo is
+  // uploaded (see PERFORMANCE-PLAN.md P5). Threaded onto the created recipe as `thumbUrl`.
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
@@ -88,6 +91,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     const recipeWithSource = {
       ...(result.data as object),
       sourceImage: finalImage,
+      thumbUrl: (mode === 'photo' || mode === 'dish-photo') && thumbUrl ? thumbUrl : undefined,
       creationMethod: mode === 'dish-photo' ? 'ai-infer' : 'ai-parse',
     } as Recipe
 
@@ -110,7 +114,10 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     }
 
     // Ensure JSON parse / SyntaxErrors show a clean message
-    if (err instanceof SyntaxError || (err instanceof Error && err.message.includes('Unable to parse recipe response'))) {
+    if (
+      err instanceof SyntaxError ||
+      (err instanceof Error && err.message.includes('Unable to parse recipe response'))
+    ) {
       setErrorMsg(
         'The AI response was incomplete. Please try again — if this persists, try a smaller or clearer photo.',
       )
@@ -209,6 +216,8 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     setImagePreview,
     imageData,
     setImageData,
+    thumbUrl,
+    setThumbUrl,
     status,
     setStatus,
     errorMsg,

@@ -1,4 +1,13 @@
 /**
+ * Max dimension / quality used for the small library-card variant generated alongside the
+ * full-size image at upload time (see PERFORMANCE-PLAN.md P5). Chosen so the longest edge covers
+ * the largest on-screen use (the ~96px square card thumbnail) with headroom for high-DPI phone
+ * screens, while staying well under the full 1920px upload.
+ */
+export const THUMBNAIL_MAX_DIMENSION = 420
+export const THUMBNAIL_QUALITY = 0.7
+
+/**
  * Processes an image file to ensure it is optimized for web usage.
  * Resizes large images to a maximum dimension (default 1920px) and compresses them.
  * This effectively ensures "72dpi" or screen-appropriate resolution.
@@ -111,4 +120,18 @@ export async function processImage(file: File, maxDimension = 1920, quality = 0.
 
     img.src = url
   })
+}
+
+/**
+ * Generates the small library-card variant of an already-optimized image, using the same
+ * `processImage()` machinery (no separate resize implementation). Intended to run alongside — not
+ * instead of — the full-size `processImage()` call, so uploads produce both variants. See
+ * PERFORMANCE-PLAN.md P5.
+ *
+ * @param file The input File object (typically the original, not the already-downsized full file —
+ *   resizing from the original avoids compounding JPEG re-encoding artifacts).
+ * @returns A Promise resolving to a new, smaller File object (~THUMBNAIL_MAX_DIMENSION px)
+ */
+export async function createThumbnail(file: File): Promise<File> {
+  return processImage(file, THUMBNAIL_MAX_DIMENSION, THUMBNAIL_QUALITY)
 }

@@ -311,4 +311,25 @@ describe('toListRecipe', () => {
     expect(slim.isFavorite).toBe(true)
     expect(slim.ingredients).toEqual(recipe.ingredients)
   })
+
+  it('carries thumbUrl through so library cards can request the small variant (P5)', () => {
+    const recipe = makeRecipe({
+      id: 'r2',
+      images: ['https://example.com/full.jpg'],
+      thumbUrl: 'https://example.com/full-thumb.jpg',
+    })
+
+    const slim = toListRecipe(recipe, false)
+
+    expect(slim.thumbUrl).toBe('https://example.com/full-thumb.jpg')
+  })
+
+  it('leaves thumbUrl undefined for recipes that predate it (no backfill)', () => {
+    const recipe = makeRecipe({ id: 'r3', images: ['https://example.com/full.jpg'] })
+    delete (recipe as { thumbUrl?: string }).thumbUrl
+
+    const slim = toListRecipe(recipe, false)
+
+    expect(slim.thumbUrl).toBeUndefined()
+  })
 })

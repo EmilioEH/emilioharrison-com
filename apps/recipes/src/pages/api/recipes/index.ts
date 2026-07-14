@@ -48,6 +48,7 @@ export function toListRecipe(doc: Recipe, isFavorite: boolean): RecipeListItem {
     images: doc.images,
     finishedImage: doc.finishedImage,
     sourceImage: doc.sourceImage,
+    thumbUrl: doc.thumbUrl,
     prepTime: doc.prepTime,
     cookTime: doc.cookTime,
     servings: doc.servings,

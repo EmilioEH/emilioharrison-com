@@ -89,6 +89,7 @@ export interface Recipe {
   assignedDate?: string // YYYY-MM-DD
   finishedImage?: string // Base64 or URL
   images?: string[] // Array of all recipe images (first one is primary)
+  thumbUrl?: string // Small (~420px) variant of images[0]/primary image, generated at upload time for the library list card — see P5 in PERFORMANCE-PLAN.md. Absent on legacy recipes uploaded before this field existed (no backfill); consumers must fall back to the full-size image fields.
 
   // Enhancement Status (for dual-process import)
   enhancementStatus?: 'pending' | 'processing' | 'complete' | 'error'
@@ -117,6 +118,7 @@ export type RecipeListItem = Pick<
   | 'images'
   | 'finishedImage'
   | 'sourceImage'
+  | 'thumbUrl'
   | 'prepTime'
   | 'cookTime'
   | 'servings'
