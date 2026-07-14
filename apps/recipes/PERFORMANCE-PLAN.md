@@ -98,7 +98,10 @@ Implementation note: persistence uses a hand-rolled `localStorage` layer in `rec
 - [x] For the current dataset, list response body is measurably smaller than baseline (record before/after size in the PR description). — ~83% smaller for a realistic 30-recipe library with Storage-URL images (267KB → 45KB); see PR description for the base64-sourceImage edge case, which dominates size regardless of this change (P5's thumbnail work is the real fix there).
 - [x] No `console.log` in the request path. — removed; unit-tested (`never leaves a console.log in the request path`).
 
-**⚠️ Required manual deploy step:** run `npx tsx scripts/backfill-legacy-created-by.ts` once against production Firestore after this deploys. Firestore cannot query "field does not exist," so the `createdBy == null` branch of the scoped query only matches legacy recipes that have been explicitly backfilled to `createdBy: null` — until the script runs, any recipe that predates the `createdBy` field entirely (as opposed to having it explicitly `null`) won't appear in anyone's library list. This is a one-time, idempotent script (re-running it is a no-op once nothing is missing the field).
+**⚠️ Required manual deploy step:** run the legacy-recipe backfill once against production Firestore after this deploys. Firestore cannot query "field does not exist," so the `createdBy == null` branch of the scoped query only matches legacy recipes that have been explicitly backfilled to `createdBy: null` — until it runs, any recipe that predates the `createdBy` field entirely (as opposed to having it explicitly `null`) won't appear in anyone's library list. One-time and idempotent (a no-op once nothing is missing the field). Two ways to trigger it:
+
+- **From the deployed app (no local credentials needed):** log in as an admin on the live site, open the browser console, and run `fetch('/protected/recipes/api/admin/backfill-legacy-created-by', { method: 'POST' }).then((r) => r.json()).then(console.log)`. `GET` (same URL) returns a dry-run count with no writes, if you want to check first.
+- **Locally, with real production credentials:** `npx tsx scripts/backfill-legacy-created-by.ts` (requires a local `firebase-service-account.json`).
 
 ---
 
