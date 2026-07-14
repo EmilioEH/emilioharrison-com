@@ -209,7 +209,12 @@ test.describe('Library card thumbnails (P5)', () => {
       return { width: r.width, height: r.height }
     })
 
-    expect(boxAfter.width).toBe(boxBefore.width)
-    expect(boxAfter.height).toBe(boxBefore.height)
+    // Use a tight tolerance rather than exact equality — getBoundingClientRect() can differ by
+    // a hairline sub-pixel amount (e.g. 95.99998 vs 96) between two measurements of the same
+    // element purely from browser sub-pixel rendering/rounding, not an actual layout shift. A
+    // real CLS bug (e.g. a missing width/height causing the image to resize the card) would
+    // produce a difference of whole pixels, which this tolerance still catches.
+    expect(boxAfter.width).toBeCloseTo(boxBefore.width, 1)
+    expect(boxAfter.height).toBeCloseTo(boxBefore.height, 1)
   })
 })
