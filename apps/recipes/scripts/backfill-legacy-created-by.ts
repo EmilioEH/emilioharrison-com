@@ -17,53 +17,39 @@
  * run, recipes that are missing `createdBy` entirely (as opposed to explicitly `null`) won't
  * appear in anyone's library list — this is a known, documented trade-off, not an oversight.
  *
+ * Requires a local `firebase-service-account.json` (production credentials) — if you don't have
+ * that, see `POST /api/admin/backfill-legacy-created-by` instead, which runs the same migration
+ * from inside the deployed Worker using the credentials it already holds, triggered by an
+ * authenticated admin session rather than a local key file.
+ *
  * Usage: npx tsx scripts/backfill-legacy-created-by.ts
  */
-import { FirebaseRestService } from '../src/lib/firebase-rest.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
+import { FirebaseRestService } from '../src/lib/firebase-rest.js'
+import { runLegacyCreatedByBackfill } from '../src/lib/services/backfill-legacy-created-by.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-async function backfill() {
+async function main() {
   const serviceAccountPath = path.resolve(__dirname, '../firebase-service-account.json')
   const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf-8'))
   const db = new FirebaseRestService(serviceAccount)
 
   console.log('Scanning recipes collection for documents missing `createdBy`...')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allRecipes = (await db.getCollection('recipes')) as any[]
+  const result = await runLegacyCreatedByBackfill(db)
 
-  const legacyRecipes = allRecipes.filter((r) => r.createdBy === undefined)
-
-  console.log(
-    `Found ${allRecipes.length} total recipes, ${legacyRecipes.length} missing createdBy.`,
-  )
-
-  if (legacyRecipes.length === 0) {
+  console.log(`Found ${result.total} total recipes, ${result.missing} missing createdBy.`)
+  if (result.missing === 0) {
     console.log('Nothing to backfill.')
     return
   }
-
-  let succeeded = 0
-  let failed = 0
-
-  for (const recipe of legacyRecipes) {
-    try {
-      await db.updateDocument('recipes', recipe.id, { createdBy: null })
-      succeeded++
-    } catch (e) {
-      failed++
-      console.error(`Failed to backfill recipe ${recipe.id}:`, e)
-    }
-  }
-
-  console.log(`Backfill complete: ${succeeded} updated, ${failed} failed.`)
+  console.log(`Backfill complete: ${result.succeeded} updated, ${result.failed} failed.`)
 }
 
-backfill().catch((e) => {
+main().catch((e) => {
   console.error('Backfill script crashed:', e)
   process.exit(1)
 })
