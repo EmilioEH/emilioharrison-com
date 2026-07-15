@@ -1,13 +1,13 @@
 ---
-import '@fontsource/archivo-black'
-import '@fontsource/dm-sans/400.css'
-import '@fontsource/dm-sans/500.css'
-import '@fontsource/dm-sans/700.css'
-import '@fontsource/space-grotesk/300.css'
-import '@fontsource/space-grotesk/400.css'
-import '@fontsource/space-grotesk/500.css'
-import '@fontsource/space-grotesk/600.css'
-import '@fontsource/space-grotesk/700.css'
+// Weights match the Tailwind font-weight utilities actually used across the app (font-normal,
+// font-medium, font-semibold, font-bold, font-black) — see PERFORMANCE-PLAN.md P9. Roboto is the
+// design system's actual font (see the recipe-ui skill); Archivo Black/DM Sans/Space Grotesk were
+// imported but never referenced by any font-family in the app, so they were pure dead weight.
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/600.css'
+import '@fontsource/roboto/700.css'
+import '@fontsource/roboto/900.css'
 import GlobalFeedback from '../components/layout/GlobalFeedback'
 import GlobalBurgerMenu from '../components/layout/GlobalBurgerMenu'
 import GlobalDialogRoot from '../components/layout/GlobalDialogRoot'

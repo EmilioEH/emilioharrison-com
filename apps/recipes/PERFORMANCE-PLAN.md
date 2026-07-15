@@ -187,7 +187,7 @@ Small independent items; pick up opportunistically.
 
 **Acceptance criteria:**
 
-- [ ] Only weights actually referenced by the design system are imported; visual diff of key screens shows no fallback-font rendering (spot-check library, detail, cooking mode).
+- [x] Only weights actually referenced by the design system are imported; visual diff of key screens shows no fallback-font rendering (spot-check library, detail, cooking mode). — Investigation found the plan's premise was half wrong: none of Archivo Black/DM Sans/Space Grotesk (the fonts actually imported, and the ones named in `CLAUDE.md`'s design-system section) were referenced by any `font-family` in the app — the `recipe-ui` skill confirms Roboto is the real design-system font and flags the Archivo/DM Sans/Space Grotesk framing as leftover from an unrelated project. Fix: dropped those three packages, added `@fontsource/roboto` at exactly the 5 weights actually used by Tailwind's `font-normal`/`font-medium`/`font-semibold`/`font-bold`/`font-black` utilities (400/500/600/700/900, counts 12/191/49/300/9 respectively). Verified via a Playwright screenshot script (`chromium.launch`) confirming computed `fontFamily: "Roboto, system-ui, sans-serif"` and correct weight resolution on a bold heading, with all 5 weight files showing `(loaded)` status — no fallback-font rendering.
 
 ### P10. Bundle-size CI guardrail
 
@@ -195,7 +195,7 @@ Small independent items; pick up opportunistically.
 
 **Acceptance criteria:**
 
-- [ ] `npm run check:ci` fails if the entry chunk exceeds the budget (verify by temporarily re-adding a static heavy import).
+- [x] `npm run check:ci` fails if the entry chunk exceeds the budget (verify by temporarily re-adding a static heavy import). — Added `.size-limit.json` budgeting the `RecipeManager.*.js` entry chunk at 80 KB gzip (measured actual: 60.25 KB, ~33% headroom); wired `check:size` (`build` + `size-limit`) into `check:ci`. Verified the guardrail actually catches a regression by temporarily reintroducing a static `@react-pdf/renderer` import into `RecipeManager.tsx` and rebuilding — `size-limit` exited 1, reporting a 507 KB overage — then cleanly reverted (confirmed via `git diff --stat` showing no residual changes).
 
 ### P11. Library list virtualization (deferred — only if needed)
 
