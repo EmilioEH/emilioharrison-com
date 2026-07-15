@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useDeferredValue } from 'react'
 import * as FuseModule from 'fuse.js'
 import type { Recipe } from '../../../lib/types'
 
@@ -66,6 +66,10 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
   const [filters, setFilters] = useState<Filters>(cached?.filters ?? {})
   const [sort, setSort] = useState<string>(cached?.sort ?? 'protein')
   const [searchQuery, setSearchQuery] = useState<string>('')
+  // The input itself stays bound to `searchQuery` (immediate) so typing never feels laggy — only
+  // the expensive Fuse.js search + filter + sort below uses the deferred value, so React can keep
+  // the text box responsive while a large library re-filters in the background.
+  const deferredSearchQuery = useDeferredValue(searchQuery)
 
   // Persist filters and sort to sessionStorage whenever they change
   useEffect(() => {
@@ -96,9 +100,9 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
     }
 
     // Search
-    if (searchQuery) {
+    if (deferredSearchQuery) {
       if (!fuse) return []
-      const searchResults = fuse.search(searchQuery)
+      const searchResults = fuse.search(deferredSearchQuery)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       result = searchResults.map((r: any) => ({
         ...r.item,
@@ -134,7 +138,7 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
     > = {
       protein: (a, b) => {
         // If searching, preserve Fuse.js relevance order
-        if (searchQuery) {
+        if (deferredSearchQuery) {
           return (a.score ?? 1) - (b.score ?? 1)
         }
         const pA = a.protein || 'Other'
@@ -165,7 +169,7 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
     result.sort(comparator)
 
     return result
-  }, [recipes, searchQuery, filters, sort, view, fuse])
+  }, [recipes, deferredSearchQuery, filters, sort, view, fuse])
 
   return {
     filtersOpen,

@@ -179,7 +179,7 @@ Small independent items; pick up opportunistically.
 
 **Acceptance criteria:**
 
-- [ ] Typing in search stays responsive with 500+ mock recipes (no dropped keystrokes in a Playwright type-fast test); results still correct.
+- [x] Typing in search stays responsive with 500+ mock recipes (no dropped keystrokes in a Playwright type-fast test); results still correct. — `useFilteredRecipes.ts` wraps `searchQuery` in `useDeferredValue`; the input itself stays bound to the immediate value so typing never lags, only the Fuse.js search/filter/sort computation uses the deferred one. `tests/search.spec.ts`'s new test (520 mock recipes, `pressSequentially`) confirms the input reflects every keystroke and the final filtered result is correct.
 
 ### P9. Font audit
 
