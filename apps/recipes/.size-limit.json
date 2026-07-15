@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Recipe entry chunk (RecipeManager)",
+    "path": "dist/protected/recipes/_astro/RecipeManager.*.js",
+    "gzip": true,
+    "limit": "80 KB"
+  }
+]
