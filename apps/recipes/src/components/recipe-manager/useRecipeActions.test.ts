@@ -19,7 +19,6 @@ const mockRecipe: Recipe = {
   createdAt: '2023-01-01',
   updatedAt: '2023-01-01',
   rating: 0,
-  isFavorite: false,
   description: '',
   prepTime: 0,
   cookTime: 0,
@@ -33,7 +32,6 @@ describe('useRecipeActions', () => {
   const onUpdate = vi.fn()
   const onDelete = vi.fn()
   const onToggleThisWeek = vi.fn()
-  const onToggleFavorite = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -48,7 +46,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -64,7 +61,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -82,7 +78,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -100,7 +95,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -117,7 +111,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -127,23 +120,6 @@ describe('useRecipeActions', () => {
     expect(onToggleThisWeek).toHaveBeenCalledWith(mockRecipe.id)
   })
 
-  it('handles toggleFavorite action', async () => {
-    const { result } = renderHook(() =>
-      useRecipeActions({
-        recipe: mockRecipe,
-        onUpdate,
-        onDelete,
-        onToggleThisWeek,
-        onToggleFavorite,
-      }),
-    )
-
-    await act(async () => {
-      await result.current.handleAction('toggleFavorite')
-    })
-    expect(onToggleFavorite).toHaveBeenCalled()
-  })
-
   it('handles share action', async () => {
     const { result } = renderHook(() =>
       useRecipeActions({
@@ -151,7 +127,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -173,7 +148,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -201,7 +175,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -225,7 +198,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 
@@ -248,7 +220,6 @@ describe('useRecipeActions', () => {
         onUpdate,
         onDelete,
         onToggleThisWeek,
-        onToggleFavorite,
       }),
     )
 

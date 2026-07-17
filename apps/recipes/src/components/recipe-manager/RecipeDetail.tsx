@@ -9,7 +9,6 @@ import type { Recipe } from '../../lib/types'
 import { Check, ListPlus, Loader2 } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
-import { VersionHistoryModal } from '../recipe-details/VersionHistoryModal'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
 
 // Shown only for a recipe that arrived as a slim list-view record (see PERFORMANCE-PLAN.md P3 —
@@ -31,7 +30,6 @@ interface RecipeDetailProps {
   onUpdate: (recipe: Recipe, action: 'save' | 'edit' | 'silent' | 'hydrate') => void
   onDelete: (id: string) => void
   onToggleThisWeek: (id?: string) => void
-  onToggleFavorite?: () => void
 }
 
 export const RecipeDetail: React.FC<RecipeDetailProps> = ({
@@ -40,7 +38,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   onUpdate,
   onDelete,
   onToggleThisWeek,
-  onToggleFavorite,
 }) => {
   // The library list endpoint (GET /api/recipes) now ships a slim projection of each recipe — no
   // `steps`, `structuredSteps`, or ingredient-mapping data (see PERFORMANCE-PLAN.md P3). `steps`
@@ -111,14 +108,13 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   const {
     handleAction,
     handleSaveRecipe,
-    state: { shareDialogOpen, isEditing, isRefreshing, refreshProgress, isHistoryOpen },
-    setters: { setShareDialogOpen, setIsEditing, setIsHistoryOpen },
+    state: { shareDialogOpen, isEditing, isRefreshing, refreshProgress },
+    setters: { setShareDialogOpen, setIsEditing },
   } = useRecipeActions({
     recipe,
     onUpdate,
     onDelete,
     onToggleThisWeek,
-    onToggleFavorite,
   })
 
   const refreshRecipe = async () => {
@@ -208,26 +204,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       {/* Share Recipe Dialog */}
       <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
 
-      {/* Version History Modal */}
-      <VersionHistoryModal
-        recipeId={recipe.id}
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        onRestore={() => {
-          const fetchFresh = async () => {
-            const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-              ? import.meta.env.BASE_URL
-              : `${import.meta.env.BASE_URL}/`
-            const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
-            if (res.ok) {
-              const data = await res.json()
-              // Pure re-sync (the restore already persisted server-side via /restore).
-              if (data.recipe) onUpdate(data.recipe, 'hydrate')
-            }
-          }
-          fetchFresh()
-        }}
-      />
     </Stack>
   )
 }

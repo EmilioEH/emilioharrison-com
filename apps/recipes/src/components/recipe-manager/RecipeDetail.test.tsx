@@ -33,10 +33,6 @@ vi.mock('../recipe-details/OverviewMode', () => ({
   OverviewMode: () => <div data-testid="overview-mode" />,
 }))
 
-vi.mock('../recipe-details/VersionHistoryModal', () => ({
-  VersionHistoryModal: () => <div data-testid="version-history">Version History</div>,
-}))
-
 vi.mock('./dialogs/ShareRecipeDialog', () => ({
   ShareRecipeDialog: () => <div data-testid="share-dialog">Share Dialog</div>,
 }))
@@ -50,12 +46,10 @@ const mockRecipeActions = {
     isEditing: false,
     isRefreshing: false,
     refreshProgress: '',
-    isHistoryOpen: false,
   },
   setters: {
     setShareDialogOpen: vi.fn(),
     setIsEditing: vi.fn(),
-    setIsHistoryOpen: vi.fn(),
   },
 }
 
@@ -89,7 +83,6 @@ const mockRecipe: Recipe = {
   createdAt: '2023-01-01',
   updatedAt: '2023-01-01',
   rating: 0,
-  isFavorite: false,
   description: '',
   prepTime: 0,
   cookTime: 0,
@@ -104,7 +97,6 @@ describe('RecipeDetail', () => {
   const onUpdate = vi.fn()
   const onDelete = vi.fn()
   const onToggleThisWeek = vi.fn()
-  const onToggleFavorite = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -120,7 +112,6 @@ describe('RecipeDetail', () => {
         onUpdate={onUpdate}
         onDelete={onDelete}
         onToggleThisWeek={onToggleThisWeek}
-        onToggleFavorite={onToggleFavorite}
       />,
     )
 
@@ -141,7 +132,6 @@ describe('RecipeDetail', () => {
         onUpdate={onUpdate}
         onDelete={onDelete}
         onToggleThisWeek={onToggleThisWeek}
-        onToggleFavorite={onToggleFavorite}
       />,
     )
 
@@ -163,7 +153,6 @@ describe('RecipeDetail', () => {
           onUpdate={onUpdate}
           onDelete={onDelete}
           onToggleThisWeek={onToggleThisWeek}
-          onToggleFavorite={onToggleFavorite}
         />,
       )
 
@@ -185,7 +174,6 @@ describe('RecipeDetail', () => {
           onUpdate={onUpdate}
           onDelete={onDelete}
           onToggleThisWeek={onToggleThisWeek}
-          onToggleFavorite={onToggleFavorite}
         />,
       )
 
@@ -210,7 +198,6 @@ describe('RecipeDetail', () => {
           onUpdate={onUpdate}
           onDelete={onDelete}
           onToggleThisWeek={onToggleThisWeek}
-          onToggleFavorite={onToggleFavorite}
         />,
       )
 

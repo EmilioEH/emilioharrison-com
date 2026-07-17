@@ -15,7 +15,6 @@ export interface Filters {
   dietary?: string[]
   equipment?: string[]
   occasion?: string[]
-  onlyFavorites?: boolean
 }
 
 // Session-level cache so filters survive in-app navigation and browser back button
@@ -126,7 +125,6 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       if (!matchesArrayFilter(filters.occasion, r.occasion)) return false
 
       // Favorites filter
-      if (filters.onlyFavorites && !r.isFavorite) return false
 
       return true
     })

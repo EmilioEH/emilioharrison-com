@@ -61,7 +61,7 @@ describe('GET /api/recipes', () => {
       value: ['user-1'],
     })
 
-    // getCollection should only ever be called for the favorites subcollection, never 'recipes'.
+    // getCollection should never be called for 'recipes' — visibility uses scoped queries only.
     const recipeCollectionCalls = getCollection.mock.calls.filter(([col]) => col === 'recipes')
     expect(recipeCollectionCalls).toHaveLength(0)
   })
@@ -161,61 +161,6 @@ describe('GET /api/recipes', () => {
     expect((inCalls[1][1].value as string[]).length).toBe(16) // 45 members + self, deduped by Set
   })
 
-  it('populates isFavorite from the favorites subcollection', async () => {
-    getDocument.mockImplementation(async (collection: string, id: string) => {
-      if (collection === 'users' && id === 'user-1') return { familyId: null }
-      return null
-    })
-    runQuery.mockImplementation(async (_col: string, filter: { op: string }) => {
-      if (filter.op === 'IN') {
-        return [
-          makeRecipe({ id: 'r1', createdBy: 'user-1' }),
-          makeRecipe({ id: 'r2', createdBy: 'user-1' }),
-        ]
-      }
-      return []
-    })
-    getCollection.mockImplementation(async (path: string) => {
-      if (path === 'users/user-1/favorites') return [{ id: 'r2' }]
-      return []
-    })
-
-    const res = await GET({ cookies: fakeCookies('user-1') } as never)
-    const data = (await res.json()) as { recipes: Array<{ id: string; isFavorite: boolean }> }
-
-    const byId = Object.fromEntries(data.recipes.map((r) => [r.id, r.isFavorite]))
-    expect(byId.r1).toBe(false)
-    expect(byId.r2).toBe(true)
-  })
-
-  it('runs the recipe queries and favorites lookup in parallel (not sequential)', async () => {
-    const events: string[] = []
-    getDocument.mockImplementation(async (collection: string, id: string) => {
-      if (collection === 'users' && id === 'user-1') return { familyId: null }
-      return null
-    })
-    runQuery.mockImplementation(async () => {
-      events.push('runQuery:start')
-      await new Promise((r) => setTimeout(r, 10))
-      events.push('runQuery:end')
-      return []
-    })
-    getCollection.mockImplementation(async () => {
-      events.push('favorites:start')
-      await new Promise((r) => setTimeout(r, 10))
-      events.push('favorites:end')
-      return []
-    })
-
-    await GET({ cookies: fakeCookies('user-1') } as never)
-
-    // If these ran sequentially, both `runQuery:end` calls would appear before `favorites:start`.
-    // Running in parallel means favorites starts before the first runQuery call resolves.
-    const favoritesStartIdx = events.indexOf('favorites:start')
-    const lastRunQueryEndIdx = events.lastIndexOf('runQuery:end')
-    expect(favoritesStartIdx).toBeLessThan(lastRunQueryEndIdx)
-  })
-
   it('list response contains no instructions/steps or structured grocery fields', async () => {
     getDocument.mockImplementation(async (collection: string, id: string) => {
       if (collection === 'users' && id === 'user-1') return { familyId: null }
@@ -302,13 +247,12 @@ describe('toListRecipe', () => {
       notes: 'secret',
     })
 
-    const slim = toListRecipe(recipe, true)
+    const slim = toListRecipe(recipe)
 
     expect(slim).not.toHaveProperty('steps')
     expect(slim).not.toHaveProperty('structuredSteps')
     expect(slim).not.toHaveProperty('notes')
     expect(slim.id).toBe('r1')
-    expect(slim.isFavorite).toBe(true)
     expect(slim.ingredients).toEqual(recipe.ingredients)
   })
 
@@ -319,7 +263,7 @@ describe('toListRecipe', () => {
       thumbUrl: 'https://example.com/full-thumb.jpg',
     })
 
-    const slim = toListRecipe(recipe, false)
+    const slim = toListRecipe(recipe)
 
     expect(slim.thumbUrl).toBe('https://example.com/full-thumb.jpg')
   })
@@ -328,7 +272,7 @@ describe('toListRecipe', () => {
     const recipe = makeRecipe({ id: 'r3', images: ['https://example.com/full.jpg'] })
     delete (recipe as { thumbUrl?: string }).thumbUrl
 
-    const slim = toListRecipe(recipe, false)
+    const slim = toListRecipe(recipe)
 
     expect(slim.thumbUrl).toBeUndefined()
   })

@@ -2,7 +2,7 @@ import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../../lib/firebase-server'
 import { getAuthUser, unauthorizedResponse, serverErrorResponse } from '../../../../lib/api-helpers'
 import { setRequestContext } from '../../../../lib/request-context'
-import type { Recipe, RecipeVersion, Ingredient } from '../../../../lib/types'
+import type { Recipe, Ingredient } from '../../../../lib/types'
 import { executeAiParse } from '../../../../lib/services/ai-parser'
 
 /** Normalize any thrown value to an Error so message extraction is reliable */
@@ -41,18 +41,6 @@ Instructions:
 ${recipe.steps.join('\n')}
     `.trim()
   }
-
-  // SNAPSHOT: Save current version before overwriting
-  const versionId = crypto.randomUUID()
-  const version: RecipeVersion = {
-    id: versionId,
-    recipeId: id,
-    timestamp: new Date().toISOString(),
-    changeType: 'ai-refresh',
-    createdBy: 'system',
-    data: recipe,
-  }
-  await db.addSubDocument('recipes', id, 'versions', versionId, version)
 
   try {
     let newData

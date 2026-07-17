@@ -273,7 +273,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
     }
   }, [useContainedScroll])
 
-  const { saveRecipe, deleteRecipe, toggleFavorite, bulkUpdateRecipes, bulkDeleteRecipes } =
+  const { saveRecipe, deleteRecipe, bulkUpdateRecipes, bulkDeleteRecipes } =
     useRecipeActions({
       recipes,
       setRecipes,
@@ -379,7 +379,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
     handleBulkDelete,
     handleBulkEdit,
   } = useRecipeHandlers({
-    recipes,
     setRecipes,
     saveRecipe,
     deleteRecipe,
@@ -401,9 +400,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
             ...r,
             createdAt: now,
             updatedAt: now,
-            versionHistory: [{ date: now, changeType: 'create' as const }],
-            rating: 0,
-            isFavorite: false,
           }
           await saveRecipe(fullRecipe as unknown as Partial<Recipe>)
         }),
@@ -442,7 +438,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         handleUpdateRecipe={handleUpdateRecipe}
         handleDeleteRecipe={handleDeleteRecipe}
         handleAddToWeek={handleAddToWeek}
-        handleToggleFavorite={toggleFavorite}
         handleBulkImportSave={handleBulkImportSave}
         refreshRecipes={refreshRecipes}
         setView={setView}
@@ -492,8 +487,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
               activeFilterCount={
                 (filters.protein?.length || 0) +
                 (filters.difficulty?.length || 0) +
-                (filters.cuisine?.length || 0) +
-                (filters.onlyFavorites ? 1 : 0)
+                (filters.cuisine?.length || 0)
               }
               isSearchMode={isSearchMode}
               onSearchExpandedChange={setIsSearchMode}

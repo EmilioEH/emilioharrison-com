@@ -8,7 +8,6 @@ const ALLOWED_FIELDS = [
   'cuisine',
   'difficulty',
   'protein',
-  'isFavorite', // Maybe useful later
   'thisWeek', // Maybe useful later
   'tags', // Future support
 ]

@@ -65,46 +65,7 @@ export const PUT: APIRoute = async (context: APIContext) => {
       return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
     }
 
-    // Handle Versioning
-    // 1. Create a snapshot of the CURRENT (old) state.
-    // Strip `versions` from the snapshot data — storing nested version arrays
-    // causes each snapshot's data.versions to be JSON-stringified by the
-    // Firestore REST layer, and every subsequent save re-stringifies the
-    // previous string, growing the document exponentially until it hits the
-    // 1MB Firestore document size limit.
-    const { versions: _prevVersions, ...docWithoutVersions } = doc
-    const versionSnapshot = {
-      timestamp: now,
-      userId: user,
-      changeType: 'edit',
-      data: docWithoutVersions,
-    }
-
-    // 2. Append to existing versions (or create new array)
-    // We only keep the last 10 versions to avoid doc bloat
-    const currentVersions = (doc.versions as unknown[]) || []
-    const updatedVersions = [versionSnapshot, ...currentVersions].slice(0, 10)
-
-    // Update recipe with new data AND the new versions array
-    await db.updateDocument('recipes', id, {
-      ...updateData,
-      versions: updatedVersions,
-    })
-
-    // Handle favorites parity
-    if (user && typeof recipeData.isFavorite === 'boolean') {
-      const favCollection = `users/${user}/favorites`
-      if (recipeData.isFavorite) {
-        await db.setDocument(favCollection, id, { createdAt: now })
-      } else {
-        // Ignore delete error if not exists
-        try {
-          await db.deleteDocument(favCollection, id)
-        } catch {
-          /* ignore */
-        }
-      }
-    }
+    await db.updateDocument('recipes', id, updateData)
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

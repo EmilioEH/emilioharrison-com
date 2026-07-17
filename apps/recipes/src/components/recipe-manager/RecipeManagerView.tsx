@@ -42,7 +42,6 @@ interface RecipeManagerViewProps {
   handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent' | 'hydrate') => void
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
-  handleToggleFavorite: (recipe: Recipe) => void
   handleBulkImportSave: (recipes: Recipe[]) => void
   refreshRecipes: (force?: boolean) => void
   setView: (view: ViewMode) => void
@@ -63,7 +62,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   handleUpdateRecipe,
   handleDeleteRecipe,
   handleAddToWeek,
-  handleToggleFavorite,
   handleBulkImportSave,
   refreshRecipes,
   setView,
@@ -115,7 +113,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
           onUpdate={handleUpdateRecipe}
           onDelete={(id) => handleDeleteRecipe(id)}
           onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
-          onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
         />
       </Suspense>
     )

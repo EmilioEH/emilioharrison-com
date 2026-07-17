@@ -72,16 +72,9 @@ export interface Recipe {
 
   // Phase 7: Advanced Features
   rating?: number // 1-5
-  isFavorite?: boolean
   createdAt?: string // ISO Date
   updatedAt?: string // ISO Date
   creationMethod?: 'manual' | 'ai-parse' | 'ai-infer'
-  // Optional: keep track of simplified history
-  versionHistory?: {
-    date: string
-    changeType: 'create' | 'edit' | 'import'
-  }[]
-  // Post-cooking feedback
 
   userNotes?: string
   wouldMakeAgain?: boolean
@@ -94,17 +87,14 @@ export interface Recipe {
   // Enhancement Status (for dual-process import)
   enhancementStatus?: 'pending' | 'processing' | 'complete' | 'error'
   enhancementError?: string // Optional error message if enhancement fails
-
-  // Version History (Full Snapshots)
-  versions?: RecipeVersion[]
 }
 
 /**
  * Slim projection of `Recipe` returned by `GET /api/recipes` (the library list endpoint) — see
  * PERFORMANCE-PLAN.md P3. Contains only the fields `RecipeCard.tsx`/`RecipeLibrary.tsx` render,
- * `useFilteredRecipes.ts` filters/sorts/searches by, and `isFavorite`. Notably excludes `steps`,
- * `structuredSteps`/`structuredIngredients`, step-ingredient mappings, notes, and version history
- * — those only ship on the full document from `GET /api/recipes/[id]`.
+ * `useFilteredRecipes.ts` filters/sorts/searches by. Notably excludes `steps`,
+ * `structuredSteps`/`structuredIngredients`, and step-ingredient mappings —
+ * those only ship on the full document from `GET /api/recipes/[id]`.
  *
  * Client code treats list records as `Recipe` (the existing app-wide type) for convenience, since
  * every field here is also a valid, optional `Recipe` field — but `steps` being absent is exactly
@@ -135,16 +125,7 @@ export type RecipeListItem = Pick<
   | 'equipment'
   | 'occasion'
   | 'ingredients'
-> & { isFavorite: boolean }
-
-export interface RecipeVersion {
-  id: string
-  recipeId: string
-  timestamp: string // ISO Date
-  changeType: 'manual-edit' | 'ai-refresh' | 'import' | 'restore'
-  createdBy?: string // userId (optional for legacy)
-  data: Partial<Recipe> // Snapshot of core fields
-}
+>
 
 interface StructuredIngredient {
   original: string

@@ -64,11 +64,6 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 }) => {
   const handleFilterToggle = (key: keyof Filters, value: string) => {
     setFilters((prev) => {
-      // Handle boolean toggle for onlyFavorites
-      if (key === 'onlyFavorites') {
-        return { ...prev, onlyFavorites: !prev.onlyFavorites }
-      }
-
       const current = (prev[key] as string[]) || []
       if (current.includes(value)) {
         return { ...prev, [key]: current.filter((item) => item !== value) }
@@ -113,17 +108,6 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
                   </Button>
                 ))}
               </div>
-            </FilterSection>
-
-            {/* Special Filters */}
-            <FilterSection title="Show">
-              <FilterChip
-                label="Favorites Only"
-                active={filters.onlyFavorites}
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, onlyFavorites: !prev.onlyFavorites }))
-                }
-              />
             </FilterSection>
 
             {/* Protein - Priority 1 for variety */}

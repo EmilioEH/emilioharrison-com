@@ -4,11 +4,9 @@ import { familyActions, $pendingInvites } from '../../../lib/familyStore'
 import { recipeActions } from '../../../lib/recipeStore'
 
 import type { ViewMode } from './useRouter'
-import { useRecipeVersions } from './useRecipeVersions'
 import { triggerBackgroundEnhancement } from '../../../lib/services/recipe-enhancer'
 
 interface UseRecipeHandlersProps {
-  recipes: Recipe[]
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
   saveRecipe: (recipe: Partial<Recipe>) => Promise<{ success: boolean; savedRecipe?: Recipe }>
   deleteRecipe: (id: string) => Promise<boolean>
@@ -22,7 +20,6 @@ interface UseRecipeHandlersProps {
 }
 
 export function useRecipeHandlers({
-  recipes,
   setRecipes,
   saveRecipe,
   deleteRecipe,
@@ -80,22 +77,9 @@ export function useRecipeHandlers({
     }
   }
 
-  // NEW: Version Control Hook
-  const { createSnapshot } = useRecipeVersions()
-
   const handleSaveRecipeInternal = async (
     recipe: Partial<Recipe> & { id?: string },
   ): Promise<{ success: boolean; savedId?: string }> => {
-    // Snapshot original state before saving if it's an update
-    if (recipe.id) {
-      const original = recipes.find((r) => r.id === recipe.id)
-      if (original) {
-        // Fire and forget snapshot (don't block UI strictly, or maybe we should?)
-        // Let's await it to be safe, creating history is fast.
-        await createSnapshot(recipe.id, 'manual-edit', original)
-      }
-    }
-
     const { success, savedRecipe: saved } = await saveRecipe(recipe)
 
     if (success) {

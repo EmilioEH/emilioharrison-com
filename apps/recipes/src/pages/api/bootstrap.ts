@@ -44,9 +44,8 @@ export const GET: APIRoute = async (context: APIContext) => {
 
     // 2. Everything that only depends on `userId` / `familyId` / `userEmail` (not on each
     // other) runs in parallel.
-    const [familyDoc, favDocs, plannedDataAll, allInvites, legacyRecipes] = await Promise.all([
+    const [familyDoc, plannedDataAll, allInvites, legacyRecipes] = await Promise.all([
       familyId ? db.getDocument<Family>('families', familyId) : Promise.resolve(null),
-      db.getCollection(`users/${userId}/favorites`),
       familyId
         ? db.getCollection<FamilyRecipeData>(`families/${familyId}/recipeData`)
         : Promise.resolve([] as FamilyRecipeData[]),
@@ -73,8 +72,7 @@ export const GET: APIRoute = async (context: APIContext) => {
     // --- Assemble recipes (mirrors GET /api/recipes) ---
     const rawRecipes = dedupeById([legacyRecipes, ...inRecipeResults].flat())
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const favIds = new Set(favDocs.map((d: any) => d.id))
-    const recipes = rawRecipes.filter(isRecipe).map((doc) => toListRecipe(doc, favIds.has(doc.id)))
+    const recipes = rawRecipes.filter(isRecipe).map((doc) => toListRecipe(doc))
     recipes.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
 
     // --- Assemble planned (mirrors GET /api/week/planned) ---

@@ -85,46 +85,6 @@ export const useRecipeActions = ({
     [setRecipes, getBaseUrl],
   )
 
-  const toggleFavorite = useCallback(
-    async (recipe: Recipe): Promise<Recipe> => {
-      const oldIsFavorite = recipe.isFavorite
-      const newIsFavorite = !oldIsFavorite
-
-      // Optimistic update
-      setRecipes((prev) =>
-        prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: newIsFavorite } : r)),
-      )
-
-      try {
-        const res = await fetch(`${getBaseUrl()}api/favorites`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipeId: recipe.id }),
-        })
-
-        if (!res.ok) throw new Error('Failed to toggle favorite')
-
-        const data = await res.json()
-        if (data.isFavorite !== newIsFavorite) {
-          // Revert/Sync if server disagrees
-          setRecipes((prev) =>
-            prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: data.isFavorite } : r)),
-          )
-          return { ...recipe, isFavorite: data.isFavorite }
-        }
-        return { ...recipe, isFavorite: newIsFavorite }
-      } catch (e) {
-        console.error(e)
-        // Revert on error
-        setRecipes((prev) =>
-          prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: oldIsFavorite } : r)),
-        )
-        return { ...recipe, isFavorite: oldIsFavorite }
-      }
-    },
-    [setRecipes, getBaseUrl],
-  )
-
   const bulkUpdateRecipes = useCallback(
     async (ids: Set<string>, updates: Partial<Recipe>): Promise<boolean> => {
       try {
@@ -189,7 +149,6 @@ export const useRecipeActions = ({
   return {
     saveRecipe,
     deleteRecipe,
-    toggleFavorite,
     bulkUpdateRecipes,
     bulkDeleteRecipes,
     isSaving,
