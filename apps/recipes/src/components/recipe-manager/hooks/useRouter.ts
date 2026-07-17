@@ -7,12 +7,10 @@ export type ViewMode =
   | 'edit'
   | 'grocery'
   | 'week'
-  | 'settings'
   | 'bulk-import'
   | 'family-settings'
   | 'admin-dashboard'
   | 'invite'
-  | 'notifications'
 
 export interface RouteState {
   view: ViewMode

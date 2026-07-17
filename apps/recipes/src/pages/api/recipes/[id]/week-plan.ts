@@ -1,9 +1,8 @@
 import type { APIRoute } from 'astro'
 import type { APIContext } from 'astro'
-import { getAuthUser, unauthorizedResponse, getCloudflareEnv } from '../../../../lib/api-helpers'
+import { getAuthUser, unauthorizedResponse } from '../../../../lib/api-helpers'
 import { db } from '../../../../lib/firebase-server'
 import type { WeekPlanData, FamilyRecipeData } from '../../../../lib/types'
-import { sendFamilyPush } from '../../../../lib/push-notifications'
 import { setRequestContext } from '../../../../lib/request-context'
 
 /**
@@ -14,7 +13,7 @@ export const POST: APIRoute = async (context: APIContext) => {
   // Ensure request context is set for db access to Cloudflare env
   setRequestContext(context)
 
-  const { params, request, cookies, locals } = context
+  const { params, request, cookies } = context
   const userId = getAuthUser(cookies)
   const recipeId = params.id
 
@@ -131,40 +130,6 @@ export const POST: APIRoute = async (context: APIContext) => {
 
     // Fetch updated data
     familyData = await db.getDocument(`families/${userDoc.familyId}/recipeData`, recipeId)
-
-    // Notify Family (Fire and await to ensure delivery in serverless)
-    try {
-      const recipe = await db.getDocument('recipes', recipeId)
-      // Safely access env with fallback
-      let env
-      try {
-        env = getCloudflareEnv(locals)
-      } catch {
-        console.warn('Could not access Cloudflare Env for notifications')
-      }
-
-      if (env) {
-        const recipeTitle = recipe?.title || 'a recipe'
-        const dayName = new Date(assignedDate || Date.now()).toLocaleDateString('en-US', {
-          weekday: 'long',
-        })
-
-        await sendFamilyPush(
-          userDoc.familyId,
-          userId,
-          {
-            title: 'Meal Plan Update',
-            body: `${userDoc.displayName || 'Someone'} added ${recipeTitle} for ${dayName}.`,
-            url: '/protected/recipes/week',
-            type: 'mealPlan',
-          },
-          env,
-        )
-      }
-    } catch (err) {
-      console.error('Notification dispatch failed:', err)
-      // Do not block response on notification failure
-    }
 
     return new Response(
       JSON.stringify({

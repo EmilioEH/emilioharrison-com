@@ -26,7 +26,7 @@ import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { recipeActions } from '../../lib/recipeStore'
-import { alert, confirm } from '../../lib/dialogStore'
+import { alert } from '../../lib/dialogStore'
 // --- Sub-Components ---
 import { RecipeManagerView } from './RecipeManagerView'
 import { RecipeLibrary } from './RecipeLibrary'
@@ -84,7 +84,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   const { user: bootstrapUser, bootstrapped } = useBootstrap()
   const {
     currentUser,
-    setCurrentUser,
     isAdmin: computedIsAdmin,
     isOnboardingComplete,
     setIsOnboardingComplete,
@@ -340,7 +339,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   // Listen for settings navigation from burger menu
   useEffect(() => {
-    const handleNavigateToSettings = () => setView('settings')
     const handleNavigateToBulkImport = () => setView('bulk-import')
     const handleNavigateToFamilySettings = () => {
       console.log('DEBUG: Navigate to Family Settings Triggered')
@@ -348,29 +346,24 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     }
     const handleNavigateToAdminDashboard = () => setView('admin-dashboard')
 
-    window.addEventListener('navigate-to-settings', handleNavigateToSettings)
     window.addEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
     window.addEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
     window.addEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
 
     const handleNavigateToInvite = () => setView('invite')
-    const handleNavigateToNotifications = () => setView('notifications')
     const handleNavigateToWeekPlannerSettings = () => setShowWeekPlannerSettings(true)
 
     window.addEventListener('navigate-to-invite', handleNavigateToInvite)
-    window.addEventListener('navigate-to-notifications', handleNavigateToNotifications)
     window.addEventListener(
       'navigate-to-week-planner-settings',
       handleNavigateToWeekPlannerSettings,
     )
 
     return () => {
-      window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
       window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
       window.removeEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
       window.removeEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
       window.removeEventListener('navigate-to-invite', handleNavigateToInvite)
-      window.removeEventListener('navigate-to-notifications', handleNavigateToNotifications)
       window.removeEventListener(
         'navigate-to-week-planner-settings',
         handleNavigateToWeekPlannerSettings,
@@ -402,8 +395,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     handleUpdateRecipe,
     handleBulkDelete,
     handleBulkEdit,
-    handleExport,
-    handleUpdateProfile,
   } = useRecipeHandlers({
     recipes,
     setRecipes,
@@ -416,7 +407,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     selectedRecipe,
     selectedIds,
     clearSelection,
-    setCurrentUser,
   })
 
   const handleBulkImportSave = async (recipes: Recipe[]) => {
@@ -441,43 +431,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     } catch (e) {
       console.error(e)
       await alert('Failed to save some recipes.')
-    }
-  }
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      try {
-        const result = event.target?.result as string
-        const imported = JSON.parse(result)
-        if (Array.isArray(imported)) {
-          const existingIds = new Set(recipes.map((r) => r.id))
-          const newRecipes = imported.filter((r) => !existingIds.has(r.id))
-          setRecipes([...recipes, ...newRecipes])
-          await alert(`Imported ${newRecipes.length} recipes.`)
-        }
-      } catch (err) {
-        console.error(err)
-        await alert('Failed to parse JSON.')
-      }
-    }
-    reader.readAsText(file)
-  }
-
-  const handleDeleteAll = async () => {
-    if (await confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
-      const allIds = new Set(recipes.map((r) => r.id))
-      const success = await bulkDeleteRecipes(allIds)
-      if (success) {
-        setRecipes([])
-        await alert('All recipes deleted.')
-      } else {
-        await alert('Failed to delete all recipes.')
-      }
-      setView('library')
     }
   }
 
@@ -523,10 +476,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         handleDeleteRecipe={handleDeleteRecipe}
         handleAddToWeek={handleAddToWeek}
         handleToggleFavorite={toggleFavorite}
-        handleExport={handleExport}
-        handleImport={handleImport}
-        handleDeleteAll={handleDeleteAll}
-        handleUpdateProfile={handleUpdateProfile}
         handleBulkImportSave={handleBulkImportSave}
         refreshRecipes={refreshRecipes}
         setView={setView}

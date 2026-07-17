@@ -8,14 +8,6 @@ import type { ViewMode } from './hooks/useRouter'
 const RecipeDetail = React.lazy(() =>
   import('./RecipeDetail').then((m) => ({ default: m.RecipeDetail })),
 )
-const NotificationSettingsView = React.lazy(() =>
-  import('./views/NotificationSettingsView').then((m) => ({
-    default: m.NotificationSettingsView,
-  })),
-)
-const SettingsView = React.lazy(() =>
-  import('./views/SettingsView').then((m) => ({ default: m.SettingsView })),
-)
 const BulkRecipeImporter = React.lazy(() =>
   import('./importer/BulkRecipeImporter').then((m) => ({ default: m.BulkRecipeImporter })),
 )
@@ -51,10 +43,6 @@ interface RecipeManagerViewProps {
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
   handleToggleFavorite: (recipe: Recipe) => void
-  handleExport: () => void
-  handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-  handleDeleteAll: () => void
-  handleUpdateProfile: (name: string) => Promise<boolean>
   handleBulkImportSave: (recipes: Recipe[]) => void
   refreshRecipes: (force?: boolean) => void
   setView: (view: ViewMode) => void
@@ -69,7 +57,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   initialized,
   error,
   selectedRecipe,
-  user,
   isAdmin,
   family,
 
@@ -77,10 +64,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   handleDeleteRecipe,
   handleAddToWeek,
   handleToggleFavorite,
-  handleExport,
-  handleImport,
-  handleDeleteAll,
-  handleUpdateProfile,
   handleBulkImportSave,
   refreshRecipes,
   setView,
@@ -169,29 +152,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
           Back to Recipes
         </button>
       </div>
-    )
-  }
-
-  if (view === 'notifications') {
-    return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <NotificationSettingsView onClose={() => setView('library')} />
-      </Suspense>
-    )
-  }
-
-  if (view === 'settings') {
-    return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <SettingsView
-          onClose={() => setView('library')}
-          onExport={handleExport}
-          onImport={handleImport}
-          onDeleteAccount={handleDeleteAll}
-          currentName={user ?? undefined}
-          onUpdateProfile={handleUpdateProfile}
-        />
-      </Suspense>
     )
   }
 

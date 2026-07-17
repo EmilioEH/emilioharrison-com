@@ -3,8 +3,6 @@ import { useStore } from '@nanostores/react'
 
 import {
   X,
-  Bell,
-  Settings,
   Info,
   LayoutDashboard,
   FolderUp,
@@ -28,20 +26,9 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const isOpen = useStore(burgerMenuOpen)
   const pendingInvites = useStore($pendingInvites)
 
-  const handleSettings = () => {
-    closeBurgerMenu()
-    // Navigate to settings - dispatch custom event that RecipeManager listens to
-    window.dispatchEvent(new CustomEvent('navigate-to-settings'))
-  }
-
   const handleWeekPlannerSettings = () => {
     closeBurgerMenu()
     window.dispatchEvent(new CustomEvent('navigate-to-week-planner-settings'))
-  }
-
-  const handleNotifications = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-notifications'))
   }
 
   const handleBulkImport = () => {
@@ -114,24 +101,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               >
                 <FolderUp className="h-5 w-5 text-muted-foreground" />
                 <span className="font-medium text-foreground">Import Recipes</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleNotifications}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <Bell className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Notifications</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleSettings}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <Settings className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Settings</span>
               </button>
 
               <button

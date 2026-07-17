@@ -19,7 +19,6 @@ interface UseRecipeHandlersProps {
   selectedRecipe: Recipe | null
   selectedIds: Set<string>
   clearSelection: () => void
-  setCurrentUser: (name: string) => void
 }
 
 export function useRecipeHandlers({
@@ -34,7 +33,6 @@ export function useRecipeHandlers({
   selectedRecipe: _selectedRecipe,
   selectedIds,
   clearSelection,
-  setCurrentUser,
 }: UseRecipeHandlersProps) {
   const handleAcceptInvite = async (invite: PendingInvite) => {
     try {
@@ -178,39 +176,6 @@ export function useRecipeHandlers({
     }
   }
 
-  const handleExport = () => {
-    const dataStr = JSON.stringify(recipes, null, 2)
-    const blob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.download = `chefboard_backup_${new Date().toISOString().split('T')[0]}.json`
-    link.href = url
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  const handleUpdateProfile = async (displayName: string) => {
-    try {
-      const res = await fetch('/protected/recipes/api/user/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName }),
-      })
-      if (res.ok) {
-        setCurrentUser(displayName)
-        await alert('Profile updated successfully!')
-        return true
-      }
-      await alert('Failed to update profile')
-      return false
-    } catch (e) {
-      console.error(e)
-      await alert('An error occurred')
-      return false
-    }
-  }
-
   return {
     handleAcceptInvite,
     handleDeclineInvite,
@@ -219,7 +184,5 @@ export function useRecipeHandlers({
     handleUpdateRecipe,
     handleBulkDelete,
     handleBulkEdit,
-    handleExport,
-    handleUpdateProfile,
   }
 }
