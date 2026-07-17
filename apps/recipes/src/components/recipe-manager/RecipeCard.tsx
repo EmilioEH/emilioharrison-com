@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
 import type { Recipe } from '../../lib/types'
-import { getPlannedDatesForRecipe } from '../../lib/weekStore'
+import { getPlannedWeeksForRecipe } from '../../lib/weekStore'
 
 // Helper to normalize titles to Title Case
 const toTitleCase = (str: string): string => {
@@ -44,7 +44,7 @@ interface RecipeCardProps {
   onManage?: (id: string) => void
   allowManagement?: boolean
   skipAnimation?: boolean
-  plannedDates: ReturnType<typeof getPlannedDatesForRecipe>
+  plannedWeeks: ReturnType<typeof getPlannedWeeksForRecipe>
 }
 
 export const RecipeCard = memo(
@@ -57,9 +57,9 @@ export const RecipeCard = memo(
     onManage,
     allowManagement = false,
     skipAnimation = false,
-    plannedDates,
+    plannedWeeks,
   }: RecipeCardProps) => {
-    const isPlanned = plannedDates.length > 0
+    const isPlanned = plannedWeeks.length > 0
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
     const ingredientMatches = recipe.matches?.filter(
@@ -177,10 +177,10 @@ export const RecipeCard = memo(
 
             {/* Status Badges - Inline on right */}
             <div className="flex items-center gap-1.5 pr-2">
-              {/* Day Tags */}
-              {plannedDates.slice(0, 3).map((p) => (
+              {/* Planned-week badge */}
+              {plannedWeeks.slice(0, 1).map((p) => (
                 <Badge
-                  key={`${p.weekStart}-${p.day}`}
+                  key={p.weekStart}
                   variant="tag"
                   size="sm"
                   className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
@@ -200,15 +200,6 @@ export const RecipeCard = memo(
                   )}
                 </Badge>
               ))}
-              {plannedDates.length > 3 && (
-                <Badge
-                  variant="tag"
-                  size="sm"
-                  className="border-muted-foreground/20 bg-muted font-bold text-muted-foreground"
-                >
-                  +{plannedDates.length - 3}
-                </Badge>
-              )}
 
               {/* Add to Week button - 44px touch target */}
               {!allowManagement && (

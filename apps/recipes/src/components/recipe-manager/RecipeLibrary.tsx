@@ -6,8 +6,8 @@ import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
 import {
   allPlannedRecipes,
-  getPlannedDatesForRecipe,
-  removeRecipeFromDay,
+  getPlannedWeeksForRecipe,
+  removeRecipeFromWeek,
 } from '../../lib/weekStore'
 import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 import { RecipeCard } from './RecipeCard'
@@ -252,7 +252,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
-                plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
+                plannedWeeks={getPlannedWeeksForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
               />
             ))}
           </div>
@@ -292,7 +292,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
-                plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
+                plannedWeeks={getPlannedWeeksForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
               />
             ))}
           </div>
@@ -306,17 +306,16 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           const selectedRecipe = recipes.find((r) => r.id === managementRecipeId)
           if (!selectedRecipe) return null
 
-          const plannedDates = getPlannedDatesForRecipe(managementRecipeId)
+          const plannedWeeks = getPlannedWeeksForRecipe(managementRecipeId)
 
           return (
             <RecipeManagementSheet
               isOpen={true}
               onClose={() => setManagementRecipeId(null)}
-              recipeId={managementRecipeId}
               recipeTitle={selectedRecipe.title}
-              currentPlannedDays={plannedDates}
+              currentPlannedWeeks={plannedWeeks}
               onRemove={async () => {
-                await removeRecipeFromDay(managementRecipeId)
+                await removeRecipeFromWeek(managementRecipeId)
                 // Close the sheet after removal so the UI reflects the change
                 setManagementRecipeId(null)
               }}

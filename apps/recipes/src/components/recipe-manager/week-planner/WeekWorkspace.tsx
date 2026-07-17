@@ -15,7 +15,12 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
-import { weekState, switchWeekContext, currentWeekRecipes, $groceryNeedsRegen } from '../../../lib/weekStore'
+import {
+  weekState,
+  switchWeekContext,
+  currentWeekRecipes,
+  $groceryNeedsRegen,
+} from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
 import { buildGroceryItems } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
@@ -466,7 +471,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       <div className="flex-1 overflow-y-auto pb-tab-bar">
         {activeTab === 'plan' && (
           <WeekPlanView
-            activeWeekStart={activeWeekStart}
             currentRecipes={currentRecipes}
             allRecipes={allRecipes}
             onSelectRecipe={onSelectRecipe}

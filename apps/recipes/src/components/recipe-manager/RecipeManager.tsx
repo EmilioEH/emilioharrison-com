@@ -23,7 +23,12 @@ import { useFamilySync } from './hooks/useFamilySync'
 import { useScrollBroadcaster } from './hooks/useScrollBroadcaster'
 
 import { useStore } from '@nanostores/react'
-import { currentWeekRecipes } from '../../lib/weekStore'
+import {
+  currentWeekRecipes,
+  addRecipeToWeek,
+  removeRecipeFromWeek,
+  isPlannedForActiveWeek,
+} from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { recipeActions } from '../../lib/recipeStore'
 import { alert } from '../../lib/dialogStore'
@@ -34,7 +39,6 @@ import { RecipeFilters } from './RecipeFilters'
 import { RecipeControlBar } from './RecipeControlBar'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 
-import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
 import { BottomTabBar } from './BottomTabBar'
 
@@ -273,25 +277,28 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
     }
   }, [useContainedScroll])
 
-  const { saveRecipe, deleteRecipe, bulkUpdateRecipes, bulkDeleteRecipes } =
-    useRecipeActions({
-      recipes,
-      setRecipes,
-      refreshRecipes,
-      getBaseUrl,
-    })
+  const { saveRecipe, deleteRecipe, bulkUpdateRecipes, bulkDeleteRecipes } = useRecipeActions({
+    recipes,
+    setRecipes,
+    refreshRecipes,
+    getBaseUrl,
+  })
 
   // Smart Suggestion State
 
   // Meal Planner State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [dayPickerRecipeId, setDayPickerRecipeId] = useState<string | null>(null)
 
   // Share State
   const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null)
 
-  const handleAddToWeek = (recipeId: string) => {
-    setDayPickerRecipeId(recipeId)
+  // One-tap toggle: recipes are added to (or removed from) the active week — no day picker.
+  const handleAddToWeek = async (recipeId: string) => {
+    if (isPlannedForActiveWeek(recipeId)) {
+      await removeRecipeFromWeek(recipeId)
+    } else {
+      await addRecipeToWeek(recipeId)
+    }
   }
 
   // `recipe` here comes straight from the library/week store, which since PERFORMANCE-PLAN.md P3
@@ -582,12 +589,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
       </ResponsiveModal>
 
       {/* Meal Planner Modals */}
-      <DayPicker
-        isOpen={!!dayPickerRecipeId}
-        onClose={() => setDayPickerRecipeId(null)}
-        recipeId={dayPickerRecipeId || ''}
-        recipeTitle={recipes.find((r) => r.id === dayPickerRecipeId)?.title || ''}
-      />
       <CalendarPicker isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
 
       {/* Sticky Bottom Actions (Selection Mode) */}

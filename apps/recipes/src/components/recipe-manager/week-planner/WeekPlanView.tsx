@@ -1,23 +1,15 @@
 import React, { useState, useRef } from 'react'
-import { format, parseISO, addDays } from 'date-fns'
-import { Plus, Clock, User, Calendar, Trash2 } from 'lucide-react'
+import { Plus, Clock, User, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-import {
-  DAYS_OF_WEEK,
-  removeRecipeFromDay,
-  type PlannedRecipe,
-  type DayOfWeek,
-} from '../../../lib/weekStore'
+import { removeRecipeFromWeek, type PlannedRecipe } from '../../../lib/weekStore'
 import type { Recipe } from '../../../lib/types'
-import { DayPicker } from './DayPicker'
 
 interface WeekPlanViewProps {
-  activeWeekStart: string
   currentRecipes: PlannedRecipe[]
   allRecipes: Recipe[]
   onSelectRecipe: (recipe: Recipe) => void
-  onAddRecipe?: (day: string) => void
+  onAddRecipe?: () => void
 }
 
 /**
@@ -72,27 +64,17 @@ const itemVariants = {
 interface SwipeableRecipeCardProps {
   recipe: Recipe
   recipeId: string
-  day: DayOfWeek
-  dayName: string
-  monthAbbrev: string
-  dateNum: string
   addedByName?: string
   onSelectRecipe: (recipe: Recipe) => void
   onRemove: (recipeId: string) => void
-  onMove: (recipeId: string) => void
 }
 
 const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
   recipe,
   recipeId,
-  day: _day,
-  dayName,
-  monthAbbrev,
-  dateNum,
   addedByName,
   onSelectRecipe,
   onRemove,
-  onMove,
 }) => {
   const [swipeX, setSwipeX] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -103,7 +85,7 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
   const hasMovedRef = useRef(false)
 
   const SWIPE_THRESHOLD = 80 // Distance to trigger action/menu
-  const MENU_OPEN_POSITION = -160 // How far to swipe left to lock menu open
+  const MENU_OPEN_POSITION = -88 // How far to swipe left to lock menu open
 
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -132,8 +114,8 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       if (e.cancelable) e.preventDefault() // Prevent scroll while swiping
 
-      // Limit swipe distance - left swipe only (reveals the move/delete menu)
-      const limitedSwipe = Math.max(-180, Math.min(0, deltaX))
+      // Limit swipe distance - left swipe only (reveals the remove action)
+      const limitedSwipe = Math.max(-120, Math.min(0, deltaX))
       setSwipeX(limitedSwipe)
     }
   }
@@ -170,14 +152,6 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
     setIsMenuOpen(false)
   }
 
-  const handleMove = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    triggerHaptic('light')
-    onMove(recipeId)
-    setSwipeX(0)
-    setIsMenuOpen(false)
-  }
-
   // Handle click (selection)
   const handleClick = () => {
     if (isMenuOpen) {
@@ -190,37 +164,20 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      {/* Day Header */}
-      <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-foreground">{dayName}</span>
-          <span className="text-xs text-muted-foreground">
-            {monthAbbrev} {dateNum}
-          </span>
-        </div>
-      </div>
-
       {/* Swipeable Container */}
       <div className="relative overflow-hidden">
         {/* Background Action Buttons */}
         <div className="absolute inset-0 flex items-center justify-end">
-          {/* Right side - Menu (revealed when swiping left) */}
+          {/* Right side - Remove (revealed when swiping left) */}
           <motion.div
             initial={false}
             animate={{ opacity: swipeX < -20 ? 1 : 0 }}
             className="flex h-full items-center gap-2 bg-muted px-4"
           >
             <button
-              onClick={handleMove}
-              className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
-              aria-label="Move recipe"
-            >
-              <Calendar className="h-5 w-5" />
-            </button>
-            <button
               onClick={handleDelete}
               className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive text-destructive-foreground transition-colors hover:bg-destructive/90"
-              aria-label="Delete recipe"
+              aria-label="Remove recipe from week"
             >
               <Trash2 className="h-5 w-5" />
             </button>
@@ -288,127 +245,58 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
 }
 
 export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
-  activeWeekStart,
   currentRecipes,
   allRecipes,
   onSelectRecipe,
   onAddRecipe,
 }) => {
-  const activeDate = parseISO(activeWeekStart)
-  const [movePickerState, setMovePickerState] = useState<{
-    isOpen: boolean
-    recipeId: string
-    recipeTitle: string
-    currentDay?: DayOfWeek
-  } | null>(null)
-
-  // Build day data with recipe info
-  const dayData = DAYS_OF_WEEK.map((day, index) => {
-    const date = addDays(activeDate, index)
-    const plannedRecipe = currentRecipes.find((r) => r.day === day)
-    const recipe = plannedRecipe ? allRecipes.find((r) => r.id === plannedRecipe.recipeId) : null
-
-    return {
-      day,
-      dayName: format(date, 'EEEE'),
-      dayAbbrev: format(date, 'EEE'),
-      date,
-      dateNum: format(date, 'd'),
-      monthAbbrev: format(date, 'MMM'),
-      isPlanned: !!plannedRecipe,
-      recipe,
-      recipeId: plannedRecipe?.recipeId,
-      addedByName: plannedRecipe?.addedByName,
-    }
-  })
+  // Resolve planned entries to their recipes (flat list — recipes belong to the week, not a day)
+  const plannedCards = currentRecipes
+    .map((planned) => ({
+      planned,
+      recipe: allRecipes.find((r) => r.id === planned.recipeId) || null,
+    }))
+    .filter((entry): entry is { planned: PlannedRecipe; recipe: Recipe } => entry.recipe !== null)
 
   // Handle remove recipe
   const handleRemoveRecipe = async (recipeId: string) => {
     triggerHaptic('light')
-    await removeRecipeFromDay(recipeId)
-  }
-
-  // Handle move recipe - opens day picker
-  const handleMoveRecipe = (recipeId: string) => {
-    const recipe = allRecipes.find((r) => r.id === recipeId)
-    const plannedRecipe = currentRecipes.find((r) => r.recipeId === recipeId)
-    if (recipe) {
-      setMovePickerState({
-        isOpen: true,
-        recipeId,
-        recipeTitle: recipe.title,
-        currentDay: plannedRecipe?.day,
-      })
-    }
-  }
-
-  // Close day picker
-  const handleCloseDayPicker = () => {
-    setMovePickerState(null)
+    await removeRecipeFromWeek(recipeId)
   }
 
   return (
-    <>
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex flex-col gap-3 p-4 pb-24"
-      >
-        {dayData.map((d) => (
-          <motion.div key={d.day} variants={itemVariants}>
-            {d.isPlanned && d.recipe ? (
-              // Planned Day Card with Swipe
-              <SwipeableRecipeCard
-                recipe={d.recipe}
-                recipeId={d.recipeId!}
-                day={d.day}
-                dayName={d.dayName}
-                monthAbbrev={d.monthAbbrev}
-                dateNum={d.dateNum}
-                addedByName={d.addedByName}
-                onSelectRecipe={onSelectRecipe}
-                onRemove={handleRemoveRecipe}
-                onMove={handleMoveRecipe}
-              />
-            ) : (
-              // Empty Day Card
-              <div className="overflow-hidden rounded-xl border border-dashed border-border bg-card/50">
-                {/* Day Header */}
-                <div className="flex items-center justify-between border-b border-dashed border-border bg-muted/20 px-4 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-muted-foreground">{d.dayName}</span>
-                    <span className="text-xs text-muted-foreground/70">
-                      {d.monthAbbrev} {d.dateNum}
-                    </span>
-                  </div>
-                </div>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="flex flex-col gap-3 p-4 pb-24"
+    >
+      {plannedCards.map(({ planned, recipe }) => (
+        <motion.div key={planned.recipeId} variants={itemVariants}>
+          <SwipeableRecipeCard
+            recipe={recipe}
+            recipeId={planned.recipeId}
+            addedByName={planned.addedByName}
+            onSelectRecipe={onSelectRecipe}
+            onRemove={handleRemoveRecipe}
+          />
+        </motion.div>
+      ))}
 
-                {/* Empty State */}
-                <button
-                  onClick={() => onAddRecipe?.(d.day)}
-                  className="flex w-full items-center justify-center gap-2 p-6 text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
-                >
-                  <Plus className="h-5 w-5" />
-                  <span className="text-sm font-medium">Add a recipe</span>
-                </button>
-              </div>
-            )}
-          </motion.div>
-        ))}
+      {/* Add a recipe */}
+      <motion.div variants={itemVariants}>
+        <div className="overflow-hidden rounded-xl border border-dashed border-border bg-card/50">
+          <button
+            onClick={() => onAddRecipe?.()}
+            className="flex w-full items-center justify-center gap-2 p-6 text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="text-sm font-medium">
+              {plannedCards.length === 0 ? 'Add your first recipe' : 'Add a recipe'}
+            </span>
+          </button>
+        </div>
       </motion.div>
-
-      {/* DayPicker Modal for Moving Recipes */}
-      {movePickerState && (
-        <DayPicker
-          isOpen={movePickerState.isOpen}
-          onClose={handleCloseDayPicker}
-          recipeId={movePickerState.recipeId}
-          recipeTitle={movePickerState.recipeTitle}
-          mode="edit"
-          currentDay={movePickerState.currentDay}
-        />
-      )}
-    </>
+    </motion.div>
   )
 }

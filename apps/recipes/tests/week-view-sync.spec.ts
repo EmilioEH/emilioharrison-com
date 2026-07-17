@@ -11,19 +11,35 @@ test.describe('Week View Synchronization', () => {
 
   test('should remove recipe from week plan when deleted', async ({ page }) => {
     // 1. Setup mocks
+    let recipes: Array<Record<string, unknown>> = []
+
     await page.route('**/api/recipes*', async (route) => {
       const method = route.request().method()
       if (method === 'GET') {
-        await route.fulfill({
-          json: {
-            recipes: [], // Start empty, we'll optimistically add
-          },
-        })
+        await route.fulfill({ json: { recipes } })
       } else if (method === 'POST') {
         const data = route.request().postDataJSON()
-        await route.fulfill({ json: { id: 'test-recipe-id', ...data } })
+        const created = { id: 'test-recipe-id', ...data }
+        recipes = [...recipes, created]
+        await route.fulfill({ json: { success: true, id: created.id } })
       } else if (method === 'DELETE') {
+        recipes = []
         await route.fulfill({ json: { success: true } })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+
+    await page.route('**/week-plan', async (route) => {
+      const method = route.request().method()
+      if (method === 'POST') {
+        const body = route.request().postDataJSON()
+        await route.fulfill({
+          json: {
+            success: true,
+            data: { id: 'test-recipe-id', weekPlan: { isPlanned: true, ...body } },
+          },
+        })
       } else {
         await route.fulfill({ json: { success: true } })
       }
@@ -39,44 +55,25 @@ test.describe('Week View Synchronization', () => {
     await page.getByLabel('Protein').selectOption('Vegetarian')
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
-    // 4. Add to "This Week"
+    // 4. Add to the active week — one tap, no day picker.
     await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
-    // Go to Detail
     await page.getByRole('button', { name: 'View Recipe' }).click()
-
-    // Toggle "Add to Week" (assuming it's available in detail or menu)
-    // The test originally clicked a card in library.
-    // Now we are in detail view.
-    // Need to find "Add to Week" button.
-    // WeekWorkspace.tsx has logic. Detail view (RecipeDetail.tsx) usually has it in "More" or direct.
-    // Let's assume there is a way or check the original test logic.
-    // "await page.getByRole('button', { name: 'Add to Week' }).click()" was used after opening.
     await page.getByRole('button', { name: 'Add to Week' }).click()
+    await expect(page.getByText('Added')).toBeVisible()
 
-    // Select Monday
-    await page.getByRole('button', { name: 'Monday' }).click()
-    // Close day picker
-    await page.keyboard.press('Escape')
-    // Close detail
+    // 5. Go to the This Week tab and verify the recipe is planned.
     await page.getByRole('button', { name: 'Back to Library' }).click()
+    await page.getByRole('button', { name: 'This Week' }).click()
+    await expect(page.getByText('Toast')).toBeVisible()
 
-    // 5. Open Week Context Bar and verify count is 1
-    // The bar is at bottom.
-    await expect(page.getByRole('button', { name: 'View Week Plan' })).toContainText('1 meals')
-
-    // 6. Delete the recipe
-    const recipeCard = page.getByRole('heading', { name: 'Toast' })
-    await recipeCard.click()
-    // Click delete (might be in menu)
-    // Assuming delete button is visible or in a menu in detail view
-    // Check RecipeDetail.tsx: it has onDelete prop, usually a trash icon.
-    // Confirm dialog
+    // 6. Delete the recipe from its detail view.
+    await page.getByText('Toast').click()
     page.on('dialog', (dialog) => dialog.accept())
-    await page.getByRole('button', { name: 'Delete Recipe' }).click()
+    await page.getByLabel('More Options').click()
+    await page.getByRole('menuitem', { name: 'Delete' }).click()
 
-    // 7. Verify Week Context Bar count is 0
-    // Wait for animation
-    await page.waitForTimeout(500)
-    await expect(page.getByRole('button', { name: 'View Week Plan' })).toContainText('0 meals')
+    // 7. Verify it's gone from the week list.
+    await expect(page.getByRole('button', { name: 'This Week' })).toBeVisible()
+    await expect(page.getByText('Toast')).not.toBeVisible()
   })
 })
