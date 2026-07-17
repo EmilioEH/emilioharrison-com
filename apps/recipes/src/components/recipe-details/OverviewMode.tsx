@@ -7,9 +7,7 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  DollarSign,
   Sparkles,
-  AlertCircle,
 } from 'lucide-react'
 import { CookingHistorySummary } from './CookingHistorySummary'
 import { IngredientRow } from './IngredientRow'
@@ -43,7 +41,6 @@ import type {
 
 interface OverviewModeProps {
   recipe: Recipe
-  onSaveCost?: (cost: number) => void
   isRefreshing?: boolean
   refreshProgress?: string
   onRecipeRefresh?: () => void | Promise<void>
@@ -52,7 +49,6 @@ interface OverviewModeProps {
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
-  onSaveCost = () => {},
   isRefreshing = false,
   refreshProgress = '',
   onRecipeRefresh,
@@ -118,10 +114,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   // Family Sync State
   const [familyData, setFamilyData] = useState<FamilyRecipeData | null>(null)
 
-  // Initialize with persisted cost if available
-  const [estimatedCost, setEstimatedCost] = useState<number | null>(recipe.estimatedCost || null)
-  const [isEstimating, setIsEstimating] = useState(false)
-  const [estimateError, setEstimateError] = useState<string | null>(null)
   const lastPersistedStepIngredientSignature = useRef<string | null>(null)
 
   const loadFamilyData = async () => {
@@ -154,49 +146,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     : familyData?.ratings?.length
       ? familyData.ratings.reduce((sum, r) => sum + r.rating, 0) / familyData.ratings.length
       : recipe.rating || 0
-
-  const handleEstimateCost = async () => {
-    setIsEstimating(true)
-    setEstimateError(null)
-    try {
-      const payload = {
-        ingredients: recipe.structuredIngredients || recipe.ingredients,
-      }
-
-      const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`
-
-      const res = await fetch(`${baseUrl}api/estimate-cost`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const data = await res.json()
-
-      if (!res.ok || data.error) {
-        throw new Error(data.details || data.error || 'Estimation failed')
-      }
-
-      if (data.totalCost) {
-        setEstimatedCost(data.totalCost)
-        onSaveCost(data.totalCost)
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not estimate cost'
-      console.error('Cost estimation failed', msg)
-      setEstimateError(msg)
-    } finally {
-      setIsEstimating(false)
-    }
-  }
-  useEffect(() => {
-    // Auto-trigger if not yet estimated
-    if (estimatedCost === null && !isEstimating) {
-      handleEstimateCost()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Trigger once on mount
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -549,31 +498,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               <div className="flex-1">
                 <MetadataCard icon={Flame} label="LEVEL" value={recipe.difficulty || 'Easy'} />
               </div>
-              <div className="flex-1">
-                <MetadataCard
-                  icon={DollarSign}
-                  label="COST"
-                  value={
-                    isEstimating ? '...' : estimatedCost ? `$${estimatedCost.toFixed(2)}` : '—'
-                  }
-                />
-              </div>
             </div>
           </div>
 
-          {/* Cost Estimation Error (only shown if failed) */}
-          {estimateError && (
-            <div className="mb-6 flex justify-end">
-              <button
-                onClick={handleEstimateCost}
-                className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
-                title={estimateError}
-              >
-                <AlertCircle className="h-4 w-4" /> Couldn't estimate cost
-                <span className="ml-1 text-[10px] uppercase opacity-70">Tap to retry</span>
-              </button>
-            </div>
-          )}
 
           {/* AI Refresh Progress Banner */}
           {isRefreshing && (

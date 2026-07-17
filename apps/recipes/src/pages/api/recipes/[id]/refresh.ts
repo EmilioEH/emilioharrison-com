@@ -57,9 +57,6 @@ ${recipe.steps.join('\n')}
       newData = await executeAiParse(locals, { ...commonParams, text: buildTextPayload() })
     }
 
-    // Cost estimation (Optional fallback or moved to service later)
-    const estimatedCost = recipe.estimatedCost
-
     // MERGE strategy
     const updatedRecipe = {
       ...recipe,
@@ -68,7 +65,6 @@ ${recipe.steps.join('\n')}
       sourceUrl: recipe.sourceUrl || newData.sourceUrl,
       sourceImage: recipe.sourceImage || newData.sourceImage,
       images: recipe.images || newData.images,
-      estimatedCost,
     }
 
     await db.updateDocument('recipes', id, updatedRecipe)

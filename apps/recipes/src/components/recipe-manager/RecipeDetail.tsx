@@ -169,7 +169,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       />
       <OverviewMode
         recipe={recipe}
-        onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'silent')}
         onPersistStepIngredients={(stepIngredients) =>
           onUpdate({ ...recipe, stepIngredients }, 'silent')
         }

@@ -1,9 +1,40 @@
 import type { ShoppableIngredient, RecipeContribution } from './types'
-import { HEB_CATEGORY_ORDER, mapLegacyCategory } from './heb-manor-aisles'
+import { CATEGORY_ORDER } from './grocery-utils'
 
 interface ShoppableCategory {
   name: string
   items: ShoppableIngredient[]
+}
+
+/**
+ * Maps legacy category names (from the old 19-category store-layout taxonomy still present on
+ * previously generated Firestore lists) onto the fixed 8-category order in `CATEGORY_ORDER`.
+ * Unknown categories fall back to 'Other'.
+ */
+const LEGACY_CATEGORY_MAP: Record<string, string> = {
+  Seafood: 'Meat',
+  'Deli & Prepared': 'Meat',
+  'Bakery & Bread': 'Bakery',
+  'Beer & Wine': 'Other',
+  'Pantry & Condiments': 'Pantry',
+  'Canned & Dry Goods': 'Pantry',
+  'Baking & Spices': 'Spices',
+  'Breakfast & Cereal': 'Pantry',
+  Snacks: 'Pantry',
+  Beverages: 'Other',
+  'Paper & Household': 'Other',
+  Pet: 'Other',
+  Baby: 'Other',
+  'Personal Care': 'Other',
+  'Health & Pharmacy': 'Other',
+  'Dairy & Eggs': 'Dairy',
+  'Frozen Foods': 'Frozen',
+}
+
+export function normalizeCategory(rawCategory: string | undefined): string {
+  const cat = rawCategory || 'Other'
+  if (CATEGORY_ORDER.includes(cat)) return cat
+  return LEGACY_CATEGORY_MAP[cat] || 'Other'
 }
 
 /**
@@ -67,107 +98,18 @@ export const mergeShoppableIngredients = (
 }
 
 /**
- * Parse a storeLocation string into a structured form for sorting.
- * "Aisle 5" → { type: 'aisle', number: 5 }
- * "In Produce on the Front Wall" → { type: 'perimeter', location: '...' }
- */
-export function parseStoreLocation(
-  loc: string,
-): { type: 'aisle'; number: number } | { type: 'perimeter'; location: string } {
-  const aisleMatch = loc.match(/^Aisle\s+(\d+)$/i)
-  if (aisleMatch) {
-    return { type: 'aisle', number: parseInt(aisleMatch[1], 10) }
-  }
-  return { type: 'perimeter', location: loc }
-}
-
-/**
- * Sorts items within a category using storeLocation when available.
- *
- * Priority:
- * 1. Items with storeLocation (sorted by parsed location)
- * 2. Items without storeLocation (fallback to aisle → alphabetical)
- *
- * For numbered aisles: sort ascending, except Frozen Foods which sorts descending
- * (you approach frozen from the pharmacy side and walk back: 15→14→13).
- *
- * For perimeter locations: group by location string, then alphabetically within group.
- */
-function sortWithinCategory(
-  items: ShoppableIngredient[],
-  categoryName: string,
-): ShoppableIngredient[] {
-  const isFrozen = categoryName === 'Frozen Foods'
-
-  return [...items].sort((a, b) => {
-    const hasLocA = !!a.storeLocation
-    const hasLocB = !!b.storeLocation
-
-    // Items with storeLocation come before items without
-    if (hasLocA && !hasLocB) return -1
-    if (!hasLocA && hasLocB) return 1
-
-    // Both have storeLocation — sort by parsed location
-    if (hasLocA && hasLocB) {
-      const locA = parseStoreLocation(a.storeLocation!)
-      const locB = parseStoreLocation(b.storeLocation!)
-
-      // Both are numbered aisles
-      if (locA.type === 'aisle' && locB.type === 'aisle') {
-        if (locA.number !== locB.number) {
-          return isFrozen ? locB.number - locA.number : locA.number - locB.number
-        }
-        return a.name.localeCompare(b.name)
-      } else if (locA.type === 'perimeter' && locB.type === 'aisle') {
-        // Perimeter locations come before numbered aisles within the same category
-        return -1
-      } else if (locA.type === 'aisle' && locB.type === 'perimeter') {
-        // Numbered aisles come after perimeter locations
-        return 1
-      } else if (locA.type === 'perimeter' && locB.type === 'perimeter') {
-        // Both are perimeter — group by location string, then alpha
-        const locAPerim = locA as { type: 'perimeter'; location: string }
-        const locBPerim = locB as { type: 'perimeter'; location: string }
-        if (locAPerim.location !== locBPerim.location) {
-          return locAPerim.location.localeCompare(locBPerim.location)
-        }
-        return a.name.localeCompare(b.name)
-      }
-      return a.name.localeCompare(b.name)
-    }
-
-    // Neither has storeLocation — fall back to aisle number → alphabetical
-    if (a.aisle !== undefined && b.aisle !== undefined) {
-      if (a.aisle !== b.aisle) {
-        return isFrozen ? b.aisle - a.aisle : a.aisle - b.aisle
-      }
-    } else if (a.aisle !== undefined) {
-      return -1
-    } else if (b.aisle !== undefined) {
-      return 1
-    }
-    return a.name.localeCompare(b.name)
-  })
-}
-
-/**
- * Groups shoppable ingredients by category for store-aisle organization.
- * Uses H-E-B Manor walking-path order (19 categories).
- * Handles legacy 8-category data by mapping to new categories.
+ * Groups shoppable ingredients by category in the fixed `CATEGORY_ORDER`, mapping legacy
+ * category names along the way. Items sort alphabetically within each category.
  */
 export const categorizeShoppableIngredients = (
   ingredients: ShoppableIngredient[],
 ): ShoppableCategory[] => {
   const categories = new Map<string, ShoppableIngredient[]>()
 
-  // Initialize with empty arrays for H-E-B walking-path order
-  HEB_CATEGORY_ORDER.forEach((cat) => categories.set(cat, []))
+  CATEGORY_ORDER.forEach((cat) => categories.set(cat, []))
 
   for (const ing of ingredients) {
-    // Map legacy categories to new 19-category system
-    const rawCat = ing.category || 'Other'
-    const mappedCat = mapLegacyCategory(rawCat, ing.name)
-
+    const mappedCat = normalizeCategory(ing.category)
     let list = categories.get(mappedCat)
     if (!list) {
       list = []
@@ -177,20 +119,12 @@ export const categorizeShoppableIngredients = (
   }
 
   const result: ShoppableCategory[] = []
-
-  // Add categories in H-E-B walking-path order
-  for (const catName of HEB_CATEGORY_ORDER) {
-    const items = categories.get(catName)
-    if (items && items.length > 0) {
-      result.push({ name: catName, items: sortWithinCategory(items, catName) })
-      categories.delete(catName)
-    }
-  }
-
-  // Add any remaining categories (shouldn't happen with proper mapping)
   for (const [catName, items] of categories.entries()) {
     if (items.length > 0) {
-      result.push({ name: catName, items: sortWithinCategory(items, catName) })
+      result.push({
+        name: catName,
+        items: [...items].sort((a, b) => a.name.localeCompare(b.name)),
+      })
     }
   }
 

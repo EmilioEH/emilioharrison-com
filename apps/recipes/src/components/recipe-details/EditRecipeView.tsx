@@ -282,18 +282,6 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   placeholder="Italian, Mexican..."
                 />
               </div>
-              <div className="grid min-w-[45%] flex-1 gap-2">
-                <Label htmlFor="estimatedCost">Est. Cost ($)</Label>
-                <Input
-                  id="estimatedCost"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.estimatedCost ?? ''}
-                  onChange={(e) => handleNumberChange('estimatedCost', e.target.value)}
-                  placeholder="12.50"
-                />
-              </div>
             </Cluster>
 
             <div className="grid gap-2">

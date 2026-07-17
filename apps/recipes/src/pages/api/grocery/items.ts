@@ -31,17 +31,6 @@ interface PatchItemRequest {
     purchaseAmount?: number
     purchaseUnit?: string
     category?: string
-    hebPrice?: number
-    aisle?: number
-    storeLocation?: string
-    isRecurring?: boolean
-    recurringFrequencyWeeks?: number
-    imageUrl?: string
-    hebProductId?: string
-    hebProductUrl?: string
-    hebSize?: string
-    hebUnitPrice?: number
-    hebUnitPriceUnit?: string
     archivedAt?: string | null
     unneededThisWeek?: boolean | null
   }
@@ -104,11 +93,6 @@ export const POST: APIRoute = async (context) => {
       // If existing item wasn't manual, keep its sources but add manual flag
       if (!groceryList.ingredients[existingIndex].isManual) {
         groceryList.ingredients[existingIndex].isManual = false // AI takes precedence
-      }
-      // Copy price info from manual item if not present
-      if (manualItem.hebPrice && !groceryList.ingredients[existingIndex].hebPrice) {
-        groceryList.ingredients[existingIndex].hebPrice = manualItem.hebPrice
-        groceryList.ingredients[existingIndex].hebPriceUnit = manualItem.hebPriceUnit
       }
     } else {
       // Add new item
@@ -243,20 +227,6 @@ export const PATCH: APIRoute = async (context) => {
       if (updates.purchaseAmount !== undefined) current.purchaseAmount = updates.purchaseAmount
       if (updates.purchaseUnit !== undefined) current.purchaseUnit = updates.purchaseUnit
       if (updates.category !== undefined) current.category = updates.category
-      if (updates.hebPrice !== undefined) current.hebPrice = updates.hebPrice
-      if (updates.aisle !== undefined) current.aisle = updates.aisle
-      if (updates.storeLocation !== undefined) current.storeLocation = updates.storeLocation
-      if (updates.imageUrl !== undefined) current.imageUrl = updates.imageUrl
-      if (updates.hebProductId !== undefined) current.hebProductId = updates.hebProductId
-      if (updates.hebProductUrl !== undefined) current.hebProductUrl = updates.hebProductUrl
-      if (updates.hebSize !== undefined) current.hebSize = updates.hebSize
-      if (updates.hebUnitPrice !== undefined) current.hebUnitPrice = updates.hebUnitPrice
-      if (updates.hebUnitPriceUnit !== undefined)
-        current.hebUnitPriceUnit = updates.hebUnitPriceUnit
-      if (updates.isRecurring !== undefined) {
-        current.isRecurring = updates.isRecurring || undefined
-        current.recurringFrequencyWeeks = updates.recurringFrequencyWeeks
-      }
       if (updates.archivedAt !== undefined) {
         current.archivedAt = updates.archivedAt ?? undefined
       }

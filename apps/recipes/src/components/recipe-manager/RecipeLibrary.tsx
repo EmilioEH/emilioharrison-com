@@ -141,12 +141,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
         else if (totalMinutes <= 30) recipeCategories.push('30 Min or Less')
         else if (totalMinutes <= 60) recipeCategories.push('Under 1 Hour')
         else recipeCategories.push('Over 1 Hour')
-      } else if (sort === 'cost-low' || sort === 'cost-high') {
-        const cost = recipe.estimatedCost
-        if (cost === undefined || cost === null) recipeCategories.push('Unknown')
-        else if (cost < 10) recipeCategories.push('Under $10')
-        else if (cost < 20) recipeCategories.push('$10 - $20')
-        else recipeCategories.push('Over $20')
       }
 
       // Check if any of this recipe's categories are selected

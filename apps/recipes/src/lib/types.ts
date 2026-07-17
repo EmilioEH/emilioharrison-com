@@ -66,7 +66,6 @@ export interface Recipe {
     dishesUsed?: number
     dietary?: string[]
   }
-  estimatedCost?: number // Persisted HEB cost
   // Structured ingredients for grocery list generation (Hybrid Approach)
   structuredIngredients?: StructuredIngredient[]
 
@@ -119,7 +118,6 @@ export type RecipeListItem = Pick<
   | 'createdAt'
   | 'updatedAt'
   | 'dishType'
-  | 'estimatedCost'
   | 'mealType'
   | 'dietary'
   | 'equipment'
@@ -143,18 +141,8 @@ export interface GroceryList {
   weekStartDate: string
   ingredients: ShoppableIngredient[]
   status: 'pending' | 'processing' | 'complete' | 'error'
-  productPickerStatus?: 'pending' | 'searching' | 'ready' | 'complete'
-  unmatchedCount?: number
   createdAt: string
   updatedAt: string
-}
-
-/** HEB product search results for a single grocery item, stored in Firestore */
-export interface ProductMatchResult {
-  ingredientName: string
-  results: HebProduct[]
-  selectedProductId?: string
-  status: 'searching' | 'ready' | 'matched' | 'skipped' | 'error'
 }
 
 /** A single recipe's contribution to a grocery item */
@@ -164,26 +152,6 @@ export interface RecipeContribution {
   originalAmount: string // "1 clove", "4 garlics" - as written in recipe
 }
 
-/** Recurring grocery item stored in Firestore: recurring_grocery_items/{scopeId}/items/{itemId}
- *  scopeId = familyId ?? userId (shared across family members) */
-export interface RecurringGroceryItem {
-  id: string
-  name: string
-  purchaseAmount: number
-  purchaseUnit: string
-  category: string
-  aisle?: number
-  hebPrice?: number
-  hebPriceUnit?: string
-  frequencyWeeks: number // 1 = weekly, 2 = biweekly, N = custom
-  /** @deprecated Use frequencyWeeks. Kept for lazy migration of existing Firestore docs. */
-  frequency?: 'weekly' | 'biweekly' | 'monthly'
-  createdAt: string // ISO date
-  lastAddedWeek?: string // weekStartDate of last injection (undefined if never added)
-  addedBy?: string // userId who added this recurring item
-  addedByName?: string // display name (e.g. "Emilio")
-}
-
 /** Enhanced grocery item with purchasable unit + source breakdown */
 export interface ShoppableIngredient {
   name: string // "garlic"
@@ -191,64 +159,11 @@ export interface ShoppableIngredient {
   purchaseUnit: string // "head"
   category: string // "Produce"
   sources?: RecipeContribution[] // Who needs this and how much (optional for manual items)
-  aisle?: number // H-E-B Manor aisle number (undefined for perimeter departments)
   // Manual item fields
   isManual?: boolean // true if user-added (not AI-generated)
-  hebPrice?: number // price from static DB (e.g., 1.49)
-  hebPriceUnit?: string // "each", "lb", "oz", etc.
-  hebUnitPrice?: number // per-unit price (e.g., 0.25)
-  hebUnitPriceUnit?: string // unit for per-unit price (e.g., "ct", "oz", "lb")
-  // HEB product fields (from URL import or overrides)
-  hebProductId?: string // HEB product ID (e.g., "8271501")
-  hebProductUrl?: string // full HEB product page URL
-  imageUrl?: string // HEB CDN image URL
-  hebSize?: string // customer-friendly size (e.g., "18 ct")
-  storeLocation?: string // in-store location (e.g., "In Dairy on the Back Wall")
-  // Recurring item fields
-  isRecurring?: boolean // true if flagged as recurring
-  recurringFrequencyWeeks?: number // 1 = weekly, 2 = biweekly, N = custom weeks
   // Soft-state flags
   archivedAt?: string // ISO timestamp when soft-deleted; hidden from default view
   unneededThisWeek?: boolean // hidden from default view for current week only
-  // Background refresh tracking
-  hebRefreshedAt?: string // ISO timestamp of last successful HEB price refresh
-}
-
-/** User-saved product metadata that persists across grocery list generations */
-export interface ProductOverride {
-  name: string // normalized product name (key)
-  hebProductId?: string
-  hebProductUrl?: string
-  imageUrl?: string
-  hebPrice?: number
-  hebPriceUnit?: string
-  hebUnitPrice?: number
-  hebUnitPriceUnit?: string
-  hebSize?: string
-  category?: string
-  aisle?: number
-  storeLocation?: string
-  updatedAt: string // ISO date
-}
-
-/** Parsed HEB product data from __NEXT_DATA__ */
-export interface HebProduct {
-  productId: string
-  name: string
-  brand: string
-  price: number
-  salePrice?: number
-  priceUnit: string
-  unitPrice?: number
-  unitPriceUnit?: string
-  size: string
-  category: string
-  imageUrl: string
-  imageUrls: string[]
-  storeLocation?: string
-  inStock: boolean
-  productUrl: string
-  upc?: string
 }
 
 // --- Multi-User Family Sync Types ---

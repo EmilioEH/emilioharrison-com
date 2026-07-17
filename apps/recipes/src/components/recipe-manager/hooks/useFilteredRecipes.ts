@@ -151,16 +151,6 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
         const rB = b.rating || 0
         return rA === rB ? a.title.localeCompare(b.title) : rB - rA
       },
-      'cost-low': (a, b) => {
-        const cA = a.estimatedCost ?? Infinity
-        const cB = b.estimatedCost ?? Infinity
-        return cA === cB ? a.title.localeCompare(b.title) : cA - cB
-      },
-      'cost-high': (a, b) => {
-        const cA = a.estimatedCost ?? -1
-        const cB = b.estimatedCost ?? -1
-        return cA === cB ? a.title.localeCompare(b.title) : cB - cA
-      },
     }
 
     const comparator = sortComparators[sort] || (() => 0)

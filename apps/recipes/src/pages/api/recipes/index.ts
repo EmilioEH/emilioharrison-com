@@ -59,7 +59,6 @@ export function toListRecipe(doc: Recipe): RecipeListItem {
     createdAt: doc.createdAt || new Date().toISOString(),
     updatedAt: doc.updatedAt || new Date().toISOString(),
     dishType: doc.dishType,
-    estimatedCost: doc.estimatedCost,
     mealType: doc.mealType,
     dietary: doc.dietary,
     equipment: doc.equipment,

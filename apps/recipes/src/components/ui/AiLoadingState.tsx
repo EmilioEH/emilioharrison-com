@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 export type AiLoadingStage = 'idle' | 'fallback' | 'processing' | 'complete' | 'error'
 
-export type AiFeature = 'recipe-import' | 'grocery-list' | 'recipe-enhancement' | 'cost-estimate'
+export type AiFeature = 'recipe-import' | 'grocery-list' | 'recipe-enhancement'
 
 interface AiLoadingStateProps {
   stage: AiLoadingStage
@@ -36,13 +36,6 @@ const FEATURE_MESSAGES: Record<AiFeature, Record<AiLoadingStage, string>> = {
     processing: 'Organizing ingredients and steps...',
     complete: 'Recipe enhanced!',
     error: 'Failed to enhance recipe',
-  },
-  'cost-estimate': {
-    idle: '',
-    fallback: 'Preparing...',
-    processing: 'Calculating costs...',
-    complete: 'Estimate complete!',
-    error: 'Failed to estimate cost',
   },
 }
 
