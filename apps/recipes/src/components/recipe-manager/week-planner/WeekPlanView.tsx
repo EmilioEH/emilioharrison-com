@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { format, parseISO, addDays } from 'date-fns'
-import { Plus, Clock, User, ChefHat, Calendar, Trash2 } from 'lucide-react'
+import { Plus, Clock, User, Calendar, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import {
@@ -10,8 +10,6 @@ import {
   type DayOfWeek,
 } from '../../../lib/weekStore'
 import type { Recipe } from '../../../lib/types'
-import { cookingSessionActions } from '../../../stores/cookingSession'
-import { recipeActions } from '../../../lib/recipeStore'
 import { DayPicker } from './DayPicker'
 
 interface WeekPlanViewProps {
@@ -80,7 +78,6 @@ interface SwipeableRecipeCardProps {
   dateNum: string
   addedByName?: string
   onSelectRecipe: (recipe: Recipe) => void
-  onStartCooking: (recipe: Recipe) => void
   onRemove: (recipeId: string) => void
   onMove: (recipeId: string) => void
 }
@@ -94,7 +91,6 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
   dateNum,
   addedByName,
   onSelectRecipe,
-  onStartCooking,
   onRemove,
   onMove,
 }) => {
@@ -136,8 +132,8 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       if (e.cancelable) e.preventDefault() // Prevent scroll while swiping
 
-      // Limit swipe distance - allow right swipe for cook, left swipe for menu
-      const limitedSwipe = Math.max(-180, Math.min(150, deltaX))
+      // Limit swipe distance - left swipe only (reveals the move/delete menu)
+      const limitedSwipe = Math.max(-180, Math.min(0, deltaX))
       setSwipeX(limitedSwipe)
     }
   }
@@ -146,13 +142,7 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
   const handleTouchEnd = () => {
     // Check if swipe threshold met
     if (Math.abs(swipeX) > SWIPE_THRESHOLD) {
-      if (swipeX > 0) {
-        // Swiped right - Start cooking
-        triggerHaptic('success')
-        onStartCooking(recipe)
-        setSwipeX(0)
-        setIsMenuOpen(false)
-      } else {
+      if (swipeX < 0) {
         // Swiped left - Open menu (lock it open)
         triggerHaptic('light')
         setSwipeX(MENU_OPEN_POSITION)
@@ -213,17 +203,7 @@ const SwipeableRecipeCard: React.FC<SwipeableRecipeCardProps> = ({
       {/* Swipeable Container */}
       <div className="relative overflow-hidden">
         {/* Background Action Buttons */}
-        <div className="absolute inset-0 flex items-center justify-between">
-          {/* Left side - Start Cooking (revealed when swiping right) */}
-          <motion.div
-            initial={false}
-            animate={{ opacity: swipeX > 20 ? 1 : 0 }}
-            className="flex h-full items-center bg-primary px-6"
-          >
-            <ChefHat className="h-6 w-6 text-primary-foreground" />
-            <span className="ml-2 font-bold text-primary-foreground">Cook</span>
-          </motion.div>
-
+        <div className="absolute inset-0 flex items-center justify-end">
           {/* Right side - Menu (revealed when swiping left) */}
           <motion.div
             initial={false}
@@ -348,39 +328,6 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
     await removeRecipeFromDay(recipeId)
   }
 
-  // Handle start cooking
-  //
-  // `recipe` here comes from `allRecipes` — the library store, which since PERFORMANCE-PLAN.md P3
-  // holds slim list records (no `steps`/`ingredients` detail) until a detail view hydrates them.
-  // Cooking mode reads `session.recipe.steps`/`.ingredients` directly (see cookingSession.ts,
-  // CookingContainer.tsx et al.) and this entry point skips RecipeDetail's own hydration gate
-  // entirely, so we have to fetch the full document ourselves before starting the session —
-  // otherwise cooking mode would crash or render blank on a recipe that's never been opened yet.
-  const handleStartCooking = async (recipe: Recipe) => {
-    let fullRecipe = recipe
-    if (recipe.steps === undefined) {
-      try {
-        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-          ? import.meta.env.BASE_URL
-          : `${import.meta.env.BASE_URL}/`
-        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.recipe) {
-            fullRecipe = data.recipe
-            // Populate the shared store too, so the detail view we're about to navigate to
-            // doesn't need to re-fetch the same document.
-            recipeActions.updateRecipe(fullRecipe)
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to hydrate recipe before starting cooking mode:', error)
-      }
-    }
-    cookingSessionActions.startSession(fullRecipe)
-    onSelectRecipe(fullRecipe) // Navigate to recipe detail which will show cooking mode
-  }
-
   // Handle move recipe - opens day picker
   const handleMoveRecipe = (recipeId: string) => {
     const recipe = allRecipes.find((r) => r.id === recipeId)
@@ -421,7 +368,6 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
                 dateNum={d.dateNum}
                 addedByName={d.addedByName}
                 onSelectRecipe={onSelectRecipe}
-                onStartCooking={handleStartCooking}
                 onRemove={handleRemoveRecipe}
                 onMove={handleMoveRecipe}
               />

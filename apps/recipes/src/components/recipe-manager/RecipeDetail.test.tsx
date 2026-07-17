@@ -12,15 +12,6 @@ vi.mock('@nanostores/react', () => ({
   }),
 }))
 
-vi.mock('../../stores/cookingSession', () => ({
-  $cookingSession: {
-    get: () => ({ isActive: false, recipeId: null }),
-  },
-  cookingSessionActions: {
-    startSession: vi.fn(),
-  },
-}))
-
 vi.mock('../recipe-details/DetailHeader', () => ({
   DetailHeader: ({ onAction }: { onAction: (action: string) => void }) => (
     <div data-testid="detail-header">
@@ -28,10 +19,6 @@ vi.mock('../recipe-details/DetailHeader', () => ({
       <button onClick={() => onAction('addToWeek')}>Add to Week</button>
     </div>
   ),
-}))
-
-vi.mock('../cooking-mode/CookingContainer', () => ({
-  CookingContainer: () => <div data-testid="cooking-container">Cooking Mode</div>,
 }))
 
 vi.mock('../recipe-details/EditRecipeView', () => ({
@@ -43,11 +30,7 @@ vi.mock('../recipe-details/EditRecipeView', () => ({
 }))
 
 vi.mock('../recipe-details/OverviewMode', () => ({
-  OverviewMode: ({ startCooking }: { startCooking: () => void }) => (
-    <div data-testid="overview-mode">
-      <button onClick={startCooking}>Start Cooking Proxy</button>
-    </div>
-  ),
+  OverviewMode: () => <div data-testid="overview-mode" />,
 }))
 
 vi.mock('../recipe-details/VersionHistoryModal', () => ({
@@ -92,10 +75,8 @@ vi.mock('../ui/layout', () => ({
 
 // Mock Lucide icons
 vi.mock('lucide-react', () => ({
-  Play: () => <span>PlayIcon</span>,
   Check: () => <span>CheckIcon</span>,
   ListPlus: () => <span>ListIcon</span>,
-  // Used by the Suspense fallback shown while the lazy-loaded CookingContainer chunk resolves
   Loader2: () => <span>LoaderIcon</span>,
 }))
 
@@ -145,28 +126,8 @@ describe('RecipeDetail', () => {
 
     expect(screen.getByTestId('detail-header')).toBeInTheDocument()
     expect(screen.getByTestId('overview-mode')).toBeInTheDocument()
-    expect(screen.getByText('Start Cooking')).toBeInTheDocument() // The footer button
-  })
-
-  it('renders cooking container when isCooking is true', async () => {
-    // We need to override the default useStore mock for this specific test
-    const { useStore } = await import('@nanostores/react')
-    vi.mocked(useStore).mockReturnValueOnce({ isActive: true, recipeId: 'recipe-123' }) // For cooking session
-
-    render(
-      <RecipeDetail
-        recipe={mockRecipe}
-        onClose={onClose}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        onToggleThisWeek={onToggleThisWeek}
-        onToggleFavorite={onToggleFavorite}
-      />,
-    )
-
-    // CookingContainer is React.lazy-loaded, so it resolves asynchronously — wait for it.
-    expect(await screen.findByTestId('cooking-container')).toBeInTheDocument()
-    expect(screen.queryByTestId('detail-header')).not.toBeInTheDocument()
+    // Both the (mocked) header and the sticky footer expose an Add to Week affordance.
+    expect(screen.getAllByText('Add to Week').length).toBeGreaterThan(0)
   })
 
   it('renders edit view when isEditing is true', () => {

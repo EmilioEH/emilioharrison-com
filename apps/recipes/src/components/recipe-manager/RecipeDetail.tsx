@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback, Suspense } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRecipeActions } from './useRecipeActions'
 import { computed } from 'nanostores'
 import { useStore } from '@nanostores/react'
@@ -6,25 +6,11 @@ import { DetailHeader } from '../recipe-details/DetailHeader'
 import { Stack, Inline } from '../ui/layout'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 import type { Recipe } from '../../lib/types'
-import { cookingSessionActions, $cookingSession } from '../../stores/cookingSession'
-import { Play, Check, ListPlus, Loader2 } from 'lucide-react'
+import { Check, ListPlus, Loader2 } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { VersionHistoryModal } from '../recipe-details/VersionHistoryModal'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
-
-// Cooking mode (step-by-step timers/wake lock UI) is a distinct heavy feature only
-// entered when the user taps "Start Cooking" — code-split separately from the
-// (much more frequently visited) recipe overview/detail screen above it.
-const CookingContainer = React.lazy(() =>
-  import('../cooking-mode/CookingContainer').then((m) => ({ default: m.CookingContainer })),
-)
-
-const CookingModeLoadingFallback: React.FC = () => (
-  <div data-testid="loading-indicator" className="flex h-full items-center justify-center bg-card">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
-)
 
 // Shown only for a recipe that arrived as a slim list-view record (see PERFORMANCE-PLAN.md P3 —
 // GET /api/recipes no longer ships `steps`/ingredient detail) and hasn't been hydrated into the
@@ -38,27 +24,6 @@ const RecipeDetailLoadingFallback: React.FC = () => (
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
   </div>
 )
-
-// Wake Lock Helper
-const useWakeLock = (enabled: boolean) => {
-  useEffect(() => {
-    if (!enabled || !('wakeLock' in navigator)) return
-
-    let wakeLock: WakeLockSentinel | null = null
-    const requestLock = async () => {
-      try {
-        wakeLock = await navigator.wakeLock.request('screen')
-      } catch (err) {
-        console.warn('Wake Lock error:', err)
-      }
-    }
-    requestLock()
-
-    return () => {
-      wakeLock?.release()
-    }
-  }, [enabled])
-}
 
 interface RecipeDetailProps {
   recipe: Recipe
@@ -77,10 +42,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   onToggleThisWeek,
   onToggleFavorite,
 }) => {
-  const session = useStore($cookingSession)
-
-  const isCooking = session.isActive && session.recipeId === recipe.id
-
   // The library list endpoint (GET /api/recipes) now ships a slim projection of each recipe — no
   // `steps`, `structuredSteps`, or ingredient-mapping data (see PERFORMANCE-PLAN.md P3). `steps`
   // being absent is the signal that `recipe` is that slim record rather than the full document.
@@ -147,14 +108,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     ),
   )
 
-  // Track if user is actively cooking from the overview (checking ingredients/steps)
-  const [isOverviewCooking, setIsOverviewCooking] = useState(false)
-  const handleOverviewCookingChange = useCallback((active: boolean) => {
-    setIsOverviewCooking(active)
-  }, [])
-
-  useWakeLock(isCooking || isOverviewCooking)
-
   const {
     handleAction,
     handleSaveRecipe,
@@ -167,10 +120,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     onToggleThisWeek,
     onToggleFavorite,
   })
-
-  const startCooking = () => {
-    cookingSessionActions.startSession(recipe)
-  }
 
   const refreshRecipe = async () => {
     try {
@@ -189,14 +138,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     } catch (error) {
       console.warn('Failed to refresh recipe after review:', error)
     }
-  }
-
-  if (isCooking) {
-    return (
-      <Suspense fallback={<CookingModeLoadingFallback />}>
-        <CookingContainer onClose={onClose} />
-      </Suspense>
-    )
   }
 
   if (isHydrating) {
@@ -232,7 +173,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
       />
       <OverviewMode
         recipe={recipe}
-        startCooking={startCooking}
         onSaveCost={(cost) => onUpdate({ ...recipe, estimatedCost: cost }, 'silent')}
         onPersistStepIngredients={(stepIngredients) =>
           onUpdate({ ...recipe, stepIngredients }, 'silent')
@@ -240,12 +180,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
         isRefreshing={isRefreshing}
         refreshProgress={refreshProgress}
         onRecipeRefresh={refreshRecipe}
-        onActivelyCoookingChange={handleOverviewCookingChange}
       />
       {/* Sticky Action Footer */}
       <div className="safe-area-pb fixed bottom-8 left-0 right-0 z-50 border-t border-border bg-background/80 px-4 py-3 backdrop-blur-md transition-all duration-300">
         <Inline spacing="md" justify="center" className="mx-auto max-w-md">
-          {/* Secondary: Add to List (Mapped to Week functionality for now) */}
           <button
             onClick={() => handleAction('addToWeek')}
             className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 font-display text-base font-bold uppercase tracking-wider transition-all active:scale-95 ${
@@ -263,15 +201,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                 <ListPlus className="h-4 w-4" /> Add to Week
               </>
             )}
-          </button>
-
-          {/* Primary: Start Cooking */}
-          <button
-            onClick={startCooking}
-            className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-xl bg-foreground text-background shadow-lg transition-all hover:bg-foreground/90 active:scale-95"
-          >
-            <span className="font-display text-lg font-bold">Start Cooking</span>
-            <Play className="h-5 w-5 fill-current" />
           </button>
         </Inline>
       </div>

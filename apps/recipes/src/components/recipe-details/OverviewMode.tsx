@@ -7,7 +7,6 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Play,
   DollarSign,
   Sparkles,
   AlertCircle,
@@ -44,23 +43,19 @@ import type {
 
 interface OverviewModeProps {
   recipe: Recipe
-  startCooking: () => void
   onSaveCost?: (cost: number) => void
   isRefreshing?: boolean
   refreshProgress?: string
   onRecipeRefresh?: () => void | Promise<void>
-  onActivelyCoookingChange?: (active: boolean) => void
   onPersistStepIngredients?: (stepIngredients: Array<{ indices: number[] }>) => void | Promise<void>
 }
 
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
-  startCooking,
   onSaveCost = () => {},
   isRefreshing = false,
   refreshProgress = '',
   onRecipeRefresh,
-  onActivelyCoookingChange,
   onPersistStepIngredients,
 }) => {
   // Track AI operations to detect background enhancement
@@ -103,14 +98,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
   const [ingredientsOpen, setIngredientsOpen] = useState(true)
-
-  // Derived: is the user actively cooking from the overview?
-  const isActivelyCooking = checkedIngredientsList.length > 0 || checkedStepsList.length > 0
-
-  // Notify parent about active cooking state (for wake lock)
-  useEffect(() => {
-    onActivelyCoookingChange?.(isActivelyCooking)
-  }, [isActivelyCooking, onActivelyCoookingChange])
 
   const handleToggleIngredient = useCallback(
     (index: number) => {
@@ -683,14 +670,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               className="mb-4 font-display text-xl font-bold text-foreground"
             >
               Instructions
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={startCooking}
-                className="h-auto rounded-full px-3 py-1 text-xs uppercase tracking-widest"
-              >
-                Cooking Mode <Play className="fill-current" />
-              </Button>
             </Inline>
 
             {/* Grouped Steps Display */}

@@ -40,8 +40,6 @@ import { BottomTabBar } from './BottomTabBar'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 import { WeekPlannerSettings } from '../settings/WeekPlannerSettings'
-import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
-import { $cookingSession } from '../../stores/cookingSession'
 
 // ViewMode is now imported from useRouter
 
@@ -626,18 +624,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Global Cooking Status Indicator (Mini Player) */}
-      {view !== 'detail' && (
-        <CookingStatusIndicator
-          onResume={() => {
-            const session = $cookingSession.get()
-            if (session.recipeId) {
-              setRoute({ activeRecipeId: session.recipeId, view: 'detail' })
-            }
-          }}
-        />
       )}
 
       {/* Invitation Modal - DEPRECATED: Now handled in FamilyManagementView */}
