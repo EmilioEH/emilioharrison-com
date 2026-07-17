@@ -10,7 +10,6 @@ import {
   LogOut,
   UsersRound,
   ShieldAlert,
-  GraduationCap,
   UserPlus,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
@@ -51,7 +50,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
 
     // Also clear the service worker's cached app shell (see public/sw.js). The shell HTML is
     // network-first (so it's not usually served stale while online), but it IS served from
-    // cache when offline — and it embeds this user's displayName/isAdmin/hasOnboarded. Without
+    // cache when offline — and it embeds this user's displayName/isAdmin. Without
     // this, a different user logging in on the same device and going offline before their
     // first successful page load could briefly see this user's cached shell.
     navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_SHELL_CACHE' })
@@ -125,17 +124,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                   >
                     <ShieldAlert className="h-5 w-5 text-muted-foreground" />
                     <span className="font-medium text-foreground">Admin Dashboard</span>
-                  </button>
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      closeBurgerMenu()
-                      window.location.href = '/protected/recipes?force_onboarding=true'
-                    }}
-                    className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                  >
-                    <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Onboarding (Demo)</span>
                   </button>
                 </>
               )}

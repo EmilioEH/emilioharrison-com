@@ -133,7 +133,6 @@ const db = new Proxy({} as FirebaseDbProxy, {
                 id: 'TestUser',
                 email: 'emilioeh1991@gmail.com',
                 displayName: 'Emilio',
-                hasOnboarded: true,
               }
             }
             // Secondary User Mock
@@ -142,7 +141,6 @@ const db = new Proxy({} as FirebaseDbProxy, {
                 id: 'User2',
                 email: 'guest@example.com',
                 displayName: 'Guest',
-                hasOnboarded: true,
               }
             }
             // Family Mock

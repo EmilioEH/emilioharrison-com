@@ -45,16 +45,13 @@ import { $cookingSession } from '../../stores/cookingSession'
 
 // ViewMode is now imported from useRouter
 
-// Code-split: week planner, the recipe editor, and onboarding are each only needed
-// once the user navigates away from (or hasn't yet reached) the library view.
+// Code-split: the week planner and the recipe editor are each only needed
+// once the user navigates away from the library view.
 const WeekWorkspace = React.lazy(() =>
   import('./week-planner/WeekWorkspace').then((m) => ({ default: m.WeekWorkspace })),
 )
 const RecipeEditor = React.lazy(() =>
   import('./RecipeEditor').then((m) => ({ default: m.RecipeEditor })),
-)
-const OnboardingFlow = React.lazy(() =>
-  import('../onboarding/OnboardingFlow').then((m) => ({ default: m.OnboardingFlow })),
 )
 
 const ViewLoadingFallback: React.FC = () => (
@@ -66,32 +63,20 @@ const ViewLoadingFallback: React.FC = () => (
 interface RecipeManagerProps {
   user?: string | null
   isAdmin?: boolean
-  hasOnboarded?: boolean
 }
 
-// --- Onboarding ---
-
 // --- MAIN COMPONENT ---
-const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
+const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
   // Boot-time data (recipes, planned, family, user identity) now all come from a single
-  // `GET /api/bootstrap` call — see PERFORMANCE-PLAN.md P6+P7. `user`/`isAdmin`/`hasOnboarded`
-  // are SSR defaults from `[...path].astro` (which no longer blocks on Firestore — `user` is just
-  // the raw `site_user` cookie value, `isAdmin` is a cheap cookie-derived best guess, and
-  // `hasOnboarded` is usually omitted/unknown); `useIdentityResolution` reconciles those
-  // placeholders with the Firestore-verified `bootstrapUser` once it arrives, without ever
-  // flashing the wrong screen for a returning user (see that hook for the exact decision matrix,
-  // including the `force_onboarding`/`skip_onboarding` query-param overrides).
-  const { user: bootstrapUser, bootstrapped } = useBootstrap()
-  const {
-    currentUser,
-    isAdmin: computedIsAdmin,
-    isOnboardingComplete,
-    setIsOnboardingComplete,
-  } = useIdentityResolution({
+  // `GET /api/bootstrap` call — see PERFORMANCE-PLAN.md P6+P7. `user`/`isAdmin` are SSR defaults
+  // from `[...path].astro` (which no longer blocks on Firestore — `user` is just the raw
+  // `site_user` cookie value and `isAdmin` is a cheap cookie-derived best guess);
+  // `useIdentityResolution` reconciles those placeholders with the Firestore-verified
+  // `bootstrapUser` once it arrives, without ever flashing the wrong screen for a returning user.
+  const { user: bootstrapUser } = useBootstrap()
+  const { currentUser, isAdmin: computedIsAdmin } = useIdentityResolution({
     initialUser: user,
     initialIsAdmin: isAdmin,
-    initialHasOnboarded: hasOnboarded,
-    bootstrapped,
     bootstrapUser,
   })
 
@@ -445,22 +430,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [setIsSelectionMode])
 
   // --- RENDER ---
-
-  // Onboarding status isn't known yet (cold launch, still waiting on bootstrap, and no query-param
-  // override) — show the same loading affordance used elsewhere rather than guessing either way.
-  if (isOnboardingComplete === null) {
-    return <ViewLoadingFallback />
-  }
-
-  if (!isOnboardingComplete) {
-    return (
-      <div className="fixed inset-0 z-[60]">
-        <Suspense fallback={<ViewLoadingFallback />}>
-          <OnboardingFlow onComplete={() => setIsOnboardingComplete(true)} />
-        </Suspense>
-      </div>
-    )
-  }
 
   return (
     <>

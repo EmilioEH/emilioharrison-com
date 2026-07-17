@@ -549,7 +549,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
             contentType: 'application/json',
             body: JSON.stringify({
               success: true,
-              user: { displayName: 'Emilio', isAdmin: true, hasOnboarded: true },
+              user: { displayName: 'Emilio', isAdmin: true },
               recipes: recipesData.recipes || [],
               planned: plannedData.planned || [],
               family: {

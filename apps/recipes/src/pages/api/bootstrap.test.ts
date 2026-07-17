@@ -59,7 +59,6 @@ describe('GET /api/bootstrap', () => {
           familyId: 'fam-1',
           email: 'user1@example.com',
           displayName: 'User One',
-          hasOnboarded: true,
         }
       }
       if (collection === 'families' && id === 'fam-1') {
@@ -96,7 +95,7 @@ describe('GET /api/bootstrap', () => {
     const res = await GET(fakeContext('user-1', { site_email: 'user1@example.com' }))
     expect(res.status).toBe(200)
     const data = (await res.json()) as {
-      user: { displayName: string; isAdmin: boolean; hasOnboarded: boolean }
+      user: { displayName: string; isAdmin: boolean }
       recipes: Array<{ id: string; isFavorite: boolean }>
       planned: Array<{ id: string }>
       family: {
@@ -106,7 +105,7 @@ describe('GET /api/bootstrap', () => {
       }
     }
 
-    expect(data.user).toEqual({ displayName: 'User One', isAdmin: false, hasOnboarded: true })
+    expect(data.user).toEqual({ displayName: 'User One', isAdmin: false })
     expect(data.recipes.map((r) => r.id)).toEqual(['r1'])
     expect(data.recipes[0].isFavorite).toBe(true)
     expect(data.planned.map((p) => p.id)).toEqual(['r1'])

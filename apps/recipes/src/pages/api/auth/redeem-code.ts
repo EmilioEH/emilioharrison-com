@@ -51,10 +51,8 @@ export const POST: APIRoute = async (context) => {
       joinedAt: new Date().toISOString(), // This will be overwritten if we merge, but for setDocument it replaces.
       // Ideally we should check if user exists first to preserve joinedAt, but for "new" users via invite this is fine.
       // If they were "pending", preserving their original request date is nice but not critical.
-      // Let's stick to the plan: set hasOnboarded = false.
       status: 'approved',
       redeemedCode: code, // Audit trail
-      hasOnboarded: false,
     })
 
     // 4. Consume Code (Mark as accepted)

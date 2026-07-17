@@ -4,7 +4,7 @@
 //   lazily the first time each asset is actually requested (there's no pre-build manifest of
 //   every hashed filename to precache, and that list changes every deploy anyway).
 // - Navigation/HTML requests (the app shell): NOT content-hashed and can embed per-request
-//   user data (see [...path].astro — displayName/isAdmin/hasOnboarded are serialized into the
+//   user data (see [...path].astro — displayName/isAdmin are serialized into the
 //   page), so they're network-first with a cache fallback for offline use only. The shell
 //   cache is explicitly cleared on logout (see CLEAR_SHELL_CACHE below) so a fresh login on
 //   the same device can't see a previous user's cached shell while offline.
@@ -120,7 +120,7 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   // Sent on logout (see GlobalBurgerMenu.tsx) so a different user logging in on the same
   // device never sees the previous user's cached app shell while offline — the shell embeds
-  // per-user data (displayName/isAdmin/hasOnboarded) server-rendered into the HTML.
+  // per-user data (displayName/isAdmin) server-rendered into the HTML.
   if (event.data && event.data.type === 'CLEAR_SHELL_CACHE') {
     event.waitUntil(caches.delete(SHELL_CACHE))
   }

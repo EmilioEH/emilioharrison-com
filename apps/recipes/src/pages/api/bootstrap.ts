@@ -33,8 +33,8 @@ export const GET: APIRoute = async (context: APIContext) => {
 
   try {
     // 1. The one unavoidable sequential dependency: everything else below (family id, email,
-    // admin/onboarding flags, the recipe visibility scope) is derived from this document.
-    const userDoc = await db.getDocument<User & { hasOnboarded?: boolean }>('users', userId)
+    // the admin flag, the recipe visibility scope) is derived from this document.
+    const userDoc = await db.getDocument<User>('users', userId)
     const familyId = userDoc?.familyId || null
 
     let userEmail = userDoc?.email
@@ -94,26 +94,19 @@ export const GET: APIRoute = async (context: APIContext) => {
     const isTestMode = getEnv(context, 'PUBLIC_TEST_MODE') === 'true'
     const isTestUser = userId === 'TestUser' || userId === 'test_user'
     let isAdmin = false
-    let hasOnboarded = true
     const displayName: string | null = userDoc?.displayName || userId
 
     if (isTestMode && isTestUser) {
       isAdmin = true
-      // hasOnboarded already defaults to true above.
-    } else {
-      if (userEmail) {
-        const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
-        isAdmin = adminEmails.includes(userEmail.toLowerCase())
-      }
-      if (typeof userDoc?.hasOnboarded === 'boolean') {
-        hasOnboarded = userDoc.hasOnboarded
-      }
+    } else if (userEmail) {
+      const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
+      isAdmin = adminEmails.includes(userEmail.toLowerCase())
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        user: { displayName, isAdmin, hasOnboarded },
+        user: { displayName, isAdmin },
         recipes,
         planned,
         family: {
