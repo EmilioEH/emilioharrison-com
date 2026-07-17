@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ShieldAlert, LogOut, Trash2, Ban, CheckCircle, LogIn } from 'lucide-react'
+import { ShieldAlert, LogOut, Trash2, Ban, CheckCircle } from 'lucide-react'
 import { Inline } from '@/components/ui/layout'
 
 interface AdminUser {
@@ -10,7 +10,6 @@ interface AdminUser {
   joinedAt: string
   stats?: {
     recipesAdded: number
-    recipesCooked: number
   }
   familyId?: string
 }
@@ -37,24 +36,13 @@ interface FamilyInvite {
   createdAt: string
 }
 
-interface AdminFamily {
-  id: string
-  name: string
-  memberCount: number
-  createdBy: string
-}
-
 interface AdminDashboardProps {
   onClose?: () => void
 }
 
-import { AdminFamilyManager } from './AdminFamilyManager'
-
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'families' | 'codes' | 'invites'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'codes' | 'invites'>('users')
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [families, setFamilies] = useState<AdminFamily[]>([])
-  const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null)
   const [codes, setCodes] = useState<InviteCode[]>([])
   const [invites, setInvites] = useState<FamilyInvite[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,58 +54,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [usersRes, familiesRes, codesRes, invitesRes] = await Promise.all([
+      const [usersRes, codesRes, invitesRes] = await Promise.all([
         fetch('/protected/recipes/api/admin/users'),
-        fetch('/protected/recipes/api/admin/families'),
         fetch('/protected/recipes/api/admin/access-codes'),
         fetch('/protected/recipes/api/admin/invites'),
       ])
 
       const usersData = await usersRes.json()
-      const familiesData = await familiesRes.json()
       const codesData = await codesRes.json()
       const invitesData = await invitesRes.json()
 
-      console.log('[AdminDashboard] Fetched Data:', {
-        usersCount: usersData.users?.length,
-        familiesCount: familiesData.families?.length,
-        success: {
-          users: usersData.success,
-          families: familiesData.families,
-        },
-      })
-
       if (usersData.success) setUsers(usersData.users)
-      if (familiesData.success) setFamilies(familiesData.families)
       if (codesData.success) setCodes(codesData.invites || [])
       if (invitesData.success) setInvites(invitesData.invites)
     } catch (e) {
       console.error('Failed to fetch admin data', e)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleImpersonate = async (user: AdminUser) => {
-    if (!window.confirm(`Login as ${user.displayName}? You will see the app exactly as they do.`))
-      return
-
-    try {
-      const res = await fetch('/protected/recipes/api/admin/impersonate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        // Hard reload to refresh server-side cookies/session and return to app
-        window.location.href = '/protected/recipes'
-      } else {
-        alert(data.error || 'Failed to impersonate')
-      }
-    } catch (e) {
-      console.error(e)
-      alert('Error starting impersonation')
     }
   }
 
@@ -270,16 +223,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           Users ({users.length})
         </button>
         <button
-          onClick={() => setActiveTab('families')}
-          className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-            activeTab === 'families'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Families ({families.length})
-        </button>
-        <button
           onClick={() => setActiveTab('codes')}
           className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'codes'
@@ -349,17 +292,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       <div>Added: {user.stats?.recipesAdded || 0}</div>
-                      <div>Cooked: {user.stats?.recipesCooked || 0}</div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleImpersonate(user)}
-                          className="rounded p-1 text-blue-600 hover:bg-blue-50"
-                          title="Login as User"
-                        >
-                          <LogIn className="h-4 w-4" />
-                        </button>
                         <button
                           onClick={() => handleToggleUserStatus(user)}
                           className={`rounded p-1 ${
@@ -379,99 +314,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                           onClick={() => handleDeleteUser(user)}
                           className="rounded p-1 text-red-600 hover:bg-red-50"
                           title="Delete User"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === 'families' && (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Family
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Member Count
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {families.map((family) => (
-                  <tr key={family.id} className="cursor-pointer hover:bg-gray-50">
-                    <td
-                      className="whitespace-nowrap px-6 py-4"
-                      onClick={() => {
-                        setSelectedFamilyId(family.id)
-                      }}
-                    >
-                      <div className="text-sm font-medium text-gray-900">{family.name}</div>
-                    </td>
-                    <td
-                      className="whitespace-nowrap px-6 py-4 text-sm text-gray-500"
-                      onClick={() => setSelectedFamilyId(family.id)}
-                    >
-                      {family.memberCount}
-                    </td>
-                    <td
-                      className="whitespace-nowrap px-6 py-4 font-mono text-xs text-gray-400"
-                      onClick={() => setSelectedFamilyId(family.id)}
-                    >
-                      {family.id}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          className="mr-2 text-blue-600 hover:text-blue-900"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedFamilyId(family.id)
-                          }}
-                        >
-                          View
-                        </button>
-                        <button
-                          className="rounded p-1 text-red-600 hover:bg-red-50"
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (
-                              window.confirm(
-                                `Are you sure you want to PERMANENTLY delete "${family.name}"? This will remove all data and members.`,
-                              )
-                            ) {
-                              try {
-                                const res = await fetch('/protected/recipes/api/admin/families', {
-                                  method: 'DELETE',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ familyId: family.id }),
-                                })
-                                if (res.ok) {
-                                  setFamilies((prev) => prev.filter((f) => f.id !== family.id))
-                                } else {
-                                  const data = await res.json()
-                                  alert(data.error || 'Failed to delete family')
-                                }
-                              } catch (err) {
-                                console.error(err)
-                                alert('Error deleting family')
-                              }
-                            }
-                          }}
-                          title="Delete Family"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -634,15 +476,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           </div>
         )}
       </div>
-
-      {selectedFamilyId && (
-        <div className="fixed inset-0 z-[100] bg-white">
-          <AdminFamilyManager
-            familyId={selectedFamilyId}
-            onBack={() => setSelectedFamilyId(null)}
-          />
-        </div>
-      )}
     </div>
   )
 }

@@ -31,7 +31,7 @@ test.describe('Admin Dashboard', () => {
               displayName: 'Emilio',
               status: 'approved',
               joinedAt: new Date().toISOString(),
-              stats: { recipesAdded: 5, recipesCooked: 10 },
+              stats: { recipesAdded: 5 },
             },
             {
               id: 'User2',
@@ -39,7 +39,7 @@ test.describe('Admin Dashboard', () => {
               displayName: 'Guest',
               status: 'pending',
               joinedAt: new Date().toISOString(),
-              stats: { recipesAdded: 0, recipesCooked: 0 },
+              stats: { recipesAdded: 0 },
             },
           ],
         }),
@@ -139,7 +139,7 @@ test.describe('Admin Dashboard', () => {
                     displayName: 'Emilio',
                     status: 'approved',
                     joinedAt: new Date().toISOString(),
-                    stats: { recipesAdded: 5, recipesCooked: 10 },
+                    stats: { recipesAdded: 5 },
                   },
                   {
                     id: 'User2',
@@ -147,7 +147,7 @@ test.describe('Admin Dashboard', () => {
                     displayName: 'Guest',
                     status: 'pending',
                     joinedAt: new Date().toISOString(),
-                    stats: { recipesAdded: 0, recipesCooked: 0 },
+                    stats: { recipesAdded: 0 },
                   },
                 ],
               }),
@@ -246,7 +246,6 @@ test.describe('Admin Dashboard', () => {
 
     // Check Stats
     await expect(page.getByText('Added: 5')).toBeVisible()
-    await expect(page.getByText('Cooked: 10')).toBeVisible()
 
     // Switch to Access Codes
     await page.getByText('Access Codes').click()

@@ -291,8 +291,7 @@ export class FirebaseRestService {
    * NOTE: Firestore cannot filter for "field does not exist" server-side (not even via `!=` —
    * documents missing a field are excluded from every filter type, including inequality/not-in).
    * Callers relying on `EQUAL` against `null` need documents to have that field explicitly set to
-   * `null` — see `scripts/backfill-legacy-created-by.ts` for the one-time migration this project
-   * uses to convert legacy "field is simply absent" recipes into `createdBy: null`.
+   * `null` (legacy "field is simply absent" recipes must be backfilled to `createdBy: null` first).
    *
    * Firestore's structured query API also rejects a plain `fieldFilter`/`EQUAL` comparison
    * against `null` (and `NaN`) — the REST API 400s unless it's expressed as a dedicated

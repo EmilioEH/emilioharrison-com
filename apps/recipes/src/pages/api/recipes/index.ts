@@ -92,10 +92,9 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Visibility = (createdBy IN [me, ...family]) UNION (legacy recipes with no createdBy field
     // at all, which are treated as visible to everyone). Firestore cannot query "field does not
     // exist" server-side (not even via `!=`), so the legacy branch relies on those documents
-    // having been backfilled with an explicit `createdBy: null` — see
-    // scripts/backfill-legacy-created-by.ts. Until that backfill runs in a given environment,
-    // true field-less legacy docs won't match this query; this is a known, documented trade-off
-    // of avoiding a full collection scan on every request (see README/PERFORMANCE-PLAN.md).
+    // having been backfilled with an explicit `createdBy: null`. True field-less legacy docs
+    // won't match this query; this is a known, documented trade-off of avoiding a full collection
+    // scan on every request (see README/PERFORMANCE-PLAN.md).
     const creatorChunks = chunkArray(Array.from(allowedCreators), FIRESTORE_IN_LIMIT)
 
     const recipeQueries: Promise<Recipe[]>[] = [
