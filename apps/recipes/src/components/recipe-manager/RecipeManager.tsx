@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
-import { VarietyWarning } from './VarietyWarning'
-
 import { RecipeHeader } from './RecipeHeader'
 import { BulkEditModal } from './dialogs/BulkEditModal'
 import { FamilySetup } from './FamilySetup'
@@ -24,7 +22,6 @@ import { useRecipeContext } from './hooks/useRecipeContext'
 import { useFamilySync } from './hooks/useFamilySync'
 import { useScrollBroadcaster } from './hooks/useScrollBroadcaster'
 
-import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
 import { currentWeekRecipes } from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
@@ -65,11 +62,6 @@ const ViewLoadingFallback: React.FC = () => (
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
   </div>
 )
-
-interface ProteinWarning {
-  protein: string
-  count: number
-}
 
 interface RecipeManagerProps {
   user?: string | null
@@ -308,7 +300,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     })
 
   // Smart Suggestion State
-  const [proteinWarning, setProteinWarning] = useState<ProteinWarning | null>(null)
 
   // Meal Planner State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
@@ -392,11 +383,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       )
     }
   }, [setView])
-
-  // Run Rollover Check
-  useEffect(() => {
-    checkAndRunRollover()
-  }, [])
 
   // Self-Correction: Clean up ghost recipes from week plan
   // If a recipe is in the plan but not in the loaded recipes list, remove it.
@@ -553,8 +539,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         setRoute={setRoute}
         family={family}
       >
-        <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
-
         {/* Full-width Header Shell */}
         {!isSearchMode && <RecipeHeader onAddRecipe={() => setView('edit')} />}
 

@@ -460,7 +460,7 @@ test.describe('Grocery List', () => {
     })
 
     // 2. Mock API Failure (500)
-    await page.route('**/api/grocery/generate', async (route) => {
+    await page.route('**/api/generate-grocery-list', async (route) => {
       // Simulate server error
       await route.fulfill({
         status: 500,
