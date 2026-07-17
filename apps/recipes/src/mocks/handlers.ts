@@ -56,16 +56,6 @@ export const handlers = [
     return HttpResponse.json({ success: true })
   }),
 
-  // GET /api/feedback - Fetch feedback (stub)
-  http.get(`${API_BASE}/feedback`, () => {
-    return HttpResponse.json({ feedback: [] })
-  }),
-
-  // POST /api/feedback - Submit feedback (stub)
-  http.post(`${API_BASE}/feedback`, () => {
-    return HttpResponse.json({ success: true, id: `feedback-${Date.now()}` })
-  }),
-
   // POST /api/parse-recipe - AI recipe parsing (stub)
   http.post(`${API_BASE}/parse-recipe`, () => {
     return HttpResponse.json({

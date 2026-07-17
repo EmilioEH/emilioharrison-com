@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import type { Recipe, Family } from '../../lib/types'
 import type { ViewMode } from './hooks/useRouter'
 
@@ -19,7 +19,6 @@ const SettingsView = React.lazy(() =>
 const BulkRecipeImporter = React.lazy(() =>
   import('./importer/BulkRecipeImporter').then((m) => ({ default: m.BulkRecipeImporter })),
 )
-const FeedbackDashboard = React.lazy(() => import('./views/FeedbackDashboard'))
 const AdminDashboard = React.lazy(() =>
   import('../admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
@@ -204,23 +203,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
           onRecipesParsed={handleBulkImportSave}
         />
       </Suspense>
-    )
-  }
-
-  if (view === 'feedback-dashboard') {
-    return (
-      <div className="flex h-full flex-col bg-white">
-        <div className="flex items-center gap-2 border-b px-4 py-3">
-          <button onClick={() => setView('library')} className="rounded-full p-2 hover:bg-gray-100">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <Suspense fallback={<ViewLoadingFallback />}>
-            <FeedbackDashboard />
-          </Suspense>
-        </div>
-      </div>
     )
   }
 

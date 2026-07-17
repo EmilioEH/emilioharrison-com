@@ -9,7 +9,7 @@ import { Button } from '../ui/button'
  * Features:
  * - Appears after scrolling 100vh (beneath the fold)
  * - Smooth scroll to top animation
- * - Positioned bottom-right, above Beta Feedback Footer
+ * - Positioned bottom-right
  * - Fully accessible (keyboard and screen reader support)
  *
  * Addresses feedback report: #1768336770547

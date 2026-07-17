@@ -43,7 +43,7 @@ function hasLocalStorage(): boolean {
 /**
  * Reads the `site_user` cookie value client-side. This cookie is intentionally set with
  * `httpOnly: false` everywhere it's written (login.ts, admin/impersonate.ts, admin/revert.ts) so
- * the client can read the logged-in user's id — the same pattern GlobalFeedback.jsx already uses.
+ * the client can read the logged-in user's id.
  * Returns null server-side (SSR) or when there's no session.
  */
 export function getCurrentUserId(): string | null {

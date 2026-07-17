@@ -8,7 +8,6 @@ import '@fontsource/roboto/500.css'
 import '@fontsource/roboto/600.css'
 import '@fontsource/roboto/700.css'
 import '@fontsource/roboto/900.css'
-import GlobalFeedback from '../components/layout/GlobalFeedback'
 import GlobalBurgerMenu from '../components/layout/GlobalBurgerMenu'
 import GlobalDialogRoot from '../components/layout/GlobalDialogRoot'
 import { GlobalScrollToTop } from '../components/layout/GlobalScrollToTop'
@@ -56,10 +55,6 @@ const isImpersonating = Astro.cookies.has('admin_mask')
     <style is:global>
       @import '../styles/global.css';
     </style>
-    <script>
-      import { logger } from '../lib/logger'
-      logger.init()
-    </script>
   </head>
   <body class="bg-paper text-ink min-h-screen font-sans antialiased">
     {
@@ -117,9 +112,6 @@ const isImpersonating = Astro.cookies.has('admin_mask')
       <main class="w-full flex-1 scroll-smooth">
         <slot />
       </main>
-      <div class="fixed bottom-0 left-0 right-0 z-50">
-        <GlobalFeedback client:load />
-      </div>
     </div>
 
     <GlobalBurgerMenu client:load user={user} isAdmin={isAdmin} />

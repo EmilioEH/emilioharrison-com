@@ -5,7 +5,6 @@ import {
   X,
   Bell,
   Settings,
-  MessageSquare,
   Info,
   LayoutDashboard,
   FolderUp,
@@ -17,7 +16,6 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
-import { openFeedbackModal } from '../../lib/feedbackStore'
 import { $pendingInvites } from '../../lib/familyStore'
 import { clearPersistedRecipes } from '../../lib/recipeStore'
 
@@ -49,16 +47,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const handleBulkImport = () => {
     closeBurgerMenu()
     window.dispatchEvent(new CustomEvent('navigate-to-bulk-import'))
-  }
-
-  const handleFeedback = () => {
-    closeBurgerMenu()
-    openFeedbackModal()
-  }
-
-  const handleFeedbackDashboard = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-feedback-dashboard'))
   }
 
   const handleManageFamily = () => {
@@ -160,14 +148,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <>
                   <button
                     role="menuitem"
-                    onClick={handleFeedbackDashboard}
-                    className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                  >
-                    <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Feedback Dashboard</span>
-                  </button>
-                  <button
-                    role="menuitem"
                     onClick={() => {
                       closeBurgerMenu()
                       window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
@@ -229,16 +209,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
               >
                 <CheckSquare className="h-5 w-5 text-muted-foreground" />
                 <span className="font-medium text-foreground">Select Recipes</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleFeedback}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                aria-label="Send Feedback"
-              >
-                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Send Feedback</span>
               </button>
 
               <a

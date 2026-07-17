@@ -270,26 +270,6 @@ export interface HebProduct {
   upc?: string
 }
 
-export interface Feedback {
-  id: string
-  timestamp: string
-  type: 'bug' | 'idea'
-  description: string
-  expected?: string // For bugs
-  actual?: string // For bugs
-  screenshot?: string // Base64 string
-  logs: string // JSON string of log entries (Firestore-safe)
-  context: string // JSON string of context object (Firestore-safe)
-  status?: 'open' | 'fixed' | 'wont-fix'
-  resolved_at?: string
-}
-
-export interface LogEntry {
-  type: 'info' | 'warn' | 'error' | 'log'
-  args: string[]
-  timestamp: string
-}
-
 // --- Multi-User Family Sync Types ---
 
 /** Family/Household group for sharing recipe data */
