@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     // Determine the best parsing source
     let newData
-    const commonParams = { mode: 'parse' as const, style: 'enhanced' as const }
+    const commonParams = { style: 'enhanced' as const }
 
     if (recipe.sourceUrl) {
       console.log(`[Enhance] Total Reparse via URL: ${recipe.sourceUrl}`)

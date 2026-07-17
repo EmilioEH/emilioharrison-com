@@ -73,7 +73,7 @@ export interface Recipe {
   rating?: number // 1-5
   createdAt?: string // ISO Date
   updatedAt?: string // ISO Date
-  creationMethod?: 'manual' | 'ai-parse' | 'ai-infer'
+  creationMethod?: 'manual' | 'ai-parse'
 
   userNotes?: string
   wouldMakeAgain?: boolean

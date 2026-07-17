@@ -39,7 +39,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     const body = await request.json()
-    const { mode: _mode = 'parse', style: _style = 'strict' } = body
 
     if (!body.url && !body.image && !body.text) {
       return new Response(JSON.stringify({ error: 'No input provided' }), {
@@ -108,7 +107,10 @@ async function runPhase(
     }
     messages.push({
       role: 'user',
-      content: buildMessageContent(userPrompt, contentPart) as unknown as OpenAI.Chat.ChatCompletionContentPart[],
+      content: buildMessageContent(
+        userPrompt,
+        contentPart,
+      ) as unknown as OpenAI.Chat.ChatCompletionContentPart[],
     })
 
     const result = await client.chat.completions.create({
@@ -172,7 +174,9 @@ async function generateRecipeStream(
         }
 
         // ── Phase 3: Structure everything from OCR'd text (text-only model) ──
-        const ingredientList = Array.isArray(phase1.ingredients) ? phase1.ingredients.join('\n') : ''
+        const ingredientList = Array.isArray(phase1.ingredients)
+          ? phase1.ingredients.join('\n')
+          : ''
         const stepList = phase2 && Array.isArray(phase2.steps) ? phase2.steps.join('\n') : ''
 
         const phase3 = await runPhase(

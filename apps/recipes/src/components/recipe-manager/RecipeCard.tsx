@@ -37,8 +37,6 @@ const itemVariants: Variants = {
 
 interface RecipeCardProps {
   recipe: Recipe & { matches?: { indices: [number, number][]; key?: string }[] }
-  isSelectionMode: boolean
-  isSelected: boolean
   onSelect: (recipe: Recipe) => void
   onToggleThisWeek: (id: string) => void
   onManage?: (id: string) => void
@@ -50,8 +48,6 @@ interface RecipeCardProps {
 export const RecipeCard = memo(
   ({
     recipe,
-    isSelectionMode,
-    isSelected,
     onSelect,
     onToggleThisWeek,
     onManage,
@@ -74,11 +70,7 @@ export const RecipeCard = memo(
         role="button"
         tabIndex={0}
         data-testid={`recipe-card-${recipe.id}`}
-        className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all active:scale-[0.98] active:bg-accent/70 ${
-          isSelected
-            ? 'border-primary/20 bg-accent'
-            : 'hover:border-border hover:bg-accent/50 hover:shadow-sm'
-        }`}
+        className="group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:border-border hover:bg-accent/50 hover:shadow-sm active:scale-[0.98] active:bg-accent/70"
         onClick={() => {
           onSelect(recipe)
         }}
@@ -219,7 +211,7 @@ export const RecipeCard = memo(
         </div>
 
         {/* Management Menu Button */}
-        {allowManagement && !isSelectionMode && isPlanned && onManage && (
+        {allowManagement && isPlanned && onManage && (
           <Button
             variant="ghost"
             size="icon"

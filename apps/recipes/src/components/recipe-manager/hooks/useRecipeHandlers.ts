@@ -1,5 +1,5 @@
 import type { Recipe, PendingInvite } from '../../../lib/types'
-import { alert, confirm } from '../../../lib/dialogStore'
+import { alert } from '../../../lib/dialogStore'
 import { familyActions, $pendingInvites } from '../../../lib/familyStore'
 import { recipeActions } from '../../../lib/recipeStore'
 
@@ -10,26 +10,18 @@ interface UseRecipeHandlersProps {
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
   saveRecipe: (recipe: Partial<Recipe>) => Promise<{ success: boolean; savedRecipe?: Recipe }>
   deleteRecipe: (id: string) => Promise<boolean>
-  bulkUpdateRecipes: (ids: Set<string>, updates: Partial<Recipe>) => Promise<boolean>
-  bulkDeleteRecipes: (ids: Set<string>) => Promise<boolean>
   setRecipe: (id: string | null) => void
   setView: (view: ViewMode) => void
   selectedRecipe: Recipe | null
-  selectedIds: Set<string>
-  clearSelection: () => void
 }
 
 export function useRecipeHandlers({
   setRecipes,
   saveRecipe,
   deleteRecipe,
-  bulkUpdateRecipes,
-  bulkDeleteRecipes,
   setRecipe,
   setView,
   selectedRecipe: _selectedRecipe,
-  selectedIds,
-  clearSelection,
 }: UseRecipeHandlersProps) {
   const handleAcceptInvite = async (invite: PendingInvite) => {
     try {
@@ -142,31 +134,11 @@ export function useRecipeHandlers({
     }
   }
 
-  const handleBulkDelete = async () => {
-    if (await confirm(`Delete ${selectedIds.size} recipes? This cannot be undone.`)) {
-      if (await bulkDeleteRecipes(selectedIds)) {
-        clearSelection()
-      } else {
-        await alert('Some deletions failed')
-      }
-    }
-  }
-
-  const handleBulkEdit = async (updates: Partial<Recipe>) => {
-    if (await bulkUpdateRecipes(selectedIds, updates)) {
-      clearSelection()
-    } else {
-      await alert('Bulk update failed')
-    }
-  }
-
   return {
     handleAcceptInvite,
     handleDeclineInvite,
     handleSaveRecipe: handleSaveRecipeInternal,
     handleDeleteRecipe: handleDeleteRecipeInternal,
     handleUpdateRecipe,
-    handleBulkDelete,
-    handleBulkEdit,
   }
 }

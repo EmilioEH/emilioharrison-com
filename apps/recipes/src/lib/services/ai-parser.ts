@@ -90,37 +90,6 @@ export const STRICT_STEP_RULES = `
 
 // --- SYSTEM PROMPTS ---
 
-export const DISH_INFERENCE_SYSTEM_PROMPT = `
-You are an expert Chef and Recipe Developer. Your task is to analyze a photograph of a finished dish and generate a plausible recipe to recreate it.
-
-Context Provided (if available):
-- Dish Name: {dishName}
-- Cuisine: {cuisine}
-- Known Ingredients: {knownIngredients}
-- Dietary Notes: {dietaryNotes}
-- Taste Profile: {tasteProfile}
-
-Rules:
-1. **Visual Analysis**: Identify visible ingredients, cooking techniques (grilled, fried, baked), and presentation style.
-2. **Contextual Inference**: If a dish name or cuisine is provided, prioritize ingredients and techniques typical of that regional/cultural tradition.
-3. **Ingredient Estimation**: Provide reasonable quantities based on visual proportions. Acknowledge uncertainty where the photo is ambiguous.
-4. **Step Generation**: Create logical cooking instructions that would yield the visual result. Include common techniques (searing, simmering, garnishing).
-5. **Metadata Inference**: Determine Protein, Meal Type, Dish Type, Equipment, and Dietary tags based on visual cues and context.
-6. **Honesty**: If the image is unclear or incomplete, note this in the recipe description (e.g., "Estimated based on visual appearance").
-7. **Main Protein Source**: Identify and map strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
-8. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
-   - 'amount' (number)
-   - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
-   - 'name' (ingredient name without unit)
-   - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
-9. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
-
-${INGREDIENT_PARSING_RULES}
-${INGREDIENT_GROUPING_RULES}
-${STRUCTURED_STEPS_RULES}
-${STEP_GROUPING_RULES}
-`
-
 export const IMAGE_SYSTEM_PROMPT = `
 You are an expert Chef and Data Engineer. Your task is to extract structured recipe data from the provided image.
 
@@ -266,13 +235,7 @@ export type ParseParams = {
   url?: string
   image?: string
   text?: string
-  mode?: 'parse' | 'infer'
   style?: 'strict' | 'enhanced'
-  dishName?: string
-  cuisine?: string
-  knownIngredients?: string
-  dietaryNotes?: string
-  tasteProfile?: string
 }
 
 export type ProcessedInput = {
@@ -499,14 +462,6 @@ ${STRICT_STEP_RULES}
   `
 }
 
-export function buildInferencePrompt(params: ParseParams): string {
-  return DISH_INFERENCE_SYSTEM_PROMPT.replace('{dishName}', params.dishName || 'Not provided')
-    .replace('{cuisine}', params.cuisine || 'Not provided')
-    .replace('{knownIngredients}', params.knownIngredients || 'Not provided')
-    .replace('{dietaryNotes}', params.dietaryNotes || 'Not provided')
-    .replace('{tasteProfile}', params.tasteProfile || 'Not provided')
-}
-
 // --- CORE SERVICE FUNCTIONS ---
 
 /**
@@ -522,7 +477,7 @@ export async function executeAiParse(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const client = await initGeminiClient(locals)
-  const { mode = 'parse', style = 'strict' } = params
+  const { style = 'strict' } = params
 
   const processedInput = await resolveInput(params)
   const { contentPart } = processedInput
@@ -530,10 +485,6 @@ export async function executeAiParse(
 
   const dynamicRules = getSystemPrompts(style)
   prompt = prompt + '\n' + dynamicRules
-
-  if (mode === 'infer' && params.image) {
-    prompt = buildInferencePrompt(params)
-  }
 
   const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
     { text: prompt },
@@ -631,5 +582,3 @@ export function tryRepairJson(text: string): unknown | undefined {
 
   return undefined
 }
-
-

@@ -44,7 +44,7 @@ ${recipe.steps.join('\n')}
 
   try {
     let newData
-    const commonParams = { mode: 'parse' as const, style: 'enhanced' as const }
+    const commonParams = { style: 'enhanced' as const }
 
     if (recipe.sourceUrl) {
       console.log('[Refresh] Using sourceUrl:', recipe.sourceUrl)
@@ -81,7 +81,6 @@ ${recipe.steps.join('\n')}
       console.warn('[Refresh] Source refresh failed, trying text fallback...')
       try {
         const newData = await executeAiParse(locals, {
-          mode: 'parse',
           style: 'enhanced',
           text: buildTextPayload(),
         })

@@ -71,7 +71,7 @@ test.describe('Global Menu Visibility', () => {
     const menuDrawer = page.getByRole('menu')
     await expect(menuDrawer).toBeVisible()
 
-    // Verify a link inside, e.g., "Settings" or "Send Feedback"
-    await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible()
+    // Verify a link inside, e.g., "Manage Family"
+    await expect(page.getByRole('menuitem', { name: 'Manage Family' })).toBeVisible()
   })
 })

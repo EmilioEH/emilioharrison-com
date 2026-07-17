@@ -7,7 +7,6 @@ export type ViewMode =
   | 'edit'
   | 'grocery'
   | 'week'
-  | 'bulk-import'
   | 'family-settings'
   | 'admin-dashboard'
   | 'invite'

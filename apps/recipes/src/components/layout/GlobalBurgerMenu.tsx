@@ -1,17 +1,7 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
 
-import {
-  X,
-  Info,
-  LayoutDashboard,
-  FolderUp,
-  CheckSquare,
-  LogOut,
-  UsersRound,
-  ShieldAlert,
-  UserPlus,
-} from 'lucide-react'
+import { X, Info, LogOut, UsersRound, ShieldAlert, UserPlus } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
 import { $pendingInvites } from '../../lib/familyStore'
 import { clearPersistedRecipes } from '../../lib/recipeStore'
@@ -24,16 +14,6 @@ interface GlobalBurgerMenuProps {
 const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const isOpen = useStore(burgerMenuOpen)
   const pendingInvites = useStore($pendingInvites)
-
-  const handleWeekPlannerSettings = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-week-planner-settings'))
-  }
-
-  const handleBulkImport = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-bulk-import'))
-  }
 
   const handleManageFamily = () => {
     closeBurgerMenu()
@@ -95,41 +75,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
             <div className="p-2" role="menu">
               <button
                 role="menuitem"
-                onClick={handleBulkImport}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <FolderUp className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Import Recipes</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleWeekPlannerSettings}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Week Planner Settings</span>
-              </button>
-
-              {/* Admin Dashboard Link */}
-              {props.isAdmin && (
-                <>
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      closeBurgerMenu()
-                      window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
-                    }}
-                    className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                  >
-                    <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Admin Dashboard</span>
-                  </button>
-                </>
-              )}
-
-              <button
-                role="menuitem"
                 onClick={handleManageFamily}
                 className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
               >
@@ -156,17 +101,20 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <span className="font-medium text-foreground">Invite</span>
               </button>
 
-              <button
-                role="menuitem"
-                onClick={() => {
-                  closeBurgerMenu()
-                  window.dispatchEvent(new CustomEvent('toggle-selection-mode'))
-                }}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <CheckSquare className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Select Recipes</span>
-              </button>
+              {/* Admin Dashboard Link */}
+              {props.isAdmin && (
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    closeBurgerMenu()
+                    window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
+                  }}
+                  className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
+                >
+                  <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">Admin Dashboard</span>
+                </button>
+              )}
 
               <a
                 role="menuitem"

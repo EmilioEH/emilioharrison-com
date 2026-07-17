@@ -12,7 +12,7 @@ export const $recipesError = atom<string | null>(null)
 // ---------------------------------------------------------------------------
 //
 // `@nanostores/persistent`'s `persistentAtom`/`persistentMap` (used elsewhere in this codebase,
-// e.g. userPreferences.ts, weekStore.ts) bake the storage key in at atom-creation time. This
+// e.g. weekStore.ts) bake the storage key in at atom-creation time. This
 // cache needs a *dynamic* key — scoped to whichever user is currently logged in — so that
 // switching accounts (including admin impersonation, see api/admin/impersonate.ts + revert.ts)
 // can never surface a different user's recipes. That rules out a static-key persistentAtom, so

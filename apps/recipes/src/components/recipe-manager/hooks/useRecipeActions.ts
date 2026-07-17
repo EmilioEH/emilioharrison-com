@@ -4,16 +4,10 @@ import type { Recipe } from '../../../lib/types'
 interface UseRecipeActionsProps {
   recipes: Recipe[]
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
-  refreshRecipes: (showLoading?: boolean) => Promise<void>
   getBaseUrl: () => string
 }
 
-export const useRecipeActions = ({
-  recipes,
-  setRecipes,
-  refreshRecipes,
-  getBaseUrl,
-}: UseRecipeActionsProps) => {
+export const useRecipeActions = ({ recipes, setRecipes, getBaseUrl }: UseRecipeActionsProps) => {
   const [isSaving, setIsSaving] = useState(false)
 
   const saveRecipe = useCallback(
@@ -85,72 +79,9 @@ export const useRecipeActions = ({
     [setRecipes, getBaseUrl],
   )
 
-  const bulkUpdateRecipes = useCallback(
-    async (ids: Set<string>, updates: Partial<Recipe>): Promise<boolean> => {
-      try {
-        const res = await fetch(`${getBaseUrl()}api/recipes/bulk`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'update',
-            ids: Array.from(ids),
-            updates,
-          }),
-        })
-
-        if (res.ok) {
-          setRecipes((prev) =>
-            prev.map((r) => {
-              if (ids.has(r.id)) {
-                return { ...r, ...updates, updatedAt: new Date().toISOString() }
-              }
-              return r
-            }),
-          )
-          return true
-        }
-        return false
-      } catch (e) {
-        console.error(e)
-        return false
-      }
-    },
-    [setRecipes, getBaseUrl],
-  )
-
-  const bulkDeleteRecipes = useCallback(
-    async (ids: Set<string>): Promise<boolean> => {
-      // Optimistic Update
-      setRecipes((prev) => prev.filter((r) => !ids.has(r.id)))
-
-      // Also unplan these recipes
-      // Dynamically import to avoid circular dependencies if any, or just import at top if safe.
-      // Since useRecipeActions is a hook, let's assume we can import weekStore at top.
-      const { unplanRecipe } = await import('../../../lib/weekStore')
-      ids.forEach((id) => unplanRecipe(id))
-
-      try {
-        await Promise.all(
-          Array.from(ids).map((id) =>
-            fetch(`${getBaseUrl()}api/recipes/${id}`, { method: 'DELETE' }),
-          ),
-        )
-        return true
-      } catch (e) {
-        console.error(e)
-        // Revert/Sync on error
-        await refreshRecipes(false)
-        return false
-      }
-    },
-    [setRecipes, getBaseUrl, refreshRecipes],
-  )
-
   return {
     saveRecipe,
     deleteRecipe,
-    bulkUpdateRecipes,
-    bulkDeleteRecipes,
     isSaving,
   }
 }

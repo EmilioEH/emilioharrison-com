@@ -37,21 +37,6 @@ test.describe('Lazy-loaded ViewMode routes', () => {
       week: async (page) => {
         await expect(page.getByLabel('View Grocery List')).toBeVisible({ timeout: 15000 })
       },
-      settings: async (page) => {
-        await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({
-          timeout: 15000,
-        })
-      },
-      'feedback-dashboard': async (page) => {
-        await expect(page.getByRole('heading', { name: 'Feedback Dashboard' })).toBeVisible({
-          timeout: 15000,
-        })
-      },
-      'bulk-import': async (page) => {
-        await expect(page.getByRole('heading', { name: 'Import Recipes' })).toBeVisible({
-          timeout: 15000,
-        })
-      },
       'family-settings': async (page) => {
         await expect(page.getByRole('heading', { name: 'Manage Family' })).toBeVisible({
           timeout: 15000,
@@ -61,11 +46,6 @@ test.describe('Lazy-loaded ViewMode routes', () => {
         await expect(page.getByRole('heading', { name: 'Invite Others' })).toBeVisible({
           timeout: 15000,
         })
-      },
-      notifications: async (page) => {
-        await expect(page.getByRole('heading', { name: 'Notifications', exact: true })).toBeVisible(
-          { timeout: 15000 },
-        )
       },
     }
 

@@ -8,9 +8,6 @@ import type { ViewMode } from './hooks/useRouter'
 const RecipeDetail = React.lazy(() =>
   import('./RecipeDetail').then((m) => ({ default: m.RecipeDetail })),
 )
-const BulkRecipeImporter = React.lazy(() =>
-  import('./importer/BulkRecipeImporter').then((m) => ({ default: m.BulkRecipeImporter })),
-)
 const AdminDashboard = React.lazy(() =>
   import('../admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
@@ -42,7 +39,6 @@ interface RecipeManagerViewProps {
   handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent' | 'hydrate') => void
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
-  handleBulkImportSave: (recipes: Recipe[]) => void
   refreshRecipes: (force?: boolean) => void
   setView: (view: ViewMode) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +58,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   handleUpdateRecipe,
   handleDeleteRecipe,
   handleAddToWeek,
-  handleBulkImportSave,
   refreshRecipes,
   setView,
 
@@ -149,17 +144,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
           Back to Recipes
         </button>
       </div>
-    )
-  }
-
-  if (view === 'bulk-import') {
-    return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <BulkRecipeImporter
-          onClose={() => setView('library')}
-          onRecipesParsed={handleBulkImportSave}
-        />
-      </Suspense>
     )
   }
 

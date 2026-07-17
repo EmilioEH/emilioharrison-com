@@ -1,18 +1,10 @@
 import React, { useState } from 'react'
-import {
-  Loader2,
-  ChefHat,
-  Info,
-  ChevronDown,
-  ChevronUp,
-  ShieldAlert,
-  ArrowLeft,
-} from 'lucide-react'
+import { Loader2, ChefHat, ShieldAlert, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
-import { Stack, Cluster } from '@/components/ui/layout'
+import { Stack } from '@/components/ui/layout'
 import { AiProgressBar } from '@/components/ui/AiProgressBar'
 import { uploadImage } from './api'
 import { processImage, createThumbnail } from '../../../lib/image-optimization'
@@ -39,16 +31,6 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     status,
     errorMsg,
     setErrorMsg,
-    dishName,
-    setDishName,
-    cuisine,
-    setCuisine,
-    knownIngredients,
-    setKnownIngredients,
-    dietaryNotes,
-    setDietaryNotes,
-    tasteProfile,
-    setTasteProfile,
     handleProcess,
     progressMessage,
     // Blocked site fallback
@@ -59,7 +41,6 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
   } = useAiImporter({ onRecipeParsed, mode })
 
   const [internalIsUploading, setInternalIsUploading] = useState(false)
-  const [isContextOpen, setIsContextOpen] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return
@@ -115,7 +96,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
       <SourceToggle mode={mode} setMode={setMode} />
 
       <Stack spacing="lg">
-        {mode === 'photo' || mode === 'dish-photo' ? (
+        {mode === 'photo' ? (
           <>
             <PhotoUploader
               imagePreview={imagePreview}
@@ -125,128 +106,6 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
               }}
               handleFileChange={handleFileChange}
             />
-
-            {mode === 'dish-photo' && (
-              <div className="animate-in fade-in slide-in-from-top-2">
-                {/* ... (Dish photo inputs) ... */}
-                {/* I will omit the bulky inputs here for the replacement, assuming replace_file_content can target the render block effectively if I provide enough context or just replace the Loading Section */}
-                <div className="mb-4 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-600 dark:text-blue-400">
-                  <div className="flex gap-2">
-                    <Info className="h-4 w-4 shrink-0 translate-y-0.5" />
-                    <p>
-                      <strong>Experimental:</strong> Gemini will reverse-engineer a recipe from your
-                      photo. Results are estimated!
-                    </p>
-                  </div>
-                </div>
-
-                <Stack spacing="md">
-                  <div>
-                    <label
-                      htmlFor="dish-name"
-                      className="mb-1 block text-xs font-bold uppercase text-muted-foreground"
-                    >
-                      Dish Name (Recommended)
-                    </label>
-                    <input
-                      id="dish-name"
-                      type="text"
-                      className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
-                      placeholder="e.g. Pad Thai, Beef Bourguignon"
-                      value={dishName}
-                      onChange={(e) => setDishName(e.target.value)}
-                    />
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between px-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => setIsContextOpen(!isContextOpen)}
-                  >
-                    <span className="text-xs font-bold uppercase">Add More Context (Optional)</span>
-                    {isContextOpen ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-
-                  {isContextOpen && (
-                    <Stack spacing="md" className="pt-2 animate-in slide-in-from-top-2">
-                      <Cluster spacing="md">
-                        <div className="flex-1">
-                          <label
-                            htmlFor="cuisine"
-                            className="mb-1 block text-xs font-bold uppercase text-muted-foreground"
-                          >
-                            Cuisine
-                          </label>
-                          <input
-                            id="cuisine"
-                            type="text"
-                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
-                            placeholder="Italian, Thai..."
-                            value={cuisine}
-                            onChange={(e) => setCuisine(e.target.value)}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label
-                            htmlFor="taste-profile"
-                            className="mb-1 block text-xs font-bold uppercase text-muted-foreground"
-                          >
-                            Taste Profile
-                          </label>
-                          <input
-                            id="taste-profile"
-                            type="text"
-                            className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
-                            placeholder="Spicy, Sweet..."
-                            value={tasteProfile}
-                            onChange={(e) => setTasteProfile(e.target.value)}
-                          />
-                        </div>
-                      </Cluster>
-
-                      <div>
-                        <label
-                          htmlFor="known-ingredients"
-                          className="mb-1 block text-xs font-bold uppercase text-muted-foreground"
-                        >
-                          Known Ingredients
-                        </label>
-                        <textarea
-                          id="known-ingredients"
-                          className="min-h-[60px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
-                          placeholder="Shrimp, lemongrass, peanuts..."
-                          value={knownIngredients}
-                          onChange={(e) => setKnownIngredients(e.target.value)}
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="dietary-notes"
-                          className="mb-1 block text-xs font-bold uppercase text-muted-foreground"
-                        >
-                          Dietary Notes
-                        </label>
-                        <input
-                          id="dietary-notes"
-                          type="text"
-                          className="w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
-                          placeholder="Gluten-Free, Dairy-Free..."
-                          value={dietaryNotes}
-                          onChange={(e) => setDietaryNotes(e.target.value)}
-                        />
-                      </div>
-                    </Stack>
-                  )}
-                  {/* End Context Section */}
-                </Stack>
-              </div>
-            )}
           </>
         ) : isBlocked ? (
           /* Blocked site fallback - paste text manually */
@@ -334,7 +193,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             internalIsUploading ||
             (mode === 'url' && !isBlocked && !url) ||
             (mode === 'url' && isBlocked && !pastedText) ||
-            ((mode === 'photo' || mode === 'dish-photo') && !imageData)
+            (mode === 'photo' && !imageData)
           }
         >
           {status === 'processing' || internalIsUploading ? (
