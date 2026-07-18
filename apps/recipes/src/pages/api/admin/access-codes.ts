@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { verifyAdmin } from '../../../lib/auth-admin'
 import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
+import { generateInviteCode, inviteExpiryFrom } from '../../../lib/invite-codes'
 
 export const GET: APIRoute = async (context) => {
   const { request } = context
@@ -34,15 +35,17 @@ export const POST: APIRoute = async (context) => {
       return unauthorizedResponse()
     }
 
-    // Generate a simple 6-char code
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase()
+    // Cryptographically-random, single-use, time-limited code (see lib/invite-codes.ts).
+    const code = generateInviteCode()
+    const now = new Date()
 
     await db.setDocument('invites', code, {
       code,
       createdBy: user.email || 'Unknown',
       createdByUserId: userId,
       createdByName: user.displayName || 'User',
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
+      expiresAt: inviteExpiryFrom(now.getTime()),
       status: 'pending',
     })
 
