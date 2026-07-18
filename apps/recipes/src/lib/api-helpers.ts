@@ -95,9 +95,7 @@ export function createOpenRouterClient(locals: App.Locals): OpenAI {
       hasProcessEnv: process?.env?.OPENROUTER_API_KEY ? 'yes' : 'no',
       importMetaEnv: import.meta.env?.OPENROUTER_API_KEY ? 'yes' : 'no',
     })
-    throw new Error(
-      'Missing OPENROUTER_API_KEY configuration',
-    )
+    throw new Error('Missing OPENROUTER_API_KEY configuration')
   }
 
   return new OpenAI({

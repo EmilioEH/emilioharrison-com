@@ -162,7 +162,10 @@ export async function parseRecipe(
   }
 }
 
-function parseNdjsonLines(text: string, onProgress?: (msg: string) => void): Record<string, unknown> {
+function parseNdjsonLines(
+  text: string,
+  onProgress?: (msg: string) => void,
+): Record<string, unknown> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const merged: Record<string, any> = {}
   const msgs = [

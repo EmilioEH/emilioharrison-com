@@ -18,9 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 
 interface DetailHeaderActionsProps {
-  onAction: (
-    action: 'delete' | 'edit' | 'addToWeek' | 'move' | 'share' | 'refresh',
-  ) => void
+  onAction: (action: 'delete' | 'edit' | 'addToWeek' | 'move' | 'share' | 'refresh') => void
   onToggleThisWeek?: () => void
   isThisWeek: boolean | undefined
 }

@@ -471,7 +471,6 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
           </Stack>
         </Stack>
       </div>
-
     </div>
   )
 }

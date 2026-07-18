@@ -202,7 +202,6 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
       {/* Share Recipe Dialog */}
       <ShareRecipeDialog recipe={recipe} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
-
     </Stack>
   )
 }

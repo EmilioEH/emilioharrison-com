@@ -55,7 +55,9 @@ function checkEnv() {
     console.log('\n\x1b[36mHow to fix:\x1b[0m')
     console.log('1. Open your apps/recipes/.env.local file')
     console.log('2. Provide valid API keys and configuration for the items listed above.')
-    console.log('3. These values can be found in your Firebase Console and OpenRouter API Dashboard.')
+    console.log(
+      '3. These values can be found in your Firebase Console and OpenRouter API Dashboard.',
+    )
 
     process.exit(1)
   }

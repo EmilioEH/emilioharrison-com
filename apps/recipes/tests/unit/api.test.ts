@@ -97,8 +97,16 @@ vi.mock('@google/genai', () => {
                                 purchaseUnit: 'unit',
                                 category: 'Produce',
                                 sources: [
-                                  { recipeId: 'r0', recipeTitle: 'Recipe 0', originalAmount: '1 item' },
-                                  { recipeId: 'r1', recipeTitle: 'Recipe 1', originalAmount: '1 item' },
+                                  {
+                                    recipeId: 'r0',
+                                    recipeTitle: 'Recipe 0',
+                                    originalAmount: '1 item',
+                                  },
+                                  {
+                                    recipeId: 'r1',
+                                    recipeTitle: 'Recipe 1',
+                                    originalAmount: '1 item',
+                                  },
                                 ],
                               },
                             ],
@@ -138,7 +146,9 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({}),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
+      const locals = {
+        runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
+      }
       const response = await parseRecipe({ request, locals } as unknown as Parameters<
         typeof parseRecipe
       >[0])
@@ -150,7 +160,9 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({ url: 'https://example.com' }),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
+      const locals = {
+        runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
+      }
       const response = await parseRecipe({ request, locals } as unknown as Parameters<
         typeof parseRecipe
       >[0])
@@ -180,7 +192,9 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({}),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
+      const locals = {
+        runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
+      }
       const response = await generateGroceryList({ request, locals } as unknown as Parameters<
         typeof generateGroceryList
       >[0])
@@ -201,7 +215,9 @@ describe('API Tests', () => {
         method: 'POST',
         body: JSON.stringify({ recipes }),
       })
-      const locals = { runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } } }
+      const locals = {
+        runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
+      }
 
       const response = await generateGroceryList({ request, locals } as unknown as Parameters<
         typeof generateGroceryList

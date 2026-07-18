@@ -184,7 +184,10 @@ describe('RecipeDetail', () => {
       // Once the full document arrives, the gate lifts and the fetched doc is synced back via
       // the non-network-writing 'hydrate' mode (not 'silent', which would PUT it right back).
       await vi.waitFor(() => {
-        expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ id: 'recipe-123' }), 'hydrate')
+        expect(onUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'recipe-123' }),
+          'hydrate',
+        )
       })
     })
 
