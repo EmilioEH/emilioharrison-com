@@ -96,7 +96,7 @@ test.describe('Review Management', () => {
 
     // 2. Leave a Review (if not already reviewed - we assume fresh state or mock handles it)
     // We'll use the "Rate this recipe" quick component or the one in history if visible.
-    // For reliability, let's use the explicit "CookingHistorySummary" flow.
+    // For reliability, let's use the explicit "RecipeReviews" flow.
 
     // Check if we need to expand history or if the "Leave a review" form is visible
     // The component says: "Leave a review" if !currentUserReview

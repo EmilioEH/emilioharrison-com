@@ -11,9 +11,9 @@ import type { Recipe, Family, User, PendingInvite, FamilyRecipeData } from '../.
  * GET /api/bootstrap
  *
  * Consolidates the boot-time data the client needs into a single round trip (see
- * PERFORMANCE-PLAN.md P6+P7): the caller's user profile (display name / admin / onboarding
- * flags), their visible recipes (same slim shape as `GET /api/recipes`), this week's planned
- * recipes (same shape as `GET /api/week/planned`), and their family data (same shape as
+ * PERFORMANCE-PLAN.md P6+P7): the caller's user profile (display name / admin flag), their
+ * visible recipes (same slim shape as `GET /api/recipes`), this week's planned recipes (same
+ * shape as `GET /api/week/planned`), and their family data (same shape as
  * `GET /api/families/current`, nested under `family`).
  *
  * This re-implements the query logic of those three endpoints rather than calling them over

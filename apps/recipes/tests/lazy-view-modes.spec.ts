@@ -73,14 +73,10 @@ test.describe('Lazy-loaded ViewMode routes', () => {
     })
   }
 
-  test('the `grocery` ViewMode does not crash the app (pre-existing: no dedicated renderer)', async ({
-    page,
-  }) => {
-    // NOTE: `grocery` is a valid ViewMode in useRouter.ts, but nothing in RecipeManager.tsx /
-    // RecipeManagerView.tsx currently renders distinct content for it (pre-existing gap,
-    // unrelated to the P1 code-splitting change) — it falls through to the same empty
-    // <main> as an unmatched view. This test only guards against a regression (crash),
-    // it does not assert visible content.
+  test('an unrecognized `?view=` value does not crash the app', async ({ page }) => {
+    // `view` is a plain URL string, not enforced at runtime against the `ViewMode` type, so an
+    // unmatched value (a stale bookmark, a typo, a removed view) must fall through gracefully
+    // to the same empty <main> as no view at all, rather than throwing/blanking the app.
     const pageErrors: Error[] = []
     page.on('pageerror', (err) => pageErrors.push(err))
 

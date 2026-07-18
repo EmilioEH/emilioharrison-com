@@ -1,15 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useStore } from '@nanostores/react'
-import {
-  Clock,
-  Users,
-  Flame,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-} from 'lucide-react'
-import { CookingHistorySummary } from './CookingHistorySummary'
+import { Clock, Users, Flame, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { RecipeReviews } from './RecipeReviews'
 import { IngredientRow } from './IngredientRow'
 import { MetadataCard } from './MetadataCard'
 import { InstructionCard } from './InstructionCard'
@@ -501,7 +493,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </div>
           </div>
 
-
           {/* AI Refresh Progress Banner */}
           {isRefreshing && (
             <div className="mb-4 flex items-center gap-2 rounded-lg bg-primary/10 p-3 text-sm text-primary animate-in fade-in slide-in-from-top-2">
@@ -510,8 +501,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </div>
           )}
 
-          {/* Cooking History Summary */}
-          <CookingHistorySummary
+          {/* Recipe Reviews */}
+          <RecipeReviews
             averageRating={averageRating}
             totalRatings={
               familyData?.reviews?.length || familyData?.ratings?.length || (recipe.rating ? 1 : 0)

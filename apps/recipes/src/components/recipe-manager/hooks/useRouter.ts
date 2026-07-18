@@ -5,7 +5,6 @@ export type ViewMode =
   | 'library'
   | 'detail'
   | 'edit'
-  | 'grocery'
   | 'week'
   | 'family-settings'
   | 'admin-dashboard'
