@@ -261,7 +261,6 @@ Recipes are stored in Firestore; family-scoped data (reviews, notes, week plan) 
    ```
 
    Available at [`http://localhost:4321/protected/recipes`](http://localhost:4321/protected/recipes).
-
    - **Missing Google Sign-In button?** Run `npm run check:env` — the app needs valid Firebase keys to render auth components.
    - **Changed `.env.local`?** Restart the dev server — Vite doesn't hot-reload env changes.
    - **Port conflict?** `lsof -i :4321` then kill the process, or `npm run dev -- --port XXXX`.
