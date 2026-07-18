@@ -24,10 +24,9 @@ export const GET: APIRoute = async (context) => {
     // The wrapper `firebase-server.ts` likely just wraps fetch.
 
     // Parallel fetch for aggregation data
-    const [allUsers, allRecipes, allFamilies] = await Promise.all([
+    const [allUsers, allRecipes] = await Promise.all([
       db.getCollection('users'),
       db.getCollection('recipes'),
-      db.getCollection('families'),
     ])
 
     let filtered = allUsers
@@ -38,25 +37,13 @@ export const GET: APIRoute = async (context) => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const usersWithStats = filtered.map((u: any) => {
-      // 1. Recipes Added
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recipesAdded = allRecipes.filter((r: any) => r.createdBy === u.id).length
-
-      // 2. Recipes Cooked
-      let recipesCooked = 0
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      allFamilies.forEach((f: any) => {
-        if (f.cookingHistory) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          recipesCooked += f.cookingHistory.filter((h: any) => h.userId === u.id).length
-        }
-      })
 
       return {
         ...u,
         stats: {
           recipesAdded,
-          recipesCooked,
         },
       }
     })

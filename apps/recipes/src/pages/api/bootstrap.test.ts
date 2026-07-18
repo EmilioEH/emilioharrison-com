@@ -59,7 +59,6 @@ describe('GET /api/bootstrap', () => {
           familyId: 'fam-1',
           email: 'user1@example.com',
           displayName: 'User One',
-          hasOnboarded: true,
         }
       }
       if (collection === 'families' && id === 'fam-1') {
@@ -83,7 +82,6 @@ describe('GET /api/bootstrap', () => {
       return [] // legacy (createdBy == null)
     })
     getCollection.mockImplementation(async (path: string) => {
-      if (path === 'users/user-1/favorites') return [{ id: 'r1' }]
       if (path === 'families/fam-1/recipeData') {
         return [
           { id: 'r1', weekPlan: { isPlanned: true }, notes: [], ratings: [], cookingHistory: [] },
@@ -96,8 +94,8 @@ describe('GET /api/bootstrap', () => {
     const res = await GET(fakeContext('user-1', { site_email: 'user1@example.com' }))
     expect(res.status).toBe(200)
     const data = (await res.json()) as {
-      user: { displayName: string; isAdmin: boolean; hasOnboarded: boolean }
-      recipes: Array<{ id: string; isFavorite: boolean }>
+      user: { displayName: string; isAdmin: boolean }
+      recipes: Array<{ id: string }>
       planned: Array<{ id: string }>
       family: {
         family: { id: string } | null
@@ -106,9 +104,8 @@ describe('GET /api/bootstrap', () => {
       }
     }
 
-    expect(data.user).toEqual({ displayName: 'User One', isAdmin: false, hasOnboarded: true })
+    expect(data.user).toEqual({ displayName: 'User One', isAdmin: false })
     expect(data.recipes.map((r) => r.id)).toEqual(['r1'])
-    expect(data.recipes[0].isFavorite).toBe(true)
     expect(data.planned.map((p) => p.id)).toEqual(['r1'])
     expect(data.family.family?.id).toBe('fam-1')
     expect(data.family.members.map((m) => m.id).sort()).toEqual(['user-1', 'user-2'])
@@ -181,9 +178,9 @@ describe('GET /api/bootstrap', () => {
 
     await GET(fakeContext('user-1'))
 
-    const favoritesStartIdx = events.indexOf('getCollection:users/user-1/favorites:start')
+    const invitesStartIdx = events.indexOf('getCollection:pending_invites:start')
     const lastRunQueryEndIdx = events.lastIndexOf('runQuery:end')
-    expect(favoritesStartIdx).toBeLessThan(lastRunQueryEndIdx)
+    expect(invitesStartIdx).toBeLessThan(lastRunQueryEndIdx)
   })
 
   it('marks a user as admin when their email is in ADMIN_EMAILS', async () => {

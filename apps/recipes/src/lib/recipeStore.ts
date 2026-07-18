@@ -12,10 +12,9 @@ export const $recipesError = atom<string | null>(null)
 // ---------------------------------------------------------------------------
 //
 // `@nanostores/persistent`'s `persistentAtom`/`persistentMap` (used elsewhere in this codebase,
-// e.g. userPreferences.ts, weekStore.ts) bake the storage key in at atom-creation time. This
+// e.g. weekStore.ts) bake the storage key in at atom-creation time. This
 // cache needs a *dynamic* key — scoped to whichever user is currently logged in — so that
-// switching accounts (including admin impersonation, see api/admin/impersonate.ts + revert.ts)
-// can never surface a different user's recipes. That rules out a static-key persistentAtom, so
+// switching accounts can never surface a different user's recipes. That rules out a static-key persistentAtom, so
 // this follows the other established pattern in the codebase for that situation: a hand-rolled,
 // SSR-guarded localStorage read/write behind try/catch (see src/stores/overviewCooking.ts).
 //
@@ -42,8 +41,8 @@ function hasLocalStorage(): boolean {
 
 /**
  * Reads the `site_user` cookie value client-side. This cookie is intentionally set with
- * `httpOnly: false` everywhere it's written (login.ts, admin/impersonate.ts, admin/revert.ts) so
- * the client can read the logged-in user's id — the same pattern GlobalFeedback.jsx already uses.
+ * `httpOnly: false` everywhere it's written (login.ts) so the client can read the logged-in
+ * user's id.
  * Returns null server-side (SSR) or when there's no session.
  */
 export function getCurrentUserId(): string | null {
@@ -119,10 +118,8 @@ function persistRecipes(recipes: Recipe[]): void {
 /**
  * Clears the persisted recipes cache. Call on logout (see GlobalBurgerMenu.tsx) so a user's data
  * never lingers in storage after they've signed out. Per-user keying already guarantees a
- * *different* user can never read another user's entry (including across admin impersonation —
- * see api/admin/impersonate.ts / revert.ts, both of which swap the `site_user` cookie and then
- * hard-reload, so the next read of this module picks up the new identity's own cache slot); this
- * is belt-and-suspenders plus keeps storage tidy.
+ * *different* user can never read another user's entry; this is belt-and-suspenders plus keeps
+ * storage tidy.
  */
 export function clearPersistedRecipes(userId?: string | null): void {
   if (!hasLocalStorage()) return

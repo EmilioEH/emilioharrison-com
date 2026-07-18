@@ -51,7 +51,6 @@ export const POST: APIRoute = async (context) => {
       displayName: name,
       joinedAt: existingUser?.joinedAt || new Date().toISOString(),
       status: 'pending',
-      hasOnboarded: false,
     })
 
     return new Response(JSON.stringify({ success: true, status: 'pending' }), { status: 200 })

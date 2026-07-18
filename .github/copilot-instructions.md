@@ -17,8 +17,8 @@ Emilio gives short, UX-focused prompts. He describes problems the way a user wou
 
 | Workflow    | Emilio says something like...             | What to do                                                                                                                             |
 | ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Explore** | "How does cooking mode work?"             | Map the feature — components, stores, APIs, data flow. Read-only. Use the `Explore` agent.                                             |
-| **Iterate** | "Cooking mode has bad ux"                 | Research the feature, diagnose 2-4 specific UX problems, show Emilio, then fix after approval. Use the `Iterate` agent.                |
+| **Explore** | "How does grocery list generation work?"  | Map the feature — components, stores, APIs, data flow. Read-only. Use the `Explore` agent.                                             |
+| **Iterate** | "Adding a recipe to the week has bad ux"  | Research the feature, diagnose 2-4 specific UX problems, show Emilio, then fix after approval. Use the `Iterate` agent.                |
 | **Build**   | "I want users to share grocery lists"     | Research where it fits, propose a plan, then build after approval. Use the `Build` agent.                                              |
 | **Review**  | "Review what we just changed"             | Read-only analysis of recent changes against architecture rules, UX quality, and code standards. Use the `Review` agent.               |
 | **Improve** | "Improve the code for grocery generation" | Refactor, harden, optimize code quality without changing behavior. Runs after Iterate→Review or Build→Review. Use the `Improve` agent. |
@@ -33,7 +33,7 @@ Emilio gives short, UX-focused prompts. He describes problems the way a user wou
 
 Custom agents: `.github/agents/` (explore, iterate, build, review, improve)
 
-Prompt shortcuts: `.github/prompts/` — `/explore-feature`, `/iterate-feature`, `/improve-feature`, `/build-feature`, `/quality-gate`, `/check-feedback`, `/add-recipe-field`
+Prompt shortcuts: `.github/prompts/` — `/explore-feature`, `/iterate-feature`, `/improve-feature`, `/build-feature`, `/quality-gate`, `/add-recipe-field`
 
 ## Quality Gate Protocol
 

@@ -11,7 +11,7 @@ This workflow defines the standard verification process. You must match the test
 | **Utility Logic** | `date-helpers.ts`, `grocery-logic.ts` | `npm run test:unit`                     |
 | **Backend Logic** | `src/pages/api/`, Database Queries    | `npm run test:unit` (server-only tests) |
 | **UI Components** | `Button.tsx`, `RecipeCard.tsx`        | Browser Agent (Manual) or E2E           |
-| **User Flow**     | "Cooking Mode", "Auth", "Feedback"    | `npm run test:e2e`                      |
+| **User Flow**     | "Add to Week", "Auth", "Grocery List" | `npm run test:e2e`                      |
 
 # Steps
 
@@ -38,8 +38,8 @@ cd /Users/emilioharrison/Code/emilioharrison-com/apps/recipes && npm run test:e2
 If checking a specific feature, run only that spec:
 
 ```bash
-# Example: Testing only the feedback flow
-force_color_prompt=true npx playwright test tests/feedback.spec.ts
+# Example: Testing only the grocery list flow
+force_color_prompt=true npx playwright test tests/grocery-list.spec.ts
 ```
 
 ## 3. Debugging Failures

@@ -4,8 +4,7 @@ import {
   updateAiOperation,
   removeAiOperation,
 } from '../aiOperationStore'
-import type { GroceryList, Recipe, RecurringGroceryItem, ShoppableIngredient } from '../types'
-import { filterDueRecurringItems, mergeRecurringIntoIngredients } from '../grocery-utils'
+import type { GroceryList, Recipe, ShoppableIngredient } from '../types'
 
 /**
  * Triggers background grocery list generation.
@@ -74,7 +73,7 @@ export async function triggerGroceryGeneration(
       const chunk = decoder.decode(value, { stream: true })
       result += chunk
 
-      // Progress Heuristics (matches new 19-category H-E-B walking-path order)
+      // Progress Heuristics (matches the fixed 8-category order)
       if (!foundStages.has('start') && result.length > 50) {
         foundStages.add('start')
         updateAiOperation(opId, {
@@ -89,31 +88,28 @@ export async function triggerGroceryGeneration(
           message: 'Selecting fresh produce...',
         })
       }
-      if (!foundStages.has('meat') && /"category":\s*"(Meat|Seafood)"/i.test(result)) {
+      if (!foundStages.has('meat') && /"category":\s*"Meat"/i.test(result)) {
         foundStages.add('meat')
         updateAiOperation(opId, {
           progress: 40,
           message: 'Checking butcher & seafood...',
         })
       }
-      if (
-        !foundStages.has('pantry') &&
-        /"category":\s*"(Pantry & Condiments|Canned & Dry Goods|Baking & Spices)"/i.test(result)
-      ) {
+      if (!foundStages.has('pantry') && /"category":\s*"(Pantry|Spices)"/i.test(result)) {
         foundStages.add('pantry')
         updateAiOperation(opId, {
           progress: 60,
           message: 'Auditing pantry essentials...',
         })
       }
-      if (!foundStages.has('dairy') && /"category":\s*"Dairy & Eggs"/i.test(result)) {
+      if (!foundStages.has('dairy') && /"category":\s*"Dairy"/i.test(result)) {
         foundStages.add('dairy')
         updateAiOperation(opId, {
           progress: 80,
           message: 'Reviewing dairy & eggs...',
         })
       }
-      if (!foundStages.has('frozen') && /"category":\s*"Frozen Foods"/i.test(result)) {
+      if (!foundStages.has('frozen') && /"category":\s*"Frozen"/i.test(result)) {
         foundStages.add('frozen')
         updateAiOperation(opId, {
           progress: 90,
@@ -132,52 +128,7 @@ export async function triggerGroceryGeneration(
     }
 
     if (data && data.ingredients) {
-      let finalIngredients: ShoppableIngredient[] = data.ingredients
-
-      // Inject recurring items
-      try {
-        const recurringRes = await fetch(`${baseUrl}api/grocery/recurring`)
-        if (recurringRes.ok) {
-          const { items: recurringItems } = (await recurringRes.json()) as {
-            items: RecurringGroceryItem[]
-          }
-
-          if (recurringItems && recurringItems.length > 0) {
-            console.log(`[Grocery] Found ${recurringItems.length} recurring items`)
-
-            const { dueItems, itemsToUpdate } = filterDueRecurringItems(
-              recurringItems,
-              weekStartDate,
-            )
-            console.log(`[Grocery] ${dueItems.length} recurring items are due this week`)
-
-            if (dueItems.length > 0) {
-              // Merge recurring items into ingredient list
-              finalIngredients = mergeRecurringIntoIngredients(finalIngredients, dueItems)
-
-              // Update lastAddedWeek for injected items via API
-              const updatePromises = itemsToUpdate.map((item) =>
-                fetch(`${baseUrl}api/grocery/recurring`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    itemId: item.id,
-                    lastAddedWeek: weekStartDate,
-                  }),
-                }),
-              )
-
-              // Fire and forget the updates (best effort)
-              Promise.all(updatePromises).catch((err) =>
-                console.warn('[Grocery] Failed to update some recurring items:', err),
-              )
-            }
-          }
-        }
-      } catch (recurringError) {
-        // Don't fail the whole operation if recurring items fail
-        console.warn('[Grocery] Failed to inject recurring items:', recurringError)
-      }
+      const finalIngredients: ShoppableIngredient[] = data.ingredients
 
       // Save to Firestore
       const { doc, setDoc } = await import('firebase/firestore')
@@ -193,7 +144,7 @@ export async function triggerGroceryGeneration(
         status: 'complete',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      } satisfies Omit<GroceryList, 'productPickerStatus' | 'unmatchedCount'>)
+      } satisfies GroceryList)
 
       console.log('[Grocery] Saved list to Firestore:', listId)
       updateAiOperation(opId, { status: 'complete', progress: 100, message: 'Done!' })

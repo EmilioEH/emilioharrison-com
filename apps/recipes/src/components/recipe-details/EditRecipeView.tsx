@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
-import type { Recipe, Ingredient, RecipeVersion } from '../../lib/types'
+import type { Recipe, Ingredient } from '../../lib/types'
 import { Stack, Inline, Cluster } from '../ui/layout'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
-import { Plus, Trash2, GripVertical, RotateCcw } from 'lucide-react'
-import { HistoryModal } from './HistoryModal'
+import { Plus, Trash2, GripVertical } from 'lucide-react'
 
 interface EditRecipeViewProps {
   recipe: Recipe
@@ -17,7 +16,6 @@ interface EditRecipeViewProps {
 export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, onCancel }) => {
   const [formData, setFormData] = useState<Recipe>({ ...recipe })
   const [isSaving, setIsSaving] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
 
   const handleTextChange = (field: keyof Recipe, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -104,25 +102,12 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
     }
   }
 
-  const handleRestore = (version: RecipeVersion) => {
-    // In a real app we might diff or confirm.
-    // Ideally we replace the formData with version.data
-    // BUT we need to keep the ID and maybe some other fields if they aren't in the snapshot?
-    // For now, assume snapshot is full recipe
-    const restored = { ...version.data, id: recipe.id } // Ensure ID is stable
-    setFormData(restored as Recipe)
-    setHistoryOpen(false)
-  }
-
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
       {/* Sticky Header for Edit View */}
       <div className="z-10 flex items-center justify-between border-b bg-background/80 p-4 backdrop-blur-md">
         <h2 className="font-display text-lg font-bold">Edit Recipe</h2>
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)}>
-            <RotateCcw className="mr-2 h-4 w-4" /> History
-          </Button>
           <Button variant="outline" onClick={onCancel} disabled={isSaving}>
             Cancel
           </Button>
@@ -295,18 +280,6 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   value={formData.cuisine || ''}
                   onChange={(e) => handleTextChange('cuisine', e.target.value)}
                   placeholder="Italian, Mexican..."
-                />
-              </div>
-              <div className="grid min-w-[45%] flex-1 gap-2">
-                <Label htmlFor="estimatedCost">Est. Cost ($)</Label>
-                <Input
-                  id="estimatedCost"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.estimatedCost ?? ''}
-                  onChange={(e) => handleNumberChange('estimatedCost', e.target.value)}
-                  placeholder="12.50"
                 />
               </div>
             </Cluster>
@@ -498,13 +471,6 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
           </Stack>
         </Stack>
       </div>
-
-      <HistoryModal
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        versions={recipe.versions || []}
-        onRestore={handleRestore}
-      />
     </div>
   )
 }

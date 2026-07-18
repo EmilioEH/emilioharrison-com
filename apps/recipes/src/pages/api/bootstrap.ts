@@ -11,9 +11,9 @@ import type { Recipe, Family, User, PendingInvite, FamilyRecipeData } from '../.
  * GET /api/bootstrap
  *
  * Consolidates the boot-time data the client needs into a single round trip (see
- * PERFORMANCE-PLAN.md P6+P7): the caller's user profile (display name / admin / onboarding
- * flags), their visible recipes (same slim shape as `GET /api/recipes`), this week's planned
- * recipes (same shape as `GET /api/week/planned`), and their family data (same shape as
+ * PERFORMANCE-PLAN.md P6+P7): the caller's user profile (display name / admin flag), their
+ * visible recipes (same slim shape as `GET /api/recipes`), this week's planned recipes (same
+ * shape as `GET /api/week/planned`), and their family data (same shape as
  * `GET /api/families/current`, nested under `family`).
  *
  * This re-implements the query logic of those three endpoints rather than calling them over
@@ -33,8 +33,8 @@ export const GET: APIRoute = async (context: APIContext) => {
 
   try {
     // 1. The one unavoidable sequential dependency: everything else below (family id, email,
-    // admin/onboarding flags, the recipe visibility scope) is derived from this document.
-    const userDoc = await db.getDocument<User & { hasOnboarded?: boolean }>('users', userId)
+    // the admin flag, the recipe visibility scope) is derived from this document.
+    const userDoc = await db.getDocument<User>('users', userId)
     const familyId = userDoc?.familyId || null
 
     let userEmail = userDoc?.email
@@ -44,9 +44,8 @@ export const GET: APIRoute = async (context: APIContext) => {
 
     // 2. Everything that only depends on `userId` / `familyId` / `userEmail` (not on each
     // other) runs in parallel.
-    const [familyDoc, favDocs, plannedDataAll, allInvites, legacyRecipes] = await Promise.all([
+    const [familyDoc, plannedDataAll, allInvites, legacyRecipes] = await Promise.all([
       familyId ? db.getDocument<Family>('families', familyId) : Promise.resolve(null),
-      db.getCollection(`users/${userId}/favorites`),
       familyId
         ? db.getCollection<FamilyRecipeData>(`families/${familyId}/recipeData`)
         : Promise.resolve([] as FamilyRecipeData[]),
@@ -73,8 +72,7 @@ export const GET: APIRoute = async (context: APIContext) => {
     // --- Assemble recipes (mirrors GET /api/recipes) ---
     const rawRecipes = dedupeById([legacyRecipes, ...inRecipeResults].flat())
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const favIds = new Set(favDocs.map((d: any) => d.id))
-    const recipes = rawRecipes.filter(isRecipe).map((doc) => toListRecipe(doc, favIds.has(doc.id)))
+    const recipes = rawRecipes.filter(isRecipe).map((doc) => toListRecipe(doc))
     recipes.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
 
     // --- Assemble planned (mirrors GET /api/week/planned) ---
@@ -94,26 +92,19 @@ export const GET: APIRoute = async (context: APIContext) => {
     const isTestMode = getEnv(context, 'PUBLIC_TEST_MODE') === 'true'
     const isTestUser = userId === 'TestUser' || userId === 'test_user'
     let isAdmin = false
-    let hasOnboarded = true
     const displayName: string | null = userDoc?.displayName || userId
 
     if (isTestMode && isTestUser) {
       isAdmin = true
-      // hasOnboarded already defaults to true above.
-    } else {
-      if (userEmail) {
-        const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
-        isAdmin = adminEmails.includes(userEmail.toLowerCase())
-      }
-      if (typeof userDoc?.hasOnboarded === 'boolean') {
-        hasOnboarded = userDoc.hasOnboarded
-      }
+    } else if (userEmail) {
+      const adminEmails = getEmailList(context, 'ADMIN_EMAILS')
+      isAdmin = adminEmails.includes(userEmail.toLowerCase())
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        user: { displayName, isAdmin, hasOnboarded },
+        user: { displayName, isAdmin },
         recipes,
         planned,
         family: {

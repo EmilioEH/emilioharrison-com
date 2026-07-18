@@ -9,7 +9,7 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_auth',
             value: 'true',
-            domain: 'localhost',
+            domain: '127.0.0.1',
             path: '/',
             expires: -1,
             httpOnly: false,
@@ -19,7 +19,7 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_user',
             value: name,
-            domain: 'localhost',
+            domain: '127.0.0.1',
             path: '/',
             expires: -1,
             httpOnly: false,
@@ -29,7 +29,7 @@ test.describe('Shared Recipe Storage', () => {
           {
             name: 'site_email',
             value: 'emilioeh1991@gmail.com',
-            domain: 'localhost',
+            domain: '127.0.0.1',
             path: '/',
             expires: -1,
             httpOnly: false,

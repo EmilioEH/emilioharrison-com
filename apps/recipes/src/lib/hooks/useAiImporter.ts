@@ -24,12 +24,6 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
   const [errorMsg, setErrorMsg] = useState('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
 
-  const [dishName, setDishName] = useState('')
-  const [cuisine, setCuisine] = useState('')
-  const [knownIngredients, setKnownIngredients] = useState('')
-  const [dietaryNotes, setDietaryNotes] = useState('')
-  const [tasteProfile, setTasteProfile] = useState('')
-
   const [progressMessage, setProgressMessage] = useState('')
   const [candidateImages, setCandidateImages] = useState<
     Array<{ url: string; alt?: string; isDefault?: boolean }>
@@ -82,7 +76,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
 
     // Determine which image to use
     let finalImage: string | undefined
-    if (mode === 'photo' || mode === 'dish-photo') {
+    if (mode === 'photo') {
       finalImage = imagePreview || undefined
     } else if (mode === 'url' && selectedImage) {
       finalImage = selectedImage
@@ -91,8 +85,8 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     const recipeWithSource = {
       ...(result.data as object),
       sourceImage: finalImage,
-      thumbUrl: (mode === 'photo' || mode === 'dish-photo') && thumbUrl ? thumbUrl : undefined,
-      creationMethod: mode === 'dish-photo' ? 'ai-infer' : 'ai-parse',
+      thumbUrl: mode === 'photo' && thumbUrl ? thumbUrl : undefined,
+      creationMethod: 'ai-parse',
     } as Recipe
 
     onRecipeParsed(recipeWithSource, mode === 'url' ? result.candidateImages : undefined)
@@ -141,13 +135,7 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     url?: string
     image?: string
     text?: string
-    mode?: 'parse' | 'infer'
     style?: 'strict' | 'enhanced'
-    dishName?: string
-    cuisine?: string
-    knownIngredients?: string
-    dietaryNotes?: string
-    tasteProfile?: string
   }
 
   function buildPayload(): ParsePayload {
@@ -175,19 +163,6 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
         imagePayload = imagePreview
       } else if (imagePreview.startsWith('/')) {
         imagePayload = `${window.location.origin}${imagePreview}`
-      }
-    }
-
-    if (mode === 'dish-photo') {
-      return {
-        image: imagePayload,
-        mode: 'infer' as const,
-        style: 'enhanced', // Kenji-style enhancement for dish photos
-        dishName: dishName || undefined,
-        cuisine: cuisine || undefined,
-        knownIngredients: knownIngredients || undefined,
-        dietaryNotes: dietaryNotes || undefined,
-        tasteProfile: tasteProfile || undefined,
       }
     }
 
@@ -222,16 +197,6 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     setStatus,
     errorMsg,
     setErrorMsg,
-    dishName,
-    setDishName,
-    cuisine,
-    setCuisine,
-    knownIngredients,
-    setKnownIngredients,
-    dietaryNotes,
-    setDietaryNotes,
-    tasteProfile,
-    setTasteProfile,
     handleProcess,
     handleCancel,
     progressMessage,

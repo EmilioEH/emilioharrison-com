@@ -549,7 +549,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
             contentType: 'application/json',
             body: JSON.stringify({
               success: true,
-              user: { displayName: 'Emilio', isAdmin: true, hasOnboarded: true },
+              user: { displayName: 'Emilio', isAdmin: true },
               recipes: recipesData.recipes || [],
               planned: plannedData.planned || [],
               family: {
@@ -567,21 +567,6 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         }
         return
       }
-    }
-
-    // --- ADMIN FAMILIES API ---
-    if (url.includes('/api/admin/families')) {
-      if (method === 'DELETE') {
-        const body = await route.request().postDataJSON()
-        if (body.familyId) {
-          // If we had a real mock store, we'd delete it:
-          // if (mockFamilyState.family?.id === body.familyId) mockFamilyState.family = null
-          // For now just success:
-          await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) })
-          return
-        }
-      }
-      // If we fall through, the catch-all might handle it, or we can add GET here too
     }
 
     // --- FAMILIES API ---
@@ -713,7 +698,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          ...familyData,
+          data: familyData,
         }),
       })
       return
@@ -759,6 +744,13 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
       }
 
       if (isDelete) {
+        const match = url.match(/\/api\/recipes\/([^/]+)\/week-plan/)
+        const recipeId = match ? match[1] : 'unknown'
+        recipeFamilyData[recipeId] = {
+          id: recipeId,
+          weekPlan: { isPlanned: false },
+        }
+
         await route.fulfill({
           status: 200,
           contentType: 'application/json',

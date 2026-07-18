@@ -4,7 +4,7 @@
 //   lazily the first time each asset is actually requested (there's no pre-build manifest of
 //   every hashed filename to precache, and that list changes every deploy anyway).
 // - Navigation/HTML requests (the app shell): NOT content-hashed and can embed per-request
-//   user data (see [...path].astro — displayName/isAdmin/hasOnboarded are serialized into the
+//   user data (see [...path].astro — displayName/isAdmin are serialized into the
 //   page), so they're network-first with a cache fallback for offline use only. The shell
 //   cache is explicitly cleared on logout (see CLEAR_SHELL_CACHE below) so a fresh login on
 //   the same device can't see a previous user's cached shell while offline.
@@ -116,69 +116,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(caches.match(request).then((cached) => cached || fetch(request)))
 })
 
-// Push Notification Handler
-self.addEventListener('push', (event) => {
-  let data = {}
-  if (event.data) {
-    try {
-      data = event.data.json()
-    } catch {
-      data = { body: event.data.text() }
-    }
-  }
-
-  const title = data.title || 'Chefboard Alert'
-  const options = {
-    body: data.body || 'New update available.',
-    icon: '/protected/recipes/icon-192.png',
-    badge: '/protected/recipes/icon-192.png',
-    data: data.url || '/protected/recipes/',
-    vibrate: [100, 50, 100],
-    tag: 'chefboard-notification',
-  }
-
-  event.waitUntil(self.registration.showNotification(title, options))
-})
-
-// Notification Click Handler
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window is already open, focus it
-      for (const client of clientList) {
-        if (client.url && 'focus' in client) {
-          return client.focus()
-        }
-      }
-      // Otherwise open a new window
-      if (clients.openWindow) {
-        return clients.openWindow(event.notification.data)
-      }
-    }),
-  )
-})
-
 // Client Communication Handler (Client -> SW)
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-    const { title, body, icon, data } = event.data.payload
-    event.waitUntil(
-      self.registration.showNotification(title, {
-        body,
-        icon: icon || '/protected/recipes/icon-192.png',
-        badge: '/protected/recipes/icon-192.png',
-        data: data || '/protected/recipes/',
-        vibrate: [100, 50, 100],
-        tag: 'chefboard-reminder',
-      }),
-    )
-  }
-
   // Sent on logout (see GlobalBurgerMenu.tsx) so a different user logging in on the same
   // device never sees the previous user's cached app shell while offline — the shell embeds
-  // per-user data (displayName/isAdmin/hasOnboarded) server-rendered into the HTML.
+  // per-user data (displayName/isAdmin) server-rendered into the HTML.
   if (event.data && event.data.type === 'CLEAR_SHELL_CACHE') {
     event.waitUntil(caches.delete(SHELL_CACHE))
   }

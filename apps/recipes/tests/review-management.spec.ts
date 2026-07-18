@@ -26,8 +26,11 @@ test.describe('Review Management', () => {
       })
     })
 
-    // Mock Review Operations
-    await page.route('**/api/recipes/*/reviews*', async (route) => {
+    // Mock Review Operations. Note: `*` in a Playwright glob never crosses a `/`, so the
+    // original single `reviews*` pattern only ever matched the top-level POST
+    // `.../reviews` — the nested PUT/DELETE `.../reviews/{reviewId}` requests fell through
+    // to the real (unmocked) network entirely. Register both shapes explicitly.
+    const handleReviewRoute: Parameters<typeof page.route>[1] = async (route) => {
       const method = route.request().method()
       const url = route.request().url()
 
@@ -83,7 +86,10 @@ test.describe('Review Management', () => {
       }
 
       await route.continue()
-    })
+    }
+
+    await page.route('**/api/recipes/*/reviews', handleReviewRoute)
+    await page.route('**/api/recipes/*/reviews/**', handleReviewRoute)
 
     await page.goto('/protected/recipes')
     // Wait for the specific recipe to appear
@@ -96,7 +102,7 @@ test.describe('Review Management', () => {
 
     // 2. Leave a Review (if not already reviewed - we assume fresh state or mock handles it)
     // We'll use the "Rate this recipe" quick component or the one in history if visible.
-    // For reliability, let's use the explicit "CookingHistorySummary" flow.
+    // For reliability, let's use the explicit "RecipeReviews" flow.
 
     // Check if we need to expand history or if the "Leave a review" form is visible
     // The component says: "Leave a review" if !currentUserReview
@@ -140,14 +146,9 @@ test.describe('Review Management', () => {
     // 3. Verify Review Appears
     await expect(page.getByText('To be deleted')).toBeVisible()
 
-    // 4. Click "Delete Review" (expecting a confirmation dialog or direct delete)
-    // For now, let's assume immediate or we'll handle dialog if we add one.
-    // The plan didn't specify a dialog, but good UX usually has one.
-    // I'll assume a "Delete" button that might need a double click or just works.
-    await page.getByRole('button', { name: 'Delete Review' }).click()
-
-    // If there's a confirmation, handle it.
-    // For now, let's assume the button triggers the delete.
+    // 4. Click "Delete" — it's gated behind a native window.confirm() dialog.
+    page.on('dialog', (dialog) => dialog.accept())
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
     // 5. Verify Review Gone
     await expect(page.getByText('To be deleted')).not.toBeVisible()

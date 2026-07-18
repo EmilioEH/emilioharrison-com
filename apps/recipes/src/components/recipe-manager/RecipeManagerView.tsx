@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import type { Recipe, Family } from '../../lib/types'
 import type { ViewMode } from './hooks/useRouter'
 
@@ -8,18 +8,6 @@ import type { ViewMode } from './hooks/useRouter'
 const RecipeDetail = React.lazy(() =>
   import('./RecipeDetail').then((m) => ({ default: m.RecipeDetail })),
 )
-const NotificationSettingsView = React.lazy(() =>
-  import('./views/NotificationSettingsView').then((m) => ({
-    default: m.NotificationSettingsView,
-  })),
-)
-const SettingsView = React.lazy(() =>
-  import('./views/SettingsView').then((m) => ({ default: m.SettingsView })),
-)
-const BulkRecipeImporter = React.lazy(() =>
-  import('./importer/BulkRecipeImporter').then((m) => ({ default: m.BulkRecipeImporter })),
-)
-const FeedbackDashboard = React.lazy(() => import('./views/FeedbackDashboard'))
 const AdminDashboard = React.lazy(() =>
   import('../admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
@@ -51,12 +39,6 @@ interface RecipeManagerViewProps {
   handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent' | 'hydrate') => void
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
-  handleToggleFavorite: (recipe: Recipe) => void
-  handleExport: () => void
-  handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-  handleDeleteAll: () => void
-  handleUpdateProfile: (name: string) => Promise<boolean>
-  handleBulkImportSave: (recipes: Recipe[]) => void
   refreshRecipes: (force?: boolean) => void
   setView: (view: ViewMode) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,19 +52,12 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   initialized,
   error,
   selectedRecipe,
-  user,
   isAdmin,
   family,
 
   handleUpdateRecipe,
   handleDeleteRecipe,
   handleAddToWeek,
-  handleToggleFavorite,
-  handleExport,
-  handleImport,
-  handleDeleteAll,
-  handleUpdateProfile,
-  handleBulkImportSave,
   refreshRecipes,
   setView,
 
@@ -133,7 +108,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
           onUpdate={handleUpdateRecipe}
           onDelete={(id) => handleDeleteRecipe(id)}
           onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
-          onToggleFavorite={() => handleToggleFavorite(selectedRecipe)}
         />
       </Suspense>
     )
@@ -169,57 +143,6 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
         >
           Back to Recipes
         </button>
-      </div>
-    )
-  }
-
-  if (view === 'notifications') {
-    return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <NotificationSettingsView onClose={() => setView('library')} />
-      </Suspense>
-    )
-  }
-
-  if (view === 'settings') {
-    return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <SettingsView
-          onClose={() => setView('library')}
-          onExport={handleExport}
-          onImport={handleImport}
-          onDeleteAccount={handleDeleteAll}
-          currentName={user ?? undefined}
-          onUpdateProfile={handleUpdateProfile}
-        />
-      </Suspense>
-    )
-  }
-
-  if (view === 'bulk-import') {
-    return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <BulkRecipeImporter
-          onClose={() => setView('library')}
-          onRecipesParsed={handleBulkImportSave}
-        />
-      </Suspense>
-    )
-  }
-
-  if (view === 'feedback-dashboard') {
-    return (
-      <div className="flex h-full flex-col bg-white">
-        <div className="flex items-center gap-2 border-b px-4 py-3">
-          <button onClick={() => setView('library')} className="rounded-full p-2 hover:bg-gray-100">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <Suspense fallback={<ViewLoadingFallback />}>
-            <FeedbackDashboard />
-          </Suspense>
-        </div>
       </div>
     )
   }

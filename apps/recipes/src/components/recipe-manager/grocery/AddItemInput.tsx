@@ -1,19 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Plus, X, DollarSign, Loader2, MapPin, Tag } from 'lucide-react'
+import React, { useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import { cn } from '../../../lib/utils'
-import { HEB_CATEGORY_ORDER } from '../../../lib/heb-manor-aisles'
-import type { ShoppableIngredient, HebProduct } from '../../../lib/types'
-import { useHebSearchUrl } from '../../../hooks/useHebSearchUrl'
+import { CATEGORY_ORDER } from '../../../lib/grocery-utils'
+import type { ShoppableIngredient } from '../../../lib/types'
 
 interface AddItemInputProps {
   onAddItem: (item: ShoppableIngredient) => Promise<void>
   isLoading?: boolean
-}
-
-/** Shape returned by /api/grocery/heb-search */
-interface HebSearchResult {
-  product: HebProduct
-  ingredientFields: Partial<ShoppableIngredient>
 }
 
 interface FormState {
@@ -21,132 +14,25 @@ interface FormState {
   quantity: string
   unit: string
   category: string
-  hebPrice?: number
-  hebPriceUnit?: string
-  hebUnitPrice?: number
-  hebUnitPriceUnit?: string
-  aisle?: number
-  hebProductId?: string
-  hebProductUrl?: string
-  imageUrl?: string
-  hebSize?: string
-  storeLocation?: string
 }
 
 const DEFAULT_FORM: FormState = {
   name: '',
   quantity: '1',
   unit: 'item',
-  category: 'Pantry & Condiments',
+  category: 'Pantry',
 }
 
 export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading }) => {
-  const { buildUrl } = useHebSearchUrl()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<HebSearchResult[]>([])
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [searching, setSearching] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [submitting, setSubmitting] = useState(false)
 
-  const inputRef = useRef<HTMLInputElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
-
-  // Debounced live search via HEB GraphQL API
-  const handleSearch = useCallback(
-    (searchQuery: string) => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
-      }
-
-      if (searchQuery.length < 2) {
-        setResults([])
-        setShowDropdown(false)
-        setSearching(false)
-        return
-      }
-
-      setSearching(true)
-
-      debounceRef.current = setTimeout(async () => {
-        // Cancel any in-flight request
-        abortRef.current?.abort()
-        const controller = new AbortController()
-        abortRef.current = controller
-
-        try {
-          const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-            ? import.meta.env.BASE_URL
-            : `${import.meta.env.BASE_URL}/`
-
-          const response = await fetch(buildUrl(searchQuery, baseUrl), {
-            signal: controller.signal,
-          })
-
-          if (!response.ok) throw new Error('Search failed')
-
-          const data = (await response.json()) as { results: HebSearchResult[] }
-          if (!controller.signal.aborted) {
-            setResults(data.results)
-            setShowDropdown(data.results.length > 0)
-            setSearching(false)
-          }
-        } catch (err) {
-          if (err instanceof DOMException && err.name === 'AbortError') return
-          if (!controller.signal.aborted) {
-            setResults([])
-            setShowDropdown(false)
-            setSearching(false)
-          }
-        }
-      }, 350)
-    },
-    [buildUrl],
-  )
-
-  useEffect(() => {
-    handleSearch(query)
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
-      }
-      abortRef.current?.abort()
-    }
-  }, [query, handleSearch])
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const selectProduct = (result: HebSearchResult) => {
-    const { product, ingredientFields } = result
-    setForm({
-      name: product.name,
-      quantity: '1',
-      unit: product.priceUnit || 'each',
-      category: ingredientFields.category || product.category || 'Pantry & Condiments',
-      hebPrice: ingredientFields.hebPrice,
-      hebPriceUnit: ingredientFields.hebPriceUnit,
-      hebProductId: ingredientFields.hebProductId,
-      hebProductUrl: product.productUrl ? `https://www.heb.com${product.productUrl}` : undefined,
-      imageUrl: ingredientFields.imageUrl,
-      hebSize: ingredientFields.hebSize,
-      storeLocation: ingredientFields.storeLocation,
-      hebUnitPrice: product.unitPrice,
-      hebUnitPriceUnit: product.unitPriceUnit,
-    })
+  const openForm = () => {
+    if (!query.trim()) return
+    setForm({ ...DEFAULT_FORM, name: query.trim() })
     setQuery('')
-    setShowDropdown(false)
     setShowForm(true)
   }
 
@@ -163,49 +49,11 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
       category: form.category,
       isManual: true,
       sources: [],
-      ...(form.hebPrice && { hebPrice: form.hebPrice }),
-      ...(form.hebPriceUnit && { hebPriceUnit: form.hebPriceUnit }),
-      ...(form.hebUnitPrice && { hebUnitPrice: form.hebUnitPrice }),
-      ...(form.hebUnitPriceUnit && { hebUnitPriceUnit: form.hebUnitPriceUnit }),
-      ...(form.aisle && { aisle: form.aisle }),
-      ...(form.hebProductId && { hebProductId: form.hebProductId }),
-      ...(form.hebProductUrl && { hebProductUrl: form.hebProductUrl }),
-      ...(form.imageUrl && { imageUrl: form.imageUrl }),
-      ...(form.hebSize && { hebSize: form.hebSize }),
-      ...(form.storeLocation && { storeLocation: form.storeLocation }),
     }
 
     setSubmitting(true)
     try {
       await onAddItem(item)
-      // Fire-and-forget: persist as product override so future lists pick up this product match
-      if (item.hebProductId) {
-        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
-          ? import.meta.env.BASE_URL
-          : `${import.meta.env.BASE_URL}/`
-        const override = {
-          name: item.name,
-          hebProductId: item.hebProductId,
-          hebProductUrl: item.hebProductUrl,
-          imageUrl: item.imageUrl,
-          hebPrice: item.hebPrice,
-          hebPriceUnit: item.hebPriceUnit,
-          hebUnitPrice: item.hebUnitPrice,
-          hebUnitPriceUnit: item.hebUnitPriceUnit,
-          hebSize: item.hebSize,
-          category: item.category,
-          aisle: item.aisle,
-          storeLocation: item.storeLocation,
-          updatedAt: new Date().toISOString(),
-        }
-        fetch(`${baseUrl}api/grocery/overrides`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ override }),
-        }).catch(() => {
-          // Intentionally silent — override persistence is best-effort
-        })
-      }
       setForm(DEFAULT_FORM)
       setShowForm(false)
     } catch (err) {
@@ -222,102 +70,31 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setShowDropdown(false)
       if (showForm) {
         cancelForm()
       }
-    } else if (e.key === 'Enter' && !showDropdown && query.trim()) {
+    } else if (e.key === 'Enter' && query.trim()) {
       e.preventDefault()
-      setForm({ ...DEFAULT_FORM, name: query.trim() })
-      setQuery('')
-      setShowDropdown(false)
-      setShowForm(true)
+      openForm()
     }
   }
 
   return (
-    <div className="relative mb-4" ref={dropdownRef}>
-      {/* Search Input */}
+    <div className="relative mb-4">
+      {/* Item name input */}
       {!showForm && (
-        <>
-          <div className="relative">
-            <Plus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => query.length >= 2 && results.length > 0 && setShowDropdown(true)}
-              placeholder="Add item or search H-E-B..."
-              className="w-full rounded-xl border border-dashed border-primary/40 bg-card py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-solid focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              disabled={isLoading}
-            />
-            {searching && (
-              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Autocomplete Dropdown */}
-      {showDropdown && !showForm && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
-          {results.map((result, idx) => {
-            const { product } = result
-            const unitPriceStr =
-              product.unitPrice && product.unitPriceUnit
-                ? `$${product.unitPrice.toFixed(2)}/${product.unitPriceUnit}`
-                : null
-            return (
-              <button
-                key={`${product.productId}-${idx}`}
-                type="button"
-                onClick={() => selectProduct(result)}
-                className="flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted"
-              >
-                {/* Product image */}
-                {product.imageUrl && (
-                  <img
-                    src={product.imageUrl}
-                    alt=""
-                    className="h-24 w-24 flex-shrink-0 rounded-lg object-cover"
-                    loading="lazy"
-                  />
-                )}
-                {/* Product info */}
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-foreground">{product.name}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                    {product.storeLocation && (
-                      <span className="flex items-center gap-0.5">
-                        <MapPin className="h-3 w-3" />
-                        {product.storeLocation}
-                      </span>
-                    )}
-                    {product.category && (
-                      <span className="flex items-center gap-0.5">
-                        <Tag className="h-3 w-3" />
-                        {product.category}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {/* Price badge */}
-                {product.price > 0 && (
-                  <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
-                    <span className="flex items-center gap-0.5 rounded-md bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      <DollarSign className="h-3 w-3" />
-                      {(product.salePrice ?? product.price).toFixed(2)}
-                    </span>
-                    {unitPriceStr && (
-                      <span className="text-[10px] text-muted-foreground">{unitPriceStr}</span>
-                    )}
-                  </div>
-                )}
-              </button>
-            )
-          })}
+        <div className="relative">
+          <Plus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={openForm}
+            placeholder="Add an item..."
+            className="w-full rounded-xl border border-dashed border-primary/40 bg-card py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-solid focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            disabled={isLoading}
+          />
         </div>
       )}
 
@@ -325,20 +102,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
       {showForm && (
         <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Product image thumbnail */}
-              {form.imageUrl && (
-                <img
-                  src={form.imageUrl}
-                  alt={form.name}
-                  className="h-24 w-24 rounded-lg object-cover"
-                />
-              )}
-              <div>
-                <h3 className="font-display text-lg font-bold text-foreground">{form.name}</h3>
-                {form.hebSize && <p className="text-xs text-muted-foreground">{form.hebSize}</p>}
-              </div>
-            </div>
+            <h3 className="font-display text-lg font-bold text-foreground">{form.name}</h3>
             <button
               type="button"
               onClick={cancelForm}
@@ -347,25 +111,6 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
               <X className="h-4 w-4" />
             </button>
           </div>
-
-          {/* Price & location info */}
-          {(form.hebPrice || form.storeLocation) && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              {form.hebPrice && (
-                <span className="flex items-center gap-0.5">
-                  <DollarSign className="h-3.5 w-3.5" />${form.hebPrice.toFixed(2)} /{' '}
-                  {form.hebPriceUnit || 'each'}
-                </span>
-              )}
-              {form.hebUnitPrice && form.hebUnitPriceUnit && (
-                <span className="text-xs">
-                  (${form.hebUnitPrice.toFixed(2)}/{form.hebUnitPriceUnit})
-                </span>
-              )}
-              {form.aisle && <span>• Aisle {form.aisle}</span>}
-              {form.storeLocation && <span className="text-xs">• {form.storeLocation}</span>}
-            </div>
-          )}
 
           <div className="flex gap-3">
             {/* Quantity */}
@@ -419,7 +164,7 @@ export const AddItemInput: React.FC<AddItemInputProps> = ({ onAddItem, isLoading
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:outline-none"
               >
-                {HEB_CATEGORY_ORDER.map((cat) => (
+                {CATEGORY_ORDER.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>

@@ -11,7 +11,6 @@ const getBaseUrl = (): string => {
 export interface BootstrapUser {
   displayName: string | null
   isAdmin: boolean
-  hasOnboarded: boolean
 }
 
 interface BootstrapFamily {
@@ -34,7 +33,7 @@ interface BootstrapResponse {
  * Fetches `GET /api/bootstrap` once on mount and feeds `recipeStore`/`familyStore` directly —
  * this replaces what used to be 3 separate boot-time round trips (`/api/recipes`,
  * `/api/week/planned`, `/api/families/current`; see PERFORMANCE-PLAN.md P6+P7). Also returns the
- * user-identity fields (`displayName`/`isAdmin`/`hasOnboarded`) that used to come from a blocking
+ * user-identity fields (`displayName`/`isAdmin`) that used to come from a blocking
  * SSR Firestore lookup in `[...path].astro` — that lookup no longer blocks the HTML response, so
  * `RecipeManager` gets these fields from here instead, once bootstrap resolves.
  *

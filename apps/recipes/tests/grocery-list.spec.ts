@@ -1,4 +1,15 @@
 import { test, expect } from './msw-setup'
+import type { Page } from '@playwright/test'
+
+// The grocery list only exists inside WeekWorkspace's own "grocery" tab — reaching it
+// requires the "This Week" bottom-tab (enters WeekWorkspace, defaulting to its "plan" tab)
+// followed by the "View Grocery List" toggle inside the workspace header. Both WeekWorkspace
+// itself (unmounted whenever the view returns to the library, e.g. via "Back to Library")
+// and its internal activeTab state reset on every re-entry, so both steps are needed each time.
+async function openGroceryTab(page: Page) {
+  await page.getByRole('button', { name: 'This Week', exact: true }).click()
+  await page.getByRole('button', { name: 'View Grocery List' }).click()
+}
 
 test.describe('Grocery List', () => {
   test.beforeEach(async ({ page, context }) => {
@@ -126,7 +137,7 @@ test.describe('Grocery List', () => {
 
     // 4. Initial State: 2 recipes in "This Week" (now backed by plan)
     // Click "Grocery" button in header (New Flow)
-    await page.getByRole('button', { name: 'Grocery List' }).click() // Logic updated to use Week View
+    await openGroceryTab(page) // Logic updated to use Week View
 
     // 4. Verify API was called
     await expect(async () => {
@@ -140,7 +151,7 @@ test.describe('Grocery List', () => {
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // 6. Click "Grocery List" AGAIN
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
 
     // 7. Verify API was NOT called again (cached)
     expect(apiCallCount).toBe(1)
@@ -200,7 +211,7 @@ test.describe('Grocery List', () => {
     await page.reload()
 
     // 9. Click "Grocery List"
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
 
     // 10. Verify API WAS called (count -> 2)
     // Actually, reload resets the client-side cache (useState), so it WOULD call 2.
@@ -234,20 +245,20 @@ test.describe('Grocery List', () => {
     await page.reload()
 
     // Call 1
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
     // Wait for list to appear to ensure API call started/finished
     await expect(page.getByText('beef', { exact: false })).toBeVisible()
     // expect(apiCallCount).toBe(1) // Flaky: sometimes reports 0 even if list loads
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Call 2 (Cached)
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
     expect(apiCallCount).toBe(1)
     await page.getByRole('button', { name: 'Back to Library' }).click()
 
     // Call 3 (Reload -> Persistent Cache)
     await page.reload()
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
     // Wait for list to appear (confirms data loaded)
     await expect(page.getByText('beef', { exact: false }).first()).toBeVisible()
     // API call count should still be 1 (loaded from localStorage)
@@ -383,7 +394,7 @@ test.describe('Grocery List', () => {
     // Navigate and Click Grocery List
     await page.reload() // Refresh to clear state
     await page.waitForResponse((resp) => resp.url().includes('api/week/planned'))
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
 
     // 1. Verify "Eggs" (Single Source)
     // Should see "Eggs"
@@ -460,7 +471,7 @@ test.describe('Grocery List', () => {
     })
 
     // 2. Mock API Failure (500)
-    await page.route('**/api/grocery/generate', async (route) => {
+    await page.route('**/api/generate-grocery-list', async (route) => {
       // Simulate server error
       await route.fulfill({
         status: 500,
@@ -471,7 +482,7 @@ test.describe('Grocery List', () => {
 
     // 3. Reload and Go to Grocery
     await page.reload()
-    await page.getByRole('button', { name: 'Grocery List' }).click()
+    await openGroceryTab(page)
 
     // 4. Expect Error Banner
     // "Failed to generate Smart List" or check for alert icon

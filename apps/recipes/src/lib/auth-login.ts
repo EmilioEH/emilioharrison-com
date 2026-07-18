@@ -112,7 +112,6 @@ export async function upsertUser(
         displayName: name,
         joinedAt: new Date().toISOString(),
         status: status,
-        hasOnboarded: false,
         familyId: familyIdToJoin || null,
       })
     }

@@ -8,7 +8,6 @@ interface UseRecipeActionsProps {
   onUpdate: (recipe: Recipe, action: 'save' | 'edit' | 'silent') => void
   onDelete: (id: string) => void
   onToggleThisWeek: (id?: string) => void
-  onToggleFavorite?: () => void
 }
 
 export const useRecipeActions = ({
@@ -16,13 +15,11 @@ export const useRecipeActions = ({
   onUpdate,
   onDelete,
   onToggleThisWeek,
-  onToggleFavorite,
 }: UseRecipeActionsProps) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshProgress, setRefreshProgress] = useState<string>('')
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
   const handleAction = async (action: HeaderAction) => {
     switch (action) {
@@ -42,14 +39,8 @@ export const useRecipeActions = ({
       case 'move':
         onUpdate({ ...recipe }, 'edit')
         break
-      case 'toggleFavorite':
-        if (onToggleFavorite) onToggleFavorite()
-        break
       case 'share':
         setShareDialogOpen(true)
-        break
-      case 'history':
-        setIsHistoryOpen(true)
         break
       case 'refresh':
         await handleRefresh()
@@ -123,12 +114,10 @@ export const useRecipeActions = ({
       isEditing,
       isRefreshing,
       refreshProgress,
-      isHistoryOpen,
     },
     setters: {
       setShareDialogOpen,
       setIsEditing,
-      setIsHistoryOpen,
     },
   }
 }

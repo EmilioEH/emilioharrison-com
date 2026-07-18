@@ -79,7 +79,7 @@ export const ShareRecipeDialog: React.FC<ShareRecipeDialogProps> = ({
       // Dynamic import: @react-pdf/renderer (pdfkit, layout engine, embedded font-metric
       // tables) is heavy and only needed when the user actually exports a PDF. Loading it
       // on demand keeps it out of the main entry chunk (same pattern as html2canvas in
-      // FeedbackModal.tsx). isGenerating stays true for the import as well as the render.
+      // isGenerating stays true for the import as well as the render.
       const [{ pdf }, { RecipePdfDocument }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('../../recipe-pdf/RecipePdfDocument'),

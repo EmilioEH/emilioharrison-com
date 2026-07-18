@@ -1,7 +1,7 @@
 import { test, expect } from './msw-setup'
 
 test.describe('Global Menu Visibility', () => {
-  test('should be visible and clickable on recipe detail page', async ({ page, context }) => {
+  test('should be visible and clickable on the library page', async ({ page, context }) => {
     // 0. Set Auth Cookies to bypass middleware
     await context.addCookies([
       { name: 'site_auth', value: 'true', domain: 'localhost', path: '/' },
@@ -30,7 +30,6 @@ test.describe('Global Menu Visibility', () => {
               cookTime: 20,
               servings: 4,
               thisWeek: false,
-              isFavorite: false,
             },
           ],
         }),
@@ -43,35 +42,20 @@ test.describe('Global Menu Visibility', () => {
     // Wait for recipes to load
     await expect(page.locator('[data-testid^="recipe-card-"]')).toHaveCount(1)
 
-    // Get the first recipe card
-    const firstRecipe = page.locator('[data-testid^="recipe-card-"]').first()
-    await expect(firstRecipe).toBeVisible()
-
-    // 2. Click to open details
-    await firstRecipe.click()
-
-    // Verify detail view is open (check for Back button)
-    const backButton = page.getByRole('button', { name: 'Back to Library' })
-    await expect(backButton).toBeVisible()
-
-    // 3. Verify Global Menu Button is visible
-    // The button has aria-label="Open Menu"
-    const menuButton = page.getByRole('button', { name: 'Open Menu' })
-
-    // Check if it's visible. In Playwright, if z-index is lower than an overlay, it might not be accidentally clickable,
-    // but toBeVisible() mainly checks display properties.
-    // To check if it's NOT covered, we can try to click it or check stacking context,
-    // but clicking is the ultimate user test.
+    // 2. Verify Global Menu Button is visible on the library header. The burger-menu trigger
+    // (aria-label="Menu") lives only in RecipeHeader.tsx — it's not reachable from within the
+    // recipe detail view, which has its own header (Back/Share/More Options).
+    const menuButton = page.getByRole('button', { name: 'Menu' })
     await expect(menuButton).toBeVisible()
 
-    // 4. Click the menu button
+    // 3. Click the menu button
     await menuButton.click()
 
-    // 5. Verify Menu Drawer is open
+    // 4. Verify Menu Drawer is open
     const menuDrawer = page.getByRole('menu')
     await expect(menuDrawer).toBeVisible()
 
-    // Verify a link inside, e.g., "Settings" or "Send Feedback"
-    await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible()
+    // Verify a link inside, e.g., "Manage Family"
+    await expect(page.getByRole('menuitem', { name: 'Manage Family' })).toBeVisible()
   })
 })

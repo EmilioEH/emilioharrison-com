@@ -43,13 +43,15 @@ test.describe('Invite Sharing', () => {
     await page.getByRole('menuitem', { name: 'Invite' }).click()
 
     // Find "Activation Code" section
-    await expect(page.getByText('Activation Code')).toBeVisible()
+    await expect(page.getByText('Activation Code', { exact: true })).toBeVisible()
 
-    // Click Generate New Code
-    await page.getByRole('button', { name: 'Generate New Code' }).click()
+    // Click Generate Activation Code
+    await page.getByRole('button', { name: 'Generate Activation Code' }).click()
 
     // Wait for code to appear
-    await expect(page.getByText('Your Activation Code')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Activation Code', { exact: true }).last()).toBeVisible({
+      timeout: 10000,
+    })
 
     // Setup share spy check
     const codeElement = page.locator('.font-mono.text-3xl')

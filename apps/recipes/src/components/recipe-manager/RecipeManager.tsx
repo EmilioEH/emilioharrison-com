@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
-import { VarietyWarning } from './VarietyWarning'
-
 import { RecipeHeader } from './RecipeHeader'
-import { BulkEditModal } from './dialogs/BulkEditModal'
 import { FamilySetup } from './FamilySetup'
 import type { Recipe, FamilyRecipeData } from '../../lib/types'
 
@@ -16,7 +13,6 @@ import { useIdentityResolution } from './hooks/useIdentityResolution'
 import { useFilteredRecipes } from './hooks/useFilteredRecipes'
 import { useFirebaseAuthSync } from '../../lib/useFirebaseAuthSync'
 
-import { useRecipeSelection } from './hooks/useRecipeSelection'
 import { useRecipeActions } from './hooks/useRecipeActions'
 import { useRouter } from './hooks/useRouter'
 import { useRecipeHandlers } from './hooks/useRecipeHandlers'
@@ -24,12 +20,15 @@ import { useRecipeContext } from './hooks/useRecipeContext'
 import { useFamilySync } from './hooks/useFamilySync'
 import { useScrollBroadcaster } from './hooks/useScrollBroadcaster'
 
-import { checkAndRunRollover } from '../../lib/week-rollover'
 import { useStore } from '@nanostores/react'
-import { currentWeekRecipes } from '../../lib/weekStore'
+import {
+  currentWeekRecipes,
+  addRecipeToWeek,
+  removeRecipeFromWeek,
+  isPlannedForActiveWeek,
+} from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { recipeActions } from '../../lib/recipeStore'
-import { alert, confirm } from '../../lib/dialogStore'
 // --- Sub-Components ---
 import { RecipeManagerView } from './RecipeManagerView'
 import { RecipeLibrary } from './RecipeLibrary'
@@ -37,27 +36,20 @@ import { RecipeFilters } from './RecipeFilters'
 import { RecipeControlBar } from './RecipeControlBar'
 import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 
-import { DayPicker } from './week-planner/DayPicker'
 import { CalendarPicker } from './week-planner/CalendarPicker'
 import { BottomTabBar } from './BottomTabBar'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
-import { WeekPlannerSettings } from '../settings/WeekPlannerSettings'
-import { CookingStatusIndicator } from '../cooking-mode/CookingStatusIndicator'
-import { $cookingSession } from '../../stores/cookingSession'
 
 // ViewMode is now imported from useRouter
 
-// Code-split: week planner, the recipe editor, and onboarding are each only needed
-// once the user navigates away from (or hasn't yet reached) the library view.
+// Code-split: the week planner and the recipe editor are each only needed
+// once the user navigates away from the library view.
 const WeekWorkspace = React.lazy(() =>
   import('./week-planner/WeekWorkspace').then((m) => ({ default: m.WeekWorkspace })),
 )
 const RecipeEditor = React.lazy(() =>
   import('./RecipeEditor').then((m) => ({ default: m.RecipeEditor })),
-)
-const OnboardingFlow = React.lazy(() =>
-  import('../onboarding/OnboardingFlow').then((m) => ({ default: m.OnboardingFlow })),
 )
 
 const ViewLoadingFallback: React.FC = () => (
@@ -66,41 +58,23 @@ const ViewLoadingFallback: React.FC = () => (
   </div>
 )
 
-interface ProteinWarning {
-  protein: string
-  count: number
-}
-
 interface RecipeManagerProps {
   user?: string | null
   isAdmin?: boolean
-  hasOnboarded?: boolean
 }
 
-// --- Onboarding ---
-
 // --- MAIN COMPONENT ---
-const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboarded }) => {
+const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
   // Boot-time data (recipes, planned, family, user identity) now all come from a single
-  // `GET /api/bootstrap` call — see PERFORMANCE-PLAN.md P6+P7. `user`/`isAdmin`/`hasOnboarded`
-  // are SSR defaults from `[...path].astro` (which no longer blocks on Firestore — `user` is just
-  // the raw `site_user` cookie value, `isAdmin` is a cheap cookie-derived best guess, and
-  // `hasOnboarded` is usually omitted/unknown); `useIdentityResolution` reconciles those
-  // placeholders with the Firestore-verified `bootstrapUser` once it arrives, without ever
-  // flashing the wrong screen for a returning user (see that hook for the exact decision matrix,
-  // including the `force_onboarding`/`skip_onboarding` query-param overrides).
-  const { user: bootstrapUser, bootstrapped } = useBootstrap()
-  const {
-    currentUser,
-    setCurrentUser,
-    isAdmin: computedIsAdmin,
-    isOnboardingComplete,
-    setIsOnboardingComplete,
-  } = useIdentityResolution({
+  // `GET /api/bootstrap` call — see PERFORMANCE-PLAN.md P6+P7. `user`/`isAdmin` are SSR defaults
+  // from `[...path].astro` (which no longer blocks on Firestore — `user` is just the raw
+  // `site_user` cookie value and `isAdmin` is a cheap cookie-derived best guess);
+  // `useIdentityResolution` reconciles those placeholders with the Firestore-verified
+  // `bootstrapUser` once it arrives, without ever flashing the wrong screen for a returning user.
+  const { user: bootstrapUser } = useBootstrap()
+  const { currentUser, isAdmin: computedIsAdmin } = useIdentityResolution({
     initialUser: user,
     initialIsAdmin: isAdmin,
-    initialHasOnboarded: hasOnboarded,
-    bootstrapped,
     bootstrapUser,
   })
 
@@ -204,12 +178,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   // Scroll Container Ref State & Broadcaster
   const { scrollContainer, setScrollContainer } = useScrollBroadcaster()
 
-  // Hooks
-  const { isSelectionMode, setIsSelectionMode, selectedIds, toggleSelection, clearSelection } =
-    useRecipeSelection()
-  const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [isSearchMode, setIsSearchMode] = useState(false)
-  const [showWeekPlannerSettings, setShowWeekPlannerSettings] = useState(false)
 
   // Mobile detection for contained scroll mode (fixes sticky headers with keyboard)
   const [isMobile, setIsMobile] = useState(false)
@@ -299,26 +268,27 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
     }
   }, [useContainedScroll])
 
-  const { saveRecipe, deleteRecipe, toggleFavorite, bulkUpdateRecipes, bulkDeleteRecipes } =
-    useRecipeActions({
-      recipes,
-      setRecipes,
-      refreshRecipes,
-      getBaseUrl,
-    })
+  const { saveRecipe, deleteRecipe } = useRecipeActions({
+    recipes,
+    setRecipes,
+    getBaseUrl,
+  })
 
   // Smart Suggestion State
-  const [proteinWarning, setProteinWarning] = useState<ProteinWarning | null>(null)
 
   // Meal Planner State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [dayPickerRecipeId, setDayPickerRecipeId] = useState<string | null>(null)
 
   // Share State
   const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null)
 
-  const handleAddToWeek = (recipeId: string) => {
-    setDayPickerRecipeId(recipeId)
+  // One-tap toggle: recipes are added to (or removed from) the active week — no day picker.
+  const handleAddToWeek = async (recipeId: string) => {
+    if (isPlannedForActiveWeek(recipeId)) {
+      await removeRecipeFromWeek(recipeId)
+    } else {
+      await addRecipeToWeek(recipeId)
+    }
   }
 
   // `recipe` here comes straight from the library/week store, which since PERFORMANCE-PLAN.md P3
@@ -349,54 +319,25 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
 
   // Listen for settings navigation from burger menu
   useEffect(() => {
-    const handleNavigateToSettings = () => setView('settings')
-    const handleNavigateToFeedbackDashboard = () => setView('feedback-dashboard')
-    const handleNavigateToBulkImport = () => setView('bulk-import')
     const handleNavigateToFamilySettings = () => {
       console.log('DEBUG: Navigate to Family Settings Triggered')
       setView('family-settings')
     }
     const handleNavigateToAdminDashboard = () => setView('admin-dashboard')
 
-    window.addEventListener('navigate-to-settings', handleNavigateToSettings)
-    window.addEventListener('navigate-to-feedback-dashboard', handleNavigateToFeedbackDashboard)
-    window.addEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
     window.addEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
     window.addEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
 
     const handleNavigateToInvite = () => setView('invite')
-    const handleNavigateToNotifications = () => setView('notifications')
-    const handleNavigateToWeekPlannerSettings = () => setShowWeekPlannerSettings(true)
 
     window.addEventListener('navigate-to-invite', handleNavigateToInvite)
-    window.addEventListener('navigate-to-notifications', handleNavigateToNotifications)
-    window.addEventListener(
-      'navigate-to-week-planner-settings',
-      handleNavigateToWeekPlannerSettings,
-    )
 
     return () => {
-      window.removeEventListener('navigate-to-settings', handleNavigateToSettings)
-      window.removeEventListener(
-        'navigate-to-feedback-dashboard',
-        handleNavigateToFeedbackDashboard,
-      )
-      window.removeEventListener('navigate-to-bulk-import', handleNavigateToBulkImport)
       window.removeEventListener('navigate-to-family-settings', handleNavigateToFamilySettings)
       window.removeEventListener('navigate-to-admin-dashboard', handleNavigateToAdminDashboard)
       window.removeEventListener('navigate-to-invite', handleNavigateToInvite)
-      window.removeEventListener('navigate-to-notifications', handleNavigateToNotifications)
-      window.removeEventListener(
-        'navigate-to-week-planner-settings',
-        handleNavigateToWeekPlannerSettings,
-      )
     }
   }, [setView])
-
-  // Run Rollover Check
-  useEffect(() => {
-    checkAndRunRollover()
-  }, [])
 
   // Self-Correction: Clean up ghost recipes from week plan
   // If a recipe is in the plan but not in the loaded recipes list, remove it.
@@ -416,118 +357,16 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
   }, [loading, recipes])
 
   // Actions & Handlers (Refactored to Hook)
-  const {
-    handleSaveRecipe,
-    handleDeleteRecipe,
-    handleUpdateRecipe,
-    handleBulkDelete,
-    handleBulkEdit,
-    handleExport,
-    handleUpdateProfile,
-  } = useRecipeHandlers({
-    recipes,
+  const { handleSaveRecipe, handleDeleteRecipe, handleUpdateRecipe } = useRecipeHandlers({
     setRecipes,
     saveRecipe,
     deleteRecipe,
-    bulkUpdateRecipes,
-    bulkDeleteRecipes,
     setRecipe,
     setView,
     selectedRecipe,
-    selectedIds,
-    clearSelection,
-    setCurrentUser,
   })
 
-  const handleBulkImportSave = async (recipes: Recipe[]) => {
-    try {
-      await Promise.all(
-        recipes.map(async (r) => {
-          const now = new Date().toISOString()
-          const fullRecipe = {
-            ...r,
-            createdAt: now,
-            updatedAt: now,
-            versionHistory: [{ date: now, changeType: 'create' as const }],
-            rating: 0,
-            isFavorite: false,
-          }
-          await saveRecipe(fullRecipe as unknown as Partial<Recipe>)
-        }),
-      )
-      refreshRecipes()
-      await alert(`Successfully imported ${recipes.length} recipes!`)
-      setView('library')
-    } catch (e) {
-      console.error(e)
-      await alert('Failed to save some recipes.')
-    }
-  }
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      try {
-        const result = event.target?.result as string
-        const imported = JSON.parse(result)
-        if (Array.isArray(imported)) {
-          const existingIds = new Set(recipes.map((r) => r.id))
-          const newRecipes = imported.filter((r) => !existingIds.has(r.id))
-          setRecipes([...recipes, ...newRecipes])
-          await alert(`Imported ${newRecipes.length} recipes.`)
-        }
-      } catch (err) {
-        console.error(err)
-        await alert('Failed to parse JSON.')
-      }
-    }
-    reader.readAsText(file)
-  }
-
-  const handleDeleteAll = async () => {
-    if (await confirm('DANGER: This will delete ALL your recipes permanently. Are you sure?')) {
-      const allIds = new Set(recipes.map((r) => r.id))
-      const success = await bulkDeleteRecipes(allIds)
-      if (success) {
-        setRecipes([])
-        await alert('All recipes deleted.')
-      } else {
-        await alert('Failed to delete all recipes.')
-      }
-      setView('library')
-    }
-  }
-
-  // Listen for Burger Menu events
-  useEffect(() => {
-    const handleToggleSelection = () => setIsSelectionMode((prev) => !prev)
-
-    window.addEventListener('toggle-selection-mode', handleToggleSelection)
-    return () => {
-      window.removeEventListener('toggle-selection-mode', handleToggleSelection)
-    }
-  }, [setIsSelectionMode])
-
   // --- RENDER ---
-
-  // Onboarding status isn't known yet (cold launch, still waiting on bootstrap, and no query-param
-  // override) — show the same loading affordance used elsewhere rather than guessing either way.
-  if (isOnboardingComplete === null) {
-    return <ViewLoadingFallback />
-  }
-
-  if (!isOnboardingComplete) {
-    return (
-      <div className="fixed inset-0 z-[60]">
-        <Suspense fallback={<ViewLoadingFallback />}>
-          <OnboardingFlow onComplete={() => setIsOnboardingComplete(true)} />
-        </Suspense>
-      </div>
-    )
-  }
 
   return (
     <>
@@ -542,19 +381,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         handleUpdateRecipe={handleUpdateRecipe}
         handleDeleteRecipe={handleDeleteRecipe}
         handleAddToWeek={handleAddToWeek}
-        handleToggleFavorite={toggleFavorite}
-        handleExport={handleExport}
-        handleImport={handleImport}
-        handleDeleteAll={handleDeleteAll}
-        handleUpdateProfile={handleUpdateProfile}
-        handleBulkImportSave={handleBulkImportSave}
         refreshRecipes={refreshRecipes}
         setView={setView}
         setRoute={setRoute}
         family={family}
       >
-        <VarietyWarning warning={proteinWarning} onClose={() => setProteinWarning(null)} />
-
         {/* Full-width Header Shell */}
         {!isSearchMode && <RecipeHeader onAddRecipe={() => setView('edit')} />}
 
@@ -589,7 +420,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             />
           )}
 
-          {view !== 'week' && !isSelectionMode && (
+          {view !== 'week' && (
             <RecipeControlBar
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}
@@ -598,8 +429,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
               activeFilterCount={
                 (filters.protein?.length || 0) +
                 (filters.difficulty?.length || 0) +
-                (filters.cuisine?.length || 0) +
-                (filters.onlyFavorites ? 1 : 0)
+                (filters.cuisine?.length || 0)
               }
               isSearchMode={isSearchMode}
               onSearchExpandedChange={setIsSearchMode}
@@ -611,21 +441,11 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
             {view === 'library' && (
               <div className={useContainedScroll ? 'flex flex-col' : 'flex h-full flex-col'}>
                 <div className={useContainedScroll ? '' : 'scrollbar-hide flex-1'}>
-                  {!isSelectionMode && recipes.length > 0 && null}
-
                   <RecipeLibrary
                     recipes={processedRecipes}
                     sort={sort}
-                    onSelectRecipe={(r) => {
-                      if (isSelectionMode) {
-                        toggleSelection(r.id)
-                      } else {
-                        setRoute({ activeRecipeId: r.id, view: 'detail' })
-                      }
-                    }}
+                    onSelectRecipe={(r) => setRoute({ activeRecipeId: r.id, view: 'detail' })}
                     onToggleThisWeek={(id) => handleAddToWeek(id)}
-                    isSelectionMode={isSelectionMode}
-                    selectedIds={selectedIds}
                     hasSearch={!!searchQuery}
                     scrollContainer={scrollContainer}
                     onShare={handleShareRecipe}
@@ -658,8 +478,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         </div>
       </RecipeManagerView>
 
-      {/* Primary Tab Bar — hidden during selection mode and drilldown views */}
-      {(view === 'library' || view === 'week') && !isSelectionMode && (
+      {/* Primary Tab Bar — hidden on drilldown views */}
+      {(view === 'library' || view === 'week') && (
         <BottomTabBar
           activeTab={view === 'week' ? 'week' : 'library'}
           onTabChange={(tab) => setView(tab === 'week' ? 'week' : 'library')}
@@ -667,14 +487,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       )}
 
       {/* --- GLOBAL OVERLAYS (Outside View) --- */}
-
-      {showBulkEdit && (
-        <BulkEditModal
-          selectedCount={selectedIds.size}
-          onClose={() => setShowBulkEdit(false)}
-          onSave={handleBulkEdit}
-        />
-      )}
 
       <ResponsiveModal
         isOpen={view === 'edit'}
@@ -694,55 +506,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
       </ResponsiveModal>
 
       {/* Meal Planner Modals */}
-      <DayPicker
-        isOpen={!!dayPickerRecipeId}
-        onClose={() => setDayPickerRecipeId(null)}
-        recipeId={dayPickerRecipeId || ''}
-        recipeTitle={recipes.find((r) => r.id === dayPickerRecipeId)?.title || ''}
-      />
       <CalendarPicker isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
-
-      {/* Sticky Bottom Actions (Selection Mode) */}
-      {isSelectionMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-md backdrop-blur-sm animate-in slide-in-from-bottom-5">
-          <span className="text-sm font-bold text-muted-foreground">
-            {selectedIds.size} selected
-          </span>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => clearSelection()}
-              className="text-sm font-semibold text-muted-foreground hover:text-foreground"
-            >
-              Cancel
-            </button>
-            <div className="h-4 w-px bg-border" />
-            <button
-              onClick={() => setShowBulkEdit(true)}
-              className="text-sm font-bold text-primary hover:text-primary/80"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              className="rounded-full bg-destructive/10 px-4 py-2 text-sm font-bold text-destructive hover:bg-destructive/20"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Global Cooking Status Indicator (Mini Player) */}
-      {view !== 'detail' && (
-        <CookingStatusIndicator
-          onResume={() => {
-            const session = $cookingSession.get()
-            if (session.recipeId) {
-              setRoute({ activeRecipeId: session.recipeId, view: 'detail' })
-            }
-          }}
-        />
-      )}
 
       {/* Invitation Modal - DEPRECATED: Now handled in FamilyManagementView */}
 
@@ -821,15 +585,6 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin, hasOnboard
         open={!!shareRecipe}
         onOpenChange={(open: boolean) => !open && setShareRecipe(null)}
       />
-
-      {/* Week Planner Settings Modal */}
-      <ResponsiveModal
-        isOpen={showWeekPlannerSettings}
-        onClose={() => setShowWeekPlannerSettings(false)}
-        title="Week Planner Settings"
-      >
-        <WeekPlannerSettings />
-      </ResponsiveModal>
     </>
   )
 }

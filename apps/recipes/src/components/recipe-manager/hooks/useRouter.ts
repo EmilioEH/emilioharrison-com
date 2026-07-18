@@ -5,15 +5,10 @@ export type ViewMode =
   | 'library'
   | 'detail'
   | 'edit'
-  | 'grocery'
   | 'week'
-  | 'settings'
-  | 'feedback-dashboard'
-  | 'bulk-import'
   | 'family-settings'
   | 'admin-dashboard'
   | 'invite'
-  | 'notifications'
 
 export interface RouteState {
   view: ViewMode

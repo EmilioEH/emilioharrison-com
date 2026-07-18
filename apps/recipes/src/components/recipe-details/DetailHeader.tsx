@@ -1,6 +1,4 @@
 import React from 'react'
-import { Heart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Inline } from '@/components/ui/layout'
 import type { Recipe } from '../../lib/types'
 import { DetailHeaderActions } from './DetailHeaderActions'
@@ -40,17 +38,6 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
     />
 
     <Inline spacing="sm">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onAction('toggleFavorite')}
-        className={`h-11 w-11 rounded-full ${recipe.isFavorite ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600' : 'text-muted-foreground hover:text-red-500'}`}
-        aria-label={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
-        title={recipe.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
-      >
-        <Heart className={`h-6 w-6 ${recipe.isFavorite ? 'fill-red-500' : ''}`} />
-      </Button>
-
       <DetailHeaderActions
         onAction={onAction}
         onToggleThisWeek={onToggleThisWeek}

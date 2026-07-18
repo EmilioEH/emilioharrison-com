@@ -38,20 +38,11 @@ test.describe('Meal Planner Feature', () => {
       },
     ]
 
-    // Debug console
-    page.on('console', (msg) => console.log(`BROWSER LOG: ${msg.text()}`))
-    page.on('pageerror', (err) => console.log(`BROWSER ERROR: ${err.message}`))
-    page.on('requestfailed', (req) =>
-      console.log(`REQUEST FAILED: ${req.url()} ${req.failure()?.errorText}`),
-    )
-    page.on('request', (req) => console.log(`REQ: ${req.url()}`))
-
     // Block SW
     await page.route(/sw.js/, (route) => route.abort())
 
     // Broaden matching for api/recipes
     await page.route(/api\/recipes/, async (route) => {
-      console.log(`MOCKING REQUEST: ${route.request().url()}`)
       if (route.request().method() === 'GET') {
         await route.fulfill({ json: { recipes: mockRecipes } })
       } else {
@@ -60,112 +51,120 @@ test.describe('Meal Planner Feature', () => {
       }
     })
 
+    // Mock the week-plan toggle endpoint: POST plans it, DELETE unplans it, both echo the
+    // recipe's family-scoped record so weekStore's optimistic update has data to apply.
+    // Tracked in `weekPlans` so the /family-data GET below (which removeRecipeFromWeek
+    // re-fetches after a DELETE) reflects the same state, instead of the broad
+    // `/api/recipes` mock below serving it the recipe list by mistake.
+    const weekPlans: Record<string, { isPlanned: boolean; assignedDate?: string }> = {}
+    await page.route(/api\/recipes\/[^/]+\/week-plan/, async (route) => {
+      const method = route.request().method()
+      const recipeId = route
+        .request()
+        .url()
+        .match(/recipes\/([^/]+)\/week-plan/)?.[1] as string
+      if (method === 'POST') {
+        const body = route.request().postDataJSON()
+        weekPlans[recipeId] = { isPlanned: true, assignedDate: body.assignedDate }
+        await route.fulfill({
+          json: {
+            success: true,
+            data: { id: recipeId, weekPlan: weekPlans[recipeId] },
+          },
+        })
+      } else {
+        weekPlans[recipeId] = { isPlanned: false }
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+
+    await page.route(/api\/recipes\/[^/]+\/family-data/, async (route) => {
+      const recipeId = route
+        .request()
+        .url()
+        .match(/recipes\/([^/]+)\/family-data/)?.[1] as string
+      await route.fulfill({
+        json: {
+          success: true,
+          data: { id: recipeId, weekPlan: weekPlans[recipeId] || { isPlanned: false } },
+        },
+      })
+    })
+
     // Mock local storage (start fresh)
     await page.addInitScript(() => {
       localStorage.clear()
     })
 
     await page.goto('/protected/recipes')
-
-    // Debug: Check if loading
-    const loading = await page.getByTestId('loading-indicator').isVisible()
-    console.log(`IS LOADING: ${loading}`)
-
-    // Log always
-    console.log('BODY CONTENT:', await page.locator('body').innerText())
-
-    // Verify Route Interception
-    console.log('Testing manual fetch...')
-    await page.evaluate(async () => {
-      try {
-        await fetch('/protected/recipes/api/recipes')
-      } catch (e) {
-        console.error('Manual fetch failed', e)
-      }
-    })
+    await expect(page.getByTestId('loading-indicator')).toBeHidden()
   })
 
-  test('can plan a recipe for a specific day', async ({ page }) => {
-    // 1. Locate Recipe Card and Click "Add to Week"
+  test('tapping Add to Week plans the recipe for the active week (no day picker)', async ({
+    page,
+  }) => {
     const card = page.locator('[data-testid="recipe-card-1"]')
     await expect(card).toBeVisible()
 
-    // The button text is "Add to Week" (inside a Badge component)
-    await card.getByText('Add to Week').click()
+    // One tap — no dialog, no day selection.
+    await card.getByLabel('Add to Week').click()
 
-    // 2. Verify DayPicker Modal Opens
-    const modal = page.locator('[role="dialog"]')
-    await expect(modal).toBeVisible()
-    // Modal title contains "Add" and body contains "Planning for"
-    await expect(modal).toContainText('Add')
-
-    // 3. Select "Tuesday"
-    // Find the Tuesday button. It usually contains "Tue" and the date.
-    const tuesdayBtn = modal.locator('button', { hasText: 'Tue' })
-    await tuesdayBtn.click()
-
-    // 4. Verify Modal Closes (auto-close on add)
-    await expect(modal).toBeHidden()
-
-    // 5. Verify Tag appears on Card (Badge component, text is "Tue")
-    await expect(card.getByText('Tue', { exact: true })).toBeVisible()
+    // A "This week" badge appears directly on the card.
+    await expect(card.getByText('This week')).toBeVisible()
+    await expect(page.locator('[role="dialog"]')).toBeHidden()
   })
 
-  test('can switch weeks and verify persistence', async ({ page }) => {
+  test('tapping Add to Week again removes it from the week', async ({ page }) => {
     const card = page.locator('[data-testid="recipe-card-1"]')
 
-    // 1. Add to Monday of THIS week
-    await card.getByText('Add to Week').click()
-    await page.locator('[role="dialog"] button', { hasText: 'Mon' }).click()
-    await expect(card.getByText('Mon', { exact: true })).toBeVisible()
+    await card.getByLabel('Add to Week').click()
+    await expect(card.getByText('This week')).toBeVisible()
 
-    // 2. Open Calendar (WeekContextBar calendar icon at bottom)
-    const calButton = page.locator('button:has(.lucide-calendar)')
-    await calButton.first().click()
+    await card.getByLabel('Add to Week').click()
+    await expect(card.getByText('This week')).toBeHidden()
+  })
 
-    // 3. Verify Calendar Modal
+  test('week view shows a flat list of planned recipes, newest first, no day grouping', async ({
+    page,
+  }) => {
+    // Plan both recipes for the active week.
+    await page.locator('[data-testid="recipe-card-1"]').getByLabel('Add to Week').click()
+    await expect(page.locator('[data-testid="recipe-card-1"]').getByText('This week')).toBeVisible()
+
+    await page.locator('[data-testid="recipe-card-101"]').getByLabel('Add to Week').click()
+    await expect(
+      page.locator('[data-testid="recipe-card-101"]').getByText('This week'),
+    ).toBeVisible()
+
+    // Go to the This Week tab.
+    await page.getByRole('button', { name: 'This Week', exact: true }).click()
+
+    // Flat list: both recipes visible, no day-of-week section headers.
+    await expect(page.getByText('Chicken Curry')).toBeVisible()
+    await expect(page.getByText('Beef Stew')).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Monday$/i })).toHaveCount(0)
+  })
+
+  test('can switch to next week via the calendar and the week selector', async ({ page }) => {
+    // Open the week selector from the This Week tab.
+    await page.getByRole('button', { name: 'This Week', exact: true }).click()
+
+    await page.getByLabel('Select Week').click()
     const calModal = page.locator('[role="dialog"]')
     await expect(calModal).toBeVisible()
     await expect(calModal).toContainText('Select Week')
+    await calModal.getByLabel('Close modal').click()
+    await expect(calModal).toBeHidden()
 
-    // 4. Close modal to use bottom bar toggle
-    await page.keyboard.press('Escape')
+    // Use the This/Next toggle in the workspace header — scoped to exclude the bottom tab
+    // bar's identically aria-labeled "This Week" tab, which stays mounted underneath.
+    const nextToggle = page.locator('button[aria-label="Next Week"]:not([aria-current])')
+    const thisToggle = page.locator('button[aria-label="This Week"]:not([aria-current])')
 
-    // 5. Use [Next] button in bottom WeekContextBar (aria-label is 'Next Week')
-    await page.getByLabel('Next Week').click()
+    await nextToggle.click()
+    await expect(nextToggle).toBeVisible()
 
-    // 6. Verify Tag format changes to "N: Mon" (Next week prefix)
-    await expect(card.getByText('N: Mon')).toBeVisible()
-
-    // 7. Add to Wednesday of NEXT week
-    await card.getByText('Add to Week').click()
-    await page.locator('[role="dialog"] button', { hasText: 'Wed' }).click()
-    await expect(card.getByText('Wed', { exact: true })).toBeVisible()
-
-    // 8. Switch back to THIS week (aria-label is 'This Week')
-    await page.getByLabel('This Week').click()
-
-    // 9. Verify Mon is back (plain format), Wed shows N: prefix
-    await expect(card.getByText('Mon', { exact: true })).toBeVisible()
-    await expect(card.getByText('N: Wed')).toBeVisible()
-  })
-
-  test('week view groups recipes by day', async ({ page }) => {
-    // 1. Add recipe to Monday
-    await page.locator('[data-testid="recipe-card-1"]').getByText('Add to Week').click()
-    await page.locator('button', { hasText: 'Mon' }).click()
-
-    // 2. Go to Week Tab (via View link in bottom bar)
-    await page.getByText('View', { exact: true }).click()
-
-    // 3. Verify Grouping
-    // Should see "Monday" header
-    await expect(page.getByRole('button', { name: /Monday/i })).toBeVisible()
-
-    // Should see Recipe in the list
-    await expect(page.locator('[data-testid="recipe-card-1"]')).toBeVisible()
-
-    // Should NOT see other recipes (filtered)
-    await expect(page.locator('[data-testid="recipe-card-101"]')).toBeHidden()
+    await thisToggle.click()
+    await expect(thisToggle).toBeVisible()
   })
 })

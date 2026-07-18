@@ -184,7 +184,7 @@ describe('recipeStore persistence (P2 — stale-while-revalidate)', () => {
     })
   })
 
-  describe('per-user scoping / logout / admin impersonation isolation', () => {
+  describe('per-user scoping / logout isolation', () => {
     it("a second user never sees the first user's cached recipes", async () => {
       setUserCookie('user-a')
       const storeA = await import('./recipeStore')
@@ -234,23 +234,21 @@ describe('recipeStore persistence (P2 — stale-while-revalidate)', () => {
       expect(storeB.$recipesInitialized.get()).toBe(false)
     })
 
-    it("admin impersonation: switching site_user to a target user reads that user's own cache slot, not the admin's", async () => {
-      setUserCookie('admin-1')
-      const adminStore = await import('./recipeStore')
-      adminStore.recipeActions.setRecipes([mockRecipe('admin-own-recipe')])
+    it("switching the site_user cookie between two sessions reads each user's own cache slot, never the other's", async () => {
+      setUserCookie('user-a')
+      const storeA = await import('./recipeStore')
+      storeA.recipeActions.setRecipes([mockRecipe('user-a-own-recipe')])
 
-      // api/admin/impersonate.ts swaps the site_user cookie to the target and hard-reloads.
-      setUserCookie('target-user')
+      setUserCookie('user-b')
       vi.resetModules()
-      const impersonatedStore = await import('./recipeStore')
-      expect(impersonatedStore.$recipes.get()).toEqual([]) // no leak of admin's cache
-      impersonatedStore.recipeActions.setRecipes([mockRecipe('target-recipe')])
+      const storeB = await import('./recipeStore')
+      expect(storeB.$recipes.get()).toEqual([]) // no leak of user-a's cache
+      storeB.recipeActions.setRecipes([mockRecipe('user-b-recipe')])
 
-      // api/admin/revert.ts restores the original admin cookie and hard-reloads.
-      setUserCookie('admin-1')
+      setUserCookie('user-a')
       vi.resetModules()
-      const revertedStore = await import('./recipeStore')
-      expect(revertedStore.$recipes.get()).toEqual([mockRecipe('admin-own-recipe')])
+      const restoredStoreA = await import('./recipeStore')
+      expect(restoredStoreA.$recipes.get()).toEqual([mockRecipe('user-a-own-recipe')])
     })
   })
 })

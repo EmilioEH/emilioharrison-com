@@ -4,7 +4,7 @@ import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
 
 const SYSTEM_PROMPT = `
-You are an expert Grocery Shopping Assistant helping someone prepare a shopping list for H-E-B grocery store.
+You are an expert Grocery Shopping Assistant helping someone prepare a grocery shopping list.
 
 **YOUR CRITICAL TASK:**
 Convert ALL recipe ingredients into STORE-PURCHASABLE units. Think about what you ACTUALLY BUY at a grocery store.
@@ -66,37 +66,16 @@ First combine all amounts of the same ingredient, THEN convert to store units.
 **SOURCE TRACKING:**
 Include ALL recipe IDs and titles that contributed, with their ORIGINAL recipe amounts.
 
-**CATEGORY ASSIGNMENT (H-E-B Store Layout):**
-Assign each item to ONE of these 19 categories (in store walking-path order):
-1. Produce - Fresh fruits, vegetables, herbs (perimeter)
-2. Seafood - Fresh fish, shellfish, shrimp (perimeter)
-3. Meat - Beef, pork, chicken, ground meat (perimeter)
-4. Deli & Prepared - Deli meats, rotisserie, prepared foods (perimeter)
-5. Bakery & Bread - Fresh bread, tortillas, bakery items (perimeter + aisle 4)
-6. Beer & Wine - Alcoholic beverages (aisles 1-3)
-7. Pantry & Condiments - Pasta, rice, sauces, oils, vinegars (aisles 4-5)
-8. Canned & Dry Goods - Canned vegetables, beans, broth, tomatoes (aisle 6)
-9. Baking & Spices - Flour, sugar, spices, extracts, baking supplies (aisle 7)
-10. Breakfast & Cereal - Cereal, oatmeal, syrup, peanut butter, honey (aisle 8)
-11. Snacks - Chips, crackers, nuts, dried fruit (aisles 9-10)
-12. Beverages - Soda, juice, coffee, tea (aisles 11-12)
-13. Paper & Household - Paper towels, foil, plastic wrap, cleaning (aisles 25-28)
-14. Pet - Pet food and supplies (aisles 29-30)
-15. Baby - Baby food, diapers, formula (aisle 31)
-16. Personal Care - Shampoo, soap, dental, razors (aisles 32-35)
-17. Health & Pharmacy - Vitamins, medicine, first aid (aisles 36-38)
-18. Dairy & Eggs - Milk, cheese, yogurt, eggs, butter (perimeter)
-19. Frozen Foods - Frozen vegetables, ice cream, frozen meals (perimeter)
-
-**AISLE ASSIGNMENT:**
-For items in numbered-aisle categories, include the specific aisle number if known:
-- Pantry items: aisles 4-5
-- Canned goods: aisle 6
-- Baking/spices: aisle 7
-- Breakfast: aisle 8
-- Snacks: aisles 9-10
-- Beverages: aisles 11-12
-Leave aisle undefined for perimeter departments (Produce, Meat, Seafood, Deli, Dairy, Frozen).
+**CATEGORY ASSIGNMENT:**
+Assign each item to ONE of these 8 categories (in store-walk order):
+1. Produce - Fresh fruits, vegetables, herbs
+2. Meat - Beef, pork, chicken, seafood, deli
+3. Dairy - Milk, cheese, yogurt, eggs, butter
+4. Bakery - Fresh bread, tortillas, bakery items
+5. Frozen - Frozen vegetables, ice cream, frozen meals
+6. Pantry - Pasta, rice, sauces, oils, canned goods, broth, snacks, cereal
+7. Spices - Flour, sugar, spices, extracts, baking supplies
+8. Other - Everything else (beverages, household, etc.)
 
 **OUTPUT FORMAT:**
 {
@@ -115,8 +94,7 @@ Leave aisle undefined for perimeter departments (Produce, Meat, Seafood, Deli, D
       "name": "chicken broth",
       "purchaseAmount": 2,
       "purchaseUnit": "cartons",
-      "category": "Canned & Dry Goods",
-      "aisle": 6,
+      "category": "Pantry",
       "sources": [
         { "recipeId": "abc", "recipeTitle": "Chicken Soup", "originalAmount": "6 cups broth" }
       ]
@@ -137,7 +115,6 @@ const SCHEMA = {
           purchaseAmount: { type: SchemaType.NUMBER },
           purchaseUnit: { type: SchemaType.STRING },
           category: { type: SchemaType.STRING },
-          aisle: { type: SchemaType.NUMBER },
           sources: {
             type: SchemaType.ARRAY,
             items: {

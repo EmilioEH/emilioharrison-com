@@ -41,7 +41,7 @@ export function dedupeById<T extends { id: string }>(items: T[]): T[] {
  * shape a valid, if partial, `Recipe` — Fuse.js search in `useFilteredRecipes.ts` needs
  * `ingredients.name`.
  */
-export function toListRecipe(doc: Recipe, isFavorite: boolean): RecipeListItem {
+export function toListRecipe(doc: Recipe): RecipeListItem {
   return {
     id: doc.id,
     title: doc.title,
@@ -59,13 +59,11 @@ export function toListRecipe(doc: Recipe, isFavorite: boolean): RecipeListItem {
     createdAt: doc.createdAt || new Date().toISOString(),
     updatedAt: doc.updatedAt || new Date().toISOString(),
     dishType: doc.dishType,
-    estimatedCost: doc.estimatedCost,
     mealType: doc.mealType,
     dietary: doc.dietary,
     equipment: doc.equipment,
     occasion: doc.occasion,
     ingredients: doc.ingredients,
-    isFavorite,
   }
 }
 
@@ -89,16 +87,14 @@ export const GET: APIRoute = async ({ cookies }) => {
       }
     }
 
-    // 2. Scoped recipe queries + the favorites lookup are independent of each other once we know
-    // the creator list — run them in parallel instead of sequentially.
+    // 2. Scoped recipe queries.
     //
     // Visibility = (createdBy IN [me, ...family]) UNION (legacy recipes with no createdBy field
     // at all, which are treated as visible to everyone). Firestore cannot query "field does not
     // exist" server-side (not even via `!=`), so the legacy branch relies on those documents
-    // having been backfilled with an explicit `createdBy: null` — see
-    // scripts/backfill-legacy-created-by.ts. Until that backfill runs in a given environment,
-    // true field-less legacy docs won't match this query; this is a known, documented trade-off
-    // of avoiding a full collection scan on every request (see README/PERFORMANCE-PLAN.md).
+    // having been backfilled with an explicit `createdBy: null`. True field-less legacy docs
+    // won't match this query; this is a known, documented trade-off of avoiding a full collection
+    // scan on every request (see README/PERFORMANCE-PLAN.md).
     const creatorChunks = chunkArray(Array.from(allowedCreators), FIRESTORE_IN_LIMIT)
 
     const recipeQueries: Promise<Recipe[]>[] = [
@@ -108,20 +104,12 @@ export const GET: APIRoute = async ({ cookies }) => {
       ),
     ]
 
-    const favoritesQuery = userId
-      ? db.getCollection(`users/${userId}/favorites`)
-      : Promise.resolve([] as { id: string }[])
-
-    const [recipeResults, favDocs] = await Promise.all([Promise.all(recipeQueries), favoritesQuery])
+    const recipeResults = await Promise.all(recipeQueries)
 
     const rawRecipes = dedupeById(recipeResults.flat())
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const favIds = new Set(favDocs.map((d: any) => d.id))
 
-    // 3. Validate, slim to list fields, and attach `isFavorite`.
-    const validRecipes = rawRecipes
-      .filter(isRecipe)
-      .map((doc) => toListRecipe(doc, favIds.has(doc.id)))
+    // 3. Validate and slim to list fields.
+    const validRecipes = rawRecipes.filter(isRecipe).map((doc) => toListRecipe(doc))
 
     // Merging multiple queries loses the single-query `orderBy` ordering — re-sort here.
     validRecipes.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
@@ -167,15 +155,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       familyId: familyId, // Optional, but saves lookup later
       createdAt: now,
       updatedAt: now,
-      isFavorite: false,
     }
 
-    // Parallel writes instead of batch
     await db.createDocument('recipes', id, newRecipe)
-
-    if (recipeData.isFavorite) {
-      await db.createDocument(`users/${userId}/favorites`, id, { createdAt: now })
-    }
 
     return new Response(JSON.stringify({ success: true, id }), {
       status: 201,

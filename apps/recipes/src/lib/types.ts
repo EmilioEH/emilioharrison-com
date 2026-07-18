@@ -66,22 +66,14 @@ export interface Recipe {
     dishesUsed?: number
     dietary?: string[]
   }
-  estimatedCost?: number // Persisted HEB cost
   // Structured ingredients for grocery list generation (Hybrid Approach)
   structuredIngredients?: StructuredIngredient[]
 
   // Phase 7: Advanced Features
   rating?: number // 1-5
-  isFavorite?: boolean
   createdAt?: string // ISO Date
   updatedAt?: string // ISO Date
-  creationMethod?: 'manual' | 'ai-parse' | 'ai-infer'
-  // Optional: keep track of simplified history
-  versionHistory?: {
-    date: string
-    changeType: 'create' | 'edit' | 'import'
-  }[]
-  // Post-cooking feedback
+  creationMethod?: 'manual' | 'ai-parse'
 
   userNotes?: string
   wouldMakeAgain?: boolean
@@ -94,17 +86,14 @@ export interface Recipe {
   // Enhancement Status (for dual-process import)
   enhancementStatus?: 'pending' | 'processing' | 'complete' | 'error'
   enhancementError?: string // Optional error message if enhancement fails
-
-  // Version History (Full Snapshots)
-  versions?: RecipeVersion[]
 }
 
 /**
  * Slim projection of `Recipe` returned by `GET /api/recipes` (the library list endpoint) — see
  * PERFORMANCE-PLAN.md P3. Contains only the fields `RecipeCard.tsx`/`RecipeLibrary.tsx` render,
- * `useFilteredRecipes.ts` filters/sorts/searches by, and `isFavorite`. Notably excludes `steps`,
- * `structuredSteps`/`structuredIngredients`, step-ingredient mappings, notes, and version history
- * — those only ship on the full document from `GET /api/recipes/[id]`.
+ * `useFilteredRecipes.ts` filters/sorts/searches by. Notably excludes `steps`,
+ * `structuredSteps`/`structuredIngredients`, and step-ingredient mappings —
+ * those only ship on the full document from `GET /api/recipes/[id]`.
  *
  * Client code treats list records as `Recipe` (the existing app-wide type) for convenience, since
  * every field here is also a valid, optional `Recipe` field — but `steps` being absent is exactly
@@ -129,22 +118,12 @@ export type RecipeListItem = Pick<
   | 'createdAt'
   | 'updatedAt'
   | 'dishType'
-  | 'estimatedCost'
   | 'mealType'
   | 'dietary'
   | 'equipment'
   | 'occasion'
   | 'ingredients'
-> & { isFavorite: boolean }
-
-export interface RecipeVersion {
-  id: string
-  recipeId: string
-  timestamp: string // ISO Date
-  changeType: 'manual-edit' | 'ai-refresh' | 'import' | 'restore'
-  createdBy?: string // userId (optional for legacy)
-  data: Partial<Recipe> // Snapshot of core fields
-}
+>
 
 interface StructuredIngredient {
   original: string
@@ -162,18 +141,8 @@ export interface GroceryList {
   weekStartDate: string
   ingredients: ShoppableIngredient[]
   status: 'pending' | 'processing' | 'complete' | 'error'
-  productPickerStatus?: 'pending' | 'searching' | 'ready' | 'complete'
-  unmatchedCount?: number
   createdAt: string
   updatedAt: string
-}
-
-/** HEB product search results for a single grocery item, stored in Firestore */
-export interface ProductMatchResult {
-  ingredientName: string
-  results: HebProduct[]
-  selectedProductId?: string
-  status: 'searching' | 'ready' | 'matched' | 'skipped' | 'error'
 }
 
 /** A single recipe's contribution to a grocery item */
@@ -183,26 +152,6 @@ export interface RecipeContribution {
   originalAmount: string // "1 clove", "4 garlics" - as written in recipe
 }
 
-/** Recurring grocery item stored in Firestore: recurring_grocery_items/{scopeId}/items/{itemId}
- *  scopeId = familyId ?? userId (shared across family members) */
-export interface RecurringGroceryItem {
-  id: string
-  name: string
-  purchaseAmount: number
-  purchaseUnit: string
-  category: string
-  aisle?: number
-  hebPrice?: number
-  hebPriceUnit?: string
-  frequencyWeeks: number // 1 = weekly, 2 = biweekly, N = custom
-  /** @deprecated Use frequencyWeeks. Kept for lazy migration of existing Firestore docs. */
-  frequency?: 'weekly' | 'biweekly' | 'monthly'
-  createdAt: string // ISO date
-  lastAddedWeek?: string // weekStartDate of last injection (undefined if never added)
-  addedBy?: string // userId who added this recurring item
-  addedByName?: string // display name (e.g. "Emilio")
-}
-
 /** Enhanced grocery item with purchasable unit + source breakdown */
 export interface ShoppableIngredient {
   name: string // "garlic"
@@ -210,84 +159,11 @@ export interface ShoppableIngredient {
   purchaseUnit: string // "head"
   category: string // "Produce"
   sources?: RecipeContribution[] // Who needs this and how much (optional for manual items)
-  aisle?: number // H-E-B Manor aisle number (undefined for perimeter departments)
   // Manual item fields
   isManual?: boolean // true if user-added (not AI-generated)
-  hebPrice?: number // price from static DB (e.g., 1.49)
-  hebPriceUnit?: string // "each", "lb", "oz", etc.
-  hebUnitPrice?: number // per-unit price (e.g., 0.25)
-  hebUnitPriceUnit?: string // unit for per-unit price (e.g., "ct", "oz", "lb")
-  // HEB product fields (from URL import or overrides)
-  hebProductId?: string // HEB product ID (e.g., "8271501")
-  hebProductUrl?: string // full HEB product page URL
-  imageUrl?: string // HEB CDN image URL
-  hebSize?: string // customer-friendly size (e.g., "18 ct")
-  storeLocation?: string // in-store location (e.g., "In Dairy on the Back Wall")
-  // Recurring item fields
-  isRecurring?: boolean // true if flagged as recurring
-  recurringFrequencyWeeks?: number // 1 = weekly, 2 = biweekly, N = custom weeks
   // Soft-state flags
   archivedAt?: string // ISO timestamp when soft-deleted; hidden from default view
   unneededThisWeek?: boolean // hidden from default view for current week only
-  // Background refresh tracking
-  hebRefreshedAt?: string // ISO timestamp of last successful HEB price refresh
-}
-
-/** User-saved product metadata that persists across grocery list generations */
-export interface ProductOverride {
-  name: string // normalized product name (key)
-  hebProductId?: string
-  hebProductUrl?: string
-  imageUrl?: string
-  hebPrice?: number
-  hebPriceUnit?: string
-  hebUnitPrice?: number
-  hebUnitPriceUnit?: string
-  hebSize?: string
-  category?: string
-  aisle?: number
-  storeLocation?: string
-  updatedAt: string // ISO date
-}
-
-/** Parsed HEB product data from __NEXT_DATA__ */
-export interface HebProduct {
-  productId: string
-  name: string
-  brand: string
-  price: number
-  salePrice?: number
-  priceUnit: string
-  unitPrice?: number
-  unitPriceUnit?: string
-  size: string
-  category: string
-  imageUrl: string
-  imageUrls: string[]
-  storeLocation?: string
-  inStock: boolean
-  productUrl: string
-  upc?: string
-}
-
-export interface Feedback {
-  id: string
-  timestamp: string
-  type: 'bug' | 'idea'
-  description: string
-  expected?: string // For bugs
-  actual?: string // For bugs
-  screenshot?: string // Base64 string
-  logs: string // JSON string of log entries (Firestore-safe)
-  context: string // JSON string of context object (Firestore-safe)
-  status?: 'open' | 'fixed' | 'wont-fix'
-  resolved_at?: string
-}
-
-export interface LogEntry {
-  type: 'info' | 'warn' | 'error' | 'log'
-  args: string[]
-  timestamp: string
 }
 
 // --- Multi-User Family Sync Types ---
@@ -312,34 +188,6 @@ export interface User {
   familyId?: string // Reference to family group
   joinedAt: string
   status?: 'pending' | 'approved' | 'rejected'
-  notificationPreferences?: {
-    email?: boolean
-    push?: boolean
-    types?: {
-      timers?: boolean
-      mealPlan?: boolean
-      cooking?: boolean
-      invites?: boolean
-    }
-    reminders?: ReminderSettings
-  }
-}
-
-export interface ReminderSettings {
-  weeklyPlan: {
-    enabled: boolean
-    day: string // 'Sunday', 'Monday', etc.
-    time: string // '18:00' (24hr)
-  }
-  groceryList: {
-    enabled: boolean
-    day: string // 'Sunday', 'Monday', etc.
-    time: string // '10:00' (24hr)
-  }
-  dailyCooking: {
-    enabled: boolean
-    offsetHours: number // e.g. 2 hours before
-  }
 }
 
 /** A note added by a family member on a recipe */

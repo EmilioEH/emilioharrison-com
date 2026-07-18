@@ -8,14 +8,11 @@ import { getEmailList } from '../lib/env'
 // call) before the HTML shell could be sent at all, even though `RecipeManagerClient` below is
 // `client:only="react"` and renders nothing server-side anyway. See PERFORMANCE-PLAN.md P6+P7:
 // the shell now renders immediately with cheap/default values, and the client's `useBootstrap()`
-// hook (in RecipeManager.tsx) resolves the real `displayName`/`isAdmin`/`hasOnboarded` from
+// hook (in RecipeManager.tsx) resolves the real `displayName`/`isAdmin` from
 // `GET /api/bootstrap` right after mount, updating RecipeManager's state once it arrives.
 const userId = Astro.cookies.get('site_user')?.value
 const displayName = userId
 let isAdmin = false
-// `undefined` = "not yet known" (see RecipeManager.tsx's onboarding-gating effect, which treats
-// this the same as "wait for bootstrap" rather than assuming either onboarded or not).
-let hasOnboarded: boolean | undefined
 
 const isTestMode = import.meta.env.PUBLIC_TEST_MODE === 'true'
 const isTestUser = userId === 'TestUser' || userId === 'test_user'
@@ -24,13 +21,12 @@ if (isTestMode && isTestUser) {
   // BYPASS: In Test Mode, trust the TestUser completely to avoid "Split Brain" issues
   // between Client Mocks (MSW) and Server Real DB (Firestore)
   isAdmin = true
-  hasOnboarded = true
 } else if (userId) {
   // Cheap, synchronous admin check derived from the `site_email` cookie — the same pattern
   // already used server-side elsewhere for admin gating without a Firestore round trip (see
-  // the PATCH/DELETE handlers in api/families/current.ts). `displayName`/`hasOnboarded` aren't
-  // derivable this cheaply (no email-list-style env var for them), so they stay at their
-  // defaults above until bootstrap resolves the Firestore-verified values client-side.
+  // the PATCH/DELETE handlers in api/families/current.ts). `displayName` isn't derivable this
+  // cheaply, so it stays at its default above until bootstrap resolves the Firestore-verified
+  // value client-side.
   const email = Astro.cookies.get('site_email')?.value
   if (email) {
     const adminEmails = getEmailList(Astro, 'ADMIN_EMAILS')
@@ -40,10 +36,5 @@ if (isTestMode && isTestUser) {
 ---
 
 <RecipeLayout title="My Recipes" isAdmin={isAdmin}>
-  <RecipeManagerClient
-    client:only="react"
-    user={displayName}
-    isAdmin={isAdmin}
-    hasOnboarded={hasOnboarded}
-  />
+  <RecipeManagerClient client:only="react" user={displayName} isAdmin={isAdmin} />
 </RecipeLayout>

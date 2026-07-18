@@ -44,7 +44,9 @@ describe('api-utils', () => {
     it('should handle multiple objects in an array', () => {
       const input = '{"ingredients": [{"name": "Flour"},{"name": "Yeast"},{"name": "Water"'
       const result = closeBalanced(input)
-      expect(result).toBe('{"ingredients": [{"name": "Flour"},{"name": "Yeast"},{"name": "Water"}]}')
+      expect(result).toBe(
+        '{"ingredients": [{"name": "Flour"},{"name": "Yeast"},{"name": "Water"}]}',
+      )
       expect(() => JSON.parse(result)).not.toThrow()
     })
 

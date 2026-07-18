@@ -1,23 +1,8 @@
 import React from 'react'
 import { useStore } from '@nanostores/react'
 
-import {
-  X,
-  Bell,
-  Settings,
-  MessageSquare,
-  Info,
-  LayoutDashboard,
-  FolderUp,
-  CheckSquare,
-  LogOut,
-  UsersRound,
-  ShieldAlert,
-  GraduationCap,
-  UserPlus,
-} from 'lucide-react'
+import { X, Info, LogOut, UsersRound, ShieldAlert, UserPlus } from 'lucide-react'
 import { burgerMenuOpen, closeBurgerMenu } from '../../lib/burgerMenuStore'
-import { openFeedbackModal } from '../../lib/feedbackStore'
 import { $pendingInvites } from '../../lib/familyStore'
 import { clearPersistedRecipes } from '../../lib/recipeStore'
 
@@ -29,37 +14,6 @@ interface GlobalBurgerMenuProps {
 const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
   const isOpen = useStore(burgerMenuOpen)
   const pendingInvites = useStore($pendingInvites)
-
-  const handleSettings = () => {
-    closeBurgerMenu()
-    // Navigate to settings - dispatch custom event that RecipeManager listens to
-    window.dispatchEvent(new CustomEvent('navigate-to-settings'))
-  }
-
-  const handleWeekPlannerSettings = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-week-planner-settings'))
-  }
-
-  const handleNotifications = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-notifications'))
-  }
-
-  const handleBulkImport = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-bulk-import'))
-  }
-
-  const handleFeedback = () => {
-    closeBurgerMenu()
-    openFeedbackModal()
-  }
-
-  const handleFeedbackDashboard = () => {
-    closeBurgerMenu()
-    window.dispatchEvent(new CustomEvent('navigate-to-feedback-dashboard'))
-  }
 
   const handleManageFamily = () => {
     closeBurgerMenu()
@@ -76,7 +30,7 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
 
     // Also clear the service worker's cached app shell (see public/sw.js). The shell HTML is
     // network-first (so it's not usually served stale while online), but it IS served from
-    // cache when offline — and it embeds this user's displayName/isAdmin/hasOnboarded. Without
+    // cache when offline — and it embeds this user's displayName/isAdmin. Without
     // this, a different user logging in on the same device and going offline before their
     // first successful page load could briefly see this user's cached shell.
     navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_SHELL_CACHE' })
@@ -121,78 +75,6 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
             <div className="p-2" role="menu">
               <button
                 role="menuitem"
-                onClick={handleBulkImport}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <FolderUp className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Import Recipes</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleNotifications}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <Bell className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Notifications</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleSettings}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <Settings className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Settings</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleWeekPlannerSettings}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Week Planner Settings</span>
-              </button>
-
-              {/* Admin Dashboard Link */}
-              {props.isAdmin && (
-                <>
-                  <button
-                    role="menuitem"
-                    onClick={handleFeedbackDashboard}
-                    className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                  >
-                    <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Feedback Dashboard</span>
-                  </button>
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      closeBurgerMenu()
-                      window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
-                    }}
-                    className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                  >
-                    <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Admin Dashboard</span>
-                  </button>
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      closeBurgerMenu()
-                      window.location.href = '/protected/recipes?force_onboarding=true'
-                    }}
-                    className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                  >
-                    <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Onboarding (Demo)</span>
-                  </button>
-                </>
-              )}
-
-              <button
-                role="menuitem"
                 onClick={handleManageFamily}
                 className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
               >
@@ -219,27 +101,20 @@ const GlobalBurgerMenu: React.FC<GlobalBurgerMenuProps> = (props) => {
                 <span className="font-medium text-foreground">Invite</span>
               </button>
 
-              <button
-                role="menuitem"
-                onClick={() => {
-                  closeBurgerMenu()
-                  window.dispatchEvent(new CustomEvent('toggle-selection-mode'))
-                }}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-              >
-                <CheckSquare className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Select Recipes</span>
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={handleFeedback}
-                className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
-                aria-label="Send Feedback"
-              >
-                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Send Feedback</span>
-              </button>
+              {/* Admin Dashboard Link */}
+              {props.isAdmin && (
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    closeBurgerMenu()
+                    window.dispatchEvent(new CustomEvent('navigate-to-admin-dashboard'))
+                  }}
+                  className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent active:bg-accent"
+                >
+                  <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">Admin Dashboard</span>
+                </button>
+              )}
 
               <a
                 role="menuitem"

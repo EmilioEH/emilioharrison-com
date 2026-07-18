@@ -15,7 +15,6 @@ export interface Filters {
   dietary?: string[]
   equipment?: string[]
   occasion?: string[]
-  onlyFavorites?: boolean
 }
 
 // Session-level cache so filters survive in-app navigation and browser back button
@@ -126,7 +125,6 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
       if (!matchesArrayFilter(filters.occasion, r.occasion)) return false
 
       // Favorites filter
-      if (filters.onlyFavorites && !r.isFavorite) return false
 
       return true
     })
@@ -152,16 +150,6 @@ export const useFilteredRecipes = (recipes: Recipe[], view: string) => {
         const rA = a.rating || 0
         const rB = b.rating || 0
         return rA === rB ? a.title.localeCompare(b.title) : rB - rA
-      },
-      'cost-low': (a, b) => {
-        const cA = a.estimatedCost ?? Infinity
-        const cB = b.estimatedCost ?? Infinity
-        return cA === cB ? a.title.localeCompare(b.title) : cA - cB
-      },
-      'cost-high': (a, b) => {
-        const cA = a.estimatedCost ?? -1
-        const cB = b.estimatedCost ?? -1
-        return cA === cB ? a.title.localeCompare(b.title) : cB - cA
       },
     }
 

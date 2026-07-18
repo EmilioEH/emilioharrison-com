@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a monorepo containing two Astro applications deployed to Cloudflare Pages with a custom routing gateway:
 
-- **apps/recipes** ("Chefboard"): Feature-rich recipe management PWA with Firebase backend, AI recipe parsing/enhancement, authentication, family sharing, grocery lists, and cooking mode. See `apps/recipes/README.md` for the full feature list and architectural deep-dives — read it before making non-trivial changes there.
+- **apps/recipes** ("Chefboard"): Focused recipe management PWA — browse/view/add recipes, add a recipe to the active week, generate a grocery list for it — with a Firebase backend, AI recipe parsing/enhancement, authentication, and family sharing. See `apps/recipes/README.md` for the full feature list and architectural deep-dives — read it before making non-trivial changes there.
 - **apps/website**: Personal portfolio/blog site using Keystatic CMS for content management
 
 Both apps use Astro SSR (`output: 'server'`) with React islands, Tailwind CSS, and deploy to Cloudflare Workers.
@@ -43,7 +43,7 @@ npm run test:stryker     # Mutation tests (only api-utils.js, grocery-utils.js)
 
 # To run a single test file/case, call the runner directly, e.g.:
 #   npx vitest run src/lib/date-helpers.test.ts
-#   npx playwright test tests/cooking-mode.spec.ts -g "starts a session"
+#   npx playwright test tests/grocery-list.spec.ts -g "displays error message when AI generation fails"
 
 # Type Checking & Linting
 npm run check:ts         # tsc --noEmit
@@ -63,11 +63,9 @@ npm run check:env        # Validate .env.local has required keys (scripts/env-ch
 
 # Utilities
 npm run format            # Prettier
-npm run sync:feedback     # Pull feedback from Firebase (scripts/sync-feedback.ts)
-npm run feedback:resolve  # Mark feedback resolved (scripts/resolve-feedback.ts)
 ```
 
-Required env keys (`scripts/env-check.ts`): `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `PUBLIC_FIREBASE_*`, `PUBLIC_VAPID_KEY`, `VAPID_PRIVATE_KEY`. Cloudflare runtime env: `FIREBASE_SERVICE_ACCOUNT` (JSON string).
+Required env keys (`scripts/env-check.ts`): `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `PUBLIC_FIREBASE_*`. Cloudflare runtime env: `FIREBASE_SERVICE_ACCOUNT` (JSON string).
 
 ### Website App (`apps/website`)
 
@@ -110,7 +108,7 @@ A MessageChannel polyfill is injected at build time for Cloudflare Workers compa
 **AI Integration** — split across two providers by task, do not conflate them:
 
 - **OpenRouter** (`createOpenRouterClient` in `src/lib/api-helpers.ts`, OpenAI-compatible client, `OPENROUTER_API_KEY`): used **only** for the initial photo-scan flow (`pages/api/parse-recipe.ts`), which OCRs a recipe-card photo in three phases (ingredients, instructions, then structuring). All three phases use a single model, `qwen/qwen3.5-9b` — do not split vision/text models here again without updating this doc.
-- **Gemini** (`initGeminiClient` in `src/lib/api-helpers.ts`, `@google/genai`, `GEMINI_API_KEY`): used for everything else — `executeAiParse()` in `src/lib/services/ai-parser.ts` (AI Refresh and background Enhancement), grocery list generation, and grocery cost estimation. Model: `gemini-2.5-flash`. The dependency is pinned to `1.34.0` in `apps/recipes/package.json` because `@google/genai` v1.52.0 breaks the Cloudflare Workers runtime — do not bump it without verifying Workers compatibility.
+- **Gemini** (`initGeminiClient` in `src/lib/api-helpers.ts`, `@google/genai`, `GEMINI_API_KEY`): used for everything else — `executeAiParse()` in `src/lib/services/ai-parser.ts` (AI Refresh and background Enhancement) and grocery list generation. Model: `gemini-2.5-flash`. The dependency is pinned to `1.34.0` in `apps/recipes/package.json` because `@google/genai` v1.52.0 breaks the Cloudflare Workers runtime — do not bump it without verifying Workers compatibility.
   - `style='strict'`: initial import (transcription only, fast path so the user can save immediately).
   - `style='enhanced'`: background "Kenji-style" restructuring (scientific step grouping, descriptive paragraphs, standardized units). Triggered automatically after save via a **Total Reparse** from the original `sourceUrl`/`sourceImage` when available, not a text-to-text touch-up.
   - Never force enhancement on initial import — both styles must keep working when touching `ai-parser.ts`.
@@ -129,24 +127,21 @@ A MessageChannel polyfill is injected at build time for Cloudflare Workers compa
 
 - **Authentication**: Cookie-based middleware (`src/middleware.ts`) checks `site_auth` and `site_user` cookies.
 - **Request Context Pattern**: Middleware calls `setRequestContext(context)` (`lib/request-context.ts`) so modules outside the request pipeline (e.g. `firebase-server.ts` reading `FIREBASE_SERVICE_ACCOUNT`) can access Cloudflare runtime env.
-- **State Management**: Nanostores with `@nanostores/persistent` — `cookingSession.ts`, `recipeStore.ts`, `familyStore.ts`, `burgerMenuStore.ts`, `dialogStore.ts`, `feedbackStore.ts`.
+- **State Management**: Nanostores with `@nanostores/persistent` — `recipeStore.ts`, `weekStore.ts`, `familyStore.ts`, `burgerMenuStore.ts`, `dialogStore.ts`, `aiOperationStore.ts`.
 - **Real-time sync**: `useFirestoreDocument` hook (`src/lib/firestoreHooks.ts`) manages Firestore subscription lifecycle, gated on `authStore.ts` having a valid user.
 - **Image extraction from URLs** (`src/lib/services/extract-images.ts`): tiered strategy — JSON-LD → Open Graph → Twitter Cards → Microdata — filtering out icons/avatars/UI chrome.
 - **Full-screen nested views** (Week View, Recipe Detail): use `flex flex-1 flex-col min-h-0` for the root, not `absolute inset-0` — the parent `<main>` in `RecipeManager` is `flex-1`, and absolutely-positioned children don't contribute to its height (causes a collapsed-container bug).
 - **Scrollspy**: `RecipeLibrary.tsx` manually syncs sticky category headers to scroll position (`onScroll`, `scrollCache`) — check this when refactoring the list view.
 - **Cloudflare KV**: session storage binding named `SESSION`.
-- **API Routes**: organized under `src/pages/api/` by domain (auth, admin, recipes, cooking, uploads, etc.).
+- **API Routes**: organized under `src/pages/api/` by domain (auth, admin, recipes, families, grocery, week, uploads).
 
 **Directory Structure**:
 
-- `src/lib/` - stores, Firebase clients, AI/service helpers, utilities
+- `src/lib/` - stores, Firebase clients, AI/service helpers, utilities (`src/lib/services/` holds ai-parser, extract-images, grocery-service, recipe-enhancer)
 - `src/components/` - React components (feature components + `components/ui` shadcn/Radix primitives)
 - `src/pages/api/` - API endpoints
 - `src/pages/` - Astro pages; `[...path].astro` is the SPA fallback (see above)
-- `src/services/` - service layer (ai-parser, extract-images, etc.)
-- `src/utils/` - utilities (e.g. ingredient parsing)
-- `src/mocks/` - MSW mocks for testing
-- `scripts/` - maintenance scripts (migrations, feedback sync, env check)
+- `scripts/` - maintenance scripts (migrations, env check)
 - `tests/` - E2E Playwright tests + `tests/msw-setup.ts` mocks
 
 ### Website App Architecture
@@ -267,10 +262,10 @@ Cloudflare Pages, both apps behind one gateway worker:
 
 This repo has its own agent-instruction layers beyond this file — read them when working in `apps/recipes`, since they encode Emilio's actual workflow preferences:
 
-- `.github/copilot-instructions.md` — Copilot's equivalent of this file; five named workflows (Explore, Iterate, Build, Review, Improve) map to custom agents in `.github/agents/` and prompt shortcuts in `.github/prompts/` (`/explore-feature`, `/iterate-feature`, `/build-feature`, `/improve-feature`, `/quality-gate`, `/check-feedback`, `/add-recipe-field`). Key rule: never start implementing until a diagnosis/plan has been shown and approved.
+- `.github/copilot-instructions.md` — Copilot's equivalent of this file; five named workflows (Explore, Iterate, Build, Review, Improve) map to custom agents in `.github/agents/` and prompt shortcuts in `.github/prompts/` (`/explore-feature`, `/iterate-feature`, `/build-feature`, `/improve-feature`, `/quality-gate`, `/add-recipe-field`). Key rule: never start implementing until a diagnosis/plan has been shown and approved.
 - `.agent/rules/` — always-on constraints: `00-agent-workflow.md` (plan → implement → self-correct → verify → update README), `01-tech-stack.md`, `02-quality-gate.md` (lint/tsc/astro-check/format, then knip/depcheck/jscpd after refactors, then Playwright before finishing), `03-design-system.md`, `04-ios-webkit.md`, `persona.md` (communicate in plain UX language, not technical jargon — "the button wasn't visible" not "DOM element not found").
 - `.agent/knowledge/` — domain reference: recipe schema, grocery logic, Gemini API notes, sync standards.
-- `.agent/workflows/` — step-by-step procedures (run tests, run locally, check feedback, migrate mappings, etc.).
+- `.agent/workflows/` — step-by-step procedures (run tests, run locally, migrate mappings, etc.).
 - `apps/recipes/README.md` is treated as the architectural source of truth for the recipes app in these workflows — update it when a change affects architecture, features, or setup.
 
 ## Important Notes

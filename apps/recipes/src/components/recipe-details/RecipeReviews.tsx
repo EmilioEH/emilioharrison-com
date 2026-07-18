@@ -7,7 +7,7 @@ import { cn } from '../../lib/utils'
 import { $currentUserId } from '../../lib/familyStore'
 import type { FamilyRecipeData, Review } from '../../lib/types'
 
-interface CookingHistorySummaryProps {
+interface RecipeReviewsProps {
   averageRating: number
   totalRatings: number
   lastCooked?: string
@@ -18,7 +18,7 @@ interface CookingHistorySummaryProps {
   onRecipeRefresh?: () => void | Promise<void>
 }
 
-export const CookingHistorySummary: React.FC<CookingHistorySummaryProps> = ({
+export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
   averageRating,
   totalRatings,
   lastCooked,

@@ -15,9 +15,14 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
-import { weekState, switchWeekContext, currentWeekRecipes, $groceryNeedsRegen } from '../../../lib/weekStore'
+import {
+  weekState,
+  switchWeekContext,
+  currentWeekRecipes,
+  $groceryNeedsRegen,
+} from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
-import { buildGroceryItems, calculateGroceryCost } from '../../../lib/grocery-utils'
+import { buildGroceryItems } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import {
@@ -28,14 +33,13 @@ import {
 } from '../../ui/dropdown-menu'
 import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
-import { ProductPicker } from '../grocery/ProductPicker'
 import { alert } from '../../../lib/dialogStore'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
 import { AiProgressBar } from '../../ui/AiProgressBar'
 import { useAuth } from '../../../lib/authStore'
-import { useFirestoreDocument, useFirestoreCollection } from '../../../lib/firestoreHooks'
-import type { Recipe, GroceryList as GroceryListType, ProductMatchResult } from '../../../lib/types'
+import { useFirestoreDocument } from '../../../lib/firestoreHooks'
+import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
 
 import type { User } from 'firebase/auth'
 
@@ -113,11 +117,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     loading: aiLoading,
     error: firestoreError,
   } = useFirestoreDocument<GroceryListType>(listId ? `grocery_lists/${listId}` : null)
-
-  // Subscribe to product match results for Product Picker
-  const { data: productMatches } = useFirestoreCollection<ProductMatchResult>(
-    listId ? `grocery_lists/${listId}/product_matches` : null,
-  )
 
   // Check for stuck processing
   const [isStuck, setIsStuck] = useState(false)
@@ -361,37 +360,10 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       {activeTab === 'grocery' &&
         groceryRecipes.length > 0 &&
         (() => {
-          const displayItems = hasSmartList ? aiGroceryList!.ingredients : groceryItems
-          const hebCost = calculateGroceryCost(displayItems)
           return (
             <div className="touch-manipulation border-b border-border bg-muted/20 px-4 py-2.5">
               <Inline spacing="sm" justify="between" align="center" className="mx-auto max-w-2xl">
-                {/* Left: Price pill */}
-                <div className="shrink-0">
-                  {hebCost.hasAnyData ? (
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                        hebCost.isComplete
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                      }`}
-                    >
-                      ${hebCost.total.toFixed(2)}
-                      {!hebCost.isComplete && (
-                        <>
-                          <AlertTriangle className="h-3 w-3" />
-                          <span className="font-medium">
-                            {hebCost.verifiedCount}/{hebCost.itemCount}
-                          </span>
-                        </>
-                      )}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">No prices yet</span>
-                  )}
-                </div>
-
-                {/* Center: Standard / Smart toggle */}
+                {/* Standard / Smart toggle */}
                 <div className="flex items-center rounded-full border border-border bg-background p-0.5">
                   <button
                     onClick={() => {
@@ -499,7 +471,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
       <div className="flex-1 overflow-y-auto pb-tab-bar">
         {activeTab === 'plan' && (
           <WeekPlanView
-            activeWeekStart={activeWeekStart}
             currentRecipes={currentRecipes}
             allRecipes={allRecipes}
             onSelectRecipe={onSelectRecipe}
@@ -555,26 +526,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 </Inline>
               </div>
             )}
-
-            {/* Product Picker - shown after smart list is ready when items need HEB matching */}
-            {hasSmartList &&
-              scopeId &&
-              aiGroceryList &&
-              aiGroceryList.productPickerStatus &&
-              aiGroceryList.productPickerStatus !== 'complete' && (
-                <div className="px-4 pt-3">
-                  <ProductPicker
-                    ingredients={displayedIngredients}
-                    productMatches={productMatches}
-                    productPickerStatus={aiGroceryList.productPickerStatus}
-                    weekStartDate={activeWeekStart}
-                    userId={scopeId}
-                    onItemMatched={() => {
-                      // Firestore real-time listener auto-updates
-                    }}
-                  />
-                </div>
-              )}
 
             <GroceryList
               ingredients={displayedIngredients}

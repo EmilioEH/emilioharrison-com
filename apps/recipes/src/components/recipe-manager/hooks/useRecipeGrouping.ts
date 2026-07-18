@@ -9,8 +9,6 @@ const SORT_ORDERS: Record<string, string[]> = {
   protein: ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'],
   mealType: ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
   dishType: ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'],
-  'cost-low': ['Under $10', '$10 - $20', 'Over $20', 'Unknown'],
-  'cost-high': ['Over $20', '$10 - $20', 'Under $10', 'Unknown'],
 }
 
 // Helper: Sort groups by predefined order or alphabetically
@@ -42,14 +40,6 @@ const groupByTime: GroupKeyResolver = (recipe) => {
   return 'Over 1 Hour'
 }
 
-const groupByCost: GroupKeyResolver = (recipe) => {
-  const cost = recipe.estimatedCost
-  if (cost === undefined || cost === null) return 'Unknown'
-  if (cost < 10) return 'Under $10'
-  if (cost < 20) return '$10 - $20'
-  return 'Over $20'
-}
-
 // Lookup table for group key resolvers
 const GROUP_KEY_RESOLVERS: Record<string, GroupKeyResolver> = {
   protein: groupByProtein,
@@ -58,9 +48,6 @@ const GROUP_KEY_RESOLVERS: Record<string, GroupKeyResolver> = {
   alpha: groupByAlpha,
   recent: groupByRecent,
   time: groupByTime,
-
-  'cost-low': groupByCost,
-  'cost-high': groupByCost,
 }
 
 // Updated Helper: Returns ARRAY of keys

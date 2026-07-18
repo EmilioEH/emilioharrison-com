@@ -1,13 +1,13 @@
 import React, { useState, useLayoutEffect, useEffect, useMemo } from 'react'
-import { motion, type Variants } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ChefHat } from 'lucide-react'
 import type { Recipe } from '../../lib/types'
 import { useRecipeGrouping } from './hooks/useRecipeGrouping'
 import { useStore } from '@nanostores/react'
 import {
   allPlannedRecipes,
-  getPlannedDatesForRecipe,
-  removeRecipeFromDay,
+  getPlannedWeeksForRecipe,
+  removeRecipeFromWeek,
 } from '../../lib/weekStore'
 import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 import { RecipeCard } from './RecipeCard'
@@ -25,19 +25,6 @@ const containerVariants = {
   },
 }
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: 'spring',
-      bounce: 0,
-      duration: 0.3,
-    },
-  },
-}
-
 // Global scroll cache
 const scrollCache: Record<string, string | number> = {}
 
@@ -46,8 +33,6 @@ interface RecipeLibraryProps {
   onSelectRecipe: (recipe: Recipe) => void
   onToggleThisWeek: (id: string) => void
   sort: string
-  isSelectionMode: boolean
-  selectedIds: Set<string>
   onClearSearch?: () => void
   searchQuery?: string
   hasSearch?: boolean
@@ -70,8 +55,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   onSelectRecipe,
   onToggleThisWeek,
   sort,
-  isSelectionMode,
-  selectedIds,
   hasSearch,
   scrollContainer,
   allowManagement = false,
@@ -141,12 +124,6 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
         else if (totalMinutes <= 30) recipeCategories.push('30 Min or Less')
         else if (totalMinutes <= 60) recipeCategories.push('Under 1 Hour')
         else recipeCategories.push('Over 1 Hour')
-      } else if (sort === 'cost-low' || sort === 'cost-high') {
-        const cost = recipe.estimatedCost
-        if (cost === undefined || cost === null) recipeCategories.push('Unknown')
-        else if (cost < 10) recipeCategories.push('Under $10')
-        else if (cost < 20) recipeCategories.push('$10 - $20')
-        else recipeCategories.push('Over $20')
       }
 
       // Check if any of this recipe's categories are selected
@@ -171,71 +148,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   return (
     <div className="pb-24 animate-in fade-in">
       {/* Main Content Area */}
-      {/* Main Content Area */}
-      {isSelectionMode ? (
-        // COMPACT SELECTION VIEW
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-wrap gap-4 p-4 pt-4"
-        >
-          {recipes.map((recipe) => {
-            const isSelected = selectedIds?.has(recipe.id)
-            const dateStr = new Date(
-              recipe.updatedAt || recipe.createdAt || new Date().toISOString(),
-            ).toLocaleDateString('en-US', {
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-            })
-
-            return (
-              <motion.div
-                variants={itemVariants}
-                key={recipe.id}
-                role="button"
-                onClick={() => onSelectRecipe(recipe)}
-                className={`flex w-full items-center gap-4 rounded-lg border p-3 transition-colors md:w-[calc(50%-8px)] lg:w-[calc(33.33%-11px)] ${
-                  isSelected
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-card hover:bg-accent/50'
-                }`}
-              >
-                {/* Checkbox */}
-                <div
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                    isSelected
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-muted-foreground/30'
-                  }`}
-                >
-                  {isSelected && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-3.5 w-3.5"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </div>
-
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-base font-medium text-foreground">
-                    {recipe.title}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{dateStr}</span>
-                </div>
-              </motion.div>
-            )
-          })}
-        </motion.div>
-      ) : hasSearch ? (
+      {hasSearch ? (
         // FLAT SEARCH RESULTS VIEW
         <motion.div
           variants={containerVariants}
@@ -252,13 +165,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                isSelectionMode={isSelectionMode}
-                isSelected={selectedIds.has(recipe.id)}
                 onSelect={onSelectRecipe}
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
-                plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
+                plannedWeeks={getPlannedWeeksForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
               />
             ))}
           </div>
@@ -292,13 +203,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                isSelectionMode={isSelectionMode}
-                isSelected={selectedIds.has(recipe.id)}
                 onSelect={onSelectRecipe}
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
-                plannedDates={getPlannedDatesForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
+                plannedWeeks={getPlannedWeeksForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
               />
             ))}
           </div>
@@ -312,17 +221,16 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           const selectedRecipe = recipes.find((r) => r.id === managementRecipeId)
           if (!selectedRecipe) return null
 
-          const plannedDates = getPlannedDatesForRecipe(managementRecipeId)
+          const plannedWeeks = getPlannedWeeksForRecipe(managementRecipeId)
 
           return (
             <RecipeManagementSheet
               isOpen={true}
               onClose={() => setManagementRecipeId(null)}
-              recipeId={managementRecipeId}
               recipeTitle={selectedRecipe.title}
-              currentPlannedDays={plannedDates}
+              currentPlannedWeeks={plannedWeeks}
               onRemove={async () => {
-                await removeRecipeFromDay(managementRecipeId)
+                await removeRecipeFromWeek(managementRecipeId)
                 // Close the sheet after removal so the UI reflects the change
                 setManagementRecipeId(null)
               }}

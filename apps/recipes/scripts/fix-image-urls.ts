@@ -86,8 +86,12 @@ async function run() {
         patch.images = fixedImages
         const brokenCount = r.images.filter((u: string) => u.startsWith(BROKEN_PREFIX)).length
         changes.push(`  images[]: fixed ${brokenCount} URL(s)`)
-        changes.push(`    before: ${r.images.filter((u: string) => u.startsWith(BROKEN_PREFIX)).join(', ')}`)
-        changes.push(`    after:  ${fixedImages.filter((u: string) => u.startsWith(CORRECT_PREFIX) && r.images.includes(u.replace(CORRECT_PREFIX, BROKEN_PREFIX))).join(', ')}`)
+        changes.push(
+          `    before: ${r.images.filter((u: string) => u.startsWith(BROKEN_PREFIX)).join(', ')}`,
+        )
+        changes.push(
+          `    after:  ${fixedImages.filter((u: string) => u.startsWith(CORRECT_PREFIX) && r.images.includes(u.replace(CORRECT_PREFIX, BROKEN_PREFIX))).join(', ')}`,
+        )
       }
     }
 
@@ -121,9 +125,7 @@ async function run() {
 
   console.log('─'.repeat(60))
   if (DRY_RUN) {
-    console.log(
-      `Dry run complete. ${fixedCount} recipe(s) would be updated.`,
-    )
+    console.log(`Dry run complete. ${fixedCount} recipe(s) would be updated.`)
     console.log('To apply changes, run: DRY_RUN=false npx tsx scripts/fix-image-urls.ts')
   } else {
     console.log(`Done. ${fixedCount} recipe(s) updated.`)

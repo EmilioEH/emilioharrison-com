@@ -10,10 +10,7 @@ import {
   ListFilter,
   X,
   CheckSquare,
-  DollarSign,
   Tag,
-  CalendarDays,
-  MapPin,
   ListChecks,
   Undo2,
 } from 'lucide-react'
@@ -23,14 +20,11 @@ import {
   categorizeShoppableIngredients,
 } from '../../../lib/grocery-logic'
 import { confirm } from '../../../lib/dialogStore'
-import type { Recipe, ShoppableIngredient, ProductOverride } from '../../../lib/types'
+import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 import { AddItemInput } from './AddItemInput'
-import { RecurringItemToggle } from './RecurringItemToggle'
 import { GroceryItemEditSheet } from './GroceryItemEditSheet'
 import { GroceryListSelectionBar } from './GroceryListSelectionBar'
 import { triggerHaptic, LONG_PRESS_MS } from '../../../lib/haptics'
-import { RecurringListSheet } from './RecurringListSheet'
-import { useHebPriceRefresh } from '../../../hooks/useHebPriceRefresh'
 
 type ListFilterMode = 'default' | 'archived' | 'unneeded'
 
@@ -116,12 +110,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggered = useRef(false)
 
-  // 4d. Recurring sheet state
-  const [showRecurringSheet, setShowRecurringSheet] = useState(false)
-
-  // 4e. Recurring item count for empty state
-  const [recurringCount, setRecurringCount] = useState<number | null>(null)
-
   // Persist effect
   useEffect(() => {
     localStorage.setItem('grocery-checked', JSON.stringify(Array.from(checkedItems)))
@@ -159,27 +147,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     const base = import.meta.env.BASE_URL
     return base.endsWith('/') ? base : `${base}/`
   }, [])
-
-  // Background HEB price refresh (silent, stale items only, 12h threshold)
-  useHebPriceRefresh(ingredients, weekStartDate, userId, getBaseUrl())
-
-  // Fetch recurring count when list is empty
-  const shouldFetchRecurring = ingredients.length === 0 && !!userId
-  useEffect(() => {
-    if (!shouldFetchRecurring) return
-    let cancelled = false
-    fetch(`${getBaseUrl()}api/grocery/recurring`)
-      .then((res) => res.json())
-      .then((data: { items?: { id: string }[] }) => {
-        if (!cancelled) setRecurringCount(data.items?.length ?? 0)
-      })
-      .catch(() => {
-        if (!cancelled) setRecurringCount(0)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [shouldFetchRecurring, getBaseUrl])
 
   // 5. Manual Item Addition
   const handleAddItem = useCallback(
@@ -261,101 +228,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     [weekStartDate, userId, onItemAdded, getBaseUrl],
   )
 
-  // 8. Save product override (persists across weeks)
-  const handleSaveOverride = useCallback(
-    async (override: ProductOverride) => {
-      if (!userId) return
-
-      await fetch(`${getBaseUrl()}api/grocery/overrides`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, override }),
-      })
-    },
-    [userId, getBaseUrl],
-  )
-
-  // 9. Recurring Item Toggle
-  const handleToggleRecurring = useCallback(
-    async (itemName: string, frequencyWeeks: number | null) => {
-      if (!userId) {
-        console.warn('Cannot toggle recurring: missing userId')
-        return
-      }
-
-      const baseUrl = getBaseUrl()
-
-      // Find the item in the current list to get its details
-      const item = ingredients.find(
-        (ing) => ing.name.toLowerCase().trim() === itemName.toLowerCase().trim(),
-      )
-
-      if (frequencyWeeks === null) {
-        // Remove from recurring - need to find the item ID first
-        const getResponse = await fetch(`${baseUrl}api/grocery/recurring`)
-        if (getResponse.ok) {
-          const { items } = await getResponse.json()
-          const recurringItem = items?.find(
-            (i: { name: string }) => i.name.toLowerCase().trim() === itemName.toLowerCase().trim(),
-          )
-          if (recurringItem) {
-            await fetch(`${baseUrl}api/grocery/recurring`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                itemId: recurringItem.id,
-              }),
-            })
-          }
-        }
-      } else if (item) {
-        // Add or update recurring item
-        await fetch(`${baseUrl}api/grocery/recurring`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            item: {
-              name: item.name,
-              purchaseAmount: item.purchaseAmount,
-              purchaseUnit: item.purchaseUnit,
-              category: item.category,
-              frequencyWeeks,
-              ...(item.aisle !== undefined && { aisle: item.aisle }),
-              ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
-              ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
-              ...(item.imageUrl && { imageUrl: item.imageUrl }),
-              ...(item.hebProductId && { hebProductId: item.hebProductId }),
-              ...(item.hebProductUrl && { hebProductUrl: item.hebProductUrl }),
-              ...(item.hebSize && { hebSize: item.hebSize }),
-              ...(item.storeLocation && { storeLocation: item.storeLocation }),
-              ...(item.hebUnitPrice !== undefined && { hebUnitPrice: item.hebUnitPrice }),
-              ...(item.hebUnitPriceUnit && { hebUnitPriceUnit: item.hebUnitPriceUnit }),
-            },
-          }),
-        })
-      }
-
-      // Refresh the list to show updated recurring status
-      if (weekStartDate) {
-        await fetch(`${baseUrl}api/grocery/items`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            weekStartDate,
-            userId,
-            itemName,
-            updates:
-              frequencyWeeks !== null
-                ? { isRecurring: true, recurringFrequencyWeeks: frequencyWeeks }
-                : { isRecurring: false, recurringFrequencyWeeks: undefined },
-          }),
-        })
-      }
-      onItemAdded?.()
-    },
-    [userId, weekStartDate, ingredients, onItemAdded, getBaseUrl],
-  )
-
   // 10. Selection & bulk actions
   const toggleSelection = useCallback((itemName: string) => {
     setSelectedKeys((prev) => {
@@ -412,67 +284,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
       setSelectedKeys(new Set(visibleItemNames))
     }
   }, [allSelected, visibleItemNames])
-
-  const getSelectedIngredients = useCallback((): ShoppableIngredient[] => {
-    return ingredients.filter((ing) => selectedKeys.has(ing.name))
-  }, [ingredients, selectedKeys])
-
-  const handleBulkRecurring = useCallback(
-    async (frequencyWeeks: number) => {
-      if (!userId || selectedKeys.size === 0) return
-      const baseUrl = getBaseUrl()
-      const selectedItems = getSelectedIngredients()
-
-      const recurringPayload = selectedItems.map((item) => ({
-        name: item.name,
-        purchaseAmount: item.purchaseAmount,
-        purchaseUnit: item.purchaseUnit,
-        category: item.category,
-        frequencyWeeks,
-        ...(item.aisle !== undefined && { aisle: item.aisle }),
-        ...(item.hebPrice !== undefined && { hebPrice: item.hebPrice }),
-        ...(item.hebPriceUnit !== undefined && { hebPriceUnit: item.hebPriceUnit }),
-        ...(item.imageUrl && { imageUrl: item.imageUrl }),
-        ...(item.hebProductId && { hebProductId: item.hebProductId }),
-        ...(item.hebProductUrl && { hebProductUrl: item.hebProductUrl }),
-        ...(item.hebSize && { hebSize: item.hebSize }),
-        ...(item.storeLocation && { storeLocation: item.storeLocation }),
-        ...(item.hebUnitPrice !== undefined && { hebUnitPrice: item.hebUnitPrice }),
-        ...(item.hebUnitPriceUnit && { hebUnitPriceUnit: item.hebUnitPriceUnit }),
-      }))
-
-      await fetch(`${baseUrl}api/grocery/recurring`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: recurringPayload }),
-      })
-
-      if (weekStartDate) {
-        await fetch(`${baseUrl}api/grocery/items`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            weekStartDate,
-            userId,
-            names: Array.from(selectedKeys),
-            updates: { isRecurring: true, recurringFrequencyWeeks: frequencyWeeks },
-          }),
-        })
-      }
-
-      exitSelectionMode()
-      onItemAdded?.()
-    },
-    [
-      userId,
-      weekStartDate,
-      selectedKeys,
-      getSelectedIngredients,
-      onItemAdded,
-      getBaseUrl,
-      exitSelectionMode,
-    ],
-  )
 
   const handleBulkShopped = useCallback(() => {
     if (selectedKeys.size === 0) return
@@ -601,16 +412,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                 <CheckSquare className="h-5 w-5" />
               </button>
             )}
-            {userId && (
-              <button
-                onClick={() => setShowRecurringSheet(true)}
-                className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
-                aria-label="Recurring items"
-                title="Recurring items"
-              >
-                <CalendarDays className="h-5 w-5" />
-              </button>
-            )}
             <button
               onClick={() => console.log('Filters')}
               className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
@@ -633,36 +434,12 @@ export const GroceryList: React.FC<GroceryListProps> = ({
         {ingredients.length === 0 && (
           <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
             <div className="mb-4 rounded-full bg-muted p-6">
-              {recurringCount && recurringCount > 0 ? (
-                <CalendarDays className="h-10 w-10 text-primary/60" />
-              ) : (
-                <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
-              )}
+              <CheckSquare className="h-10 w-10 text-muted-foreground/50" />
             </div>
-            {recurringCount && recurringCount > 0 ? (
-              <>
-                <h3 className="font-display text-lg font-bold">No groceries yet</h3>
-                <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                  You have {recurringCount} recurring item{recurringCount === 1 ? '' : 's'}. Add
-                  them to get started.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowRecurringSheet(true)}
-                  className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  <CalendarDays className="h-4 w-4" />
-                  Browse recurring items
-                </button>
-              </>
-            ) : (
-              <>
-                <h3 className="font-display text-lg font-bold">All clear!</h3>
-                <p className="max-w-xs text-sm text-muted-foreground">
-                  You haven't added any recipes to your plan yet.
-                </p>
-              </>
-            )}
+            <h3 className="font-display text-lg font-bold">All clear!</h3>
+            <p className="max-w-xs text-sm text-muted-foreground">
+              You haven't added any recipes to your plan yet.
+            </p>
           </div>
         )}
         {/* Recipe Sources Header - scrolls with content */}
@@ -713,14 +490,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                 {allSelected ? 'Deselect All' : 'Select All'}
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setShowRecurringSheet(true)}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Recurring
-            </button>
           </div>
         )}
 
@@ -935,23 +704,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                 </div>
                               </button>
 
-                              {/* Product thumbnail or unmatched indicator */}
-                              {item.imageUrl ? (
-                                <img
-                                  src={item.imageUrl}
-                                  alt=""
-                                  className="ml-2 h-24 w-24 rounded-lg object-cover"
-                                  loading="lazy"
-                                />
-                              ) : !item.hebProductId && !item.isManual ? (
-                                <div
-                                  className="ml-2 flex h-24 w-24 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/50"
-                                  title="No H-E-B product linked"
-                                >
-                                  <ShoppingBasket className="h-4 w-4" />
-                                </div>
-                              ) : null}
-
                               {/* Item Details — tappable for edit (or select in selection mode), long-press to enter selection */}
                               <button
                                 type="button"
@@ -991,18 +743,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                     {item.purchaseUnit !== 'unit' ? item.purchaseUnit : ''}
                                   </span>
                                   <span className="font-medium capitalize">{item.name}</span>
-                                  {/* Price Badge */}
-                                  {item.hebPrice && (
-                                    <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                      <DollarSign className="h-2.5 w-2.5" />
-                                      {item.hebPrice.toFixed(2)}
-                                      {item.hebUnitPrice && item.hebUnitPriceUnit && (
-                                        <span className="ml-0.5 font-normal opacity-75">
-                                          ({item.hebUnitPrice.toFixed(2)}/{item.hebUnitPriceUnit})
-                                        </span>
-                                      )}
-                                    </span>
-                                  )}
                                   {/* Manual Item Badge */}
                                   {item.isManual && (
                                     <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-blue-100 px-1 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
@@ -1010,27 +750,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                       Manual
                                     </span>
                                   )}
-                                  {/* Recurring Item Badge */}
-                                  {item.isRecurring && item.recurringFrequencyWeeks && (
-                                    <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                                      <CalendarDays className="h-2.5 w-2.5" />
-                                      {item.recurringFrequencyWeeks}w
-                                    </span>
-                                  )}
                                 </div>
-
-                                {/* Size + Location row */}
-                                {(item.hebSize || item.storeLocation) && (
-                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
-                                    {item.hebSize && <span>{item.hebSize}</span>}
-                                    {item.storeLocation && (
-                                      <span className="flex items-center gap-0.5">
-                                        <MapPin className="h-2.5 w-2.5" />
-                                        {item.storeLocation}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
 
                                 {/* Source Tags */}
                                 <div className="mt-2 flex flex-wrap gap-2">
@@ -1076,15 +796,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                 >
                                   <Undo2 className="h-4 w-4" />
                                 </button>
-                              )}
-                              {userId && !selectionMode && !showingRestore && (
-                                <RecurringItemToggle
-                                  itemName={item.name}
-                                  isRecurring={item.isRecurring}
-                                  recurringFrequencyWeeks={item.recurringFrequencyWeeks}
-                                  onToggleRecurring={handleToggleRecurring}
-                                  disabled={isChecked}
-                                />
                               )}
                             </div>
                           </div>
@@ -1194,17 +905,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           item={editingItem}
           onSave={(updates) => handleEditItem(editingItem.name, updates)}
           onRemove={() => handleRemoveItem(editingItem.name)}
-          onSaveOverride={handleSaveOverride}
           onClose={() => setEditingItem(null)}
-        />
-      )}
-
-      {/* Recurring Items Bottom Sheet */}
-      {showRecurringSheet && (
-        <RecurringListSheet
-          onClose={() => setShowRecurringSheet(false)}
-          onChange={() => onItemAdded?.()}
-          weekStartDate={weekStartDate}
         />
       )}
 
@@ -1214,7 +915,6 @@ export const GroceryList: React.FC<GroceryListProps> = ({
           selectedCount={selectedKeys.size}
           totalCount={visibleItemNames.length}
           onCancel={exitSelectionMode}
-          onMarkRecurring={handleBulkRecurring}
           onMarkShopped={handleBulkShopped}
           onArchive={handleBulkArchive}
           onUnneededThisWeek={handleBulkUnneeded}

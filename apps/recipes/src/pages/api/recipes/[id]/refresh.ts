@@ -2,7 +2,7 @@ import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../../lib/firebase-server'
 import { getAuthUser, unauthorizedResponse, serverErrorResponse } from '../../../../lib/api-helpers'
 import { setRequestContext } from '../../../../lib/request-context'
-import type { Recipe, RecipeVersion, Ingredient } from '../../../../lib/types'
+import type { Recipe, Ingredient } from '../../../../lib/types'
 import { executeAiParse } from '../../../../lib/services/ai-parser'
 
 /** Normalize any thrown value to an Error so message extraction is reliable */
@@ -42,21 +42,9 @@ ${recipe.steps.join('\n')}
     `.trim()
   }
 
-  // SNAPSHOT: Save current version before overwriting
-  const versionId = crypto.randomUUID()
-  const version: RecipeVersion = {
-    id: versionId,
-    recipeId: id,
-    timestamp: new Date().toISOString(),
-    changeType: 'ai-refresh',
-    createdBy: 'system',
-    data: recipe,
-  }
-  await db.addSubDocument('recipes', id, 'versions', versionId, version)
-
   try {
     let newData
-    const commonParams = { mode: 'parse' as const, style: 'enhanced' as const }
+    const commonParams = { style: 'enhanced' as const }
 
     if (recipe.sourceUrl) {
       console.log('[Refresh] Using sourceUrl:', recipe.sourceUrl)
@@ -69,9 +57,6 @@ ${recipe.steps.join('\n')}
       newData = await executeAiParse(locals, { ...commonParams, text: buildTextPayload() })
     }
 
-    // Cost estimation (Optional fallback or moved to service later)
-    const estimatedCost = recipe.estimatedCost
-
     // MERGE strategy
     const updatedRecipe = {
       ...recipe,
@@ -80,7 +65,6 @@ ${recipe.steps.join('\n')}
       sourceUrl: recipe.sourceUrl || newData.sourceUrl,
       sourceImage: recipe.sourceImage || newData.sourceImage,
       images: recipe.images || newData.images,
-      estimatedCost,
     }
 
     await db.updateDocument('recipes', id, updatedRecipe)
@@ -97,7 +81,6 @@ ${recipe.steps.join('\n')}
       console.warn('[Refresh] Source refresh failed, trying text fallback...')
       try {
         const newData = await executeAiParse(locals, {
-          mode: 'parse',
           style: 'enhanced',
           text: buildTextPayload(),
         })

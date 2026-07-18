@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
 import type { Recipe } from '../../lib/types'
-import { getPlannedDatesForRecipe } from '../../lib/weekStore'
+import { getPlannedWeeksForRecipe } from '../../lib/weekStore'
 
 // Helper to normalize titles to Title Case
 const toTitleCase = (str: string): string => {
@@ -37,29 +37,25 @@ const itemVariants: Variants = {
 
 interface RecipeCardProps {
   recipe: Recipe & { matches?: { indices: [number, number][]; key?: string }[] }
-  isSelectionMode: boolean
-  isSelected: boolean
   onSelect: (recipe: Recipe) => void
   onToggleThisWeek: (id: string) => void
   onManage?: (id: string) => void
   allowManagement?: boolean
   skipAnimation?: boolean
-  plannedDates: ReturnType<typeof getPlannedDatesForRecipe>
+  plannedWeeks: ReturnType<typeof getPlannedWeeksForRecipe>
 }
 
 export const RecipeCard = memo(
   ({
     recipe,
-    isSelectionMode,
-    isSelected,
     onSelect,
     onToggleThisWeek,
     onManage,
     allowManagement = false,
     skipAnimation = false,
-    plannedDates,
+    plannedWeeks,
   }: RecipeCardProps) => {
-    const isPlanned = plannedDates.length > 0
+    const isPlanned = plannedWeeks.length > 0
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
     const ingredientMatches = recipe.matches?.filter(
@@ -74,11 +70,7 @@ export const RecipeCard = memo(
         role="button"
         tabIndex={0}
         data-testid={`recipe-card-${recipe.id}`}
-        className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all active:scale-[0.98] active:bg-accent/70 ${
-          isSelected
-            ? 'border-primary/20 bg-accent'
-            : 'hover:border-border hover:bg-accent/50 hover:shadow-sm'
-        }`}
+        className="group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:border-border hover:bg-accent/50 hover:shadow-sm active:scale-[0.98] active:bg-accent/70"
         onClick={() => {
           onSelect(recipe)
         }}
@@ -177,10 +169,10 @@ export const RecipeCard = memo(
 
             {/* Status Badges - Inline on right */}
             <div className="flex items-center gap-1.5 pr-2">
-              {/* Day Tags */}
-              {plannedDates.slice(0, 3).map((p) => (
+              {/* Planned-week badge */}
+              {plannedWeeks.slice(0, 1).map((p) => (
                 <Badge
-                  key={`${p.weekStart}-${p.day}`}
+                  key={p.weekStart}
                   variant="tag"
                   size="sm"
                   className="border-primary/20 bg-primary/10 font-bold uppercase tracking-tighter text-primary"
@@ -200,15 +192,6 @@ export const RecipeCard = memo(
                   )}
                 </Badge>
               ))}
-              {plannedDates.length > 3 && (
-                <Badge
-                  variant="tag"
-                  size="sm"
-                  className="border-muted-foreground/20 bg-muted font-bold text-muted-foreground"
-                >
-                  +{plannedDates.length - 3}
-                </Badge>
-              )}
 
               {/* Add to Week button - 44px touch target */}
               {!allowManagement && (
@@ -228,7 +211,7 @@ export const RecipeCard = memo(
         </div>
 
         {/* Management Menu Button */}
-        {allowManagement && !isSelectionMode && isPlanned && onManage && (
+        {allowManagement && isPlanned && onManage && (
           <Button
             variant="ghost"
             size="icon"
