@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
+import { getAuthUser, getAuthEmail, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
 import { getEmailList, getEnv } from '../../../lib/env'
 import type { Family, User, PendingInvite } from '../../../lib/types'
@@ -20,11 +20,10 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const userDoc = await db.getDocument('users', userId)
 
     // 2. Search for pending invites by email
-    // We need the user's email. If it's not in the doc, check the cookie.
+    // We need the user's email. If it's not in the doc, fall back to the verified session.
     let userEmail = userDoc?.email
     if (!userEmail) {
-      const emailCookie = cookies.get('site_email')
-      userEmail = emailCookie?.value || ''
+      userEmail = getAuthEmail(cookies) || ''
     }
 
     let pendingInvites: PendingInvite[] = []
@@ -58,15 +57,16 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const url = new URL(request.url)
     const requestedFamilyId = url.searchParams.get('familyId')
 
-    // Check if user is admin
+    // Check if user is admin — email comes from the signed session (verified at login),
+    // never from a forgeable cookie header.
     const isTestMode =
       getEnv({ cookies } as unknown as Record<string, unknown>, 'PUBLIC_TEST_MODE') === 'true'
     const isTestUser = userId === 'TestUser' || userId === 'test_user'
-    const emailCookie = cookies.get('site_email')
-    const cookieEmail = emailCookie?.value || ''
+    const sessionEmail = getAuthEmail(cookies) || ''
     const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
     const isAdmin =
-      (isTestMode && isTestUser) || (cookieEmail && adminEmails.includes(cookieEmail.toLowerCase()))
+      (isTestMode && isTestUser) ||
+      (sessionEmail && adminEmails.includes(sessionEmail.toLowerCase()))
 
     const targetFamilyId = isAdmin && requestedFamilyId ? requestedFamilyId : userDoc.familyId
 
@@ -215,9 +215,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     await db.createDocument('families', familyId, newFamily)
 
     // 3. Create or update user document
-    // Read email from cookie (set during login)
-    const emailCookie = cookies.get('site_email')
-    const userEmail = emailCookie?.value || ''
+    // Email comes from the signed session (verified at login)
+    const userEmail = getAuthEmail(cookies) || ''
 
     if (!userEmail) {
       console.warn('[Family] Creating user without email - invite functionality may not work')
@@ -280,9 +279,9 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
       })
     }
 
-    // Permission Check: only creator or admin (role in family OR site admin)
-    const emailCookie = cookies.get('site_email')
-    const userEmail = emailCookie?.value || ''
+    // Permission Check: only creator or admin (role in family OR site admin).
+    // Email comes from the signed session, never a forgeable cookie header.
+    const userEmail = getAuthEmail(cookies) || ''
     const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
     const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
 
@@ -346,8 +345,7 @@ export const DELETE: APIRoute = async ({ cookies }) => {
       })
     }
 
-    const emailCookie = cookies.get('site_email')
-    const userEmail = emailCookie?.value || ''
+    const userEmail = getAuthEmail(cookies) || ''
     const adminEmails = getEmailList({ cookies } as unknown, 'ADMIN_EMAILS')
     const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
 

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../lib/firebase-server'
+import { getSessionFromCookies } from '../../../lib/session'
 
 /**
  * Returns a Firebase custom token for the currently authenticated user.
@@ -10,11 +11,11 @@ export const GET: APIRoute = async (context) => {
   const { cookies } = context
 
   try {
-    // Check session authentication
-    const siteAuth = cookies.get('site_auth')?.value
-    const userId = cookies.get('site_user')?.value
+    // The UID must come from the signed session — never from a client-writable
+    // cookie — because the token minted below IS that user for Firestore purposes.
+    const session = getSessionFromCookies(cookies)
 
-    if (siteAuth !== 'true' || !userId) {
+    if (!session) {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
@@ -22,7 +23,7 @@ export const GET: APIRoute = async (context) => {
     }
 
     // Generate custom token for this user
-    const customToken = await db.createCustomToken(userId)
+    const customToken = await db.createCustomToken(session.uid)
 
     return new Response(JSON.stringify({ token: customToken }), {
       status: 200,

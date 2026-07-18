@@ -1,6 +1,12 @@
 import type { APIRoute } from 'astro'
 import { getEnv, getEmailList } from '../../../lib/env'
 import {
+  createSessionToken,
+  getSessionSecret,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from '../../../lib/session'
+import {
   verifyFirebaseToken,
   processPendingInvites,
   upsertUser,
@@ -106,12 +112,26 @@ export const POST: APIRoute = async (context) => {
       path: '/',
       httpOnly: true,
       secure: import.meta.env.PROD,
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: SESSION_MAX_AGE_SECONDS, // 30 days
       sameSite: 'lax' as const,
     }
 
-    cookies.set('site_auth', 'true', cookieOptions)
-    if (email) cookies.set('site_email', email, cookieOptions)
+    // The signed session cookie is the ONLY cookie the server trusts for identity
+    // (see lib/session.ts). It carries the uid/email verified against the Firebase
+    // ID token above and is HMAC-signed, so it cannot be minted or altered client-side.
+    const secret = getSessionSecret(context)
+    if (!secret) {
+      throw new Error(
+        'Cannot issue a session: neither SESSION_SECRET nor FIREBASE_SERVICE_ACCOUNT is configured',
+      )
+    }
+    cookies.set(SESSION_COOKIE_NAME, createSessionToken(secret, { uid: userId, email, name }), {
+      ...cookieOptions,
+      httpOnly: true,
+    })
+
+    // Display-only cookies for the client shell (localStorage cache keys, greeting).
+    // Deliberately non-httpOnly so the client can read them; never trusted server-side.
     cookies.set('site_user', userId, { ...cookieOptions, httpOnly: false })
     cookies.set('site_username', name, { ...cookieOptions, httpOnly: false })
 

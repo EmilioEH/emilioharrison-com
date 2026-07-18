@@ -10,7 +10,11 @@ import { getEmailList } from '../lib/env'
 // renders immediately with cheap/default values, and the client's `useBootstrap()` hook (in
 // RecipeManager.tsx) resolves the real `displayName`/`isAdmin` from
 // `GET /api/bootstrap` right after mount, updating RecipeManager's state once it arrives.
-const userId = Astro.cookies.get('site_user')?.value
+// Identity comes from the middleware-verified session (Astro.locals.session), never raw
+// cookies — see lib/session.ts. `displayName` stays at the uid default until bootstrap
+// resolves the Firestore-verified value client-side.
+const session = Astro.locals.session
+const userId = session?.uid
 const displayName = userId
 let isAdmin = false
 
@@ -21,17 +25,12 @@ if (isTestMode && isTestUser) {
   // BYPASS: In Test Mode, trust the TestUser completely to avoid "Split Brain" issues
   // between Client Mocks (MSW) and Server Real DB (Firestore)
   isAdmin = true
-} else if (userId) {
-  // Cheap, synchronous admin check derived from the `site_email` cookie — the same pattern
-  // already used server-side elsewhere for admin gating without a Firestore round trip (see
-  // the PATCH/DELETE handlers in api/families/current.ts). `displayName` isn't derivable this
-  // cheaply, so it stays at its default above until bootstrap resolves the Firestore-verified
-  // value client-side.
-  const email = Astro.cookies.get('site_email')?.value
-  if (email) {
-    const adminEmails = getEmailList(Astro, 'ADMIN_EMAILS')
-    isAdmin = adminEmails.includes(email.toLowerCase())
-  }
+} else if (session?.email) {
+  // Cheap, synchronous admin check against the session's verified email — same pattern
+  // used server-side for admin gating without a Firestore round trip (see the PATCH/DELETE
+  // handlers in api/families/current.ts).
+  const adminEmails = getEmailList(Astro, 'ADMIN_EMAILS')
+  isAdmin = adminEmails.includes(session.email.toLowerCase())
 }
 ---
 

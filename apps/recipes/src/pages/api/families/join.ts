@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
+import { getAuthUser, getAuthEmail, unauthorizedResponse } from '../../../lib/api-helpers'
 import { db } from '../../../lib/firebase-server'
 
 /**
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // 2. Verify it's for this user (only for invite-based joins)
     const userDoc = await db.getDocument('users', userId)
-    const userEmail = userDoc?.email || cookies.get('site_email')?.value
+    const userEmail = userDoc?.email || getAuthEmail(cookies)
 
     // Only verify email for invite-based joins (code joins are open to anyone with the code)
     if (invite && (!userEmail || invite.email.toLowerCase() !== userEmail.toLowerCase())) {
