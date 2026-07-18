@@ -1,7 +1,7 @@
 import type { APIRoute, APIContext } from 'astro'
 import { bucket, db } from '@/lib/firebase-server'
 import type { Review } from '@/lib/types'
-import { getAuthUser, unauthorizedResponse } from '@/lib/api-helpers'
+import { loadAccessibleRecipe } from '@/lib/recipe-access'
 import { setRequestContext } from '@/lib/request-context'
 
 /**
@@ -12,15 +12,13 @@ export const POST: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
 
   const { params, request, cookies } = context
-  const { id: recipeId } = params
-  if (!recipeId) {
-    return new Response(JSON.stringify({ error: 'Recipe ID required' }), { status: 400 })
-  }
 
-  const userId = getAuthUser(cookies)
-  if (!userId) {
-    return unauthorizedResponse()
-  }
+  // Reviewing writes to the global recipe's image list, so require access to the recipe —
+  // not merely a valid session — before accepting the review.
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
+  const { userId, recipe } = access
+  const recipeId = recipe.id
 
   try {
     const requestUrl = new URL(request.url)
@@ -125,20 +123,17 @@ export const POST: APIRoute = async (context: APIContext) => {
       reviews: updatedReviews,
     })
 
-    // If photo was uploaded, add to recipe images
+    // If photo was uploaded, add to recipe images (access already verified above).
     if (photoUrl) {
       try {
-        const recipe = await db.getDocument('recipes', recipeId)
-        if (recipe) {
-          const currentImages = recipe.images || []
+        const currentImages = recipe.images || []
 
-          // Prepend new photo (makes it the main image)
-          const updatedImages = [photoUrl, ...currentImages]
+        // Prepend new photo (makes it the main image)
+        const updatedImages = [photoUrl, ...currentImages]
 
-          await db.updateDocument('recipes', recipeId, {
-            images: updatedImages,
-          })
-        }
+        await db.updateDocument('recipes', recipeId, {
+          images: updatedImages,
+        })
       } catch (recipeError) {
         console.error('Failed to update recipe images:', recipeError)
         // Don't fail the whole review if image update fails

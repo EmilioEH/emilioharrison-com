@@ -1,10 +1,22 @@
 import type { APIRoute } from 'astro'
 import { getEnv } from '../../../lib/env'
 import { db } from '../../../lib/firebase-server'
+import { isInviteRedeemable } from '../../../lib/invite-codes'
+import { rateLimit, clientIpFrom } from '../../../lib/rate-limit'
 
 export const POST: APIRoute = async (context) => {
-  const { request } = context
+  const { request, locals } = context
   try {
+    // Rate-limit redemption attempts per IP to blunt code brute-forcing. Fails open when
+    // no KV is bound (local dev).
+    const kv = locals?.runtime?.env?.SESSION
+    const { limited } = await rateLimit(kv, `redeem:${clientIpFrom(request)}`, 10, 600)
+    if (limited) {
+      return new Response(JSON.stringify({ error: 'Too many attempts. Please try again later.' }), {
+        status: 429,
+      })
+    }
+
     const { idToken, code } = await request.json()
 
     if (!idToken || !code) {
@@ -32,14 +44,12 @@ export const POST: APIRoute = async (context) => {
     const email = user.email
     const name = user.displayName || email || 'Chef'
 
-    // 2. Validate Code
-    // We assume codes are stored in 'invites' collection with document ID = code
-    // document structure: { createdBy: string, createdAt: string, type: 'one-time' | 'multi' }
-    // For simplicity, let's say all codes are one-time use and we delete them after use.
-
+    // 2. Validate Code — must exist, be pending (single-use), and not expired. All failures
+    // return the same generic message so a probe can't distinguish "wrong" from "already used"
+    // from "expired".
     const inviteDoc = await db.getDocument('invites', code).catch(() => null)
 
-    if (!inviteDoc) {
+    if (!inviteDoc || !isInviteRedeemable(inviteDoc)) {
       return new Response(JSON.stringify({ error: 'Invalid or expired code' }), { status: 400 })
     }
 
