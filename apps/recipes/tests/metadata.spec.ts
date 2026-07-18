@@ -92,7 +92,7 @@ test.describe('Recipe Metadata & Filtering', () => {
     await page.getByRole('button', { name: /close/i }).first().click()
 
     // Expect Accordion Headers
-    await expect(page.getByText('Breakfast')).toBeVisible()
-    await expect(page.getByText('Dinner')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Breakfast', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Dinner', exact: true })).toBeVisible()
   })
 })

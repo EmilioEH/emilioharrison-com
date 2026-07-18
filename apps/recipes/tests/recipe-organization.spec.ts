@@ -19,11 +19,8 @@ test.describe('Recipe Organization', () => {
   test('should organize recipes into protein folders', async ({ page }) => {
     const title = `Chicken Parm ${Date.now()}`
     // 1. Create a Chicken recipe
-    await page
-      .getByRole('button')
-      .filter({ has: page.locator('svg.lucide-plus') })
-      .click() // Add Manual
-    await page.getByPlaceholder("Grandma's Pancakes").fill(title)
+    await page.getByRole('button', { name: 'Add Recipe' }).click()
+    await page.getByPlaceholder('e.g. Spicy Miso Ramen').fill(title)
     await page.locator('select').first().selectOption('Chicken') // Select Protein
     await page.getByRole('button', { name: 'Save Recipe' }).click()
     await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()
@@ -47,7 +44,7 @@ test.describe('Recipe Organization', () => {
       .getByRole('button')
       .filter({ has: page.locator('svg.lucide-plus') })
       .click()
-    await page.getByPlaceholder("Grandma's Pancakes").fill(title)
+    await page.getByPlaceholder('e.g. Spicy Miso Ramen').fill(title)
     await page.getByRole('button', { name: 'Save Recipe' }).click()
 
     // 2. Go to Uncategorized (since no protein)

@@ -698,7 +698,7 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          ...familyData,
+          data: familyData,
         }),
       })
       return
@@ -744,6 +744,13 @@ export async function setupApiMock(page: Page, recipes: Recipe[] = TEST_RECIPES)
       }
 
       if (isDelete) {
+        const match = url.match(/\/api\/recipes\/([^/]+)\/week-plan/)
+        const recipeId = match ? match[1] : 'unknown'
+        recipeFamilyData[recipeId] = {
+          id: recipeId,
+          weekPlan: { isPlanned: false },
+        }
+
         await route.fulfill({
           status: 200,
           contentType: 'application/json',

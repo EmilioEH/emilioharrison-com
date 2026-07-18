@@ -44,9 +44,9 @@ test.describe('Fuzzy Search', () => {
 
     // Workaround: Create a recipe manually since mock data seems missing in test env
     // Click Add
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByRole('button', { name: 'Add Recipe' }).click()
     // Fill Title
-    await page.getByPlaceholder('Recipe Title').fill('Highlighter Test Recipe')
+    await page.getByPlaceholder('e.g. Spicy Miso Ramen').fill('Highlighter Test Recipe')
     // Click Save
     await page.getByRole('button', { name: 'Save Recipe' }).click()
     await expect(page.getByRole('heading', { name: 'Recipe Saved!' })).toBeVisible()

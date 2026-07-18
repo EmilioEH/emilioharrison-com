@@ -63,17 +63,18 @@ test.describe('Week View Synchronization', () => {
 
     // 5. Go to the This Week tab and verify the recipe is planned.
     await page.getByRole('button', { name: 'Back to Library' }).click()
-    await page.getByRole('button', { name: 'This Week' }).click()
+    await page.getByRole('button', { name: 'This Week', exact: true }).click()
     await expect(page.getByText('Toast')).toBeVisible()
 
-    // 6. Delete the recipe from its detail view.
+    // 6. Delete the recipe from its detail view. Confirmation is a custom in-app dialog
+    // (Cancel/Confirm buttons), not a native window.confirm(), so it needs an explicit click.
     await page.getByText('Toast').click()
-    page.on('dialog', (dialog) => dialog.accept())
     await page.getByLabel('More Options').click()
     await page.getByRole('menuitem', { name: 'Delete' }).click()
+    await page.getByRole('button', { name: 'Confirm' }).click()
 
     // 7. Verify it's gone from the week list.
-    await expect(page.getByRole('button', { name: 'This Week' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'This Week', exact: true })).toBeVisible()
     await expect(page.getByText('Toast')).not.toBeVisible()
   })
 })
