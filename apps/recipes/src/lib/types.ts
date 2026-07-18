@@ -188,34 +188,6 @@ export interface User {
   familyId?: string // Reference to family group
   joinedAt: string
   status?: 'pending' | 'approved' | 'rejected'
-  notificationPreferences?: {
-    email?: boolean
-    push?: boolean
-    types?: {
-      timers?: boolean
-      mealPlan?: boolean
-      cooking?: boolean
-      invites?: boolean
-    }
-    reminders?: ReminderSettings
-  }
-}
-
-export interface ReminderSettings {
-  weeklyPlan: {
-    enabled: boolean
-    day: string // 'Sunday', 'Monday', etc.
-    time: string // '18:00' (24hr)
-  }
-  groceryList: {
-    enabled: boolean
-    day: string // 'Sunday', 'Monday', etc.
-    time: string // '10:00' (24hr)
-  }
-  dailyCooking: {
-    enabled: boolean
-    offsetHours: number // e.g. 2 hours before
-  }
 }
 
 /** A note added by a family member on a recipe */
