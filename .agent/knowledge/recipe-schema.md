@@ -13,7 +13,7 @@ Any data manipulation or persistence of recipes MUST adhere to the [types.ts](fi
 - `id`: Unique identifier (string).
 - `thisWeek`: Boolean. Used to filter recipes into the "This Week" folder.
 - `structuredIngredients`: Array of `StructuredIngredient`. This is the **Source of Truth** for grocery list generation.
-- `versionHistory`: Used to track `create`, `edit`, and `import` events.
+- `notes`: Optional string, shown on the recipe overview and editable with the recipe.
 
 ## 2. Ingredient vs StructuredIngredient
 
@@ -22,4 +22,4 @@ Any data manipulation or persistence of recipes MUST adhere to the [types.ts](fi
 
 ## 3. Data Integrity
 
-When editing a recipe, ensure that `updatedAt` is refreshed and a new entry is pushed to the `versionHistory` array.
+When editing a recipe, ensure that `updatedAt` is refreshed.
