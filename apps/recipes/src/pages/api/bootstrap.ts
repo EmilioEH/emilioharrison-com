@@ -1,7 +1,7 @@
 import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../lib/firebase-server'
 import { setRequestContext } from '../../lib/request-context'
-import { getAuthUser, unauthorizedResponse } from '../../lib/api-helpers'
+import { getAuthUser, getAuthEmail, unauthorizedResponse } from '../../lib/api-helpers'
 import { getEmailList, getEnv } from '../../lib/env'
 import { isRecipe } from '../../lib/type-guards'
 import { chunkArray, dedupeById, toListRecipe } from './recipes/index'
@@ -39,7 +39,7 @@ export const GET: APIRoute = async (context: APIContext) => {
 
     let userEmail = userDoc?.email
     if (!userEmail) {
-      userEmail = cookies.get('site_email')?.value || ''
+      userEmail = getAuthEmail(cookies) || ''
     }
 
     // 2. Everything that only depends on `userId` / `familyId` / `userEmail` (not on each

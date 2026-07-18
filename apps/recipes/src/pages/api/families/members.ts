@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getAuthUser, unauthorizedResponse } from '../../../lib/api-helpers'
+import { getAuthUser, getAuthEmail, unauthorizedResponse } from '../../../lib/api-helpers'
 import { getEmailList } from '../../../lib/env'
 import { db } from '../../../lib/firebase-server'
 
@@ -17,9 +17,9 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
   try {
     const requesterDoc = await db.getDocument('users', userId)
 
-    // Permission Check: only creator or admin (in family or site admin)
-    const emailCookie = cookies.get('site_email')
-    const userEmail = emailCookie?.value || ''
+    // Permission Check: only creator or admin (in family or site admin).
+    // Email comes from the signed session, never a forgeable cookie header.
+    const userEmail = getAuthEmail(cookies) || ''
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminEmails = getEmailList({ cookies } as any, 'ADMIN_EMAILS')
     const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())
@@ -102,9 +102,8 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
   try {
     const requesterDoc = await db.getDocument('users', userId)
 
-    // Permission Check
-    const emailCookie = cookies.get('site_email')
-    const userEmail = emailCookie?.value || ''
+    // Permission Check — email comes from the signed session, never a forgeable cookie.
+    const userEmail = getAuthEmail(cookies) || ''
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminEmails = getEmailList({ cookies } as any, 'ADMIN_EMAILS')
     const isSiteAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase())

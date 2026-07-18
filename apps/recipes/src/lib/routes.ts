@@ -4,13 +4,17 @@
  */
 export const APP_BASE_URL = import.meta.env.BASE_URL || '/'
 
-// Public API routes that do NOT require authentication
-const PUBLIC_API_ROUTES = [
-  '/api/auth/login',
-  '/api/auth/logout',
-  '/api/auth/request-access', // Access request for new users
-  '/api/auth/redeem-code', // Invite code redemption for new users
-  '/api/uploads', // Public to allow server-side fetching
+// Public API routes that do NOT require authentication. Entries without `methods`
+// are public for every method; otherwise only the listed methods skip auth.
+const PUBLIC_API_ROUTES: Array<{ prefix: string; methods?: string[] }> = [
+  { prefix: '/api/auth/login' },
+  { prefix: '/api/auth/logout' },
+  { prefix: '/api/auth/request-access' }, // Access request for new users
+  { prefix: '/api/auth/redeem-code' }, // Invite code redemption for new users
+  // Image serving stays public: the AI enhancement pipeline re-fetches
+  // `/api/uploads/<key>` server-side without cookies (see ai-parser.ts).
+  // Uploading (`POST /api/uploads`) requires an authenticated session.
+  { prefix: '/api/uploads/', methods: ['GET', 'HEAD'] },
 ]
 
 /**
@@ -39,10 +43,15 @@ export function isLoginPage(pathname: string): boolean {
 }
 
 /**
- * Checks if the pathname matches a whitelisted public API route.
+ * Checks if the pathname (and request method) matches a whitelisted public API route.
  */
-export function isPublicApiRoute(pathname: string): boolean {
-  return PUBLIC_API_ROUTES.some((route) => pathname.includes(route))
+export function isPublicApiRoute(pathname: string, method: string): boolean {
+  const normalizedMethod = method.toUpperCase()
+  return PUBLIC_API_ROUTES.some(
+    (route) =>
+      pathname.includes(route.prefix) &&
+      (!route.methods || route.methods.includes(normalizedMethod)),
+  )
 }
 
 /**

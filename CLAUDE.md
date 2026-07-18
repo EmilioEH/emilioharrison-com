@@ -125,7 +125,7 @@ A MessageChannel polyfill is injected at build time for Cloudflare Workers compa
 
 **Other key patterns**:
 
-- **Authentication**: Cookie-based middleware (`src/middleware.ts`) checks `site_auth` and `site_user` cookies.
+- **Authentication**: A signed, HMAC-verified session cookie (`site_session`) is the single source of request identity — see `src/lib/session.ts`. The middleware (`src/middleware.ts`) resolves and verifies it into `Astro.locals.session`; server code reads identity via `getAuthUser`/`getAuthEmail` (`src/lib/api-helpers.ts`), never from raw cookies. The `site_user`/`site_username` cookies still exist but are **display-only** (client cache keys, greeting) and are never trusted server-side. The signing secret is `SESSION_SECRET`, falling back to the `FIREBASE_SERVICE_ACCOUNT` private key. In `PUBLIC_TEST_MODE` builds only, the legacy `site_user` cookie is accepted so E2E specs can establish identity.
 - **Request Context Pattern**: Middleware calls `setRequestContext(context)` (`lib/request-context.ts`) so modules outside the request pipeline (e.g. `firebase-server.ts` reading `FIREBASE_SERVICE_ACCOUNT`) can access Cloudflare runtime env.
 - **State Management**: Nanostores with `@nanostores/persistent` — `recipeStore.ts`, `weekStore.ts`, `familyStore.ts`, `burgerMenuStore.ts`, `dialogStore.ts`, `aiOperationStore.ts`.
 - **Real-time sync**: `useFirestoreDocument` hook (`src/lib/firestoreHooks.ts`) manages Firestore subscription lifecycle, gated on `authStore.ts` having a valid user.

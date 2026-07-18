@@ -16,6 +16,9 @@ export interface ImportMetaEnv {
 declare global {
   namespace App {
     interface Locals {
+      // Verified session for the current request, set by middleware (see lib/session.ts).
+      // null when the request is unauthenticated. This is the only trusted request identity.
+      session: import('./lib/session').SessionPayload | null
       runtime: {
         env: {
           OPENROUTER_API_KEY?: string

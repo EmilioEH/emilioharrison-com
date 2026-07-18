@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 import type { AstroCookies } from 'astro'
 
 const { getDocument, runQuery, getCollection } = vi.hoisted(() => ({
@@ -12,11 +12,19 @@ vi.mock('../../../lib/firebase-server', () => ({
 }))
 
 import { GET, chunkArray, dedupeById, toListRecipe } from './index'
+import { createSessionToken, SESSION_COOKIE_NAME } from '../../../lib/session'
 import type { Recipe } from '../../../lib/types'
 
+const TEST_SECRET = 'recipes-index-test-secret'
+vi.stubEnv('SESSION_SECRET', TEST_SECRET)
+afterAll(() => vi.unstubAllEnvs())
+
+// Build cookies carrying a real signed session, so these tests exercise the production
+// identity path in lib/session.ts rather than a forgeable raw cookie.
 function fakeCookies(userId: string | null): AstroCookies {
+  const token = userId ? createSessionToken(TEST_SECRET, { uid: userId }) : null
   return {
-    get: (name: string) => (name === 'site_user' && userId ? { value: userId } : undefined),
+    get: (name: string) => (name === SESSION_COOKIE_NAME && token ? { value: token } : undefined),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
 }

@@ -1,4 +1,5 @@
 import { getEnv, getEmailList } from './env'
+import { getSessionFromCookies } from './session'
 
 /** Verify ID token and extract user email */
 async function verifyIdToken(
@@ -36,26 +37,22 @@ async function verifyIdToken(
   return { email: null, user: null }
 }
 
-/** Fallback: Look up user from session cookie */
+/** Fallback: resolve identity from the signed session cookie (see lib/session.ts). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function lookupSessionUser(context: any): Promise<{ email: string | null; user: any }> {
+function lookupSessionUser(context: any): { email: string | null; user: any } {
   if (!context.cookies) {
     return { email: null, user: null }
   }
 
-  const userId = context.cookies.get('site_user')?.value
-  if (!userId) {
-    return { email: null, user: null }
-  }
-
-  try {
-    const { db } = await import('./firebase-server')
-    const userDoc = await db.getDocument('users', userId)
-    if (userDoc?.email) {
-      return { email: userDoc.email, user: { ...userDoc } }
+  // The email here was verified against a Firebase ID token at login and is
+  // HMAC-signed — unlike the legacy `site_user` cookie this used to trust, it
+  // cannot be set to another user's identity by the client.
+  const session = getSessionFromCookies(context.cookies)
+  if (session?.email) {
+    return {
+      email: session.email,
+      user: { id: session.uid, email: session.email, displayName: session.name || session.email },
     }
-  } catch {
-    // DB lookup failed
   }
 
   return { email: null, user: null }
@@ -79,7 +76,7 @@ export const verifyAdmin = async (request: Request, context: any) => {
 
   // 2. Fallback: Check Session Cookie
   if (!email) {
-    const sessionResult = await lookupSessionUser(context)
+    const sessionResult = lookupSessionUser(context)
     email = sessionResult.email
     user = sessionResult.user
   }

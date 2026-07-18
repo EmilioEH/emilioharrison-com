@@ -2,6 +2,7 @@ import { defineMiddleware } from 'astro:middleware'
 import type { APIContext } from 'astro'
 import { isProtectedRoute, isLoginPage, isPublicApiRoute, getLoginUrl } from './lib/routes'
 import { setRequestContext } from './lib/request-context'
+import { getSessionFromCookies } from './lib/session'
 
 /** Creates a 401 JSON response for API routes */
 const createUnauthorizedApiResponse = (message: string) =>
@@ -21,17 +22,14 @@ const handleUnauthorized = (context: APIContext, message: string) => {
   return context.redirect(getLoginUrl())
 }
 
-/** Validates user authentication from cookies */
-const isAuthenticated = (context: APIContext): boolean => {
-  const authCookie = context.cookies.get('site_auth')
-  const userCookie = context.cookies.get('site_user')
-  return authCookie?.value === 'true' && !!userCookie?.value
-}
-
 export const onRequest = defineMiddleware(async (context, next) => {
   // Store the request context for modules that need access to Cloudflare runtime env
   // (like firebase-server.ts which needs FIREBASE_SERVICE_ACCOUNT)
   setRequestContext(context)
+
+  // Resolve the signed session once per request (lib/session.ts) — the only identity the
+  // server trusts. Pages (login/index) read it from locals instead of raw cookies.
+  context.locals.session = getSessionFromCookies(context.cookies)
 
   const { url } = context
   const pathname = url.pathname
@@ -41,19 +39,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next()
   }
 
-  // Allow public API routes (e.g. login, feedback submission)
-  if (isApiRoute(pathname) && isPublicApiRoute(pathname)) {
+  // Allow public API routes (e.g. login, invite redemption, image serving)
+  if (isApiRoute(pathname) && isPublicApiRoute(pathname, context.request.method)) {
     return next()
   }
 
-  // Check authentication
-  if (!isAuthenticated(context)) {
+  // Check authentication — a verified session, not forgeable display cookies.
+  if (!context.locals.session) {
     return handleUnauthorized(context, 'Unauthorized')
   }
-
-  // Legacy isEmailAuthorized check removed.
-  // Access control is now handled at login time via API/Firestore logic.
-  // If the user has valid cookies, they are assumed to be authorized.
 
   return next()
 })

@@ -1,6 +1,7 @@
 import type { AstroCookies } from 'astro'
 import OpenAI from 'openai'
 import { db } from './firebase-server'
+import { getSessionFromCookies } from './session'
 
 // Define Cloudflare Env interface if not globally available,
 // or use a generic approach. Ideally this should come from App.Locals or separate type def.
@@ -17,12 +18,21 @@ export function getCloudflareEnv(locals: App.Locals): any {
 }
 
 /**
- * Extracts the authenticated user ID from cookies.
- * Returns null if not authenticated.
+ * Extracts the authenticated user ID from the signed `site_session` cookie
+ * (see `lib/session.ts`). Returns null if not authenticated. The legacy
+ * `site_user` cookie is display-only and never consulted here.
  */
 export function getAuthUser(cookies: AstroCookies): string | null {
-  const userCookie = cookies.get('site_user')
-  return userCookie?.value || null
+  return getSessionFromCookies(cookies)?.uid ?? null
+}
+
+/**
+ * Extracts the authenticated user's email from the signed session (verified against a
+ * Firebase ID token at login). Use this — never the raw `site_email` cookie — for any
+ * authorization decision such as admin-allowlist checks.
+ */
+export function getAuthEmail(cookies: AstroCookies): string | null {
+  return getSessionFromCookies(cookies)?.email ?? null
 }
 
 /**
