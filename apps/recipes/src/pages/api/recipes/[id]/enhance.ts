@@ -1,28 +1,21 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../../lib/firebase-server'
-import type { Recipe } from '../../../../lib/types'
+import { loadAccessibleRecipe } from '../../../../lib/recipe-access'
+import { setRequestContext } from '../../../../lib/request-context'
 import { executeAiParse } from '../../../../lib/services/ai-parser'
 
-export const POST: APIRoute = async ({ params, locals }) => {
-  const recipeId = params.id
+export const POST: APIRoute = async (context: APIContext) => {
+  setRequestContext(context)
+  const { params, cookies, locals } = context
 
-  if (!recipeId) {
-    return new Response(JSON.stringify({ error: 'Recipe ID required' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+  // Enhance does a full reparse and overwrites the recipe — require access to this specific
+  // recipe. (This endpoint previously performed no authorization at all.)
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
+  const { recipe } = access
+  const recipeId = recipe.id
 
   try {
-    const recipe = (await db.getDocument('recipes', recipeId)) as Recipe | null
-
-    if (!recipe) {
-      return new Response(JSON.stringify({ error: 'Recipe not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
     // Determine the best parsing source
     let newData
     const commonParams = { style: 'enhanced' as const }

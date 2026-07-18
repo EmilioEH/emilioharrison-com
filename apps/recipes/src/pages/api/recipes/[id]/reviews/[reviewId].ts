@@ -2,6 +2,7 @@ import type { APIRoute, APIContext } from 'astro'
 import { bucket, db } from '@/lib/firebase-server'
 import type { Review } from '@/lib/types'
 import { getAuthUser, unauthorizedResponse } from '@/lib/api-helpers'
+import { loadAccessibleRecipe } from '@/lib/recipe-access'
 import { setRequestContext } from '@/lib/request-context'
 
 // Helper to handle photo upload
@@ -58,17 +59,17 @@ export const PUT: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
 
   const { params, request, cookies } = context
-  const { id: recipeId, reviewId } = params // Destructure reviewId directly
-  if (!recipeId || !reviewId) {
-    return new Response(JSON.stringify({ error: 'Recipe ID and Review ID required' }), {
-      status: 400,
-    })
+  const { reviewId } = params
+  if (!reviewId) {
+    return new Response(JSON.stringify({ error: 'Review ID required' }), { status: 400 })
   }
 
-  const userId = getAuthUser(cookies)
-  if (!userId) {
-    return unauthorizedResponse()
-  }
+  // Editing a review can prepend a photo to the global recipe's images, so require access
+  // to the recipe itself, not just a valid session.
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
+  const { userId, recipe } = access
+  const recipeId = recipe.id
 
   try {
     const requestUrl = new URL(request.url)

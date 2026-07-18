@@ -1,71 +1,43 @@
 import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../lib/firebase-server'
-import { getAuthUser } from '../../../lib/api-helpers'
+import { loadAccessibleRecipe } from '../../../lib/recipe-access'
 import { setRequestContext } from '../../../lib/request-context'
 
 export const GET: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
   const { params, cookies } = context
-  const { id } = params
 
-  const userId = getAuthUser(cookies)
-  if (!userId) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
+  // Enforce that the caller may access this specific recipe, not merely that they're logged in.
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
 
-  if (!id) {
-    return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
-  }
-
-  try {
-    const doc = await db.getDocument('recipes', id)
-    if (!doc) {
-      return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
-    }
-
-    return new Response(JSON.stringify({ recipe: doc, success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  } catch (e) {
-    console.error('GET Recipe Error', e)
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+  return new Response(JSON.stringify({ recipe: access.recipe, success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 
 export const PUT: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
   const { request, cookies, params } = context
-  const { id } = params
-  const user = getAuthUser(cookies)
 
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
-
-  if (!id) {
-    return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
-  }
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
 
   try {
     const recipeData = await request.json()
     const now = new Date().toISOString()
 
+    // Preserve ownership fields — a PUT must not let the caller reassign `createdBy`/`id`
+    // (which would move the recipe out of, or into, someone else's scope).
     const updateData = {
       ...recipeData,
+      id: access.recipe.id,
+      createdBy: access.recipe.createdBy,
       updatedAt: now,
     }
 
-    // Check existence
-    const doc = await db.getDocument('recipes', id)
-    if (!doc) {
-      return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
-    }
-
-    await db.updateDocument('recipes', id, updateData)
+    await db.updateDocument('recipes', access.recipe.id, updateData)
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -83,25 +55,17 @@ export const PUT: APIRoute = async (context: APIContext) => {
 export const DELETE: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
   const { params, cookies } = context
-  const { id } = params
 
-  const userId = getAuthUser(cookies)
-  if (!userId) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
-
-  if (!id) {
-    return new Response(JSON.stringify({ error: 'Missing ID' }), { status: 400 })
-  }
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
 
   try {
-    await db.deleteDocument('recipes', id)
+    await db.deleteDocument('recipes', access.recipe.id)
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    // If it's already gone, REST might throw or return. If throw, we catch.
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

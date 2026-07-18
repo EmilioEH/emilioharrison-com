@@ -1,8 +1,9 @@
 import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../../lib/firebase-server'
-import { getAuthUser, unauthorizedResponse, serverErrorResponse } from '../../../../lib/api-helpers'
+import { serverErrorResponse } from '../../../../lib/api-helpers'
+import { loadAccessibleRecipe } from '../../../../lib/recipe-access'
 import { setRequestContext } from '../../../../lib/request-context'
-import type { Recipe, Ingredient } from '../../../../lib/types'
+import type { Ingredient } from '../../../../lib/types'
 import { executeAiParse } from '../../../../lib/services/ai-parser'
 
 /** Normalize any thrown value to an Error so message extraction is reliable */
@@ -15,18 +16,12 @@ export const POST: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
   const { params, cookies, locals } = context
 
-  // Auth guard — refresh is a privileged operation
-  const userId = getAuthUser(cookies)
-  if (!userId) return unauthorizedResponse()
-
-  const { id } = params
-  if (!id) return serverErrorResponse('Recipe ID required')
-
-  const recipe = (await db.getDocument('recipes', id)) as Recipe | null
-
-  if (!recipe) {
-    return new Response(JSON.stringify({ error: 'Recipe not found' }), { status: 404 })
-  }
+  // Refresh overwrites the recipe document — require access to this specific recipe,
+  // not merely a valid session.
+  const access = await loadAccessibleRecipe(cookies, params.id)
+  if (!access.ok) return access.response
+  const { recipe } = access
+  const id = recipe.id
 
   // Helper to construct text-based payload from existing recipe data
   const buildTextPayload = () => {
