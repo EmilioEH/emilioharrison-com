@@ -1,7 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { RecipeDetail } from './RecipeDetail'
 import type { Recipe } from '../../lib/types'
+import { alert as mockAlert } from '../../lib/dialogStore'
+
+vi.mock('../../lib/dialogStore', () => ({
+  alert: vi.fn(),
+}))
 
 // Mock dependencies
 vi.mock('@nanostores/react', () => ({
@@ -209,6 +214,84 @@ describe('RecipeDetail', () => {
       await vi.waitFor(() => {
         expect(screen.queryByTestId('recipe-detail-loading')).not.toBeInTheDocument()
       })
+    })
+  })
+
+  describe('enhancement completion notice (trust/failure-state UX)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('tells the user explicitly when background enhancement finishes, instead of silently rewriting the recipe', async () => {
+      const processingRecipe = {
+        ...mockRecipe,
+        steps: ['Step 1'],
+        enhancementStatus: 'processing' as const,
+      }
+      const completedRecipe = {
+        ...processingRecipe,
+        enhancementStatus: 'complete' as const,
+        structuredSteps: [{ text: 'Step 1' }],
+      }
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ recipe: completedRecipe }),
+      })
+
+      render(
+        <RecipeDetail
+          recipe={processingRecipe}
+          onClose={onClose}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onToggleThisWeek={onToggleThisWeek}
+        />,
+      )
+
+      await vi.advanceTimersByTimeAsync(4000)
+
+      expect(onUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ enhancementStatus: 'complete' }),
+        'hydrate',
+      )
+      expect(mockAlert).toHaveBeenCalledWith(expect.stringContaining('enhanced'), 'Recipe Enhanced')
+    })
+
+    it('tells the user explicitly when background enhancement fails, and that the original is unchanged', async () => {
+      const processingRecipe = {
+        ...mockRecipe,
+        steps: ['Step 1'],
+        enhancementStatus: 'processing' as const,
+      }
+      const failedRecipe = {
+        ...processingRecipe,
+        enhancementStatus: 'error' as const,
+        enhancementError: 'The AI service timed out.',
+      }
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ recipe: failedRecipe }),
+      })
+
+      render(
+        <RecipeDetail
+          recipe={processingRecipe}
+          onClose={onClose}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onToggleThisWeek={onToggleThisWeek}
+        />,
+      )
+
+      await vi.advanceTimersByTimeAsync(4000)
+
+      expect(mockAlert).toHaveBeenCalledWith('The AI service timed out.', 'Enhancement Failed')
     })
   })
 })

@@ -42,6 +42,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         onAction={onAction}
         onToggleThisWeek={onToggleThisWeek}
         isThisWeek={recipe.thisWeek}
+        hasPreviousVersion={!!recipe.previousVersion}
       />
     </Inline>
   </Inline>

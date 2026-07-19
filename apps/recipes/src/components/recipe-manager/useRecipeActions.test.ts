@@ -187,6 +187,7 @@ describe('useRecipeActions', () => {
   })
 
   it('handles refresh action success', async () => {
+    vi.spyOn(dialogStore, 'confirm').mockResolvedValue(true)
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true, recipe: { ...mockRecipe, title: 'Refreshed' } }),
@@ -209,6 +210,7 @@ describe('useRecipeActions', () => {
   })
 
   it('handles refresh action failure', async () => {
+    vi.spyOn(dialogStore, 'confirm').mockResolvedValue(true)
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: false, error: 'Some error' }),
@@ -228,5 +230,105 @@ describe('useRecipeActions', () => {
     })
 
     expect(dialogStore.alert).toHaveBeenCalledWith(expect.stringContaining('Some error'), 'Error')
+  })
+
+  it('does not refresh when the confirmation is cancelled', async () => {
+    vi.spyOn(dialogStore, 'confirm').mockResolvedValue(false)
+    global.fetch = vi.fn()
+
+    const { result } = renderHook(() =>
+      useRecipeActions({
+        recipe: mockRecipe,
+        onUpdate,
+        onDelete,
+        onToggleThisWeek,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.handleAction('refresh')
+    })
+
+    expect(global.fetch).not.toHaveBeenCalled()
+    expect(onUpdate).not.toHaveBeenCalled()
+  })
+
+  it('handles restore action (confirmed)', async () => {
+    vi.spyOn(dialogStore, 'confirm').mockResolvedValue(true)
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ success: true, recipe: { ...mockRecipe, title: 'Restored Title' } }),
+    })
+
+    const { result } = renderHook(() =>
+      useRecipeActions({
+        recipe: mockRecipe,
+        onUpdate,
+        onDelete,
+        onToggleThisWeek,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.handleAction('restore')
+    })
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/api/recipes/${mockRecipe.id}/restore`),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Restored Title' }),
+      'silent',
+    )
+  })
+
+  it('does not restore when the confirmation is cancelled', async () => {
+    vi.spyOn(dialogStore, 'confirm').mockResolvedValue(false)
+    global.fetch = vi.fn()
+
+    const { result } = renderHook(() =>
+      useRecipeActions({
+        recipe: mockRecipe,
+        onUpdate,
+        onDelete,
+        onToggleThisWeek,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.handleAction('restore')
+    })
+
+    expect(global.fetch).not.toHaveBeenCalled()
+    expect(onUpdate).not.toHaveBeenCalled()
+  })
+
+  it('handles restore action failure', async () => {
+    vi.spyOn(dialogStore, 'confirm').mockResolvedValue(true)
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: 'No previous version to restore.' }),
+    })
+
+    const { result } = renderHook(() =>
+      useRecipeActions({
+        recipe: mockRecipe,
+        onUpdate,
+        onDelete,
+        onToggleThisWeek,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.handleAction('restore')
+    })
+
+    expect(dialogStore.alert).toHaveBeenCalledWith(
+      expect.stringContaining('No previous version to restore.'),
+      'Error',
+    )
+    expect(onUpdate).not.toHaveBeenCalled()
   })
 })
