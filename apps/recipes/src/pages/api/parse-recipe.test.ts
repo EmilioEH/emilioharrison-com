@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { buildMessageContent, generateRecipeStream } from './parse-recipe'
+import {
+  buildMessageContent,
+  buildTextRecipeStream,
+  buildImageRecipeStream,
+  runImageOcrPhases,
+} from './parse-recipe'
 
 /** A minimal fake OpenAI client whose streaming chat completion yields the given full text
  * as a single delta chunk, and records every request it was called with. */
@@ -61,13 +66,13 @@ describe('buildMessageContent', () => {
   })
 })
 
-describe('generateRecipeStream — URL/text sources (single phase, no OCR)', () => {
+describe('buildTextRecipeStream — URL/text sources (single phase, no OCR)', () => {
   it('sends the actual page content to the model and returns a single merged phase', async () => {
     const { client, calls } = fakeOpenAiClient([
       JSON.stringify({ title: 'Real Recipe From URL', ingredients: [], steps: [] }),
     ])
 
-    const stream = await generateRecipeStream(
+    const stream = buildTextRecipeStream(
       client,
       { text: 'Source URL: https://example.com\n\nHTML Content:\n<h1>Real Recipe</h1>' },
       'You are an expert Chef and Data Engineer...',
@@ -90,24 +95,65 @@ describe('generateRecipeStream — URL/text sources (single phase, no OCR)', () 
   it('errors the stream when the model returns nothing usable', async () => {
     const { client } = fakeOpenAiClient(['not valid json and not repairable {{{'])
 
-    const stream = await generateRecipeStream(client, { text: 'some content' }, 'Instructions')
+    const stream = buildTextRecipeStream(client, { text: 'some content' }, 'Instructions')
     const reader = stream.getReader()
     await expect(reader.read()).rejects.toThrow()
   })
 })
 
-describe('generateRecipeStream — photo sources (3-phase OCR pipeline, unchanged)', () => {
-  it('runs three phases and streams three tagged chunks', async () => {
+describe('runImageOcrPhases', () => {
+  it('returns both phases on success', async () => {
     const { client, calls } = fakeOpenAiClient([
       JSON.stringify({ ingredients: ['1 cup flour'] }),
       JSON.stringify({ steps: ['Mix everything.'] }),
+    ])
+
+    const result = await runImageOcrPhases(client, {
+      inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' },
+    })
+
+    expect(result).not.toBeNull()
+    expect(result?.phase1.ingredients).toEqual(['1 cup flour'])
+    expect(result?.phase2?.steps).toEqual(['Mix everything.'])
+    expect(calls).toHaveLength(2)
+  })
+
+  it('returns null when ingredient OCR (phase 1) fails, regardless of phase 2', async () => {
+    const { client } = fakeOpenAiClient(['not valid json {{{', 'not valid json {{{'])
+
+    const result = await runImageOcrPhases(client, {
+      inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' },
+    })
+
+    expect(result).toBeNull()
+  })
+
+  it('still returns phase1 with a null phase2 when only instructions OCR fails', async () => {
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({ ingredients: ['1 cup flour'] }),
+      'not valid json {{{',
+    ])
+
+    const result = await runImageOcrPhases(client, {
+      inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' },
+    })
+
+    expect(result).not.toBeNull()
+    expect(result?.phase1.ingredients).toEqual(['1 cup flour'])
+    expect(result?.phase2).toBeNull()
+  })
+})
+
+describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
+  it('streams the given phase1/phase2 immediately, then structures and streams phase3', async () => {
+    const { client, calls } = fakeOpenAiClient([
       JSON.stringify({ title: 'Photo Recipe', servings: 4 }),
     ])
 
-    const stream = await generateRecipeStream(
+    const stream = buildImageRecipeStream(
       client,
-      { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } },
-      'unused for image mode',
+      { ingredients: ['1 cup flour'] },
+      { steps: ['Mix everything.'] },
     )
     const output = await readStream(stream)
     const lines = output
@@ -116,44 +162,33 @@ describe('generateRecipeStream — photo sources (3-phase OCR pipeline, unchange
       .map((l) => JSON.parse(l))
 
     expect(lines.map((l) => l._p)).toEqual([1, 2, 3])
-    expect(calls).toHaveLength(3)
+    // Only the structuring pass calls the model — phase1/phase2 were already resolved.
+    expect(calls).toHaveLength(1)
   })
 
-  it('flags partialFailure when instructions OCR fails but ingredients/structuring succeed', async () => {
-    const { client } = fakeOpenAiClient([
-      JSON.stringify({ ingredients: ['1 cup flour'] }), // phase 1 (ingredients) succeeds
-      'not valid json {{{', // phase 2 (instructions) fails to parse -> null
-      JSON.stringify({ title: 'Photo Recipe', servings: 4 }), // phase 3 still structures something
-    ])
+  it('flags partialFailure when phase2 is null but structuring still succeeds', async () => {
+    const { client } = fakeOpenAiClient([JSON.stringify({ title: 'Photo Recipe', servings: 4 })])
 
-    const stream = await generateRecipeStream(
-      client,
-      { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } },
-      'unused for image mode',
-    )
+    const stream = buildImageRecipeStream(client, { ingredients: ['1 cup flour'] }, null)
     const output = await readStream(stream)
     const lines = output
       .trim()
       .split('\n')
       .map((l) => JSON.parse(l))
 
-    // Only phases 1 and 3 are emitted — phase 2 failed and produced nothing to send.
+    // Only phases 1 and 3 are emitted — there was no phase 2 to send.
     expect(lines.map((l) => l._p)).toEqual([1, 3])
     const finalPhase = lines.find((l) => l._p === 3)
     expect(finalPhase.partialFailure).toBe('instructions')
   })
 
   it('errors the stream (does not silently close) when the final structuring phase fails', async () => {
-    const { client } = fakeOpenAiClient([
-      JSON.stringify({ ingredients: ['1 cup flour'] }),
-      JSON.stringify({ steps: ['Mix everything.'] }),
-      'not valid json and not repairable {{{', // phase 3 fails -> null
-    ])
+    const { client } = fakeOpenAiClient(['not valid json and not repairable {{{'])
 
-    const stream = await generateRecipeStream(
+    const stream = buildImageRecipeStream(
       client,
-      { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } },
-      'unused for image mode',
+      { ingredients: ['1 cup flour'] },
+      { steps: ['Mix everything.'] },
     )
 
     // Phases 1 and 2 stream fine before the failed phase 3 errors the stream.
