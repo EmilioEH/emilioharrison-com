@@ -40,6 +40,7 @@ import { AiProgressBar } from '../../ui/AiProgressBar'
 import { useAuth } from '../../../lib/authStore'
 import { useFirestoreDocument } from '../../../lib/firestoreHooks'
 import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
+import { isGroceryGenerationStuck } from './grocery-stuck-detection'
 
 import type { User } from 'firebase/auth'
 
@@ -122,26 +123,31 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const [isStuck, setIsStuck] = useState(false)
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
     if (aiGroceryList?.status === 'processing' && aiGroceryList.updatedAt) {
-      interval = setInterval(() => {
-        const lastUpdate = new Date(aiGroceryList.updatedAt).getTime()
-        const now = new Date().getTime()
-        // Consider stuck if processing for > 45 seconds (it usually takes 5-10s)
-        if (now - lastUpdate > 45000) {
-          setIsStuck(true)
-        }
-      }, 1000)
-    } else {
-      // Avoid calling setState synchronously within an effect
-      setTimeout(() => {
-        setIsStuck((prev) => {
-          if (prev) return false
-          return prev
-        })
-      }, 0)
+      // Re-evaluated every time `aiGroceryList` changes, not just on the interval — a retry
+      // writes a fresh 'processing' doc with a recent `updatedAt`, and without evaluating
+      // immediately here, `isStuck` (once true) never clears on that same 'processing' status,
+      // since the branch below only clears it when status moves away from 'processing'. That
+      // left the UI stuck showing "Generation Timed Out" even while a retry was progressing
+      // normally underneath.
+      const check = () =>
+        setIsStuck(
+          isGroceryGenerationStuck(aiGroceryList.status, aiGroceryList.updatedAt, Date.now()),
+        )
+
+      // Defer the initial check to the next tick — calling setState synchronously within an
+      // effect body (rather than from a timer/subscription callback) can trigger cascading
+      // renders (react-hooks/set-state-in-effect).
+      const initial = setTimeout(check, 0)
+      const interval = setInterval(check, 1000)
+      return () => {
+        clearTimeout(initial)
+        clearInterval(interval)
+      }
     }
-    return () => clearInterval(interval)
+
+    const reset = setTimeout(() => setIsStuck(false), 0)
+    return () => clearTimeout(reset)
   }, [aiGroceryList])
 
   const isProcessing = useMemo(() => {
