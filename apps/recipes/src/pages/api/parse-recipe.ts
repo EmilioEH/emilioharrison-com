@@ -13,11 +13,15 @@ const MODEL = 'qwen/qwen3.5-9b'
 // included) meant a hung/slow provider response could run far longer than the content needed.
 const OCR_MAX_TOKENS = 8192
 const STRUCTURE_MAX_TOKENS = 16384
-// A dense, multi-column recipe card can legitimately take the vision model longer to read in
-// full than a simple single-column photo — 30s was cutting those off. 45s matches the
-// structuring pass's own budget.
-const OCR_TIMEOUT_MS = 45_000
-const STRUCTURE_TIMEOUT_MS = 45_000
+// A dense, multi-column recipe card can legitimately take the vision model well over a minute
+// to read in full — the field report that motivated this had one such photo failing at both a
+// 30s and a 45s budget (its pre-guardrails import ran ~5 minutes end-to-end). These phases run
+// in-request with the client holding the connection — the ~30s `ctx.waitUntil` cap that
+// constrains the background jobs does NOT apply here — so err generous: a slow success beats a
+// fast, repeated failure. OCR phases 1+2 run in parallel, so OCR contributes one budget's worth
+// of wall time, not two.
+const OCR_TIMEOUT_MS = 100_000
+const STRUCTURE_TIMEOUT_MS = 60_000
 
 const PARSE_RATE_LIMIT = 20
 const PARSE_RATE_WINDOW_SECONDS = 60 * 60

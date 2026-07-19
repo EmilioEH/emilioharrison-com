@@ -7,6 +7,13 @@ export type EnhancementJobResult =
   | { success: true; recipe: Recipe }
   | { success: false; error: string; status: number }
 
+// This job is handed to `ctx.waitUntil` (see recipes/index.ts), and Cloudflare Workers cancels
+// waitUntil work ~30 seconds after the response is sent — silently, without running catch
+// blocks. The Gemini call budget must therefore fire early enough that the error-status write
+// below still lands inside that window; executeAiParse's 45s default would instead let the
+// runtime kill this job mid-call, leaving enhancementStatus stuck at 'processing' forever.
+const WAITUNTIL_SAFE_TIMEOUT_MS = 25_000
+
 /**
  * Runs the "Kenji-style" total reparse (background Enhancement after a fresh AI import, or a
  * manual AI Refresh) and persists the result — including failure — directly to Firestore.
@@ -42,6 +49,7 @@ export async function runEnhancementJob(
         { ...commonParams, url: recipe.sourceUrl },
         origin,
         signal,
+        WAITUNTIL_SAFE_TIMEOUT_MS,
       )
     } else if (recipe.sourceImage) {
       console.log(`[Enhance] Total Reparse via Image`)
@@ -50,6 +58,7 @@ export async function runEnhancementJob(
         { ...commonParams, image: recipe.sourceImage },
         origin,
         signal,
+        WAITUNTIL_SAFE_TIMEOUT_MS,
       )
     } else {
       console.log(`[Enhance] Text-based enhancement fallback`)
@@ -60,7 +69,13 @@ ${recipe.ingredients.map((i) => `${i.amount} ${i.name}`).join('\n')}
 Steps:
 ${recipe.steps.join('\n')}
       `.trim()
-      newData = await executeAiParse(locals, { ...commonParams, text: textRep }, origin, signal)
+      newData = await executeAiParse(
+        locals,
+        { ...commonParams, text: textRep },
+        origin,
+        signal,
+        WAITUNTIL_SAFE_TIMEOUT_MS,
+      )
     }
 
     const previousVersion = snapshotRecipe(recipe, 'enhance')
