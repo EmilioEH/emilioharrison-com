@@ -83,6 +83,52 @@ describe('resolveInput — text content', () => {
   })
 })
 
+describe('resolveInput / processImageInput — SSRF guard', () => {
+  it('rejects a URL import pointed at a private IP without ever calling fetch', async () => {
+    const fetchMock = vi.fn()
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    // eslint-disable-next-line sonarjs/no-clear-text-protocols -- testing SSRF-target rejection
+    await expect(resolveInput({ url: 'http://169.254.169.254/latest/meta-data/' })).rejects.toThrow(
+      /cannot be fetched/,
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects a URL import pointed at localhost', async () => {
+    const fetchMock = vi.fn()
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    await expect(resolveInput({ url: 'http://localhost:8080/admin' })).rejects.toThrow(
+      /cannot be fetched/,
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects an absolute image URL pointed at a private IP without ever calling fetch', async () => {
+    const fetchMock = vi.fn()
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    // eslint-disable-next-line sonarjs/no-clear-text-protocols -- testing SSRF-target rejection
+    await expect(resolveInput({ image: 'http://10.0.0.5/internal-photo.jpg' })).rejects.toThrow(
+      /cannot be fetched/,
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('still allows an ordinary public image URL through', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'image/jpeg' },
+      arrayBuffer: async () => new TextEncoder().encode('bytes').buffer,
+    })
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    await resolveInput({ image: 'https://cdn.example.com/photo.jpg' })
+    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/photo.jpg')
+  })
+})
+
 describe('stripHtmlForPrompt', () => {
   it('strips script/style/comment noise while keeping the semantic body content', () => {
     const html = `

@@ -3,6 +3,7 @@ import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient } from '../api-helpers'
 import { closeBalanced } from '../api-utils'
 import { createTimeoutSignal } from './ai-timeout'
+import { assertSafeExternalUrl } from './url-safety'
 
 /** Maximum time a single Gemini call (AI Refresh / background Enhancement) may run. */
 const GEMINI_TIMEOUT_MS = 45_000
@@ -280,6 +281,8 @@ export type ProcessedInput = {
  */
 async function extractRedditContent(url: string): Promise<ProcessedInput> {
   try {
+    assertSafeExternalUrl(url)
+
     // 1. Resolve URL (handle redirects like /s/ shortlinks)
     const headRes = await fetch(url, {
       method: 'HEAD',
@@ -295,6 +298,10 @@ async function extractRedditContent(url: string): Promise<ProcessedInput> {
     let jsonUrl = cleanUrl
     if (jsonUrl.endsWith('/')) jsonUrl = jsonUrl.slice(0, -1)
     if (!jsonUrl.endsWith('.json')) jsonUrl += '.json'
+
+    // Re-check after following redirects — a redirect chain could otherwise be used to land
+    // the second fetch on an internal host even though the original URL was safe.
+    assertSafeExternalUrl(jsonUrl)
 
     // 3. Fetch JSON
     const res = await fetch(jsonUrl, {
@@ -375,6 +382,7 @@ export async function resolveInput(params: ParseParams, origin?: string): Promis
     }
 
     if (!url.startsWith('http')) throw new Error('Invalid URL')
+    assertSafeExternalUrl(url)
     const siteRes = await fetch(url, {
       headers: {
         'User-Agent':
@@ -457,6 +465,7 @@ async function processImageInput(image: string, origin?: string): Promise<Proces
   }
 
   if (resolvedImage.startsWith('http')) {
+    assertSafeExternalUrl(resolvedImage)
     const res = await fetch(resolvedImage)
     if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
     const arrayBuffer = await res.arrayBuffer()
