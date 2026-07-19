@@ -3,6 +3,7 @@ import { db } from '../../../lib/firebase-server'
 import { isRecipe } from '../../../lib/type-guards'
 import { getAuthUser } from '../../../lib/api-helpers'
 import { runEnhancementJob } from '../../../lib/services/recipe-enhancement-job'
+import { clampRecipeEnums } from '../../../lib/services/recipe-merge'
 import { rateLimit } from '../../../lib/rate-limit'
 import type { Recipe, RecipeListItem } from '../../../lib/types'
 
@@ -200,7 +201,7 @@ export const POST: APIRoute = async (context: APIContext) => {
 
     const qualifiesForEnhancement = recipeData.creationMethod === 'ai-parse' && !!recipeData.title
 
-    const newRecipe = {
+    const newRecipe = clampRecipeEnums({
       ...recipeData,
       id,
       // Enforce Ownership
@@ -211,7 +212,7 @@ export const POST: APIRoute = async (context: APIContext) => {
       // Set eagerly (in the same write) so the client sees "pending" immediately rather than
       // racing the background job's own first write.
       ...(qualifiesForEnhancement ? { enhancementStatus: 'pending' as const } : {}),
-    }
+    })
 
     await db.createDocument('recipes', id, newRecipe)
 

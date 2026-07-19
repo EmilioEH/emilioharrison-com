@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { mergeAiRecipeUpdate, snapshotRecipe, UnusableAiResultError } from './recipe-merge'
+import {
+  mergeAiRecipeUpdate,
+  snapshotRecipe,
+  clampRecipeEnums,
+  UnusableAiResultError,
+} from './recipe-merge'
 import type { Recipe } from '../types'
 
 function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
@@ -104,6 +109,66 @@ describe('mergeAiRecipeUpdate', () => {
       steps: original.steps,
     })
     expect(merged.updatedAt).not.toBe('2020-01-01T00:00:00.000Z')
+  })
+})
+
+describe('clampRecipeEnums', () => {
+  it('clamps an unrecognized protein to "Other" rather than saving the hallucinated value', () => {
+    const clamped = clampRecipeEnums({ protein: 'Turkey' })
+    expect(clamped.protein).toBe('Other')
+  })
+
+  it('matches protein case-insensitively and normalizes casing', () => {
+    const clamped = clampRecipeEnums({ protein: 'chicken' })
+    expect(clamped.protein).toBe('Chicken')
+  })
+
+  it('leaves a valid protein untouched', () => {
+    const clamped = clampRecipeEnums({ protein: 'Vegan' })
+    expect(clamped.protein).toBe('Vegan')
+  })
+
+  it('leaves protein unset when the recipe has none', () => {
+    const clamped = clampRecipeEnums<Partial<Recipe>>({})
+    expect(clamped.protein).toBeUndefined()
+  })
+
+  it('clears an unrecognized mealType/dishType instead of mislabeling (no catch-all option)', () => {
+    const clamped = clampRecipeEnums({ mealType: 'Late Night Snack Attack', dishType: 'Entree' })
+    expect(clamped.mealType).toBeUndefined()
+    expect(clamped.dishType).toBeUndefined()
+  })
+
+  it('keeps a valid mealType/dishType, matched case-insensitively', () => {
+    const clamped = clampRecipeEnums({ mealType: 'dinner', dishType: 'Main' })
+    expect(clamped.mealType).toBe('Dinner')
+    expect(clamped.dishType).toBe('Main')
+  })
+
+  it('normalizes structuredIngredients categories to the fixed grocery category set', () => {
+    const clamped = clampRecipeEnums({
+      structuredIngredients: [
+        {
+          original: '1 lb ground turkey',
+          name: 'ground turkey',
+          amount: 1,
+          unit: 'lb',
+          category: 'Seafood', // legacy category name (see grocery-logic.ts LEGACY_CATEGORY_MAP)
+        },
+      ],
+    })
+    expect(clamped.structuredIngredients?.[0].category).toBe('Meat')
+  })
+
+  it('is applied automatically by mergeAiRecipeUpdate', () => {
+    const original = makeRecipe({ protein: 'Beef' })
+    const merged = mergeAiRecipeUpdate(original, {
+      title: 'Updated Title',
+      ingredients: original.ingredients,
+      steps: original.steps,
+      protein: 'Turkey',
+    })
+    expect(merged.protein).toBe('Other')
   })
 })
 

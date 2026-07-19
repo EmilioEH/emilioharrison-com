@@ -1,4 +1,56 @@
 import type { Recipe } from '../types'
+import { normalizeCategory } from '../grocery-logic'
+
+// Mirrors the exact option sets EditRecipeView.tsx's manual-edit dropdowns offer for these
+// fields (protein also mirrors ai-parser.ts's PROTEIN_OPTIONS, used in the AI prompts). Kept as
+// local copies rather than shared imports — small, stable lists, and it avoids this module
+// picking up an unrelated dependency on ai-parser.ts's much heavier prompt-text exports.
+const PROTEIN_OPTIONS = [
+  'Chicken',
+  'Beef',
+  'Pork',
+  'Fish',
+  'Seafood',
+  'Vegetarian',
+  'Vegan',
+  'Other',
+]
+const MEAL_TYPE_OPTIONS = ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert']
+const DISH_TYPE_OPTIONS = ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce']
+
+/** Case-insensitively matches `value` against `options`, returning the canonically-cased option.
+ * An unrecognized (or absent) value resolves to `fallback` — `undefined` for fields with no
+ * catch-all option in their dropdown, so a hallucinated value clears rather than mislabels. */
+function clampEnum(
+  value: string | undefined,
+  options: string[],
+  fallback?: string,
+): string | undefined {
+  if (!value) return value
+  const match = options.find((opt) => opt.toLowerCase() === value.trim().toLowerCase())
+  return match ?? fallback
+}
+
+/**
+ * Clamps AI-generated protein/mealType/dishType/ingredient-category values to the app's fixed
+ * enum sets before a recipe is saved. Without this, a hallucinated value (e.g. "Turkey" instead
+ * of one of PROTEIN_OPTIONS) doesn't match any filter pill on the library view, and shows as
+ * unselected — not "Turkey" — the next time the recipe is opened in Edit, since the manual-edit
+ * `<select>` only recognizes the canonical set. Applied at every AI write path: the initial
+ * ai-parse creation (`POST /api/recipes`) and every AI Refresh/Enhancement merge (this file).
+ */
+export function clampRecipeEnums<T extends Partial<Recipe>>(recipe: T): T {
+  return {
+    ...recipe,
+    protein: clampEnum(recipe.protein, PROTEIN_OPTIONS, 'Other'),
+    mealType: clampEnum(recipe.mealType, MEAL_TYPE_OPTIONS),
+    dishType: clampEnum(recipe.dishType, DISH_TYPE_OPTIONS),
+    structuredIngredients: recipe.structuredIngredients?.map((ing) => ({
+      ...ing,
+      category: normalizeCategory(ing.category),
+    })),
+  }
+}
 
 /**
  * Array fields an AI reparse (Refresh/Enhancement) can regenerate. A truncated or malformed
@@ -116,5 +168,5 @@ export function mergeAiRecipeUpdate(
     }
   }
 
-  return merged as Recipe
+  return clampRecipeEnums(merged as Recipe)
 }
