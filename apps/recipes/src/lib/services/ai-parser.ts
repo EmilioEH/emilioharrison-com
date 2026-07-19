@@ -5,7 +5,10 @@ import { closeBalanced } from '../api-utils'
 import { createTimeoutSignal } from './ai-timeout'
 import { assertSafeExternalUrl } from './url-safety'
 
-/** Maximum time a single Gemini call (AI Refresh / background Enhancement) may run. */
+/** Default budget for a single Gemini call in `executeAiParse`. Safe only for in-request
+ * callers (AI Refresh), where the client holds the connection open — waitUntil-bound callers
+ * (background Enhancement) must override it via the `timeoutMs` parameter; see that param's
+ * doc for the Cloudflare constraint. */
 const GEMINI_TIMEOUT_MS = 45_000
 
 export const PROTEIN_OPTIONS = [
@@ -625,11 +628,16 @@ export async function executeAiParse(
   /** External abort signal (e.g. the incoming request being cancelled) — combined with an
    * internal timeout so a hung Gemini call can never block a request or background job forever. */
   externalSignal?: AbortSignal,
+  /** Overrides the default 45s call budget. Callers running under `ctx.waitUntil` MUST pass a
+   * value that lets the timeout fire — and their error-status write land — inside Cloudflare's
+   * ~30s post-response waitUntil cap (see recipe-enhancement-job.ts); the default is only safe
+   * for in-request callers like refresh.ts, where the client holds the connection open. */
+  timeoutMs: number = GEMINI_TIMEOUT_MS,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const client = await initGeminiClient(locals)
   const { style = 'strict' } = params
-  const { signal, cleanup } = createTimeoutSignal(GEMINI_TIMEOUT_MS, externalSignal)
+  const { signal, cleanup } = createTimeoutSignal(timeoutMs, externalSignal)
 
   const processedInput = await resolveInput(params, origin)
   const { contentPart } = processedInput
@@ -661,6 +669,11 @@ export async function executeAiParse(
         responseMimeType: 'application/json',
         responseSchema: RECIPE_RESPONSE_SCHEMA,
         abortSignal: signal,
+        // gemini-2.5-flash has dynamic "thinking" enabled by default, which can add tens of
+        // seconds of latency before output starts — enough to blow the tight budget background
+        // Enhancement runs under (see timeoutMs above). The response schema and the detailed
+        // style prompts do the shaping here; disable thinking for consistent, fast responses.
+        thinkingConfig: { thinkingBudget: 0 },
       },
       contents: [{ role: 'user', parts }],
     })

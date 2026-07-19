@@ -96,6 +96,7 @@ describe('runEnhancementJob', () => {
       expect.objectContaining({ url: 'https://a.com' }),
       'https://origin',
       undefined,
+      expect.any(Number),
     )
 
     await runEnhancementJob({}, makeRecipe({ sourceImage: '/api/uploads/x.jpg' }), 'https://origin')
@@ -104,6 +105,7 @@ describe('runEnhancementJob', () => {
       expect.objectContaining({ image: '/api/uploads/x.jpg' }),
       'https://origin',
       undefined,
+      expect.any(Number),
     )
 
     await runEnhancementJob({}, makeRecipe(), 'https://origin')
@@ -112,7 +114,21 @@ describe('runEnhancementJob', () => {
       expect.objectContaining({ text: expect.stringContaining('Steak Tips') }),
       'https://origin',
       undefined,
+      expect.any(Number),
     )
+  })
+
+  it('caps every AI call well under the ~30s Cloudflare waitUntil budget', async () => {
+    // Cloudflare cancels waitUntil work ~30s after the response is sent — without running catch
+    // blocks. If this job's Gemini timeout exceeds that, a slow call is killed mid-flight and
+    // enhancementStatus stays 'processing' forever (this exact failure shipped once: a 45s
+    // budget under a 30s cap). The timeout must leave room for the error write too.
+    executeAiParse.mockResolvedValue({ title: 'x', ingredients: [{ name: 'a', amount: '1' }] })
+
+    await runEnhancementJob({}, makeRecipe({ sourceUrl: 'https://a.com' }), 'https://origin')
+
+    const timeoutMs = executeAiParse.mock.calls.at(-1)?.[4]
+    expect(timeoutMs).toBeLessThanOrEqual(25_000)
   })
 
   it('never throws even if the Firestore status write itself fails', async () => {

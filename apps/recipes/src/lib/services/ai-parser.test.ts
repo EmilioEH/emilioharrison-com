@@ -196,6 +196,15 @@ describe('executeAiParse — response schema', () => {
     expect(config.responseSchema.properties.ingredients).toBeDefined()
     expect(config.responseSchema.properties.structuredSteps).toBeDefined()
   })
+
+  it('disables Gemini thinking (latency: default dynamic thinking can add tens of seconds)', async () => {
+    generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Fast Recipe' }) })
+
+    await executeAiParse({}, { text: 'Recipe text content' })
+
+    const config = generateContent.mock.calls[0][0].config
+    expect(config.thinkingConfig).toEqual({ thinkingBudget: 0 })
+  })
 })
 
 describe('executeAiParse — forwards content to the model', () => {

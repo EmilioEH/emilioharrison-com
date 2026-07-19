@@ -18,7 +18,14 @@ import { rateLimit } from '../../lib/rate-limit'
 import { db } from '../../lib/firebase-server'
 import type { GroceryList, Recipe } from '../../lib/types'
 
-const GEMINI_TIMEOUT_MS = 60_000
+// HARD PLATFORM CONSTRAINT: this job runs under `ctx.waitUntil`, and Cloudflare Workers cancels
+// waitUntil work ~30 seconds after the response is sent — silently, without running catch/finally.
+// The previous 60s budget here could never be reached: any generation crossing ~30s was killed
+// mid-flight, the error-status write never ran, and the Firestore doc stayed 'processing'
+// forever (surfacing to the user as a "Generation Timed Out" state that retry couldn't clear,
+// because every retry died the same way). The timeout must fire — and the error write must
+// land — comfortably inside that 30s window.
+const GEMINI_TIMEOUT_MS = 25_000
 const GROCERY_RATE_LIMIT = 15
 const GROCERY_RATE_WINDOW_SECONDS = 60 * 60
 
@@ -183,6 +190,11 @@ async function runGroceryGenerationJob(client: any, recipes: Recipe[], listId: s
         responseMimeType: 'application/json',
         responseSchema: SCHEMA,
         abortSignal: signal,
+        // gemini-2.5-flash has dynamic "thinking" enabled by default, which can add tens of
+        // seconds of latency before output starts. Unit conversion/aggregation is mechanical —
+        // the schema and prompt do the shaping — and the job must finish within the waitUntil
+        // budget above, so disable thinking entirely.
+        thinkingConfig: { thinkingBudget: 0 },
       },
     })
 
