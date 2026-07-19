@@ -1,7 +1,26 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { formatRecipesForPrompt } from '../../lib/api-utils'
 import { Type as SchemaType } from '@google/genai'
-import { initGeminiClient, serverErrorResponse } from '../../lib/api-helpers'
+import {
+  initGeminiClient,
+  getGroceryScopeId,
+  serverErrorResponse,
+  unauthorizedResponse,
+  badRequestResponse,
+} from '../../lib/api-helpers'
+import { tryRepairJson } from '../../lib/services/ai-parser'
+import { createTimeoutSignal } from '../../lib/services/ai-timeout'
+import {
+  detectAllNewGroceryStages,
+  extractGeminiChunkText,
+} from '../../lib/services/grocery-progress'
+import { rateLimit } from '../../lib/rate-limit'
+import { db } from '../../lib/firebase-server'
+import type { GroceryList, Recipe } from '../../lib/types'
+
+const GEMINI_TIMEOUT_MS = 60_000
+const GROCERY_RATE_LIMIT = 15
+const GROCERY_RATE_WINDOW_SECONDS = 60 * 60
 
 const SYSTEM_PROMPT = `
 You are an expert Grocery Shopping Assistant helping someone prepare a grocery shopping list.
@@ -135,22 +154,19 @@ const SCHEMA = {
   required: ['ingredients'],
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  let client
-  try {
-    client = await initGeminiClient(locals)
-  } catch {
-    return serverErrorResponse('Missing API Key')
-  }
-
-  const { recipes } = await request.json()
-
-  if (!recipes || recipes.length === 0) {
-    return new Response(JSON.stringify({ ingredients: [] }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+/**
+ * Runs the Gemini generation to completion and persists the result (including progress and
+ * failure) directly to Firestore. Never throws — safe to hand to `ctx.waitUntil()`.
+ *
+ * Previously the client read this stream directly and wrote the final result to Firestore
+ * itself; if the tab was backgrounded or closed mid-generation, the AI call had already been
+ * paid for but the list was lost. Persisting server-side means the client only ever needs to
+ * watch its existing Firestore subscription (`grocery_lists/{listId}`) — which already exists
+ * for exactly this — regardless of what happens to the original request.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function runGroceryGenerationJob(client: any, recipes: Recipe[], listId: string) {
+  const { signal, cleanup } = createTimeoutSignal(GEMINI_TIMEOUT_MS)
 
   try {
     const inputList = formatRecipesForPrompt(recipes)
@@ -166,43 +182,141 @@ export const POST: APIRoute = async ({ request, locals }) => {
       config: {
         responseMimeType: 'application/json',
         responseSchema: SCHEMA,
+        abortSignal: signal,
       },
     })
 
-    const encoder = new TextEncoder()
-    const readable = new ReadableStream({
-      async start(controller) {
+    let result = ''
+    const foundStages = new Set<string>()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for await (const chunk of streamResponse as AsyncIterable<any>) {
+      const text = extractGeminiChunkText(chunk)
+      if (!text) continue
+      result += text
+
+      for (const update of detectAllNewGroceryStages(result, foundStages)) {
         try {
-          for await (const chunk of streamResponse) {
-            let text = ''
-            if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
-              text = chunk.candidates[0].content.parts[0].text
-            } else if ('text' in chunk && typeof (chunk as { text: string }).text === 'string') {
-              text = (chunk as { text: string }).text
-            } else if (typeof chunk === 'string') {
-              text = chunk
-            }
-
-            if (text) {
-              controller.enqueue(encoder.encode(text))
-            }
-          }
-          controller.close()
-        } catch (err) {
-          controller.error(err)
+          await db.updateDocument('grocery_lists', listId, {
+            progress: update.progress,
+            message: update.message,
+            updatedAt: new Date().toISOString(),
+          })
+        } catch (writeError) {
+          console.warn('[Grocery] Failed to persist progress update:', writeError)
         }
-      },
-    })
+      }
+    }
 
-    return new Response(readable, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Transfer-Encoding': 'chunked',
-      },
+    let data
+    try {
+      data = JSON.parse(result)
+    } catch {
+      const repaired = tryRepairJson(result)
+      if (repaired === undefined) throw new Error('AI response was incomplete')
+      data = repaired as { ingredients?: unknown }
+    }
+
+    if (!data?.ingredients) throw new Error('No ingredients generated')
+
+    await db.updateDocument('grocery_lists', listId, {
+      ingredients: data.ingredients,
+      status: 'complete',
+      progress: 100,
+      message: 'Done!',
+      updatedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Gemini API Error:', error)
-    return serverErrorResponse(error instanceof Error ? error.message : 'Failed to generate list')
+    console.error('[Grocery] Generation failed:', error)
+    try {
+      await db.updateDocument('grocery_lists', listId, {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        updatedAt: new Date().toISOString(),
+      })
+    } catch (writeError) {
+      console.error('[Grocery] Failed to persist error status:', writeError)
+    }
+  } finally {
+    cleanup()
   }
+}
+
+export const POST: APIRoute = async (context: APIContext) => {
+  const { request, locals, cookies } = context
+
+  const scope = await getGroceryScopeId(cookies)
+  if (!scope) return unauthorizedResponse()
+
+  let client
+  try {
+    client = await initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key')
+  }
+
+  const { recipes, weekStartDate } = await request.json()
+
+  if (!recipes || recipes.length === 0) {
+    return new Response(JSON.stringify({ success: true, ingredients: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (!weekStartDate || typeof weekStartDate !== 'string') {
+    return badRequestResponse('weekStartDate is required')
+  }
+
+  const kv = locals?.runtime?.env?.SESSION
+  const { limited } = await rateLimit(
+    kv,
+    `grocery:${scope.userId}`,
+    GROCERY_RATE_LIMIT,
+    GROCERY_RATE_WINDOW_SECONDS,
+  )
+  if (limited) {
+    return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const listId = `${scope.scopeId}_${weekStartDate}`
+  const now = new Date().toISOString()
+
+  try {
+    // Initialize the doc as 'processing' immediately — before the AI call — so the client's
+    // existing Firestore subscription reflects generation starting even if this request's
+    // connection is later dropped.
+    await db.setDocument('grocery_lists', listId, {
+      id: listId,
+      userId: scope.userId,
+      ...(scope.familyId ? { familyId: scope.familyId } : {}),
+      weekStartDate,
+      ingredients: [],
+      status: 'processing',
+      progress: 0,
+      message: 'Analyzing recipes...',
+      createdAt: now,
+      updatedAt: now,
+    } satisfies GroceryList)
+  } catch (error) {
+    console.error('[Grocery] Failed to initialize list document:', error)
+    return serverErrorResponse('Failed to start generation')
+  }
+
+  const job = runGroceryGenerationJob(client, recipes as Recipe[], listId)
+  const ctx = locals?.runtime?.ctx
+  if (ctx?.waitUntil) {
+    ctx.waitUntil(job)
+  } else {
+    // No Workers `ctx` available (e.g. local dev without the Cloudflare runtime proxy).
+    await job
+  }
+
+  return new Response(JSON.stringify({ success: true, listId, status: 'processing' }), {
+    status: 202,
+    headers: { 'Content-Type': 'application/json' },
+  })
 }

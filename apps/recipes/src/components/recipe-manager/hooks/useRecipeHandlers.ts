@@ -4,7 +4,6 @@ import { familyActions, $pendingInvites } from '../../../lib/familyStore'
 import { recipeActions } from '../../../lib/recipeStore'
 
 import type { ViewMode } from './useRouter'
-import { triggerBackgroundEnhancement } from '../../../lib/services/recipe-enhancer'
 
 interface UseRecipeHandlersProps {
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
@@ -84,11 +83,9 @@ export function useRecipeHandlers({
       // If it's a new recipe, we do NOT change view here.
       // The RecipeEditor will handle the "Success" state.
 
-      // Background Enhancement Trigger (Fire-and-forget)
-      // Only for NEW recipes created via AI parsing
-      if (!recipe.id && saved?.id && recipe.creationMethod === 'ai-parse' && recipe.title) {
-        triggerBackgroundEnhancement(saved.id, recipe.title)
-      }
+      // Background Enhancement for new AI-parsed recipes is now triggered server-side
+      // (POST /api/recipes, via ctx.waitUntil) so it survives the client closing/backgrounding
+      // right after save — see recipe-enhancement-job.ts.
 
       return { success: true, savedId: saved?.id }
     } else {

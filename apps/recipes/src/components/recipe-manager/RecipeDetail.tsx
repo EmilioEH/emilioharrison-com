@@ -97,6 +97,58 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipe.id]) // Only run on mount/id change to prevent loop
 
+  // Background Enhancement now runs server-side and has no live subscription (unlike grocery
+  // lists) — poll briefly while it's in flight so this view picks up the "complete"/"error"
+  // transition without requiring a manual reload. Bounded so a stuck job doesn't poll forever;
+  // self-terminates because the effect re-runs (and no-ops) once `enhancementStatus` leaves
+  // pending/processing — see the dependency array below.
+  useEffect(() => {
+    const status = recipe.enhancementStatus
+    if (status !== 'pending' && status !== 'processing') return
+
+    const POLL_INTERVAL_MS = 4000
+    const MAX_ATTEMPTS = 15 // ~60s total
+    let attempts = 0
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+
+    const poll = async () => {
+      attempts++
+      try {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`
+        const res = await fetch(`${baseUrl}api/recipes/${recipe.id}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          const updatedRecipe = data.recipe || data
+          if (
+            !cancelled &&
+            updatedRecipe?.id === recipe.id &&
+            updatedRecipe.enhancementStatus !== status
+          ) {
+            onUpdate(updatedRecipe, 'hydrate')
+            return
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to poll enhancement status:', error)
+      }
+
+      if (!cancelled && attempts < MAX_ATTEMPTS) {
+        timer = setTimeout(poll, POLL_INTERVAL_MS)
+      }
+    }
+
+    timer = setTimeout(poll, POLL_INTERVAL_MS)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipe.id, recipe.enhancementStatus])
+
   // Use weekStore to determine if planned (Family-scoped)
   const isPlanned = useStore(
     useMemo(

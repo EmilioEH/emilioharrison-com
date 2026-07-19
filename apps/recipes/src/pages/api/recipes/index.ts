@@ -1,8 +1,58 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { isRecipe } from '../../../lib/type-guards'
 import { getAuthUser } from '../../../lib/api-helpers'
+import { runEnhancementJob } from '../../../lib/services/recipe-enhancement-job'
+import { rateLimit } from '../../../lib/rate-limit'
 import type { Recipe, RecipeListItem } from '../../../lib/types'
+
+const ENHANCE_RATE_LIMIT = 20
+const ENHANCE_RATE_WINDOW_SECONDS = 60 * 60
+
+/**
+ * Kicks off background Enhancement for a freshly-created, AI-parsed recipe without blocking
+ * the create response. Runs via `ctx.waitUntil` (Cloudflare Workers) so it survives the
+ * client's tab/connection closing — previously this was triggered by a client-side
+ * fire-and-forget `fetch` from `recipe-enhancer.ts`, which died if the user backgrounded the
+ * app right after saving.
+ */
+export async function triggerBackgroundEnhancement(
+  context: APIContext,
+  recipe: Recipe,
+  userId: string,
+) {
+  if (recipe.creationMethod !== 'ai-parse' || !recipe.title) return
+
+  const kv = context.locals?.runtime?.env?.SESSION
+  const { limited } = await rateLimit(
+    kv,
+    `enhance:${userId}`,
+    ENHANCE_RATE_LIMIT,
+    ENHANCE_RATE_WINDOW_SECONDS,
+  )
+
+  if (limited) {
+    await db
+      .updateDocument('recipes', recipe.id, {
+        enhancementStatus: 'error',
+        enhancementError: 'Skipped automatic enhancement — rate limit reached.',
+      })
+      .catch((e) => console.error('[Enhance] Failed to record rate-limit skip:', e))
+    return
+  }
+
+  const origin = new URL(context.request.url).origin
+  const job = runEnhancementJob(context.locals, recipe, origin)
+
+  const ctx = context.locals?.runtime?.ctx
+  if (ctx?.waitUntil) {
+    ctx.waitUntil(job)
+  } else {
+    // No Workers `ctx` available (e.g. local dev without the Cloudflare runtime proxy) —
+    // fall back to awaiting it directly rather than silently dropping the job.
+    await job
+  }
+}
 
 // Firestore's `in` operator caps at 30 values. Family groups are small in this app, so a single
 // chunk almost always covers it — but we chunk defensively rather than silently truncating the
@@ -131,7 +181,8 @@ export const GET: APIRoute = async ({ cookies }) => {
   }
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async (context: APIContext) => {
+  const { request, cookies } = context
   const userId = getAuthUser(cookies)
 
   if (!userId) {
@@ -147,6 +198,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const userDoc = await db.getDocument('users', userId)
     const familyId = userDoc?.familyId || null
 
+    const qualifiesForEnhancement = recipeData.creationMethod === 'ai-parse' && !!recipeData.title
+
     const newRecipe = {
       ...recipeData,
       id,
@@ -155,9 +208,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       familyId: familyId, // Optional, but saves lookup later
       createdAt: now,
       updatedAt: now,
+      // Set eagerly (in the same write) so the client sees "pending" immediately rather than
+      // racing the background job's own first write.
+      ...(qualifiesForEnhancement ? { enhancementStatus: 'pending' as const } : {}),
     }
 
     await db.createDocument('recipes', id, newRecipe)
+
+    if (qualifiesForEnhancement) {
+      // Fire-and-forget from the caller's perspective — see triggerBackgroundEnhancement.
+      void triggerBackgroundEnhancement(context, newRecipe as Recipe, userId)
+    }
 
     return new Response(JSON.stringify({ success: true, id }), {
       status: 201,

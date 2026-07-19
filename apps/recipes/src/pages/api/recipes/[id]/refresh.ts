@@ -10,6 +10,11 @@ import {
   snapshotRecipe,
   UnusableAiResultError,
 } from '../../../../lib/services/recipe-merge'
+import { rateLimit } from '../../../../lib/rate-limit'
+
+/** AI Refresh is a user-triggered, relatively expensive reparse — cap abuse/cost. */
+const REFRESH_RATE_LIMIT = 10
+const REFRESH_RATE_WINDOW_SECONDS = 60 * 60
 
 /** Normalize any thrown value to an Error so message extraction is reliable */
 const toError = (e: unknown): Error => {
@@ -25,9 +30,23 @@ export const POST: APIRoute = async (context: APIContext) => {
   // not merely a valid session.
   const access = await loadAccessibleRecipe(cookies, params.id)
   if (!access.ok) return access.response
-  const { recipe } = access
+  const { recipe, userId } = access
   const id = recipe.id
   const origin = new URL(request.url).origin
+
+  const kv = locals?.runtime?.env?.SESSION
+  const { limited } = await rateLimit(
+    kv,
+    `refresh:${userId}`,
+    REFRESH_RATE_LIMIT,
+    REFRESH_RATE_WINDOW_SECONDS,
+  )
+  if (limited) {
+    return new Response(
+      JSON.stringify({ error: 'Too many refresh requests. Please try again later.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
 
   // Helper to construct text-based payload from existing recipe data
   const buildTextPayload = () => {
@@ -47,14 +66,29 @@ ${recipe.steps.join('\n')}
     const commonParams = { style: 'enhanced' as const }
     if (recipe.sourceUrl) {
       console.log('[Refresh] Using sourceUrl:', recipe.sourceUrl)
-      return await executeAiParse(locals, { ...commonParams, url: recipe.sourceUrl }, origin)
+      return await executeAiParse(
+        locals,
+        { ...commonParams, url: recipe.sourceUrl },
+        origin,
+        request.signal,
+      )
     }
     if (recipe.sourceImage) {
       console.log('[Refresh] Using sourceImage')
-      return await executeAiParse(locals, { ...commonParams, image: recipe.sourceImage }, origin)
+      return await executeAiParse(
+        locals,
+        { ...commonParams, image: recipe.sourceImage },
+        origin,
+        request.signal,
+      )
     }
     console.log('[Refresh] No source available, using saved text')
-    return await executeAiParse(locals, { ...commonParams, text: buildTextPayload() }, origin)
+    return await executeAiParse(
+      locals,
+      { ...commonParams, text: buildTextPayload() },
+      origin,
+      request.signal,
+    )
   }
 
   let usedTextFallback = false
@@ -77,6 +111,7 @@ ${recipe.steps.join('\n')}
           locals,
           { style: 'enhanced', text: buildTextPayload() },
           origin,
+          request.signal,
         )
       } else {
         throw sourceError

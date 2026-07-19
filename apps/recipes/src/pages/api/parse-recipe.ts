@@ -1,9 +1,23 @@
-import type { APIRoute } from 'astro'
+import type { APIRoute, APIContext } from 'astro'
 import OpenAI from 'openai'
-import { createOpenRouterClient, serverErrorResponse } from '../../lib/api-helpers'
+import { createOpenRouterClient, serverErrorResponse, getAuthUser } from '../../lib/api-helpers'
 import { tryRepairJson, resolveInput, getSystemPrompts } from '../../lib/services/ai-parser'
+import { createTimeoutSignal } from '../../lib/services/ai-timeout'
+import { rateLimit } from '../../lib/rate-limit'
 
 const MODEL = 'qwen/qwen3.5-9b'
+
+// OCR passes just transcribe an ingredient/step list (plain string arrays) — far cheaper than
+// the full structured-recipe output, which needs enough headroom for enhanced-mode fields
+// (structuredSteps/ingredientGroups/etc). The previous 65536-token ceiling on every phase (OCR
+// included) meant a hung/slow provider response could run far longer than the content needed.
+const OCR_MAX_TOKENS = 8192
+const STRUCTURE_MAX_TOKENS = 16384
+const OCR_TIMEOUT_MS = 30_000
+const STRUCTURE_TIMEOUT_MS = 45_000
+
+const PARSE_RATE_LIMIT = 20
+const PARSE_RATE_WINDOW_SECONDS = 60 * 60
 
 /**
  * Maps raw errors to user-friendly messages.
@@ -12,7 +26,7 @@ function getSafeErrorMessage(error: unknown): string {
   const msg = error instanceof Error ? error.message : ''
 
   if (msg.includes('Base64 decoding failed') || msg.includes('inline_data.data')) {
-    return 'We couldn\u2019t process that photo. Please try uploading a different image.'
+    return 'We couldn’t process that photo. Please try uploading a different image.'
   }
   if (msg.includes('BLOCKED:') || msg.includes('Failed to fetch URL')) {
     return msg
@@ -29,7 +43,31 @@ function getSafeErrorMessage(error: unknown): string {
   return 'Something went wrong while processing your recipe. Please try again.'
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async (context: APIContext) => {
+  const { request, locals, cookies } = context
+
+  const userId = getAuthUser(cookies)
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const kv = locals?.runtime?.env?.SESSION
+  const { limited } = await rateLimit(
+    kv,
+    `parse:${userId}`,
+    PARSE_RATE_LIMIT,
+    PARSE_RATE_WINDOW_SECONDS,
+  )
+  if (limited) {
+    return new Response(JSON.stringify({ error: 'Too many imports. Please try again later.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   let client
   try {
     client = createOpenRouterClient(locals)
@@ -50,7 +88,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const processedInput = await resolveInput(body)
     const { contentPart, sourceInfo, prompt } = processedInput
 
-    const stream = await generateRecipeStream(client, contentPart, prompt, body.style)
+    const stream = await generateRecipeStream(
+      client,
+      contentPart,
+      prompt,
+      body.style,
+      request.signal,
+    )
 
     return new Response(stream, {
       status: 200,
@@ -97,6 +141,9 @@ export function buildMessageContent(
 
 /**
  * Runs a single phase: calls OpenRouter, streams the response, buffers it, returns parsed JSON.
+ * Bounded by `timeoutMs` (combined with `externalSignal`, e.g. the incoming request being
+ * cancelled) so a hung upstream call can't block the request/stream forever, and can't keep
+ * running at full cost after the client has given up.
  */
 async function runPhase(
   client: OpenAI,
@@ -104,7 +151,11 @@ async function runPhase(
   userPrompt: string,
   contentPart: Record<string, unknown> | undefined,
   model: string = MODEL,
+  maxTokens: number = OCR_MAX_TOKENS,
+  timeoutMs: number = OCR_TIMEOUT_MS,
+  externalSignal?: AbortSignal,
 ): Promise<Record<string, unknown> | null> {
+  const { signal, cleanup } = createTimeoutSignal(timeoutMs, externalSignal)
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = []
     if (systemPrompt) {
@@ -118,13 +169,16 @@ async function runPhase(
       ) as unknown as OpenAI.Chat.ChatCompletionContentPart[],
     })
 
-    const result = await client.chat.completions.create({
-      model,
-      messages,
-      response_format: { type: 'json_object' },
-      max_tokens: 65536,
-      stream: true,
-    })
+    const result = await client.chat.completions.create(
+      {
+        model,
+        messages,
+        response_format: { type: 'json_object' },
+        max_tokens: maxTokens,
+        stream: true,
+      },
+      { signal },
+    )
 
     let buffer = ''
     for await (const chunk of result) {
@@ -135,8 +189,11 @@ async function runPhase(
     const parsed = tryRepairJson(buffer)
     if (parsed && typeof parsed === 'object') return parsed as Record<string, unknown>
     return null
-  } catch {
+  } catch (err) {
+    console.error('[ParseRecipe] Phase failed:', err instanceof Error ? err.message : err)
     return null
+  } finally {
+    cleanup()
   }
 }
 
@@ -150,6 +207,7 @@ export async function generateRecipeStream(
   contentPart: Record<string, unknown> | undefined,
   prompt: string,
   style: 'strict' | 'enhanced' = 'strict',
+  externalSignal?: AbortSignal,
 ): Promise<ReadableStream> {
   const encoder = new TextEncoder()
 
@@ -169,6 +227,9 @@ export async function generateRecipeStream(
             finalPrompt,
             contentPart,
             MODEL,
+            STRUCTURE_MAX_TOKENS,
+            STRUCTURE_TIMEOUT_MS,
+            externalSignal,
           )
 
           if (!result) {
@@ -181,18 +242,32 @@ export async function generateRecipeStream(
           return
         }
 
-        // ── Photo-scan flow: three phases so the vision model transcribes the image in full
-        // before a text-only pass structures it (more reliable than asking one call to OCR
-        // and structure simultaneously). ──
-
-        // ── Phase 1: OCR ingredients (raw text, vision model) ──
-        const phase1 = await runPhase(
-          client,
-          '',
-          `Extract ALL ingredient lines from this image. Return JSON with an "ingredients" array where each element is one ingredient line as a string. Include amounts and units. Do not combine or skip any ingredients.`,
-          contentPart,
-          MODEL,
-        )
+        // ── Photo-scan flow: two independent OCR passes (ingredients, instructions) run
+        // concurrently — they read the same image and don't depend on each other — followed by
+        // a text-only pass that structures the combined result. Running phases 1+2 in parallel
+        // roughly halves the wall time of the slowest part of this flow. ──
+        const [phase1, phase2] = await Promise.all([
+          runPhase(
+            client,
+            '',
+            `Extract ALL ingredient lines from this image. Return JSON with an "ingredients" array where each element is one ingredient line as a string. Include amounts and units. Do not combine or skip any ingredients.`,
+            contentPart,
+            MODEL,
+            OCR_MAX_TOKENS,
+            OCR_TIMEOUT_MS,
+            externalSignal,
+          ),
+          runPhase(
+            client,
+            '',
+            `Extract ALL cooking instruction paragraphs from this image. Return JSON with a "steps" array where each element is one complete paragraph as a string. Do NOT combine paragraphs. Do NOT skip any text.`,
+            contentPart,
+            MODEL,
+            OCR_MAX_TOKENS,
+            OCR_TIMEOUT_MS,
+            externalSignal,
+          ),
+        ])
 
         if (!phase1) {
           controller.error(new Error('Failed to parse recipe from image'))
@@ -200,15 +275,6 @@ export async function generateRecipeStream(
         }
 
         controller.enqueue(encoder.encode(JSON.stringify({ _p: 1, ...phase1 }) + '\n'))
-
-        // ── Phase 2: OCR instructions (raw text, vision model) ──
-        const phase2 = await runPhase(
-          client,
-          '',
-          `Extract ALL cooking instruction paragraphs from this image. Return JSON with a "steps" array where each element is one complete paragraph as a string. Do NOT combine paragraphs. Do NOT skip any text.`,
-          contentPart,
-          MODEL,
-        )
 
         if (phase2) {
           controller.enqueue(encoder.encode(JSON.stringify({ _p: 2, ...phase2 }) + '\n'))
@@ -226,6 +292,9 @@ export async function generateRecipeStream(
           `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?})\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
           undefined,
           MODEL,
+          STRUCTURE_MAX_TOKENS,
+          STRUCTURE_TIMEOUT_MS,
+          externalSignal,
         )
 
         if (phase3) {

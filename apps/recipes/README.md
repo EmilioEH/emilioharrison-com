@@ -164,7 +164,7 @@ src/
 │       ├── parse-recipe.ts   # OpenRouter photo-scan OCR pipeline
 │       └── generate-grocery-list.ts  # Gemini grocery list generation
 ├── lib/
-│   ├── services/              # ai-parser, extract-images, grocery-service, recipe-enhancer
+│   ├── services/              # ai-parser, extract-images, grocery-service, recipe-enhancement-job, recipe-merge, ai-timeout, grocery-progress
 │   ├── recipeStore.ts / weekStore.ts / familyStore.ts / authStore.ts
 │   ├── firebase-client.ts / firebase-server.ts / firebase-rest.ts
 │   ├── grocery-logic.ts / grocery-utils.ts
