@@ -5,7 +5,12 @@ import { tryRepairJson, resolveInput, getSystemPrompts } from '../../lib/service
 import { createTimeoutSignal } from '../../lib/services/ai-timeout'
 import { rateLimit } from '../../lib/rate-limit'
 
-const MODEL = 'qwen/qwen3.5-9b'
+// Swapped from qwen/qwen3.5-9b: the 9B tier was taking minutes to OCR dense, multi-column
+// recipe cards (the motivating field report ran ~5 min pre-guardrails and kept hitting the
+// raised timeouts). The flash tier is image-capable, latency-optimized, cheaper on input
+// (which dominates for image prompts), and per OpenRouter's models API supports the same
+// text+image inputs. Still one model for all phases — see CLAUDE.md's AI Integration note.
+const MODEL = 'qwen/qwen3.5-flash-02-23'
 
 // OCR passes just transcribe an ingredient/step list (plain string arrays) — far cheaper than
 // the full structured-recipe output, which needs enough headroom for enhanced-mode fields

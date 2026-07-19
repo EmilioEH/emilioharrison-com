@@ -39,10 +39,15 @@ describe('isGroceryGenerationStuck', () => {
     expect(isGroceryGenerationStuck('processing', freshUpdatedAt, now, 45_000)).toBe(false)
   })
 
-  it('defaults to a threshold comfortably above the server-side Gemini timeout (60s)', () => {
-    // 55s elapsed — within the server's own 60s budget, so this must not be considered stuck
-    // under the default threshold used in the app.
-    const updatedAt55sAgo = new Date(now - 55_000).toISOString()
-    expect(isGroceryGenerationStuck('processing', updatedAt55sAgo, now)).toBe(false)
+  it('defaults to a threshold comfortably above the server-side Gemini timeout (25s)', () => {
+    // 28s elapsed — the server may still be inside its own 25s budget finishing the terminal
+    // status write, so this must not be considered stuck under the default threshold.
+    const updatedAt28sAgo = new Date(now - 28_000).toISOString()
+    expect(isGroceryGenerationStuck('processing', updatedAt28sAgo, now)).toBe(false)
+
+    // 40s elapsed — past the server's budget plus write margin, the job can no longer be
+    // legitimately in flight (Cloudflare kills waitUntil work at ~30s), so this IS stuck.
+    const updatedAt40sAgo = new Date(now - 40_000).toISOString()
+    expect(isGroceryGenerationStuck('processing', updatedAt40sAgo, now)).toBe(true)
   })
 })
