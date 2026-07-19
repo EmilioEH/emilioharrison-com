@@ -15,6 +15,7 @@ import {
   extractGeminiChunkText,
 } from '../../lib/services/grocery-progress'
 import { rateLimit } from '../../lib/rate-limit'
+import { logAiError } from '../../lib/services/ai-error-log'
 import { db } from '../../lib/firebase-server'
 import type { GroceryList, Recipe } from '../../lib/types'
 
@@ -240,6 +241,7 @@ async function runGroceryGenerationJob(client: any, recipes: Recipe[], listId: s
     })
   } catch (error) {
     console.error('[Grocery] Generation failed:', error)
+    logAiError('grocery', error, { context: { listId, recipeCount: String(recipes.length) } })
     try {
       await db.updateDocument('grocery_lists', listId, {
         status: 'error',

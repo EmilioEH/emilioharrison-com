@@ -1,5 +1,6 @@
 import { db } from '../firebase-server'
 import { executeAiParse } from './ai-parser'
+import { logAiError } from './ai-error-log'
 import { mergeAiRecipeUpdate, snapshotRecipe, UnusableAiResultError } from './recipe-merge'
 import type { Recipe } from '../types'
 
@@ -93,6 +94,10 @@ ${recipe.steps.join('\n')}
     const isUnusable = error instanceof UnusableAiResultError
     const message = error instanceof Error ? error.message : 'Failed to enhance recipe'
     console.error('[Enhance] Error:', message)
+    let source = 'text'
+    if (recipe.sourceUrl) source = 'url'
+    else if (recipe.sourceImage) source = 'image'
+    logAiError('enhancement', error, { context: { recipeId, source } })
 
     try {
       await db.updateDocument('recipes', recipeId, {
