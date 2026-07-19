@@ -86,6 +86,12 @@ export interface Recipe {
   // Enhancement Status (for dual-process import)
   enhancementStatus?: 'pending' | 'processing' | 'complete' | 'error'
   enhancementError?: string // Optional error message if enhancement fails
+
+  // Snapshot of AI-mutable fields taken immediately before the most recent AI Refresh or
+  // background Enhancement overwrote them (see lib/services/recipe-merge.ts) — a safety net
+  // so a bad AI result can be manually restored. Not yet exposed in the UI.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  previousVersion?: { savedAt: string; reason: 'refresh' | 'enhance'; data: Record<string, any> }
 }
 
 /**

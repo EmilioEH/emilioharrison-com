@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import OpenAI from 'openai'
 import { createOpenRouterClient, serverErrorResponse } from '../../lib/api-helpers'
-import { tryRepairJson, resolveInput } from '../../lib/services/ai-parser'
+import { tryRepairJson, resolveInput, getSystemPrompts } from '../../lib/services/ai-parser'
 
 const MODEL = 'qwen/qwen3.5-9b'
 
@@ -48,9 +48,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const processedInput = await resolveInput(body)
-    const { contentPart, sourceInfo } = processedInput
+    const { contentPart, sourceInfo, prompt } = processedInput
 
-    const stream = await generateRecipeStream(client, contentPart)
+    const stream = await generateRecipeStream(client, contentPart, prompt, body.style)
 
     return new Response(stream, {
       status: 200,
@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 /**
  * Converts a Gemini-style contentPart to an OpenAI message content array.
  */
-function buildMessageContent(
+export function buildMessageContent(
   prompt: string,
   contentPart: Record<string, unknown> | undefined,
 ): Array<Record<string, unknown>> {
@@ -79,12 +79,17 @@ function buildMessageContent(
 
   if (!contentPart) return content
 
-  if ('inlineData' in contentPart) {
+  if ('inlineData' in contentPart && contentPart.inlineData) {
     const { mimeType, data } = contentPart.inlineData as { mimeType: string; data: string }
     content.push({
       type: 'image_url',
       image_url: { url: `data:${mimeType};base64,${data}` },
     })
+  } else if ('text' in contentPart && contentPart.text) {
+    // CRITICAL: for URL/JSON-LD/pasted-text sources, this IS the recipe content (page HTML,
+    // JSON-LD, or pasted text). Omitting it previously meant the model saw only the
+    // instructions and fabricated a recipe from nothing.
+    content.push({ type: 'text', text: contentPart.text as string })
   }
 
   return content
@@ -135,15 +140,51 @@ async function runPhase(
   }
 }
 
-async function generateRecipeStream(
+/** True only for the photo-scan flow, where contentPart carries inline image bytes. */
+function isImageContent(contentPart: Record<string, unknown> | undefined): boolean {
+  return !!contentPart && typeof contentPart === 'object' && !!contentPart.inlineData
+}
+
+export async function generateRecipeStream(
   client: OpenAI,
   contentPart: Record<string, unknown> | undefined,
+  prompt: string,
+  style: 'strict' | 'enhanced' = 'strict',
 ): Promise<ReadableStream> {
   const encoder = new TextEncoder()
 
   return new ReadableStream({
     async start(controller) {
       try {
+        if (!isImageContent(contentPart)) {
+          // ── URL / JSON-LD / pasted-text sources: the content is already textual, so no
+          // OCR passes are needed — send it straight to the model with the source-specific
+          // system prompt resolveInput() already selected (URL_SYSTEM_PROMPT /
+          // JSON_LD_SYSTEM_PROMPT / TEXT_SYSTEM_PROMPT), same as the Gemini enhance/refresh
+          // path. buildMessageContent() attaches the actual text via `contentPart`. ──
+          const finalPrompt = `${prompt}\n${getSystemPrompts(style)}`
+          const result = await runPhase(
+            client,
+            'You are an expert Chef and Data Engineer. Follow the instructions in the user message exactly and return a strict JSON object.',
+            finalPrompt,
+            contentPart,
+            MODEL,
+          )
+
+          if (!result) {
+            controller.error(new Error('Failed to parse recipe from content'))
+            return
+          }
+
+          controller.enqueue(encoder.encode(JSON.stringify({ _p: 3, ...result }) + '\n'))
+          controller.close()
+          return
+        }
+
+        // ── Photo-scan flow: three phases so the vision model transcribes the image in full
+        // before a text-only pass structures it (more reliable than asking one call to OCR
+        // and structure simultaneously). ──
+
         // ── Phase 1: OCR ingredients (raw text, vision model) ──
         const phase1 = await runPhase(
           client,

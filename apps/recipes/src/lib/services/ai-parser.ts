@@ -339,7 +339,7 @@ async function extractRedditContent(url: string): Promise<ProcessedInput> {
   }
 }
 
-export async function resolveInput(params: ParseParams): Promise<ProcessedInput> {
+export async function resolveInput(params: ParseParams, origin?: string): Promise<ProcessedInput> {
   const { url, image, text } = params
 
   if (url) {
@@ -406,29 +406,39 @@ export async function resolveInput(params: ParseParams): Promise<ProcessedInput>
   }
 
   if (image) {
-    return await processImageInput(image)
+    return await processImageInput(image, origin)
   }
 
   throw new Error('No input provided')
 }
 
-async function processImageInput(image: string): Promise<ProcessedInput> {
+async function processImageInput(image: string, origin?: string): Promise<ProcessedInput> {
   let base64Data = ''
   let mimeType = 'image/jpeg'
+  let resolvedImage = image
 
-  if (image.startsWith('http')) {
-    const res = await fetch(image)
+  if (image.startsWith('/') || image.startsWith('api/')) {
+    // Same-origin relative path (e.g. `sourceImage` saved from an earlier upload — see
+    // uploads/index.ts, which returns a relative `/api/uploads/<key>` URL). Resolve it to an
+    // absolute URL using the current request's origin so AI Refresh/Enhancement can re-fetch
+    // the original photo. Without an origin (e.g. called from a context that has none), this
+    // can't be resolved — fail clearly rather than silently switching to a different input.
+    if (!origin) {
+      throw new Error('Invalid image data: received a URL path instead of image bytes')
+    }
+    resolvedImage = new URL(image, origin).toString()
+  }
+
+  if (resolvedImage.startsWith('http')) {
+    const res = await fetch(resolvedImage)
     if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
     const arrayBuffer = await res.arrayBuffer()
     base64Data = Buffer.from(arrayBuffer).toString('base64')
     mimeType = res.headers.get('content-type') || mimeType
-  } else if (image.startsWith('/') || image.startsWith('api/')) {
-    // Reject relative URL paths that were mistakenly passed instead of base64
-    throw new Error('Invalid image data: received a URL path instead of image bytes')
-  } else if (image.includes(',')) {
-    base64Data = image.split(',')[1] || ''
+  } else if (resolvedImage.includes(',')) {
+    base64Data = resolvedImage.split(',')[1] || ''
   } else {
-    base64Data = image
+    base64Data = resolvedImage
   }
 
   if (base64Data.length > 9 * 1024 * 1024) {
@@ -447,7 +457,7 @@ async function processImageInput(image: string): Promise<ProcessedInput> {
   }
 }
 
-function getSystemPrompts(style: 'strict' | 'enhanced' = 'strict') {
+export function getSystemPrompts(style: 'strict' | 'enhanced' = 'strict') {
   if (style === 'enhanced') {
     return `
 ${INGREDIENT_PARSING_RULES}
@@ -474,12 +484,13 @@ export async function executeAiParse(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   locals: any,
   params: ParseParams,
+  origin?: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const client = await initGeminiClient(locals)
   const { style = 'strict' } = params
 
-  const processedInput = await resolveInput(params)
+  const processedInput = await resolveInput(params, origin)
   const { contentPart } = processedInput
   let { prompt } = processedInput
 
@@ -490,8 +501,16 @@ export async function executeAiParse(
     { text: prompt },
   ]
 
-  if (contentPart && typeof contentPart === 'object' && 'inlineData' in contentPart) {
-    parts.push({ inlineData: contentPart.inlineData as { mimeType: string; data: string } })
+  // CRITICAL: for text/URL/JSON-LD sources, `contentPart.text` IS the recipe content (the
+  // page HTML, JSON-LD, or pasted text) — omitting it here previously meant the model was
+  // asked to "extract a recipe" from nothing but the instructions, and fabricated one
+  // wholesale. Always forward whichever content the source actually produced.
+  if (contentPart && typeof contentPart === 'object') {
+    if ('inlineData' in contentPart && contentPart.inlineData) {
+      parts.push({ inlineData: contentPart.inlineData as { mimeType: string; data: string } })
+    } else if ('text' in contentPart && contentPart.text) {
+      parts.push({ text: contentPart.text })
+    }
   }
 
   const response = await client.models.generateContent({

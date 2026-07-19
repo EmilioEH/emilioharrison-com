@@ -5,6 +5,11 @@ import { loadAccessibleRecipe } from '../../../../lib/recipe-access'
 import { setRequestContext } from '../../../../lib/request-context'
 import type { Ingredient } from '../../../../lib/types'
 import { executeAiParse } from '../../../../lib/services/ai-parser'
+import {
+  mergeAiRecipeUpdate,
+  snapshotRecipe,
+  UnusableAiResultError,
+} from '../../../../lib/services/recipe-merge'
 
 /** Normalize any thrown value to an Error so message extraction is reliable */
 const toError = (e: unknown): Error => {
@@ -14,7 +19,7 @@ const toError = (e: unknown): Error => {
 
 export const POST: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
-  const { params, cookies, locals } = context
+  const { params, cookies, locals, request } = context
 
   // Refresh overwrites the recipe document — require access to this specific recipe,
   // not merely a valid session.
@@ -22,6 +27,7 @@ export const POST: APIRoute = async (context: APIContext) => {
   if (!access.ok) return access.response
   const { recipe } = access
   const id = recipe.id
+  const origin = new URL(request.url).origin
 
   // Helper to construct text-based payload from existing recipe data
   const buildTextPayload = () => {
@@ -37,62 +43,67 @@ ${recipe.steps.join('\n')}
     `.trim()
   }
 
-  try {
-    let newData
+  const runFromSource = async () => {
     const commonParams = { style: 'enhanced' as const }
-
     if (recipe.sourceUrl) {
       console.log('[Refresh] Using sourceUrl:', recipe.sourceUrl)
-      newData = await executeAiParse(locals, { ...commonParams, url: recipe.sourceUrl })
-    } else if (recipe.sourceImage) {
+      return await executeAiParse(locals, { ...commonParams, url: recipe.sourceUrl }, origin)
+    }
+    if (recipe.sourceImage) {
       console.log('[Refresh] Using sourceImage')
-      newData = await executeAiParse(locals, { ...commonParams, image: recipe.sourceImage })
-    } else {
-      console.log('[Refresh] Falling back to text representation')
-      newData = await executeAiParse(locals, { ...commonParams, text: buildTextPayload() })
+      return await executeAiParse(locals, { ...commonParams, image: recipe.sourceImage }, origin)
+    }
+    console.log('[Refresh] No source available, using saved text')
+    return await executeAiParse(locals, { ...commonParams, text: buildTextPayload() }, origin)
+  }
+
+  let usedTextFallback = false
+
+  try {
+    let newData
+    try {
+      newData = await runFromSource()
+    } catch (sourceError) {
+      // Only a real source (URL/photo) re-read failing triggers this fallback — and unlike
+      // before, we report it to the caller instead of silently swapping what the AI saw for
+      // something it never had a chance to actually re-verify against.
+      if (recipe.sourceUrl || recipe.sourceImage) {
+        console.warn(
+          '[Refresh] Source re-read failed, falling back to saved text:',
+          toError(sourceError).message,
+        )
+        usedTextFallback = true
+        newData = await executeAiParse(
+          locals,
+          { style: 'enhanced', text: buildTextPayload() },
+          origin,
+        )
+      } else {
+        throw sourceError
+      }
     }
 
-    // MERGE strategy
-    const updatedRecipe = {
-      ...recipe,
-      ...newData,
-      updatedAt: new Date().toISOString(),
-      sourceUrl: recipe.sourceUrl || newData.sourceUrl,
-      sourceImage: recipe.sourceImage || newData.sourceImage,
-      images: recipe.images || newData.images,
-    }
+    const previousVersion = snapshotRecipe(recipe, 'refresh')
+    const updatedRecipe = { ...mergeAiRecipeUpdate(recipe, newData), previousVersion }
 
     await db.updateDocument('recipes', id, updatedRecipe)
 
-    return new Response(JSON.stringify({ success: true, recipe: updatedRecipe }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({ success: true, recipe: updatedRecipe, usedTextFallback }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
   } catch (error) {
+    if (error instanceof UnusableAiResultError) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 422,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
     const err = toError(error)
     console.error('[Refresh] Error occurred:', err.message)
-    // Fallback to text-based if source failed
-    if (recipe.sourceUrl || recipe.sourceImage) {
-      console.warn('[Refresh] Source refresh failed, trying text fallback...')
-      try {
-        const newData = await executeAiParse(locals, {
-          style: 'enhanced',
-          text: buildTextPayload(),
-        })
-        const updatedRecipe = {
-          ...recipe,
-          ...newData,
-          updatedAt: new Date().toISOString(),
-        }
-        await db.updateDocument('recipes', id, updatedRecipe)
-        return new Response(JSON.stringify({ success: true, recipe: updatedRecipe }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      } catch (fallbackError) {
-        console.error('[Refresh] Fallback also failed:', toError(fallbackError).message)
-      }
-    }
     return serverErrorResponse(err.message)
   }
 }
