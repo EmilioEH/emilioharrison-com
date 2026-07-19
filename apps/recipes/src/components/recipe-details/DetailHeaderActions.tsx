@@ -7,6 +7,7 @@ import {
   Share2,
   Trash2,
   Sparkles,
+  Undo2,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -16,17 +17,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import type { HeaderAction } from './types'
 
 interface DetailHeaderActionsProps {
-  onAction: (action: 'delete' | 'edit' | 'addToWeek' | 'move' | 'share' | 'refresh') => void
+  onAction: (action: HeaderAction) => void
   onToggleThisWeek?: () => void
   isThisWeek: boolean | undefined
+  hasPreviousVersion?: boolean
 }
 
 export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
   onAction,
   onToggleThisWeek,
   isThisWeek,
+  hasPreviousVersion = false,
 }) => {
   const [open, setOpen] = useState(false)
 
@@ -77,6 +81,12 @@ export const DetailHeaderActions: React.FC<DetailHeaderActionsProps> = ({
             <Sparkles className="mr-2 h-4 w-4" />
             Refresh AI Data
           </DropdownMenuItem>
+          {hasPreviousVersion && (
+            <DropdownMenuItem onSelect={() => onAction('restore')}>
+              <Undo2 className="mr-2 h-4 w-4" />
+              Restore Previous Version
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => onAction('delete')}

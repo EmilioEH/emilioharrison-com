@@ -19,6 +19,19 @@ export async function uploadImage(file: File, baseUrl: string): Promise<string |
   }
 }
 
+/** Maps a stream-reading failure (unsalvageable — see the `merged.title` check above) to a
+ * user-friendly message. */
+function getStreamErrorMessage(err: unknown): string {
+  if (err instanceof SyntaxError) {
+    if (err.message.includes('Empty response')) {
+      return 'The AI couldn’t process this image. Try a different photo or upload a clearer image.'
+    }
+    return 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong'
+}
+
 export async function parseRecipe(
   payload: {
     url?: string
@@ -142,23 +155,22 @@ export async function parseRecipe(
     if (sourceUrl) merged.sourceUrl = sourceUrl
     return { data: merged, candidateImages }
   } catch (err) {
+    // Preserve cancellation semantics — let the caller's AbortError check in
+    // handleParseError see the real error, rather than wrapping it below.
+    if (err instanceof Error && err.name === 'AbortError') throw err
+
     console.warn('Stream error — attempting to salvage partial response', err)
 
-    // Try to salvage whatever we have
-    if (Object.keys(merged).length > 0) {
+    // Only salvage if structuring (the final phase) got far enough to produce a title.
+    // Phase 1/2 fragments alone (raw ingredient/step OCR) aren't a usable recipe — silently
+    // treating them as a full success is what let a hollow, title-less recipe get saved with
+    // no error shown to the user (see recipe-corruption postmortem).
+    if (merged.title) {
       if (sourceUrl) merged.sourceUrl = sourceUrl
       return { data: merged, candidateImages }
     }
 
-    const userMessage =
-      err instanceof SyntaxError && err.message.includes('Empty response')
-        ? 'The AI couldn\u2019t process this image. Try a different photo or upload a clearer image.'
-        : err instanceof SyntaxError
-          ? 'The AI response was cut off. Please try again — if this persists, try a smaller or clearer photo.'
-          : err instanceof Error
-            ? err.message
-            : 'Something went wrong'
-    throw new Error(userMessage)
+    throw new Error(getStreamErrorMessage(err))
   }
 }
 

@@ -204,7 +204,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
           {internalIsUploading
             ? 'Uploading Photo...'
             : status === 'processing'
-              ? 'Consulting Chef Gemini...'
+              ? 'Reading your recipe...'
               : 'Process Recipe'}
         </Button>
       </Stack>
@@ -223,7 +223,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             message={
               internalIsUploading
                 ? 'Uploading Photo...'
-                : progressMessage || 'Consulting Chef Gemini...'
+                : progressMessage || 'Reading your recipe...'
             }
             isAnimating={true}
           />

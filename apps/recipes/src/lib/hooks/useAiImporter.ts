@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Recipe } from '../types'
 import { parseRecipe } from '../../components/recipe-manager/importer/api'
 import type { InputMode } from '../../components/recipe-manager/importer/SourceToggle'
+import { alert } from '../dialogStore'
 
 type Status = 'idle' | 'processing' | 'error'
 
@@ -41,7 +42,9 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
     setAbortController(newController)
     setStatus('processing')
     setErrorMsg('')
-    setProgressMessage('Consulting Chef Gemini...')
+    // Photo-scan/URL import runs on our OCR model, not Gemini — the two must not be conflated
+    // in user-facing copy (Gemini powers AI Refresh/Enhancement/grocery lists instead).
+    setProgressMessage('Reading your recipe...')
 
     try {
       const result = await parseRecipe(
@@ -82,8 +85,10 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       finalImage = selectedImage
     }
 
+    const { partialFailure, ...parsedData } = result.data as Record<string, unknown>
+
     const recipeWithSource = {
-      ...(result.data as object),
+      ...parsedData,
       sourceImage: finalImage,
       thumbUrl: mode === 'photo' && thumbUrl ? thumbUrl : undefined,
       creationMethod: 'ai-parse',
@@ -91,6 +96,16 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
 
     onRecipeParsed(recipeWithSource, mode === 'url' ? result.candidateImages : undefined)
     setStatus('idle')
+
+    // The server flags this when an OCR phase failed but there was still enough content to
+    // produce a usable recipe (e.g. ingredients read fine, instructions didn't) — tell the user
+    // explicitly instead of letting a silently hollow recipe look like a normal successful import.
+    if (partialFailure === 'instructions') {
+      void alert(
+        "We couldn't clearly read the instructions from this photo. Please review and add them before cooking.",
+        'Instructions May Be Incomplete',
+      )
+    }
   }
 
   const handleParseError = (err: unknown) => {

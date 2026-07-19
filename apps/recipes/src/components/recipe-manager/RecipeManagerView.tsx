@@ -1,7 +1,8 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
 import { Loader2, AlertCircle } from 'lucide-react'
 import type { Recipe, Family } from '../../lib/types'
 import type { ViewMode } from './hooks/useRouter'
+import { LazyViewErrorBoundary } from '../ui/LazyViewErrorBoundary'
 
 // Non-library views are code-split: each is only fetched when the user actually
 // navigates to it, keeping the entry chunk limited to the library view.
@@ -63,6 +64,11 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
 
   children,
 }) => {
+  // Bumped on retry to force React to remount the failed Suspense/lazy subtree and re-trigger
+  // the dynamic import, rather than staying stuck on the same errored view.
+  const [retryKey, setRetryKey] = useState(0)
+  const retryView = () => setRetryKey((k) => k + 1)
+
   React.useEffect(() => {
     if (view === 'admin-dashboard' && !isAdmin) {
       setView('library')
@@ -100,16 +106,18 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
 
   if (view === 'detail' && selectedRecipe) {
     return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <RecipeDetail
-          key={selectedRecipe.id}
-          recipe={selectedRecipe}
-          onClose={() => setView('library')}
-          onUpdate={handleUpdateRecipe}
-          onDelete={(id) => handleDeleteRecipe(id)}
-          onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
-        />
-      </Suspense>
+      <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <RecipeDetail
+            key={selectedRecipe.id}
+            recipe={selectedRecipe}
+            onClose={() => setView('library')}
+            onUpdate={handleUpdateRecipe}
+            onDelete={(id) => handleDeleteRecipe(id)}
+            onToggleThisWeek={() => handleAddToWeek(selectedRecipe.id)}
+          />
+        </Suspense>
+      </LazyViewErrorBoundary>
     )
   }
 
@@ -152,25 +160,31 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
       return null
     }
     return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <AdminDashboard onClose={() => setView('library')} />
-      </Suspense>
+      <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <AdminDashboard onClose={() => setView('library')} />
+        </Suspense>
+      </LazyViewErrorBoundary>
     )
   }
 
   if (view === 'invite') {
     return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <InviteView onClose={() => setView('library')} />
-      </Suspense>
+      <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <InviteView onClose={() => setView('library')} />
+        </Suspense>
+      </LazyViewErrorBoundary>
     )
   }
 
   if (view === 'family-settings') {
     return (
-      <Suspense fallback={<ViewLoadingFallback />}>
-        <FamilyManagementView onClose={() => setView('library')} family={family} />
-      </Suspense>
+      <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <FamilyManagementView onClose={() => setView('library')} family={family} />
+        </Suspense>
+      </LazyViewErrorBoundary>
     )
   }
 

@@ -276,6 +276,12 @@ export async function generateRecipeStream(
 
         controller.enqueue(encoder.encode(JSON.stringify({ _p: 1, ...phase1 }) + '\n'))
 
+        // Instructions OCR failing doesn't block the pipeline (ingredients alone are still
+        // useful), but silently continuing meant a recipe could be saved with no instructions
+        // and no signal that anything was wrong. Flag it on the final phase so the client can
+        // tell the user explicitly instead.
+        const instructionsFailed = !phase2
+
         if (phase2) {
           controller.enqueue(encoder.encode(JSON.stringify({ _p: 2, ...phase2 }) + '\n'))
         }
@@ -297,9 +303,28 @@ export async function generateRecipeStream(
           externalSignal,
         )
 
-        if (phase3) {
-          controller.enqueue(encoder.encode(JSON.stringify({ _p: 3, ...phase3 }) + '\n'))
+        if (!phase3) {
+          // Without structuring, there's no title/servings/times/groups — just raw OCR text.
+          // Previously this closed the stream with no error, and the client's stream-error
+          // handler would silently "salvage" the phase1/phase2 fragments into what looked like
+          // a complete recipe (see recipe-corruption postmortem). Fail loudly instead.
+          controller.error(
+            new Error(
+              'Failed to structure the recipe from this photo. Please try again with a clearer image.',
+            ),
+          )
+          return
         }
+
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              _p: 3,
+              ...phase3,
+              ...(instructionsFailed ? { partialFailure: 'instructions' } : {}),
+            }) + '\n',
+          ),
+        )
 
         controller.close()
       } catch (err) {

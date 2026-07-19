@@ -10,7 +10,7 @@ interface AiProgressBarProps {
 
 export const AiProgressBar: React.FC<AiProgressBarProps> = ({
   progress,
-  message = 'Consulting Chef Gemini...',
+  message = 'Working some AI magic...',
   isAnimating = false,
   className = '',
 }) => {

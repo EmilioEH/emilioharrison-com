@@ -88,10 +88,15 @@ export interface Recipe {
   enhancementError?: string // Optional error message if enhancement fails
 
   // Snapshot of AI-mutable fields taken immediately before the most recent AI Refresh or
-  // background Enhancement overwrote them (see lib/services/recipe-merge.ts) — a safety net
-  // so a bad AI result can be manually restored. Not yet exposed in the UI.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  previousVersion?: { savedAt: string; reason: 'refresh' | 'enhance'; data: Record<string, any> }
+  // background Enhancement overwrote them (see lib/services/recipe-merge.ts) — the source
+  // for the one-tap "Restore Previous Version" action (see restore.ts). Set back to `null`
+  // once restored, since there's no snapshot left to undo the undo with.
+  previousVersion?: {
+    savedAt: string
+    reason: 'refresh' | 'enhance'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>
+  } | null
 }
 
 /**

@@ -45,10 +45,19 @@ export const useRecipeActions = ({
       case 'refresh':
         await handleRefresh()
         break
+      case 'restore':
+        await handleRestore()
+        break
     }
   }
 
   const handleRefresh = async () => {
+    const confirmed = await confirm(
+      "This regenerates the recipe from its original source. Any manual edits you've made since the last import may be overwritten. You can restore the previous version afterward if needed.",
+      'Refresh with AI?',
+    )
+    if (!confirmed) return
+
     setIsRefreshing(true)
     setRefreshProgress('Preparing to refresh...')
 
@@ -90,6 +99,34 @@ export const useRecipeActions = ({
     } finally {
       setIsRefreshing(false)
       setRefreshProgress('')
+    }
+  }
+
+  const handleRestore = async () => {
+    const confirmed = await confirm(
+      'Restore this recipe to how it was before the last AI refresh or enhancement? The current version will be discarded.',
+      'Restore Previous Version?',
+    )
+    if (!confirmed) return
+
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`
+
+    try {
+      const res = await fetch(`${baseUrl}api/recipes/${recipe.id}/restore`, { method: 'POST' })
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Restore failed')
+      }
+
+      onUpdate(data.recipe, 'silent')
+      await alert('Recipe restored to the previous version.', 'Restored')
+    } catch (e) {
+      console.error('Restore error:', e)
+      const errorMsg = e instanceof Error ? e.message : String(e)
+      await alert(`Failed to restore recipe: ${errorMsg}`, 'Error')
     }
   }
 

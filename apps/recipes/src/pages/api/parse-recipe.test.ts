@@ -118,4 +118,45 @@ describe('generateRecipeStream — photo sources (3-phase OCR pipeline, unchange
     expect(lines.map((l) => l._p)).toEqual([1, 2, 3])
     expect(calls).toHaveLength(3)
   })
+
+  it('flags partialFailure when instructions OCR fails but ingredients/structuring succeed', async () => {
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({ ingredients: ['1 cup flour'] }), // phase 1 (ingredients) succeeds
+      'not valid json {{{', // phase 2 (instructions) fails to parse -> null
+      JSON.stringify({ title: 'Photo Recipe', servings: 4 }), // phase 3 still structures something
+    ])
+
+    const stream = await generateRecipeStream(
+      client,
+      { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } },
+      'unused for image mode',
+    )
+    const output = await readStream(stream)
+    const lines = output
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+
+    // Only phases 1 and 3 are emitted — phase 2 failed and produced nothing to send.
+    expect(lines.map((l) => l._p)).toEqual([1, 3])
+    const finalPhase = lines.find((l) => l._p === 3)
+    expect(finalPhase.partialFailure).toBe('instructions')
+  })
+
+  it('errors the stream (does not silently close) when the final structuring phase fails', async () => {
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({ ingredients: ['1 cup flour'] }),
+      JSON.stringify({ steps: ['Mix everything.'] }),
+      'not valid json and not repairable {{{', // phase 3 fails -> null
+    ])
+
+    const stream = await generateRecipeStream(
+      client,
+      { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } },
+      'unused for image mode',
+    )
+
+    // Phases 1 and 2 stream fine before the failed phase 3 errors the stream.
+    await expect(readStream(stream)).rejects.toThrow()
+  })
 })

@@ -10,6 +10,7 @@ import { Check, ListPlus, Loader2 } from 'lucide-react'
 import { EditRecipeView } from '../recipe-details/EditRecipeView'
 import { OverviewMode } from '../recipe-details/OverviewMode'
 import { isPlannedForActiveWeek, allPlannedRecipes } from '../../lib/weekStore'
+import { alert } from '../../lib/dialogStore'
 
 // Shown only for a recipe that arrived as a slim list-view record (see PERFORMANCE-PLAN.md P3 —
 // GET /api/recipes no longer ships `steps`/ingredient detail) and hasn't been hydrated into the
@@ -128,6 +129,22 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             updatedRecipe.enhancementStatus !== status
           ) {
             onUpdate(updatedRecipe, 'hydrate')
+
+            // The recipe previously just silently rewrote itself once enhancement finished —
+            // tell the user explicitly so an unexpected content change (or a failure that left
+            // the original untouched) doesn't look like a bug.
+            if (updatedRecipe.enhancementStatus === 'complete') {
+              void alert(
+                "We've enhanced this recipe with clearer step-by-step instructions and organized ingredients. Tap “Smart View” to see it, or switch back to “Original” any time.",
+                'Recipe Enhanced',
+              )
+            } else if (updatedRecipe.enhancementStatus === 'error') {
+              void alert(
+                updatedRecipe.enhancementError ||
+                  "We couldn't enhance this recipe automatically. Your original recipe is unchanged.",
+                'Enhancement Failed',
+              )
+            }
             return
           }
         }
