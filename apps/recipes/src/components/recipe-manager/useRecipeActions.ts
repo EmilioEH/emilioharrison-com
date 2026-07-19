@@ -66,6 +66,13 @@ export const useRecipeActions = ({
         setRefreshProgress('Done!')
         await new Promise((r) => setTimeout(r, 1000))
         onUpdate(data.recipe, 'silent')
+
+        if (data.usedTextFallback) {
+          await alert(
+            "We couldn't re-read the original photo or link, so this refresh was regenerated from the recipe's saved text instead.",
+            'Refreshed from Saved Text',
+          )
+        }
       } else {
         throw new Error(data.error || 'Refresh failed')
       }
