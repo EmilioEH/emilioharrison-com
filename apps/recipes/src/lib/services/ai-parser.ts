@@ -1,4 +1,5 @@
 import { load } from 'cheerio'
+import { Type as SchemaType } from '@google/genai'
 import { initGeminiClient } from '../api-helpers'
 import { closeBalanced } from '../api-utils'
 import { createTimeoutSignal } from './ai-timeout'
@@ -235,6 +236,28 @@ export function extractJsonLd(html: string): unknown | null {
   return null
 }
 
+/**
+ * Strips scripts, styles, and other non-content markup from a page's raw HTML before it's sent
+ * to the model as the recipe source (used when no JSON-LD `Recipe` data was found). Cuts token
+ * usage substantially — inline scripts/styles/tracking pixels routinely make up the bulk of a
+ * modern page's byte count — without discarding the semantic structure (headings, lists) the
+ * model relies on to tell ingredients from instructions, unlike a plain-text conversion.
+ */
+export function stripHtmlForPrompt(html: string): string {
+  const $ = load(html)
+  const title = $('title').first().text().trim()
+
+  $('script, style, noscript, svg, iframe, link, meta, template, head').remove()
+  $('*')
+    .contents()
+    .each((_, node) => {
+      if (node.type === 'comment') $(node).remove()
+    })
+
+  const bodyHtml = ($('body').html() || $.root().html() || '').trim()
+  return title ? `<title>${title}</title>\n${bodyHtml}` : bodyHtml
+}
+
 export type ParseParams = {
   url?: string
   image?: string
@@ -396,7 +419,7 @@ export async function resolveInput(params: ParseParams, origin?: string): Promis
 
     return {
       prompt: URL_SYSTEM_PROMPT,
-      contentPart: { text: `Source URL: ${url}\n\nHTML Content:\n${html}` },
+      contentPart: { text: `Source URL: ${url}\n\nHTML Content:\n${stripHtmlForPrompt(html)}` },
       sourceInfo: { url, candidateImages },
     }
   }
@@ -476,6 +499,107 @@ ${STRICT_STEP_RULES}
   `
 }
 
+/**
+ * Canonical response shape for `executeAiParse`'s Gemini calls (AI Refresh / Enhancement —
+ * both always run in 'enhanced' style, see recipe-enhancement-job.ts / refresh.ts). Passed as
+ * `responseSchema` so Gemini's structured-output mode enforces field names/types itself, the
+ * same way generate-grocery-list.ts already constrains its own response — previously this call
+ * only set `responseMimeType`, relying entirely on prompt wording (which drifts) plus
+ * downstream repair/validation (tryRepairJson, mergeAiRecipeUpdate) to catch shape problems
+ * after the fact.
+ */
+const RECIPE_RESPONSE_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    title: { type: SchemaType.STRING },
+    description: { type: SchemaType.STRING },
+    servings: { type: SchemaType.NUMBER },
+    prepTime: { type: SchemaType.NUMBER },
+    cookTime: { type: SchemaType.NUMBER },
+    protein: { type: SchemaType.STRING },
+    mealType: { type: SchemaType.STRING },
+    dishType: { type: SchemaType.STRING },
+    cuisine: { type: SchemaType.STRING },
+    difficulty: { type: SchemaType.STRING },
+    equipment: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    occasion: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    dietary: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    ingredients: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          name: { type: SchemaType.STRING },
+          amount: { type: SchemaType.STRING },
+          prep: { type: SchemaType.STRING },
+        },
+        required: ['name', 'amount'],
+      },
+    },
+    structuredIngredients: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          original: { type: SchemaType.STRING },
+          name: { type: SchemaType.STRING },
+          amount: { type: SchemaType.NUMBER },
+          unit: { type: SchemaType.STRING },
+          category: { type: SchemaType.STRING },
+        },
+        required: ['original', 'name', 'amount', 'unit', 'category'],
+      },
+    },
+    ingredientGroups: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          header: { type: SchemaType.STRING },
+          startIndex: { type: SchemaType.NUMBER },
+          endIndex: { type: SchemaType.NUMBER },
+        },
+        required: ['header', 'startIndex', 'endIndex'],
+      },
+    },
+    structuredSteps: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          title: { type: SchemaType.STRING },
+          text: { type: SchemaType.STRING },
+          highlightedText: { type: SchemaType.STRING },
+          tip: { type: SchemaType.STRING },
+        },
+        required: ['text'],
+      },
+    },
+    stepGroups: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          header: { type: SchemaType.STRING },
+          startIndex: { type: SchemaType.NUMBER },
+          endIndex: { type: SchemaType.NUMBER },
+        },
+        required: ['header', 'startIndex', 'endIndex'],
+      },
+    },
+    stepIngredients: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          indices: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        },
+        required: ['indices'],
+      },
+    },
+  },
+}
+
 // --- CORE SERVICE FUNCTIONS ---
 
 /**
@@ -524,7 +648,11 @@ export async function executeAiParse(
   try {
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
-      config: { responseMimeType: 'application/json', abortSignal: signal },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: RECIPE_RESPONSE_SCHEMA,
+        abortSignal: signal,
+      },
       contents: [{ role: 'user', parts }],
     })
 

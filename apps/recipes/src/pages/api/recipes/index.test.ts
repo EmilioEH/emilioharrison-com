@@ -293,6 +293,17 @@ describe('POST /api/recipes', () => {
     const created = createDocument.mock.calls[0][2]
     expect(created).not.toHaveProperty('enhancementStatus')
   })
+
+  it('clamps a hallucinated protein value to "Other" instead of saving it as-is', async () => {
+    await POST(
+      fakePostContext(
+        { title: 'AI Recipe', creationMethod: 'ai-parse', protein: 'Turkey' },
+        'user-1',
+      ),
+    )
+    const created = createDocument.mock.calls[0][2]
+    expect(created.protein).toBe('Other')
+  })
 })
 
 describe('triggerBackgroundEnhancement', () => {

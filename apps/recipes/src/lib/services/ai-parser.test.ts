@@ -7,7 +7,7 @@ const { generateContent, initGeminiClient } = vi.hoisted(() => ({
 
 vi.mock('../api-helpers', () => ({ initGeminiClient }))
 
-import { resolveInput, executeAiParse } from './ai-parser'
+import { resolveInput, executeAiParse, stripHtmlForPrompt } from './ai-parser'
 
 const originalFetch = global.fetch
 
@@ -80,6 +80,75 @@ describe('resolveInput — text content', () => {
     const result = await resolveInput({ text: 'Title: Test Recipe\nIngredients:\n- 1 egg' })
     expect(result.contentPart.text).toContain('Test Recipe')
     expect(result.contentPart.text).toContain('1 egg')
+  })
+})
+
+describe('stripHtmlForPrompt', () => {
+  it('strips script/style/comment noise while keeping the semantic body content', () => {
+    const html = `
+      <html>
+        <head>
+          <title>Best Steak Recipe</title>
+          <style>.ad { display: none; }</style>
+          <script>window.dataLayer = window.dataLayer || []; trackPageview();</script>
+        </head>
+        <body>
+          <!-- ad slot -->
+          <nav>Home / Recipes</nav>
+          <h1>Best Steak Recipe</h1>
+          <ul><li>1 lb steak</li><li>1 tsp salt</li></ul>
+          <script>gtag('event', 'view');</script>
+        </body>
+      </html>
+    `
+    const result = stripHtmlForPrompt(html)
+
+    expect(result).toContain('Best Steak Recipe')
+    expect(result).toContain('1 lb steak')
+    expect(result).not.toContain('trackPageview')
+    expect(result).not.toContain('gtag')
+    expect(result).not.toContain('display: none')
+    expect(result).not.toContain('ad slot')
+  })
+
+  it('prepends the page title when present', () => {
+    const html = '<html><head><title>Chicken Soup</title></head><body><p>Content</p></body></html>'
+    const result = stripHtmlForPrompt(html)
+    expect(result).toContain('<title>Chicken Soup</title>')
+  })
+})
+
+describe('resolveInput — URL content is stripped before prompting', () => {
+  it('sends stripped HTML (no scripts) rather than the raw page when there is no JSON-LD', async () => {
+    const rawHtml = `
+      <html>
+        <head><script>trackEverything();</script></head>
+        <body><h1>Grandma's Chili</h1><script>moreTracking();</script></body>
+      </html>
+    `
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => rawHtml,
+    }) as unknown as typeof fetch
+
+    const result = await resolveInput({ url: 'https://example.com/chili' })
+
+    expect(result.contentPart.text).toContain("Grandma's Chili")
+    expect(result.contentPart.text).not.toContain('trackEverything')
+    expect(result.contentPart.text).not.toContain('moreTracking')
+  })
+})
+
+describe('executeAiParse — response schema', () => {
+  it('passes a canonical responseSchema to the Gemini call', async () => {
+    generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Schema Recipe' }) })
+
+    await executeAiParse({}, { text: 'Recipe text content' })
+
+    const config = generateContent.mock.calls[0][0].config
+    expect(config.responseSchema).toBeDefined()
+    expect(config.responseSchema.properties.ingredients).toBeDefined()
+    expect(config.responseSchema.properties.structuredSteps).toBeDefined()
   })
 })
 
