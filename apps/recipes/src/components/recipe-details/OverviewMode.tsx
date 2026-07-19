@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
-import { useStore } from '@nanostores/react'
 import { Clock, Users, Flame, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { RecipeReviews } from './RecipeReviews'
 import { IngredientRow } from './IngredientRow'
@@ -10,7 +9,6 @@ import { Button } from '../ui/button'
 import { Stack, Inline } from '../ui/layout'
 import { ImageViewer } from '../ui/ImageViewer'
 import { Carousel } from '../ui/Carousel'
-import { aiOperationStore } from '../../lib/aiOperationStore'
 import {
   getCheckedIngredients,
   getCheckedSteps,
@@ -46,12 +44,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   onRecipeRefresh,
   onPersistStepIngredients,
 }) => {
-  // Track AI operations to detect background enhancement
-  const aiOperations = useStore(aiOperationStore)
-  const enhanceOpId = `enhance-${recipe.id}`
-  const isEnhancing = aiOperations.operations.some(
-    (op) => op.id === enhanceOpId && op.status === 'processing',
-  )
+  // Background Enhancement now runs server-side (see recipe-enhancement-job.ts) and persists
+  // its state directly on the recipe document, so this reflects it regardless of which
+  // session/tab/device triggered it — not just the one that happened to be open at the time.
+  const isEnhancing =
+    recipe.enhancementStatus === 'pending' || recipe.enhancementStatus === 'processing'
 
   // Validate enhanced content exists
   const hasEnhancedContent =

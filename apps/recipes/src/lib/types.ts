@@ -149,6 +149,10 @@ export interface GroceryList {
   status: 'pending' | 'processing' | 'complete' | 'error'
   createdAt: string
   updatedAt: string
+  // Written incrementally by the server while generating (see generate-grocery-list.ts) so the
+  // client's existing Firestore subscription can show granular progress from any tab/device.
+  progress?: number
+  message?: string
 }
 
 /** A single recipe's contribution to a grocery item */

@@ -183,13 +183,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
         if (weekNeedsRegen) {
           $groceryNeedsRegen.set(null)
         }
-        triggerGroceryGeneration(
-          activeWeekStart,
-          groceryRecipes,
-          scopeId!,
-          user.uid,
-          currentFamily?.id,
-        )
+        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId!)
       }
     }
   }, [
@@ -419,13 +413,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                       onSelect={() => {
                         if (scopeId && user) {
                           removeAiOperation(`grocery-${listId}`)
-                          triggerGroceryGeneration(
-                            activeWeekStart,
-                            groceryRecipes,
-                            scopeId,
-                            user.uid,
-                            currentFamily?.id,
-                          )
+                          triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId)
                         }
                       }}
                       disabled={isProcessing}
@@ -450,11 +438,13 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 <div className="mt-2 text-primary">
                   <AiProgressBar
                     progress={
-                      operations.find((op) => op.id === `grocery-${listId}`)?.progress ||
-                      (aiGroceryList?.status === 'processing' ? 5 : 0)
+                      // The server now writes progress/message directly to Firestore as it
+                      // generates (see generate-grocery-list.ts), so this reflects reality from
+                      // any tab/device — not just the one that happened to trigger it.
+                      aiGroceryList?.progress ?? (aiGroceryList?.status === 'processing' ? 5 : 0)
                     }
                     message={
-                      operations.find((op) => op.id === `grocery-${listId}`)?.message ||
+                      aiGroceryList?.message ||
                       (isStuck ? 'Still processing...' : 'Consulting Chef Gemini...')
                     }
                     isAnimating={true}
@@ -509,13 +499,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                         window.location.reload()
                       } else if (scopeId && user) {
                         console.log('Retrying grocery generation...')
-                        triggerGroceryGeneration(
-                          activeWeekStart,
-                          groceryRecipes,
-                          scopeId,
-                          user.uid,
-                          currentFamily?.id,
-                        )
+                        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId)
                       }
                     }}
                     className="gap-2"

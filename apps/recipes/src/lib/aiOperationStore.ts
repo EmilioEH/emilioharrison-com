@@ -4,7 +4,7 @@ export type AiOperationStatus = 'idle' | 'fallback' | 'processing' | 'complete' 
 
 export interface AiOperation {
   id: string
-  feature: 'parse-recipe' | 'grocery-list' | 'recipe-enhancement'
+  feature: 'parse-recipe' | 'grocery-list'
   status: AiOperationStatus
   progress: number
   cancelable: boolean

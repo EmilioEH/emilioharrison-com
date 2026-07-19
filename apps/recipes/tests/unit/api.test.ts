@@ -1,6 +1,32 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from 'vitest'
+import type { AstroCookies } from 'astro'
+
+const { getDocument, setDocument, updateDocument } = vi.hoisted(() => ({
+  getDocument: vi.fn(),
+  setDocument: vi.fn(),
+  updateDocument: vi.fn(),
+}))
+
+vi.mock('../../src/lib/firebase-server', () => ({
+  db: { getDocument, setDocument, updateDocument },
+}))
+
 import { POST as parseRecipe } from '../../src/pages/api/parse-recipe'
 import { POST as generateGroceryList } from '../../src/pages/api/generate-grocery-list'
+import { createSessionToken, SESSION_COOKIE_NAME } from '../../src/lib/session'
+
+const TEST_SECRET = 'api-test-secret'
+vi.stubEnv('SESSION_SECRET', TEST_SECRET)
+afterAll(() => vi.unstubAllEnvs())
+
+/** Both endpoints now resolve identity from the signed session cookie (see lib/session.ts)
+ * and, for the grocery endpoint, a `users/{uid}` Firestore lookup for family scoping. */
+function fakeCookies(userId = 'test-user'): AstroCookies {
+  const token = createSessionToken(TEST_SECRET, { uid: userId })
+  return {
+    get: (name: string) => (name === SESSION_COOKIE_NAME ? { value: token } : undefined),
+  } as unknown as AstroCookies
+}
 
 // Mock for parse-recipe (OpenRouter via openai)
 function determineContent(messages: Array<{ role: string; content: string }>) {
@@ -134,6 +160,9 @@ vi.mock('@google/genai', () => {
 describe('API Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getDocument.mockResolvedValue(null) // no family by default
+    setDocument.mockResolvedValue({})
+    updateDocument.mockResolvedValue({})
   })
 
   afterEach(() => {
@@ -149,9 +178,11 @@ describe('API Tests', () => {
       const locals = {
         runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
       }
-      const response = await parseRecipe({ request, locals } as unknown as Parameters<
-        typeof parseRecipe
-      >[0])
+      const response = await parseRecipe({
+        request,
+        locals,
+        cookies: fakeCookies(),
+      } as unknown as Parameters<typeof parseRecipe>[0])
       expect(response.status).toBe(400)
     })
 
@@ -163,9 +194,11 @@ describe('API Tests', () => {
       const locals = {
         runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
       }
-      const response = await parseRecipe({ request, locals } as unknown as Parameters<
-        typeof parseRecipe
-      >[0])
+      const response = await parseRecipe({
+        request,
+        locals,
+        cookies: fakeCookies(),
+      } as unknown as Parameters<typeof parseRecipe>[0])
       expect(response.status).toBe(200)
 
       const text = await response.text()
@@ -195,13 +228,15 @@ describe('API Tests', () => {
       const locals = {
         runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
       }
-      const response = await generateGroceryList({ request, locals } as unknown as Parameters<
-        typeof generateGroceryList
-      >[0])
+      const response = await generateGroceryList({
+        request,
+        locals,
+        cookies: fakeCookies(),
+      } as unknown as Parameters<typeof generateGroceryList>[0])
       expect(response.status).toBe(200)
     })
 
-    it('should process multiple recipes in a single stream', async () => {
+    it('should generate and persist the list to Firestore (no live Workers ctx to waitUntil, so the job runs to completion before the response returns)', async () => {
       const recipes = Array(6)
         .fill(null)
         .map((_, i) => ({
@@ -213,22 +248,42 @@ describe('API Tests', () => {
 
       const request = new Request('http://localhost/api/generate-grocery-list', {
         method: 'POST',
-        body: JSON.stringify({ recipes }),
+        body: JSON.stringify({ recipes, weekStartDate: '2024-01-01' }),
       })
       const locals = {
         runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },
       }
 
-      const response = await generateGroceryList({ request, locals } as unknown as Parameters<
-        typeof generateGroceryList
-      >[0])
+      const response = await generateGroceryList({
+        request,
+        locals,
+        cookies: fakeCookies(),
+      } as unknown as Parameters<typeof generateGroceryList>[0])
 
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data.ingredients).toHaveLength(1)
-      expect(data.ingredients[0].name).toBe('Test Ingredient')
-      expect(data.ingredients[0].purchaseAmount).toBe(2)
-      expect(data.ingredients[0].sources).toHaveLength(2)
+      // The endpoint acknowledges immediately — the result lands in Firestore, not the response.
+      expect(response.status).toBe(202)
+      const ack = await response.json()
+      expect(ack.success).toBe(true)
+      expect(ack.status).toBe('processing')
+
+      // Initial write marks the list as processing before generation starts.
+      expect(setDocument).toHaveBeenCalledWith(
+        'grocery_lists',
+        ack.listId,
+        expect.objectContaining({ status: 'processing' }),
+      )
+
+      // Final write (awaited directly since no ctx.waitUntil is available in this test) persists
+      // the generated list.
+      const finalCall = updateDocument.mock.calls.find(
+        (call) => call[0] === 'grocery_lists' && call[2]?.status === 'complete',
+      )
+      expect(finalCall).toBeDefined()
+      const persisted = finalCall![2]
+      expect(persisted.ingredients).toHaveLength(1)
+      expect(persisted.ingredients[0].name).toBe('Test Ingredient')
+      expect(persisted.ingredients[0].purchaseAmount).toBe(2)
+      expect(persisted.ingredients[0].sources).toHaveLength(2)
     })
   })
 })
