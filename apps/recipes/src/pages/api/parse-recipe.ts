@@ -4,6 +4,7 @@ import { createOpenRouterClient, serverErrorResponse, getAuthUser } from '../../
 import { tryRepairJson, resolveInput, getSystemPrompts } from '../../lib/services/ai-parser'
 import { createTimeoutSignal } from '../../lib/services/ai-timeout'
 import { rateLimit } from '../../lib/rate-limit'
+import { logAiError } from '../../lib/services/ai-error-log'
 
 // Swapped from qwen/qwen3.5-9b: the 9B tier was taking minutes to OCR dense, multi-column
 // recipe cards (the motivating field report ran ~5 min pre-guardrails and kept hitting the
@@ -90,9 +91,20 @@ export const POST: APIRoute = async (context: APIContext) => {
     return serverErrorResponse('Missing API Key configuration')
   }
 
+  let body: { url?: string; image?: string; text?: string; style?: 'strict' | 'enhanced' }
   try {
-    const body = await request.json()
+    body = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
+  // For error-log labeling in the catch below: photo-scan vs URL/pasted-text import.
+  const importFeature = body.image ? 'photo-import' : 'url-import'
+
+  try {
     if (!body.url && !body.image && !body.text) {
       return new Response(JSON.stringify({ error: 'No input provided' }), {
         status: 400,
@@ -120,6 +132,10 @@ export const POST: APIRoute = async (context: APIContext) => {
       // it can possibly error, so this ambiguity doesn't apply to phase 3 failing downstream.
       const phases = await runImageOcrPhases(client, contentPart, request.signal)
       if (!phases) {
+        logAiError('photo-import', new Error('Ingredient OCR (phase 1) produced no result'), {
+          userId,
+          context: { model: MODEL, timeoutMs: String(OCR_TIMEOUT_MS) },
+        })
         return new Response(
           JSON.stringify({
             error: getSafeErrorMessage(new Error('Failed to parse recipe from image')),
@@ -136,6 +152,7 @@ export const POST: APIRoute = async (context: APIContext) => {
     return new Response(stream, { status: 200, headers: responseHeaders })
   } catch (error) {
     console.error('API Error:', error)
+    logAiError(importFeature, error, { userId })
     const userMessage = getSafeErrorMessage(error)
     return serverErrorResponse(userMessage)
   }

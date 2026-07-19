@@ -11,6 +11,7 @@ import {
   UnusableAiResultError,
 } from '../../../../lib/services/recipe-merge'
 import { rateLimit } from '../../../../lib/rate-limit'
+import { logAiError } from '../../../../lib/services/ai-error-log'
 
 /** AI Refresh is a user-triggered, relatively expensive reparse — cap abuse/cost. */
 const REFRESH_RATE_LIMIT = 10
@@ -131,6 +132,10 @@ ${recipe.steps.join('\n')}
       },
     )
   } catch (error) {
+    logAiError('refresh', error, {
+      userId,
+      context: { recipeId: id, usedTextFallback: String(usedTextFallback) },
+    })
     if (error instanceof UnusableAiResultError) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 422,

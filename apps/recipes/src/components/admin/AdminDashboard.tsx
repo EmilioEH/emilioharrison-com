@@ -36,15 +36,25 @@ interface FamilyInvite {
   createdAt: string
 }
 
+interface AiErrorEntry {
+  id: string
+  feature: string
+  message: string
+  context?: Record<string, string>
+  userId?: string
+  createdAt: string
+}
+
 interface AdminDashboardProps {
   onClose?: () => void
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'codes' | 'invites'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'codes' | 'invites' | 'errors'>('users')
   const [users, setUsers] = useState<AdminUser[]>([])
   const [codes, setCodes] = useState<InviteCode[]>([])
   const [invites, setInvites] = useState<FamilyInvite[]>([])
+  const [aiErrors, setAiErrors] = useState<AiErrorEntry[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,23 +64,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [usersRes, codesRes, invitesRes] = await Promise.all([
+      const [usersRes, codesRes, invitesRes, errorsRes] = await Promise.all([
         fetch('/protected/recipes/api/admin/users'),
         fetch('/protected/recipes/api/admin/access-codes'),
         fetch('/protected/recipes/api/admin/invites'),
+        fetch('/protected/recipes/api/admin/error-logs'),
       ])
 
       const usersData = await usersRes.json()
       const codesData = await codesRes.json()
       const invitesData = await invitesRes.json()
+      const errorsData = await errorsRes.json()
 
       if (usersData.success) setUsers(usersData.users)
       if (codesData.success) setCodes(codesData.invites || [])
       if (invitesData.success) setInvites(invitesData.invites)
+      if (errorsData.success) setAiErrors(errorsData.errors || [])
     } catch (e) {
       console.error('Failed to fetch admin data', e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleClearErrors = async () => {
+    if (!window.confirm('Clear all AI error logs?')) return
+    try {
+      const res = await fetch('/protected/recipes/api/admin/error-logs', { method: 'DELETE' })
+      if (res.ok) {
+        setAiErrors([])
+      } else {
+        alert('Failed to clear error logs')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error clearing logs')
     }
   }
 
@@ -234,13 +262,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         </button>
         <button
           onClick={() => setActiveTab('invites')}
-          className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+          className={`mr-4 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'invites'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           Family Invites ({invites.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('errors')}
+          className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'errors'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          AI Errors ({aiErrors.length})
         </button>
       </div>
 
@@ -473,6 +511,71 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {activeTab === 'errors' && (
+          <div>
+            {aiErrors.length > 0 && (
+              <div className="mb-3 flex justify-end">
+                <button
+                  onClick={handleClearErrors}
+                  className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" /> Clear All
+                </button>
+              </div>
+            )}
+            {aiErrors.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No AI errors logged. Failures in photo import, URL import, AI refresh, background
+                enhancement, and grocery generation will appear here.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        Feature
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        Error
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        Context
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        When
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {aiErrors.map((err) => (
+                      <tr key={err.id}>
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <span className="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
+                            {err.feature}
+                          </span>
+                        </td>
+                        <td className="max-w-md px-6 py-4 text-sm text-gray-900">{err.message}</td>
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {err.context
+                            ? Object.entries(err.context)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(' · ')
+                            : '-'}
+                          {err.userId && <div className="font-mono">{err.userId}</div>}
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                          {new Date(err.createdAt).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
