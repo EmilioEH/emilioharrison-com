@@ -1,9 +1,14 @@
 import { load } from 'cheerio'
 import { Type as SchemaType } from '@google/genai'
-import { initGeminiClient } from '../api-helpers'
+import type { GoogleGenAI } from '@google/genai'
 import { closeBalanced } from '../api-utils'
 import { createTimeoutSignal } from './ai-timeout'
 import { assertSafeExternalUrl } from './url-safety'
+
+// NOTE: this module must stay free of Cloudflare/Astro/Vite-only imports (no `locals`, no
+// `import.meta.glob`, no `api-helpers`/`firebase-server`). It's imported by the self-hosted VM
+// worker (see BACKGROUND-JOBS-VM-PLAN.md) running in plain Node, which is why `executeAiParse`
+// takes an already-constructed Gemini client rather than reaching for one via `locals`.
 
 /** Default budget for a single Gemini call in `executeAiParse`. Safe only for in-request
  * callers (AI Refresh), where the client holds the connection open — waitUntil-bound callers
@@ -621,8 +626,10 @@ const RECIPE_RESPONSE_SCHEMA = {
  */
 
 export async function executeAiParse(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  locals: any,
+  /** An already-constructed Gemini client. Cloudflare callers build it via
+   * `initGeminiClient(locals)`; the VM worker builds it from `process.env` — see the module
+   * note at the top of this file. */
+  gemini: GoogleGenAI,
   params: ParseParams,
   origin?: string,
   /** External abort signal (e.g. the incoming request being cancelled) — combined with an
@@ -635,7 +642,7 @@ export async function executeAiParse(
   timeoutMs: number = GEMINI_TIMEOUT_MS,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
-  const client = await initGeminiClient(locals)
+  const client = gemini
   const { style = 'strict' } = params
   const { signal, cleanup } = createTimeoutSignal(timeoutMs, externalSignal)
 

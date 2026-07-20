@@ -1,6 +1,5 @@
 import type { APIRoute, APIContext } from 'astro'
-import { formatRecipesForPrompt } from '../../lib/api-utils'
-import { Type as SchemaType } from '@google/genai'
+import type { GoogleGenAI } from '@google/genai'
 import {
   initGeminiClient,
   getGroceryScopeId,
@@ -8,12 +7,7 @@ import {
   unauthorizedResponse,
   badRequestResponse,
 } from '../../lib/api-helpers'
-import { tryRepairJson } from '../../lib/services/ai-parser'
-import { createTimeoutSignal } from '../../lib/services/ai-timeout'
-import {
-  detectAllNewGroceryStages,
-  extractGeminiChunkText,
-} from '../../lib/services/grocery-progress'
+import { computeGroceryList } from '../../lib/services/grocery-core'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
 import { db } from '../../lib/firebase-server'
@@ -30,185 +24,22 @@ const GEMINI_TIMEOUT_MS = 25_000
 const GROCERY_RATE_LIMIT = 15
 const GROCERY_RATE_WINDOW_SECONDS = 60 * 60
 
-const SYSTEM_PROMPT = `
-You are an expert Grocery Shopping Assistant helping someone prepare a grocery shopping list.
-
-**YOUR CRITICAL TASK:**
-Convert ALL recipe ingredients into STORE-PURCHASABLE units. Think about what you ACTUALLY BUY at a grocery store.
-
-**INPUT FORMAT:**
-Each ingredient line has [RECIPE_ID:xxx] [RECIPE_TITLE:xxx] tags for source tracking.
-
-**MANDATORY CONVERSION RULES - ALWAYS APPLY THESE:**
-
-PRODUCE - Convert to whole items:
-- Any amount of garlic (cloves, minced, chopped) → "X heads" (10 cloves = 1 head, round UP)
-- Any amount of lemon/lime JUICE (tbsp, squeeze, wedges) → "X lemons" or "X limes" (3 tbsp juice = 1 fruit)
-- Lemon/lime wedges or zest → count as whole fruits
-- Onion amounts (diced, chopped, sliced, cups) → "X onions" (1 cup diced = 1 onion)
-- Fresh herb amounts (tbsp, sprigs, leaves, cups) → "X bunches" (1 bunch covers most recipe needs)
-- Ginger amounts → "X pieces" or "1 hand ginger"
-- Broccoli florets, crowns → "X heads broccoli"
-- Bell pepper pieces → "X bell peppers" (any fraction = 1 whole)
-- Scallions/green onions → "X bunches"
-- Celery stalks → "X bunches celery"
-- Carrots → count or "X bags" for many
-- Potatoes → count or "X lbs"
-- Mushrooms → "X packages" or "X oz"
-
-DAIRY & EGGS:
-- Butter tbsp/cups → "X sticks" (1 stick = 8 tbsp = 1/2 cup)
-- Eggs → individual count (user decides on dozen)
-- Milk/cream amounts → "X cups" or "X pints/quarts"
-- Cheese amounts → "X oz" or "X cups shredded"
-
-PANTRY:
-- Broth/stock cups → "X cartons" (1 carton = 4 cups) or "X cans" (1 can = 2 cups)
-- Tomato paste tbsp → "X cans" (1 small can = 6 tbsp)
-- Canned goods → count as cans
-- Coconut milk → "X cans" (1 can = ~14oz)
-
-MEAT & SEAFOOD:
-- Keep in pounds or ounces
-- Aggregate across recipes
-
-OMIT ENTIRELY:
-- Salt, pepper, cooking oil, olive oil, vegetable oil
-- Water
-- Ice
-
-**CRITICAL: NEVER OUTPUT THESE UNITS - ALWAYS CONVERT:**
-- "tbsp" of any fresh produce → convert to whole items
-- "squeeze" → convert to whole fruit
-- "wedges" → convert to whole fruit
-- "cloves" → convert to heads
-- "florets" → convert to heads/crowns
-- "diced/chopped/sliced" → convert to whole items
-- "minced" → convert to whole items
-- "cups" of cut vegetables → convert to whole items
-
-**AGGREGATION:**
-First combine all amounts of the same ingredient, THEN convert to store units.
-
-**SOURCE TRACKING:**
-Include ALL recipe IDs and titles that contributed, with their ORIGINAL recipe amounts.
-
-**CATEGORY ASSIGNMENT:**
-Assign each item to ONE of these 8 categories (in store-walk order):
-1. Produce - Fresh fruits, vegetables, herbs
-2. Meat - Beef, pork, chicken, seafood, deli
-3. Dairy - Milk, cheese, yogurt, eggs, butter
-4. Bakery - Fresh bread, tortillas, bakery items
-5. Frozen - Frozen vegetables, ice cream, frozen meals
-6. Pantry - Pasta, rice, sauces, oils, canned goods, broth, snacks, cereal
-7. Spices - Flour, sugar, spices, extracts, baking supplies
-8. Other - Everything else (beverages, household, etc.)
-
-**OUTPUT FORMAT:**
-{
-  "ingredients": [
-    {
-      "name": "limes",
-      "purchaseAmount": 3,
-      "purchaseUnit": "whole",
-      "category": "Produce",
-      "sources": [
-        { "recipeId": "abc", "recipeTitle": "Fish Tacos", "originalAmount": "2 tbsp lime juice" },
-        { "recipeId": "xyz", "recipeTitle": "Guacamole", "originalAmount": "squeeze of lime" }
-      ]
-    },
-    {
-      "name": "chicken broth",
-      "purchaseAmount": 2,
-      "purchaseUnit": "cartons",
-      "category": "Pantry",
-      "sources": [
-        { "recipeId": "abc", "recipeTitle": "Chicken Soup", "originalAmount": "6 cups broth" }
-      ]
-    }
-  ]
-}
-`
-
-const SCHEMA = {
-  type: SchemaType.OBJECT,
-  properties: {
-    ingredients: {
-      type: SchemaType.ARRAY,
-      items: {
-        type: SchemaType.OBJECT,
-        properties: {
-          name: { type: SchemaType.STRING },
-          purchaseAmount: { type: SchemaType.NUMBER },
-          purchaseUnit: { type: SchemaType.STRING },
-          category: { type: SchemaType.STRING },
-          sources: {
-            type: SchemaType.ARRAY,
-            items: {
-              type: SchemaType.OBJECT,
-              properties: {
-                recipeId: { type: SchemaType.STRING },
-                recipeTitle: { type: SchemaType.STRING },
-                originalAmount: { type: SchemaType.STRING },
-              },
-              required: ['recipeId', 'recipeTitle', 'originalAmount'],
-            },
-          },
-        },
-        required: ['name', 'purchaseAmount', 'purchaseUnit', 'category', 'sources'],
-      },
-    },
-  },
-  required: ['ingredients'],
-}
-
 /**
- * Runs the Gemini generation to completion and persists the result (including progress and
- * failure) directly to Firestore. Never throws — safe to hand to `ctx.waitUntil()`.
+ * Cloudflare orchestrator: runs the shared grocery generation core and persists progress + the
+ * final result (or failure) to Firestore via the REST `db`. Never throws — safe to hand to
+ * `ctx.waitUntil()`.
  *
- * Previously the client read this stream directly and wrote the final result to Firestore
- * itself; if the tab was backgrounded or closed mid-generation, the AI call had already been
- * paid for but the list was lost. Persisting server-side means the client only ever needs to
- * watch its existing Firestore subscription (`grocery_lists/{listId}`) — which already exists
- * for exactly this — regardless of what happens to the original request.
+ * The AI logic itself lives in grocery-core.ts (shared with the self-hosted VM worker — see
+ * BACKGROUND-JOBS-VM-PLAN.md); this wrapper owns the Cloudflare-specific half: the Firestore
+ * writes and the tight `GEMINI_TIMEOUT_MS` budget the waitUntil ceiling requires. The client
+ * only ever watches its Firestore subscription on `grocery_lists/{listId}`, so it doesn't matter
+ * that the original request may be gone by the time this finishes.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function runGroceryGenerationJob(client: any, recipes: Recipe[], listId: string) {
-  const { signal, cleanup } = createTimeoutSignal(GEMINI_TIMEOUT_MS)
-
+async function runGroceryGenerationJob(gemini: GoogleGenAI, recipes: Recipe[], listId: string) {
   try {
-    const inputList = formatRecipesForPrompt(recipes)
-
-    const streamResponse = await client.models.generateContentStream({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: SYSTEM_PROMPT }, { text: `Recipes to Process:\n${inputList}` }],
-        },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: SCHEMA,
-        abortSignal: signal,
-        // gemini-2.5-flash has dynamic "thinking" enabled by default, which can add tens of
-        // seconds of latency before output starts. Unit conversion/aggregation is mechanical —
-        // the schema and prompt do the shaping — and the job must finish within the waitUntil
-        // budget above, so disable thinking entirely.
-        thinkingConfig: { thinkingBudget: 0 },
-      },
-    })
-
-    let result = ''
-    const foundStages = new Set<string>()
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for await (const chunk of streamResponse as AsyncIterable<any>) {
-      const text = extractGeminiChunkText(chunk)
-      if (!text) continue
-      result += text
-
-      for (const update of detectAllNewGroceryStages(result, foundStages)) {
+    const ingredients = await computeGroceryList(gemini, recipes, {
+      timeoutMs: GEMINI_TIMEOUT_MS,
+      onProgress: async (update) => {
         try {
           await db.updateDocument('grocery_lists', listId, {
             progress: update.progress,
@@ -218,22 +49,11 @@ async function runGroceryGenerationJob(client: any, recipes: Recipe[], listId: s
         } catch (writeError) {
           console.warn('[Grocery] Failed to persist progress update:', writeError)
         }
-      }
-    }
-
-    let data
-    try {
-      data = JSON.parse(result)
-    } catch {
-      const repaired = tryRepairJson(result)
-      if (repaired === undefined) throw new Error('AI response was incomplete')
-      data = repaired as { ingredients?: unknown }
-    }
-
-    if (!data?.ingredients) throw new Error('No ingredients generated')
+      },
+    })
 
     await db.updateDocument('grocery_lists', listId, {
-      ingredients: data.ingredients,
+      ingredients,
       status: 'complete',
       progress: 100,
       message: 'Done!',
@@ -251,8 +71,6 @@ async function runGroceryGenerationJob(client: any, recipes: Recipe[], listId: s
     } catch (writeError) {
       console.error('[Grocery] Failed to persist error status:', writeError)
     }
-  } finally {
-    cleanup()
   }
 }
 

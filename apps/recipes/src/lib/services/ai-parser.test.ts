@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { GoogleGenAI } from '@google/genai'
 
-const { generateContent, initGeminiClient } = vi.hoisted(() => ({
+const { generateContent } = vi.hoisted(() => ({
   generateContent: vi.fn(),
-  initGeminiClient: vi.fn(),
 }))
 
-vi.mock('../api-helpers', () => ({ initGeminiClient }))
+// executeAiParse now takes an already-constructed Gemini client (see the module note in
+// ai-parser.ts — it must stay Node-importable for the VM worker), so tests pass a fake client
+// directly rather than mocking api-helpers/initGeminiClient.
+const fakeGemini = { models: { generateContent } } as unknown as GoogleGenAI
 
 import { resolveInput, executeAiParse, stripHtmlForPrompt } from './ai-parser'
 
@@ -13,9 +16,6 @@ const originalFetch = global.fetch
 
 beforeEach(() => {
   vi.clearAllMocks()
-  initGeminiClient.mockResolvedValue({
-    models: { generateContent },
-  })
 })
 
 afterEach(() => {
@@ -189,7 +189,7 @@ describe('executeAiParse — response schema', () => {
   it('passes a canonical responseSchema to the Gemini call', async () => {
     generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Schema Recipe' }) })
 
-    await executeAiParse({}, { text: 'Recipe text content' })
+    await executeAiParse(fakeGemini, { text: 'Recipe text content' })
 
     const config = generateContent.mock.calls[0][0].config
     expect(config.responseSchema).toBeDefined()
@@ -200,7 +200,7 @@ describe('executeAiParse — response schema', () => {
   it('disables Gemini thinking (latency: default dynamic thinking can add tens of seconds)', async () => {
     generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Fast Recipe' }) })
 
-    await executeAiParse({}, { text: 'Recipe text content' })
+    await executeAiParse(fakeGemini, { text: 'Recipe text content' })
 
     const config = generateContent.mock.calls[0][0].config
     expect(config.thinkingConfig).toEqual({ thinkingBudget: 0 })
@@ -211,7 +211,7 @@ describe('executeAiParse — forwards content to the model', () => {
   it('includes the recipe text in the request parts (regression: text was previously dropped)', async () => {
     generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Real Recipe' }) })
 
-    await executeAiParse({}, { text: 'Title: Real Recipe\nIngredients:\n- 2 cups flour' })
+    await executeAiParse(fakeGemini, { text: 'Title: Real Recipe\nIngredients:\n- 2 cups flour' })
 
     expect(generateContent).toHaveBeenCalledTimes(1)
     const callArgs = generateContent.mock.calls[0][0]
@@ -230,7 +230,7 @@ describe('executeAiParse — forwards content to the model', () => {
     }) as unknown as typeof fetch
     generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Photo Recipe' }) })
 
-    await executeAiParse({}, { image: 'https://cdn.example.com/photo.jpg' })
+    await executeAiParse(fakeGemini, { image: 'https://cdn.example.com/photo.jpg' })
 
     const parts = generateContent.mock.calls[0][0].contents[0].parts
     expect(parts.some((p: { inlineData?: unknown }) => p.inlineData)).toBe(true)
@@ -246,7 +246,7 @@ describe('executeAiParse — forwards content to the model', () => {
     generateContent.mockResolvedValue({ text: JSON.stringify({ title: 'Recipe' }) })
 
     await executeAiParse(
-      {},
+      fakeGemini,
       { image: '/protected/recipes/api/uploads/xyz.jpg' },
       'https://emilioharrison.com',
     )

@@ -13,6 +13,16 @@ vi.mock('../firebase-server', () => ({
 const { executeAiParse } = vi.hoisted(() => ({ executeAiParse: vi.fn() }))
 vi.mock('./ai-parser', () => ({ executeAiParse }))
 
+// runEnhancementJob now builds the Gemini client (via initGeminiClient) and hands it to the
+// shared enhancement-core, which calls the mocked executeAiParse. Mock the client builder so the
+// job doesn't need a real GEMINI_API_KEY; `fakeGemini` is what executeAiParse should receive as
+// its first arg.
+const { initGeminiClient, fakeGemini } = vi.hoisted(() => {
+  const fakeGemini = { models: {} }
+  return { initGeminiClient: vi.fn().mockResolvedValue(fakeGemini), fakeGemini }
+})
+vi.mock('../api-helpers', () => ({ initGeminiClient }))
+
 import { runEnhancementJob } from './recipe-enhancement-job'
 
 function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
@@ -92,7 +102,7 @@ describe('runEnhancementJob', () => {
 
     await runEnhancementJob({}, makeRecipe({ sourceUrl: 'https://a.com' }), 'https://origin')
     expect(executeAiParse).toHaveBeenLastCalledWith(
-      {},
+      fakeGemini,
       expect.objectContaining({ url: 'https://a.com' }),
       'https://origin',
       undefined,
@@ -101,7 +111,7 @@ describe('runEnhancementJob', () => {
 
     await runEnhancementJob({}, makeRecipe({ sourceImage: '/api/uploads/x.jpg' }), 'https://origin')
     expect(executeAiParse).toHaveBeenLastCalledWith(
-      {},
+      fakeGemini,
       expect.objectContaining({ image: '/api/uploads/x.jpg' }),
       'https://origin',
       undefined,
@@ -110,7 +120,7 @@ describe('runEnhancementJob', () => {
 
     await runEnhancementJob({}, makeRecipe(), 'https://origin')
     expect(executeAiParse).toHaveBeenLastCalledWith(
-      {},
+      fakeGemini,
       expect.objectContaining({ text: expect.stringContaining('Steak Tips') }),
       'https://origin',
       undefined,
