@@ -1,10 +1,17 @@
 # Migration Plan: Background AI Jobs → self-hosted VM worker
 
-Status: **APPROVED (approach)** — Firestore-listener handoff chosen. Not yet built.
+Status: **APPROVED (approach)** — Firestore-listener handoff chosen; reviewed on the target box
+and findings incorporated (see "VM-side review" below). Not yet built.
 
 Supersedes the earlier "migrate to Workers Paid + Workflows" draft. Same goal (remove the
 30-second `ctx.waitUntil` ceiling behind PRs #35–#44), different route: run the two slow AI jobs
 on Emilio's existing always-on VM instead of paying for Cloudflare Workflows.
+
+This plan was reviewed by a Claude session running *on the target VM* (PR #46 comment), which
+checked its assumptions against the real box rather than the prose. Its findings — restart-storm
+guards, a daily process recycle for gRPC memory hygiene, the exact secret-file convention to
+match (and one to avoid), and pulling alerting forward — are folded into the phases and risks
+below.
 
 ## Why this route
 
@@ -81,10 +88,14 @@ Reuse the existing status docs as the queue — no new collection needed:
   `RecipeDetail.tsx` picks up the transition exactly as it does now.
 - **Grocery**: `grocery_lists/{id}` already has `status`. Same pattern: endpoint writes
   `pending` + returns 202; worker claims and runs.
-- **Reaper**: a periodic sweep (worker-internal `setInterval`, or a systemd timer) flips any doc
-  stuck in `processing` beyond a generous deadline (e.g. 10 min) to `error`, so a worker crash
-  mid-job can't strand a doc forever. The client's stuck-state UI (PR #41, threshold aligned in
-  #43) already handles a doc that goes `error` or stops updating.
+- **Reaper**: a worker-internal `setInterval` sweep flips any doc stuck in `processing` beyond a
+  generous deadline (e.g. 10 min) to `error`, so a worker crash mid-job can't strand a doc
+  forever. The client's stuck-state UI (PR #41, threshold aligned in #43) already handles a doc
+  that goes `error` or stops updating. In-process (not a separate systemd timer) is deliberate —
+  per the VM review, a timer unit would load the service-account credential a *second* time in a
+  second process for no benefit; the Gemini calls are `await`ed I/O so the event loop stays free
+  to fire the interval, and `Restart=always` already covers the real failure mode (whole-process
+  death).
 
 ## Phases
 
@@ -97,14 +108,40 @@ test suite stays green. *One PR — the meat.*
 
 **Phase 2 — The worker service (`services/recipe-worker/`, same repo).** A small Node entrypoint:
 `firebase-admin` init from the service-account JSON, `onSnapshot` listeners for the two pending
-queues, transactional claim, calls the shared job module, plus the reaper. A `systemd` unit file
-and a README with the exact VM setup steps. *One PR.*
+queues, transactional claim, calls the shared job module, plus the in-process reaper. Ships with:
+
+- A **`systemd` unit** carrying, per the VM review, the same guards the box's existing OpenClaw
+  gateway unit uses: `Restart=always`, `RestartSec=5`, `StartLimitBurst=5`,
+  `StartLimitIntervalSec=60` (so a persistently-failing Gemini call/credential can't spin-loop),
+  plus a `MemoryMax=` backstop against slow gRPC-stream memory growth over multi-day uptime.
+  Default to a **`--user` unit under root with linger** (already enabled on the box) to match the
+  gateway's existing convention rather than introduce a second one; a system unit under
+  `/etc/systemd/system/` is an equally valid style call.
+- A **daily low-traffic restart timer** (e.g. 4am Central) purely for process hygiene — distinct
+  from the reaper (which is about stuck Firestore *docs*, not process *health*). Cheap insurance
+  against long-lived-`grpc-js`-stream memory creep.
+- **Basic alerting, pulled forward from "optional later"** (the box has no monitoring stack today
+  beyond manual `journalctl`). Reuse the *existing* `openclaw cron → Signal` path already wired
+  up for the trading bot to periodically run `systemctl is-active recipe-worker` (and/or count
+  docs stuck past the reaper deadline) and ping Signal on trouble — rather than standing up a new
+  alerting system.
+- A **README/runbook** with the exact VM setup steps. *One PR.*
 
 **Phase 3 — Deploy to the VM (done by the Claude Code instance on the box).** Check out the
-branch, `npm ci` in the worker dir, drop the two secrets into an `EnvironmentFile` (root-owned,
-`600`), `systemctl enable --now recipe-worker`, verify with `journalctl -u recipe-worker -f`
-against a real enhancement + grocery run. Cloudflare and VM run the new path together; the old
-`waitUntil` path is already gone as of Phase 1's merge, so this is the activation step.
+branch, `npm ci` in the worker dir, drop the two secrets into an `EnvironmentFile` at
+**`/root/.recipe-worker.env`** — root-owned `600`, **outside any git checkout**, matching the
+box's existing `/root/.openclaw/.env` convention (and explicitly *not* the box's other, worse
+pattern of plaintext keys in root's crontab). Then `systemctl enable --now recipe-worker`
+(**`enable`, not just `start`** — the box runs `unattended-upgrades` and reboots for kernel
+updates; an un-enabled unit would silently vanish on the next reboot). Verify with
+`journalctl -u recipe-worker -f` against a real enhancement + grocery run. Cloudflare and VM run
+the new path together; the old `waitUntil` path is already gone as of Phase 1's merge, so this is
+the activation step.
+
+Runbook callout: the **service-account JSON has no backup on the box** (the VM holds no unique
+*app* state, but this credential file is the exception). If the VM is ever rebuilt, it must be
+re-fetched from the Firebase console or an out-of-band copy — note this in the runbook so a
+rebuild isn't blocked on it.
 
 **Phase 4 — Watch + document.** Tail journald + the Admin → AI Errors panel for a few days of
 real use. Update `apps/recipes/README.md` and CLAUDE.md's "Server-side background AI jobs"
@@ -121,12 +158,23 @@ pending jobs just wait until it's back.
 ## Risks
 
 - **`firebase-admin` service-account scope**: the same JSON the Cloudflare REST client already
-  uses; confirm it has Firestore read/write in Phase 3.
+  uses; confirm it has Firestore read/write in Phase 3. Runtime confirmed compatible by the VM
+  review: Node v24.18.0 (plain `/usr/bin/node` system install, no nvm shim to break a systemd
+  `ExecStart`) vs `firebase-admin@14.2.0`'s `engines: >=22`.
+- **Long-lived gRPC stream memory growth**: `grpc-js` streams can creep over multi-day uptime.
+  Mitigated by the `MemoryMax=` backstop and the daily recycle timer (Phase 2), not left to
+  chance.
 - **Double-processing**: mitigated by the transactional claim; single worker for now anyway.
-- **Worker liveness**: systemd `Restart=always` + the reaper cover crashes; a full VM outage
-  degrades gracefully (jobs queue, app keeps working). Optional later: a dead-man's-switch alert.
+- **Worker liveness**: systemd `Restart=always` + restart-storm guards + the reaper cover
+  crashes; a full VM outage degrades gracefully (jobs queue, app keeps working). The
+  Signal-based dead-man's-switch is now in Phase 2/3, not deferred — the box has no other
+  monitoring.
 - **Secret handling on the VM**: service-account JSON + Gemini key in a root-owned `600`
-  EnvironmentFile, never in the repo. Verified present/scoped during Phase 3.
+  EnvironmentFile at `/root/.recipe-worker.env`, outside the repo, matching the `.openclaw/.env`
+  convention. Verified present/scoped during Phase 3.
+- **Observability**: journald retention on the box is default (vacuum-by-disk-%, ~445M used of
+  136G free) — fine at this volume, but there's no active per-service logrotate; don't assume
+  managed log rotation beyond journald's default.
 
 ## Effort
 
