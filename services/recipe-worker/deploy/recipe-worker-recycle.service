@@ -1,0 +1,17 @@
+# Oneshot that restarts the worker (see services/recipe-worker/README.md).
+#
+# Paired with recipe-worker-recycle.timer. This is memory hygiene, NOT job recovery:
+# grpc-js (firebase-admin's transport) grows its stream state slowly over multi-day uptime,
+# and a clean restart during a quiet window releases it. The transactional claim + onSnapshot
+# backlog replay make a restart safe — any doc queued during the ~2s bounce is picked up when
+# the listeners reattach.
+#
+# The reaper (in-process setInterval) handles crash recovery; this handles slow leaks. They are
+# deliberately separate concerns.
+
+[Unit]
+Description=Recycle the Chefboard background AI worker (memory hygiene)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --user restart recipe-worker.service

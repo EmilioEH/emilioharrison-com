@@ -1,0 +1,15 @@
+# Daily recycle at 04:00 America/Chicago (see services/recipe-worker/README.md).
+#
+# 4am Central is the quietest window for this single-family app — a ~2s restart there is
+# invisible. Persistent=true so a recycle missed while the box was off (unattended-upgrades
+# reboot, power blip) runs on next boot instead of silently skipping a day.
+
+[Unit]
+Description=Daily recycle of the Chefboard background AI worker
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 America/Chicago
+Persistent=true
+
+[Install]
+WantedBy=timers.target
