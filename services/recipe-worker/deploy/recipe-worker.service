@@ -9,6 +9,11 @@
 Description=Chefboard background AI worker (enhancement + grocery)
 After=network-online.target
 Wants=network-online.target
+# Restart-storm guard (mirrors the OpenClaw gateway unit): systemd gives up after 5 failed
+# starts in 60s so a persistently failing credential/call can't spin-loop the CPU. These MUST
+# live in [Unit] — modern systemd silently ignores StartLimit* under [Service].
+StartLimitBurst=5
+StartLimitIntervalSec=60
 
 [Service]
 Type=simple
@@ -18,12 +23,9 @@ WorkingDirectory=%h/emilioharrison-com/services/recipe-worker
 EnvironmentFile=%h/.recipe-worker.env
 ExecStart=/usr/bin/node --import tsx src/index.ts
 
-# Crash recovery + restart-storm guard (mirrors the OpenClaw gateway unit): a persistently
-# failing credential/call can't spin-loop the CPU.
+# Crash recovery: restart on failure, paced so the StartLimit guard above can trip.
 Restart=always
 RestartSec=5
-StartLimitBurst=5
-StartLimitIntervalSec=60
 
 # Backstop against slow grpc-js stream memory growth over multi-day uptime (the daily recycle
 # timer is the primary hygiene; this just caps the worst case). Tune if the box is tight.
