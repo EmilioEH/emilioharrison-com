@@ -1,0 +1,33 @@
+# Chefboard background AI worker (see services/recipe-worker/README.md).
+#
+# Installed as a --user unit under root (linger already enabled on the box), matching the
+# existing OpenClaw gateway convention. If you prefer a system unit, move this to
+# /etc/systemd/system/, drop the [Install] WantedBy to multi-user.target, and enable with
+# `systemctl enable --now recipe-worker` (no --user).
+
+[Unit]
+Description=Chefboard background AI worker (enhancement + grocery)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/emilioharrison-com/services/recipe-worker
+# Secrets live OUTSIDE the git checkout, root-owned 600 — matches /root/.openclaw/.env.
+# (Do NOT copy the plaintext-in-crontab pattern used elsewhere on this box.)
+EnvironmentFile=%h/.recipe-worker.env
+ExecStart=/usr/bin/node --import tsx src/index.ts
+
+# Crash recovery + restart-storm guard (mirrors the OpenClaw gateway unit): a persistently
+# failing credential/call can't spin-loop the CPU.
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Backstop against slow grpc-js stream memory growth over multi-day uptime (the daily recycle
+# timer is the primary hygiene; this just caps the worst case). Tune if the box is tight.
+MemoryMax=512M
+
+[Install]
+WantedBy=default.target

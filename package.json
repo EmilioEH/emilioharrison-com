@@ -2,7 +2,8 @@
   "name": "emilioharrison-monorepo",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "services/*"
   ],
   "scripts": {
     "build": "node scripts/build-all.mjs",
