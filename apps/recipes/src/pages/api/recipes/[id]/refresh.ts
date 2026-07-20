@@ -1,6 +1,6 @@
 import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../../lib/firebase-server'
-import { serverErrorResponse } from '../../../../lib/api-helpers'
+import { serverErrorResponse, initGeminiClient } from '../../../../lib/api-helpers'
 import { loadAccessibleRecipe } from '../../../../lib/recipe-access'
 import { setRequestContext } from '../../../../lib/request-context'
 import type { Ingredient } from '../../../../lib/types'
@@ -49,6 +49,14 @@ export const POST: APIRoute = async (context: APIContext) => {
     )
   }
 
+  // Build the Gemini client once and hand it to the (now client-injected) executeAiParse.
+  let gemini
+  try {
+    gemini = await initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key configuration')
+  }
+
   // Helper to construct text-based payload from existing recipe data
   const buildTextPayload = () => {
     return `
@@ -68,7 +76,7 @@ ${recipe.steps.join('\n')}
     if (recipe.sourceUrl) {
       console.log('[Refresh] Using sourceUrl:', recipe.sourceUrl)
       return await executeAiParse(
-        locals,
+        gemini,
         { ...commonParams, url: recipe.sourceUrl },
         origin,
         request.signal,
@@ -77,7 +85,7 @@ ${recipe.steps.join('\n')}
     if (recipe.sourceImage) {
       console.log('[Refresh] Using sourceImage')
       return await executeAiParse(
-        locals,
+        gemini,
         { ...commonParams, image: recipe.sourceImage },
         origin,
         request.signal,
@@ -85,7 +93,7 @@ ${recipe.steps.join('\n')}
     }
     console.log('[Refresh] No source available, using saved text')
     return await executeAiParse(
-      locals,
+      gemini,
       { ...commonParams, text: buildTextPayload() },
       origin,
       request.signal,
@@ -109,7 +117,7 @@ ${recipe.steps.join('\n')}
         )
         usedTextFallback = true
         newData = await executeAiParse(
-          locals,
+          gemini,
           { style: 'enhanced', text: buildTextPayload() },
           origin,
           request.signal,

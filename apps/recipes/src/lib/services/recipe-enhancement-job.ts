@@ -1,18 +1,26 @@
 import { db } from '../firebase-server'
-import { executeAiParse } from './ai-parser'
+import { initGeminiClient } from '../api-helpers'
+import { computeEnhancedRecipe } from './enhancement-core'
 import { logAiError } from './ai-error-log'
-import { mergeAiRecipeUpdate, snapshotRecipe, UnusableAiResultError } from './recipe-merge'
+import { UnusableAiResultError } from './recipe-merge'
 import type { Recipe } from '../types'
 
 export type EnhancementJobResult =
   | { success: true; recipe: Recipe }
   | { success: false; error: string; status: number }
 
+// The Cloudflare-side orchestrator. The provider-agnostic compute lives in enhancement-core.ts
+// (shared with the self-hosted VM worker — see BACKGROUND-JOBS-VM-PLAN.md); this file owns the
+// Cloudflare-specific half: building the Gemini client from `locals`, persisting status to
+// Firestore via the REST `db`, and the waitUntil budget below.
+//
 // This job is handed to `ctx.waitUntil` (see recipes/index.ts), and Cloudflare Workers cancels
 // waitUntil work ~30 seconds after the response is sent — silently, without running catch
 // blocks. The Gemini call budget must therefore fire early enough that the error-status write
-// below still lands inside that window; executeAiParse's 45s default would instead let the
-// runtime kill this job mid-call, leaving enhancementStatus stuck at 'processing' forever.
+// below still lands inside that window; the core's default (executeAiParse's 45s) would instead
+// let the runtime kill this job mid-call, leaving enhancementStatus stuck at 'processing'
+// forever. (Once the VM worker owns this job — Phase 3 of the plan — this cap goes away, since a
+// real Node process has no waitUntil ceiling.)
 const WAITUNTIL_SAFE_TIMEOUT_MS = 25_000
 
 /**
@@ -40,52 +48,11 @@ export async function runEnhancementJob(
   }
 
   try {
-    const commonParams = { style: 'enhanced' as const }
-    let newData
-
-    if (recipe.sourceUrl) {
-      console.log(`[Enhance] Total Reparse via URL: ${recipe.sourceUrl}`)
-      newData = await executeAiParse(
-        locals,
-        { ...commonParams, url: recipe.sourceUrl },
-        origin,
-        signal,
-        WAITUNTIL_SAFE_TIMEOUT_MS,
-      )
-    } else if (recipe.sourceImage) {
-      console.log(`[Enhance] Total Reparse via Image`)
-      newData = await executeAiParse(
-        locals,
-        { ...commonParams, image: recipe.sourceImage },
-        origin,
-        signal,
-        WAITUNTIL_SAFE_TIMEOUT_MS,
-      )
-    } else {
-      console.log(`[Enhance] Text-based enhancement fallback`)
-      const textRep = `
-Title: ${recipe.title}
-Ingredients:
-${recipe.ingredients.map((i) => `${i.amount} ${i.name}`).join('\n')}
-Steps:
-${recipe.steps.join('\n')}
-      `.trim()
-      newData = await executeAiParse(
-        locals,
-        { ...commonParams, text: textRep },
-        origin,
-        signal,
-        WAITUNTIL_SAFE_TIMEOUT_MS,
-      )
-    }
-
-    const previousVersion = snapshotRecipe(recipe, 'enhance')
-    const updatedRecipe = {
-      ...mergeAiRecipeUpdate(recipe, newData),
-      previousVersion,
-      enhancementStatus: 'complete' as const,
-      enhancementError: undefined,
-    }
+    const gemini = await initGeminiClient(locals)
+    const updatedRecipe = await computeEnhancedRecipe(gemini, recipe, origin, {
+      signal,
+      timeoutMs: WAITUNTIL_SAFE_TIMEOUT_MS,
+    })
 
     await db.updateDocument('recipes', recipeId, updatedRecipe)
 
