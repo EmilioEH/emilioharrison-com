@@ -69,9 +69,16 @@ Put the secrets in a **root-owned, `600`, outside the git checkout** env file at
 (`/root/.openclaw/.env`):
 
 ```ini
-FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"...", ... }
-GEMINI_API_KEY=...
+FIREBASE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"...", ... }'
+GEMINI_API_KEY='...'
 ```
+
+> **Wrap both values in single quotes.** systemd's `EnvironmentFile` parser
+> otherwise re-interprets the `\n` escape sequences inside the service-account
+> `private_key`, corrupting it before Node ever sees it — the worker then
+> crash-loops with `Failed to parse private key` even though the JSON is valid.
+> Single quotes make systemd take the value literally. (The JSON itself must
+> still be on one line.)
 
 ```bash
 chown root:root /root/.recipe-worker.env
