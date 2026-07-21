@@ -158,6 +158,10 @@ export interface GroceryList {
   // client's existing Firestore subscription can show granular progress from any tab/device.
   progress?: number
   message?: string
+  // Transient handoff payload for the self-hosted VM worker (BACKGROUND_WORKER_ENABLED path only):
+  // the request's recipes, persisted on the `pending` doc so the async worker — which never sees
+  // the original request — can generate from them. The worker deletes this field on completion.
+  inputRecipes?: Recipe[]
 }
 
 /** A single recipe's contribution to a grocery item */

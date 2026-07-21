@@ -363,6 +363,24 @@ describe('triggerBackgroundEnhancement', () => {
       expect.objectContaining({ enhancementStatus: 'error' }),
     )
   })
+
+  it('leaves the doc pending for the VM worker (no waitUntil, no in-request run) when the flag is on', async () => {
+    const waitUntil = vi.fn()
+    await triggerBackgroundEnhancement(
+      fakePostContext({}, 'user-1', {
+        runtime: { ctx: { waitUntil }, env: { BACKGROUND_WORKER_ENABLED: 'true' } },
+      }),
+      recipe,
+      'user-1',
+    )
+
+    // The create handler already wrote enhancementStatus: 'pending'; the worker claims it. This
+    // path must neither run the job in-request nor hand it to waitUntil.
+    expect(runEnhancementJob).not.toHaveBeenCalled()
+    expect(waitUntil).not.toHaveBeenCalled()
+    // Rate limiting still applies (it gates whether the doc is left pending vs. marked skipped).
+    expect(rateLimit).toHaveBeenCalled()
+  })
 })
 
 describe('chunkArray', () => {

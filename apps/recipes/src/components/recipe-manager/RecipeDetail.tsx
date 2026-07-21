@@ -108,7 +108,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
     if (status !== 'pending' && status !== 'processing') return
 
     const POLL_INTERVAL_MS = 4000
-    const MAX_ATTEMPTS = 15 // ~60s total
+    // Sized to outlast the slowest healthy backend: the VM worker's WORKER_JOB_TIMEOUT_MS (120s,
+    // BACKGROUND_WORKER_ENABLED path) plus margin. The legacy Cloudflare path finishes far sooner
+    // and this self-terminates the moment enhancementStatus leaves pending/processing anyway.
+    const MAX_ATTEMPTS = 40 // ~160s total
     let attempts = 0
     let cancelled = false
     let timer: ReturnType<typeof setTimeout>

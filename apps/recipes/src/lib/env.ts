@@ -25,6 +25,21 @@ export function getEnv(context: any, key: string): string {
 }
 
 /**
+ * Kill-switch for the self-hosted background AI worker (see BACKGROUND-JOBS-VM-PLAN.md).
+ *
+ * When `true`, the slow background jobs (recipe enhancement after import, grocery-list
+ * generation) are handed off to the VM worker by writing a `pending` Firestore doc and returning
+ * immediately — instead of running under Cloudflare's `ctx.waitUntil` (which is capped at ~30s).
+ * When absent/`false` (the default), the legacy in-request `waitUntil` path runs, so merging the
+ * cutover changes nothing in production until this flag is explicitly set on the Cloudflare env.
+ * Flipping it back to `false` is an instant rollback — no redeploy.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isBackgroundWorkerEnabled(context: any): boolean {
+  return getEnv(context, 'BACKGROUND_WORKER_ENABLED') === 'true'
+}
+
+/**
  * Safely parse a comma-separated email list from an environment variable.
  * Returns an empty array if the env var is empty, undefined, or malformed.
  *
