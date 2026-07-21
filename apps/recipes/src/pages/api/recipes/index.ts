@@ -5,6 +5,7 @@ import { getAuthUser } from '../../../lib/api-helpers'
 import { runEnhancementJob } from '../../../lib/services/recipe-enhancement-job'
 import { clampRecipeEnums } from '../../../lib/services/recipe-merge'
 import { rateLimit } from '../../../lib/rate-limit'
+import { isBackgroundWorkerEnabled } from '../../../lib/env'
 import type { Recipe, RecipeListItem } from '../../../lib/types'
 
 const ENHANCE_RATE_LIMIT = 20
@@ -41,6 +42,12 @@ export async function triggerBackgroundEnhancement(
       .catch((e) => console.error('[Enhance] Failed to record rate-limit skip:', e))
     return
   }
+
+  // Cutover path: the recipe doc was already written with `enhancementStatus: 'pending'` in the
+  // create handler below — the state the VM worker's Firestore listener claims on. Leave it for
+  // the worker instead of running under Cloudflare's ~30s waitUntil ceiling (see
+  // BACKGROUND-JOBS-VM-PLAN.md). Nothing to run here.
+  if (isBackgroundWorkerEnabled(context)) return
 
   const origin = new URL(context.request.url).origin
   const job = runEnhancementJob(context.locals, recipe, origin)

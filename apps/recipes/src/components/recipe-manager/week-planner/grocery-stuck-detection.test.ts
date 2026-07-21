@@ -39,15 +39,23 @@ describe('isGroceryGenerationStuck', () => {
     expect(isGroceryGenerationStuck('processing', freshUpdatedAt, now, 45_000)).toBe(false)
   })
 
-  it('defaults to a threshold comfortably above the server-side Gemini timeout (25s)', () => {
-    // 28s elapsed — the server may still be inside its own 25s budget finishing the terminal
-    // status write, so this must not be considered stuck under the default threshold.
-    const updatedAt28sAgo = new Date(now - 28_000).toISOString()
-    expect(isGroceryGenerationStuck('processing', updatedAt28sAgo, now)).toBe(false)
+  it('defaults to a threshold above the VM worker budget (120s), not just the Cloudflare one', () => {
+    // 90s elapsed — well past the legacy Cloudflare budget, but a healthy VM-worker job can run
+    // this long (WORKER_JOB_TIMEOUT_MS 120s, no waitUntil ceiling), so it must NOT be flagged.
+    const updatedAt90sAgo = new Date(now - 90_000).toISOString()
+    expect(isGroceryGenerationStuck('processing', updatedAt90sAgo, now)).toBe(false)
 
-    // 40s elapsed — past the server's budget plus write margin, the job can no longer be
-    // legitimately in flight (Cloudflare kills waitUntil work at ~30s), so this IS stuck.
-    const updatedAt40sAgo = new Date(now - 40_000).toISOString()
-    expect(isGroceryGenerationStuck('processing', updatedAt40sAgo, now)).toBe(true)
+    // 140s elapsed — beyond even the worker's per-job budget plus margin, so this IS stuck.
+    const updatedAt140sAgo = new Date(now - 140_000).toISOString()
+    expect(isGroceryGenerationStuck('processing', updatedAt140sAgo, now)).toBe(true)
+  })
+
+  it('treats a long-stale pending doc (worker-path: never claimed) as stuck', () => {
+    // Worker path only: a doc left `pending` means the VM worker never claimed it (worker down).
+    const staleUpdatedAt = new Date(now - 140_000).toISOString()
+    expect(isGroceryGenerationStuck('pending', staleUpdatedAt, now)).toBe(true)
+    // ...but a freshly-enqueued pending doc (worker claims within ms normally) is not yet stuck.
+    const freshUpdatedAt = new Date(now - 1000).toISOString()
+    expect(isGroceryGenerationStuck('pending', freshUpdatedAt, now, 45_000)).toBe(false)
   })
 })

@@ -11,6 +11,7 @@ import { computeGroceryList } from '../../lib/services/grocery-core'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
 import { db } from '../../lib/firebase-server'
+import { isBackgroundWorkerEnabled } from '../../lib/env'
 import type { GroceryList, Recipe } from '../../lib/types'
 
 // HARD PLATFORM CONSTRAINT: this job runs under `ctx.waitUntil`, and Cloudflare Workers cancels
@@ -80,13 +81,6 @@ export const POST: APIRoute = async (context: APIContext) => {
   const scope = await getGroceryScopeId(cookies)
   if (!scope) return unauthorizedResponse()
 
-  let client
-  try {
-    client = await initGeminiClient(locals)
-  } catch {
-    return serverErrorResponse('Missing API Key')
-  }
-
   const { recipes, weekStartDate } = await request.json()
 
   if (!recipes || recipes.length === 0) {
@@ -116,6 +110,45 @@ export const POST: APIRoute = async (context: APIContext) => {
 
   const listId = `${scope.scopeId}_${weekStartDate}`
   const now = new Date().toISOString()
+
+  // Cutover path: hand the job to the self-hosted VM worker instead of running it under
+  // Cloudflare's ~30s waitUntil ceiling (see BACKGROUND-JOBS-VM-PLAN.md). Write the doc as
+  // `pending` — the state the worker's Firestore listener claims on — and stash the request's
+  // recipes as `inputRecipes` so the async worker (which never sees this request) can generate
+  // from them. No Gemini call happens here in this path.
+  if (isBackgroundWorkerEnabled(context)) {
+    try {
+      await db.setDocument('grocery_lists', listId, {
+        id: listId,
+        userId: scope.userId,
+        ...(scope.familyId ? { familyId: scope.familyId } : {}),
+        weekStartDate,
+        ingredients: [],
+        status: 'pending',
+        progress: 0,
+        message: 'Waiting for worker...',
+        createdAt: now,
+        updatedAt: now,
+        inputRecipes: recipes as Recipe[],
+      } satisfies GroceryList)
+    } catch (error) {
+      console.error('[Grocery] Failed to enqueue list document:', error)
+      return serverErrorResponse('Failed to start generation')
+    }
+
+    return new Response(JSON.stringify({ success: true, listId, status: 'pending' }), {
+      status: 202,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  // Legacy in-request path: run under Cloudflare waitUntil with the tight budget.
+  let client
+  try {
+    client = await initGeminiClient(locals)
+  } catch {
+    return serverErrorResponse('Missing API Key')
+  }
 
   try {
     // Initialize the doc as 'processing' immediately — before the AI call — so the client's
