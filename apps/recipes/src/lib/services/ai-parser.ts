@@ -671,15 +671,19 @@ export async function executeAiParse(
 
   try {
     const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
+      // gemini-2.5-flash was retired for newly-created API keys (Google 404s it as "no longer
+      // available to new users"); moved to the newest flash-lite under the project's cost cap
+      // ($1.50/1M output). See CLAUDE.md for the cost/quality rationale and how to bump to a
+      // full-flash tier if enhancement quality needs it.
+      model: 'gemini-3.1-flash-lite',
       config: {
         responseMimeType: 'application/json',
         responseSchema: RECIPE_RESPONSE_SCHEMA,
         abortSignal: signal,
-        // gemini-2.5-flash has dynamic "thinking" enabled by default, which can add tens of
-        // seconds of latency before output starts — enough to blow the tight budget background
-        // Enhancement runs under (see timeoutMs above). The response schema and the detailed
-        // style prompts do the shaping here; disable thinking for consistent, fast responses.
+        // Flash models enable dynamic "thinking" by default, which can add tens of seconds of
+        // latency before output starts — enough to blow the tight budget background Enhancement
+        // runs under (see timeoutMs above). The response schema and the detailed style prompts do
+        // the shaping here; disable thinking for consistent, fast responses.
         thinkingConfig: { thinkingBudget: 0 },
       },
       contents: [{ role: 'user', parts }],
