@@ -63,7 +63,11 @@ export function formatRecipesForPrompt(recipes: Recipe[]): string {
   return recipes
     .map((r) => {
       let ingredientsList = ''
-      if (r.structuredIngredients && r.structuredIngredients.length > 0) {
+      // A recipe persisted with a malformed ingredients field (e.g. a legacy/AI-parse artifact
+      // saved as a string rather than an array) would otherwise throw "map is not a function"
+      // and crash the entire grocery job for every recipe in the week — so require a real array
+      // before mapping, matching the top-level Array.isArray(recipes) guard above.
+      if (Array.isArray(r.structuredIngredients) && r.structuredIngredients.length > 0) {
         // Use pre-normalized data with source attribution
         ingredientsList = r.structuredIngredients
           .map(
@@ -73,7 +77,8 @@ export function formatRecipesForPrompt(recipes: Recipe[]): string {
           .join('\n')
       } else {
         // Fallback to raw ingredient strings with source attribution
-        ingredientsList = (r.ingredients || [])
+        const rawIngredients = Array.isArray(r.ingredients) ? r.ingredients : []
+        ingredientsList = rawIngredients
           .map((i) => `- ${i.amount} ${i.name} [RECIPE_ID:${r.id}] [RECIPE_TITLE:${r.title}]`)
           .join('\n')
       }

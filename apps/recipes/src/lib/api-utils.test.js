@@ -124,5 +124,26 @@ describe('api-utils', () => {
       expect(formatRecipesForPrompt({})).toBe('')
       expect(formatRecipesForPrompt([])).toBe('')
     })
+
+    it('does not throw when a recipe has a malformed (non-array) ingredients field', () => {
+      // Regression: a recipe persisted with ingredients/structuredIngredients as a string (a
+      // legacy/AI-parse artifact) used to crash the whole grocery job with "map is not a
+      // function". It must now degrade gracefully — the bad recipe contributes nothing, the
+      // others still render.
+      const recipes = [
+        // @ts-expect-error - deliberately malformed persisted shape
+        { id: 'bad-1', title: 'Malformed Recipe', ingredients: '1 cup flour, 2 eggs' },
+        // @ts-expect-error - deliberately malformed persisted shape
+        { id: 'bad-2', title: 'Bad Structured', structuredIngredients: 'not-an-array' },
+        { id: 'good-1', title: 'Good Recipe', ingredients: [{ name: 'salt', amount: '1 tsp' }] },
+      ]
+
+      let prompt
+      // @ts-expect-error - testing malformed input
+      expect(() => (prompt = formatRecipesForPrompt(recipes))).not.toThrow()
+      // The healthy recipe still makes it into the prompt.
+      expect(prompt).toContain('Good Recipe')
+      expect(prompt).toContain('salt')
+    })
   })
 })
