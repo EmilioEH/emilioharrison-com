@@ -172,7 +172,10 @@ export async function computeGroceryList(
     const inputList = formatRecipesForPrompt(recipes)
 
     const streamResponse = await gemini.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      // gemini-2.5-flash was retired for newly-created API keys; moved to the newest flash-lite
+      // under the project's cost cap. Keep this model string in sync with ai-parser.ts (both are
+      // the app's Gemini text model). See CLAUDE.md for the cost/quality rationale.
+      model: 'gemini-3.1-flash-lite',
       contents: [
         {
           role: 'user',
@@ -183,9 +186,9 @@ export async function computeGroceryList(
         responseMimeType: 'application/json',
         responseSchema: SCHEMA,
         abortSignal: signal,
-        // gemini-2.5-flash has dynamic "thinking" enabled by default, which can add tens of
-        // seconds of latency before output starts. Unit conversion/aggregation is mechanical —
-        // the schema and prompt do the shaping — so disable thinking entirely.
+        // Flash models enable dynamic "thinking" by default, which can add tens of seconds of
+        // latency before output starts. Unit conversion/aggregation is mechanical — the schema
+        // and prompt do the shaping — so disable thinking entirely.
         thinkingConfig: { thinkingBudget: 0 },
       },
     })
