@@ -12,6 +12,7 @@ import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
 import { db } from '../../lib/firebase-server'
 import { isBackgroundWorkerEnabled } from '../../lib/env'
+import { getAllowedCreatorIds, isRecipeAccessible } from '../../lib/recipe-access'
 import type { GroceryList, Recipe } from '../../lib/types'
 
 // HARD PLATFORM CONSTRAINT: this job runs under `ctx.waitUntil`, and Cloudflare Workers cancels
@@ -81,9 +82,9 @@ export const POST: APIRoute = async (context: APIContext) => {
   const scope = await getGroceryScopeId(cookies)
   if (!scope) return unauthorizedResponse()
 
-  const { recipes, weekStartDate } = await request.json()
+  const { recipeIds, weekStartDate } = await request.json()
 
-  if (!recipes || recipes.length === 0) {
+  if (!Array.isArray(recipeIds) || recipeIds.length === 0) {
     return new Response(JSON.stringify({ success: true, ingredients: [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -92,6 +93,30 @@ export const POST: APIRoute = async (context: APIContext) => {
 
   if (!weekStartDate || typeof weekStartDate !== 'string') {
     return badRequestResponse('weekStartDate is required')
+  }
+
+  // Server-authoritative fetch: the client tells us *which* recipes are in the week, but never
+  // supplies their contents. This is the fix for a real incident — a stale/thin client-side
+  // snapshot (e.g. mid-import, or a slimmed list-view projection) silently produced empty
+  // grocery lists with no error, because the old contract trusted whatever ingredient data the
+  // browser happened to have in memory at click-time. Re-fetching here, gated by the same
+  // per-recipe authorization every other recipe-by-id endpoint uses, means the server always
+  // works from the current, complete, canonical document.
+  const allowedCreators = await getAllowedCreatorIds(scope.userId)
+  const fetchedRecipes = await Promise.all(
+    (recipeIds as unknown[])
+      .filter((id): id is string => typeof id === 'string')
+      .map((id) => db.getDocument<Recipe>('recipes', id)),
+  )
+  const recipes = fetchedRecipes.filter(
+    (r): r is Recipe => r !== null && isRecipeAccessible(r, allowedCreators),
+  )
+
+  if (recipes.length === 0) {
+    return new Response(JSON.stringify({ success: true, ingredients: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const kv = locals?.runtime?.env?.SESSION
@@ -129,7 +154,7 @@ export const POST: APIRoute = async (context: APIContext) => {
         message: 'Waiting for worker...',
         createdAt: now,
         updatedAt: now,
-        inputRecipes: recipes as Recipe[],
+        inputRecipes: recipes,
       } satisfies GroceryList)
     } catch (error) {
       console.error('[Grocery] Failed to enqueue list document:', error)
@@ -171,7 +196,7 @@ export const POST: APIRoute = async (context: APIContext) => {
     return serverErrorResponse('Failed to start generation')
   }
 
-  const job = runGroceryGenerationJob(client, recipes as Recipe[], listId)
+  const job = runGroceryGenerationJob(client, recipes, listId)
   const ctx = locals?.runtime?.ctx
   if (ctx?.waitUntil) {
     ctx.waitUntil(job)

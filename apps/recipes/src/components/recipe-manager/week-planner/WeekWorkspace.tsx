@@ -22,7 +22,6 @@ import {
   $groceryNeedsRegen,
 } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
-import { buildGroceryItems } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import {
@@ -33,6 +32,7 @@ import {
 } from '../../ui/dropdown-menu'
 import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
+import { RawIngredientsList } from '../grocery/RawIngredientsList'
 import { alert } from '../../../lib/dialogStore'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
@@ -76,7 +76,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
   const groceryNeedsRegen = useStore($groceryNeedsRegen)
-  const [viewMode, setViewMode] = useState<'programmatic' | 'ai'>('programmatic')
+  const [viewMode, setViewMode] = useState<'raw' | 'ai'>('raw')
   const { user: authUser } = useAuth()
 
   // IMPORTANT: For Firestore operations, we MUST use the Firebase Auth user (authUser)
@@ -102,9 +102,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     const plannedRecipeIds = currentRecipes.map((p) => p.recipeId)
     return allRecipes.filter((r) => plannedRecipeIds.includes(r.id))
   }, [currentRecipes, allRecipes])
-
-  // Use extracted utilities to reduce component complexity
-  const groceryItems = useMemo(() => buildGroceryItems(groceryRecipes), [groceryRecipes])
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
@@ -208,33 +205,35 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   ])
 
   // Auto-switch to AI view when smart list becomes ready
-  const [userToggledStandard, setUserToggledStandard] = useState(false)
+  const [userToggledRaw, setUserToggledRaw] = useState(false)
 
-  // Derived view mode: show Smart List unless user explicitly chose Standard
+  // Derived view mode: show Smart List unless user explicitly chose Raw. Raw is always the
+  // fallback (not just the pre-Smart default) — it's read directly from recipes already in
+  // memory, so it can't fail the way an AI-generated Smart list can. See GROCERY-LIST-V2-PLAN.md.
   const effectiveViewMode = useMemo(() => {
-    if (userToggledStandard) return viewMode
+    if (userToggledRaw) return viewMode
     if (hasSmartList) return 'ai'
-    return 'programmatic'
-  }, [userToggledStandard, hasSmartList, viewMode])
+    return 'raw'
+  }, [userToggledRaw, hasSmartList, viewMode])
 
-  // Combined ingredients based on view mode
-  const displayedIngredients = useMemo(() => {
-    if (
-      effectiveViewMode === 'ai' &&
-      hasSmartList &&
-      aiGroceryList &&
-      Array.isArray(aiGroceryList.ingredients)
-    ) {
-      return aiGroceryList.ingredients
-    }
-    return groceryItems
-  }, [effectiveViewMode, hasSmartList, aiGroceryList, groceryItems])
-
-  // Share/Copy grocery list
+  // Share/Copy grocery list — reflects whichever view is currently showing.
   const buildGroceryText = () => {
-    return groceryItems
-      .map((item) => `- ${item.purchaseAmount} ${item.purchaseUnit} ${item.name}`)
-      .join('\n')
+    if (effectiveViewMode === 'ai' && hasSmartList && aiGroceryList) {
+      return aiGroceryList.ingredients
+        .map((item) => `- ${item.purchaseAmount} ${item.purchaseUnit} ${item.name}`)
+        .join('\n')
+    }
+    return groceryRecipes
+      .map((recipe) => {
+        const lines =
+          Array.isArray(recipe.structuredIngredients) && recipe.structuredIngredients.length > 0
+            ? recipe.structuredIngredients.map(
+                (i) => i.original || `${i.amount} ${i.unit} ${i.name}`,
+              )
+            : (recipe.ingredients || []).map((i) => (i.amount ? `${i.amount} ${i.name}` : i.name))
+        return `${recipe.title}\n${lines.map((l) => `- ${l}`).join('\n')}`
+      })
+      .join('\n\n')
   }
 
   const handleCopyGrocery = async () => {
@@ -363,26 +362,26 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
           return (
             <div className="touch-manipulation border-b border-border bg-muted/20 px-4 py-2.5">
               <Inline spacing="sm" justify="between" align="center" className="mx-auto max-w-2xl">
-                {/* Standard / Smart toggle */}
+                {/* Raw / Smart toggle */}
                 <div className="flex items-center rounded-full border border-border bg-background p-0.5">
                   <button
                     onClick={() => {
-                      setViewMode('programmatic')
-                      setUserToggledStandard(true)
+                      setViewMode('raw')
+                      setUserToggledRaw(true)
                     }}
                     className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                      effectiveViewMode === 'programmatic'
+                      effectiveViewMode === 'raw'
                         ? 'bg-foreground text-background shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    Standard
+                    Raw
                   </button>
                   <button
                     onClick={() => {
                       if (hasSmartList) {
                         setViewMode('ai')
-                        setUserToggledStandard(false)
+                        setUserToggledRaw(false)
                       }
                     }}
                     disabled={!hasSmartList}
@@ -517,23 +516,27 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               </div>
             )}
 
-            <GroceryList
-              ingredients={displayedIngredients}
-              isLoading={false}
-              onClose={() => setActiveTab('plan')}
-              recipes={groceryRecipes}
-              onOpenRecipe={onSelectRecipe}
-              embedded={true}
-              weekStartDate={activeWeekStart}
-              userId={scopeId ?? undefined}
-              onItemAdded={() => {
-                // Firestore real-time listener auto-updates aiGroceryList.
-                // Switch to Smart List view so the user sees the newly added item.
-                if (hasSmartList || aiGroceryList) {
-                  setViewMode('ai')
-                }
-              }}
-            />
+            {effectiveViewMode === 'ai' && hasSmartList && aiGroceryList ? (
+              <GroceryList
+                ingredients={aiGroceryList.ingredients}
+                isLoading={false}
+                onClose={() => setActiveTab('plan')}
+                recipes={groceryRecipes}
+                onOpenRecipe={onSelectRecipe}
+                embedded={true}
+                weekStartDate={activeWeekStart}
+                userId={scopeId ?? undefined}
+                onItemAdded={() => {
+                  // Firestore real-time listener auto-updates aiGroceryList.
+                  // Switch to Smart List view so the user sees the newly added item.
+                  if (hasSmartList || aiGroceryList) {
+                    setViewMode('ai')
+                  }
+                }}
+              />
+            ) : (
+              <RawIngredientsList recipes={groceryRecipes} onOpenRecipe={onSelectRecipe} />
+            )}
           </>
         )}
       </div>

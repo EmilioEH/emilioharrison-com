@@ -242,13 +242,20 @@ describe('API Tests', () => {
         .map((_, i) => ({
           id: `r${i}`,
           title: `Recipe ${i}`,
-          ingredients: ['1 item'],
-          instructions: [],
+          ingredients: [{ name: 'item', amount: '1' }],
+          steps: [],
         }))
+
+      // The endpoint now re-fetches each recipe server-side by id rather than trusting the
+      // client-supplied payload — so the fake `getDocument` needs to actually return them.
+      getDocument.mockImplementation((collection: string, id: string) => {
+        if (collection === 'recipes') return Promise.resolve(recipes.find((r) => r.id === id) ?? null)
+        return Promise.resolve(null) // no family for users/families lookups
+      })
 
       const request = new Request('http://localhost/api/generate-grocery-list', {
         method: 'POST',
-        body: JSON.stringify({ recipes, weekStartDate: '2024-01-01' }),
+        body: JSON.stringify({ recipeIds: recipes.map((r) => r.id), weekStartDate: '2024-01-01' }),
       })
       const locals = {
         runtime: { env: { OPENROUTER_API_KEY: 'mock-key', GEMINI_API_KEY: 'mock-key' } },

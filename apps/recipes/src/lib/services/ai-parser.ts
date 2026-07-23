@@ -4,6 +4,7 @@ import type { GoogleGenAI } from '@google/genai'
 import { closeBalanced } from '../api-utils'
 import { createTimeoutSignal } from './ai-timeout'
 import { assertSafeExternalUrl } from './url-safety'
+import { GEMINI_TEXT_MODEL } from './ai-model-config'
 
 // NOTE: this module must stay free of Cloudflare/Astro/Vite-only imports (no `locals`, no
 // `import.meta.glob`, no `api-helpers`/`firebase-server`). It's imported by the self-hosted VM
@@ -671,11 +672,10 @@ export async function executeAiParse(
 
   try {
     const response = await client.models.generateContent({
-      // gemini-2.5-flash was retired for newly-created API keys (Google 404s it as "no longer
-      // available to new users"); moved to the newest flash-lite under the project's cost cap
-      // ($1.50/1M output). See CLAUDE.md for the cost/quality rationale and how to bump to a
-      // full-flash tier if enhancement quality needs it.
-      model: 'gemini-3.1-flash-lite',
+      // Model lives in ai-model-config.ts — a single source of truth shared with grocery-core.ts.
+      // See that file for the cost/quality rationale and how to bump to a full-flash tier if
+      // enhancement quality needs it.
+      model: GEMINI_TEXT_MODEL,
       config: {
         responseMimeType: 'application/json',
         responseSchema: RECIPE_RESPONSE_SCHEMA,
