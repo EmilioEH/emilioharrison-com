@@ -3,6 +3,7 @@ import { Type as SchemaType } from '@google/genai'
 import { formatRecipesForPrompt } from '../api-utils'
 import { tryRepairJson } from './ai-parser'
 import { createTimeoutSignal } from './ai-timeout'
+import { GEMINI_TEXT_MODEL } from './ai-model-config'
 import {
   detectAllNewGroceryStages,
   extractGeminiChunkText,
@@ -149,17 +150,28 @@ const SCHEMA = {
   required: ['ingredients'],
 }
 
-/**
- * Runs the Gemini grocery generation to completion and returns the `ingredients` array. Reports
- * each newly-detected category stage via `onProgress` as the stream arrives (the caller persists
- * those). Throws on an incomplete/empty result — the caller maps that to a persisted `error`.
- *
- * `timeoutMs` bounds the call; Cloudflare passes a tight (waitUntil-safe) budget, the VM worker
- * passes a generous one. `externalSignal` (unused today; reserved) can cancel early.
- */
-export async function computeGroceryList(
+// A schema-valid `{"ingredients": []}` is a legitimate model response, not a thrown error — so
+// on its own it silently looks like success even when the input clearly had things to buy
+// (confirmed live: same prompt, same data, empty output some of the time, non-empty most of the
+// time — genuine sampling variance, not a truncation/timeout/data bug). One retry with a fresh
+// attempt is cheap insurance against that variance; only exercised when the input actually had
+// ingredients to work with, so it never fires on a legitimately empty week.
+const MAX_ATTEMPTS = 2
+
+function recipesHaveIngredients(recipes: Recipe[]): boolean {
+  return recipes.some(
+    (r) =>
+      (Array.isArray(r.structuredIngredients) && r.structuredIngredients.length > 0) ||
+      (Array.isArray(r.ingredients) && r.ingredients.length > 0),
+  )
+}
+
+/** Runs a single Gemini call and returns its parsed `ingredients` array (or throws on a
+ * malformed/incomplete response). Broken out of `computeGroceryList` so each retry attempt gets
+ * its own timeout budget rather than sharing one across attempts. */
+async function runGroceryGenerationAttempt(
   gemini: GoogleGenAI,
-  recipes: Recipe[],
+  inputList: string,
   opts: {
     timeoutMs: number
     onProgress?: (update: GroceryProgressUpdate) => void | Promise<void>
@@ -169,13 +181,8 @@ export async function computeGroceryList(
   const { signal, cleanup } = createTimeoutSignal(opts.timeoutMs, opts.externalSignal)
 
   try {
-    const inputList = formatRecipesForPrompt(recipes)
-
     const streamResponse = await gemini.models.generateContentStream({
-      // gemini-2.5-flash was retired for newly-created API keys; moved to the newest flash-lite
-      // under the project's cost cap. Keep this model string in sync with ai-parser.ts (both are
-      // the app's Gemini text model). See CLAUDE.md for the cost/quality rationale.
-      model: 'gemini-3.1-flash-lite',
+      model: GEMINI_TEXT_MODEL,
       contents: [
         {
           role: 'user',
@@ -223,4 +230,44 @@ export async function computeGroceryList(
   } finally {
     cleanup()
   }
+}
+
+/**
+ * Runs the Gemini grocery generation to completion and returns the `ingredients` array. Reports
+ * each newly-detected category stage via `onProgress` as the stream arrives (the caller persists
+ * those). Throws on an incomplete/malformed result, or on a result that's empty despite non-empty
+ * input surviving every retry — the caller maps either to a persisted `error`, never a silent
+ * "complete, 0 items."
+ *
+ * `timeoutMs` bounds each individual attempt; Cloudflare passes a tight (waitUntil-safe) budget,
+ * the VM worker passes a generous one. `externalSignal` (unused today; reserved) can cancel early.
+ */
+export async function computeGroceryList(
+  gemini: GoogleGenAI,
+  recipes: Recipe[],
+  opts: {
+    timeoutMs: number
+    onProgress?: (update: GroceryProgressUpdate) => void | Promise<void>
+    externalSignal?: AbortSignal
+  },
+): Promise<unknown[]> {
+  const inputList = formatRecipesForPrompt(recipes)
+  const expectsOutput = recipesHaveIngredients(recipes)
+  const maxAttempts = expectsOutput ? MAX_ATTEMPTS : 1
+
+  let lastResult: unknown[] = []
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    lastResult = await runGroceryGenerationAttempt(gemini, inputList, opts)
+    if (lastResult.length > 0 || !expectsOutput) return lastResult
+  }
+
+  if (expectsOutput && lastResult.length === 0) {
+    throw new Error(
+      `Gemini returned an empty ingredient list ${maxAttempts} time(s) in a row despite ` +
+        `${recipes.length} recipe(s) with real ingredients — treating as a failure rather than ` +
+        `a legitimately empty list.`,
+    )
+  }
+
+  return lastResult
 }

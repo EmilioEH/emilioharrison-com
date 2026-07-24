@@ -19,6 +19,26 @@ function fakeGemini(chunks: string[]): GoogleGenAI {
   } as unknown as GoogleGenAI
 }
 
+/** Fake Gemini client that returns a different full-text response on each successive call —
+ * for exercising the retry-on-empty-result path (each attempt is a fresh `generateContentStream`
+ * call, so this simulates "first attempt came back empty, second attempt worked"). */
+function fakeGeminiSequence(responses: string[]): GoogleGenAI {
+  let call = 0
+  return {
+    models: {
+      generateContentStream: vi.fn(async () => {
+        const text = responses[Math.min(call, responses.length - 1)]
+        call += 1
+        return {
+          async *[Symbol.asyncIterator]() {
+            yield { candidates: [{ content: { parts: [{ text }] } }] }
+          },
+        }
+      }),
+    },
+  } as unknown as GoogleGenAI
+}
+
 const recipes: Recipe[] = [
   {
     id: 'r1',
@@ -70,5 +90,43 @@ describe('computeGroceryList (shared core — no Firestore, no locals)', () => {
   it('throws when the model produces no usable ingredients', async () => {
     const gemini = fakeGemini(['not json at all {{{'])
     await expect(computeGroceryList(gemini, recipes, { timeoutMs: 25_000 })).rejects.toThrow()
+  })
+
+  it('retries once when the model returns a schema-valid but empty list for non-empty input', async () => {
+    const empty = JSON.stringify({ ingredients: [] })
+    const real = JSON.stringify({
+      ingredients: [
+        { name: 'lime', purchaseAmount: 2, purchaseUnit: 'whole', category: 'Produce', sources: [] },
+      ],
+    })
+    const gemini = fakeGeminiSequence([empty, real])
+
+    const ingredients = await computeGroceryList(gemini, recipes, { timeoutMs: 25_000 })
+
+    expect(gemini.models.generateContentStream).toHaveBeenCalledTimes(2)
+    expect(ingredients).toHaveLength(1)
+  })
+
+  it('throws (not a silent empty success) when every retry attempt comes back empty', async () => {
+    const empty = JSON.stringify({ ingredients: [] })
+    const gemini = fakeGeminiSequence([empty, empty])
+
+    await expect(computeGroceryList(gemini, recipes, { timeoutMs: 25_000 })).rejects.toThrow(
+      /empty ingredient list/,
+    )
+    expect(gemini.models.generateContentStream).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not retry (and returns []) when the input recipes genuinely have no ingredients', async () => {
+    const empty = JSON.stringify({ ingredients: [] })
+    const gemini = fakeGeminiSequence([empty])
+    const emptyRecipes: Recipe[] = [
+      { id: 'r2', title: 'Just Water', servings: 1, prepTime: 0, cookTime: 0, ingredients: [], steps: [] },
+    ]
+
+    const ingredients = await computeGroceryList(gemini, emptyRecipes, { timeoutMs: 25_000 })
+
+    expect(ingredients).toEqual([])
+    expect(gemini.models.generateContentStream).toHaveBeenCalledTimes(1)
   })
 })

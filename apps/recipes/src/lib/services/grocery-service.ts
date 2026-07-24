@@ -13,10 +13,17 @@ import type { Recipe } from '../types'
  * subscription on `grocery_lists/{scopeId}_{weekStartDate}` is the source of truth for
  * progress/completion/errors from here — this function only guards against duplicate triggers
  * and gives an instant local "processing" signal before that subscription catches up.
+ *
+ * Sends recipe **IDs** only, never the client's in-memory recipe objects — the server re-fetches
+ * the full, current documents itself. A prior version sent whatever ingredient data the browser
+ * happened to have, which silently produced empty grocery lists when that data was stale or thin
+ * (e.g. a slimmed list-view projection, or a recipe generation triggered before an import had
+ * fully landed client-side). `recipes` is still accepted as the parameter shape so call sites
+ * don't need to change — only the id is used.
  */
 export async function triggerGroceryGeneration(
   weekStartDate: string,
-  recipes: Recipe[],
+  recipes: Pick<Recipe, 'id'>[],
   scopeId: string,
 ) {
   const listId = `${scopeId}_${weekStartDate}`
@@ -47,7 +54,7 @@ export async function triggerGroceryGeneration(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        recipes: recipes.map((r) => ({ ...r })), // Ensure plain objects
+        recipeIds: recipes.map((r) => r.id),
         weekStartDate,
       }),
     })
