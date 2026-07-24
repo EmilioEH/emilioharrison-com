@@ -654,8 +654,9 @@ export class FirebaseRestService {
     if (typeof val === 'boolean') return { booleanValue: val }
     if (Array.isArray(val)) {
       if (inArray) {
-        // Firestore DOES NOT support nested arrays, even if separated by Map objects.
-        // Array -> Map -> Array is FORBIDDEN.
+        // Reachable only for a literal array-of-arrays (Array -> Array with no intervening
+        // Map) — Firestore genuinely forbids that specific shape. Array -> Map -> Array is
+        // fine and does NOT reach here; see the reset in the map branch below.
         // Fallback: Stringify nested arrays to preserve data without crashing.
         return { stringValue: JSON.stringify(val) }
       }
@@ -668,7 +669,15 @@ export class FirebaseRestService {
       if (val instanceof Date) {
         return { timestampValue: val.toISOString() }
       }
-      return { mapValue: { fields: this.toFirestoreFields(val, inArray) } }
+      // A map creates a fresh nesting context: Firestore's real restriction is only that an
+      // array value cannot directly contain another array value. Array -> Map -> Array is the
+      // officially-supported workaround for what would otherwise be a nested array (see
+      // stepIngredients: Array<{ indices: number[] }> in types.ts) and must NOT be stringified —
+      // only reset `inArray` here would previously stay `true` once set from an outer array,
+      // causing every array-valued field on any object nested inside an array (e.g. each
+      // recipe's own `ingredients`/`structuredIngredients` when writing an array of recipes) to
+      // be silently flattened to a JSON string instead of a real Firestore array.
+      return { mapValue: { fields: this.toFirestoreFields(val, false) } }
     }
     return { stringValue: String(val) }
   }
