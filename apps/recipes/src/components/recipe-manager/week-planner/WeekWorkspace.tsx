@@ -22,6 +22,7 @@ import {
   $groceryNeedsRegen,
 } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
+import { buildRawShoppableIngredients } from '../../../lib/grocery-utils'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import {
@@ -32,7 +33,6 @@ import {
 } from '../../ui/dropdown-menu'
 import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
-import { RawIngredientsList } from '../grocery/RawIngredientsList'
 import { alert } from '../../../lib/dialogStore'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
@@ -102,6 +102,11 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     const plannedRecipeIds = currentRecipes.map((p) => p.recipeId)
     return allRecipes.filter((r) => plannedRecipeIds.includes(r.id))
   }, [currentRecipes, allRecipes])
+
+  // Raw view's ingredients — same ShoppableIngredient shape Smart uses, rendered through the
+  // same <GroceryList> with mergeIngredients={false} so it looks and behaves identically, just
+  // without combining the same ingredient across recipes.
+  const rawIngredients = useMemo(() => buildRawShoppableIngredients(groceryRecipes), [groceryRecipes])
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
@@ -535,7 +540,19 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                 }}
               />
             ) : (
-              <RawIngredientsList recipes={groceryRecipes} onOpenRecipe={onSelectRecipe} />
+              // Same component as Smart — same category headers, row layout, checkboxes — just
+              // fed uncombined per-recipe items (mergeIngredients={false}). weekStartDate/userId
+              // deliberately omitted: editing/adding writes to the Firestore grocery_lists doc,
+              // which doesn't apply to Raw's on-the-fly-derived, non-persisted ingredients.
+              <GroceryList
+                ingredients={rawIngredients}
+                mergeIngredients={false}
+                isLoading={false}
+                onClose={() => setActiveTab('plan')}
+                recipes={groceryRecipes}
+                onOpenRecipe={onSelectRecipe}
+                embedded={true}
+              />
             )}
           </>
         )}
