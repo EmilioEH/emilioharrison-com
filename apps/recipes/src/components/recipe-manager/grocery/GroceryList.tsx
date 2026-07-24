@@ -39,6 +39,11 @@ interface GroceryListProps {
   weekStartDate?: string
   userId?: string
   onItemAdded?: () => void // Callback to refresh list after adding item
+  // When false, skip combining same-name/unit ingredients across recipes — each stays its own
+  // row, still category-grouped. Used by the "Raw" view (see RawIngredientsList usage in
+  // WeekWorkspace.tsx) so it can share this component's full row/checkbox/category styling
+  // without adopting Smart's cross-recipe aggregation.
+  mergeIngredients?: boolean
 }
 
 export const GroceryList: React.FC<GroceryListProps> = ({
@@ -51,6 +56,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
   weekStartDate,
   userId,
   onItemAdded,
+  mergeIngredients = true,
 }) => {
   // 1a. Filter mode: default (hide archived/unneeded) vs archived/unneeded views
   const [listFilter, setListFilter] = useState<ListFilterMode>('default')
@@ -75,11 +81,11 @@ export const GroceryList: React.FC<GroceryListProps> = ({
     return { archived, unneeded }
   }, [ingredients])
 
-  // 1d. Merge & Categorize visible ingredients
+  // 1d. Merge (optional) & Categorize visible ingredients
   const categorizedList = useMemo(() => {
-    const merged = mergeShoppableIngredients(visibleIngredients)
-    return categorizeShoppableIngredients(merged)
-  }, [visibleIngredients])
+    const base = mergeIngredients ? mergeShoppableIngredients(visibleIngredients) : visibleIngredients
+    return categorizeShoppableIngredients(base)
+  }, [visibleIngredients, mergeIngredients])
 
   // 2. Checked State (Persisted)
   const [checkedItems, setCheckedItems] = useState<Set<string>>(() => {

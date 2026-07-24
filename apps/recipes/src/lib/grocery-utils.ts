@@ -1,4 +1,5 @@
 import type { Recipe, ShoppableIngredient } from './types'
+import { normalizeCategory } from './grocery-logic'
 
 /** Fixed grocery category display order (store-walk order). */
 export const CATEGORY_ORDER = [
@@ -13,90 +14,56 @@ export const CATEGORY_ORDER = [
 ]
 
 /**
- * Aggregates ingredients from multiple recipes into a single shoppable list.
- * Handles both structured and basic ingredients.
+ * Maps recipes into `ShoppableIngredient` rows for the "Raw" grocery view — same shape
+ * `GroceryList.tsx` already knows how to render (category header, checkbox row, source tag),
+ * but with no cross-recipe combining: each ingredient line becomes its own row. Passed to
+ * `<GroceryList mergeIngredients={false} .../>` so Raw shares Smart's exact visual/interactive
+ * treatment, just uncombined (see WeekWorkspace.tsx).
+ *
+ * Uses each recipe's already-stored `structuredIngredients` fields (amount/unit/name/category —
+ * computed once at import/enhancement time, not a live call) when present, since those are
+ * already split the same way Smart's rows display (number + unit + name). Falls back to the
+ * basic `ingredients` field — a free-text amount that can't be cleanly split into number+unit
+ * without real parsing — shown in the unit slot as-is instead.
  */
-export function buildGroceryItems(recipes: Recipe[]): ShoppableIngredient[] {
-  const ingredientMap = new Map<string, ShoppableIngredient>()
+export function buildRawShoppableIngredients(recipes: Recipe[]): ShoppableIngredient[] {
+  const items: ShoppableIngredient[] = []
 
   for (const recipe of recipes) {
-    if (recipe.structuredIngredients && recipe.structuredIngredients.length > 0) {
-      processStructuredIngredients(recipe, ingredientMap)
-    } else if (recipe.ingredients) {
-      processBasicIngredients(recipe, ingredientMap)
-    }
-  }
-
-  return Array.from(ingredientMap.values())
-}
-
-function processStructuredIngredients(recipe: Recipe, map: Map<string, ShoppableIngredient>) {
-  for (const ing of recipe.structuredIngredients!) {
-    const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`
-    const existing = map.get(key)
-
-    if (existing) {
-      existing.purchaseAmount += ing.amount
-      const sources = existing.sources ?? []
-      if (!sources.some((s) => s.recipeId === recipe.id)) {
-        existing.sources = [
-          ...sources,
-          {
-            recipeId: recipe.id,
-            recipeTitle: recipe.title,
-            originalAmount: `${ing.amount} ${ing.unit}`,
-          },
-        ]
+    if (Array.isArray(recipe.structuredIngredients) && recipe.structuredIngredients.length > 0) {
+      for (const ing of recipe.structuredIngredients) {
+        items.push({
+          name: ing.name,
+          purchaseAmount: ing.amount,
+          purchaseUnit: ing.unit || 'unit',
+          category: normalizeCategory(ing.category),
+          sources: [
+            {
+              recipeId: recipe.id,
+              recipeTitle: recipe.title,
+              originalAmount: ing.original || `${ing.amount} ${ing.unit}`,
+            },
+          ],
+        })
       }
     } else {
-      map.set(key, {
-        name: ing.name,
-        purchaseAmount: ing.amount,
-        purchaseUnit: ing.unit,
-        category: ing.category || 'Other',
-        sources: [
-          {
-            recipeId: recipe.id,
-            recipeTitle: recipe.title,
-            originalAmount: `${ing.amount} ${ing.unit}`,
-          },
-        ],
-      })
-    }
-  }
-}
-
-function processBasicIngredients(recipe: Recipe, map: Map<string, ShoppableIngredient>) {
-  for (const ing of recipe.ingredients) {
-    const key = `${ing.name.toLowerCase()}|basic`
-    const existing = map.get(key)
-
-    if (existing) {
-      const sources = existing.sources ?? []
-      if (!sources.some((s) => s.recipeId === recipe.id)) {
-        existing.sources = [
-          ...sources,
-          {
-            recipeId: recipe.id,
-            recipeTitle: recipe.title,
-            originalAmount: ing.amount ? `${ing.amount} ${ing.name}` : ing.name,
-          },
-        ]
+      for (const ing of recipe.ingredients || []) {
+        items.push({
+          name: ing.name?.toLowerCase() || 'unknown',
+          purchaseAmount: 0,
+          purchaseUnit: ing.amount || 'unit',
+          category: normalizeCategory(undefined),
+          sources: [
+            {
+              recipeId: recipe.id,
+              recipeTitle: recipe.title,
+              originalAmount: ing.amount ? `${ing.amount} ${ing.name}` : ing.name,
+            },
+          ],
+        })
       }
-    } else {
-      map.set(key, {
-        name: ing.name?.toLowerCase() || 'unknown',
-        purchaseAmount: 1,
-        purchaseUnit: 'unit',
-        category: 'Other',
-        sources: [
-          {
-            recipeId: recipe.id,
-            recipeTitle: recipe.title,
-            originalAmount: ing.amount ? `${ing.amount} ${ing.name}` : ing.name,
-          },
-        ],
-      })
     }
   }
+
+  return items
 }
