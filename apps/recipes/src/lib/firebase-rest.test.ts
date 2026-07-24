@@ -141,6 +141,57 @@ describe('FirebaseRestService', () => {
     expect(logsList[0].mapValue.fields.type).toEqual({ stringValue: 'info' })
   })
 
+  describe('nested array serialization (Array -> Map -> Array)', () => {
+    it('serializes an array field on an object nested inside another array as a real arrayValue, not a stringified fallback', async () => {
+      // Regression test for a real incident: writing `inputRecipes` (an array of recipe
+      // objects, each with its own `ingredients` array) silently stringified every recipe's
+      // `ingredients`/`structuredIngredients` field, because `inArray` stayed `true` once set
+      // by the outer array and was never reset when descending into each recipe's own map.
+      // Firestore's actual restriction is only Array -> Array directly; Array -> Map -> Array
+      // is the documented, supported workaround (see stepIngredients in types.ts) and must
+      // round-trip as a real nested array, not JSON text.
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+      global.fetch = fetchMock
+
+      await service.createDocument('grocery_lists', 'list1', {
+        inputRecipes: [
+          { id: 'r1', title: 'Tacos', ingredients: [{ name: 'lime', amount: '2' }] },
+          { id: 'r2', title: 'Soup', ingredients: [{ name: 'onion', amount: '1' }] },
+        ],
+      })
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+      const recipes = body.fields.inputRecipes.arrayValue.values
+      expect(recipes).toHaveLength(2)
+
+      const firstRecipeIngredients = recipes[0].mapValue.fields.ingredients
+      expect(firstRecipeIngredients.stringValue).toBeUndefined()
+      expect(firstRecipeIngredients.arrayValue.values).toHaveLength(1)
+      expect(firstRecipeIngredients.arrayValue.values[0].mapValue.fields.name).toEqual({
+        stringValue: 'lime',
+      })
+    })
+
+    it('still stringifies a genuinely nested array (Array -> Array, no intervening Map)', async () => {
+      // Firestore really does forbid this shape — confirms the fix didn't remove the fallback
+      // for the one case that actually needs it.
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+      global.fetch = fetchMock
+
+      await service.createDocument('test', 'doc1', {
+        matrix: [
+          [1, 2],
+          [3, 4],
+        ],
+      })
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+      const values = body.fields.matrix.arrayValue.values
+      expect(values[0]).toEqual({ stringValue: '[1,2]' })
+      expect(values[1]).toEqual({ stringValue: '[3,4]' })
+    })
+  })
+
   describe('runQuery', () => {
     it('builds a structured query against :runQuery, not a full collection GET', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
