@@ -1,6 +1,7 @@
 import type { GoogleGenAI } from '@google/genai'
 import { executeAiParse } from './ai-parser'
 import { mergeAiRecipeUpdate, snapshotRecipe } from './recipe-merge'
+import { withTransientRetry } from './ai-retry'
 import type { Recipe } from '../types'
 
 // Provider-agnostic core of the "Kenji-style" total reparse (background Enhancement / AI
@@ -25,52 +26,6 @@ export class EnhancementProducedNothingError extends Error {}
 function hasEnhancedStructure(result: unknown): boolean {
   const steps = (result as { structuredSteps?: unknown } | null | undefined)?.structuredSteps
   return Array.isArray(steps) && steps.length > 0
-}
-
-/** Errors worth a second attempt: the call never really got going, so nothing about this recipe
- * makes it doomed. Deliberately narrow — a malformed/unusable *response* is not retried here. */
-function isTransientAiError(error: unknown): boolean {
-  const text = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
-  return /abort|timed? ?out|timeout|429|RESOURCE_EXHAUSTED|503|UNAVAILABLE|ECONNRESET|socket hang up/i.test(
-    text,
-  )
-}
-
-/**
- * Minimum per-attempt budget before a transient failure is worth retrying.
- *
- * Background Enhancement on Cloudflare runs under `ctx.waitUntil`, which is killed ~30s after the
- * response is sent, so that path deliberately caps each AI call at ~25s (see
- * recipe-enhancement-job.ts). Retrying there would push a hung attempt past the ceiling and the
- * error-status write would never land — the exact failure that shipped once before. The VM worker
- * has no such ceiling (120s per call), so it gets the retry and Cloudflare doesn't.
- */
-const MIN_TIMEOUT_FOR_RETRY_MS = 60_000
-
-/**
- * Runs the reparse, retrying once if the first attempt fails in a way that suggests the request
- * simply never landed.
- *
- * Motivated by production timings: enhancement calls are bimodal — a healthy one returns in about
- * 6 seconds, while failures hang and are killed at exactly the 120s timeout, three times in one
- * 15-minute window. A hung request tells us nothing about the recipe, and the fast success rate
- * means a second attempt is very likely to land.
- */
-async function runParseWithTransientRetry(
-  runParse: () => Promise<unknown>,
-  timeoutMs: number | undefined,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
-  try {
-    return await runParse()
-  } catch (error) {
-    const budget = timeoutMs ?? 0
-    if (!isTransientAiError(error) || budget < MIN_TIMEOUT_FOR_RETRY_MS) throw error
-    console.warn(
-      `[Enhance] transient failure (${error instanceof Error ? error.message : error}) — retrying once`,
-    )
-    return runParse()
-  }
 }
 
 /**
@@ -125,7 +80,7 @@ ${recipe.steps.join('\n')}
     return executeAiParse(gemini, { ...commonParams, text: textRep }, origin, signal, timeoutMs)
   }
 
-  let newData = await runParseWithTransientRetry(runParse, timeoutMs)
+  let newData = await withTransientRetry(runParse, timeoutMs, 'Enhance')
 
   // A reparse that comes back with no `structuredSteps` isn't an enhancement — it's a no-op.
   // mergeAiRecipeUpdate deliberately refuses to overwrite a populated array with an empty one

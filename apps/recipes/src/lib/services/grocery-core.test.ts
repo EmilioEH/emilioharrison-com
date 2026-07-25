@@ -117,6 +117,50 @@ describe('computeGroceryList (shared core — no Firestore, no locals)', () => {
     expect(gemini.models.generateContentStream).toHaveBeenCalledTimes(2)
   })
 
+  it('retries once on a transient error when the timeout budget allows it (VM worker)', async () => {
+    const real = JSON.stringify({
+      ingredients: [
+        { name: 'lime', purchaseAmount: 2, purchaseUnit: 'whole', category: 'Produce', sources: [] },
+      ],
+    })
+    let call = 0
+    const gemini = {
+      models: {
+        generateContentStream: vi.fn(async () => {
+          call += 1
+          if (call === 1) {
+            throw Object.assign(new Error('aborted'), { name: 'AbortError' })
+          }
+          return {
+            async *[Symbol.asyncIterator]() {
+              yield { candidates: [{ content: { parts: [{ text: real }] } }] }
+            },
+          }
+        }),
+      },
+    } as unknown as GoogleGenAI
+
+    const ingredients = await computeGroceryList(gemini, recipes, { timeoutMs: 120_000 })
+
+    expect(gemini.models.generateContentStream).toHaveBeenCalledTimes(2)
+    expect(ingredients).toHaveLength(1)
+  })
+
+  it('does not retry a transient error under the tight Cloudflare waitUntil budget', async () => {
+    const gemini = {
+      models: {
+        generateContentStream: vi.fn(async () => {
+          throw Object.assign(new Error('aborted'), { name: 'AbortError' })
+        }),
+      },
+    } as unknown as GoogleGenAI
+
+    await expect(computeGroceryList(gemini, recipes, { timeoutMs: 25_000 })).rejects.toThrow(
+      /aborted/i,
+    )
+    expect(gemini.models.generateContentStream).toHaveBeenCalledTimes(1)
+  })
+
   it('does not retry (and returns []) when the input recipes genuinely have no ingredients', async () => {
     const empty = JSON.stringify({ ingredients: [] })
     const gemini = fakeGeminiSequence([empty])
