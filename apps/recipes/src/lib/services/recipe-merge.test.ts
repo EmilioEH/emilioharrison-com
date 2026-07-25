@@ -49,6 +49,33 @@ describe('mergeAiRecipeUpdate', () => {
     expect(merged.title).toBe('Real Recipe Title')
   })
 
+  it('drops a leading step that just repeats the description', () => {
+    // Observed in production: a photo-imported recipe came back from background Enhancement
+    // with clean `structuredSteps` but `steps[0]` set to the recipe's own blurb. Enhancement
+    // overwrites `steps`, so this has to be caught here, not only at import time.
+    const blurb =
+      'Familiar flavors with a bit of color and acid make this an easy, delicious, and, dare I say, entertaining weeknight meal.'
+    const original = makeRecipe()
+    const merged = mergeAiRecipeUpdate(original, {
+      title: 'Chicken Thighs with Broccolini',
+      description: blurb,
+      steps: [blurb, 'Pat the chicken dry and season.', 'Heat the oil in a skillet.'],
+    })
+
+    expect(merged.steps).toEqual(['Pat the chicken dry and season.', 'Heat the oil in a skillet.'])
+  })
+
+  it('leaves steps untouched when none of them echo the description', () => {
+    const original = makeRecipe()
+    const merged = mergeAiRecipeUpdate(original, {
+      title: 'Chicken Thighs',
+      description: 'A weeknight dinner that comes together in one skillet with bright lemon.',
+      steps: ['Pat the chicken dry and season.', 'Heat the oil in a skillet.'],
+    })
+
+    expect(merged.steps).toEqual(['Pat the chicken dry and season.', 'Heat the oil in a skillet.'])
+  })
+
   it('keeps the original ingredients when the AI result returns an empty array', () => {
     const original = makeRecipe()
     const merged = mergeAiRecipeUpdate(original, {
