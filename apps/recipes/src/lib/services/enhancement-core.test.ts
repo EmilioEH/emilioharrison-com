@@ -138,6 +138,46 @@ describe('computeEnhancedRecipe (shared core — no Firestore, no locals)', () =
       expect(executeAiParse).toHaveBeenCalledTimes(2)
     })
 
+    it('retries a transient AbortError when the timeout budget allows (VM worker)', async () => {
+      // Production timings: enhancement is bimodal — healthy calls return in ~6s, hung ones are
+      // killed at exactly the 120s timeout (3 times in one 15-minute window). A hung request says
+      // nothing about the recipe, so a second attempt is worth it.
+      const abort = Object.assign(new Error('This operation was aborted sending request'), {
+        name: 'AbortError',
+      })
+      executeAiParse
+        .mockRejectedValueOnce(abort)
+        .mockResolvedValueOnce({ ...withoutStructure, structuredSteps: [{ text: 'Sear it.' }] })
+
+      const result = await computeEnhancedRecipe(fakeGemini, makeRecipe(), 'o', {
+        timeoutMs: 120_000,
+      })
+
+      expect(executeAiParse).toHaveBeenCalledTimes(2)
+      expect(result.enhancementStatus).toBe('complete')
+    })
+
+    it('does NOT retry a transient error under the tight Cloudflare waitUntil budget', async () => {
+      // Retrying a 25s call would push past the ~30s waitUntil ceiling, and the error-status
+      // write would never land — a failure mode that has already shipped once.
+      const abort = Object.assign(new Error('aborted'), { name: 'AbortError' })
+      executeAiParse.mockRejectedValue(abort)
+
+      await expect(
+        computeEnhancedRecipe(fakeGemini, makeRecipe(), 'o', { timeoutMs: 25_000 }),
+      ).rejects.toThrow(/abort/i)
+      expect(executeAiParse).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not retry a non-transient error', async () => {
+      executeAiParse.mockRejectedValue(new Error('Invalid image format'))
+
+      await expect(
+        computeEnhancedRecipe(fakeGemini, makeRecipe(), 'o', { timeoutMs: 120_000 }),
+      ).rejects.toThrow('Invalid image format')
+      expect(executeAiParse).toHaveBeenCalledTimes(1)
+    })
+
     it('does not retry when the first reparse already produced enhanced steps', async () => {
       executeAiParse.mockResolvedValue({
         ...withoutStructure,
