@@ -6,6 +6,7 @@ import { Textarea } from '../ui/textarea'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { DISH_TYPE_OPTIONS } from '../../lib/dish-types'
 
 interface EditRecipeViewProps {
   recipe: Recipe
@@ -227,7 +228,7 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
                 >
                   <option value="">Select...</option>
-                  {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
+                  {DISH_TYPE_OPTIONS.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>

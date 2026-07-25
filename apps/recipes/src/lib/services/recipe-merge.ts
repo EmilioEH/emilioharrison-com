@@ -1,5 +1,6 @@
 import type { Recipe } from '../types'
 import { normalizeCategory } from '../grocery-logic'
+import { DISH_TYPE_OPTIONS } from '../dish-types'
 import { pickPlausibleTitle, stripLeadingDescriptionEcho } from './recipe-result-validation'
 
 // Mirrors the exact option sets EditRecipeView.tsx's manual-edit dropdowns offer for these
@@ -17,7 +18,7 @@ const PROTEIN_OPTIONS = [
   'Other',
 ]
 const MEAL_TYPE_OPTIONS = ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert']
-const DISH_TYPE_OPTIONS = ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce']
+
 
 /** Case-insensitively matches `value` against `options`, returning the canonically-cased option.
  * An unrecognized (or absent) value resolves to `fallback` — `undefined` for fields with no
@@ -45,7 +46,7 @@ export function clampRecipeEnums<T extends Partial<Recipe>>(recipe: T): T {
     ...recipe,
     protein: clampEnum(recipe.protein, PROTEIN_OPTIONS, 'Other'),
     mealType: clampEnum(recipe.mealType, MEAL_TYPE_OPTIONS),
-    dishType: clampEnum(recipe.dishType, DISH_TYPE_OPTIONS),
+    dishType: clampEnum(recipe.dishType, [...DISH_TYPE_OPTIONS]),
     structuredIngredients: recipe.structuredIngredients?.map((ing) => ({
       ...ing,
       category: normalizeCategory(ing.category),
