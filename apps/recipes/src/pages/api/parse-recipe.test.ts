@@ -257,6 +257,83 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
     expect(final.steps).not.toContain(blurb)
   })
 
+  it('prefers clean structuredSteps over a steps array polluted with the description', async () => {
+    // Reproduces an actual post-deploy production import ("Chicken Thighs with Broccolini"):
+    // the model returned BOTH `steps` and `structuredSteps`, but only `steps` had the intro
+    // blurb glued on as steps[0]. The first fix preferred `steps`, so the dirty list won.
+    const blurb =
+      'Familiar flavors with a bit of color and acid make this an easy, delicious, and, dare I say, entertaining weeknight meal.'
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({
+        title: 'Chicken Thighs with Broccolini',
+        description: blurb,
+        ingredients: [{ name: 'chicken thighs', amount: '4' }],
+        steps: [blurb, 'Pat the chicken thighs dry and season.', 'Heat the oil in a skillet.'],
+        structuredSteps: [
+          { text: 'Pat the chicken thighs dry and season.' },
+          { text: 'Heat the oil in a skillet.' },
+        ],
+      }),
+    ])
+
+    const stream = buildImageRecipeStream(client, { ingredients: ['4 chicken thighs'] }, {
+      steps: [blurb, 'Pat the chicken thighs dry and season.'],
+    })
+    const lines = (await readStream(stream))
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+    const final = lines.find((l) => l._p === 3)
+
+    expect(final.steps).toEqual([
+      'Pat the chicken thighs dry and season.',
+      'Heat the oil in a skillet.',
+    ])
+    expect(final.steps[0]).not.toContain('Familiar flavors')
+  })
+
+  it('strips a leading description echo even when every list contains it', async () => {
+    // Belt and braces: precedence alone can't help when the blurb is in *both* lists.
+    const blurb =
+      'Butzenina is a simple roasted pork tenderloin stuffed with garlic that is usually served cold.'
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({
+        title: 'Butzenina',
+        description: blurb,
+        structuredSteps: [{ text: blurb }, { text: 'Stuff the tenderloin with garlic.' }],
+      }),
+    ])
+
+    const stream = buildImageRecipeStream(client, { ingredients: ['1 pork tenderloin'] }, null)
+    const lines = (await readStream(stream))
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+    const final = lines.find((l) => l._p === 3)
+
+    expect(final.steps).toEqual(['Stuff the tenderloin with garlic.'])
+  })
+
+  it('keeps the list intact when a genuine step merely resembles the description', async () => {
+    // Guard against over-stripping: short steps must never be dropped by the echo check.
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({
+        title: 'Toast',
+        description: 'Toast is a simple breakfast that is quick to make and endlessly adaptable.',
+        structuredSteps: [{ text: 'Toast the bread.' }, { text: 'Butter it.' }],
+      }),
+    ])
+
+    const stream = buildImageRecipeStream(client, { ingredients: ['1 slice bread'] }, null)
+    const lines = (await readStream(stream))
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+    const final = lines.find((l) => l._p === 3)
+
+    expect(final.steps).toEqual(['Toast the bread.', 'Butter it.'])
+  })
+
   it('falls back to OCR steps when the structuring pass returns no structuredSteps', async () => {
     const { client } = fakeOpenAiClient([JSON.stringify({ title: 'Photo Recipe', servings: 4 })])
 

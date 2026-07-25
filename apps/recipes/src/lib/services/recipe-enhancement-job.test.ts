@@ -50,6 +50,9 @@ describe('runEnhancementJob', () => {
       title: 'Steak Tips, Enhanced',
       ingredients: [{ name: 'steak', amount: '16 oz (450g)' }],
       steps: ['Sear until deeply browned, about 4 minutes.'],
+      // Enhancement now requires real enhanced structure — a result without structuredSteps
+      // leaves the recipe unchanged and is treated as a failure (see enhancement-core.ts).
+      structuredSteps: [{ title: 'Sear the Beef', text: 'Sear until deeply browned.' }],
     })
 
     const result = await runEnhancementJob({}, recipe, 'https://example.com')
@@ -98,7 +101,11 @@ describe('runEnhancementJob', () => {
   })
 
   it('prefers sourceUrl, then sourceImage, then reconstructed text, in that order', async () => {
-    executeAiParse.mockResolvedValue({ title: 'x', ingredients: [{ name: 'a', amount: '1' }] })
+    executeAiParse.mockResolvedValue({
+      title: 'x',
+      ingredients: [{ name: 'a', amount: '1' }],
+      structuredSteps: [{ text: 'Sear it.' }],
+    })
 
     await runEnhancementJob({}, makeRecipe({ sourceUrl: 'https://a.com' }), 'https://origin')
     expect(executeAiParse).toHaveBeenLastCalledWith(
@@ -133,7 +140,11 @@ describe('runEnhancementJob', () => {
     // blocks. If this job's Gemini timeout exceeds that, a slow call is killed mid-flight and
     // enhancementStatus stays 'processing' forever (this exact failure shipped once: a 45s
     // budget under a 30s cap). The timeout must leave room for the error write too.
-    executeAiParse.mockResolvedValue({ title: 'x', ingredients: [{ name: 'a', amount: '1' }] })
+    executeAiParse.mockResolvedValue({
+      title: 'x',
+      ingredients: [{ name: 'a', amount: '1' }],
+      structuredSteps: [{ text: 'Sear it.' }],
+    })
 
     await runEnhancementJob({}, makeRecipe({ sourceUrl: 'https://a.com' }), 'https://origin')
 

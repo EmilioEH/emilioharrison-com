@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { createOpenRouterClient, serverErrorResponse, getAuthUser } from '../../lib/api-helpers'
 import { tryRepairJson, resolveInput, getSystemPrompts } from '../../lib/services/ai-parser'
 import { createTimeoutSignal } from '../../lib/services/ai-timeout'
+import { stripLeadingDescriptionEcho } from '../../lib/services/step-normalization'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
 
@@ -343,32 +344,50 @@ export function normalizeIngredients(
  * ("X is a simple roasted ... usually served cold"). The structuring pass is what separates that
  * prose into `description` vs. actual cooking steps, but phase 3 was never asked for `steps`, so
  * the raw OCR paragraphs always won and the blurb showed up in the user's Instructions box.
- * Prefer the structured output (either `steps` or `structuredSteps[].text`), falling back to raw
- * OCR only when structuring produced no usable steps — a rough list beats an empty one.
+ *
+ * `structuredSteps` is preferred over `steps` because it's the more deliberate output — verified
+ * against a real production import where the model returned BOTH, with the blurb polluting
+ * `steps` while `structuredSteps` was clean. Raw OCR is the last resort: a rough list beats an
+ * empty one.
+ *
+ * Whichever list wins, leading entries that just echo the description are dropped — the model
+ * isn't reliably consistent about this, so precedence alone isn't enough of a guarantee.
  */
 export function normalizeSteps(
   structuredSteps: unknown,
   steps: unknown,
   ocrSteps: unknown,
+  description?: unknown,
 ): string[] | undefined {
-  const fromSteps = Array.isArray(steps)
-    ? steps.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
-    : []
-  if (fromSteps.length > 0) return fromSteps
-
   const fromStructured = Array.isArray(structuredSteps)
     ? structuredSteps
         .map((s) =>
-          s && typeof s === 'object' ? (s as { text?: unknown }).text : typeof s === 'string' ? s : undefined,
+          s && typeof s === 'object'
+            ? (s as { text?: unknown }).text
+            : typeof s === 'string'
+              ? s
+              : undefined,
         )
         .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
     : []
-  if (fromStructured.length > 0) return fromStructured
+
+  const fromSteps = Array.isArray(steps)
+    ? steps.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    : []
 
   const fromOcr = Array.isArray(ocrSteps)
     ? ocrSteps.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
     : []
-  return fromOcr.length > 0 ? fromOcr : undefined
+
+  const chosen =
+    fromStructured.length > 0 ? fromStructured : fromSteps.length > 0 ? fromSteps : fromOcr
+
+  if (chosen.length === 0) return undefined
+
+  return stripLeadingDescriptionEcho(
+    chosen,
+    typeof description === 'string' ? description : undefined,
+  )
 }
 
 /**
@@ -444,6 +463,7 @@ export function buildImageRecipeStream(
           phase3.structuredSteps,
           phase3.steps,
           phase2?.steps,
+          phase3.description,
         )
 
         controller.enqueue(

@@ -1,5 +1,6 @@
 import type { Recipe } from '../types'
 import { normalizeCategory } from '../grocery-logic'
+import { stripLeadingDescriptionEcho } from './step-normalization'
 
 // Mirrors the exact option sets EditRecipeView.tsx's manual-edit dropdowns offer for these
 // fields (protein also mirrors ai-parser.ts's PROTEIN_OPTIONS, used in the AI prompts). Kept as
@@ -168,5 +169,25 @@ export function mergeAiRecipeUpdate(
     }
   }
 
+  merged.steps = cleanMergedSteps(merged.steps, merged.description)
+
   return clampRecipeEnums(merged as Recipe)
+}
+
+/**
+ * Strips a leading description echo from the merged step list.
+ *
+ * The Gemini reparse behind Refresh/Enhancement sometimes returns the recipe's own description as
+ * steps[0] — observed in production on a photo-imported recipe whose `structuredSteps` came back
+ * clean while `steps` led with the blurb. Because Enhancement runs automatically right after an AI
+ * import and overwrites `steps` in the merge above, leaving this to the import path alone would
+ * let the blurb reappear moments after import had removed it. See step-normalization.ts.
+ */
+function cleanMergedSteps(steps: unknown, description: unknown): unknown {
+  if (!Array.isArray(steps) || steps.length === 0) return steps
+
+  return stripLeadingDescriptionEcho(
+    steps.filter((s: unknown): s is string => typeof s === 'string'),
+    typeof description === 'string' ? description : undefined,
+  )
 }
