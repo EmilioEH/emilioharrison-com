@@ -73,20 +73,33 @@ const LEGACY_CATEGORY_MAP: Record<string, string> = {
  * Stored categories arrive in every casing the model felt like using — `produce`, `Seasoning`,
  * `spice` — and an exact-match lookup sent all of them to "Other" even when the name was
  * otherwise valid. */
-const CATEGORY_LOOKUP: Record<string, string> = (() => {
+let categoryLookup: Record<string, string> | null = null
+
+/**
+ * Built on first use rather than at module load.
+ *
+ * `grocery-utils` imports `normalizeCategory` from this module while this module imports
+ * `CATEGORY_ORDER` from it — a cycle. Reading `CATEGORY_ORDER` during module initialisation
+ * therefore touches a binding that may not exist yet, which surfaced in the browser as
+ * "Cannot access 'X' before initialization" and took the page down. Deferring the read until the
+ * first call means both modules have finished initialising by then.
+ */
+function getCategoryLookup(): Record<string, string> {
+  if (categoryLookup) return categoryLookup
   const lookup: Record<string, string> = {}
   for (const canonical of CATEGORY_ORDER) lookup[canonical.toLowerCase()] = canonical
   for (const [alias, canonical] of Object.entries(LEGACY_CATEGORY_MAP)) {
     lookup[alias.toLowerCase()] = canonical
   }
+  categoryLookup = lookup
   return lookup
-})()
+}
 
 export function normalizeCategory(rawCategory: string | undefined): string {
   if (typeof rawCategory !== 'string') return 'Other'
   const key = rawCategory.trim().toLowerCase()
   if (!key) return 'Other'
-  return CATEGORY_LOOKUP[key] || 'Other'
+  return getCategoryLookup()[key] || 'Other'
 }
 
 /**
