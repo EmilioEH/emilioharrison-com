@@ -92,7 +92,9 @@ and practical caveats in parentheses exactly where the cook could go wrong.
 - **Data Structure**:
   - title: Action-focused header (e.g., "Sear the Beef")
   - text: The full macro-step paragraph, in the voice shown above.
-  - highlightedText: The same text with key verbs wrapped in **bold**.
+  - highlightedText: The same text with key verbs wrapped in **double asterisks**. Use markdown
+    asterisks ONLY — never HTML or pseudo-HTML tags such as <highlight>, <b> or <mark>, which are
+    displayed to the user verbatim.
   - tip: A single practical or scientific note for this step ("why it works"), when there is a
     genuinely useful one — omit rather than padding with something obvious.
 - Populate 'structuredSteps' array with these objects.
