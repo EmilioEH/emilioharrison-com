@@ -1,6 +1,6 @@
 import type { Recipe } from '../types'
 import { normalizeCategory } from '../grocery-logic'
-import { stripLeadingDescriptionEcho } from './step-normalization'
+import { pickPlausibleTitle, stripLeadingDescriptionEcho } from './recipe-result-validation'
 
 // Mirrors the exact option sets EditRecipeView.tsx's manual-edit dropdowns offer for these
 // fields (protein also mirrors ai-parser.ts's PROTEIN_OPTIONS, used in the AI prompts). Kept as
@@ -91,33 +91,6 @@ const SNAPSHOT_FIELDS = [
   'difficulty',
 ] as const
 
-/**
- * Longest a real recipe title plausibly gets. Generous — "Roasted Pork Chops and Vegetables with
- * Parsley Vinaigrette" is 56 — while still far below the runaway lengths seen in the wild.
- */
-const MAX_TITLE_LENGTH = 120
-
-/**
- * Phrases that mark a "title" as the model narrating its own difficulties rather than naming the
- * dish. Seen in production on two recipes, one with a 3,167-character title that opened
- * "... (Incomplete Recipe Extract from Image Source - Instructions truncated in source image,
- * completing based on common culinary practices ...)". The dish name was correct; the model just
- * appended an apology to it, and the merge took the whole string.
- */
-const TITLE_COMMENTARY =
-  /\b(note:|incomplete recipe|truncated|inferred|based on common|source image|extract from|remaining steps|not (?:fully )?(?:visible|legible))\b/i
-
-/**
- * Whether an AI-supplied title is safe to write over the existing one. A recipe title is a short
- * noun phrase; anything long or self-narrating is the model breaking character, and the original
- * title (which the user has seen and accepted) is the better answer.
- */
-export function isPlausibleTitle(title: unknown): title is string {
-  if (typeof title !== 'string') return false
-  const t = title.trim()
-  return t.length > 0 && t.length <= MAX_TITLE_LENGTH && !TITLE_COMMENTARY.test(t)
-}
-
 export interface RecipeSnapshot {
   savedAt: string
   reason: 'refresh' | 'enhance'
@@ -176,7 +149,7 @@ export function mergeAiRecipeUpdate(
     ...original,
     ...aiResult,
     updatedAt: new Date().toISOString(),
-    title: isPlausibleTitle(aiResult.title) ? aiResult.title.trim() : original.title,
+    title: pickPlausibleTitle(aiResult.title, original.title),
     sourceUrl: original.sourceUrl || aiResult.sourceUrl,
     sourceImage: original.sourceImage || aiResult.sourceImage,
     images: original.images || aiResult.images,

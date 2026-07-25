@@ -108,6 +108,28 @@ export const STEP_GROUPING_RULES = `
 - **Populate**: 'stepGroups' with header, startIndex, and endIndex.
 `
 
+// These two rules apply regardless of source (photo, URL, JSON-LD, pasted text) or provider
+// (Gemini here; the photo-import pipeline reuses this exact text on OpenRouter — see
+// parse-recipe.ts). Previously each of the four SYSTEM_PROMPTs below plus the separate
+// photo-import structuring prompt defined these independently and drifted: a 3,000-character
+// title (self-narrating commentary appended to an otherwise-correct dish name) and a recipe's own
+// descriptive blurb being stored as steps[0] both shipped as field-reported bugs from prompts that
+// had drifted from each other, not from any one of them being wrong in isolation. One copy, used
+// everywhere that structures a Recipe, so a fix here doesn't need to be found and reapplied per path.
+export const TITLE_RULE = `
+**TITLE**: MUST be ONLY the dish name — a short noun phrase, ideally under 60 characters (e.g.
+"Chicken Thighs with Broccolini and Israeli Couscous"). NEVER append caveats, notes, apologies, or
+commentary about the source to it. If the source is cut off, unreadable, or incomplete, still give
+a clean dish-name title and put any such remark in "description" instead.
+`
+
+export const DESCRIPTION_VS_STEPS_RULE = `
+**DESCRIPTION VS. STEPS**: Source material often opens with descriptive prose about the dish (its
+origin, history, or how it's served) before the actual method begins. That prose belongs in
+"description", NEVER in "steps"/"structuredSteps" — those must contain only actual cooking
+instructions.
+`
+
 export const STRICT_INGREDIENT_RULES = `
 **INGREDIENT PARSING (STRICT TRANSCRIPTION)**:
 - **Accuracy**: Transcribe ingredients EXACTLY as they appear in the source.
@@ -132,25 +154,23 @@ You are an expert Chef and Data Engineer. Your task is to extract structured rec
 Return a strict JSON object matching the provided schema.
 
 Rules:
-0. **"title" MUST be ONLY the dish name** — a short noun phrase, ideally under 60 characters
-   (e.g. "Chicken Thighs with Broccolini and Israeli Couscous"). NEVER append caveats, notes,
-   apologies, or commentary about the source to it. If the image is cut off, unreadable, or
-   incomplete, still give a clean dish-name title and put any such remark in "description".
 1. Describe what you see in the image and infer the recipe (ingredients/steps) as best as possible.
 2. Generate a one-sentence "description" that makes the dish sound delicious.
-2. Use reasonable defaults if data is missing (e.g. 2 servings).
-3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
-4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-5. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
-6. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
-7. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
-8. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
-9. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+3. Use reasonable defaults if data is missing (e.g. 2 servings).
+4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+5. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+6. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+7. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
+8. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
+9. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
+10. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
    - 'amount' (number)
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
-10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+11. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${TITLE_RULE}
+${DESCRIPTION_VS_STEPS_RULE}
 ${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
@@ -165,19 +185,21 @@ Return a strict JSON object matching the provided schema.
 Rules:
 1. Parse the text content to identify the recipe title, ingredients, and instructions.
 2. Generate a one-sentence "description" that makes the dish sound delicious.
-2. Use reasonable defaults if data is missing (e.g. 2 servings).
-3. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
-4. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-5. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
-6. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
-7. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
-8. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
-9. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+3. Use reasonable defaults if data is missing (e.g. 2 servings).
+4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+5. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+6. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+7. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
+8. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
+9. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
+10. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
    - 'amount' (number)
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
-10. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+11. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${TITLE_RULE}
+${DESCRIPTION_VS_STEPS_RULE}
 ${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
@@ -193,21 +215,23 @@ Rules:
 1. Analyze the provided HTML content carefully.
 2. Prioritize extracting data from JSON-LD structured data (Recipe schema) if present in the HTML.
 3. Generate a one-sentence "description" that makes the dish sound delicious.
-3. If JSON-LD is missing or incomplete, parse the visible text content.
-4. Do not hallucinate ingredients or steps that are not present in the content.
-5. Use reasonable defaults if optional metadata is missing, but be accurate with Ingredients and Steps.
-6. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
-7. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-8. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
-9. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
-10. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
-11. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
-12. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
+4. If JSON-LD is missing or incomplete, parse the visible text content.
+5. Do not hallucinate ingredients or steps that are not present in the content.
+6. Use reasonable defaults if optional metadata is missing, but be accurate with Ingredients and Steps.
+7. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
+8. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
+9. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+10. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
+11. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
+12. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
+13. **Normalize Ingredients**: Populate 'structuredIngredients' by parsing each ingredient into:
     - 'amount' (number)
     - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
     - 'name' (ingredient name without unit)
     - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
-13. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+14. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${TITLE_RULE}
+${DESCRIPTION_VS_STEPS_RULE}
 ${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
@@ -221,15 +245,17 @@ The input is already structured data from the source website. Your job is not to
 1. Map the fields to our schema.
 2. Clean up HTML tags from descriptions or steps.
 3. Generate a one-sentence "description" that makes the dish sound delicious (if one is not already provided, or improve the existing one).
-3. **Normalize Ingredients**: This is critical. Parse the 'recipeIngredient' strings into 'structuredIngredients':
+4. **Normalize Ingredients**: This is critical. Parse the 'recipeIngredient' strings into 'structuredIngredients':
    - 'amount' (number)
    - 'unit' (standardized string, e.g. "cup", "tbsp", "oz", "g")
    - 'name' (ingredient name without unit)
    - 'category' (Produce, Meat, Dairy, Bakery, Frozen, Pantry, Spices, Other)
-4. Map "Main Protein Source" to one of: ${PROTEIN_OPTIONS.join(', ')}.
-5. Infer "Meal Type", "Dish Type" based on the recipe title and context.
-6. **ENRICH** missing metadata: Infer Occasion, Dietary tags, and Equipment from the content if they are missing.
-7. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+5. Map "Main Protein Source" to one of: ${PROTEIN_OPTIONS.join(', ')}.
+6. Infer "Meal Type", "Dish Type" based on the recipe title and context.
+7. **ENRICH** missing metadata: Infer Occasion, Dietary tags, and Equipment from the content if they are missing.
+8. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
+${TITLE_RULE}
+${DESCRIPTION_VS_STEPS_RULE}
 ${INGREDIENT_PARSING_RULES}
 ${INGREDIENT_GROUPING_RULES}
 ${STRUCTURED_STEPS_RULES}
