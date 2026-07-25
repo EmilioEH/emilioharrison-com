@@ -4,6 +4,7 @@ import { formatRecipesForPrompt } from '../api-utils'
 import { tryRepairJson } from './ai-parser'
 import { createTimeoutSignal } from './ai-timeout'
 import { GEMINI_TEXT_MODEL } from './ai-model-config'
+import { withTransientRetry } from './ai-retry'
 import {
   detectAllNewGroceryStages,
   extractGeminiChunkText,
@@ -257,7 +258,11 @@ export async function computeGroceryList(
 
   let lastResult: unknown[] = []
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    lastResult = await runGroceryGenerationAttempt(gemini, inputList, opts)
+    lastResult = await withTransientRetry(
+      () => runGroceryGenerationAttempt(gemini, inputList, opts),
+      opts.timeoutMs,
+      'Grocery',
+    )
     if (lastResult.length > 0 || !expectsOutput) return lastResult
   }
 

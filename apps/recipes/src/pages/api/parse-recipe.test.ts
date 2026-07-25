@@ -100,6 +100,31 @@ describe('buildTextRecipeStream — URL/text sources (single phase, no OCR)', ()
     await expect(reader.read()).rejects.toThrow()
   })
 
+  it('retries once on a transient transport failure and still returns a result', async () => {
+    let call = 0
+    const create = vi.fn(async () => {
+      call += 1
+      if (call === 1) {
+        throw Object.assign(new Error('This operation was aborted'), { name: 'AbortError' })
+      }
+      return {
+        [Symbol.asyncIterator]: async function* () {
+          yield {
+            choices: [{ delta: { content: JSON.stringify({ title: 'Recovered Recipe' }) } }],
+          }
+        },
+      }
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client = { chat: { completions: { create } } } as any
+
+    const stream = buildTextRecipeStream(client, { text: 'some content' }, 'Instructions')
+    const parsed = JSON.parse((await readStream(stream)).trim())
+
+    expect(parsed.title).toBe('Recovered Recipe')
+    expect(create).toHaveBeenCalledTimes(2)
+  })
+
   // This path (URL, JSON-LD, Reddit, pasted text — four of the five import sources) previously
   // applied NO validation at all: normalizeIngredients/normalizeSteps/title-plausibility only ran
   // on the photo-import path. A title-pollution or ingredient-shape bug fixed for photo import

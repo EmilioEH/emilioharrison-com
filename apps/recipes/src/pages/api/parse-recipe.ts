@@ -9,6 +9,7 @@ import {
   DESCRIPTION_VS_STEPS_RULE,
 } from '../../lib/services/ai-parser'
 import { createTimeoutSignal } from '../../lib/services/ai-timeout'
+import { withTransientRetry } from '../../lib/services/ai-retry'
 import {
   normalizeIngredients,
   normalizeSteps,
@@ -197,19 +198,19 @@ export function buildMessageContent(
 }
 
 /**
- * Runs a single phase: calls OpenRouter, streams the response, buffers it, returns parsed JSON.
- * Bounded by `timeoutMs` (combined with `externalSignal`, e.g. the incoming request being
- * cancelled) so a hung upstream call can't block the request/stream forever, and can't keep
- * running at full cost after the client has given up.
+ * Runs one OpenRouter attempt: streams the response, buffers it, returns parsed JSON. Bounded by
+ * `timeoutMs` (combined with `externalSignal`, e.g. the incoming request being cancelled) so a
+ * hung upstream call can't block the request/stream forever. Broken out from `runPhase` so a
+ * retry gets its own fresh timeout signal rather than sharing one across attempts.
  */
-async function runPhase(
+async function runPhaseAttempt(
   client: OpenAI,
   systemPrompt: string,
   userPrompt: string,
   contentPart: Record<string, unknown> | undefined,
-  model: string = MODEL,
-  maxTokens: number = OCR_MAX_TOKENS,
-  timeoutMs: number = OCR_TIMEOUT_MS,
+  model: string,
+  maxTokens: number,
+  timeoutMs: number,
   externalSignal?: AbortSignal,
 ): Promise<Record<string, unknown> | null> {
   const { signal, cleanup } = createTimeoutSignal(timeoutMs, externalSignal)
@@ -246,11 +247,47 @@ async function runPhase(
     const parsed = tryRepairJson(buffer)
     if (parsed && typeof parsed === 'object') return parsed as Record<string, unknown>
     return null
+  } finally {
+    cleanup()
+  }
+}
+
+/**
+ * Runs a single phase, retrying once on a transient transport failure (see ai-retry.ts) — these
+ * phases all run in-request while the client holds the connection, so unlike the `waitUntil`-bound
+ * background jobs there's no hard ceiling that a retry could blow through. A non-transient failure
+ * (or the retry also failing) still resolves to `null`, same as before this phase had any retry —
+ * callers already treat `null` as "this phase didn't produce anything usable".
+ */
+async function runPhase(
+  client: OpenAI,
+  systemPrompt: string,
+  userPrompt: string,
+  contentPart: Record<string, unknown> | undefined,
+  model: string = MODEL,
+  maxTokens: number = OCR_MAX_TOKENS,
+  timeoutMs: number = OCR_TIMEOUT_MS,
+  externalSignal?: AbortSignal,
+): Promise<Record<string, unknown> | null> {
+  try {
+    return await withTransientRetry(
+      () =>
+        runPhaseAttempt(
+          client,
+          systemPrompt,
+          userPrompt,
+          contentPart,
+          model,
+          maxTokens,
+          timeoutMs,
+          externalSignal,
+        ),
+      timeoutMs,
+      'ParseRecipe',
+    )
   } catch (err) {
     console.error('[ParseRecipe] Phase failed:', err instanceof Error ? err.message : err)
     return null
-  } finally {
-    cleanup()
   }
 }
 
