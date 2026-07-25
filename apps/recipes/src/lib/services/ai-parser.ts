@@ -53,29 +53,48 @@ export const INGREDIENT_GROUPING_RULES = `
 - **Populate**: 'ingredientGroups' with startIndex and endIndex for each group.
 `
 
+// The exemplars below are short excerpts from real J. Kenji López-Alt recipes on Serious Eats
+// (Cacio e Pepe, Easy Fried Rice, Easy Gazpacho), used as few-shot style anchors. They were added
+// after a field report that enhanced recipes "don't look like a Kenji recipe": the abstract rules
+// alone left too much room, and concrete examples are far more reliable for style transfer.
+// Checked against the real recipes, which is also why the step count says 3-5 rather than the
+// 4-6 this previously claimed — his actual recipes routinely run three dense steps.
 export const STRUCTURED_STEPS_RULES = `
 **STRUCTURED STEPS (ENHANCED MODE - MACRO-STEPS)**:
 - **Macro-Step Architecture**: Group instructions into "Macro-Steps" based on phases of cooking (not individual actions).
-  - Aim for 4-6 dense paragraphs total.
-  - Phase 1: Prep/Sear (High heat)
-  - Phase 2: Aromatics/Deglaze
-  - Phase 3: Braise/Simmer
-  - Phase 4: Finish/Texture
-- **The "Until" Framework**: Every step involving heat MUST define a sensory endpoint using "until".
+  - Aim for 3-5 dense paragraphs total. Fewer, denser steps beat many thin ones.
+  - Typical arc: Prep/Sear -> Aromatics/Deglaze -> Simmer/Cook -> Finish/Texture
+- **The "Until" Framework** (the single most important rule): every action with an endpoint MUST
+  pair a SENSORY cue with an approximate time, in the form "until <sensory cue>, about <time>".
   - Input: "Cook for 10 minutes."
   - Output: "Cook, stirring frequently, until deep golden brown and reduced by half, about 10 minutes."
 - **Heat Management Descriptors**: Use descriptive physics terms (shimmering, foaming subsides, bare simmer).
-- **Troubleshooting Parentheticals**: Insert safety nets in parentheses for common failure points.
+- **Troubleshooting Parentheticals** (use in MOST steps): put the practical caveat in parentheses
+  at the exact point the cook could go wrong — a timing reality-check, a substitution, or a
+  recovery instruction.
   - Ex: "(If the garlic begins to darken too quickly, remove from heat to prevent bitterness.)"
-- **Scientific "Why"**: Occasionally explain the purpose of a technique (e.g., "...whisking vigorously to emulsify the fat").
+  - Ex: "(typically about 1 minute less than the package recommends)"
+- **Physical/Spatial Detail**: Say what the cook actually does with their hands and the pan.
 - **Parallel Processing**: Organize steps to utilize downtime (e.g., "While the potatoes boil, heat the butter...").
 - **The "Reserve" Pattern**: Explicitly manage flow (Cook meat -> Remove and Reserve -> Cook Veg -> Return meat).
+
+**STYLE EXEMPLARS — match this voice, rhythm, and density:**
+- "Heat 3 tablespoons olive oil and about a teaspoon of black pepper in a medium skillet over medium-low heat until ingredients are fragrant and pepper is barely starting to sizzle, about 1 minute."
+- "Add half of rice and cook, stirring and tossing, until rice is pale brown and toasted and has a lightly chewy texture, about 3 minutes. Transfer to a medium bowl."
+- "Return rice to wok and press it up the sides, leaving a space in the middle. Add 1/2 tablespoon (7ml) oil to the space."
+- "Cook until spaghetti is al dente (typically about 1 minute less than the package recommends)."
+- "Add a few more tablespoons of pasta water to the skillet to adjust consistency, reheating as necessary until the sauce is creamy and coats each strand of spaghetti."
+
+Note the pattern: plain imperative voice, no adjectives for their own sake, every heat step
+anchored to a sensory endpoint plus a time, measurements carried inline with metric in parens,
+and practical caveats in parentheses exactly where the cook could go wrong.
+
 - **Data Structure**:
   - title: Action-focused header (e.g., "Sear the Beef")
-  - text: The full macro-step paragraph.
-  - highlightedText: The text with key verbs in **bold**.
-  - tip: Key troubleshooting or scientific note extracted.
-  - substeps: Break down the macro-step into atomic actions.
+  - text: The full macro-step paragraph, in the voice shown above.
+  - highlightedText: The same text with key verbs wrapped in **bold**.
+  - tip: A single practical or scientific note for this step ("why it works"), when there is a
+    genuinely useful one — omit rather than padding with something obvious.
 - Populate 'structuredSteps' array with these objects.
 `
 
