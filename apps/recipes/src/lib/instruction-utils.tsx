@@ -1,16 +1,34 @@
 import React from 'react'
 
 /**
+ * Emphasis markup the AI has been seen emitting in `highlightedText` instead of the `**bold**`
+ * this renderer expects. Reported in the wild as instructions reading literally
+ * "Set the pork to come to &lt;highlight&gt;room temperature&lt;/highlight&gt; 1 to 2 hours...".
+ *
+ * Normalising here rather than only tightening the prompt fixes recipes ALREADY stored with these
+ * tags — no data migration — and keeps the display robust if the model drifts to another variant
+ * later. Open and close tags both map to `**`, which is symmetric in markdown.
+ */
+const EMPHASIS_TAGS = /<\/?\s*(?:highlight|mark|strong|em|b|i)\s*>/gi
+
+/** Converts stray HTML-ish emphasis tags into the `**` markdown this renderer understands. */
+export function normalizeEmphasisMarkup(text: string): string {
+  return text.replace(EMPHASIS_TAGS, '**')
+}
+
+/**
  * Highlights ingredients and verbs in recipe instruction text.
- * Verbs are expected to be wrapped in double asterisks (e.g., **mix**).
+ * Verbs are expected to be wrapped in double asterisks (e.g., **mix**); HTML-ish emphasis tags
+ * from the AI are normalised to that form first (see EMPHASIS_TAGS).
  * Ingredients are highlighted based on provided indices and names.
  */
 export function renderHighlightedInstruction(
-  text: string,
+  rawText: string,
   ingredients: { name: string }[] = [],
   highlightIndices: number[] = [],
 ): React.ReactNode {
-  if (!text) return null
+  if (!rawText) return null
+  const text = normalizeEmphasisMarkup(rawText)
 
   // 1. Identify ingredients to highlight in this text
   const targetIngredients = highlightIndices
