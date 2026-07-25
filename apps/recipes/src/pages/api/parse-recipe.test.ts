@@ -238,7 +238,10 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
         title: 'Butzenina',
         description: blurb,
         ingredients: [{ name: 'pork tenderloin', amount: '1' }],
-        structuredSteps: [{ text: 'Stuff the tenderloin with garlic.' }, { text: 'Roast at 350F.' }],
+        structuredSteps: [
+          { text: 'Stuff the tenderloin with garlic.' },
+          { text: 'Roast at 350F.' },
+        ],
       }),
     ])
 
@@ -276,9 +279,13 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
       }),
     ])
 
-    const stream = buildImageRecipeStream(client, { ingredients: ['4 chicken thighs'] }, {
-      steps: [blurb, 'Pat the chicken thighs dry and season.'],
-    })
+    const stream = buildImageRecipeStream(
+      client,
+      { ingredients: ['4 chicken thighs'] },
+      {
+        steps: [blurb, 'Pat the chicken thighs dry and season.'],
+      },
+    )
     const lines = (await readStream(stream))
       .trim()
       .split('\n')
@@ -349,5 +356,36 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
     const final = lines.find((l) => l._p === 3)
 
     expect(final.steps).toEqual(['Mix everything.', 'Bake it.'])
+  })
+})
+
+describe('instruction-OCR retry (field report: empty Instructions on a legible photo)', () => {
+  it('retries instruction OCR once when the first attempt yields no steps', async () => {
+    // phase1 (ingredients) succeeds; phase2 returns nothing, then succeeds on retry.
+    const { client, calls } = fakeOpenAiClient([
+      JSON.stringify({ ingredients: ['4 teaspoons kosher salt'] }),
+      JSON.stringify({ steps: [] }),
+      JSON.stringify({ steps: ['In a small bowl, stir together the salt and pepper.'] }),
+    ])
+
+    const phases = await runImageOcrPhases(client, {
+      inlineData: { mimeType: 'image/png', data: 'x' },
+    })
+
+    expect(phases).not.toBeNull()
+    expect(phases!.phase2?.steps).toEqual(['In a small bowl, stir together the salt and pepper.'])
+    // ingredients + instructions + one instruction retry
+    expect(calls).toHaveLength(3)
+  })
+
+  it('does not retry instruction OCR when the first attempt already produced steps', async () => {
+    const { client, calls } = fakeOpenAiClient([
+      JSON.stringify({ ingredients: ['4 teaspoons kosher salt'] }),
+      JSON.stringify({ steps: ['Preheat the oven to 350F.'] }),
+    ])
+
+    await runImageOcrPhases(client, { inlineData: { mimeType: 'image/png', data: 'x' } })
+
+    expect(calls).toHaveLength(2)
   })
 })
