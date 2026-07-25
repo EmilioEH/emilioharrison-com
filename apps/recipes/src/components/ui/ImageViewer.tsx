@@ -74,6 +74,26 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
   )
 }
 
+/** Pointer capture keeps a drag alive when the finger leaves the element, but both calls throw
+ * for a pointer that is no longer active — which happens routinely after a `pointercancel`
+ * (a gesture the OS took over) and in environments that don't implement the API at all. Losing
+ * capture only degrades the drag; it must never surface as an unhandled error. */
+function capturePointer(el: Element, pointerId: number) {
+  try {
+    el.setPointerCapture?.(pointerId)
+  } catch {
+    // Pointer already gone — dragging still works, it just won't track outside the element.
+  }
+}
+
+function releasePointer(el: Element, pointerId: number) {
+  try {
+    el.releasePointerCapture?.(pointerId)
+  } catch {
+    // Already released or never captured; nothing to clean up.
+  }
+}
+
 // Internal Zoomable Image Component
 const ZoomableImage = ({ src, alt }: { src: string; alt: string }) => {
   const [scale, setScale] = React.useState(1)
@@ -104,7 +124,7 @@ const ZoomableImage = ({ src, alt }: { src: string; alt: string }) => {
         x: e.clientX - position.x,
         y: e.clientY - position.y,
       }
-      e.currentTarget.setPointerCapture(e.pointerId)
+      capturePointer(e.currentTarget, e.pointerId)
     }
   }
 
@@ -120,7 +140,7 @@ const ZoomableImage = ({ src, alt }: { src: string; alt: string }) => {
 
   const handlePointerUp = (e: React.PointerEvent) => {
     setIsDragging(false)
-    e.currentTarget.releasePointerCapture(e.pointerId)
+    releasePointer(e.currentTarget, e.pointerId)
   }
 
   // Touch handlers for pinch-to-zoom
@@ -151,7 +171,13 @@ const ZoomableImage = ({ src, alt }: { src: string; alt: string }) => {
   const handleTouchEnd = () => {
     lastDist.current = null
     lastScale.current = scale
-    if (scale < 1) {
+
+    // Zooming back out to fit must also recentre the image. Panning while zoomed leaves a
+    // translate offset behind, and once back at scale 1 that offset just strands the image
+    // off-screen with no way to drag it back — panning is only enabled above scale 1.
+    // This was previously gated on `scale < 1`, which can never be true: handleTouchMove clamps
+    // scale to a minimum of 1, so the reset was dead code and the image stayed off-centre.
+    if (scale <= 1) {
       setScale(1)
       lastScale.current = 1
       setPosition({ x: 0, y: 0 })
