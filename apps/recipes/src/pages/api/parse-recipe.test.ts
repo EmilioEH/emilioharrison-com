@@ -194,4 +194,83 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
     // Phases 1 and 2 stream fine before the failed phase 3 errors the stream.
     await expect(readStream(stream)).rejects.toThrow()
   })
+
+  // Field report (photo import): ingredients rendered as four literal "undefined" lines, and
+  // the recipe's *description* prose appeared in the Instructions box. Both trace back to the
+  // merged payload's shape rather than to OCR quality.
+  it('emits object-shaped ingredients even when the structuring phase omits them', async () => {
+    // Phase 3 legitimately returns everything *except* `ingredients` (observed in the wild —
+    // the structuring prompt asks for ~16 fields and the model drops one). Without
+    // normalization the client keeps phase 1's raw OCR *strings*, and the editor's
+    // `${i.amount} ${i.name}` mapping renders each one as the literal text "undefined".
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({ title: 'Butzenina', servings: 4, structuredSteps: [{ text: 'Roast it.' }] }),
+    ])
+
+    const stream = buildImageRecipeStream(
+      client,
+      { ingredients: ['1 pork tenderloin', '4 cloves garlic'] },
+      { steps: ['Roast it.'] },
+    )
+    const lines = (await readStream(stream))
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+    const final = lines.find((l) => l._p === 3)
+
+    expect(Array.isArray(final.ingredients)).toBe(true)
+    for (const ing of final.ingredients) {
+      expect(typeof ing).toBe('object')
+      expect(typeof ing.name).toBe('string')
+      expect(ing.name.length).toBeGreaterThan(0)
+    }
+    // The OCR'd text must survive the coercion, not be replaced by placeholders.
+    expect(JSON.stringify(final.ingredients)).toContain('pork tenderloin')
+  })
+
+  it('derives steps from the structured pass so description prose does not stay in instructions', async () => {
+    // Phase 2 OCR grabs every paragraph on the card, including the intro blurb. The structuring
+    // pass separates that into `description` vs real steps — but phase 3 was never asked for
+    // `steps`, so the raw OCR paragraphs (blurb included) always won.
+    const blurb = 'Butzenina is a simple roasted pork tenderloin stuffed with garlic.'
+    const { client } = fakeOpenAiClient([
+      JSON.stringify({
+        title: 'Butzenina',
+        description: blurb,
+        ingredients: [{ name: 'pork tenderloin', amount: '1' }],
+        structuredSteps: [{ text: 'Stuff the tenderloin with garlic.' }, { text: 'Roast at 350F.' }],
+      }),
+    ])
+
+    const stream = buildImageRecipeStream(
+      client,
+      { ingredients: ['1 pork tenderloin'] },
+      { steps: [blurb, 'Stuff the tenderloin with garlic.', 'Roast at 350F.'] },
+    )
+    const lines = (await readStream(stream))
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+    const final = lines.find((l) => l._p === 3)
+
+    expect(final.steps).toEqual(['Stuff the tenderloin with garlic.', 'Roast at 350F.'])
+    expect(final.steps).not.toContain(blurb)
+  })
+
+  it('falls back to OCR steps when the structuring pass returns no structuredSteps', async () => {
+    const { client } = fakeOpenAiClient([JSON.stringify({ title: 'Photo Recipe', servings: 4 })])
+
+    const stream = buildImageRecipeStream(
+      client,
+      { ingredients: ['1 cup flour'] },
+      { steps: ['Mix everything.', 'Bake it.'] },
+    )
+    const lines = (await readStream(stream))
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l))
+    const final = lines.find((l) => l._p === 3)
+
+    expect(final.steps).toEqual(['Mix everything.', 'Bake it.'])
+  })
 })

@@ -17,6 +17,41 @@ interface RecipeEditorProps {
   onView?: (id: string) => void
 }
 
+/**
+ * Renders one ingredient as an editable text line.
+ *
+ * Defensive about shape on purpose: `Ingredient` is typed as `{name, amount, prep?}`, but the
+ * photo-import pipeline can hand back raw OCR *strings* if the structuring phase omits the field
+ * (normalized server-side in parse-recipe.ts — this is the second line of defence). Interpolating
+ * a string entry through `${i.amount} ${i.name}` yields the literal text "undefined", which is
+ * exactly what a user reported seeing in place of their ingredients. Falling back to the raw
+ * value keeps the transcribed text visible and correctable instead of destroying it.
+ */
+function ingredientToLine(ingredient: Ingredient | string | null | undefined): string {
+  if (ingredient === null || ingredient === undefined) return ''
+  if (typeof ingredient === 'string') return ingredient.trim()
+  if (typeof ingredient !== 'object') return String(ingredient)
+
+  const { amount, name, prep } = ingredient as Ingredient
+  if (typeof name !== 'string' || !name.trim()) {
+    // No usable name — prefer any other human-readable text over emitting "undefined".
+    const fallback = [amount, prep].find((v) => typeof v === 'string' && v.trim())
+    return typeof fallback === 'string' ? fallback.trim() : ''
+  }
+
+  const prepStr = prep ? ` (${prep})` : ''
+  return `${amount || ''} ${name}${prepStr}`.trim()
+}
+
+/** Joins ingredients into the textarea's one-per-line format, dropping unrenderable entries. */
+function ingredientsToText(ingredients: Array<Ingredient | string> | undefined): string {
+  if (!Array.isArray(ingredients)) return ''
+  return ingredients
+    .map(ingredientToLine)
+    .filter((line) => line.length > 0)
+    .join('\n')
+}
+
 export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   recipe,
   onSave,
@@ -33,15 +68,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   >(candidateImages || [])
 
   // Initial load helpers
-  const [ingText, setIngText] = useState(() => {
-    if (!recipe.ingredients) return ''
-    return recipe.ingredients
-      .map((i) => {
-        const prepStr = i.prep ? ` (${i.prep})` : ''
-        return `${i.amount || ''} ${i.name}${prepStr}`.trim()
-      })
-      .join('\n')
-  })
+  const [ingText, setIngText] = useState(() => ingredientsToText(recipe.ingredients))
   const [stepText, setStepText] = useState(recipe.steps?.join('\n') || '')
 
   const handleRecipeParsed = (
@@ -71,13 +98,7 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     }
 
     if (parsed.ingredients) {
-      const text = parsed.ingredients
-        .map((i) => {
-          const prepStr = i.prep ? ` (${i.prep})` : ''
-          return `${i.amount || ''} ${i.name}${prepStr}`.trim()
-        })
-        .join('\n')
-      setIngText(text)
+      setIngText(ingredientsToText(parsed.ingredients))
     }
 
     if (parsed.steps) {

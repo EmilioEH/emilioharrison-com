@@ -292,12 +292,95 @@ export async function runImageOcrPhases(
   return { phase1, phase2 }
 }
 
+/** True for an ingredient entry the editor can actually render — an object carrying a `name`.
+ * The OCR phases emit plain strings, the structuring phase emits `{name, amount, prep?}`. */
+function isObjectIngredient(value: unknown): value is { name: string } {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof (value as { name?: unknown }).name === 'string' &&
+    (value as { name: string }).name.trim().length > 0
+  )
+}
+
+/**
+ * Guarantees the merged payload's `ingredients` are object-shaped.
+ *
+ * The client merges each phase's JSON in order, so phase 3's `ingredients` normally overwrites
+ * phase 1's raw OCR strings. When the structuring model omits the field (it's asked for ~16 at
+ * once, and dropping one is a real, observed failure), phase 1's *strings* survived to the
+ * editor — whose `${i.amount} ${i.name}` mapping then rendered every line as the literal text
+ * "undefined". Falling back to the OCR lines as `{name}` objects keeps the transcribed text the
+ * user can see and correct, instead of destroying it.
+ */
+export function normalizeIngredients(
+  structured: unknown,
+  ocrIngredients: unknown,
+): Array<Record<string, unknown>> | undefined {
+  if (Array.isArray(structured) && structured.length > 0 && structured.every(isObjectIngredient)) {
+    return structured as Array<Record<string, unknown>>
+  }
+
+  const source = Array.isArray(structured) && structured.length > 0 ? structured : ocrIngredients
+  if (!Array.isArray(source)) return undefined
+
+  const coerced = source
+    .map((entry) => {
+      if (isObjectIngredient(entry)) return entry as Record<string, unknown>
+      if (typeof entry === 'string' && entry.trim()) return { name: entry.trim(), amount: '' }
+      return null
+    })
+    .filter((e): e is Record<string, unknown> => e !== null)
+
+  return coerced.length > 0 ? coerced : undefined
+}
+
+/**
+ * Picks the step list for the merged payload.
+ *
+ * Phase 2 OCR transcribes *every* paragraph on the card — including the descriptive intro blurb
+ * ("X is a simple roasted ... usually served cold"). The structuring pass is what separates that
+ * prose into `description` vs. actual cooking steps, but phase 3 was never asked for `steps`, so
+ * the raw OCR paragraphs always won and the blurb showed up in the user's Instructions box.
+ * Prefer the structured output (either `steps` or `structuredSteps[].text`), falling back to raw
+ * OCR only when structuring produced no usable steps — a rough list beats an empty one.
+ */
+export function normalizeSteps(
+  structuredSteps: unknown,
+  steps: unknown,
+  ocrSteps: unknown,
+): string[] | undefined {
+  const fromSteps = Array.isArray(steps)
+    ? steps.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    : []
+  if (fromSteps.length > 0) return fromSteps
+
+  const fromStructured = Array.isArray(structuredSteps)
+    ? structuredSteps
+        .map((s) =>
+          s && typeof s === 'object' ? (s as { text?: unknown }).text : typeof s === 'string' ? s : undefined,
+        )
+        .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
+    : []
+  if (fromStructured.length > 0) return fromStructured
+
+  const fromOcr = Array.isArray(ocrSteps)
+    ? ocrSteps.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    : []
+  return fromOcr.length > 0 ? fromOcr : undefined
+}
+
 /**
  * Builds the streamed response for the photo-scan flow once OCR (phase 1 required, phase 2
  * optional) has already succeeded — see `runImageOcrPhases`. Streams the OCR chunks immediately
  * (`_p: 1`/`_p: 2`), then runs the text-only structuring pass (phase 3) and streams that
  * (`_p: 3`) or errors the stream if it fails. Because phase 1 is guaranteed present before this
  * stream is ever constructed, the response body is never empty when a later error can occur.
+ *
+ * The phase-3 payload is normalized before it goes out (see `normalizeIngredients` /
+ * `normalizeSteps`) so the client's last-write-wins merge can't leave the editor holding raw OCR
+ * strings where it expects `{name, amount}` objects, or OCR prose where it expects steps.
  */
 export function buildImageRecipeStream(
   client: OpenAI,
@@ -331,7 +414,7 @@ export function buildImageRecipeStream(
         const phase3 = await runPhase(
           client,
           'You are a recipe parser. Structure the OCR text into a complete recipe JSON object.',
-          `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?})\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
+          `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\nThe OCR'd instructions may include introductory or descriptive prose that is NOT a cooking step (e.g. a blurb about the dish's origin or how it is served). Put that text in "description" and keep it OUT of "steps"/"structuredSteps", which must contain only actual cooking instructions.\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?}) — REQUIRED, one entry per ingredient line, never plain strings\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- steps (array of strings, one cooking step per element)\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
           undefined,
           MODEL,
           STRUCTURE_MAX_TOKENS,
@@ -354,11 +437,22 @@ export function buildImageRecipeStream(
           return
         }
 
+        // The client merges phases last-write-wins, so this final payload must carry shapes the
+        // editor can actually render — it can't rely on the model having returned every field.
+        const normalizedIngredients = normalizeIngredients(phase3.ingredients, phase1.ingredients)
+        const normalizedSteps = normalizeSteps(
+          phase3.structuredSteps,
+          phase3.steps,
+          phase2?.steps,
+        )
+
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
               _p: 3,
               ...phase3,
+              ...(normalizedIngredients ? { ingredients: normalizedIngredients } : {}),
+              ...(normalizedSteps ? { steps: normalizedSteps } : {}),
               ...(instructionsFailed ? { partialFailure: 'instructions' } : {}),
             }) + '\n',
           ),
