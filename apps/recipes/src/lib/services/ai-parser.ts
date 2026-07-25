@@ -118,10 +118,18 @@ export const STEP_GROUPING_RULES = `
 // had drifted from each other, not from any one of them being wrong in isolation. One copy, used
 // everywhere that structures a Recipe, so a fix here doesn't need to be found and reapplied per path.
 export const TITLE_RULE = `
-**TITLE**: MUST be ONLY the dish name — a short noun phrase, ideally under 60 characters (e.g.
-"Chicken Thighs with Broccolini and Israeli Couscous"). NEVER append caveats, notes, apologies, or
-commentary about the source to it. If the source is cut off, unreadable, or incomplete, still give
-a clean dish-name title and put any such remark in "description" instead.
+**TITLE**: Transcribe the recipe's printed title EXACTLY as written. Do not shorten it, rephrase
+it, or replace it with a more conventional name. Long, unconventional or conversational titles are
+correct and must be preserved verbatim — e.g. "Salted Butter and Chocolate Chunk Shortbread, or Why
+Would I Make Another Chocolate Chip Cookie Ever Again?" is the title, not
+"Chocolate Chunk Shortbread".
+If the recipe prints a title and a subtitle on separate lines (e.g. "BUZHENINA" above
+"Garlic-Roasted Pork Tenderloin"), use the main title as "title" and put the subtitle in
+"description"; do not merge them.
+Only invent a title if the source genuinely has none, in which case write a short dish name.
+NEVER append caveats, notes, apologies, or commentary about the source to the title. If the source
+is cut off, unreadable, or incomplete, still give a clean title and put any such remark in
+"description" instead.
 `
 
 export const DESCRIPTION_VS_STEPS_RULE = `
