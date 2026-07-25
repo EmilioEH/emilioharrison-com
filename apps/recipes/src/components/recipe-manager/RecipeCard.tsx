@@ -7,6 +7,7 @@ import { HighlightedText } from '../ui/HighlightedText'
 import type { Recipe } from '../../lib/types'
 import { getPlannedWeeksForRecipe } from '../../lib/weekStore'
 import { getRecipeCardImage } from '../../lib/recipe-card-image'
+import { useLongPress } from '../../lib/hooks/useLongPress'
 
 // Helper to normalize titles to Title Case
 const toTitleCase = (str: string): string => {
@@ -58,6 +59,13 @@ export const RecipeCard = memo(
   }: RecipeCardProps) => {
     const cardImage = getRecipeCardImage(recipe)
 
+    // Press and hold opens the same manage sheet the ⋮ button opens. Previously that sheet was
+    // only reachable in the week view, so the library had no per-recipe actions at all.
+    const { handlers: longPressHandlers, didLongPress } = useLongPress(
+      () => onManage?.(recipe.id),
+      !!onManage,
+    )
+
     const isPlanned = plannedWeeks.length > 0
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
@@ -74,7 +82,16 @@ export const RecipeCard = memo(
         tabIndex={0}
         data-testid={`recipe-card-${recipe.id}`}
         className="group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:border-border hover:bg-accent/50 hover:shadow-sm active:scale-[0.98] active:bg-accent/70"
+        {...longPressHandlers}
+        onContextMenu={(e) => {
+          // Desktop right-click and the iOS callout menu land here; treat both as the gesture.
+          if (!onManage) return
+          e.preventDefault()
+          onManage(recipe.id)
+        }}
         onClick={() => {
+          // A long press also fires a click on release; that must not open the recipe as well.
+          if (didLongPress()) return
           onSelect(recipe)
         }}
         onKeyDown={(e) => {

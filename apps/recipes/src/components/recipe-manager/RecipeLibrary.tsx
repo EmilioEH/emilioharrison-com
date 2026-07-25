@@ -214,9 +214,13 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
         </motion.div>
       )}
 
-      {/* Recipe Management Sheet */}
-      {allowManagement &&
-        managementRecipeId &&
+      {/* Recipe Management Sheet.
+       * No longer gated on `allowManagement`: long-pressing any card opens this, so it has to be
+       * available in the library too, where there was previously no per-recipe menu at all. The
+       * sheet already hides its "currently planned" section for an unplanned recipe, so it
+       * degrades to just the share action rather than showing anything meaningless. The ⋮ button
+       * on the card stays week-view-only — the gesture is the library's entry point. */}
+      {managementRecipeId &&
         (() => {
           const selectedRecipe = recipes.find((r) => r.id === managementRecipeId)
           if (!selectedRecipe) return null
