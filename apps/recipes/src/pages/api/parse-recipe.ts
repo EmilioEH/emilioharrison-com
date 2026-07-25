@@ -245,22 +245,29 @@ async function runPhase(
 }
 
 /**
- * Instruction-OCR prompt. Two additions over the original one-liner, both driven by real reports:
+ * Instruction-OCR prompt.
  *
- * - **Column order.** Cookbook pages routinely run two columns, with the method starting in one
- *   and continuing in the next; without being told, a model can transcribe one column and stop.
- * - **Exclude the headnote.** These pages open with a blurb about the dish's origin ("Buzhenina is
- *   a simple roasted pork tenderloin ... usually served cold"). Transcribing it as a step is how
- *   that text ended up in a user's Instructions box. It's filtered downstream too
- *   (step-normalization.ts), but not collecting it in the first place is better.
+ * Beyond transcribing steps it also *separates* the headnote — the intro prose a cookbook page
+ * opens with ("Buzhenina is a simple roasted pork tenderloin ... usually served cold"). Returning
+ * it as a step is how that text ended up in a user's Instructions box; simply dropping it would
+ * be worse, because phase 3 has no other source for `description` and would invent one. So it's
+ * captured under its own key and handed to phase 3 explicitly.
+ *
+ * The reading-order note is deliberately layout-agnostic rather than "left column then right":
+ * that phrasing was written against one two-column cookbook photo, and single-column cards,
+ * three-column layouts and right-to-left scans all exist.
  */
-const INSTRUCTION_OCR_PROMPT = `Extract ALL cooking instruction paragraphs from this image.
+const INSTRUCTION_OCR_PROMPT = `Extract the cooking instructions from this image.
 
-If this is a COOKBOOK PAGE WITH MULTIPLE COLUMNS, read the FULL left column top-to-bottom first, then the FULL right column top-to-bottom. Instructions often START in one column and CONTINUE in the next — capture every one, in cooking order.
+Read the whole page in natural reading order. If the text is laid out in columns, finish each column before moving to the next — a recipe's method often starts in one column and continues in another, and stopping early loses half of it.
 
-Include ONLY actual cooking instructions. EXCLUDE the headnote/intro blurb about the dish's history, origin, or serving suggestions, and EXCLUDE the ingredient list.
+Separate two different kinds of text:
+- "steps": ONLY actual cooking instructions, in cooking order, one complete paragraph per element. Do NOT combine paragraphs and do NOT skip any instruction.
+- "headnote": the introductory/descriptive prose about the dish (its origin, how it is served, shopping advice), if the page has any. This is NOT a cooking step.
 
-Return JSON with a "steps" array where each element is one complete paragraph as a string. Do NOT combine paragraphs. Do NOT skip any instruction.`
+Ignore the ingredient list; it is transcribed separately.
+
+Return JSON: { "steps": string[], "headnote": string }. Use an empty string for "headnote" if there is none.`
 
 /** True only for the photo-scan flow, where contentPart carries inline image bytes. */
 function isImageContent(contentPart: Record<string, unknown> | undefined): boolean {
@@ -470,11 +477,15 @@ export function buildImageRecipeStream(
           ? phase1.ingredients.join('\n')
           : ''
         const stepList = phase2 && Array.isArray(phase2.steps) ? phase2.steps.join('\n') : ''
+        // The headnote is transcribed separately (see INSTRUCTION_OCR_PROMPT) so it can't be
+        // mistaken for a step — but it's still the best source for `description`, so hand it over
+        // explicitly rather than letting the model invent one.
+        const headnote = phase2 && typeof phase2.headnote === 'string' ? phase2.headnote.trim() : ''
 
         const phase3 = await runPhase(
           client,
           'You are a recipe parser. Structure the OCR text into a complete recipe JSON object.',
-          `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\nThe OCR'd instructions may include introductory or descriptive prose that is NOT a cooking step (e.g. a blurb about the dish's origin or how it is served). Put that text in "description" and keep it OUT of "steps"/"structuredSteps", which must contain only actual cooking instructions.\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?}) — REQUIRED, one entry per ingredient line, never plain strings\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- steps (array of strings, one cooking step per element)\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
+          `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\n${headnote ? `The source page's introductory blurb (use this as the basis for "description", NOT as a cooking step):\n${headnote}\n\n` : ''}If the OCR'd instructions still contain introductory or descriptive prose that is NOT a cooking step (e.g. a blurb about the dish's origin or how it is served), put that text in "description" and keep it OUT of "steps"/"structuredSteps", which must contain only actual cooking instructions.\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?}) — REQUIRED, one entry per ingredient line, never plain strings\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- steps (array of strings, one cooking step per element)\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
           undefined,
           MODEL,
           STRUCTURE_MAX_TOKENS,
