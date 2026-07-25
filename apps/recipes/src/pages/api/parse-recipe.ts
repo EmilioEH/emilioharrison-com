@@ -244,6 +244,24 @@ async function runPhase(
   }
 }
 
+/**
+ * Instruction-OCR prompt. Two additions over the original one-liner, both driven by real reports:
+ *
+ * - **Column order.** Cookbook pages routinely run two columns, with the method starting in one
+ *   and continuing in the next; without being told, a model can transcribe one column and stop.
+ * - **Exclude the headnote.** These pages open with a blurb about the dish's origin ("Buzhenina is
+ *   a simple roasted pork tenderloin ... usually served cold"). Transcribing it as a step is how
+ *   that text ended up in a user's Instructions box. It's filtered downstream too
+ *   (step-normalization.ts), but not collecting it in the first place is better.
+ */
+const INSTRUCTION_OCR_PROMPT = `Extract ALL cooking instruction paragraphs from this image.
+
+If this is a COOKBOOK PAGE WITH MULTIPLE COLUMNS, read the FULL left column top-to-bottom first, then the FULL right column top-to-bottom. Instructions often START in one column and CONTINUE in the next — capture every one, in cooking order.
+
+Include ONLY actual cooking instructions. EXCLUDE the headnote/intro blurb about the dish's history, origin, or serving suggestions, and EXCLUDE the ingredient list.
+
+Return JSON with a "steps" array where each element is one complete paragraph as a string. Do NOT combine paragraphs. Do NOT skip any instruction.`
+
 /** True only for the photo-scan flow, where contentPart carries inline image bytes. */
 function isImageContent(contentPart: Record<string, unknown> | undefined): boolean {
   return !!contentPart && typeof contentPart === 'object' && !!contentPart.inlineData
@@ -266,7 +284,19 @@ export async function runImageOcrPhases(
   phase1: Record<string, unknown>
   phase2: Record<string, unknown> | null
 } | null> {
-  const [phase1, phase2] = await Promise.all([
+  const runInstructionOcr = () =>
+    runPhase(
+      client,
+      '',
+      INSTRUCTION_OCR_PROMPT,
+      contentPart,
+      MODEL,
+      OCR_MAX_TOKENS,
+      OCR_TIMEOUT_MS,
+      externalSignal,
+    )
+
+  const [phase1, firstPhase2] = await Promise.all([
     runPhase(
       client,
       '',
@@ -277,20 +307,31 @@ export async function runImageOcrPhases(
       OCR_TIMEOUT_MS,
       externalSignal,
     ),
-    runPhase(
-      client,
-      '',
-      `Extract ALL cooking instruction paragraphs from this image. Return JSON with a "steps" array where each element is one complete paragraph as a string. Do NOT combine paragraphs. Do NOT skip any text.`,
-      contentPart,
-      MODEL,
-      OCR_MAX_TOKENS,
-      OCR_TIMEOUT_MS,
-      externalSignal,
-    ),
+    runInstructionOcr(),
   ])
 
   if (!phase1) return null
+
+  // Instruction OCR gets a second chance. It previously ran exactly once, and a single miss left
+  // the user with an empty Instructions box plus a "couldn't read the instructions" warning —
+  // reported on a cookbook page whose instructions are provably legible (a vision model reads all
+  // nine paragraphs off it reliably). The failure is the model being inconsistent, not the photo
+  // being unreadable, which is the same pattern already handled in grocery-core and
+  // enhancement-core. Only retried when it produced nothing usable, so a normal import still
+  // costs a single call.
+  let phase2 = firstPhase2
+  if (!hasOcrSteps(phase2)) {
+    console.warn('[ParseRecipe] Instruction OCR produced no steps — retrying once')
+    phase2 = (await runInstructionOcr()) ?? phase2
+  }
+
   return { phase1, phase2 }
+}
+
+/** Whether an instruction-OCR result actually carries transcribed steps. */
+function hasOcrSteps(phase: Record<string, unknown> | null): boolean {
+  const steps = phase?.steps
+  return Array.isArray(steps) && steps.some((s) => typeof s === 'string' && s.trim().length > 0)
 }
 
 /** True for an ingredient entry the editor can actually render — an object carrying a `name`.
