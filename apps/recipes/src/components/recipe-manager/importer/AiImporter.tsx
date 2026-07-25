@@ -201,10 +201,15 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
           ) : (
             <ChefHat />
           )}
+          {/* Deliberately not a status message. The progress banner below is the single source of
+            * truth for what the import is doing; this button used to hardcode "Reading your
+            * recipe..." for the entire run, so mid-import the screen said "Reading your
+            * recipe..." and "Structuring instructions... (66%)" at the same time — two labels
+            * disagreeing, one of them permanently stale. */}
           {internalIsUploading
             ? 'Uploading Photo...'
             : status === 'processing'
-              ? 'Reading your recipe...'
+              ? 'Importing…'
               : 'Process Recipe'}
         </Button>
       </Stack>
