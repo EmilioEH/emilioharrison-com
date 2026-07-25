@@ -128,8 +128,13 @@ test.describe('Recipe Overview Layout', () => {
     )
 
     // Smart View grouped steps should still show per-step toggles and titles.
+    //
+    // The toggle is now the step row itself rather than a separate circle beside it (a 20px
+    // target that also read as a radio button), so this testid is on the row. The step title is
+    // a span within that row, not a standalone heading — a heading nested inside a button would
+    // be poor semantics — hence the text assertion rather than a role query.
     await expect(page.getByTestId('instruction-step-toggle').first()).toBeVisible()
-    await expect(page.getByRole('heading', { name: /1\.\s+Prep Aromatics/i })).toBeVisible()
+    await expect(page.getByText('Prep Aromatics', { exact: false }).first()).toBeVisible()
 
     // Switching to Original keeps per-step landmarks while removing grouped headers.
     await page.getByRole('button', { name: 'Original' }).click()

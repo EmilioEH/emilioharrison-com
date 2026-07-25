@@ -20,7 +20,6 @@ import {
   hasUsefulStepIngredientMappings,
   areStepIngredientMappingsEqual,
 } from '../../lib/step-ingredient-mapping'
-import { renderHighlightedInstruction } from '../../lib/instruction-utils'
 import type {
   Recipe,
   FamilyRecipeData,
@@ -628,47 +627,27 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                 No instructions listed yet.
               </div>
-            ) : viewMode === 'enhanced' &&
-              displaySteps.length > 0 &&
-              displaySteps[0].title !== undefined ? (
-              // Enhanced (AI) mode: render structured steps as prose paragraphs
-              // with phase titles and bolded verbs — easier to read than numbered cards.
-              <Stack spacing="md" data-testid="instructions-group">
-                {displayStepGroups.map((group, gIdx) => (
-                  <React.Fragment key={gIdx}>
-                    {group.header && (
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                        {group.header}
-                      </h3>
-                    )}
-                    {group.items.map((step, idx) => (
-                      <div key={group.startIndex + idx} className="rounded-lg bg-muted/20 p-4">
-                        {step.title && (
-                          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-primary">
-                            {step.title}
-                          </p>
-                        )}
-                        <p className="text-base leading-7 text-foreground">
-                          {step.highlightedText
-                            ? renderHighlightedInstruction(step.highlightedText)
-                            : step.text}
-                        </p>
-                        {step.tip && (
-                          <p className="mt-2 text-sm italic leading-relaxed text-muted-foreground">
-                            Tip: {step.tip}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </Stack>
             ) : (
-              // Original mode: render as numbered, checkable InstructionCards
+              // ONE layout for both views — only the content differs. Smart View supplies phase
+              // headers, step titles and tips; Original supplies plain numbered steps
+              // (displayStepGroups already collapses to a single header-less group there).
+              //
+              // These were previously two separate render branches that had drifted apart in
+              // padding, type scale and — most importantly — interaction: Smart View rendered
+              // steps as static prose, so the view people actually cook from was the one where
+              // steps couldn't be checked off at all.
               <div className="rounded-lg bg-muted/20 p-3" data-testid="instructions-group">
                 <Stack spacing="xs">
                   {displayStepGroups.map((group, gIdx) => (
                     <React.Fragment key={gIdx}>
+                      {group.header && (
+                        <h3
+                          data-testid="instructions-group-header"
+                          className="px-1 pb-1 pt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground first:pt-1"
+                        >
+                          {group.header}
+                        </h3>
+                      )}
                       {group.items.map((step, idx) => {
                         const globalIdx = group.startIndex + idx
                         const ingredientsArray = Array.isArray(recipe.ingredients)
@@ -688,7 +667,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                             targetIngredientIndices={targetIndicesArray}
                             fullIngredients={ingredientsArray}
                             isChecked={checkedStepsList.includes(globalIdx)}
-                            hideBadge={false}
                             hideNumber={false}
                             onToggle={() => handleToggleStep(globalIdx)}
                           />
