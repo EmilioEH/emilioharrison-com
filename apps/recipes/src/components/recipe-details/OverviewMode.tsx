@@ -37,6 +37,34 @@ interface OverviewModeProps {
   onPersistStepIngredients?: (stepIngredients: Array<{ indices: number[] }>) => void | Promise<void>
 }
 
+/** Per-recipe storage key for the Original/Smart View choice. */
+function viewModeStorageKey(recipeId: string): string {
+  return `recipe-view-mode:${recipeId}`
+}
+
+/** The legacy single-key preference, written before the choice was scoped per recipe. Read once
+ * as a migration so an existing selection isn't lost, then cleared so it can't keep overriding
+ * every other recipe. */
+const LEGACY_VIEW_MODE_KEY = 'recipe-view-mode'
+
+function readStoredViewMode(recipeId: string): 'original' | 'enhanced' | null {
+  try {
+    const scoped = localStorage.getItem(viewModeStorageKey(recipeId))
+    if (scoped === 'original' || scoped === 'enhanced') return scoped
+
+    const legacy = localStorage.getItem(LEGACY_VIEW_MODE_KEY)
+    if (legacy === 'original' || legacy === 'enhanced') {
+      // Carry the old global choice onto this recipe once, then retire the shared key.
+      localStorage.setItem(viewModeStorageKey(recipeId), legacy)
+      localStorage.removeItem(LEGACY_VIEW_MODE_KEY)
+      return legacy
+    }
+  } catch {
+    // Storage unavailable — fall through to the default.
+  }
+  return null
+}
+
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
   isRefreshing = false,
@@ -54,16 +82,20 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const hasEnhancedContent =
     (recipe.structuredSteps?.length || 0) > 0 || (recipe.ingredientGroups?.length || 0) > 0
 
-  // NEW: View Mode State with localStorage persistence
+  // View mode, remembered per recipe.
+  //
+  // This used to write to a single global `recipe-view-mode` key, so switching one recipe to
+  // "Original" — entirely reasonable for a scanned card you want to read as-is — silently made
+  // Original the default for every other recipe too, permanently overriding the
+  // enhanced-when-available behaviour below. Keyed by id, the choice sticks to the recipe it was
+  // made on and everything else still opens in Smart View when there is one.
   const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(() => {
     // Guard against SSR where localStorage is not available
     if (typeof window === 'undefined') {
       return hasEnhancedContent ? 'enhanced' : 'original'
     }
-    const savedPreference = localStorage.getItem('recipe-view-mode')
-    if (savedPreference === 'original' || savedPreference === 'enhanced') {
-      return savedPreference
-    }
+    const savedPreference = readStoredViewMode(recipe.id)
+    if (savedPreference) return savedPreference
     // Default to enhanced if available
     return hasEnhancedContent ? 'enhanced' : 'original'
   })
@@ -71,7 +103,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   // Save preference when user manually changes it
   const handleViewModeChange = (mode: 'original' | 'enhanced') => {
     setViewMode(mode)
-    localStorage.setItem('recipe-view-mode', mode)
+    try {
+      localStorage.setItem(viewModeStorageKey(recipe.id), mode)
+    } catch {
+      // Private mode / storage full — the choice just won't persist.
+    }
   }
 
   const [checkedIngredientsList, setCheckedIngredientsList] = useState<number[]>(() =>
@@ -612,13 +648,13 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                             {step.title}
                           </p>
                         )}
-                        <p className="text-sm leading-relaxed text-foreground">
+                        <p className="text-base leading-7 text-foreground">
                           {step.highlightedText
                             ? renderHighlightedInstruction(step.highlightedText)
                             : step.text}
                         </p>
                         {step.tip && (
-                          <p className="mt-2 text-xs italic text-muted-foreground">
+                          <p className="mt-2 text-sm italic leading-relaxed text-muted-foreground">
                             Tip: {step.tip}
                           </p>
                         )}
