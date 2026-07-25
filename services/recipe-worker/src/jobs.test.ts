@@ -33,6 +33,8 @@ function fakeStore(overrides: Partial<WorkerStore> = {}): WorkerStore {
   }
 }
 
+const fakeLogAiError = vi.fn()
+
 beforeEach(() => vi.clearAllMocks())
 
 describe('runEnhancementForDoc', () => {
@@ -41,7 +43,14 @@ describe('runEnhancementForDoc', () => {
     const computeEnhanced = vi.fn(async () => makeRecipe({ title: 'Enhanced' }))
 
     const outcome = await runEnhancementForDoc(
-      { store, gemini: fakeGemini, origin: 'https://o', jobTimeoutMs: 120_000, computeEnhanced },
+      {
+        store,
+        gemini: fakeGemini,
+        origin: 'https://o',
+        jobTimeoutMs: 120_000,
+        computeEnhanced,
+        logAiError: fakeLogAiError,
+      },
       'r1',
     )
 
@@ -58,6 +67,7 @@ describe('runEnhancementForDoc', () => {
       expect.objectContaining({ title: 'Enhanced' }),
     )
     expect(store.failEnhancement).not.toHaveBeenCalled()
+    expect(fakeLogAiError).not.toHaveBeenCalled()
   })
 
   it('skips (no compute) when the doc is not claimable', async () => {
@@ -65,7 +75,14 @@ describe('runEnhancementForDoc', () => {
     const computeEnhanced = vi.fn()
 
     const outcome = await runEnhancementForDoc(
-      { store, gemini: fakeGemini, origin: 'o', jobTimeoutMs: 1, computeEnhanced },
+      {
+        store,
+        gemini: fakeGemini,
+        origin: 'o',
+        jobTimeoutMs: 1,
+        computeEnhanced,
+        logAiError: fakeLogAiError,
+      },
       'r1',
     )
 
@@ -74,20 +91,30 @@ describe('runEnhancementForDoc', () => {
     expect(store.completeEnhancement).not.toHaveBeenCalled()
   })
 
-  it('persists an error status (and does not throw) when compute fails', async () => {
+  it('persists an error status and logs it (and does not throw) when compute fails', async () => {
     const store = fakeStore()
     const computeEnhanced = vi.fn(async () => {
       throw new Error('Gemini timed out')
     })
 
     const outcome = await runEnhancementForDoc(
-      { store, gemini: fakeGemini, origin: 'o', jobTimeoutMs: 1, computeEnhanced },
+      {
+        store,
+        gemini: fakeGemini,
+        origin: 'o',
+        jobTimeoutMs: 1,
+        computeEnhanced,
+        logAiError: fakeLogAiError,
+      },
       'r1',
     )
 
     expect(outcome).toBe('failed')
     expect(store.failEnhancement).toHaveBeenCalledWith('r1', 'Gemini timed out')
     expect(store.completeEnhancement).not.toHaveBeenCalled()
+    expect(fakeLogAiError).toHaveBeenCalledWith('enhancement', expect.any(Error), {
+      context: { recipeId: 'r1' },
+    })
   })
 })
 
@@ -100,7 +127,13 @@ describe('runGroceryForDoc', () => {
     })
 
     const outcome = await runGroceryForDoc(
-      { store, gemini: fakeGemini, jobTimeoutMs: 120_000, computeGrocery },
+      {
+        store,
+        gemini: fakeGemini,
+        jobTimeoutMs: 120_000,
+        computeGrocery,
+        logAiError: fakeLogAiError,
+      },
       'fam_2026-07-20',
     )
 
@@ -112,6 +145,7 @@ describe('runGroceryForDoc', () => {
       'Selecting fresh produce...',
     )
     expect(store.completeGrocery).toHaveBeenCalledWith('fam_2026-07-20', [{ name: 'limes' }])
+    expect(fakeLogAiError).not.toHaveBeenCalled()
   })
 
   it('skips when the doc is not claimable', async () => {
@@ -119,7 +153,7 @@ describe('runGroceryForDoc', () => {
     const computeGrocery = vi.fn()
 
     const outcome = await runGroceryForDoc(
-      { store, gemini: fakeGemini, jobTimeoutMs: 1, computeGrocery },
+      { store, gemini: fakeGemini, jobTimeoutMs: 1, computeGrocery, logAiError: fakeLogAiError },
       'x',
     )
 
@@ -127,19 +161,22 @@ describe('runGroceryForDoc', () => {
     expect(computeGrocery).not.toHaveBeenCalled()
   })
 
-  it('persists an error status (and does not throw) when compute fails', async () => {
+  it('persists an error status and logs it (and does not throw) when compute fails', async () => {
     const store = fakeStore()
     const computeGrocery = vi.fn(async () => {
       throw new Error('AI response was incomplete')
     })
 
     const outcome = await runGroceryForDoc(
-      { store, gemini: fakeGemini, jobTimeoutMs: 1, computeGrocery },
+      { store, gemini: fakeGemini, jobTimeoutMs: 1, computeGrocery, logAiError: fakeLogAiError },
       'x',
     )
 
     expect(outcome).toBe('failed')
     expect(store.failGrocery).toHaveBeenCalledWith('x', 'AI response was incomplete')
     expect(store.completeGrocery).not.toHaveBeenCalled()
+    expect(fakeLogAiError).toHaveBeenCalledWith('grocery', expect.any(Error), {
+      context: { listId: 'x' },
+    })
   })
 })

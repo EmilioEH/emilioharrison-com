@@ -5,6 +5,7 @@ import type {
   ComputeGrocery,
   JobOutcome,
 } from './types'
+import type { LogAiError } from './ai-error-log'
 
 /**
  * Runs one background Enhancement job end-to-end for a recipe id: claim it, run the shared
@@ -21,6 +22,7 @@ export async function runEnhancementForDoc(
     origin: string
     jobTimeoutMs: number
     computeEnhanced: ComputeEnhanced
+    logAiError: LogAiError
   },
   recipeId: string,
 ): Promise<JobOutcome> {
@@ -40,6 +42,7 @@ export async function runEnhancementForDoc(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to enhance recipe'
     console.error(`[worker] enhancement failed: ${recipeId} — ${message}`)
+    deps.logAiError('enhancement', error, { context: { recipeId } })
     await deps.store
       .failEnhancement(recipeId, message)
       .catch((e) => console.error(`[worker] failEnhancement(${recipeId}) write failed:`, e))
@@ -58,6 +61,7 @@ export async function runGroceryForDoc(
     gemini: GoogleGenAI
     jobTimeoutMs: number
     computeGrocery: ComputeGrocery
+    logAiError: LogAiError
   },
   listId: string,
 ): Promise<JobOutcome> {
@@ -81,6 +85,7 @@ export async function runGroceryForDoc(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to generate grocery list'
     console.error(`[worker] grocery failed: ${listId} — ${message}`)
+    deps.logAiError('grocery', error, { context: { listId } })
     await deps.store
       .failGrocery(listId, message)
       .catch((e) => console.error(`[worker] failGrocery(${listId}) write failed:`, e))
