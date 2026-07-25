@@ -3,6 +3,7 @@ import { computeEnhancedRecipe } from '../../../apps/recipes/src/lib/services/en
 import { computeGroceryList } from '../../../apps/recipes/src/lib/services/grocery-core'
 import { loadConfig } from './config'
 import { initFirestore, createFirestoreStore } from './firestore-store'
+import { createAiErrorLogger } from './ai-error-log'
 import { runEnhancementForDoc, runGroceryForDoc } from './jobs'
 import { sweepStuckJobs } from './reaper'
 
@@ -18,6 +19,7 @@ function main() {
   const config = loadConfig()
   const db = initFirestore(config)
   const store = createFirestoreStore(db)
+  const logAiError = createAiErrorLogger(db)
   const gemini = new GoogleGenAI({ apiKey: config.geminiApiKey })
 
   console.log(
@@ -31,12 +33,14 @@ function main() {
     origin: config.origin,
     jobTimeoutMs: config.jobTimeoutMs,
     computeEnhanced: computeEnhancedRecipe,
+    logAiError,
   }
   const groceryDeps = {
     store,
     gemini,
     jobTimeoutMs: config.jobTimeoutMs,
     computeGrocery: computeGroceryList,
+    logAiError,
   }
 
   // Enhancement queue: `recipes` docs with enhancementStatus == 'pending'. onSnapshot fires once

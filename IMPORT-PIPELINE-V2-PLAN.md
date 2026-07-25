@@ -1,6 +1,6 @@
 # Investigation + Redesign Plan: Recipe Import (Photo + Link)
 
-Status: **DRAFT — investigation complete, architecture proposed, NOT built.**
+Status: **DONE — all four phases shipped** (PRs #65, #66, and the VM-worker error-logging PR).
 
 Written after a single evening produced seven separate import/enhancement bug reports
 (undefined ingredients, description-in-instructions, silent enhancement no-op, 3000-character
