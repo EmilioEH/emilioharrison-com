@@ -29,12 +29,64 @@ const LEGACY_CATEGORY_MAP: Record<string, string> = {
   'Health & Pharmacy': 'Other',
   'Dairy & Eggs': 'Dairy',
   'Frozen Foods': 'Frozen',
+
+  // Categories the AI invents instead of using the eight canonical names. An audit of the live
+  // library found 29 distinct category values across ~5,200 stored ingredients, with roughly a
+  // fifth of them landing outside the canonical set and therefore silently filed under "Other" —
+  // enough to make the grocery list look broken. Mapped here rather than only tightened in the
+  // prompt, so every recipe already saved is corrected at read time without a data migration.
+  Seasoning: 'Spices',
+  Seasonings: 'Spices',
+  Spice: 'Spices',
+  Herb: 'Produce', // fresh herbs shop with produce; dried ones arrive as "Spices" already
+  Herbs: 'Produce',
+  Vegetable: 'Produce',
+  Vegetables: 'Produce',
+  Fruit: 'Produce',
+  Fruits: 'Produce',
+  Liquid: 'Pantry',
+  Liquids: 'Pantry',
+  Fat: 'Pantry',
+  Fats: 'Pantry',
+  Oil: 'Pantry',
+  Oils: 'Pantry',
+  Condiment: 'Pantry',
+  Condiments: 'Pantry',
+  Sauce: 'Pantry',
+  Sauces: 'Pantry',
+  Grain: 'Pantry',
+  Grains: 'Pantry',
+  Baking: 'Pantry',
+  Canned: 'Pantry',
+  Protein: 'Meat',
+  Proteins: 'Meat',
+  Poultry: 'Meat',
+  Beef: 'Meat',
+  Pork: 'Meat',
+  Fish: 'Meat',
+  Bread: 'Bakery',
+  Cheese: 'Dairy',
+  Garnish: 'Produce',
 }
 
+/** Case-insensitive lookup built once from both the canonical names and the alias map above.
+ * Stored categories arrive in every casing the model felt like using — `produce`, `Seasoning`,
+ * `spice` — and an exact-match lookup sent all of them to "Other" even when the name was
+ * otherwise valid. */
+const CATEGORY_LOOKUP: Record<string, string> = (() => {
+  const lookup: Record<string, string> = {}
+  for (const canonical of CATEGORY_ORDER) lookup[canonical.toLowerCase()] = canonical
+  for (const [alias, canonical] of Object.entries(LEGACY_CATEGORY_MAP)) {
+    lookup[alias.toLowerCase()] = canonical
+  }
+  return lookup
+})()
+
 export function normalizeCategory(rawCategory: string | undefined): string {
-  const cat = rawCategory || 'Other'
-  if (CATEGORY_ORDER.includes(cat)) return cat
-  return LEGACY_CATEGORY_MAP[cat] || 'Other'
+  if (typeof rawCategory !== 'string') return 'Other'
+  const key = rawCategory.trim().toLowerCase()
+  if (!key) return 'Other'
+  return CATEGORY_LOOKUP[key] || 'Other'
 }
 
 /**

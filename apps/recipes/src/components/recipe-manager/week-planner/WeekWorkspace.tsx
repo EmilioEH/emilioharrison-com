@@ -23,6 +23,7 @@ import {
 } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
 import { buildRawShoppableIngredients } from '../../../lib/grocery-utils'
+import { useFullRecipes } from '../../../lib/hooks/useFullRecipes'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
 import {
@@ -103,10 +104,26 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return allRecipes.filter((r) => plannedRecipeIds.includes(r.id))
   }, [currentRecipes, allRecipes])
 
+  // `allRecipes` comes from the list endpoint, which projects away `structuredIngredients` (see
+  // toListRecipe). The grocery list needs them, so fetch the full documents for just this week's
+  // recipes — a handful, not the whole library.
+  const plannedIds = useMemo(() => groceryRecipes.map((r) => r.id), [groceryRecipes])
+  const { recipes: fullGroceryRecipes } = useFullRecipes(plannedIds)
+
+  // Prefer the full document wherever it has arrived; fall back to the list-shaped recipe so the
+  // list still renders (with degraded ingredient data) while the fetch is in flight.
+  const groceryRecipesForList = useMemo(() => {
+    const byId = new Map(fullGroceryRecipes.map((r) => [r.id, r]))
+    return groceryRecipes.map((r) => byId.get(r.id) ?? r)
+  }, [groceryRecipes, fullGroceryRecipes])
+
   // Raw view's ingredients — same ShoppableIngredient shape Smart uses, rendered through the
   // same <GroceryList> with mergeIngredients={false} so it looks and behaves identically, just
   // without combining the same ingredient across recipes.
-  const rawIngredients = useMemo(() => buildRawShoppableIngredients(groceryRecipes), [groceryRecipes])
+  const rawIngredients = useMemo(
+    () => buildRawShoppableIngredients(groceryRecipesForList),
+    [groceryRecipesForList],
+  )
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
