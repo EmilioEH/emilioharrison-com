@@ -1,5 +1,4 @@
 import React from 'react'
-import { Check } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { Ingredient } from '../../lib/types'
 
@@ -18,8 +17,13 @@ interface IngredientRowProps {
 function parseAmount(raw: string): { qty: string; unit: string } {
   if (!raw) return { qty: '—', unit: '' }
 
-  // Match a leading number/fraction (e.g. "2", "1/2", "1 1/2")
-  const m = raw.match(/^(\d+(?:\s*\/\s*\d+)?(?:\s+\d+\s*\/\s*\d+)?)\s*(.*)$/)
+  // Match a leading quantity, longest form first so the alternatives don't truncate each other:
+  // mixed number ("1 1/2"), fraction ("1/2"), decimal ("2.5"), then plain integer ("2").
+  //
+  // Decimals were previously unmatched — only `\d+` led the pattern — so "2.5 tsp" split into
+  // qty "2" and unit ".5 tsp", rendering as "2  .5 tsp  Ras el hanout" with the stray fragment
+  // sitting in the unit column.
+  const m = raw.match(/^(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+\.\d+|\d+)\s*(.*)$/)
   if (m && m[1].trim()) {
     return { qty: m[1].trim(), unit: m[2].trim() }
   }
@@ -49,25 +53,20 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
     <button
       type="button"
       onClick={onToggle}
+      aria-pressed={isChecked}
       className={cn(
-        'grid w-full grid-cols-[1.25rem_2.5rem_7rem_minmax(0,1fr)] items-start gap-x-2 border-b border-border/50 py-2.5 text-left font-body text-base text-foreground transition-opacity last:border-0',
+        'grid w-full grid-cols-[2.5rem_7rem_minmax(0,1fr)] items-start gap-x-3 border-b border-border/50 py-3 text-left font-body text-base text-foreground transition-colors last:border-0 active:bg-accent/60',
         isChecked && 'opacity-50',
       )}
+      style={{ touchAction: 'manipulation' }}
       data-testid="ingredient-row"
     >
-      {/* Col 1: Checkbox */}
-      <div
-        className={cn(
-          'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
-          isChecked
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-muted-foreground/40',
-        )}
-      >
-        {isChecked && <Check className="h-3 w-3" />}
-      </div>
+      {/* No separate checkbox: the row has always been the tap target, but it drew a circle
+        * beside the text that read as a radio button — implying pick-one rather than check-off.
+        * Completion reads from the dimmed, struck-through row instead, matching how instruction
+        * steps now behave. */}
 
-      {/* Col 2: Quantity */}
+      {/* Col 1: Quantity */}
       <span
         data-testid="ingredient-amount"
         className={cn(
@@ -78,7 +77,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
         {qty}
       </span>
 
-      {/* Col 3: Unit / Measurement */}
+      {/* Col 2: Unit / Measurement */}
       <span
         data-testid="ingredient-unit"
         className={cn('text-sm font-normal text-muted-foreground', isChecked && 'line-through')}
@@ -86,7 +85,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
         {unit}
       </span>
 
-      {/* Col 4: Ingredient name + prep */}
+      {/* Col 3: Ingredient name + prep */}
       <span data-testid="ingredient-name" className={cn('min-w-0', isChecked && 'line-through')}>
         <span className="font-normal text-foreground">{ingredient.name}</span>
         {ingredient.prep && <span className="text-muted-foreground">, {ingredient.prep}</span>}
