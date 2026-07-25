@@ -87,4 +87,127 @@ describe('parseRecipe — stream salvage (regression: hollow-recipe corruption b
     expect((result.data as Record<string, unknown>).title).toBe('Complete Recipe')
     expect((result.data as Record<string, unknown>).partialFailure).toBeUndefined()
   })
+
+  it('skips a line split across chunk boundaries rather than losing the whole phase', async () => {
+    // Simulates a chunk boundary landing mid-line — readNdjsonStream buffers until it sees a
+    // newline, so this should merge cleanly, not drop or corrupt the phase-3 payload.
+    const full = JSON.stringify({ _p: 3, title: 'Chunked Recipe' }) + '\n'
+    const chunks = [full.slice(0, 10), full.slice(10)]
+    global.fetch = vi.fn().mockResolvedValue(makeStreamResponse(chunks))
+
+    const result = await parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/')
+
+    expect((result.data as Record<string, unknown>).title).toBe('Chunked Recipe')
+  })
+
+  it('reports a progress message for each phase marker as it streams in', async () => {
+    const chunks = [
+      JSON.stringify({ _p: 1, ingredients: [] }) + '\n',
+      JSON.stringify({ _p: 3, title: 'Progress Recipe' }) + '\n',
+    ]
+    global.fetch = vi.fn().mockResolvedValue(makeStreamResponse(chunks))
+    const onProgress = vi.fn()
+
+    await parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/', undefined, onProgress)
+
+    expect(onProgress).toHaveBeenCalledWith('Extracting ingredients... (33%)')
+    expect(onProgress).toHaveBeenCalledWith('Finalizing recipe details... (100%)')
+  })
+})
+
+describe('parseRecipe — non-OK response', () => {
+  it('throws the server-provided error message', async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'Too many imports. Please try again later.' }), {
+        status: 429,
+        statusText: 'Too Many Requests',
+      }),
+    )
+
+    await expect(parseRecipe({ url: 'https://example.com' }, '/base/')).rejects.toThrow(
+      'Too many imports. Please try again later.',
+    )
+  })
+
+  it('falls back to the raw status line when the error body is not the expected shape', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('not json', { status: 500, statusText: 'Server Error' }))
+
+    await expect(parseRecipe({ url: 'https://example.com' }, '/base/')).rejects.toThrow(
+      'Failed: 500 Server Error',
+    )
+  })
+})
+
+describe('parseRecipe — response metadata', () => {
+  it('carries the source URL and candidate images from response headers into the result', async () => {
+    const chunks = [JSON.stringify({ _p: 3, title: 'From URL' }) + '\n']
+    const res = makeStreamResponse(chunks)
+    res.headers.set('X-Source-Url', 'https://example.com/recipe')
+    res.headers.set(
+      'X-Candidate-Images',
+      JSON.stringify([{ url: 'https://example.com/img.jpg', isDefault: true }]),
+    )
+    global.fetch = vi.fn().mockResolvedValue(res)
+
+    const result = await parseRecipe({ url: 'https://example.com/recipe' }, '/base/')
+
+    expect((result.data as Record<string, unknown>).sourceUrl).toBe('https://example.com/recipe')
+    expect(result.candidateImages).toEqual([
+      { url: 'https://example.com/img.jpg', isDefault: true },
+    ])
+  })
+
+  it('ignores an unparseable candidate-images header instead of failing the import', async () => {
+    const chunks = [JSON.stringify({ _p: 3, title: 'Bad Header Recipe' }) + '\n']
+    const res = makeStreamResponse(chunks)
+    res.headers.set('X-Candidate-Images', 'not valid json')
+    global.fetch = vi.fn().mockResolvedValue(res)
+
+    const result = await parseRecipe({ url: 'https://example.com' }, '/base/')
+
+    expect((result.data as Record<string, unknown>).title).toBe('Bad Header Recipe')
+    expect(result.candidateImages).toBeUndefined()
+  })
+})
+
+describe('parseRecipe — non-streaming fallback (no res.body)', () => {
+  /** A fetch Response-like object with `body: null` — some environments (older Safari, certain
+   * proxies) don't expose a streaming body even on a 200, which is what parseRecipe's `!res.body`
+   * branch exists for. jsdom's real `Response` always has a body stream, so it can't produce this
+   * case; a minimal fake is the only way to actually exercise `parseFromFullText`. */
+  function fakeNonStreamingResponse(text: string): Response {
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      body: null,
+      headers: new Headers(),
+      text: async () => text,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any
+  }
+
+  it('parses NDJSON from the full text body when the environment exposes no stream', async () => {
+    const text =
+      JSON.stringify({ _p: 1, ingredients: ['flour'] }) +
+      '\n' +
+      JSON.stringify({ _p: 3, title: 'Full Text Recipe' }) +
+      '\n'
+    global.fetch = vi.fn().mockResolvedValue(fakeNonStreamingResponse(text))
+
+    const result = await parseRecipe({ url: 'https://example.com' }, '/base/')
+
+    expect((result.data as Record<string, unknown>).title).toBe('Full Text Recipe')
+    expect((result.data as Record<string, unknown>).ingredients).toEqual(['flour'])
+  })
+
+  it('throws when the full text body is empty/unusable', async () => {
+    global.fetch = vi.fn().mockResolvedValue(fakeNonStreamingResponse(''))
+
+    await expect(parseRecipe({ url: 'https://example.com' }, '/base/')).rejects.toThrow(
+      /Empty response/,
+    )
+  })
 })

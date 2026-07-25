@@ -1,6 +1,7 @@
 # Investigation + Redesign Plan: Recipe Import (Photo + Link)
 
-Status: **DONE — all four phases shipped** (PRs #65, #66, and the VM-worker error-logging PR).
+Status: **Phases 1-4 shipped** (PRs #65, #66, #67). **Phase 5 (client-side) in progress** — see
+below.
 
 Written after a single evening produced seven separate import/enhancement bug reports
 (undefined ingredients, description-in-instructions, silent enhancement no-op, 3000-character
@@ -173,3 +174,33 @@ prompt nobody shares with the other four sources.
 Each phase is independently shippable. None require the others to land first, though 2 is much
 easier to do well once 1 removes the duplicate prompts it would otherwise need to fix in five
 places.
+
+## Phase 5: the client-side half (added after a follow-up survey)
+
+Phases 1-4 covered every server-side call site. Two gaps flagged in this doc from the start were
+deliberately left for later ("less urgent... the client should rarely receive un-validated data
+going forward") — a follow-up survey of the whole app for the next "chasing patches" candidate
+turned up hard evidence that it's time to close them:
+
+- **`importer/api.ts`'s `parseRecipe()` is the single most complex function in the codebase** —
+  ESLint's cognitive-complexity check flags it at **52** (the limit is 15; the next-highest
+  function anywhere in the app is 27). It owns the NDJSON stream-reading loop, per-line JSON
+  parsing, progress-message lookup (duplicated verbatim in the `!res.body` fallback path,
+  `parseNdjsonLines`), and the stream-error salvage logic, all in one function with deep nesting.
+  This is exactly the shape of code a future bug hides in undetected.
+- **`RecipeEditor.tsx`'s `handleRecipeParsed` still merges via a raw `{...prev, ...parsed}`
+  spread**, same as noted in the original investigation — no title/ingredient/step validation at
+  the last point before an AI result becomes saved form state. Server-side normalization (Phase 2)
+  makes this much lower-risk than when first flagged, but it's still the one AI-result write path
+  in the app with no defense-in-depth at all.
+
+**Scope for this phase:**
+1. Refactor `parseRecipe()` — extract the streaming-read loop, per-line merge logic, and progress
+   lookup into small named functions, deduplicating the progress-message array between the
+   streaming and non-streaming paths. Pure refactor: all four existing salvage/abort/success tests
+   in `api.test.ts` must keep passing unchanged, proving behavior didn't shift.
+2. Apply the same `recipe-result-validation.ts` functions already used server-side
+   (`extractPlausibleTitle`, `normalizeIngredients`, `normalizeSteps`) at the `handleRecipeParsed`
+   merge boundary — not `mergeAiRecipeUpdate` (that's a merge-onto-*existing*-recipe operation;
+   `AiImporter` only renders for new recipes, the same "no fallback to an original" case Phase 2's
+   `extractPlausibleTitle` was built for).
