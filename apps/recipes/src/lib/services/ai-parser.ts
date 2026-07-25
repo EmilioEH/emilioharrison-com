@@ -4,6 +4,7 @@ import type { GoogleGenAI } from '@google/genai'
 import { closeBalanced } from '../api-utils'
 import { createTimeoutSignal } from './ai-timeout'
 import { assertSafeExternalUrl } from './url-safety'
+import { DISH_TYPE_OPTIONS, DISH_TYPE_PROMPT_GUIDANCE } from '../dish-types'
 import { GEMINI_TEXT_MODEL } from './ai-model-config'
 
 // NOTE: this module must stay free of Cloudflare/Astro/Vite-only imports (no `locals`, no
@@ -159,7 +160,7 @@ Rules:
 3. Use reasonable defaults if data is missing (e.g. 2 servings).
 4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 5. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-6. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+6. Infer the "Dish Type", strictly one of: ${DISH_TYPE_OPTIONS.join(', ')}. ${DISH_TYPE_PROMPT_GUIDANCE}
 7. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
 8. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
 9. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
@@ -188,7 +189,7 @@ Rules:
 3. Use reasonable defaults if data is missing (e.g. 2 servings).
 4. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 5. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-6. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+6. Infer the "Dish Type", strictly one of: ${DISH_TYPE_OPTIONS.join(', ')}. ${DISH_TYPE_PROMPT_GUIDANCE}
 7. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
 8. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
 9. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.
@@ -220,7 +221,7 @@ Rules:
 6. Use reasonable defaults if optional metadata is missing, but be accurate with Ingredients and Steps.
 7. Identify the "Main Protein Source" and map it strictly to one of these values: ${PROTEIN_OPTIONS.join(', ')}.
 8. Infer the "Meal Type" (Breakfast, Lunch, Dinner, Snack, Dessert).
-9. Infer the "Dish Type" (Main, Side, Appetizer, Salad, Soup, Drink, Sauce).
+9. Infer the "Dish Type", strictly one of: ${DISH_TYPE_OPTIONS.join(', ')}. ${DISH_TYPE_PROMPT_GUIDANCE}
 10. **INFER** specific "Equipment" required (e.g. Air Fryer, Slow Cooker, Blender) based on the steps.
 11. **INFER** any "Occasion" tags (e.g. Weeknight, Party, Holiday) based on complexity and serving style.
 12. **INFER** "Dietary" attributes (e.g. Gluten-Free, Vegan, Keto) based on the ingredients.

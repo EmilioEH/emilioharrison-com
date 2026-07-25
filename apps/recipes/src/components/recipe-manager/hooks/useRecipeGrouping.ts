@@ -3,12 +3,13 @@ import { format, addDays, parseISO } from 'date-fns'
 import { useStore } from '@nanostores/react'
 import { weekState, currentWeekRecipes } from '../../../lib/weekStore'
 import type { Recipe } from '../../../lib/types'
+import { DISH_TYPE_OPTIONS, resolveDishType } from '../../../lib/dish-types'
 
 // Predefined sort orders for grouping
 const SORT_ORDERS: Record<string, string[]> = {
   protein: ['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'],
   mealType: ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
-  dishType: ['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'],
+  dishType: [...DISH_TYPE_OPTIONS],
 }
 
 // Helper: Sort groups by predefined order or alphabetically
@@ -27,7 +28,9 @@ type GroupKeyResolver = (recipe: Recipe, groups: Record<string, Recipe[]>) => st
 
 const groupByProtein: GroupKeyResolver = (recipe) => recipe.protein || 'Uncategorized'
 const groupByMealType: GroupKeyResolver = (recipe) => recipe.mealType || 'Other'
-const groupByDishType: GroupKeyResolver = (recipe) => recipe.dishType || 'Other'
+// Falls back to inferring from the title so the ~400 recipes categorised before the baking
+// values existed are filterable now, rather than only after each is re-enhanced.
+const groupByDishType: GroupKeyResolver = (recipe) => resolveDishType(recipe)
 const groupByAlpha: GroupKeyResolver = (recipe) =>
   recipe.title ? recipe.title[0].toUpperCase() : '#'
 const groupByRecent: GroupKeyResolver = () => 'All Recipes'
