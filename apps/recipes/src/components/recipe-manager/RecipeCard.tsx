@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
 import type { Recipe } from '../../lib/types'
 import { getPlannedWeeksForRecipe } from '../../lib/weekStore'
+import { getRecipeCardImage } from '../../lib/recipe-card-image'
 
 // Helper to normalize titles to Title Case
 const toTitleCase = (str: string): string => {
@@ -55,6 +56,8 @@ export const RecipeCard = memo(
     skipAnimation = false,
     plannedWeeks,
   }: RecipeCardProps) => {
+    const cardImage = getRecipeCardImage(recipe)
+
     const isPlanned = plannedWeeks.length > 0
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
@@ -83,14 +86,13 @@ export const RecipeCard = memo(
       >
         {/* Square Thumbnail with border for contrast */}
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm ring-1 ring-black/5">
-          {recipe.thumbUrl || recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage ? (
+          {cardImage ? (
             <img
               // Prefer the small ~420px thumbUrl generated at upload time (P5) — cheaper to fetch
               // and decode than the full up-to-1920px image for a 96px card. Recipes saved before
               // thumbUrl existed (no backfill) fall back to the full-size fields.
-              src={
-                recipe.thumbUrl || recipe.images?.[0] || recipe.finishedImage || recipe.sourceImage
-              }
+              // A photographed recipe card is deliberately not shown here — see getRecipeCardImage.
+              src={cardImage}
               width={96}
               height={96}
               className="aspect-square h-full w-full object-cover"
