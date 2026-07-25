@@ -5,6 +5,11 @@ import { AiImporter } from './importer/AiImporter'
 import { ImageSelector } from './importer/ImageSelector'
 import type { Recipe, Ingredient } from '../../lib/types'
 import { confirm } from '../../lib/dialogStore'
+import {
+  extractPlausibleTitle,
+  normalizeIngredients,
+  normalizeSteps,
+} from '../../lib/services/recipe-result-validation'
 
 interface RecipeEditorProps {
   recipe: Partial<Recipe>
@@ -75,18 +80,36 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
     parsed: Recipe,
     candidateImgs?: Array<{ url: string; alt?: string; isDefault?: boolean }>,
   ) => {
+    // Defense-in-depth: every import source is already validated server-side (see
+    // recipe-result-validation.ts / IMPORT-PIPELINE-V2-PLAN.md), but this merge is still the
+    // last point before an AI result becomes saved form state, and previously trusted the
+    // network response completely via a raw spread. AiImporter only renders for brand-new
+    // recipes (see the `!recipe.id` check below), so there's no existing title to fall back to —
+    // the same "fresh import" case `extractPlausibleTitle` was built for.
+    const normalizedIngredients = normalizeIngredients(parsed.ingredients) as
+      | Ingredient[]
+      | undefined
+    const normalizedSteps = normalizeSteps(undefined, parsed.steps, undefined, parsed.description)
+
+    const safeParsed: Recipe = {
+      ...parsed,
+      title: extractPlausibleTitle(parsed.title) ?? 'Untitled Recipe',
+      ...(normalizedIngredients ? { ingredients: normalizedIngredients } : {}),
+      ...(normalizedSteps ? { steps: normalizedSteps } : {}),
+    }
+
     setFormData((prev) => {
       const updated = {
         ...prev,
-        ...parsed,
+        ...safeParsed,
         updatedAt: new Date().toISOString(),
       }
 
       // Ensure sourceImage is in the images array
-      if (parsed.sourceImage) {
+      if (safeParsed.sourceImage) {
         const currentImages = updated.images || []
-        if (!currentImages.includes(parsed.sourceImage)) {
-          updated.images = [parsed.sourceImage, ...currentImages]
+        if (!currentImages.includes(safeParsed.sourceImage)) {
+          updated.images = [safeParsed.sourceImage, ...currentImages]
         }
       }
 
@@ -97,12 +120,12 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
       setInternalCandidateImages(candidateImgs)
     }
 
-    if (parsed.ingredients) {
-      setIngText(ingredientsToText(parsed.ingredients))
+    if (safeParsed.ingredients) {
+      setIngText(ingredientsToText(safeParsed.ingredients))
     }
 
-    if (parsed.steps) {
-      setStepText(parsed.steps.join('\n'))
+    if (safeParsed.steps) {
+      setStepText(safeParsed.steps.join('\n'))
     }
   }
 

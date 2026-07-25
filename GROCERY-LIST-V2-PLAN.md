@@ -1,6 +1,8 @@
 # Redesign Plan: Grocery List (Raw + Smart)
 
-Status: **DRAFT — for discussion, not yet approved or built.**
+Status: **Phases 1-3 shipped** (PR #53, plus two fast-follow display fixes) — Raw list, the
+server-authoritative Smart data fetch, and the reliability layer are all live. Phase 4 (canary
+job) remains deferred, per its own "optional, once 1-3 are stable" framing — not built.
 
 Written after a live production incident: the VM worker's grocery generation was silently
 returning `status: complete` with 0 items, several times in a row, with no user-visible error.

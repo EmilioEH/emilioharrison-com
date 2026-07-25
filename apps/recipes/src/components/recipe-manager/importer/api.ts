@@ -32,6 +32,165 @@ function getStreamErrorMessage(err: unknown): string {
   return 'Something went wrong'
 }
 
+/** Indexed by the `_p` phase marker parse-recipe.ts's response streams (`_p: 1/2/3`). Shared by
+ * both the streaming and non-streaming (`!res.body` fallback) read paths — previously duplicated
+ * verbatim in each, one of the things that made `parseRecipe` hard to follow. */
+const PHASE_PROGRESS_MESSAGES = [
+  '',
+  'Extracting ingredients... (33%)',
+  'Structuring instructions... (66%)',
+  'Finalizing recipe details... (100%)',
+]
+
+function reportPhaseProgress(phase: unknown, onProgress?: (msg: string) => void): void {
+  if (typeof phase !== 'number' || !onProgress) return
+  const msg = PHASE_PROGRESS_MESSAGES[phase]
+  if (msg) onProgress(msg)
+}
+
+/** Parses one NDJSON line and merges it onto `merged` in place. Malformed/partial lines (e.g. a
+ * chunk boundary that split a line mid-write) are skipped silently rather than treated as an
+ * error — the next read (or the trailing-buffer flush) recovers a clean line. */
+function mergeNdjsonLine(
+  merged: Record<string, unknown>,
+  line: string,
+  onProgress?: (msg: string) => void,
+): void {
+  const trimmed = line.trim()
+  if (!trimmed) return
+  try {
+    const phaseData = JSON.parse(trimmed)
+    reportPhaseProgress(phaseData._p, onProgress)
+    delete phaseData._p
+    Object.assign(merged, phaseData)
+  } catch {
+    // Skip partial/unparseable lines — see doc comment above.
+  }
+}
+
+/**
+ * Reads the streaming response body to completion, merging each NDJSON line onto `merged` as it
+ * arrives. Mutates `merged` in place (rather than building and returning its own object) so that
+ * if this throws partway through, the caller still has whatever was merged before the failure —
+ * that partial state is exactly what `parseRecipe`'s catch block uses to decide whether a failure
+ * is salvageable (see the `merged.title` check there).
+ */
+async function readNdjsonStream(
+  body: ReadableStream<Uint8Array>,
+  merged: Record<string, unknown>,
+  onProgress?: (msg: string) => void,
+): Promise<void> {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+
+    const newlineIdx = buffer.lastIndexOf('\n')
+    if (newlineIdx < 0) continue
+
+    const complete = buffer.slice(0, newlineIdx)
+    buffer = buffer.slice(newlineIdx + 1)
+    for (const line of complete.split('\n')) {
+      mergeNdjsonLine(merged, line, onProgress)
+    }
+  }
+
+  if (buffer.trim()) mergeNdjsonLine(merged, buffer, onProgress)
+}
+
+type CandidateImages = Array<{ url: string; alt?: string; isDefault?: boolean }>
+type ParseResult = { data: unknown; candidateImages?: CandidateImages }
+
+/** Reads and throws the server's error message for a non-OK response, falling back to the raw
+ * status line if the body isn't the expected `{error}` JSON shape. */
+async function throwForErrorResponse(res: Response): Promise<never> {
+  let errMsg = `Failed: ${res.status} ${res.statusText}`
+  try {
+    const errData = JSON.parse(await res.text())
+    if (errData.error) errMsg = errData.error
+  } catch {
+    // ignore — use the status-line fallback above
+  }
+  throw new Error(errMsg)
+}
+
+/** Pulls the source URL and image-picker candidates out of response headers (see
+ * `parse-recipe.ts`'s `responseHeaders`). Malformed JSON in the candidates header is ignored
+ * rather than failing the whole import over an image-picker nicety. */
+function extractResponseMetadata(res: Response): {
+  sourceUrl: string | undefined
+  candidateImages: CandidateImages | undefined
+} {
+  const sourceUrl = res.headers.get('X-Source-Url') || undefined
+  let candidateImages: CandidateImages | undefined
+  try {
+    const header = res.headers.get('X-Candidate-Images')
+    if (header) candidateImages = JSON.parse(header)
+  } catch {
+    // Invalid JSON in header, ignore
+  }
+  return { sourceUrl, candidateImages }
+}
+
+/** Non-streaming fallback (some environments don't expose `res.body`): read the whole response as
+ * text and parse it as NDJSON in one pass rather than incrementally. */
+async function parseFromFullText(
+  res: Response,
+  sourceUrl: string | undefined,
+  candidateImages: CandidateImages | undefined,
+  onProgress?: (msg: string) => void,
+): Promise<ParseResult> {
+  const merged = parseNdjsonLines(await res.text(), onProgress)
+  if (Object.keys(merged).length === 0) {
+    throw new SyntaxError('Empty response — the AI generated no content')
+  }
+  if (sourceUrl) merged.sourceUrl = sourceUrl
+  return { data: merged, candidateImages }
+}
+
+/**
+ * Reads the streaming response to completion. On a stream failure, salvages whatever was merged
+ * so far if structuring got far enough to produce a title — see `readNdjsonStream`'s doc comment
+ * for why a title is the bar for "usable" (phase 1/2 fragments alone aren't a real recipe, and
+ * silently treating them as one is how a hollow, title-less recipe got saved with no error shown,
+ * per the recipe-corruption postmortem). Everything else propagates as a real, user-visible error.
+ */
+async function parseFromStream(
+  body: ReadableStream<Uint8Array>,
+  sourceUrl: string | undefined,
+  candidateImages: CandidateImages | undefined,
+  onProgress?: (msg: string) => void,
+): Promise<ParseResult> {
+  const merged: Record<string, unknown> = {}
+
+  try {
+    await readNdjsonStream(body, merged, onProgress)
+    if (Object.keys(merged).length === 0) {
+      throw new SyntaxError('Empty response — the AI generated no content')
+    }
+    if (sourceUrl) merged.sourceUrl = sourceUrl
+    return { data: merged, candidateImages }
+  } catch (err) {
+    // Preserve cancellation semantics — let the caller's AbortError check in
+    // handleParseError see the real error, rather than wrapping it below.
+    if (err instanceof Error && err.name === 'AbortError') throw err
+
+    console.warn('Stream error — attempting to salvage partial response', err)
+
+    if (merged.title) {
+      if (sourceUrl) merged.sourceUrl = sourceUrl
+      return { data: merged, candidateImages }
+    }
+
+    throw new Error(getStreamErrorMessage(err))
+  }
+}
+
 export async function parseRecipe(
   payload: {
     url?: string
@@ -48,10 +207,7 @@ export async function parseRecipe(
   baseUrl: string,
   signal?: AbortSignal,
   onProgress?: (stage: string) => void,
-): Promise<{
-  data: unknown
-  candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>
-}> {
+): Promise<ParseResult> {
   const res = await fetch(`${baseUrl}api/parse-recipe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -59,145 +215,22 @@ export async function parseRecipe(
     signal,
   })
 
-  if (!res.ok) {
-    let errMsg = `Failed: ${res.status} ${res.statusText}`
-    try {
-      const textBody = await res.text()
-      const errData = JSON.parse(textBody)
-      if (errData.error) errMsg = errData.error
-    } catch {
-      // ignore
-    }
-    throw new Error(errMsg)
-  }
+  if (!res.ok) await throwForErrorResponse(res)
 
-  // Extract metadata from headers
-  const sourceUrl = res.headers.get('X-Source-Url') || undefined
-  const candidateImagesHeader = res.headers.get('X-Candidate-Images')
-  let candidateImages: Array<{ url: string; alt?: string; isDefault?: boolean }> | undefined
+  const { sourceUrl, candidateImages } = extractResponseMetadata(res)
 
-  try {
-    if (candidateImagesHeader) {
-      candidateImages = JSON.parse(candidateImagesHeader)
-    }
-  } catch {
-    // Invalid JSON in header, ignore
-  }
-
-  // Ensure we have a body to read
-  if (!res.body) {
-    const text = await res.text()
-    const merged = parseNdjsonLines(text, onProgress)
-    if (Object.keys(merged).length === 0) {
-      throw new SyntaxError('Empty response — the AI generated no content')
-    }
-    if (sourceUrl) (merged as Record<string, unknown>).sourceUrl = sourceUrl
-    return { data: merged, candidateImages }
-  }
-
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const merged: Record<string, any> = {}
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-
-      // Process complete NDJSON lines as they arrive
-      const newlineIdx = buffer.lastIndexOf('\n')
-      if (newlineIdx >= 0) {
-        const complete = buffer.slice(0, newlineIdx)
-        buffer = buffer.slice(newlineIdx + 1)
-        for (const line of complete.split('\n')) {
-          const trimmed = line.trim()
-          if (!trimmed) continue
-          try {
-            const phaseData = JSON.parse(trimmed)
-            const p = phaseData._p
-            if (p && onProgress) {
-              const msgs = [
-                '',
-                'Extracting ingredients... (33%)',
-                'Structuring instructions... (66%)',
-                'Finalizing recipe details... (100%)',
-              ]
-              if (msgs[p]) onProgress(msgs[p])
-            }
-            delete phaseData._p
-            Object.assign(merged, phaseData)
-          } catch {
-            // Skip partial/unparseable lines
-          }
-        }
-      }
-    }
-
-    // Process any remaining buffer
-    if (buffer.trim()) {
-      try {
-        const phaseData = JSON.parse(buffer.trim())
-        delete phaseData._p
-        Object.assign(merged, phaseData)
-      } catch {
-        // ignore
-      }
-    }
-
-    if (Object.keys(merged).length === 0) {
-      throw new SyntaxError('Empty response — the AI generated no content')
-    }
-
-    if (sourceUrl) merged.sourceUrl = sourceUrl
-    return { data: merged, candidateImages }
-  } catch (err) {
-    // Preserve cancellation semantics — let the caller's AbortError check in
-    // handleParseError see the real error, rather than wrapping it below.
-    if (err instanceof Error && err.name === 'AbortError') throw err
-
-    console.warn('Stream error — attempting to salvage partial response', err)
-
-    // Only salvage if structuring (the final phase) got far enough to produce a title.
-    // Phase 1/2 fragments alone (raw ingredient/step OCR) aren't a usable recipe — silently
-    // treating them as a full success is what let a hollow, title-less recipe get saved with
-    // no error shown to the user (see recipe-corruption postmortem).
-    if (merged.title) {
-      if (sourceUrl) merged.sourceUrl = sourceUrl
-      return { data: merged, candidateImages }
-    }
-
-    throw new Error(getStreamErrorMessage(err))
-  }
+  return res.body
+    ? parseFromStream(res.body, sourceUrl, candidateImages, onProgress)
+    : parseFromFullText(res, sourceUrl, candidateImages, onProgress)
 }
 
 function parseNdjsonLines(
   text: string,
   onProgress?: (msg: string) => void,
 ): Record<string, unknown> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const merged: Record<string, any> = {}
-  const msgs = [
-    '',
-    'Extracting ingredients... (33%)',
-    'Structuring instructions... (66%)',
-    'Finalizing recipe details... (100%)',
-  ]
+  const merged: Record<string, unknown> = {}
   for (const line of text.trim().split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    try {
-      const phaseData = JSON.parse(trimmed)
-      const p = phaseData._p
-      if (p && onProgress && msgs[p]) onProgress(msgs[p])
-      delete phaseData._p
-      Object.assign(merged, phaseData)
-    } catch {
-      // skip bad lines
-    }
+    mergeNdjsonLine(merged, line, onProgress)
   }
   return merged
 }
