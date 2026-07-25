@@ -150,7 +150,7 @@ describe('RecipeEditor', () => {
     })
 
     it('falls back to "Untitled Recipe" rather than saving an unsalvageable title', () => {
-      setNextParsedRecipe({ title: 'A '.repeat(65).trim(), ingredients: [] })
+      setNextParsedRecipe({ title: 'A '.repeat(120).trim(), ingredients: [] })
       render(<RecipeEditor {...defaultProps} />)
 
       fireEvent.click(screen.getByRole('button', { name: 'Simulate Parsed' }))

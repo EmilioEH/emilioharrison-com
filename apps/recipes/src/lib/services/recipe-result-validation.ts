@@ -23,7 +23,14 @@
  * Longest a real recipe title plausibly gets. Generous — "Roasted Pork Chops and Vegetables with
  * Parsley Vinaigrette" is 56 — while still far below the runaway lengths seen in the wild.
  */
-const MAX_TITLE_LENGTH = 120
+/**
+ * Real cookbook titles run long — "Salted Butter and Chocolate Chunk Shortbread, or Why Would I
+ * Make Another Chocolate Chip Cookie Ever Again?" is 105 characters and entirely legitimate. The
+ * cap exists only to catch runaway output (the incident that prompted it produced a 3,167-character
+ * title), so it sits well above any plausible real title. The commentary-phrase check below is what
+ * actually distinguishes a real title from the model narrating its own difficulties.
+ */
+const MAX_TITLE_LENGTH = 200
 
 /**
  * Phrases that mark a "title" as the model narrating its own difficulties rather than naming the

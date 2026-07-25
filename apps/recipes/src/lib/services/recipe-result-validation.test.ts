@@ -21,6 +21,16 @@ describe('isPlausibleTitle', () => {
     expect(isPlausibleTitle(polluted)).toBe(false)
   })
 
+  it('accepts a real long cookbook title verbatim (regression: titles were being shortened)', () => {
+    // The printed title of a real recipe in the library, 105 characters. The prompt used to ask
+    // for "a short noun phrase, ideally under 60 characters", which instructed the model to
+    // rewrite exactly this kind of title.
+    const real =
+      'Salted Butter and Chocolate Chunk Shortbread, or Why Would I Make Another Chocolate Chip Cookie Ever Again?'
+    expect(isPlausibleTitle(real)).toBe(true)
+    expect(extractPlausibleTitle(real)).toBe(real)
+  })
+
   it('rejects non-string values', () => {
     expect(isPlausibleTitle(undefined)).toBe(false)
     expect(isPlausibleTitle(42)).toBe(false)
@@ -64,7 +74,7 @@ describe('extractPlausibleTitle (fresh import — no original to fall back to)',
   it('gives up (returns undefined) when the title is too long with no marker to truncate at', () => {
     // No "(", "[", or "Note:" for COMMENTARY_START to anchor on, so there's nothing to salvage —
     // unlike the two production cases, which both had a clean prefix before a clear marker.
-    expect(extractPlausibleTitle('A '.repeat(65).trim())).toBeUndefined()
+    expect(extractPlausibleTitle('A '.repeat(120).trim())).toBeUndefined()
     expect(extractPlausibleTitle('')).toBeUndefined()
     expect(extractPlausibleTitle(undefined)).toBeUndefined()
   })
