@@ -130,6 +130,10 @@ You are an expert Chef and Data Engineer. Your task is to extract structured rec
 Return a strict JSON object matching the provided schema.
 
 Rules:
+0. **"title" MUST be ONLY the dish name** — a short noun phrase, ideally under 60 characters
+   (e.g. "Chicken Thighs with Broccolini and Israeli Couscous"). NEVER append caveats, notes,
+   apologies, or commentary about the source to it. If the image is cut off, unreadable, or
+   incomplete, still give a clean dish-name title and put any such remark in "description".
 1. Describe what you see in the image and infer the recipe (ingredients/steps) as best as possible.
 2. Generate a one-sentence "description" that makes the dish sound delicious.
 2. Use reasonable defaults if data is missing (e.g. 2 servings).

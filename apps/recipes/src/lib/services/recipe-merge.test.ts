@@ -49,6 +49,44 @@ describe('mergeAiRecipeUpdate', () => {
     expect(merged.title).toBe('Real Recipe Title')
   })
 
+  describe('title plausibility (field report: AI commentary written into the title)', () => {
+    it('keeps the original title when the AI narrates its difficulties into it', () => {
+      // Real production value, truncated — the stored title ran to 3,167 characters.
+      const polluted =
+        'Chicken Thighs with Broccolini, Lemon, and Israeli Couscous (Incomplete Recipe Extract from Image Source - Instructions truncated in source image, completing based on common culinary practices for described dish components). Note: Recipe source stops at step 4, remaining steps inferred.'
+      const original = makeRecipe({ title: 'Chicken Thighs with Broccolini' })
+
+      const merged = mergeAiRecipeUpdate(original, {
+        title: polluted,
+        ingredients: [{ name: 'chicken thighs', amount: '4' }],
+      })
+
+      expect(merged.title).toBe('Chicken Thighs with Broccolini')
+    })
+
+    it('keeps the original title when the AI returns an essay instead of a name', () => {
+      // The other production case: a plausible dish name with a marketing paragraph glued on.
+      const original = makeRecipe({ title: 'Poached Chicken and Corn Soup' })
+      const merged = mergeAiRecipeUpdate(original, {
+        title:
+          'Colombian-Style Chicken with Corn, Avocado, and Lime soup stew hybrid inspired by ajiaco featuring a clean, vibrant broth and creamy avocado accents for a comforting meal that is perfect for any night of the week and beyond',
+        ingredients: [{ name: 'chicken', amount: '1 lb' }],
+      })
+
+      expect(merged.title).toBe('Poached Chicken and Corn Soup')
+    })
+
+    it('still accepts a normal improved title', () => {
+      const original = makeRecipe({ title: 'Steak Tips' })
+      const merged = mergeAiRecipeUpdate(original, {
+        title: 'Steak Tips with Ras el Hanout and Couscous',
+        ingredients: [{ name: 'steak', amount: '1 lb' }],
+      })
+
+      expect(merged.title).toBe('Steak Tips with Ras el Hanout and Couscous')
+    })
+  })
+
   it('drops a leading step that just repeats the description', () => {
     // Observed in production: a photo-imported recipe came back from background Enhancement
     // with clean `structuredSteps` but `steps[0]` set to the recipe's own blurb. Enhancement
