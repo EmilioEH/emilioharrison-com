@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react'
-import { Loader2 } from 'lucide-react'
+import { ViewSkeleton } from '../ui/ViewSkeleton'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { RecipeHeader } from './RecipeHeader'
@@ -50,12 +50,6 @@ const WeekWorkspace = React.lazy(() =>
 )
 const RecipeEditor = React.lazy(() =>
   import('./RecipeEditor').then((m) => ({ default: m.RecipeEditor })),
-)
-
-const ViewLoadingFallback: React.FC = () => (
-  <div data-testid="loading-indicator" className="flex h-full items-center justify-center bg-card">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
 )
 
 interface RecipeManagerProps {
@@ -458,7 +452,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
             {/* Week View with slide-up animation */}
             <AnimatePresence>
               {view === 'week' && (
-                <Suspense fallback={<ViewLoadingFallback />}>
+                <Suspense fallback={<ViewSkeleton variant="week" />}>
                   <WeekWorkspace
                     recipes={processedRecipes}
                     allRecipes={recipes}
@@ -493,7 +487,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         onClose={() => setView('library')}
         title={selectedRecipe?.id ? 'Edit Recipe' : 'New Recipe'}
       >
-        <Suspense fallback={<ViewLoadingFallback />}>
+        <Suspense fallback={<ViewSkeleton variant="form" />}>
           <RecipeEditor
             recipe={selectedRecipe || {}}
             onSave={handleSaveRecipe}

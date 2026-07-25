@@ -1,5 +1,14 @@
 import React, { Suspense, useState } from 'react'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { ViewSkeleton, type SkeletonVariant } from '../ui/ViewSkeleton'
+
+/** Picks the placeholder shape matching the view being navigated to. */
+function skeletonVariantForView(view: string): SkeletonVariant {
+  if (view === 'detail') return 'detail'
+  if (view === 'week') return 'week'
+  if (view === 'edit' || view === 'invite' || view === 'family-settings') return 'form'
+  return 'list'
+}
+import { AlertCircle } from 'lucide-react'
 import type { Recipe, Family } from '../../lib/types'
 import type { ViewMode } from './hooks/useRouter'
 import { LazyViewErrorBoundary } from '../ui/LazyViewErrorBoundary'
@@ -19,13 +28,8 @@ const FamilyManagementView = React.lazy(() =>
   import('./views/FamilyManagementView').then((m) => ({ default: m.FamilyManagementView })),
 )
 
-// Shared fallback while a lazy view's chunk loads — visually identical to the
-// top-level data loading indicator below (same testid; the two never render at once).
-const ViewLoadingFallback: React.FC = () => (
-  <div data-testid="loading-indicator" className="flex h-full items-center justify-center bg-card">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
-)
+// Fallback while a lazy view's chunk loads. Each boundary passes the shape of the view that is
+// about to render, so navigation looks like content arriving rather than the app blanking out.
 
 interface RecipeManagerViewProps {
   view: string
@@ -75,15 +79,10 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     }
   }, [view, isAdmin, setView])
 
+  // Initial data load, before any recipes have arrived. Shaped to whichever view is being
+  // navigated to so a cold open doesn't blank the screen either.
   if (loading) {
-    return (
-      <div
-        data-testid="loading-indicator"
-        className="flex h-full items-center justify-center bg-card"
-      >
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <ViewSkeleton variant={skeletonVariantForView(view)} />
   }
 
   if (error) {
@@ -107,7 +106,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   if (view === 'detail' && selectedRecipe) {
     return (
       <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
-        <Suspense fallback={<ViewLoadingFallback />}>
+        <Suspense fallback={<ViewSkeleton variant="detail" />}>
           <RecipeDetail
             key={selectedRecipe.id}
             recipe={selectedRecipe}
@@ -129,12 +128,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     // This prevents premature "Recipe Not Found" during page load/reload
     if (!initialized) {
       return (
-        <div
-          data-testid="loading-indicator"
-          className="flex h-full items-center justify-center bg-card"
-        >
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <ViewSkeleton variant="detail" />
       )
     }
 
@@ -161,7 +155,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
     }
     return (
       <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
-        <Suspense fallback={<ViewLoadingFallback />}>
+        <Suspense fallback={<ViewSkeleton variant="list" />}>
           <AdminDashboard onClose={() => setView('library')} />
         </Suspense>
       </LazyViewErrorBoundary>
@@ -171,7 +165,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   if (view === 'invite') {
     return (
       <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
-        <Suspense fallback={<ViewLoadingFallback />}>
+        <Suspense fallback={<ViewSkeleton variant="form" />}>
           <InviteView onClose={() => setView('library')} />
         </Suspense>
       </LazyViewErrorBoundary>
@@ -181,7 +175,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   if (view === 'family-settings') {
     return (
       <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
-        <Suspense fallback={<ViewLoadingFallback />}>
+        <Suspense fallback={<ViewSkeleton variant="form" />}>
           <FamilyManagementView onClose={() => setView('library')} family={family} />
         </Suspense>
       </LazyViewErrorBoundary>
