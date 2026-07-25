@@ -99,6 +99,55 @@ describe('buildTextRecipeStream — URL/text sources (single phase, no OCR)', ()
     const reader = stream.getReader()
     await expect(reader.read()).rejects.toThrow()
   })
+
+  // This path (URL, JSON-LD, Reddit, pasted text — four of the five import sources) previously
+  // applied NO validation at all: normalizeIngredients/normalizeSteps/title-plausibility only ran
+  // on the photo-import path. A title-pollution or ingredient-shape bug fixed for photo import
+  // could still happen, unfixed, here.
+  describe('validation now applies here too (previously only the photo path had it)', () => {
+    it('salvages a clean title from AI commentary, same as the photo path does', async () => {
+      const polluted =
+        'Buzhenina (Incomplete Recipe Extract from Image Source - Instructions truncated). Note: remaining steps inferred.'
+      const { client } = fakeOpenAiClient([
+        JSON.stringify({ title: polluted, ingredients: [{ name: 'pork', amount: '1' }] }),
+      ])
+
+      const stream = buildTextRecipeStream(client, { text: 'x' }, 'Instructions')
+      const parsed = JSON.parse((await readStream(stream)).trim())
+
+      expect(parsed.title).toBe('Buzhenina')
+    })
+
+    it('coerces raw string ingredients to objects instead of letting them render as "undefined"', async () => {
+      const { client } = fakeOpenAiClient([
+        JSON.stringify({ title: 'Test Recipe', ingredients: ['2 cups flour', '1 tsp salt'] }),
+      ])
+
+      const stream = buildTextRecipeStream(client, { text: 'x' }, 'Instructions')
+      const parsed = JSON.parse((await readStream(stream)).trim())
+
+      expect(parsed.ingredients).toEqual([
+        { name: '2 cups flour', amount: '' },
+        { name: '1 tsp salt', amount: '' },
+      ])
+    })
+
+    it('strips a leading description echo from steps', async () => {
+      const blurb = 'This is a simple weeknight dinner the whole family will enjoy.'
+      const { client } = fakeOpenAiClient([
+        JSON.stringify({
+          title: 'Test Recipe',
+          description: blurb,
+          steps: [blurb, 'Preheat the oven.', 'Bake for 20 minutes.'],
+        }),
+      ])
+
+      const stream = buildTextRecipeStream(client, { text: 'x' }, 'Instructions')
+      const parsed = JSON.parse((await readStream(stream)).trim())
+
+      expect(parsed.steps).toEqual(['Preheat the oven.', 'Bake for 20 minutes.'])
+    })
+  })
 })
 
 describe('runImageOcrPhases', () => {
