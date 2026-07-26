@@ -1,6 +1,7 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
 import { unitLabel } from '../../lib/units'
+import { gramsForIngredient } from '../../lib/ingredient-weights'
 import type { Ingredient } from '../../lib/types'
 
 interface IngredientRowProps {
@@ -88,6 +89,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
   }
 
   const { qty, unit } = measureOf(ingredient)
+  const grams = gramsForIngredient(ingredient.name, ingredient.quantity, ingredient.unit)
 
   return (
     <button
@@ -124,6 +126,13 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
         <span data-testid="ingredient-name" className="font-semibold text-foreground">
           {ingredient.name}
         </span>
+        {/* The weight for a volume measurement, looked up in a fixed table — deterministic, and
+          * absent whenever the ingredient isn't in it. Never a guessed number. */}
+        {grams !== null && (
+          <span data-testid="ingredient-grams" className="ml-1.5 text-sm text-muted-foreground">
+            {grams} g
+          </span>
+        )}
         {ingredient.prep && (
           <span className="text-sm text-muted-foreground">{`, ${ingredient.prep}`}</span>
         )}
