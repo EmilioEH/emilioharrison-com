@@ -138,6 +138,61 @@ describe('buildRawShoppableIngredients', () => {
     expect(item.category).toBe('Meat')
   })
 
+  // Once a recipe has been through the normalisation migration the display list is the better
+  // structured of the two — see lib/ingredient-parse.ts. structuredIngredients is then consulted
+  // only for the category, which is the one field it still holds exclusively.
+  const normalised = {
+    id: 'r2',
+    title: 'Polenta Lasagna',
+    servings: 4,
+    prepTime: 10,
+    cookTime: 40,
+    ingredients: [
+      { name: 'cooked polenta', amount: '1 tube', quantity: 1, unit: 'tube', prep: 'cut into 24 slices', original: '1 (18-ounce) tube, cut into 24 slices cooked polenta' },
+      { name: 'garlic', amount: '2 cloves', quantity: 2, unit: 'clove', original: '2 cloves garlic, minced' },
+      { name: 'large egg', amount: '1', quantity: 1, unit: 'piece', original: '1 large egg' },
+    ],
+    // Deliberately one entry against three display rows, and for the *second* of them — the two
+    // lists disagree on length on 56 real recipes, so a positional match would file the category
+    // against the wrong ingredient.
+    structuredIngredients: [
+      { original: '', name: 'garlic cloves', amount: 2, unit: 'cloves', category: 'Produce' },
+    ],
+    steps: ['Bake.'],
+  } as unknown as Recipe
+
+  it('prefers the normalised display fields over the stale structured ones', () => {
+    const rows = buildRawShoppableIngredients([normalised])
+
+    expect(rows).toHaveLength(3)
+    expect(rows[0].purchaseAmount).toBe(1)
+    expect(rows[0].purchaseUnit).toBe('tube')
+    expect(rows[0].name).toBe('cooked polenta')
+  })
+
+  it('takes the category from the structured list by name, not by position', () => {
+    const rows = buildRawShoppableIngredients([normalised])
+
+    // "garlic cloves" and "garlic" share an ingredient key, so the stored category finds its way
+    // to the right row rather than to whatever sat at index 0.
+    expect(rows[1].name).toBe('garlic')
+    expect(rows[1].category).toBe('Produce')
+  })
+
+  it('falls back to the keyword guesser when nothing in the structured list matches', () => {
+    // A miss must not become a wrong answer — an unmatched ingredient is categorised from its
+    // own name, exactly as a recipe with no structured data would be.
+    expect(buildRawShoppableIngredients([normalised])[2].category).toBe('Dairy')
+  })
+
+  it('keeps a bare count from printing the quantity twice', () => {
+    // `piece` renders as an empty label, and falling through to the raw amount produced
+    // "1  1  large egg" in the unit column.
+    const egg = buildRawShoppableIngredients([normalised])[2]
+    expect(egg.purchaseAmount).toBe(1)
+    expect(egg.purchaseUnit).toBe('unit')
+  })
+
   it('normalises a non-canonical stored category instead of dropping it in Other', () => {
     const recipe = {
       ...tandoori,

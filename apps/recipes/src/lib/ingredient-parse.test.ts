@@ -28,6 +28,25 @@ describe('parseIngredientLine', () => {
     expect(parseIngredientLine('4-6 chicken thighs')).toMatchObject({ quantity: 4 })
   })
 
+  it('reads a range whose upper bound is a mixed number', () => {
+    // "1 to 1 1/2 lb carrots" read only the leading 1 and left "to 1 1/2 lb" in the name.
+    expect(parseIngredientLine('1 to 1 1/2 lb (450-680g) carrots')).toMatchObject({
+      quantity: 1,
+      unit: 'lb',
+      name: 'carrots',
+    })
+  })
+
+  it('adds a measure the page joins with a plus', () => {
+    // "2 tbsp + 2 tsp" — both parts are printed, so adding them is arithmetic, not invention.
+    // Dropping the second silently understated the amount.
+    expect(parseIngredientLine('2 tbsp + 2 tsp (40ml) fresh orange juice')).toMatchObject({
+      quantity: 2.667,
+      unit: 'tbsp',
+      name: 'fresh orange juice',
+    })
+  })
+
   it('does not mistake a size description for a range', () => {
     // "1 to 1½ inches thick" describes the cut, not how many pork chops to buy.
     const parsed = parseIngredientLine('4 pork chops, 1 to 1½ inches thick')

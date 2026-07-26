@@ -92,13 +92,15 @@ function readQuantity(input: string): { value: number; rest: string; hedge?: str
   // The mixed form ("2¼ to 2½ pounds") has to be tried first, or the bare-integer branch matches
   // the "2" and strands the "½" at the front of the ingredient name.
   const range =
-    /^\s*(?:-|–|—|to|or)\s*(?:\d+\s*[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|\d+\s*\/\s*\d+|\d+(?:\.\d+)?|[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])\s*/i.exec(
+    /^\s*(?:-|–|—|to|or)\s*(?:\d+\s+\d+\s*\/\s*\d+|\d+\s*[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|\d+\s*\/\s*\d+|\d+(?:\.\d+)?|[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])\s*/i.exec(
       rest,
     )
   if (range) {
     const afterRange = rest.slice(range[0].length)
-    // Only a range if a unit or the ingredient follows — "1 to 1½ inches thick" is a description.
-    if (!/^(inch|inches|cm|mm|pound|lb)\b/i.test(afterRange.trim())) rest = afterRange
+    // A length following the range makes it a description of the cut — "1 to 1½ inches thick" —
+    // not a quantity to buy. Weights and volumes are excluded from that test: "1 to 1 1/2 lb
+    // carrots" is a real range, and treating "lb" as a description left "to 1 1/2 lb" in the name.
+    if (!/^(inch|inches|cm|mm)\b/i.test(afterRange.trim())) rest = afterRange
   }
 
   return { value, rest, ...(hedge ? { hedge } : {}) }
@@ -370,7 +372,22 @@ export function parseIngredientLine(line: string): ParsedIngredient {
   working = stripLeadingParenthetical(working, notes, preps)
   working = stripLeadingPrepClause(working, preps)
 
-  if (unit) working = stripRestatedMeasure(working, quantity.value, unit.id, notes)
+  // "2 tbsp + 2 tsp fresh orange juice" — a measure the page adds to the first. Both parts are
+  // printed values in the same family, so adding them is arithmetic rather than invention, and
+  // the printed form survives in `original`. Without this the second part was dropped silently
+  // and the row understated the recipe.
+  let total = quantity.value
+  if (unit) {
+    const summed = readAddedMeasure(working, unit.id)
+    if (summed) {
+      // Rounded because converting across a unit's base leaves noise — 2 tsp in tbsp is
+      // 0.6666648…, and storing that helps nobody.
+      total = Math.round((total + summed.amount) * 1000) / 1000
+      working = summed.rest
+    }
+  }
+
+  if (unit) working = stripRestatedMeasure(working, total, unit.id, notes)
 
   working = stripParentheticals(working, notes, preps).replace(/^of\s+/i, '').trim()
 
@@ -384,12 +401,35 @@ export function parseIngredientLine(line: string): ParsedIngredient {
 
   return {
     original,
-    quantity: quantity.value,
+    quantity: total,
     ...(unit ? { unit: unit.id } : {}),
     name,
     ...(allPrep ? { prep: allPrep } : {}),
     ...(notes.length ? { note: notes.join('; ') } : {}),
   }
+}
+
+/**
+ * Reads a measure the page explicitly adds to the first: "2 tbsp + 2 tsp".
+ *
+ * Only an explicit `+` or `plus` counts, and only within the same convertible family — so this
+ * can never quietly merge "1 lb" with "2 oz" written side by side, which is a different shape
+ * handled by `stripRestatedMeasure`. Returns the addition expressed in the first unit.
+ */
+function readAddedMeasure(text: string, unitId: string): { amount: number; rest: string } | null {
+  const joined = /^\s*(?:\+|plus)\s+/i.exec(text)
+  if (!joined) return null
+
+  const second = readQuantity(text.slice(joined[0].length))
+  if (!second) return null
+
+  const secondUnit = readUnit(second.rest)
+  if (!secondUnit) return null
+
+  const amount = convert(second.value, secondUnit.id, unitId)
+  if (amount === null) return null
+
+  return { amount, rest: secondUnit.rest.trim() }
 }
 
 /**
