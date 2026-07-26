@@ -225,6 +225,12 @@ const SIZE_WORD = /^(small|medium|large|extra[- ]large|jumbo|baby|medium-large)$
 const BARE_PACKAGE_SIZE =
   /^(\d+(?:\.\d+)?(?:\s*-\s*|\s+to\s+|\s*–\s*)?(?:\d+(?:\.\d+)?)?\s*-?\s*(?:ounce|oz|pound|lb|gram|g|kg|ml|liter|litre|l|inch)\b\.?)\s*/i
 
+/**
+ * A US unit and its metric restatement, slash-separated: "cup/30 grams", "cups/1.4 liters",
+ * "pound/450 grams". Both name the same amount, so the second is a note rather than a unit.
+ */
+const DUAL_UNIT = /^([A-Za-z]+)\s*\/\s*(\d+(?:\.\d+)?\s*[A-Za-z]+)\s+/
+
 /** Imprecise amounts the page prints instead of a number. */
 const IMPRECISE = /^(a\s+)?(pinch|dash|handful|drizzle|sprinkle|grating|spoonful|few grinds)( of)?\b/i
 /**
@@ -324,6 +330,14 @@ export function parseIngredientLine(line: string): ParsedIngredient {
   // A parenthetical can sit either side of the unit — "1 (15-ounce) can tomatoes" and
   // "1/3 cup (85 grams) pecans" are both common — so look again once the unit is consumed.
   working = stripLeadingParenthetical(working, notes, preps)
+
+  // "½ cup/30 grams flour" — some books print the US unit and its metric equivalent separated by
+  // a slash. The first is the unit; the second restates it and belongs in the note.
+  const dualUnit = DUAL_UNIT.exec(working)
+  if (dualUnit && normalizeUnit(dualUnit[1]).id) {
+    notes.push(dualUnit[2].trim())
+    working = `${dualUnit[1]} ${working.slice(dualUnit[0].length)}`.trim()
+  }
 
   // "One 14.5-ounce can black beans" — the size sits between the count and the container.
   const bareSize = BARE_PACKAGE_SIZE.exec(working)
