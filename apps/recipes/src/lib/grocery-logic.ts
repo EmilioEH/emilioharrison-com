@@ -1,5 +1,6 @@
 import type { ShoppableIngredient, RecipeContribution } from './types'
 import { CATEGORY_ORDER } from './grocery-utils'
+import { normalizeUnit, convert, bestDisplayUnit, unitLabel } from './units'
 
 interface ShoppableCategory {
   name: string
@@ -124,7 +125,27 @@ function parseSources(sources: unknown): RecipeContribution[] {
 }
 
 /**
- * Merges shoppable ingredients by combining duplicates (same name + same purchaseUnit).
+ * How two lines for the same ingredient are combined.
+ *
+ * Volume and weight are exactly convertible within themselves, so two recipes wanting 2 tbsp and
+ * ¼ cup of oil are asking for 6 tbsp of oil — one line, one number. Matching on the exact unit
+ * spelling left those as two rows, which is a worse shopping list than the sum.
+ *
+ * Counts and imprecise amounts are combined only with their own unit: 2 cloves plus 1 head is not
+ * a number anyone can add, and "a pinch" has nothing to add at all.
+ */
+function mergeGroupFor(ing: ShoppableIngredient): { key: string; unitId: string | null } {
+  const name = ing.name.toLowerCase().trim()
+  const { id, family } = normalizeUnit(ing.purchaseUnit)
+
+  if (id && (family === 'volume' || family === 'weight')) {
+    return { key: `${name}|${family}`, unitId: id }
+  }
+  return { key: `${name}|${ing.purchaseUnit.toLowerCase().trim()}`, unitId: null }
+}
+
+/**
+ * Merges shoppable ingredients, combining anything that can be added exactly.
  * Preserves source attribution from all contributing recipes.
  */
 export const mergeShoppableIngredients = (
@@ -133,14 +154,33 @@ export const mergeShoppableIngredients = (
   const mergedMap = new Map<string, ShoppableIngredient>()
 
   for (const ing of ingredients) {
-    const key = `${ing.name.toLowerCase().trim()}|${ing.purchaseUnit.toLowerCase().trim()}`
+    const { key, unitId } = mergeGroupFor(ing)
 
     // Safe access to sources - handles both arrays and JSON strings from Firestore
     const sources = parseSources(ing.sources)
 
     if (mergedMap.has(key)) {
       const existing = mergedMap.get(key)!
-      existing.purchaseAmount += ing.purchaseAmount
+
+      if (unitId) {
+        // Convert into whatever unit this row is already carrying, then let the display unit be
+        // reconsidered — 6 tsp of oil should read as 2 tbsp, not stay as 6 tsp.
+        const existingUnit = normalizeUnit(existing.purchaseUnit).id ?? unitId
+        const converted = convert(ing.purchaseAmount, unitId, existingUnit)
+        if (converted === null) {
+          existing.purchaseAmount += ing.purchaseAmount
+        } else {
+          const total = existing.purchaseAmount + converted
+          const best = bestDisplayUnit(total, existingUnit)
+          // Round before choosing the spelling: converting leaves 48 tsp as 1.0000000002 cups,
+          // which would otherwise be labelled "cups".
+          const rounded = Math.round(best.amount * 100) / 100
+          existing.purchaseAmount = rounded
+          existing.purchaseUnit = unitLabel(best.unit, rounded) || best.unit
+        }
+      } else {
+        existing.purchaseAmount += ing.purchaseAmount
+      }
 
       // Merge sources, avoiding duplicates by recipeId
       const existingSources = existing.sources ?? []
