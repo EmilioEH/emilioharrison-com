@@ -187,9 +187,8 @@ before it is trusted.** That review is one-time and roughly 600 lines after dedu
    Immediately improves grocery grouping on all existing recipes, with no reprocessing.
 4. **Deduplicate ingredient names** — 1,484 raw names into ~600 real ingredients. This is the piece
    with the actual thinking in it; everything downstream depends on it being right.
-5. **Build the weight table.** LLM selects the correct USDA record per ingredient (it knows kosher
-   salt is not a pickle); the API supplies the measured gram weight; **Emilio reviews the table
-   once**. Stored static.
+5. **Build the weight table — in full, upfront, as a committed file.** See "Building the table"
+   below. Not lazily populated at runtime.
 6. **Show conversions in the recipe view.** Deterministic lookup. Silent when the ingredient isn't
    in the table, is already weighed, or is counted — never a guessed number.
 7. **Grocery aggregation.** Combine within unit families (2 tbsp + ¼ cup oil = 6 tbsp), then the
@@ -198,6 +197,53 @@ before it is trusted.** That review is one-time and roughly 600 lines after dedu
 
 Phases 3 and 4 carry most of the value and need no AI at all. Phase 5 is where the API and the
 review step live.
+
+## Building the table
+
+**Built once, in full, and committed to the repo as a static file. No API call ever happens at
+import or display time.**
+
+An earlier draft had this filling lazily — miss the table, queue a background lookup, cache the
+result. That was wrong, for four reasons:
+
+- **Unreviewed entries reach production.** A background job resolving "kosher salt" to the pickle
+  record, with nobody looking, is exactly the failure this table exists to prevent.
+- **Errors are only visible in aggregate.** "Kosher salt: 155g/cup" looks plausible alone. Sorted
+  beside "table salt: 288g" and "granulated sugar: 200g" it is obviously wrong. Reviewing entries
+  one at a time as they trickle in cannot catch this.
+- **It keeps the API in production** — a key to manage, rate limits, a background job, and a
+  failure path when USDA is down. A committed file has none of that, and can be diffed, corrected
+  by hand, and reviewed in a PR like any other code.
+- **Lazy work never finishes.** ~600 ingredients is a bounded job with an end state.
+
+**Scope it further:** only ingredients that actually appear with a *volume* unit need an entry.
+Anything always weighed or always counted needs no conversion. Since 54% of ingredients are
+volume-measured, the real table is well under 600 rows.
+
+**New ingredients later:** show no conversion and log the miss. Batch-add and review periodically.
+Never guess at runtime.
+
+### Matching an ingredient to the right USDA record
+
+The API's data is sound; its search is not (see the probe above — 3 of 8 wrong). Layered
+mitigation, in order:
+
+1. **Restrict to the `SR Legacy` / `Foundation` datasets.** The default search returns `Branded`
+   supermarket listings, which are far noisier.
+2. **Strip cooking modifiers before searching** — "kosher salt" → "salt", "unsalted butter" →
+   "butter". Untested hypothesis: those modifiers are what dragged the queries into pickles and
+   pretzels. Cheap to validate, and if it works it removes most of the LLM calls below.
+3. **Let an LLM choose among the top candidates**, rather than trusting search ranking. Given
+   `["Pickles, cucumber, dill or kosher dill", "Salt, table", "Salt, kosher"]` a model picks
+   correctly; a keyword ranker never will. Note it is *selecting between real measured records*,
+   not inventing a number.
+4. **Cross-check to focus the review.** Ask the model roughly what a cup of the ingredient should
+   weigh and compare against the USDA figure. Agreement corroborates; large divergence flags. The
+   pickle case fails loudly — model says salt ≈ 290g/cup, the bad record says 155g. This turns
+   Phase 5's review from "eyeball 600 rows" into "check the ~10% that were flagged".
+
+**Practical note:** `DEMO_KEY` is rate-limited within a handful of requests. A free registered key
+allows 1,000/hour; at two calls per ingredient the full build is comfortably a single batch.
 
 ## Open questions
 
