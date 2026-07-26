@@ -206,7 +206,9 @@ export const POST: APIRoute = async (context: APIContext) => {
     const userDoc = await db.getDocument('users', userId)
     const familyId = userDoc?.familyId || null
 
-    const qualifiesForEnhancement = recipeData.creationMethod === 'ai-parse' && !!recipeData.title
+    // Background "Kenji-style" enhancement was removed at the owner's request: it reworded
+    // instructions, invented specifics the source never stated, and merged steps together.
+    // Recipes now keep the text transcribed at import.
 
     const newRecipe = clampRecipeEnums({
       ...recipeData,
@@ -216,17 +218,9 @@ export const POST: APIRoute = async (context: APIContext) => {
       familyId: familyId, // Optional, but saves lookup later
       createdAt: now,
       updatedAt: now,
-      // Set eagerly (in the same write) so the client sees "pending" immediately rather than
-      // racing the background job's own first write.
-      ...(qualifiesForEnhancement ? { enhancementStatus: 'pending' as const } : {}),
     })
 
     await db.createDocument('recipes', id, newRecipe)
-
-    if (qualifiesForEnhancement) {
-      // Fire-and-forget from the caller's perspective — see triggerBackgroundEnhancement.
-      void triggerBackgroundEnhancement(context, newRecipe as Recipe, userId)
-    }
 
     return new Response(JSON.stringify({ success: true, id }), {
       status: 201,

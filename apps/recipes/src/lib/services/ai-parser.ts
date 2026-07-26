@@ -31,6 +31,25 @@ export const PROTEIN_OPTIONS = [
 
 // --- PROMPT SEGMENTS ---
 
+/**
+ * Replaces the former "Kenji-style" rules (dual measurements, mise-en-place grouping, macro-steps,
+ * phase headers). Those instructed the model to reword instructions, infer specifics the source
+ * never stated, and merge steps together — which is exactly what made saved recipes stop matching
+ * the page they came from. Removed at the owner's request; the goal now is a faithful transcription.
+ */
+export const FAITHFUL_TRANSCRIPTION_RULES = `
+**FIDELITY**: Transcribe the recipe as written. This is a transcription task, not a rewrite.
+- **Steps**: Reproduce each instruction as printed, in the printed order, one step per element.
+  Do NOT merge steps together, split them apart, re-order them, or restate them in your own words.
+  Do NOT add encouragement, sensory description, or explanation the source does not contain.
+- **Ingredients**: Reproduce each ingredient line as printed. Do NOT add measurements, weights,
+  brands or varieties the source does not give (no inferring "all-purpose" flour or "kosher" salt
+  when the page just says flour or salt). Keep any amount exactly as written.
+- **Description**: Use the recipe's own introductory text if the source has one, transcribed
+  faithfully. Only write your own one-sentence description when the source has none.
+- If something is genuinely unreadable, omit it rather than inventing a plausible replacement.
+`
+
 export const INGREDIENT_PARSING_RULES = `
 **INGREDIENT PARSING & FORMATTING (ENHANCED MODE)**:
 - **Dual Measurements**: ALWAYS provide volume (cups/tbsp) AND mass (grams/ounces) for dry goods and produce.
@@ -180,10 +199,7 @@ Rules:
 11. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${TITLE_RULE}
 ${DESCRIPTION_VS_STEPS_RULE}
-${INGREDIENT_PARSING_RULES}
-${INGREDIENT_GROUPING_RULES}
-${STRUCTURED_STEPS_RULES}
-${STEP_GROUPING_RULES}
+${FAITHFUL_TRANSCRIPTION_RULES}
 `
 
 export const TEXT_SYSTEM_PROMPT = `
@@ -209,10 +225,7 @@ Rules:
 11. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${TITLE_RULE}
 ${DESCRIPTION_VS_STEPS_RULE}
-${INGREDIENT_PARSING_RULES}
-${INGREDIENT_GROUPING_RULES}
-${STRUCTURED_STEPS_RULES}
-${STEP_GROUPING_RULES}
+${FAITHFUL_TRANSCRIPTION_RULES}
 `
 
 export const URL_SYSTEM_PROMPT = `
@@ -241,10 +254,7 @@ Rules:
 14. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${TITLE_RULE}
 ${DESCRIPTION_VS_STEPS_RULE}
-${INGREDIENT_PARSING_RULES}
-${INGREDIENT_GROUPING_RULES}
-${STRUCTURED_STEPS_RULES}
-${STEP_GROUPING_RULES}
+${FAITHFUL_TRANSCRIPTION_RULES}
 `
 
 export const JSON_LD_SYSTEM_PROMPT = `
@@ -265,10 +275,7 @@ The input is already structured data from the source website. Your job is not to
 8. **Map Ingredients to Steps**: Populate 'stepIngredients' as an array of objects. Each object should have an 'indices' property containing an array of 0-based indices of ingredients (from the 'ingredients' array) that are used in the corresponding step.
 ${TITLE_RULE}
 ${DESCRIPTION_VS_STEPS_RULE}
-${INGREDIENT_PARSING_RULES}
-${INGREDIENT_GROUPING_RULES}
-${STRUCTURED_STEPS_RULES}
-${STEP_GROUPING_RULES}
+${FAITHFUL_TRANSCRIPTION_RULES}
 `
 
 // --- HELPERS ---
@@ -565,10 +572,7 @@ async function processImageInput(image: string, origin?: string): Promise<Proces
 export function getSystemPrompts(style: 'strict' | 'enhanced' = 'strict') {
   if (style === 'enhanced') {
     return `
-${INGREDIENT_PARSING_RULES}
-${INGREDIENT_GROUPING_RULES}
-${STRUCTURED_STEPS_RULES}
-${STEP_GROUPING_RULES}
+${FAITHFUL_TRANSCRIPTION_RULES}
     `
   }
   return `

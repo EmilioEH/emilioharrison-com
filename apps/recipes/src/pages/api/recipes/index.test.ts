@@ -278,14 +278,20 @@ describe('POST /api/recipes', () => {
     expect(runEnhancementJob).not.toHaveBeenCalled()
   })
 
-  it('sets enhancementStatus: pending on creation for a titled AI-parsed recipe', async () => {
+  it('never enhances an AI-parsed recipe (the feature was removed)', async () => {
+    // Background "Kenji-style" enhancement used to fire here. It reworded instructions and
+    // invented specifics the source never stated, so it was removed — an AI-parsed recipe now
+    // keeps exactly the text transcribed at import.
     const res = await POST(
       fakePostContext({ title: 'AI Recipe', creationMethod: 'ai-parse' }, 'user-1'),
     )
     expect(res.status).toBe(201)
 
     const created = createDocument.mock.calls[0][2]
-    expect(created.enhancementStatus).toBe('pending')
+    expect(created).not.toHaveProperty('enhancementStatus')
+
+    await new Promise((r) => setTimeout(r, 0))
+    expect(runEnhancementJob).not.toHaveBeenCalled()
   })
 
   it('does not qualify an AI-parsed recipe with no title', async () => {
