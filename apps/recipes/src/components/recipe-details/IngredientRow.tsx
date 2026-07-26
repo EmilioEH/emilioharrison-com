@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
+import { unitLabel } from '../../lib/units'
 import type { Ingredient } from '../../lib/types'
 
 interface IngredientRowProps {
@@ -8,11 +9,32 @@ interface IngredientRowProps {
   onToggle?: () => void
 }
 
+/** Renders a quantity the way a cookbook prints it: 0.5 → ½, 1.5 → 1½. */
+const FRACTION_GLYPHS: Array<[number, string]> = [
+  [0.125, '⅛'], [0.25, '¼'], [1 / 3, '⅓'], [0.375, '⅜'], [0.5, '½'],
+  [0.625, '⅝'], [2 / 3, '⅔'], [0.75, '¾'], [0.875, '⅞'],
+]
+
+function formatQuantity(value: number): string {
+  const whole = Math.floor(value)
+  const fraction = value - whole
+  if (fraction < 0.001) return String(whole)
+  for (const [size, glyph] of FRACTION_GLYPHS) {
+    if (Math.abs(fraction - size) < 0.02) return whole ? `${whole}${glyph}` : glyph
+  }
+  return String(Math.round(value * 100) / 100)
+}
+
 /**
  * Splits a raw amount string into a numeric quantity and a unit.
+ *
+ * Only reached for ingredients that predate the normalisation migration, which stores `quantity`
+ * and `unit` directly. It cannot read the fraction glyphs that migration writes — that's fine,
+ * because a record with a glyph in `amount` also has the numeric fields and never gets here.
+ *
  * e.g. "2 tbsp" → { qty: "2", unit: "tbsp" }
  *      "1/4 cup" → { qty: "1/4", unit: "cup" }
- *      "to taste" → { qty: "—", unit: "to taste" }
+ *      "to taste" → { qty: "", unit: "to taste" }
  */
 function parseAmount(raw: string): { qty: string; unit: string } {
   if (!raw) return { qty: '', unit: '' }
@@ -33,6 +55,23 @@ function parseAmount(raw: string): { qty: string; unit: string } {
   return { qty: '', unit: raw.trim() }
 }
 
+/**
+ * The measure to print, preferring the stored numeric fields over re-reading the text.
+ *
+ * Splitting the amount at render time was always a workaround for the amount being free text.
+ * Normalised records carry `quantity` and `unit` already, so the row just formats them — which is
+ * also what keeps the unit spelling consistent down the column.
+ */
+function measureOf(ingredient: Ingredient): { qty: string; unit: string } {
+  const hasNumeric = typeof ingredient.quantity === 'number' || Boolean(ingredient.unit)
+  if (!hasNumeric) return parseAmount(ingredient.amount)
+
+  return {
+    qty: typeof ingredient.quantity === 'number' ? formatQuantity(ingredient.quantity) : '',
+    unit: unitLabel(ingredient.unit, ingredient.quantity),
+  }
+}
+
 export const IngredientRow: React.FC<IngredientRowProps> = ({
   ingredient,
   isChecked = false,
@@ -48,7 +87,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
     )
   }
 
-  const { qty, unit } = parseAmount(ingredient.amount)
+  const { qty, unit } = measureOf(ingredient)
 
   return (
     <button

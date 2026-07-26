@@ -30,7 +30,17 @@ export const EditRecipeView: React.FC<EditRecipeViewProps> = ({ recipe, onSave, 
   // --- Ingredients Management ---
   const handleIngredientChange = (index: number, field: keyof Ingredient, value: string) => {
     const newIngredients = [...(formData.ingredients || [])]
-    newIngredients[index] = { ...newIngredients[index], [field]: value }
+    const updated: Ingredient = { ...newIngredients[index], [field]: value }
+
+    // Typing a new amount has to win over the normalised `quantity`/`unit`, which the row prefers
+    // when rendering. Leaving them in place would show the old measure back to whoever just
+    // edited it. Dropping them falls the row back to reading the text that was typed.
+    if (field === 'amount') {
+      delete updated.quantity
+      delete updated.unit
+    }
+
+    newIngredients[index] = updated
     setFormData((prev) => ({ ...prev, ingredients: newIngredients }))
   }
 

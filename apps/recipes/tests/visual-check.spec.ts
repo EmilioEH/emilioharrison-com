@@ -27,14 +27,21 @@ const recipe = {
   description: 'A quick weeknight steak with warm spices, couscous and pomegranate.',
   images: [],
   sourceImage: '',
+  // Post-normalisation shape: a numeric `quantity` and a canonical `unit` alongside the rendered
+  // `amount`, with the printed line kept in `original`. The last two entries are deliberately
+  // left in the pre-migration shape — legacy records still render through the text parser, and
+  // the column has to stay aligned across both.
   ingredients: [
-    { name: 'Steak', amount: '1 lb', prep: 'pat dry' },
-    { name: 'Ras el hanout', amount: '2.5 tsp' },
-    { name: 'Salt', amount: '1 tsp' },
-    { name: 'Pepper', amount: '1/4 tsp' },
-    { name: 'Vegetable oil', amount: '2 tbsp' },
-    { name: 'Water', amount: '1 1/4 cups' },
-    { name: 'Couscous', amount: '1 cup' },
+    { name: 'Steak', amount: '1 lb', quantity: 1, unit: 'lb', prep: 'pat dry', original: '1 pound steak' },
+    { name: 'Ras el hanout', amount: '2½ tsp', quantity: 2.5, unit: 'tsp', original: '2 1/2 teaspoons ras el hanout' },
+    { name: 'kosher salt', amount: '1 tsp', quantity: 1, unit: 'tsp', original: '1 teaspoon kosher salt' },
+    { name: 'Pepper', amount: '¼ tsp', quantity: 0.25, unit: 'tsp', original: '1/4 teaspoon pepper' },
+    { name: 'Vegetable oil', amount: '2 tbsp', quantity: 2, unit: 'tbsp', original: '2 tablespoons vegetable oil' },
+    { name: 'Water', amount: '1¼ cups', quantity: 1.25, unit: 'cup', original: '1 1/4 cups water' },
+    { name: 'sharp Cheddar cheese', amount: '1 cup', quantity: 1, unit: 'cup', note: '4 oz / 113g', original: '1 cup (4 oz / 113g) sharp Cheddar cheese' },
+    { name: 'Couscous', amount: '1 cup', quantity: 1, unit: 'cup', original: '1 cup couscous' },
+    { name: 'garlic', amount: '10 cloves', quantity: 10, unit: 'clove', prep: 'peeled', original: '10 garlic cloves, peeled' },
+    { name: 'Salt', amount: 'to taste', unit: 'to_taste', original: 'Salt, to taste' },
     { name: 'Spinach', amount: '2 cups' },
     { name: 'Pomegranate seeds', amount: '1/2 cup' },
   ],
