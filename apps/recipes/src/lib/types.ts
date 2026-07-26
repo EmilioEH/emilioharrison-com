@@ -1,7 +1,27 @@
+/**
+ * One ingredient as the recipe view renders it.
+ *
+ * `amount` is the rendered measure ("1½ cups") and stays the field the UI prints. `quantity` and
+ * `unit` are the machine-readable form of that same measure — they exist so grocery aggregation
+ * and weight conversion never have to re-parse text, and they are absent whenever the line has no
+ * readable number ("to taste") rather than carrying a guess.
+ *
+ * `original` is the printed line, kept verbatim. It is the record of what the page actually said,
+ * so a parser mistake is always correctable and nothing is lost by normalising. See
+ * lib/ingredient-parse.ts and RECIPE-FIDELITY-AND-MEASURES-PLAN.md.
+ */
 export interface Ingredient {
   name: string
   amount: string
   prep?: string
+  /** Numeric quantity; absent when the line has no readable number. */
+  quantity?: number
+  /** Canonical unit id from `lib/units.ts`; absent when the unit wasn't recognised. */
+  unit?: string
+  /** Package size, conversion or aside the line carried: the `15-ounce` of `1 (15-ounce) can`. */
+  note?: string
+  /** The printed line, verbatim. Never rewritten. */
+  original?: string
 }
 
 /** Logical grouping of ingredients by cooking phase (e.g., "FOR THE CURRY PASTE") */
