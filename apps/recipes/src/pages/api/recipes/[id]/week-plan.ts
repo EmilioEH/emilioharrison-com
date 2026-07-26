@@ -5,6 +5,32 @@ import { db } from '../../../../lib/firebase-server'
 import type { WeekPlanData, FamilyRecipeData } from '../../../../lib/types'
 import { setRequestContext } from '../../../../lib/request-context'
 
+
+/**
+ * Record that this recipe was on a given week's plan, permanently.
+ *
+ * `weekPlan.assignedDate` is a single mutable field per recipe, so it only ever remembers the
+ * *latest* week a recipe was planned for. That is fine for showing this week's plan and wrong for
+ * the review, which asks about a week that has already happened: re-plan a recipe this week and it
+ * silently drops out of last week's review; take one off the plan and the same.
+ *
+ * `families/{id}/weekPlans/{weekStart}` is append-only and never rewritten by unplanning — what was
+ * planned that week is a fact about the past. Weeks before this shipped have no document, and the
+ * review falls back to deriving them the old way.
+ */
+async function recordWeekMembership(familyId: string, weekStart: string, recipeId: string) {
+  try {
+    const path = `families/${familyId}/weekPlans`
+    const existing = (await db.getDocument(path, weekStart)) as { recipeIds?: string[] } | null
+    const recipeIds = Array.isArray(existing?.recipeIds) ? existing.recipeIds : []
+    if (recipeIds.includes(recipeId)) return
+    await db.setDocument(path, weekStart, { recipeIds: [...recipeIds, recipeId] })
+  } catch (error) {
+    // The plan itself is what the cook asked for; losing the history record shouldn't fail it.
+    console.error('[WeekPlan] could not record week membership:', error)
+  }
+}
+
 /**
  * POST /api/recipes/[id]/week-plan
  * Add a recipe to the week plan or update its planning status (family-scoped)
@@ -100,6 +126,9 @@ export const POST: APIRoute = async (context: APIContext) => {
       }
 
       await db.createDocument(`families/${userDoc.familyId}/recipeData`, recipeId, newFamilyData)
+      if (isPlanned && assignedDate) {
+        await recordWeekMembership(userDoc.familyId, assignedDate, recipeId)
+      }
       console.log('[WeekPlan] Created successfully')
 
       return new Response(
@@ -116,6 +145,9 @@ export const POST: APIRoute = async (context: APIContext) => {
 
     // 3. Update week plan
     console.log('[WeekPlan] Updating existing family data...')
+    if (isPlanned && assignedDate) {
+      await recordWeekMembership(userDoc.familyId, assignedDate, recipeId)
+    }
     await db.updateDocument(`families/${userDoc.familyId}/recipeData`, recipeId, {
       weekPlan: newWeekPlan,
     })

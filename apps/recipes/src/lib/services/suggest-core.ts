@@ -19,7 +19,12 @@
 import type { Recipe } from '../types'
 import type { CookOutcome } from '../week-review'
 import { preferenceWeight } from '../week-review'
-import { describeFacets, hasFacets, type RecipeFacets } from '../recipe-facets'
+import { describeFacets, matchesFacets, type RecipeFacets } from '../recipe-facets'
+
+// Re-exported from its home in `recipe-facets` so existing importers keep working.
+export { matchesFacets }
+import type { ConversationEntry, Constraints } from './suggest-turns'
+import { MAX_REPLAYED_TURNS } from './suggest-turns'
 
 /** Everything known about one recipe's history with this family. */
 export interface RecipeSignal {
@@ -47,40 +52,6 @@ export interface SuggestInput {
 export interface Suggestion {
   recipeId: string
   reason: string
-}
-
-/**
- * Whether a recipe satisfies the cook's explicit narrowing.
- *
- * Facets are the one place a hard filter belongs: the cook tapped "Chicken", so a beef dish is
- * wrong no matter how good a suggestion it would otherwise be. Free text stays a steer for the
- * model — this is the part they were unambiguous about.
- *
- * Each list is additive (two proteins means either), and the lists combine (a protein AND a time).
- */
-export function matchesFacets(recipe: Recipe, facets: RecipeFacets | undefined): boolean {
-  if (!hasFacets(facets)) return true
-  const f = facets!
-
-  const any = (values: string[] | undefined, actual: string | undefined) => {
-    if (!values?.length) return true
-    const got = String(actual ?? '').toLowerCase()
-    // "Main Course" should satisfy "Main" — the stored vocabulary is not fully normalised.
-    return values.some((v) => got.includes(v.toLowerCase()) || v.toLowerCase().includes(got))
-  }
-
-  if (!any(f.proteins, recipe.protein)) return false
-  if (!any(f.dishTypes, recipe.dishType)) return false
-  if (!any(f.cuisines, recipe.cuisine)) return false
-  if (!any(f.difficulties, recipe.difficulty)) return false
-
-  if (f.maxMinutes) {
-    const minutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)
-    // A recipe with no time recorded is not excluded — absence of data is not a slow recipe.
-    if (minutes > 0 && minutes > f.maxMinutes) return false
-  }
-
-  return true
 }
 
 /** One line per recipe. Compact on purpose: this is sent in full, every request. */
@@ -126,6 +97,37 @@ export function buildMenu(
   }
 
   return { menu: lines.join('\n'), index }
+}
+
+/**
+ * The stable half of the prompt: who the model is, and everything it may choose from.
+ *
+ * Emitted **first** and byte-identical across every turn of a session, so the whole ~8,300-token
+ * menu is a cache prefix. The previous single-shot `buildPrompt` put the varying parts — how many
+ * meals, the mood, what was already kept — *above* the menu, which is harmless for one call and
+ * ruinous for a conversation: nothing before the change point can be reused. Everything that
+ * varies now lives in `buildTurnPrompt`, appended after this.
+ *
+ * Confirm it is actually working by reading `usageMetadata.cachedContentTokenCount` off the
+ * response rather than assuming.
+ */
+export function buildConversationPreamble(menu: string): string {
+  return [
+    'You help someone choose what to cook this week from recipes they already own.',
+    'Think like a good waiter: read what they are in the mood for, ask at most one useful question',
+    'at a time, and when you have enough, put a few things in front of them with a reason each.',
+    'Have an opinion. Do not interrogate — a waiter does not ask three questions before bringing',
+    'anything.',
+    '',
+    'Their recipes, one per line:',
+    'number|title|protein|cuisine|total time|difficulty|history|weight',
+    '',
+    'The weight is how much to favour a recipe. A positive weight means they liked it and it has',
+    'been a while. A negative weight means they cooked it very recently or did not enjoy it —',
+    'avoid those unless the request clearly calls for one.',
+    '',
+    menu,
+  ].join('\n')
 }
 
 export function buildPrompt(input: SuggestInput, menu: string, keptTitles: string[]): string {
@@ -226,4 +228,67 @@ export function fallbackSuggestions(input: SuggestInput): Suggestion[] {
       recipeId: recipe.id,
       reason: signals[recipe.id]?.lastCookedWeek ? 'You liked this one before.' : "You haven't made this yet.",
     }))
+}
+
+/**
+ * The varying half of the prompt: the conversation so far, what is settled, and what to do next.
+ *
+ * A previous offer replays as an ordered list with titles and facts rather than opaque ids —
+ * otherwise "not the second one" has nothing to resolve against.
+ */
+export function buildTurnPrompt(opts: {
+  conversation: ConversationEntry[]
+  constraints: Constraints
+  narrowed: string
+  stillNeeded: number
+  keptTitles: string[]
+  offerableCount: number
+}): string {
+  const { conversation, constraints, narrowed, stillNeeded, keptTitles, offerableCount } = opts
+
+  const transcript = conversation.slice(-MAX_REPLAYED_TURNS).map((entry) => {
+    if (entry.role === 'cook') return `Cook: ${entry.said}`
+    const numbered = (entry.offered ?? []).map((line, i) => `${i + 1}. ${line}`).join('; ')
+    const offered = numbered ? `\n  Offered: ${numbered}` : ''
+    return `You: ${entry.said}${offered}`
+  })
+
+  return [
+    '',
+    '--- This conversation ---',
+    transcript.length ? transcript.join('\n') : '(nothing said yet)',
+    '',
+    '--- What is settled ---',
+    `They still need ${stillNeeded} meal${stillNeeded === 1 ? '' : 's'}.`,
+    constraints.mood.length ? `Mood: ${constraints.mood.join(', ')}.` : 'No mood given.',
+    narrowed ? `Narrowed to: ${narrowed}.` : 'Nothing narrowed.',
+    keptTitles.length
+      ? `Already chosen this week: ${keptTitles.join('; ')}. Vary from these — different proteins and effort levels, so the week is not all the same.`
+      : '',
+    `${offerableCount} recipes currently fit.`,
+    '',
+    '--- Your reply ---',
+    'Answer with JSON only, in this shape:',
+    '{"say":"<one or two sentences>","widgets":[...],"patch":{...}}',
+    '',
+    'Widgets you may use:',
+    '- {"kind":"chips","id":"proteins|dishTypes|cuisines|difficulties|time|mood","mode":"one|many",',
+    '   "options":[{"label":"Chicken","value":"Chicken"}]} — a question. Facet values must come from',
+    '   the vocabulary the menu actually uses; options matching no recipe are discarded.',
+    '- {"kind":"counter","id":"wanted","min":1,"max":7,"value":4} — how many meals.',
+    '- {"kind":"recipes","picks":[{"n":<line number>,"why":"<max 14 words>"}]} — your suggestions.',
+    '- {"kind":"text","id":"freeText","placeholder":"..."} — when typing would genuinely help.',
+    '- {"kind":"actions","options":[{"label":"Show me others","intent":"more"}]} — intents are',
+    '   "more", "done" or "restart".',
+    '',
+    'Include a "patch" when what they said changes the standing constraints — for example "too much',
+    'chicken" is {"proteins":{"add":[]},"excludeIds":[]} plus removing chicken from what you offer,',
+    'or a firm "nothing over an hour" is {"maxMinutes":60}. The cook sees every patch as a chip they',
+    'can remove, so only patch what they actually asked for.',
+    '',
+    'Ask a question only if you genuinely cannot pick without it. Otherwise pick. Every "n" must be',
+    'a line number from the menu above — never invent a recipe.',
+  ]
+    .filter((line) => line !== '')
+    .join('\n')
 }

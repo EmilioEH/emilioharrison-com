@@ -1,7 +1,7 @@
 # Meal Suggester V2 (Conversational) + Week Review Fixes — Implementation Plan
 
 > **Updated**: 2026-07-26
-> **Status**: Phases 1–2 complete — Phase 3 next
+> **Status**: Complete — all six phases shipped
 > **Branch**: Feature work should branch from `main`
 > **Supersedes**: the stepped-wizard suggester shipped in PRs #102–#104
 
@@ -244,16 +244,16 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 
 | #    | Task                                | File(s)                                        | Status | Notes                                                                                                                                                   |
 | ---- | ----------------------------------- | ---------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.1  | Turn/Widget/Patch types + guards    | `src/lib/services/suggest-turns.ts` (new)      | `[ ]`  | Pure module. Reject anything not matching the shape rather than coercing.                                                                               |
-| 3.2  | Option grounding                    | `src/lib/services/suggest-turns.ts`            | `[ ]`  | `countMatching()` per option under current constraints; drop zeros; drop the widget if <2 survive. Decision 3.                                          |
-| 3.3  | Patch validation + apply            | `src/lib/services/suggest-turns.ts`            | `[ ]`  | Values must exist in `recipe-facets.ts` vocabularies. `excludeIds` must be real recipe ids. Clamp `wanted` to 1..`MAX_WANTED`.                          |
-| 3.4  | Split the prompt for caching        | `src/lib/services/suggest-core.ts:131`         | `[ ]`  | `buildMenuBlock()` first (stable), `buildTurnPrompt()` last. Confirm cached tokens via `usageMetadata`.                                                 |
-| 3.5  | Gemini response schema              | `src/pages/api/week/suggest.ts:126-133`        | `[ ]`  | Explicit `responseSchema` for `Turn`. Keep `temperature: 0.8` for pick variety.                                                                         |
-| 3.6  | New endpoint request/response shape | `src/pages/api/week/suggest.ts`                | `[ ]`  | Accept `{ conversation, constraints }`; return `{ turn, constraints }`. Only `MealSuggester` calls this, so no compatibility shim needed.               |
-| 3.7  | Degraded turn                       | `src/pages/api/week/suggest.ts:142`            | `[ ]`  | Express today's three wizard steps as a static `Turn`; picks from `fallbackSuggestions`. Decision 6.                                                    |
-| 3.8  | Exhaustion guard                    | `src/pages/api/week/suggest.ts:109`            | `[ ]`  | After applying a patch, if the pool drops below `wanted`, say so rather than returning a short set.                                                     |
-| 3.9  | Rate limit review                   | `src/pages/api/week/suggest.ts:27`             | `[ ]`  | 60/hr is now per-turn. Raise deliberately.                                                                                                              |
-| 3.10 | Unit tests                          | `src/lib/services/suggest-turns.test.ts` (new) | `[ ]`  | Ungrounded option dropped; widget with 1 survivor dropped; unknown protein in a patch rejected; out-of-range `wanted` clamped; malformed turn rejected. |
+| 3.1  | Turn/Widget/Patch types + guards    | `src/lib/services/suggest-turns.ts` (new)      | `[x]`  | Pure module. Reject anything not matching the shape rather than coercing.                                                                               |
+| 3.2  | Option grounding                    | `src/lib/services/suggest-turns.ts`            | `[x]`  | `countMatching()` per option under current constraints; drop zeros; drop the widget if <2 survive. Decision 3.                                          |
+| 3.3  | Patch validation + apply            | `src/lib/services/suggest-turns.ts`            | `[x]`  | Values must exist in `recipe-facets.ts` vocabularies. `excludeIds` must be real recipe ids. Clamp `wanted` to 1..`MAX_WANTED`.                          |
+| 3.4  | Split the prompt for caching        | `src/lib/services/suggest-core.ts:131`         | `[x]`  | `buildMenuBlock()` first (stable), `buildTurnPrompt()` last. Confirm cached tokens via `usageMetadata`.                                                 |
+| 3.5  | Gemini response schema              | `src/pages/api/week/suggest.ts:126-133`        | `[x]`  | Explicit `responseSchema` for `Turn`. Keep `temperature: 0.8` for pick variety.                                                                         |
+| 3.6  | New endpoint request/response shape | `src/pages/api/week/suggest.ts`                | `[x]`  | Accept `{ conversation, constraints }`; return `{ turn, constraints }`. Only `MealSuggester` calls this, so no compatibility shim needed.               |
+| 3.7  | Degraded turn                       | `src/pages/api/week/suggest.ts:142`            | `[x]`  | Express today's three wizard steps as a static `Turn`; picks from `fallbackSuggestions`. Decision 6.                                                    |
+| 3.8  | Exhaustion guard                    | `src/pages/api/week/suggest.ts:109`            | `[x]`  | After applying a patch, if the pool drops below `wanted`, say so rather than returning a short set.                                                     |
+| 3.9  | Rate limit review                   | `src/pages/api/week/suggest.ts:27`             | `[x]`  | 60/hr is now per-turn. Raise deliberately.                                                                                                              |
+| 3.10 | Unit tests                          | `src/lib/services/suggest-turns.test.ts` (new) | `[x]`  | Ungrounded option dropped; widget with 1 survivor dropped; unknown protein in a patch rejected; out-of-range `wanted` clamped; malformed turn rejected. |
 
 ### Considerations for Future Sessions
 
@@ -275,16 +275,16 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 
 | #    | Task                             | File(s)                                        | Status | Notes                                                                                                                                              |
 | ---- | -------------------------------- | ---------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4.1  | Conversation component           | `week-planner/SuggesterConversation.tsx` (new) | `[ ]`  | Replaces `MealSuggester.tsx`. Renders `Turn[]`; one renderer per widget kind.                                                                      |
-| 4.2  | Visible constraint chips         | `week-planner/ConstraintBar.tsx` (new)         | `[ ]`  | Current constraints, each removable. Removing one appends a new turn.                                                                              |
-| 4.3  | Prefetch turn 1                  | `WeekPlanView.tsx:302`                         | `[ ]`  | Fire on mount of the "Help me pick this week" card so the screen opens with a real question, not a spinner.                                        |
-| 4.4  | Keep prior turns during load     | —                                              | `[ ]`  | Today `{!loading && suggestions.map(...)}` blanks the screen every round. Append a typing indicator instead.                                       |
-| 4.5  | Old widgets append, never mutate | —                                              | `[ ]`  | Tapping an earlier answer adds a new turn. This is what kills the current dead end where changing an answer does nothing.                          |
-| 4.6  | Per-card dismiss                 | —                                              | `[ ]`  | ✕ on a card adds to `rejectedIds` locally, no model call. Replaces batch `rejectCurrent`, which discards cards the cook was still considering.     |
-| 4.7  | Kept meals as transcript rows    | —                                              | `[ ]`  | "Added Buzhenina to the week", with un-keep in the same row. There is currently no way to undo a keep.                                             |
-| 4.8  | An ending                        | —                                              | `[ ]`  | `actions` widget with `done` returns to the plan. Today the only button after filling the week is still "Show me others".                          |
-| 4.9  | Scroll behaviour                 | —                                              | `[ ]`  | Auto-scroll to the newest turn unless the cook has scrolled up.                                                                                    |
-| 4.10 | Playwright with mocked turns     | `tests/meal-planner.spec.ts`                   | `[ ]`  | Existing specs drive `getByRole('button', { name: 'comforting' })`, which is meaningless with dynamic options. Assert against fixed turn payloads. |
+| 4.1  | Conversation component           | `week-planner/SuggesterConversation.tsx` (new) | `[x]`  | Replaces `MealSuggester.tsx`. Renders `Turn[]`; one renderer per widget kind.                                                                      |
+| 4.2  | Visible constraint chips         | `week-planner/ConstraintBar.tsx` (new)         | `[x]`  | Current constraints, each removable. Removing one appends a new turn.                                                                              |
+| 4.3  | Prefetch turn 1                  | `WeekPlanView.tsx:302`                         | `[x]`  | Fire on mount of the "Help me pick this week" card so the screen opens with a real question, not a spinner.                                        |
+| 4.4  | Keep prior turns during load     | —                                              | `[x]`  | Today `{!loading && suggestions.map(...)}` blanks the screen every round. Append a typing indicator instead.                                       |
+| 4.5  | Old widgets append, never mutate | —                                              | `[x]`  | Tapping an earlier answer adds a new turn. This is what kills the current dead end where changing an answer does nothing.                          |
+| 4.6  | Per-card dismiss                 | —                                              | `[x]`  | ✕ on a card adds to `rejectedIds` locally, no model call. Replaces batch `rejectCurrent`, which discards cards the cook was still considering.     |
+| 4.7  | Kept meals as transcript rows    | —                                              | `[x]`  | "Added Buzhenina to the week", with un-keep in the same row. There is currently no way to undo a keep.                                             |
+| 4.8  | An ending                        | —                                              | `[x]`  | `actions` widget with `done` returns to the plan. Today the only button after filling the week is still "Show me others".                          |
+| 4.9  | Scroll behaviour                 | —                                              | `[x]`  | Auto-scroll to the newest turn unless the cook has scrolled up.                                                                                    |
+| 4.10 | Playwright with mocked turns     | `tests/meal-planner.spec.ts`                   | `[x]`  | Existing specs drive `getByRole('button', { name: 'comforting' })`, which is meaningless with dynamic options. Assert against fixed turn payloads. |
 
 ### Considerations for Future Sessions
 
@@ -308,14 +308,14 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 
 | #   | Task                        | File(s)                                    | Status | Notes                                                                                                                                                         |
 | --- | --------------------------- | ------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5.1 | Composer, gated client-side | `week-planner/SuggesterComposer.tsx` (new) | `[ ]`  | Appears once a `recipes` widget has rendered; persists after. Not model-controlled.                                                                           |
-| 5.2 | Teaching placeholder        | —                                          | `[ ]`  | "Too heavy? Not enough veg? Say so." — not "Type a message".                                                                                                  |
-| 5.3 | Cook bubble register        | `SuggesterConversation.tsx`                | `[ ]`  | Right-aligned bubble for typed text, distinct from the collapsed-answer register used by taps.                                                                |
-| 5.4 | Patch → chip                | `ConstraintBar.tsx`                        | `[ ]`  | "too much chicken" produces a visible, removable **no chicken ✕**. Decision 4.                                                                                |
-| 5.5 | Keyboard handling           | `SuggesterComposer.tsx`                    | `[ ]`  | Pin above `env(safe-area-inset-bottom)`; on focus, scroll the last suggestion turn into view — the keyboard otherwise covers the exact cards being discussed. |
-| 5.6 | Honest degradation          | —                                          | `[ ]`  | If the model is down, do not pretend to have understood the sentence: say so and fall back under existing constraints.                                        |
-| 5.7 | History cap                 | `suggest.ts`                               | `[ ]`  | Replay ~6 entries; constraints carry the rest losslessly.                                                                                                     |
-| 5.8 | E2E                         | `tests/meal-planner.spec.ts`               | `[ ]`  | Typed feedback → mocked patch turn → chip appears → chip removable.                                                                                           |
+| 5.1 | Composer, gated client-side | `week-planner/SuggesterComposer.tsx` (new) | `[x]`  | Appears once a `recipes` widget has rendered; persists after. Not model-controlled.                                                                           |
+| 5.2 | Teaching placeholder        | —                                          | `[x]`  | "Too heavy? Not enough veg? Say so." — not "Type a message".                                                                                                  |
+| 5.3 | Cook bubble register        | `SuggesterConversation.tsx`                | `[x]`  | Right-aligned bubble for typed text, distinct from the collapsed-answer register used by taps.                                                                |
+| 5.4 | Patch → chip                | `ConstraintBar.tsx`                        | `[x]`  | "too much chicken" produces a visible, removable **no chicken ✕**. Decision 4.                                                                                |
+| 5.5 | Keyboard handling           | `SuggesterComposer.tsx`                    | `[x]`  | Pin above `env(safe-area-inset-bottom)`; on focus, scroll the last suggestion turn into view — the keyboard otherwise covers the exact cards being discussed. |
+| 5.6 | Honest degradation          | —                                          | `[x]`  | If the model is down, do not pretend to have understood the sentence: say so and fall back under existing constraints.                                        |
+| 5.7 | History cap                 | `suggest.ts`                               | `[x]`  | Replay ~6 entries; constraints carry the rest losslessly.                                                                                                     |
+| 5.8 | E2E                         | `tests/meal-planner.spec.ts`               | `[x]`  | Typed feedback → mocked patch turn → chip appears → chip removable.                                                                                           |
 
 ---
 
@@ -330,14 +330,14 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 
 | #   | Task                       | File(s)                                     | Status | Notes                                                                                                                                                                                                            |
 | --- | -------------------------- | ------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 6.1 | Fix the `meh` double-count | `src/pages/api/week/suggest.ts:91-94`       | `[ ]`  | A "meh" writes both a `cookingHistory` entry (read back as `'good'`, +1) and a 2-star review (`'meh'`, −2), netting −1 instead of −2. Also asymmetric: a manual 2-star counts, a manual 5-star does not.         |
-| 6.2 | Fix the empty-facet match  | `src/lib/services/suggest-core.ts:65-69`    | `[ ]`  | `'chicken'.includes('')` is `true`, so every recipe with no protein recorded matches every protein filter. The time facet handles absent data deliberately; the string facets do the opposite by accident.       |
-| 6.3 | Write `lastCooked`         | `src/pages/api/week/review.ts`              | `[ ]`  | Still never set anywhere, so `RecipeReviews.tsx:205`'s "Last: …" line never appears despite the review now recording cooks.                                                                                      |
-| 6.4 | Record weeks as weeks      | `families/{id}/weekPlans/{weekStart}` (new) | `[ ]`  | The review reconstructs last week from `weekPlan.assignedDate` — one mutable value per recipe. Re-plan or remove a recipe and it silently drops out of last week's review.                                       |
-| 6.5 | Floor the review backlog   | `src/lib/week-review.ts:42`                 | `[ ]`  | `weekAwaitingReview` walks backwards one unreviewed week at a time forever. With six months of planning it will ask about April. Ignore/auto-close anything older than ~3 weeks.                                 |
-| 6.6 | Batch the review writes    | `src/pages/api/week/review.ts:93-129`       | `[ ]`  | Sequential `getDocument` + `setDocument` per recipe (~12 round trips for a five-meal week) behind a "Saving…" button. Full-document overwrites also clobber a concurrent family member's write.                  |
-| 6.7 | Review screen UX           | `WeekReviewPrompt.tsx`                      | `[ ]`  | Thumbnails (a week-old meal recalled from a title alone); the disabled "Save 0 of 2" grey slab as the default state; pin the action; allow clearing an answer; deduplicate the copy the entry card already says. |
-| 6.8 | Surface the no-family case | `src/pages/api/week/review.ts:33`           | `[ ]`  | Returns `pending: null` — the feature silently does not exist and never says why.                                                                                                                                |
+| 6.1 | Fix the `meh` double-count | `src/pages/api/week/suggest.ts:91-94`       | `[x]`  | A "meh" writes both a `cookingHistory` entry (read back as `'good'`, +1) and a 2-star review (`'meh'`, −2), netting −1 instead of −2. Also asymmetric: a manual 2-star counts, a manual 5-star does not.         |
+| 6.2 | Fix the empty-facet match  | `src/lib/services/suggest-core.ts:65-69`    | `[x]`  | `'chicken'.includes('')` is `true`, so every recipe with no protein recorded matches every protein filter. The time facet handles absent data deliberately; the string facets do the opposite by accident.       |
+| 6.3 | Write `lastCooked`         | `src/pages/api/week/review.ts`              | `[x]`  | Still never set anywhere, so `RecipeReviews.tsx:205`'s "Last: …" line never appears despite the review now recording cooks.                                                                                      |
+| 6.4 | Record weeks as weeks      | `families/{id}/weekPlans/{weekStart}` (new) | `[x]`  | The review reconstructs last week from `weekPlan.assignedDate` — one mutable value per recipe. Re-plan or remove a recipe and it silently drops out of last week's review.                                       |
+| 6.5 | Floor the review backlog   | `src/lib/week-review.ts:42`                 | `[x]`  | `weekAwaitingReview` walks backwards one unreviewed week at a time forever. With six months of planning it will ask about April. Ignore/auto-close anything older than ~3 weeks.                                 |
+| 6.6 | Batch the review writes    | `src/pages/api/week/review.ts:93-129`       | `[x]`  | Sequential `getDocument` + `setDocument` per recipe (~12 round trips for a five-meal week) behind a "Saving…" button. Full-document overwrites also clobber a concurrent family member's write.                  |
+| 6.7 | Review screen UX           | `WeekReviewPrompt.tsx`                      | `[x]`  | Thumbnails (a week-old meal recalled from a title alone); the disabled "Save 0 of 2" grey slab as the default state; pin the action; allow clearing an answer; deduplicate the copy the entry card already says. |
+| 6.8 | Surface the no-family case | `src/pages/api/week/review.ts:33`           | `[x]`  | Returns `pending: null` — the feature silently does not exist and never says why.                                                                                                                                |
 
 ---
 
@@ -384,14 +384,25 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 
 ---
 
+## Deferred
+
+- **Peek sheet for a suggestion.** Opening a recipe from a card still routes to the detail view and
+  unmounts the workspace, losing the exchange (`RecipeManager.tsx` → `view: 'detail'`). Fixing it
+  properly means a sheet that renders over the conversation, which is its own piece of work and
+  touches the router rather than the suggester.
+- **`RecipeFilters.tsx` still has its own chip.** Migrating it to `ui/Chip` was deliberately left
+  out of Phase 2 to keep that change small; it is now the only place left with a bespoke pill.
+- **A pre-existing E2E failure**, unrelated to this plan: `visual-check-remaining.spec.ts` →
+  "both footers flush at the bottom". The recipe detail action footer sits 40px above the viewport
+  bottom, and it fails on `main` without any of this work applied.
+
 ## Open Questions
 
-1. **Peek sheet vs. route change** for opening a recipe from a suggestion (Phase 4 considerations).
-   Own PR, or folded into Phase 4?
-2. **How aggressive should a patch be?** Does "too much chicken" exclude chicken outright, or
-   downweight it? Excluding is legible and undoable; downweighting is closer to what a waiter does.
-   Starting position: exclude, because the chip makes it visible and reversible.
-3. **`SUGGEST_RATE_LIMIT` ceiling** once turns are per-request rather than per-session.
+1. ~~Peek sheet vs. route change.~~ Deferred, see above.
+2. ~~How aggressive should a patch be?~~ Resolved: **exclude**. `applyPatch` writes the constraint,
+   `ConstraintBar` shows it, and one tap removes it — legibility beat subtlety.
+3. ~~`SUGGEST_RATE_LIMIT` ceiling.~~ Raised to 200/hour, since it now counts turns rather than
+   sessions. Worth revisiting once there is real usage to measure.
 
 ---
 
@@ -400,5 +411,6 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 | Date       | Session                                    | Outcome                                                                                                                                                                                             |
 | ---------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-07-26 | Review of the week-plan review + suggester | ~25 findings across silent failures, one-way exchange, filter wall, touch targets, and scoring. Design agreed: closed widget vocabulary, taps first, composer after suggestions. This plan written. |
+| 2026-07-26 | Phases 3–6 | Shipped together. Turn contract + grounded options + patch validation; the transcript replaces the wizard; the composer opens after the first suggestions; scoring and review corrections. Two open questions resolved by building: a patch *excludes* (visible and reversible via the chip), and the recipe peek is still a route change — see Deferred below. |
 | 2026-07-26 | Phase 2 | Shipped. Shared `Chip` at 44px, tab bar yields to the overlay, keyboard-aware viewport, header and padding cleanups. `tests/week-planner-touch-targets.spec.ts` measures the floor rather than trusting the class string. |
 | 2026-07-26 | Phase 1 | Shipped. `listAccessibleRecipes` now the single visibility rule (three copies before, one of them broken); partial reviews resume via `reviewProgress`; failed saves and failed adds surface instead of vanishing. 16 new unit tests. Manual QA on a phone still outstanding — noted below. |

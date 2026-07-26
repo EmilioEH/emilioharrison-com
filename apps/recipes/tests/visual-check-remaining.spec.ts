@@ -152,10 +152,32 @@ test.describe('remaining findings', () => {
       route.fulfill({
         json: {
           success: true,
-          suggestions: [
-            { recipeId: 'scan-001', reason: "You haven't made this one yet, and it's quick." },
-            { recipeId: 'dish-001', reason: 'Lighter, to balance the beef you already picked.' },
-          ],
+          turn: {
+            say: 'Two that would work this week.',
+            widgets: [
+              {
+                kind: 'recipes',
+                picks: [
+                  { recipeId: 'scan-001', why: "You haven't made this one yet, and it's quick." },
+                  { recipeId: 'dish-001', why: 'Lighter, to balance the beef you already picked.' },
+                ],
+              },
+              {
+                kind: 'actions',
+                options: [
+                  { label: 'Show me others', intent: 'more' },
+                  { label: "That's the week", intent: 'done' },
+                ],
+              },
+            ],
+          },
+          constraints: {
+            wanted: 4,
+            mood: [],
+            facets: { proteins: [], dishTypes: [], cuisines: [], difficulties: [], maxMinutes: null },
+            keptIds: [],
+            rejectedIds: [],
+          },
         },
       }),
     )
@@ -179,23 +201,16 @@ test.describe('remaining findings', () => {
     await page.getByRole('button', { name: 'Back to the week' }).click()
     await page.waitForTimeout(400)
 
-    // The suggester, full screen, part-way through the steps.
+    // The suggester, mid-exchange.
     await page.getByTestId('open-meal-suggester').click()
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(600)
     await expect(page.getByTestId('meal-suggester')).toBeVisible()
-    await page.getByRole('button', { name: '5', exact: true }).first().click()
-    await page.waitForTimeout(300)
-    await page.getByRole('button', { name: 'comforting', exact: true }).click()
-    await page.getByRole('button', { name: 'quick weeknights', exact: true }).click()
-    await page.getByRole('button', { name: 'Next', exact: true }).click()
-    await page.waitForTimeout(400)
+    await expect(page.getByTestId('suggestion-card').first()).toBeVisible()
     await page.screenshot({ path: `${OUT}/13-suggester-screen.png` })
 
-    // The action sits below several chip groups on a phone — it has to be reachable, or the
-    // whole screen is a dead end.
-    const findMeals = page.getByRole('button', { name: /Find me meals/i })
-    await findMeals.scrollIntoViewIfNeeded()
-    await expect(findMeals).toBeVisible()
+    // The composer opens only once there is something concrete to react to.
+    await expect(page.getByTestId('suggester-composer')).toBeVisible()
+    await page.getByTestId('suggester-composer').fill('too heavy')
     await page.screenshot({ path: `${OUT}/14-suggester-action.png` })
   })
 })

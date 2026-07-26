@@ -22,6 +22,17 @@ export const OUTCOME_RATING: Record<Exclude<CookOutcome, 'skipped'>, number> = {
   again: 5,
 }
 
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * How far back the prompt will still ask.
+ *
+ * Three weeks is roughly the edge of "I remember how that went". Older weeks are not asked about
+ * at all, rather than being asked about badly — a guessed answer is worse than no answer, because
+ * the suggester treats it as fact.
+ */
+export const REVIEW_BACKLOG_WEEKS = 3
+
 export interface PlannedForReview {
   recipeId: string
   weekStart: string
@@ -46,11 +57,18 @@ export function weekAwaitingReview(
 ): { weekStart: string; recipeIds: string[] } | null {
   const thisWeek = weekStartOf(today)
   const reviewed = new Set(reviewedWeeks)
+  const oldestWorthAsking = weekStartOf(
+    new Date(new Date(`${thisWeek}T00:00:00`).getTime() - REVIEW_BACKLOG_WEEKS * WEEK_MS),
+  )
 
   const byWeek = new Map<string, string[]>()
   for (const entry of planned) {
     // Only weeks that have finished. The current week is still being cooked.
     if (!entry.weekStart || entry.weekStart >= thisWeek) continue
+    // And only weeks anyone could still honestly answer for. Without a floor this walks backwards
+    // one week at a time forever: clear last week and it offers the one before, and after six
+    // months of planning it is asking how a meal went in April.
+    if (entry.weekStart < oldestWorthAsking) continue
     if (reviewed.has(entry.weekStart)) continue
     const ids = byWeek.get(entry.weekStart) ?? []
     if (!ids.includes(entry.recipeId)) ids.push(entry.recipeId)

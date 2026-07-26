@@ -1,4 +1,5 @@
 import type { APIRoute, APIContext } from 'astro'
+import { Type as SchemaType } from '@google/genai'
 import {
   getAuthUser,
   unauthorizedResponse,
@@ -12,35 +13,102 @@ import { GEMINI_TEXT_MODEL } from '../../../lib/services/ai-model-config'
 import { rateLimit } from '../../../lib/rate-limit'
 import { listAccessibleRecipes } from '../../../lib/recipe-access'
 import { weekStartOf, type CookOutcome } from '../../../lib/week-review'
+import { describeFacets } from '../../../lib/recipe-facets'
 import {
   buildMenu,
-  buildPrompt,
-  parseSuggestions,
+  buildConversationPreamble,
+  buildTurnPrompt,
   fallbackSuggestions,
-  matchesFacets,
   type RecipeSignal,
 } from '../../../lib/services/suggest-core'
-import type { RecipeFacets } from '../../../lib/recipe-facets'
+import {
+  sanitizeConstraints,
+  applyPatch,
+  offerableUnder,
+  groundWidgets,
+  parseTurn,
+  degradedTurn,
+  MAX_REPLAYED_TURNS,
+  type ConversationEntry,
+} from '../../../lib/services/suggest-turns'
 import type { FamilyRecipeData } from '../../../lib/types'
 
-/** Comfortably inside the request budget — this is one small call over ~8k tokens. */
+/** Comfortably inside the request budget — this is one small call over a cached ~8k-token menu. */
 const SUGGEST_TIMEOUT_MS = 25_000
-const SUGGEST_RATE_LIMIT = 60
+/**
+ * Per *turn*, not per session. A planning session is now several exchanges rather than one call,
+ * so the old 60 would have been a couple of sessions' worth.
+ */
+const SUGGEST_RATE_LIMIT = 200
 const SUGGEST_RATE_WINDOW_SECONDS = 60 * 60
-const MAX_WANTED = 7
+
+/** How a stored quick-review rating reads back as an outcome. Mirrors `OUTCOME_RATING`. */
+function outcomeForRating(rating: number): CookOutcome {
+  if (rating <= 2) return 'meh'
+  if (rating >= 5) return 'again'
+  return 'good'
+}
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 /**
+ * The shape the model must answer in. Enforced by Gemini's structured-output mode rather than
+ * hoped for — `parseTurn` still validates, because a schema constrains shape and not sense.
+ */
+const TURN_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    say: { type: SchemaType.STRING },
+    widgets: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          kind: { type: SchemaType.STRING },
+          id: { type: SchemaType.STRING },
+          mode: { type: SchemaType.STRING },
+          value: { type: SchemaType.NUMBER },
+          placeholder: { type: SchemaType.STRING },
+          options: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                label: { type: SchemaType.STRING },
+                value: { type: SchemaType.STRING },
+                intent: { type: SchemaType.STRING },
+              },
+            },
+          },
+          picks: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                n: { type: SchemaType.NUMBER },
+                why: { type: SchemaType.STRING },
+              },
+            },
+          },
+        },
+        required: ['kind'],
+      },
+    },
+  },
+  required: ['say', 'widgets'],
+}
+
+/**
  * POST /api/week/suggest
  *
- * Suggests a few meals from the cook's own library, given how many they still need and whatever
- * they said they feel like.
+ * One turn of the meal-picking exchange: `{ conversation, constraints }` in, `{ turn, constraints }`
+ * out. The model chooses the next question and what to offer in it; this endpoint owns the typed
+ * state, grounds every option against the real library, and resolves picks to recipes the cook
+ * actually has. See `lib/services/suggest-turns.ts` for why it is shaped that way.
  *
- * The whole library goes to the model — see suggest-core.ts for why a candidate pre-filter is the
- * wrong shape here. If the model is unavailable the endpoint still answers, from a deterministic
- * ranking, because a blank screen is a worse failure than an unexplained pick.
+ * If the model is unavailable or answers unusably, the endpoint still returns a turn — built from
+ * a deterministic ranking. A blank screen is a worse failure than an unexplained pick.
  */
 export const POST: APIRoute = async (context: APIContext) => {
   setRequestContext(context)
@@ -58,33 +126,16 @@ export const POST: APIRoute = async (context: APIContext) => {
 
   try {
     const body = await context.request.json()
-    const wanted = Math.max(1, Math.min(MAX_WANTED, Number(body?.wanted) || 3))
-    const mood = String(body?.mood ?? '').slice(0, 400)
-    const keptIds: string[] = Array.isArray(body?.keptIds) ? body.keptIds.map(String) : []
-    const rejectedIds: string[] = Array.isArray(body?.rejectedIds)
-      ? body.rejectedIds.map(String)
+    let constraints = sanitizeConstraints(body?.constraints)
+    const conversation: ConversationEntry[] = Array.isArray(body?.conversation)
+      ? body.conversation.slice(-MAX_REPLAYED_TURNS)
       : []
-    const facets: RecipeFacets = {
-      proteins: Array.isArray(body?.facets?.proteins) ? body.facets.proteins.map(String) : [],
-      dishTypes: Array.isArray(body?.facets?.dishTypes) ? body.facets.dishTypes.map(String) : [],
-      cuisines: Array.isArray(body?.facets?.cuisines) ? body.facets.cuisines.map(String) : [],
-      difficulties: Array.isArray(body?.facets?.difficulties)
-        ? body.facets.difficulties.map(String)
-        : [],
-      maxMinutes: Number(body?.facets?.maxMinutes) || null,
-    }
 
     const userDoc = await db.getDocument('users', userId)
     const familyId = userDoc?.familyId as string | undefined
 
-    // The library the cook can actually choose from — the same scope the library screen shows.
-    //
-    // This used to read the entire `recipes` collection and filter it with
-    // `!r.createdBy || r.createdBy === userId || familyId`, where the trailing `|| familyId` is
-    // truthy for anyone in a family and made the filter a no-op. Two things followed: the model
-    // was shown other families' recipes, and any pick outside the cook's own library resolved to
-    // nothing on the client and was silently dropped — so asking for five meals could return three.
     const recipes = await listAccessibleRecipes(userId)
+    const knownIds = new Set(recipes.map((r) => r.id))
 
     // What this family has made, and what they thought of it.
     const signals: Record<string, RecipeSignal> = {}
@@ -94,11 +145,16 @@ export const POST: APIRoute = async (context: APIContext) => {
       )) as FamilyRecipeData[]
       for (const data of familyData) {
         const cooks = data.cookingHistory ?? []
-        const outcomes: CookOutcome[] = cooks.map((c) => (c.wouldMakeAgain ? 'again' : 'good'))
-        // A "meh" is recorded as a 2-star quick review; read it back so dislikes carry weight.
-        for (const review of data.reviews ?? []) {
-          if (review.source === 'quick' && review.rating <= 2) outcomes.push('meh')
-        }
+        // A cook records what happened; the rating records how it went. Reading both would count
+        // a "meh" twice — once as an ordinary cook, once as a dislike — so the rating wins where
+        // there is one, and a cook with no rating is treated as unremarkable.
+        const quickRatings = (data.reviews ?? [])
+          .filter((r) => r.source === 'quick')
+          .map((r) => r.rating)
+        const outcomes: CookOutcome[] = quickRatings.length
+          ? quickRatings.map(outcomeForRating)
+          : cooks.map((c) => (c.wouldMakeAgain ? 'again' : 'good'))
+
         const lastCook = cooks[cooks.length - 1]?.cookedAt
         signals[data.id] = {
           outcomes,
@@ -108,29 +164,45 @@ export const POST: APIRoute = async (context: APIContext) => {
       }
     }
 
-    // Facets are a hard filter — the cook tapped "Chicken", so a beef dish is wrong however good
-    // a suggestion it would be. Free text stays a steer for the model; this was explicit.
-    const exclude = [...keptIds, ...rejectedIds]
-    const offerable = recipes.filter((r) => !exclude.includes(r.id) && matchesFacets(r, facets))
+    // A patch the cook's last message earned is applied before anything is offered, so the reply
+    // and the constraints can never disagree.
+    const offerable = offerableUnder(recipes, constraints)
     if (!offerable.length) {
-      return json({ success: true, suggestions: [], exhausted: true })
+      return json({
+        success: true,
+        turn: degradedTurn([]),
+        constraints,
+        exhausted: true,
+      })
     }
 
-    const input = { recipes: offerable, signals, wanted, mood, keptIds, rejectedIds, facets }
-    const { menu, index } = buildMenu(offerable, signals)
-    const keptTitles = keptIds
+    const stillNeeded = Math.max(1, constraints.wanted - constraints.keptIds.length)
+    const keptTitles = constraints.keptIds
       .map((id) => recipes.find((r) => r.id === id)?.title)
       .filter((t): t is string => Boolean(t))
 
-    let suggestions = [] as ReturnType<typeof parseSuggestions>
+    const { menu, index } = buildMenu(offerable, signals)
+    const preamble = buildConversationPreamble(menu)
+    const tail = buildTurnPrompt({
+      conversation,
+      constraints,
+      narrowed: describeFacets(constraints.facets),
+      stillNeeded,
+      keptTitles,
+      offerableCount: offerable.length,
+    })
+
+    let turn = null as ReturnType<typeof parseTurn>
     const { signal, cleanup } = createTimeoutSignal(SUGGEST_TIMEOUT_MS, context.request.signal)
     try {
       const gemini = await initGeminiClient(context.locals)
       const response = await gemini.models.generateContent({
         model: GEMINI_TEXT_MODEL,
-        contents: [{ role: 'user', parts: [{ text: buildPrompt(input, menu, keptTitles) }] }],
+        // The stable menu first, the conversation last, so the long half is a cache prefix.
+        contents: [{ role: 'user', parts: [{ text: `${preamble}\n${tail}` }] }],
         config: {
           responseMimeType: 'application/json',
+          responseSchema: TURN_SCHEMA,
           abortSignal: signal,
           // Choosing among a list is judgement, not reasoning — the latency is not worth it.
           thinkingConfig: { thinkingBudget: 0 },
@@ -138,18 +210,47 @@ export const POST: APIRoute = async (context: APIContext) => {
           temperature: 0.8,
         },
       })
-      suggestions = parseSuggestions(response.text ?? '', index, exclude)
+      turn = parseTurn(response.text ?? '', index, [
+        ...constraints.keptIds,
+        ...constraints.rejectedIds,
+      ])
     } catch (error) {
       console.error('[week/suggest] model call failed:', error)
     } finally {
       cleanup()
     }
 
-    if (!suggestions.length) {
-      return json({ success: true, suggestions: fallbackSuggestions(input), degraded: true })
+    if (!turn) {
+      const picks = fallbackSuggestions({
+        recipes,
+        signals,
+        wanted: stillNeeded,
+        mood: constraints.mood.join(', '),
+        keptIds: constraints.keptIds,
+        rejectedIds: constraints.rejectedIds,
+        facets: constraints.facets,
+      }).map((s) => ({ recipeId: s.recipeId, why: s.reason }))
+
+      return json({ success: true, turn: degradedTurn(picks), constraints, degraded: true })
     }
 
-    return json({ success: true, suggestions: suggestions.slice(0, wanted) })
+    constraints = applyPatch(constraints, turn.patch, knownIds)
+
+    // Ground the options against the library *after* the patch — the counts a cook sees have to
+    // reflect what they just said, not what was true a sentence ago.
+    const grounded = offerableUnder(recipes, constraints)
+    const widgets = groundWidgets(turn.widgets, recipes, constraints)
+
+    // Narrowing itself into a corner is worth saying out loud rather than quietly returning less
+    // than was asked for.
+    const exhausted = grounded.length === 0
+
+    return json({
+      success: true,
+      turn: { say: turn.say, widgets },
+      constraints,
+      ...(exhausted ? { exhausted: true } : {}),
+    })
   } catch (error) {
     console.error('[week/suggest] failed:', error)
     return serverErrorResponse('Could not put together suggestions right now.')
