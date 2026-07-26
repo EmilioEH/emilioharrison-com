@@ -1,11 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { Plus, Clock, User, Trash2 } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { Plus, Clock, User, Trash2, Sparkles, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-import { removeRecipeFromWeek, addRecipeToWeek, type PlannedRecipe } from '../../../lib/weekStore'
-import type { CookOutcome } from '../../../lib/week-review'
-import { WeekReviewPrompt } from './WeekReviewPrompt'
-import { MealSuggester } from './MealSuggester'
+import { removeRecipeFromWeek, type PlannedRecipe } from '../../../lib/weekStore'
+import { formatWeekRange } from '../../../lib/week-review'
 import type { Recipe } from '../../../lib/types'
 
 interface WeekPlanViewProps {
@@ -13,14 +11,10 @@ interface WeekPlanViewProps {
   allRecipes: Recipe[]
   onSelectRecipe: (recipe: Recipe) => void
   onAddRecipe?: () => void
-}
-
-const apiBase = () =>
-  import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`
-
-interface PendingReview {
-  weekStart: string
-  recipeIds: string[]
+  /** Set when a finished week is still owed an answer — surfaces the prompt to open the screen. */
+  reviewWeek?: string | null
+  onOpenReview?: () => void
+  onOpenSuggester?: () => void
 }
 
 /**
@@ -260,6 +254,9 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
   allRecipes,
   onSelectRecipe,
   onAddRecipe,
+  reviewWeek,
+  onOpenReview,
+  onOpenSuggester,
 }) => {
   // Resolve planned entries to their recipes (flat list — recipes belong to the week, not a day)
   const plannedCards = currentRecipes
@@ -275,43 +272,6 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
     await removeRecipeFromWeek(recipeId)
   }
 
-  // How last week went. Asked here because opening the planner is the only moment that recurs on
-  // the same cadence as cooking — see lib/week-review.ts.
-  const [pendingReview, setPendingReview] = useState<PendingReview | null>(null)
-  const [reviewDismissed, setReviewDismissed] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(`${apiBase()}api/week/review`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled && data?.pending) setPendingReview(data.pending)
-      })
-      .catch(() => {
-        // A missing prompt is not worth surfacing an error for.
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const submitReview = async (outcomes: Array<{ recipeId: string; outcome: CookOutcome }>) => {
-    if (!pendingReview) return
-    await fetch(`${apiBase()}api/week/review`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weekStart: pendingReview.weekStart, outcomes }),
-    })
-    triggerHaptic('light')
-    setPendingReview(null)
-  }
-
-  const reviewRecipes = pendingReview
-    ? pendingReview.recipeIds
-        .map((id) => allRecipes.find((r) => r.id === id))
-        .filter((r): r is Recipe => Boolean(r))
-    : []
-
   return (
     <motion.div
       variants={containerVariants}
@@ -319,24 +279,36 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
       animate="visible"
       className="flex flex-col gap-3 p-4 pb-24"
     >
-      {pendingReview && !reviewDismissed && reviewRecipes.length > 0 && (
-        <WeekReviewPrompt
-          weekStart={pendingReview.weekStart}
-          recipes={reviewRecipes}
-          onSubmit={submitReview}
-          onDismiss={() => setReviewDismissed(true)}
-        />
+      {/* Ways in, not the things themselves. Both open a full screen — a multi-step exchange
+        * doesn't belong between the cook and the recipes they came to look at. */}
+      {reviewWeek && (
+        <motion.button
+          variants={itemVariants}
+          type="button"
+          onClick={onOpenReview}
+          data-testid="open-week-review"
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
+        >
+          <span className="min-w-0">
+            <span className="block font-medium text-foreground">How did last week go?</span>
+            <span className="block text-xs text-muted-foreground">
+              {formatWeekRange(reviewWeek)} · a tap each, and the suggestions get better
+            </span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+        </motion.button>
       )}
 
-      <MealSuggester
-        allRecipes={allRecipes}
-        plannedIds={currentRecipes.map((r) => r.recipeId)}
-        onAdd={async (recipeId) => {
-          await addRecipeToWeek(recipeId)
-          triggerHaptic('light')
-        }}
-        onOpenRecipe={onSelectRecipe}
-      />
+      <motion.button
+        variants={itemVariants}
+        type="button"
+        onClick={onOpenSuggester}
+        data-testid="open-meal-suggester"
+        className="flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
+      >
+        <Sparkles className="h-4 w-4 text-primary" />
+        Help me pick this week
+      </motion.button>
 
       {plannedCards.map(({ planned, recipe }) => (
         <motion.div key={planned.recipeId} variants={itemVariants}>

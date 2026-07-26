@@ -94,3 +94,12 @@ export function preferenceWeight(
 
   return weight
 }
+
+/** "Jul 13 – Jul 19", for naming the week being asked about. */
+export function formatWeekRange(weekStart: string): string {
+  const start = new Date(`${weekStart}T00:00:00`)
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+  return `${start.toLocaleDateString(undefined, opts)} – ${end.toLocaleDateString(undefined, opts)}`
+}

@@ -1,7 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useStore } from '@nanostores/react'
 import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek } from 'date-fns'
-import { motion } from 'framer-motion'
+import { formatWeekRange, type CookOutcome } from '../../../lib/week-review'
+import { WeekScreen } from './WeekScreen'
+import { WeekReviewPrompt } from './WeekReviewPrompt'
+import { MealSuggester } from './MealSuggester'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar,
   Check,
@@ -19,6 +23,7 @@ import {
   weekState,
   switchWeekContext,
   currentWeekRecipes,
+  addRecipeToWeek,
   $groceryNeedsRegen,
 } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
@@ -74,6 +79,54 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   user: _propsUser,
 }) => {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
+
+  // The two full screens reachable from the plan. Kept here rather than in the router so the week
+  // context underneath (which week is active, what is planned) survives entering and leaving them.
+  const [fullScreen, setFullScreen] = useState<'review' | 'suggest' | null>(null)
+  const [pendingReview, setPendingReview] = useState<{
+    weekStart: string
+    recipeIds: string[]
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const base = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`
+    fetch(`${base}api/week/review`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data?.pending) setPendingReview(data.pending)
+      })
+      .catch(() => {
+        // A missing prompt is not worth surfacing an error for.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const submitWeekReview = async (
+    outcomes: Array<{ recipeId: string; outcome: CookOutcome }>,
+  ) => {
+    if (!pendingReview) return
+    const base = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`
+    await fetch(`${base}api/week/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weekStart: pendingReview.weekStart, outcomes }),
+    })
+    setPendingReview(null)
+    setFullScreen(null)
+  }
+
+  const reviewRecipes = pendingReview
+    ? pendingReview.recipeIds
+        .map((id) => allRecipes.find((r) => r.id === id))
+        .filter((r): r is Recipe => Boolean(r))
+    : []
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
   const groceryNeedsRegen = useStore($groceryNeedsRegen)
@@ -484,6 +537,41 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
           )
         })()}
 
+      <AnimatePresence>
+        {fullScreen === 'review' && pendingReview && (
+          <WeekScreen
+            key="review"
+            title="How did last week go?"
+            subtitle={formatWeekRange(pendingReview.weekStart)}
+            onBack={() => setFullScreen(null)}
+          >
+            <WeekReviewPrompt
+              recipes={reviewRecipes}
+              onSubmit={submitWeekReview}
+              onDismiss={() => setFullScreen(null)}
+            />
+          </WeekScreen>
+        )}
+
+        {fullScreen === 'suggest' && (
+          <WeekScreen
+            key="suggest"
+            title="Help me pick"
+            subtitle="A few ideas from your own recipes"
+            onBack={() => setFullScreen(null)}
+          >
+            <MealSuggester
+              allRecipes={allRecipes}
+              plannedIds={currentRecipes.map((r) => r.recipeId)}
+              onAdd={async (recipeId) => {
+                await addRecipeToWeek(recipeId)
+              }}
+              onOpenRecipe={onSelectRecipe}
+            />
+          </WeekScreen>
+        )}
+      </AnimatePresence>
+
       {/* Content area: scrolls everything inside */}
       <div className="flex-1 overflow-y-auto pb-tab-bar">
         {activeTab === 'plan' && (
@@ -492,6 +580,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             allRecipes={allRecipes}
             onSelectRecipe={onSelectRecipe}
             onAddRecipe={() => onClose()}
+            reviewWeek={reviewRecipes.length ? pendingReview?.weekStart : null}
+            onOpenReview={() => setFullScreen('review')}
+            onOpenSuggester={() => setFullScreen('suggest')}
           />
         )}
 
