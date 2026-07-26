@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
-import { cn } from '../../../lib/utils'
+import { Chip } from '../../ui/Chip'
 import type { CookOutcome } from '../../../lib/week-review'
 import type { Recipe } from '../../../lib/types'
 
@@ -97,29 +97,18 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
           <div key={recipe.id}>
             <p className="mb-1.5 font-medium leading-snug text-foreground">{recipe.title}</p>
             <div
-              className="flex flex-wrap gap-1.5"
+              className="flex flex-wrap gap-2"
               role="group"
               aria-label={`How was ${recipe.title}?`}
             >
-              {OPTIONS.map((option) => {
-                const selected = answers[recipe.id] === option.value
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => setAnswers((prev) => ({ ...prev, [recipe.id]: option.value }))}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                      selected
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground',
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                )
-              })}
+              {OPTIONS.map((option) => (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  active={answers[recipe.id] === option.value}
+                  onClick={() => setAnswers((prev) => ({ ...prev, [recipe.id]: option.value }))}
+                />
+              ))}
             </div>
           </div>
         ))}

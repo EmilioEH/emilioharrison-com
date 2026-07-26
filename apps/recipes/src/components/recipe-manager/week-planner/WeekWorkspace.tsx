@@ -25,6 +25,7 @@ import {
   currentWeekRecipes,
   addRecipeToWeek,
   $groceryNeedsRegen,
+  $weekOverlayOpen,
 } from '../../../lib/weekStore'
 import { $currentFamily } from '../../../lib/familyStore'
 import { buildRawShoppableIngredients } from '../../../lib/grocery-utils'
@@ -88,6 +89,12 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     weekStart: string
     recipeIds: string[]
   } | null>(null)
+
+  // Let the shell know a full screen is up, so the bottom tab bar gets out of its way.
+  useEffect(() => {
+    $weekOverlayOpen.set(fullScreen !== null)
+    return () => $weekOverlayOpen.set(false)
+  }, [fullScreen])
 
   const loadPendingReview = React.useCallback(async () => {
     const res = await fetch(`${apiBase()}api/week/review`)

@@ -26,7 +26,16 @@ const isImpersonating = Astro.cookies.has('admin_mask')
 <html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      `interactive-widget=resizes-content` makes the on-screen keyboard shrink the viewport rather
+      than overlay it, so controls pinned to the bottom of a screen stay reachable. Deliberately
+      no `user-scalable`/`maximum-scale`: those break WCAG and interfere with portal tap timing on
+      iOS (see .agent/rules/04-ios-webkit.md).
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+    />
     <meta
       name="description"
       content="AI-powered recipe manager for organizing, parsing, and generating grocery lists from your favorite recipes"

@@ -32,7 +32,7 @@ export const WeekScreen: React.FC<WeekScreenProps> = ({ title, subtitle, onBack,
     data-testid="week-screen"
   >
     <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-2xl items-center gap-2 px-2 py-2">
+      <div className="mx-auto flex max-w-2xl items-center gap-1 px-2 py-2">
         <button
           type="button"
           onClick={onBack}
@@ -41,11 +41,17 @@ export const WeekScreen: React.FC<WeekScreenProps> = ({ title, subtitle, onBack,
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <div className="min-w-0">
+        {/* Tight leading and a hair of space, so the two lines read as one heading rather than
+          * as a title with an unrelated line floating under it. */}
+        <div className="min-w-0 leading-tight">
           <h2 className="truncate font-display text-lg font-bold leading-tight text-foreground">
             {title}
           </h2>
-          {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+          {subtitle && (
+            <p className="mt-0.5 truncate text-xs leading-tight text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
         </div>
       </div>
     </div>

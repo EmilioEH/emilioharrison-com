@@ -31,6 +31,16 @@ export const weekState = persistentMap<WeekState>('weekState', {
  */
 export const $groceryNeedsRegen = atom<string | null>(null)
 
+/**
+ * True while one of the week's full screens (the review, the suggester) is open.
+ *
+ * It lives here rather than inside `WeekWorkspace` because the bottom tab bar is a sibling of the
+ * whole workspace, several levels up in `RecipeManager`. The tab bar is `fixed z-50` and later in
+ * the DOM than the overlay's `absolute z-50`, so it painted straight over a screen that is
+ * supposed to have the viewport to itself — and one tap on it discarded a half-finished exchange.
+ */
+export const $weekOverlayOpen = atom<boolean>(false)
+
 // On load, advance a stale stored week to the current week.
 // The default value above only applies on first ever load; after that localStorage
 // holds the previous value, so the planner would stay stuck in the past.

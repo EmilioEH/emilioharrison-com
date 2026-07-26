@@ -277,7 +277,7 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="flex flex-col gap-3 p-4 pb-24"
+      className="flex flex-col gap-3 p-4"
     >
       {/* Ways in, not the things themselves. Both open a full screen — a multi-step exchange
         * doesn't belong between the cook and the recipes they came to look at. */}

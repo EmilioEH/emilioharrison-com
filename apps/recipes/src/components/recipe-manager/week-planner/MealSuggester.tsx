@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Plus, RotateCw, Check, Pencil } from 'lucide-react'
+import { Chip } from '../../ui/Chip'
 import { cn } from '../../../lib/utils'
 import { apiBase } from '../../../lib/routes'
 import type { Recipe } from '../../../lib/types'
@@ -49,26 +50,6 @@ const COUNTS = [3, 4, 5, 6, 7]
 const toggle = (list: string[], value: string) =>
   list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
 
-const Chip: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({
-  label,
-  active,
-  onClick,
-}) => (
-  <button
-    type="button"
-    aria-pressed={active}
-    onClick={onClick}
-    className={cn(
-      'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-      active
-        ? 'border-primary bg-primary text-primary-foreground'
-        : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground',
-    )}
-  >
-    {label}
-  </button>
-)
-
 /**
  * One turn of the exchange.
  *
@@ -97,7 +78,7 @@ const Step: React.FC<{
       <button
         type="button"
         onClick={onReopen}
-        className="flex w-full items-baseline justify-between gap-3 py-1 text-left"
+        className="flex min-h-11 w-full items-center justify-between gap-3 py-2 text-left"
       >
         <span className="shrink-0 text-sm text-muted-foreground">{title}</span>
         <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground">
@@ -251,7 +232,7 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
         open={step === 0}
         onReopen={() => setStep(0)}
       >
-        <div className="flex gap-1.5">
+        <div className="flex gap-2">
           {COUNTS.map((n) => (
             <button
               key={n}
@@ -281,7 +262,7 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
           open={step === 1}
           onReopen={() => setStep(1)}
         >
-          <div className="mb-2 flex flex-wrap gap-1.5">
+          <div className="mb-3 flex flex-wrap gap-2">
             {MOODS.map((m) => (
               <Chip
                 key={m}
@@ -301,7 +282,7 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
           <button
             type="button"
             onClick={() => setStep(2)}
-            className="h-11 rounded-lg text-sm font-semibold text-primary"
+            className="h-11 rounded-lg border border-border px-5 text-sm font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-accent/50"
           >
             Next
           </button>
@@ -320,7 +301,7 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
               <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Time
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {TIME_OPTIONS.map((t) => (
                   <Chip
                     key={t.id}
@@ -337,7 +318,7 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {group.label}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {group.options.map((option) => (
                     <Chip
                       key={option}

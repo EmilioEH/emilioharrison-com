@@ -1,7 +1,7 @@
 # Meal Suggester V2 (Conversational) + Week Review Fixes — Implementation Plan
 
 > **Updated**: 2026-07-26
-> **Status**: Phase 1 complete — Phase 2 next
+> **Status**: Phases 1–2 complete — Phase 3 next
 > **Branch**: Feature work should branch from `main`
 > **Supersedes**: the stepped-wizard suggester shipped in PRs #102–#104
 
@@ -223,13 +223,13 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 
 | #   | Task                                  | File(s)                                        | Status | Notes                                                                                                                                                                                                     |
 | --- | ------------------------------------- | ---------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.1 | Shared `Chip` component               | `src/components/ui/Chip.tsx` (new)             | `[ ]`  | `min-h-11` per the 44px rule in `.agent/rules/04-ios-webkit.md`. The identical `px-3 py-1.5 text-sm` string is currently written twice (`WeekReviewPrompt.tsx:82`, `MealSuggester.tsx:63`) at ~30px tall. |
-| 2.2 | Adopt in both week screens            | `WeekReviewPrompt.tsx`, `MealSuggester.tsx`    | `[ ]`  | `RecipeFilters.tsx` is a deliberate follow-up, not this phase.                                                                                                                                            |
-| 2.3 | Collapsed step rows to 44px           | `MealSuggester.tsx:98-108`                     | `[ ]`  | `py-1` gives a ~28px reopen target.                                                                                                                                                                       |
-| 2.4 | Step "Next" as a real button          | `MealSuggester.tsx:278-284`                    | `[ ]`  | No horizontal padding — the target is only as wide as the word.                                                                                                                                           |
-| 2.5 | Hide the tab bar under a week overlay | `weekStore.ts`, `RecipeManager.tsx:476`        | `[ ]`  | Add a `$weekOverlayOpen` atom set by `WeekWorkspace`. `BottomTabBar` (`fixed z-50`, later in DOM) currently paints over `WeekScreen` (`absolute z-50`) — one tap discards the whole exchange.             |
-| 2.6 | Viewport meta for the keyboard        | `src/layouts/RecipeLayout.astro:29`            | `[ ]`  | Add `interactive-widget=resizes-content`. Do **not** touch `user-scalable`/`maximum-scale` (forbidden by CLAUDE.md). Needed by Phase 5.                                                                   |
-| 2.7 | Header and padding cleanup            | `WeekScreen.tsx:44-49`, `WeekPlanView.tsx:280` | `[ ]`  | Title/subtitle read as unrelated lines; `pb-24` sits inside a container that already has `pb-tab-bar` (~216px dead space).                                                                                |
+| 2.1 | Shared `Chip` component               | `src/components/ui/Chip.tsx` (new)             | `[x]`  | `min-h-11` per the 44px rule in `.agent/rules/04-ios-webkit.md`. The identical `px-3 py-1.5 text-sm` string is currently written twice (`WeekReviewPrompt.tsx:82`, `MealSuggester.tsx:63`) at ~30px tall. |
+| 2.2 | Adopt in both week screens            | `WeekReviewPrompt.tsx`, `MealSuggester.tsx`    | `[x]`  | `RecipeFilters.tsx` is a deliberate follow-up, not this phase.                                                                                                                                            |
+| 2.3 | Collapsed step rows to 44px           | `MealSuggester.tsx:98-108`                     | `[x]`  | `py-1` gives a ~28px reopen target.                                                                                                                                                                       |
+| 2.4 | Step "Next" as a real button          | `MealSuggester.tsx:278-284`                    | `[x]`  | No horizontal padding — the target is only as wide as the word.                                                                                                                                           |
+| 2.5 | Hide the tab bar under a week overlay | `weekStore.ts`, `RecipeManager.tsx:476`        | `[x]`  | Add a `$weekOverlayOpen` atom set by `WeekWorkspace`. `BottomTabBar` (`fixed z-50`, later in DOM) currently paints over `WeekScreen` (`absolute z-50`) — one tap discards the whole exchange.             |
+| 2.6 | Viewport meta for the keyboard        | `src/layouts/RecipeLayout.astro:29`            | `[x]`  | Add `interactive-widget=resizes-content`. Do **not** touch `user-scalable`/`maximum-scale` (forbidden by CLAUDE.md). Needed by Phase 5.                                                                   |
+| 2.7 | Header and padding cleanup            | `WeekScreen.tsx:44-49`, `WeekPlanView.tsx:280` | `[x]`  | Title/subtitle read as unrelated lines; `pb-24` sits inside a container that already has `pb-tab-bar` (~216px dead space).                                                                                |
 
 ---
 
@@ -400,4 +400,5 @@ Offered: 1. Buzhenina, Roasted Garlic Pork (Pork, 75m)
 | Date       | Session                                    | Outcome                                                                                                                                                                                             |
 | ---------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-07-26 | Review of the week-plan review + suggester | ~25 findings across silent failures, one-way exchange, filter wall, touch targets, and scoring. Design agreed: closed widget vocabulary, taps first, composer after suggestions. This plan written. |
+| 2026-07-26 | Phase 2 | Shipped. Shared `Chip` at 44px, tab bar yields to the overlay, keyboard-aware viewport, header and padding cleanups. `tests/week-planner-touch-targets.spec.ts` measures the floor rather than trusting the class string. |
 | 2026-07-26 | Phase 1 | Shipped. `listAccessibleRecipes` now the single visibility rule (three copies before, one of them broken); partial reviews resume via `reviewProgress`; failed saves and failed adds surface instead of vanishing. 16 new unit tests. Manual QA on a phone still outstanding — noted below. |
