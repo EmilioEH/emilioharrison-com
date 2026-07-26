@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ChefHat, Star, MoreVertical, Plus } from 'lucide-react'
+import { Star, MoreVertical, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
@@ -101,14 +101,22 @@ export const RecipeCard = memo(
           }
         }}
       >
-        {/* Square Thumbnail with border for contrast */}
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm ring-1 ring-black/5">
-          {cardImage ? (
+        {/* Square thumbnail, only when there is a real dish photo to show.
+          *
+          * Most of this library is imported by photographing cookbook pages, so `getRecipeCardImage`
+          * returns nothing for the majority of recipes. Those used to get a chef-hat placeholder,
+          * which meant most of the list was a column of identical icons — decoration that pushed
+          * every title to the same indent without telling the reader anything. The card now
+          * collapses to its text, and a thumbnail means "there is a photo of the finished dish". */}
+        {cardImage && (
+          <div
+            data-testid="recipe-card-thumbnail"
+            className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm ring-1 ring-black/5"
+          >
             <img
               // Prefer the small ~420px thumbUrl generated at upload time (P5) — cheaper to fetch
               // and decode than the full up-to-1920px image for a 96px card. Recipes saved before
               // thumbUrl existed (no backfill) fall back to the full-size fields.
-              // A photographed recipe card is deliberately not shown here — see getRecipeCardImage.
               src={cardImage}
               width={96}
               height={96}
@@ -117,12 +125,8 @@ export const RecipeCard = memo(
               loading="lazy"
               decoding="async"
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-              <ChefHat className="h-10 w-10 text-muted-foreground/30" />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Content Column */}
         <div className="flex flex-1 flex-col justify-center">
