@@ -19,6 +19,7 @@
 import type { Recipe } from '../types'
 import type { CookOutcome } from '../week-review'
 import { preferenceWeight } from '../week-review'
+import { describeFacets, hasFacets, type RecipeFacets } from '../recipe-facets'
 
 /** Everything known about one recipe's history with this family. */
 export interface RecipeSignal {
@@ -38,12 +39,48 @@ export interface SuggestInput {
   keptIds: string[]
   /** Already offered and passed over. Do not repeat them. */
   rejectedIds: string[]
+  /** What the cook narrowed by. Empty means no constraint. */
+  facets?: RecipeFacets
   today?: Date
 }
 
 export interface Suggestion {
   recipeId: string
   reason: string
+}
+
+/**
+ * Whether a recipe satisfies the cook's explicit narrowing.
+ *
+ * Facets are the one place a hard filter belongs: the cook tapped "Chicken", so a beef dish is
+ * wrong no matter how good a suggestion it would otherwise be. Free text stays a steer for the
+ * model — this is the part they were unambiguous about.
+ *
+ * Each list is additive (two proteins means either), and the lists combine (a protein AND a time).
+ */
+export function matchesFacets(recipe: Recipe, facets: RecipeFacets | undefined): boolean {
+  if (!hasFacets(facets)) return true
+  const f = facets!
+
+  const any = (values: string[] | undefined, actual: string | undefined) => {
+    if (!values?.length) return true
+    const got = String(actual ?? '').toLowerCase()
+    // "Main Course" should satisfy "Main" — the stored vocabulary is not fully normalised.
+    return values.some((v) => got.includes(v.toLowerCase()) || v.toLowerCase().includes(got))
+  }
+
+  if (!any(f.proteins, recipe.protein)) return false
+  if (!any(f.dishTypes, recipe.dishType)) return false
+  if (!any(f.cuisines, recipe.cuisine)) return false
+  if (!any(f.difficulties, recipe.difficulty)) return false
+
+  if (f.maxMinutes) {
+    const minutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)
+    // A recipe with no time recorded is not excluded — absence of data is not a slow recipe.
+    if (minutes > 0 && minutes > f.maxMinutes) return false
+  }
+
+  return true
 }
 
 /** One line per recipe. Compact on purpose: this is sent in full, every request. */
@@ -92,7 +129,8 @@ export function buildMenu(
 }
 
 export function buildPrompt(input: SuggestInput, menu: string, keptTitles: string[]): string {
-  const { wanted, mood, keptIds } = input
+  const { wanted, mood, keptIds, facets } = input
+  const narrowed = describeFacets(facets)
 
   return [
     'You help someone choose what to cook this week from recipes they already own.',
@@ -101,6 +139,7 @@ export function buildPrompt(input: SuggestInput, menu: string, keptTitles: strin
     '',
     `They need ${wanted} more meal${wanted === 1 ? '' : 's'}.`,
     mood.trim() ? `They said: "${mood.trim()}"` : 'They did not say what they feel like.',
+    narrowed ? `They also asked specifically for: ${narrowed}. The list below is already limited to those, so choose freely within it.` : '',
     keptIds.length
       ? `Already chosen this week: ${keptTitles.join('; ')}. Pick things that vary from these — different proteins and effort levels, so the week is not all the same.`
       : '',
@@ -169,11 +208,11 @@ export function parseSuggestions(
  * cook" when the AI does not — a blank screen is a worse failure than an unexplained pick.
  */
 export function fallbackSuggestions(input: SuggestInput): Suggestion[] {
-  const { recipes, signals, wanted, keptIds, rejectedIds, today = new Date() } = input
+  const { recipes, signals, wanted, keptIds, rejectedIds, facets, today = new Date() } = input
   const excluded = new Set([...keptIds, ...rejectedIds])
 
   return recipes
-    .filter((r) => !excluded.has(r.id))
+    .filter((r) => !excluded.has(r.id) && matchesFacets(r, facets))
     .map((r) => {
       const signal = signals[r.id]
       const weight = signal ? preferenceWeight(signal.outcomes, signal.lastCookedWeek, today) : 0

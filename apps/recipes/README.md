@@ -212,7 +212,13 @@ Two components at the top of the week plan, deliberately in that order.
 
 `skipped` deliberately records nothing. A meal that was planned and not made is real information, and inventing a cook would poison the suggestions this feeds.
 
-**`MealSuggester`** takes a meal count and a mood — free text, plus chips for when the cook can't name what they want — and returns a few recipes with a sentence of why each. Picking happens in batches, so every subsequent round is chosen against what has already been banked: take a stew and a pasta, ask for more, and it stops offering heavy dinners.
+**`MealSuggester`** is closed until asked for — most visits to the planner aren't "decide the whole week from scratch", and a permanently expanded form at the top of the plan is in the way the rest of the time.
+
+Opened, it asks one thing at a time and leaves each answer on screen as a collapsed, re-editable line, so the exchange reads like a conversation rather than a form: **how many meals → what are you feeling → anything specific**. Every answer is a tap rather than a sentence, because the cook usually can't name what they want; the free-text box is there for when they can. Everything is multi-select — "quick" *and* "comforting" is an ordinary thing to want.
+
+The third step steers by the library's real metadata (time, protein, dish, cuisine, effort), and those are a **hard filter** — tapping Chicken means a beef dish is wrong however good a suggestion it would otherwise be. Free text stays a steer for the model; facets were explicit. That vocabulary lives in `lib/recipe-facets.ts`, shared with `RecipeFilters.tsx`, which had been carrying its own inline copy that had already drifted (its dish types were missing Bread, Baked Good and Dessert).
+
+Picking happens in batches, so every subsequent round is chosen against what has already been banked: take a stew and a pasta, ask for more, and it stops offering heavy dinners.
 
 **The whole library goes to the model.** The instinct is to pre-filter to a handful of candidates in code — right for structured criteria (see the USDA weight table), wrong here, because "something comforting" doesn't map to `protein` or `cuisine` and a metadata filter can drop the best answer before the model sees it. It only works because the library is small: 413 recipes with the facts that matter come to roughly 8,300 tokens, so it fits in one cheap call with no retrieval step.
 

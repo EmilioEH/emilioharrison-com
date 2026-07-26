@@ -1,4 +1,11 @@
 import React from 'react'
+import {
+  PROTEIN_OPTIONS,
+  MEAL_TYPE_OPTIONS,
+  CUISINE_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  DISH_TYPE_OPTIONS,
+} from '../../lib/recipe-facets'
 import { ArrowDownAZ, Clock, Calendar, ChefHat, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -112,7 +119,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 
             {/* Protein - Priority 1 for variety */}
             <FilterSection title="Protein">
-              {['Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Vegetarian', 'Vegan', 'Other'].map(
+              {PROTEIN_OPTIONS.map(
                 (p) => (
                   <FilterChip
                     key={p}
@@ -126,7 +133,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 
             {/* Meal Type - Priority 2 for planning */}
             <FilterSection title="Meal Type">
-              {['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snack', 'Dessert'].map((t) => (
+              {MEAL_TYPE_OPTIONS.map((t) => (
                 <FilterChip
                   key={t}
                   label={t}
@@ -138,7 +145,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 
             {/* Cuisine - Priority 3 for variety */}
             <FilterSection title="Cuisine">
-              {['Italian', 'Mexican', 'Asian', 'American', 'Mediterranean', 'Vegetarian'].map(
+              {CUISINE_OPTIONS.map(
                 (c) => (
                   <FilterChip
                     key={c}
@@ -152,7 +159,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 
             {/* Difficulty - Priority 4 for balancing easy vs complex */}
             <FilterSection title="Difficulty">
-              {['Easy', 'Medium', 'Hard'].map((diff) => (
+              {DIFFICULTY_OPTIONS.map((diff) => (
                 <FilterChip
                   key={diff}
                   label={diff}
@@ -164,7 +171,7 @@ export const RecipeFilters: React.FC<RecipeFiltersProps> = ({
 
             {/* Dish Type */}
             <FilterSection title="Dish Type">
-              {['Main', 'Side', 'Appetizer', 'Salad', 'Soup', 'Drink', 'Sauce'].map((t) => (
+              {DISH_TYPE_OPTIONS.map((t) => (
                 <FilterChip
                   key={t}
                   label={t}
