@@ -1,5 +1,7 @@
-import type { Recipe, ShoppableIngredient } from './types'
+import type { Ingredient, Recipe, ShoppableIngredient } from './types'
 import { normalizeCategory } from './grocery-logic'
+import { ingredientKey } from './ingredient-names'
+import { unitLabel } from './units'
 
 /** Fixed grocery category display order (store-walk order). */
 export const CATEGORY_ORDER = [
@@ -103,10 +105,67 @@ export function guessCategoryFromName(name: string): string {
   return 'Other'
 }
 
+/**
+ * The stored category for an ingredient, looked up by name rather than by position.
+ *
+ * `structuredIngredients` is the only place a category lives, but it drifted out of step with the
+ * display list — 56 recipes disagree on length — so matching by index would file ingredients under
+ * whatever happened to sit at that offset. Keying on `ingredientKey` also means "garlic cloves"
+ * finds the category stored for "garlic".
+ */
+function storedCategoryLookup(recipe: Recipe): (name: string) => string | undefined {
+  const byKey = new Map<string, string>()
+  for (const structured of recipe.structuredIngredients ?? []) {
+    const key = ingredientKey(structured.name)
+    const category = String(structured.category ?? '').trim()
+    if (key && category && !byKey.has(key)) byKey.set(key, category)
+  }
+  return (name: string) => byKey.get(ingredientKey(name))
+}
+
+/**
+ * True once an ingredient has been through the normalisation migration, i.e. it carries a real
+ * number and a canonical unit rather than a free-text amount. See lib/ingredient-parse.ts.
+ */
+function isNormalised(ingredient: Ingredient): boolean {
+  return typeof ingredient.quantity === 'number' || Boolean(ingredient.unit)
+}
+
 export function buildRawShoppableIngredients(recipes: Recipe[]): ShoppableIngredient[] {
   const items: ShoppableIngredient[] = []
 
   for (const recipe of recipes) {
+    // Prefer the display list once it has been normalised. It is now the better-structured of the
+    // two: a numeric quantity on 90% of ingredients against a free-text amount, one canonical unit
+    // spelling against 311, and the printed name rather than the AI-rewritten one that turned
+    // "1 teaspoon sugar" into "granulated sugar". `structuredIngredients` is consulted only for
+    // the category, which is the one field it still holds exclusively.
+    const display = recipe.ingredients ?? []
+    if (display.length > 0 && display.some(isNormalised)) {
+      const storedCategory = storedCategoryLookup(recipe)
+      for (const ing of display) {
+        const name = String(ing.name || '').trim()
+        if (!name) continue
+        // A recognised unit wins even when it renders as nothing — `piece` is a bare count, and
+        // falling through to the raw amount there printed the quantity twice ("1  1  large egg").
+        const unit = ing.unit ? unitLabel(ing.unit, ing.quantity) || 'unit' : ing.amount || 'unit'
+        items.push({
+          name: name.toLowerCase(),
+          purchaseAmount: typeof ing.quantity === 'number' ? ing.quantity : 0,
+          purchaseUnit: unit,
+          category: normalizeCategory(storedCategory(name) ?? guessCategoryFromName(name)),
+          sources: [
+            {
+              recipeId: recipe.id,
+              recipeTitle: recipe.title,
+              originalAmount: ing.original || `${ing.amount} ${name}`.trim(),
+            },
+          ],
+        })
+      }
+      continue
+    }
+
     if (Array.isArray(recipe.structuredIngredients) && recipe.structuredIngredients.length > 0) {
       for (const ing of recipe.structuredIngredients) {
         items.push({
