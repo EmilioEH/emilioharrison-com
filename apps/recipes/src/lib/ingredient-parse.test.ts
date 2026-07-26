@@ -83,6 +83,30 @@ describe('parseIngredientLine', () => {
     })
   })
 
+  it('moves a prep clause printed between the measure and the ingredient', () => {
+    // Removing the bracket leaves the line starting at its comma, with the prep in front of the
+    // ingredient: the row read ", divided shredded mozzarella" with the comma still attached.
+    expect(
+      parseIngredientLine('1 cup (about 4 ounces), divided shredded part-skim mozzarella cheese'),
+    ).toMatchObject({
+      quantity: 1,
+      unit: 'cup',
+      name: 'shredded part-skim mozzarella cheese',
+      prep: 'divided',
+    })
+    expect(parseIngredientLine('1 (18-ounce) tube, cut into 24 slices cooked polenta')).toMatchObject({
+      unit: 'tube',
+      name: 'cooked polenta',
+      prep: 'cut into 24 slices',
+    })
+  })
+
+  it('leaves a leading preparation word the page put in the name', () => {
+    // Only a clause the page separated with a comma moves. "1½ cups chopped onion" is how the
+    // book wrote it, and "chopped onion" is the thing being measured.
+    expect(parseIngredientLine('1½ cups chopped onion').name).toBe('chopped onion')
+  })
+
   it('files a restated measure as a note but keeps an additive one', () => {
     // Books that print weight and volume put them back to back. The second only restates the
     // first when it cannot be an addition to it — a different family, or the same size twice.
