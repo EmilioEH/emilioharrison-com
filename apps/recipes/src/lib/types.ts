@@ -57,6 +57,10 @@ export interface Recipe {
   createdBy?: string // userId (optional for legacy recipes)
   familyId?: string // familyId (optional, assists with indexing)
   title: string
+  /** The second line a page prints under the title — "GREEK SPINACH AND FETA PIE" over
+   * "Spanakopita". Set by the import transcription; rendered in OverviewMode, which skips it when
+   * the title already contains it. */
+  subtitle?: string
   servings: number
   prepTime: number
   cookTime: number

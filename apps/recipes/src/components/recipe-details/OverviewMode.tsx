@@ -340,6 +340,28 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               {recipe.title}
             </h1>
 
+            {/* A page that prints a name over a description of the dish — "GREEK SPINACH AND FETA
+              * PIE" above "Spanakopita" — stores the second line as `subtitle`. It was being
+              * transcribed and then never shown, because nothing rendered this field.
+              *
+              * Skipped when the title already contains it. Most stored subtitles restate the
+              * title ("Skillet Shrimp Scampi with Orzo and Tomatoes" storing "with Orzo and
+              * Tomatoes"), and printing the same words twice reads as a bug. */}
+            {(() => {
+              const subtitle = String(recipe.subtitle ?? '').trim()
+              if (!subtitle) return null
+              const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '')
+              if (squash(recipe.title).includes(squash(subtitle))) return null
+              return (
+                <p
+                  className="mb-2 font-body text-lg leading-snug text-muted-foreground"
+                  data-testid="recipe-subtitle"
+                >
+                  {subtitle}
+                </p>
+              )
+            })()}
+
             {recipe.sourceUrl &&
               (() => {
                 try {

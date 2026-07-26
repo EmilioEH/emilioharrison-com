@@ -42,6 +42,12 @@ const STRUCTURE_MAX_TOKENS = 16384
 const OCR_TIMEOUT_MS = 100_000
 const STRUCTURE_TIMEOUT_MS = 60_000
 
+// How often phase 3 reports that it is still producing output, and roughly how much output a
+// structured recipe runs to. The second number only shapes the curve of a progress bar — being
+// wrong makes it move faster or slower, never wrong about whether work is happening.
+const PROGRESS_INTERVAL_MS = 400
+const EXPECTED_STRUCTURE_CHARS = 4000
+
 const PARSE_RATE_LIMIT = 20
 const PARSE_RATE_WINDOW_SECONDS = 60 * 60
 
@@ -213,6 +219,7 @@ async function runPhaseAttempt(
   maxTokens: number,
   timeoutMs: number,
   externalSignal?: AbortSignal,
+  onDelta?: (charactersSoFar: number) => void,
 ): Promise<Record<string, unknown> | null> {
   const { signal, cleanup } = createTimeoutSignal(timeoutMs, externalSignal)
   try {
@@ -242,7 +249,10 @@ async function runPhaseAttempt(
     let buffer = ''
     for await (const chunk of result) {
       const delta = chunk.choices?.[0]?.delta?.content
-      if (delta) buffer += delta
+      if (delta) {
+        buffer += delta
+        onDelta?.(buffer.length)
+      }
     }
 
     const parsed = tryRepairJson(buffer)
@@ -269,6 +279,7 @@ async function runPhase(
   maxTokens: number = OCR_MAX_TOKENS,
   timeoutMs: number = OCR_TIMEOUT_MS,
   externalSignal?: AbortSignal,
+  onDelta?: (charactersSoFar: number) => void,
 ): Promise<Record<string, unknown> | null> {
   try {
     return await withTransientRetry(
@@ -282,6 +293,7 @@ async function runPhase(
           maxTokens,
           timeoutMs,
           externalSignal,
+          onDelta,
         ),
       timeoutMs,
       'ParseRecipe',
@@ -429,6 +441,30 @@ export function buildImageRecipeStream(
         // explicitly rather than letting the model invent one.
         const headnote = phase2 && typeof phase2.headnote === 'string' ? phase2.headnote.trim() : ''
 
+        // Phase 3 is the long one — up to a 60s budget — and it used to emit nothing until it
+        // finished, so the client's bar sat frozen at 66% for about a minute with no way to tell
+        // a working import from a hung one. The call already streams, so the growing response is
+        // turned into real progress markers here.
+        //
+        // `_t` carries a 0..1 fraction rather than a percentage, so the client owns the wording.
+        // It must never be merged onto the recipe — see mergeNdjsonLine in importer/api.ts.
+        let lastEmit = 0
+        const emitStructuringProgress = (charactersSoFar: number) => {
+          const now = Date.now()
+          if (now - lastEmit < PROGRESS_INTERVAL_MS) return
+          lastEmit = now
+          // There is no content-length to divide by, so approach 1 asymptotically: honest about
+          // "still working", never claims to be finished, and never goes backwards.
+          const fraction = 1 - Math.exp(-charactersSoFar / EXPECTED_STRUCTURE_CHARS)
+          try {
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ _t: Math.round(fraction * 100) / 100 }) + '\n'),
+            )
+          } catch {
+            // The client has gone away; the abort signal will stop the upstream call shortly.
+          }
+        }
+
         const phase3 = await runPhase(
           client,
           'You are a recipe parser. Structure the OCR text into a complete recipe JSON object.',
@@ -438,6 +474,7 @@ export function buildImageRecipeStream(
           STRUCTURE_MAX_TOKENS,
           STRUCTURE_TIMEOUT_MS,
           externalSignal,
+          emitStructuringProgress,
         )
 
         if (!phase3) {
