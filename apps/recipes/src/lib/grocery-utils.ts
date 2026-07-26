@@ -1,7 +1,7 @@
 import type { Ingredient, Recipe, ShoppableIngredient } from './types'
 import { normalizeCategory } from './grocery-logic'
 import { ingredientKey } from './ingredient-names'
-import { unitLabel } from './units'
+import { normalizeUnit, unitLabel } from './units'
 
 /** Fixed grocery category display order (store-walk order). */
 export const CATEGORY_ORDER = [
@@ -96,6 +96,29 @@ const CATEGORY_KEYWORDS: Array<[RegExp, string]> = [
     'Pantry',
   ],
 ]
+
+/**
+ * The unit to print on a grocery row, agreeing with the number beside it.
+ *
+ * The purchasable unit comes from the AI pass, which returns whichever spelling it feels like and
+ * always a plural — real rows read "1 lbs Baby Red Potatoes", "1 heads Cauliflower", "1 bunches
+ * Collard Greens". Normalising through the unit vocabulary makes the spelling follow the count.
+ *
+ * Bare counts print nothing: "1 whole Avocado" becomes "1 Avocado", since "whole" and "unit" are
+ * how a count gets written down, not something you say out loud.
+ *
+ * An unrecognised unit is passed through untouched — "1 can of chipotles in adobo" is a real
+ * answer, and mangling it would be worse than leaving it.
+ */
+export function groceryUnitLabel(unit: string | null | undefined, amount?: number): string {
+  const raw = String(unit ?? '').trim()
+  if (!raw) return ''
+
+  const normalized = normalizeUnit(raw)
+  if (!normalized.id) return raw
+
+  return unitLabel(normalized.id, amount)
+}
 
 export function guessCategoryFromName(name: string): string {
   const text = String(name || '')
