@@ -255,7 +255,9 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
       .split('\n')
       .map((l) => JSON.parse(l))
 
-    expect(lines.map((l) => l._p)).toEqual([1, 2, 3])
+    // Progress-only lines (`_t`) are interleaved while phase 3 streams; the phase markers
+    // themselves must still arrive in order.
+    expect(lines.filter((l) => '_p' in l).map((l) => l._p)).toEqual([1, 2, 3])
     // Only the structuring pass calls the model — phase1/phase2 were already resolved.
     expect(calls).toHaveLength(1)
   })
@@ -271,7 +273,7 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
       .map((l) => JSON.parse(l))
 
     // Only phases 1 and 3 are emitted — there was no phase 2 to send.
-    expect(lines.map((l) => l._p)).toEqual([1, 3])
+    expect(lines.filter((l) => '_p' in l).map((l) => l._p)).toEqual([1, 3])
     const finalPhase = lines.find((l) => l._p === 3)
     expect(finalPhase.partialFailure).toBe('instructions')
   })

@@ -110,8 +110,50 @@ describe('parseRecipe — stream salvage (regression: hollow-recipe corruption b
 
     await parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/', undefined, onProgress)
 
-    expect(onProgress).toHaveBeenCalledWith('Extracting ingredients... (33%)')
+    expect(onProgress).toHaveBeenCalledWith('Read the ingredients... (20%)')
     expect(onProgress).toHaveBeenCalledWith('Finalizing recipe details... (100%)')
+  })
+
+  it('reports moving progress while the structuring phase streams', async () => {
+    // The bar used to sit at a fixed percentage for the ~60s that phase 3 takes, which looks
+    // exactly like a hung import.
+    const chunks = [
+      JSON.stringify({ _p: 1, ingredients: [] }) + '\n',
+      JSON.stringify({ _p: 2, steps: [] }) + '\n',
+      JSON.stringify({ _t: 0.1 }) + '\n',
+      JSON.stringify({ _t: 0.8 }) + '\n',
+      JSON.stringify({ _p: 3, title: 'Progress Recipe' }) + '\n',
+    ]
+    global.fetch = vi.fn().mockResolvedValue(makeStreamResponse(chunks))
+    const onProgress = vi.fn()
+
+    await parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/', undefined, onProgress)
+
+    const percentages = onProgress.mock.calls
+      .map((call) => /\((\d+)%\)/.exec(String(call[0]))?.[1])
+      .filter((value): value is string => Boolean(value))
+      .map(Number)
+    // Strictly increasing — a bar that goes backwards is worse than one that doesn't move.
+    expect(percentages).toEqual([...percentages].sort((a, b) => a - b))
+    expect(onProgress).toHaveBeenCalledWith('Structuring the recipe... (41%)')
+    expect(onProgress).toHaveBeenCalledWith('Structuring the recipe... (83%)')
+  })
+
+  it('never merges a progress marker onto the recipe', async () => {
+    // `Object.assign` folds in every key it is handed, so a `_t` reaching the merge would write a
+    // stray field onto the saved recipe. The import pipeline was stabilised in #65–#68 after a
+    // run of exactly this kind of bug.
+    const chunks = [
+      JSON.stringify({ _t: 0.5 }) + '\n',
+      JSON.stringify({ _p: 3, title: 'Clean Recipe' }) + '\n',
+    ]
+    global.fetch = vi.fn().mockResolvedValue(makeStreamResponse(chunks))
+
+    const result = await parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/')
+
+    const data = result.data as Record<string, unknown>
+    expect(data).not.toHaveProperty('_t')
+    expect(data.title).toBe('Clean Recipe')
   })
 })
 

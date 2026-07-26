@@ -37,8 +37,11 @@ function getStreamErrorMessage(err: unknown): string {
  * verbatim in each, one of the things that made `parseRecipe` hard to follow. */
 const PHASE_PROGRESS_MESSAGES = [
   '',
-  'Extracting ingredients... (33%)',
-  'Structuring instructions... (66%)',
+  // Each marker arrives *after* its phase finished, so the wording names what just completed.
+  // These used to describe the phase as if it were starting — "Structuring instructions" appeared
+  // the moment instruction OCR ended, which is also where the bar then sat frozen.
+  'Read the ingredients... (20%)',
+  'Read the instructions... (35%)',
   'Finalizing recipe details... (100%)',
 ]
 
@@ -46,6 +49,24 @@ function reportPhaseProgress(phase: unknown, onProgress?: (msg: string) => void)
   if (typeof phase !== 'number' || !onProgress) return
   const msg = PHASE_PROGRESS_MESSAGES[phase]
   if (msg) onProgress(msg)
+}
+
+/** Where the structuring phase's own progress is mapped to, between OCR finishing and the end. */
+const STRUCTURE_BAND_START = 35
+const STRUCTURE_BAND_END = 95
+
+/**
+ * Reports progress from the structuring phase, which is the slow one.
+ *
+ * The server sends a 0..1 fraction as `_t` while that response streams in. Before this the bar
+ * had nothing to show for the ~60s it can take and sat at a fixed percentage, which is
+ * indistinguishable from a hung import.
+ */
+function reportStructuringProgress(fraction: unknown, onProgress?: (msg: string) => void): void {
+  if (typeof fraction !== 'number' || !onProgress) return
+  const clamped = Math.min(Math.max(fraction, 0), 1)
+  const percent = Math.round(STRUCTURE_BAND_START + clamped * (STRUCTURE_BAND_END - STRUCTURE_BAND_START))
+  onProgress(`Structuring the recipe... (${percent}%)`)
 }
 
 /** Parses one NDJSON line and merges it onto `merged` in place. Malformed/partial lines (e.g. a
@@ -60,6 +81,14 @@ function mergeNdjsonLine(
   if (!trimmed) return
   try {
     const phaseData = JSON.parse(trimmed)
+
+    // A progress-only line. It must return before the merge below: `Object.assign` folds in every
+    // key it is given, so letting `_t` through would write a stray field onto the recipe itself.
+    if ('_t' in phaseData) {
+      reportStructuringProgress(phaseData._t, onProgress)
+      return
+    }
+
     reportPhaseProgress(phaseData._p, onProgress)
     delete phaseData._p
     Object.assign(merged, phaseData)
