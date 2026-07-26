@@ -7,8 +7,14 @@ import type { Recipe } from '../../../lib/types'
 
 interface WeekReviewPromptProps {
   recipes: Recipe[]
-  onSubmit: (outcomes: Array<{ recipeId: string; outcome: CookOutcome }>) => Promise<void>
+  onSubmit: (
+    outcomes: Array<{ recipeId: string; outcome: CookOutcome }>,
+    opts: { partial: boolean },
+  ) => Promise<void>
+  /** Close the screen; the week stays open and will be asked about again. */
   onDismiss: () => void
+  /** Close the week for good, recording nothing. */
+  onDismissWeek: () => Promise<void>
 }
 
 /** Four taps, not five stars. The suggester only needs to know whether you'd have it again. */
@@ -31,19 +37,44 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
   recipes,
   onSubmit,
   onDismiss,
+  onDismissWeek,
 }) => {
   const [answers, setAnswers] = useState<Record<string, CookOutcome>>({})
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const answeredCount = Object.keys(answers).length
   const allAnswered = answeredCount === recipes.length
 
+  /**
+   * Sends only what was actually answered.
+   *
+   * It used to send `answers[r.id] ?? 'skipped'` for every recipe, so saving two of five recorded
+   * the other three as "didn't make it" and closed the week for good. Unanswered now means
+   * unanswered: the week stays open and asks about what's left.
+   */
   const save = async () => {
     setSaving(true)
+    setError(null)
     try {
-      await onSubmit(
-        recipes.map((r) => ({ recipeId: r.id, outcome: answers[r.id] ?? 'skipped' })),
-      )
+      const answered = recipes
+        .filter((r) => answers[r.id])
+        .map((r) => ({ recipeId: r.id, outcome: answers[r.id] }))
+      await onSubmit(answered, { partial: !allAnswered })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save that just now.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const dismissWeek = async () => {
+    setSaving(true)
+    setError(null)
+    try {
+      await onDismissWeek()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not do that just now.')
     } finally {
       setSaving(false)
     }
@@ -94,6 +125,12 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
         ))}
       </div>
 
+      {error && (
+        <p role="alert" className="mt-4 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
+
       <div className="mt-4 flex items-center gap-2">
         <button
           type="button"
@@ -110,9 +147,20 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
           disabled={saving}
           className="h-11 rounded-lg px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          Skip
+          Not now
         </button>
       </div>
+
+      {/* Saving part of a week now leaves it open, so there has to be a way to say "stop asking" —
+       * otherwise the card sits on the plan for good. "Not now" above is the softer version. */}
+      <button
+        type="button"
+        onClick={dismissWeek}
+        disabled={saving}
+        className="mt-2 flex h-11 w-full items-center justify-center rounded-lg text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        Don’t ask about this week
+      </button>
     </motion.section>
   )
 }
