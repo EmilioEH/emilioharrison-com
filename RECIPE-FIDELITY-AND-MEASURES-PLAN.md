@@ -1,6 +1,14 @@
 # Plan: Faithful Recipes and Standardized Measures
 
-Status: **Phase 1 done (PR #81, merged). Phases 2-7 not started.**
+Status: **Phase 1 done (PR #81). Phase 3 done and applied to the live library (PRs #83–#90).
+Phases 2, 4-7 not started.**
+
+Phase 3 note: normalising the units turned out to require undoing a corruption this document
+didn't know about — on ~19% of ingredients the amount and the name had been concatenated by an
+earlier import, with 728 holding the whole measurement inside `name` and 240 repeating it. The
+parser reconstructs the printed line and de-duplicates it before splitting. Every ingredient now
+stores that line verbatim in `original`, which is what makes the migration re-runnable: four
+rounds of parser fixes were applied to already-migrated records without a restore.
 
 Written after Emilio's wife used the app and reported that recipes were "significantly altering
 the title" and that Smart View was "super weird and inaccurate". Investigating that turned into a
@@ -182,9 +190,13 @@ before it is trusted.** That review is one-time and roughly 600 lines after dedu
    text on 344 recipes.
 2. **Delete the stored styled fields.** Backup already taken. Leaves 66 recipes unchanged since
    they have no faithful version — see open questions.
-3. **Normalise units.** Closed vocabulary; ~25 spellings collapse to ~8 units. Pure code,
-   deterministic, no AI. Also strips the polluted `cup (226g)` values into a separate note field.
-   Immediately improves grocery grouping on all existing recipes, with no reprocessing.
+3. **Normalise units.** *(Done — PRs #83–#90, applied to all 413 recipes.)* Closed vocabulary;
+   ~25 spellings collapse to ~8 units. Pure code, deterministic, no AI. Also strips the polluted
+   `cup (226g)` values into a separate note field. **89.6%** of ingredients now carry a numeric
+   `quantity` and **83.9%** a canonical `unit`; every one keeps its printed line in `original`.
+   Applies to the display `ingredients` only — `structuredIngredients`, which the grocery list
+   reads, still holds 311 unit spellings and is out of step with the display data on 56 recipes.
+   Rebuilding it from the same parser is the obvious next step and is not done.
 4. **Deduplicate ingredient names** — 1,484 raw names into ~600 real ingredients. This is the piece
    with the actual thinking in it; everything downstream depends on it being right.
 5. **Build the weight table — in full, upfront, as a committed file.** See "Building the table"
