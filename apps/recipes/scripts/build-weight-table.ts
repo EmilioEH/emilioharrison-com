@@ -186,10 +186,13 @@ interface Portion { amount?: number; gramWeight?: number; modifier?: string; mea
  * despite having been matched to exactly the right record.
  */
 const PER_CUP: Array<[RegExp, number]> = [
-  [/\bcup\b/, 1],
-  [/\bfl(?:uid)?\s*oz\b/, 8],
-  [/\btbsp\b|\btablespoons?\b/, 16],
-  [/\btsp\b|\bteaspoons?\b/, 48],
+  // Each pattern captures the count the label itself carries, which is not always the record's
+  // `amount`. Tap water stores amount 1 with the modifier "serving 8 fl oz" — reading that as one
+  // fluid ounce made a cup of water 1,896g instead of 237g.
+  [/(?:(\d+(?:\.\d+)?)\s*)?\bcups?\b/, 1],
+  [/(?:(\d+(?:\.\d+)?)\s*)?\bfl(?:uid)?\s*oz\b/, 8],
+  [/(?:(\d+(?:\.\d+)?)\s*)?\b(?:tbsp|tablespoons?)\b/, 16],
+  [/(?:(\d+(?:\.\d+)?)\s*)?\b(?:tsp|teaspoons?)\b/, 48],
 ]
 
 /** Grams for one cup, from the portion list. SR Legacy puts the measure in `modifier`. */
@@ -200,13 +203,18 @@ async function cupWeight(fdcId: number): Promise<{ grams: number; portion: strin
   for (const [pattern, perCup] of PER_CUP) {
     for (const p of body?.foodPortions ?? []) {
       const label = `${p.modifier ?? ''} ${p.measureUnit?.name ?? ''}`.toLowerCase()
-      if (!pattern.test(label)) continue
+      const match = pattern.exec(label)
+      if (!match) continue
       // Skip fractional or qualified measures ("1/2 cup, chopped") — only a plain one is usable.
       if (/\d\s*\/\s*\d/.test(label)) continue
-      const amount = p.amount ?? 1
+
+      // The count can live in either place; take whichever the record actually states.
+      const labelCount = match[1] ? Number(match[1]) : null
+      const amount = labelCount && labelCount > 0 ? labelCount : (p.amount ?? 1)
       if (!p.gramWeight || amount <= 0) continue
+
       const grams = (p.gramWeight / amount) * perCup
-      return { grams: Math.round(grams * 10) / 10, portion: `${label.trim()} ×${perCup}` }
+      return { grams: Math.round(grams * 10) / 10, portion: `${label.trim()} ÷${amount} ×${perCup}` }
     }
   }
   return null
