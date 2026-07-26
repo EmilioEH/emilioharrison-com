@@ -83,6 +83,22 @@ describe('parseIngredientLine', () => {
     })
   })
 
+  it('reads a US unit printed with its metric restatement', () => {
+    // "½ cup/30 grams flour" — both name the same amount, so the second is a note. Left unhandled
+    // this put "cup/30 grams" into the ingredient name and left the row with no unit at all.
+    expect(parseIngredientLine('½ cup/30 grams unbleached white flour')).toMatchObject({
+      quantity: 0.5,
+      unit: 'cup',
+      name: 'unbleached white flour',
+      note: '30 grams',
+    })
+    expect(parseIngredientLine('6 cups/1.4 liters chicken stock')).toMatchObject({
+      quantity: 6,
+      unit: 'cup',
+      name: 'chicken stock',
+    })
+  })
+
   it('files a bracketed preparation as prep, not as a note', () => {
     expect(parseIngredientLine('½ cup (packed) light brown sugar')).toMatchObject({
       quantity: 0.5,
