@@ -40,6 +40,7 @@ import {
 import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
+import { apiBase } from '../../../lib/routes'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
 import { AiProgressBar } from '../../ui/AiProgressBar'
@@ -88,15 +89,17 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     recipeIds: string[]
   } | null>(null)
 
+  const loadPendingReview = React.useCallback(async () => {
+    const res = await fetch(`${apiBase()}api/week/review`)
+    const data = await res.json()
+    return (data?.pending ?? null) as { weekStart: string; recipeIds: string[] } | null
+  }, [])
+
   useEffect(() => {
     let cancelled = false
-    const base = import.meta.env.BASE_URL.endsWith('/')
-      ? import.meta.env.BASE_URL
-      : `${import.meta.env.BASE_URL}/`
-    fetch(`${base}api/week/review`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled && data?.pending) setPendingReview(data.pending)
+    loadPendingReview()
+      .then((pending) => {
+        if (!cancelled) setPendingReview(pending)
       })
       .catch(() => {
         // A missing prompt is not worth surfacing an error for.
@@ -104,21 +107,48 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [loadPendingReview])
 
+  /**
+   * Save what the cook answered.
+   *
+   * Throws on failure so the prompt can stay open and say so. It used to await the fetch without
+   * checking it, then clear the prompt regardless — which made a 400 ("you must join a family
+   * first") or a 500 look exactly like a successful save, with the answers gone.
+   *
+   * A partial save leaves the week open; re-reading the pending review tells us what is left,
+   * and only an empty answer closes the screen.
+   */
   const submitWeekReview = async (
     outcomes: Array<{ recipeId: string; outcome: CookOutcome }>,
+    opts: { partial: boolean },
   ) => {
     if (!pendingReview) return
-    const base = import.meta.env.BASE_URL.endsWith('/')
-      ? import.meta.env.BASE_URL
-      : `${import.meta.env.BASE_URL}/`
-    await fetch(`${base}api/week/review`, {
+    const res = await fetch(`${apiBase()}api/week/review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weekStart: pendingReview.weekStart, outcomes }),
+      body: JSON.stringify({ weekStart: pendingReview.weekStart, outcomes, partial: opts.partial }),
     })
-    setPendingReview(null)
+    const data = await res.json().catch(() => null)
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Could not save that just now. Try again in a moment.')
+    }
+
+    const remaining = await loadPendingReview().catch(() => null)
+    setPendingReview(remaining)
+    if (!remaining || remaining.weekStart !== pendingReview.weekStart) setFullScreen(null)
+  }
+
+  /** "Don't ask about this week" — closes the week with nothing recorded. */
+  const dismissWeekForever = async () => {
+    if (!pendingReview) return
+    const res = await fetch(`${apiBase()}api/week/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weekStart: pendingReview.weekStart, outcomes: [], dismiss: true }),
+    })
+    if (!res.ok) throw new Error('Could not do that just now. Try again in a moment.')
+    setPendingReview(await loadPendingReview().catch(() => null))
     setFullScreen(null)
   }
 
@@ -549,6 +579,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
               recipes={reviewRecipes}
               onSubmit={submitWeekReview}
               onDismiss={() => setFullScreen(null)}
+              onDismissWeek={dismissWeekForever}
             />
           </WeekScreen>
         )}
@@ -563,9 +594,9 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             <MealSuggester
               allRecipes={allRecipes}
               plannedIds={currentRecipes.map((r) => r.recipeId)}
-              onAdd={async (recipeId) => {
-                await addRecipeToWeek(recipeId)
-              }}
+              // The boolean matters: the suggester removes the card and counts it as added
+              // before this resolves, so it needs to know when to put it back.
+              onAdd={(recipeId) => addRecipeToWeek(recipeId)}
               onOpenRecipe={onSelectRecipe}
             />
           </WeekScreen>

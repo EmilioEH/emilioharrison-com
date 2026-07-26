@@ -4,7 +4,8 @@ import { setRequestContext } from '../../lib/request-context'
 import { getAuthUser, getAuthEmail, unauthorizedResponse } from '../../lib/api-helpers'
 import { getEmailList, getEnv } from '../../lib/env'
 import { isRecipe } from '../../lib/type-guards'
-import { chunkArray, dedupeById, toListRecipe } from './recipes/index'
+import { toListRecipe } from './recipes/index'
+import { chunkArray, dedupeById } from '../../lib/collection-utils'
 import type { Recipe, Family, User, PendingInvite, FamilyRecipeData } from '../../lib/types'
 
 /**

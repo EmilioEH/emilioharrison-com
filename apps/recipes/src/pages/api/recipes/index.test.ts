@@ -19,14 +19,8 @@ vi.mock('../../../lib/services/recipe-enhancement-job', () => ({ runEnhancementJ
 const { rateLimit } = vi.hoisted(() => ({ rateLimit: vi.fn() }))
 vi.mock('../../../lib/rate-limit', () => ({ rateLimit }))
 
-import {
-  GET,
-  POST,
-  triggerBackgroundEnhancement,
-  chunkArray,
-  dedupeById,
-  toListRecipe,
-} from './index'
+import { GET, POST, triggerBackgroundEnhancement, toListRecipe } from './index'
+import { chunkArray, dedupeById } from '../../../lib/collection-utils'
 import { createSessionToken, SESSION_COOKIE_NAME } from '../../../lib/session'
 import type { Recipe } from '../../../lib/types'
 import type { APIContext } from 'astro'

@@ -4,6 +4,16 @@
  */
 export const APP_BASE_URL = import.meta.env.BASE_URL || '/'
 
+/**
+ * The app base with a guaranteed trailing slash, for building `fetch` URLs: `${apiBase()}api/…`.
+ *
+ * The three-line ternary this replaces is written out inline in about twenty places across the
+ * app. New code should use this; the existing copies are left alone rather than swept up in an
+ * unrelated change.
+ */
+export const apiBase = (): string =>
+  APP_BASE_URL.endsWith('/') ? APP_BASE_URL : `${APP_BASE_URL}/`
+
 // Public API routes that do NOT require authentication. Entries without `methods`
 // are public for every method; otherwise only the listed methods skip auth.
 const PUBLIC_API_ROUTES: Array<{ prefix: string; methods?: string[] }> = [

@@ -15,6 +15,7 @@
 import type { AstroCookies } from 'astro'
 import { db } from './firebase-server'
 import { getAuthUser } from './api-helpers'
+import { chunkArray, dedupeById, FIRESTORE_IN_LIMIT } from './collection-utils'
 import type { Recipe } from './types'
 
 export type RecipeAccessResult =
@@ -57,6 +58,36 @@ export function isRecipeAccessible(
   const creator = recipe.createdBy
   if (creator === undefined || creator === null) return true
   return allowedCreators.has(creator)
+}
+
+/**
+ * Every recipe `userId` may see, as whole documents.
+ *
+ * This is the collection-level twin of `loadAccessibleRecipe`, and the single implementation of
+ * the visibility scope: (createdBy IN [me, ...family]) UNION (legacy recipes with no `createdBy`).
+ * Firestore cannot query "field does not exist" server-side (not even via `!=`), so the legacy
+ * branch relies on those documents having been backfilled with an explicit `createdBy: null`.
+ * True field-less legacy docs won't match; that is a known trade-off of avoiding a full collection
+ * scan on every request (see README/PERFORMANCE-PLAN.md).
+ *
+ * Pass `null` for an unauthenticated caller — they see only the legacy-public recipes.
+ *
+ * Callers project this to whatever shape they need (`toListRecipe` for the library, the whole
+ * document for the meal suggester). `GET /api/bootstrap` deliberately keeps its own copy of these
+ * queries: it interleaves them with the family and invite fetches to keep the boot path to a
+ * single round of parallel work, and folding it in here would serialise that.
+ */
+export async function listAccessibleRecipes(userId: string | null): Promise<Recipe[]> {
+  const allowedCreators = userId ? await getAllowedCreatorIds(userId) : new Set<string>()
+
+  const results = await Promise.all([
+    db.runQuery<Recipe>('recipes', { field: 'createdBy', op: 'EQUAL', value: null }),
+    ...chunkArray(Array.from(allowedCreators), FIRESTORE_IN_LIMIT).map((chunk) =>
+      db.runQuery<Recipe>('recipes', { field: 'createdBy', op: 'IN', value: chunk }),
+    ),
+  ])
+
+  return dedupeById(results.flat())
 }
 
 /**

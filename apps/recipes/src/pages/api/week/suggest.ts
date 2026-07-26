@@ -10,6 +10,7 @@ import { setRequestContext } from '../../../lib/request-context'
 import { createTimeoutSignal } from '../../../lib/services/ai-timeout'
 import { GEMINI_TEXT_MODEL } from '../../../lib/services/ai-model-config'
 import { rateLimit } from '../../../lib/rate-limit'
+import { listAccessibleRecipes } from '../../../lib/recipe-access'
 import { weekStartOf, type CookOutcome } from '../../../lib/week-review'
 import {
   buildMenu,
@@ -20,7 +21,7 @@ import {
   type RecipeSignal,
 } from '../../../lib/services/suggest-core'
 import type { RecipeFacets } from '../../../lib/recipe-facets'
-import type { Recipe, FamilyRecipeData } from '../../../lib/types'
+import type { FamilyRecipeData } from '../../../lib/types'
 
 /** Comfortably inside the request budget — this is one small call over ~8k tokens. */
 const SUGGEST_TIMEOUT_MS = 25_000
@@ -76,9 +77,14 @@ export const POST: APIRoute = async (context: APIContext) => {
     const userDoc = await db.getDocument('users', userId)
     const familyId = userDoc?.familyId as string | undefined
 
-    // The library the cook can actually choose from.
-    const all = (await db.getCollection('recipes')) as Recipe[]
-    const recipes = all.filter((r) => !r.createdBy || r.createdBy === userId || familyId)
+    // The library the cook can actually choose from — the same scope the library screen shows.
+    //
+    // This used to read the entire `recipes` collection and filter it with
+    // `!r.createdBy || r.createdBy === userId || familyId`, where the trailing `|| familyId` is
+    // truthy for anyone in a family and made the filter a no-op. Two things followed: the model
+    // was shown other families' recipes, and any pick outside the cook's own library resolved to
+    // nothing on the client and was silently dropped — so asking for five meals could return three.
+    const recipes = await listAccessibleRecipes(userId)
 
     // What this family has made, and what they thought of it.
     const signals: Record<string, RecipeSignal> = {}

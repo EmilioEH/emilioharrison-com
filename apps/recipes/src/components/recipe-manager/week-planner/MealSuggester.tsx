@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Plus, RotateCw, Check, Pencil } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { apiBase } from '../../../lib/routes'
 import type { Recipe } from '../../../lib/types'
 import {
   PROTEIN_OPTIONS,
@@ -22,7 +23,8 @@ interface MealSuggesterProps {
   allRecipes: Recipe[]
   /** Already on the plan for this week — never suggested, and used to balance what comes next. */
   plannedIds: string[]
-  onAdd: (recipeId: string) => Promise<void> | void
+  /** Resolves `false` when the add failed, so the card can be put back. */
+  onAdd: (recipeId: string) => Promise<boolean | void> | boolean | void
   onOpenRecipe?: (recipe: Recipe) => void
 }
 
@@ -43,9 +45,6 @@ const MOODS = [
 ]
 
 const COUNTS = [3, 4, 5, 6, 7]
-
-const apiBase = () =>
-  import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`
 
 const toggle = (list: string[], value: string) =>
   list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
@@ -191,13 +190,23 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
       if (!res.ok || !data.success) throw new Error(data.error || 'Could not get suggestions.')
 
       setDegraded(Boolean(data.degraded))
-      setSuggestions(data.suggestions ?? [])
-      if (!data.suggestions?.length) {
+
+      // Only keep picks we can actually show. A suggestion for a recipe missing from `allRecipes`
+      // used to render as nothing at all — ask for five meals, get three cards and no explanation.
+      const returned: Suggestion[] = data.suggestions ?? []
+      const showable = returned.filter((s) => byId.has(s.recipeId))
+      setSuggestions(showable)
+
+      if (!showable.length) {
         setError(
           data.exhausted
             ? "That's everything that fits — try widening what you asked for."
             : 'Nothing came back. Try loosening a choice above.',
         )
+      } else if (showable.length < returned.length) {
+        const dropped = returned.length - showable.length
+        const subject = dropped === 1 ? 'One suggestion was' : `${dropped} suggestions were`
+        setError(`${subject} for a recipe that isn’t in your library — ask again for more.`)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.')
@@ -207,10 +216,24 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
     }
   }
 
+  /**
+   * Add a suggestion to the week.
+   *
+   * Optimistic, then reconciled: the card goes and the count rises immediately, because that is
+   * what makes picking feel quick. But `onAdd` can fail, and it used to fail invisibly — the card
+   * was gone, "3 added" was a lie, and the week was unchanged. On failure the card comes back.
+   */
   const keep = async (recipeId: string) => {
+    const card = suggestions.find((s) => s.recipeId === recipeId)
     setKept((prev) => [...prev, recipeId])
     setSuggestions((prev) => prev.filter((s) => s.recipeId !== recipeId))
-    await onAdd(recipeId)
+
+    const added = await onAdd(recipeId)
+    if (added === false) {
+      setKept((prev) => prev.filter((id) => id !== recipeId))
+      if (card) setSuggestions((prev) => [card, ...prev])
+      setError('Couldn’t add that to the week. Try again.')
+    }
   }
 
   const facetGroups = [
