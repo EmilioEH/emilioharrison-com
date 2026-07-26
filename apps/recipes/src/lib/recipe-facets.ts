@@ -11,6 +11,7 @@
  */
 
 import { DISH_TYPE_OPTIONS } from './dish-types'
+import type { Recipe } from './types'
 
 /** Ordered by how much of the library each covers: Chicken 124, Vegetarian 88, Pork 74, Beef 56. */
 export const PROTEIN_OPTIONS = [
@@ -93,4 +94,44 @@ export function describeFacets(facets: RecipeFacets | undefined): string {
   if (facets.difficulties?.length) parts.push(facets.difficulties.join(', '))
   if (facets.maxMinutes) parts.push(`under ${facets.maxMinutes} min`)
   return parts.join(' · ')
+}
+
+/**
+ * Whether a recipe satisfies the cook's explicit narrowing.
+ *
+ * Facets are the one place a hard filter belongs: the cook tapped "Chicken", so a beef dish is
+ * wrong no matter how good a suggestion it would otherwise be. Free text stays a steer for the
+ * model — this is the part they were unambiguous about.
+ *
+ * Each list is additive (two proteins means either), and the lists combine (a protein AND a time).
+ */
+export function matchesFacets(recipe: Recipe, facets: RecipeFacets | undefined): boolean {
+  if (!hasFacets(facets)) return true
+  const f = facets!
+
+  const any = (values: string[] | undefined, actual: string | undefined) => {
+    if (!values?.length) return true
+    const got = String(actual ?? '').toLowerCase()
+    // A recipe with nothing recorded for this field is not a match. It used to be one for
+    // *everything*: the substring test below is bidirectional, and `'chicken'.includes('')` is
+    // true, so tapping Chicken returned every recipe with no protein set. That is the opposite of
+    // what a hard filter is for. The time facet's tolerance of missing data is deliberate and
+    // different — a recipe with no time recorded is genuinely not known to be slow.
+    if (!got) return false
+    // "Main Course" should satisfy "Main" — the stored vocabulary is not fully normalised.
+    return values.some((v) => got.includes(v.toLowerCase()) || v.toLowerCase().includes(got))
+  }
+
+  if (!any(f.proteins, recipe.protein)) return false
+  if (!any(f.dishTypes, recipe.dishType)) return false
+  if (!any(f.cuisines, recipe.cuisine)) return false
+  if (!any(f.difficulties, recipe.difficulty)) return false
+
+  if (f.maxMinutes) {
+    const minutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)
+    // A recipe with no time recorded is not excluded — absence of data is not a slow recipe.
+    if (minutes > 0 && minutes > f.maxMinutes) return false
+  }
+
+  return true
 }

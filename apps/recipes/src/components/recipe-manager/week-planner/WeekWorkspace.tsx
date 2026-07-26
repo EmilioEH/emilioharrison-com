@@ -4,7 +4,7 @@ import { format, parseISO, startOfWeek, addWeeks, addDays, isSameWeek } from 'da
 import { formatWeekRange, type CookOutcome } from '../../../lib/week-review'
 import { WeekScreen } from './WeekScreen'
 import { WeekReviewPrompt } from './WeekReviewPrompt'
-import { MealSuggester } from './MealSuggester'
+import { SuggesterConversation } from './SuggesterConversation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar,
@@ -24,6 +24,7 @@ import {
   switchWeekContext,
   currentWeekRecipes,
   addRecipeToWeek,
+  removeRecipeFromWeek,
   $groceryNeedsRegen,
   $weekOverlayOpen,
 } from '../../../lib/weekStore'
@@ -42,6 +43,7 @@ import { WeekPlanView } from './WeekPlanView'
 import { GroceryList } from '../grocery/GroceryList'
 import { alert } from '../../../lib/dialogStore'
 import { apiBase } from '../../../lib/routes'
+import { emptyConstraints, type Turn } from '../../../lib/services/suggest-turns'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import { aiOperationStore, removeAiOperation } from '../../../lib/aiOperationStore'
 import { AiProgressBar } from '../../ui/AiProgressBar'
@@ -95,6 +97,39 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     $weekOverlayOpen.set(fullScreen !== null)
     return () => $weekOverlayOpen.set(false)
   }, [fullScreen])
+
+  /**
+   * The suggester's first turn, fetched while the cook is still looking at the plan.
+   *
+   * A conversation that opens on a spinner is a worse conversation. This costs one call per visit
+   * to the week view, which is the same order as the review lookup already sitting here, and it
+   * buys an exchange that starts the instant the button is tapped. Failure is silent — the
+   * suggester falls back to the deterministic opening question, which is a real question anyway.
+   */
+  const [prefetchedTurn, setPrefetchedTurn] = useState<Turn | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${apiBase()}api/week/suggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversation: [],
+        constraints: { ...emptyConstraints(), keptIds: currentRecipes.map((r) => r.recipeId) },
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data?.success && data.turn) setPrefetchedTurn(data.turn as Turn)
+      })
+      .catch(() => {
+        // The deterministic opening question is a perfectly good first turn.
+      })
+    return () => {
+      cancelled = true
+    }
+    // Deliberately once per mount: re-fetching as the plan changes would spend a call per edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const loadPendingReview = React.useCallback(async () => {
     const res = await fetch(`${apiBase()}api/week/review`)
@@ -597,14 +632,18 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             title="Help me pick"
             subtitle="A few ideas from your own recipes"
             onBack={() => setFullScreen(null)}
+            scroll={false}
           >
-            <MealSuggester
+            <SuggesterConversation
               allRecipes={allRecipes}
               plannedIds={currentRecipes.map((r) => r.recipeId)}
               // The boolean matters: the suggester removes the card and counts it as added
               // before this resolves, so it needs to know when to put it back.
               onAdd={(recipeId) => addRecipeToWeek(recipeId)}
+              onRemoveFromWeek={(recipeId) => removeRecipeFromWeek(recipeId)}
               onOpenRecipe={onSelectRecipe}
+              onDone={() => setFullScreen(null)}
+              prefetched={prefetchedTurn}
             />
           </WeekScreen>
         )}

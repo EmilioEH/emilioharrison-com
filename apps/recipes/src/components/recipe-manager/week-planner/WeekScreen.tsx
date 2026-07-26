@@ -1,12 +1,18 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
+import { cn } from '../../../lib/utils'
 
 interface WeekScreenProps {
   title: string
   subtitle?: string
   onBack: () => void
   children: React.ReactNode
+  /**
+   * Set false when the child fills the screen and scrolls itself — the suggester keeps its
+   * composer pinned under a scrolling transcript, which a scroller here would break.
+   */
+  scroll?: boolean
 }
 
 /**
@@ -20,7 +26,13 @@ interface WeekScreenProps {
  * Slides in over the plan rather than replacing the route: the week context (which week is active,
  * what is already planned) stays exactly as it was underneath.
  */
-export const WeekScreen: React.FC<WeekScreenProps> = ({ title, subtitle, onBack, children }) => (
+export const WeekScreen: React.FC<WeekScreenProps> = ({
+  title,
+  subtitle,
+  onBack,
+  children,
+  scroll = true,
+}) => (
   <motion.div
     initial={{ x: '100%', opacity: 0 }}
     animate={{ x: 0, opacity: 1 }}
@@ -28,7 +40,17 @@ export const WeekScreen: React.FC<WeekScreenProps> = ({ title, subtitle, onBack,
     transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
     // Above the workspace's own sticky header (z-40), which would otherwise paint over this
     // screen's header and swallow taps on its back button.
-    className="absolute inset-0 z-50 flex flex-col bg-background"
+    //
+    // The explicit height matters when `scroll` is false. `inset-0` only yields a definite height
+    // if the containing block has one, and the shell's is `min-h-full` — a minimum, so it sizes to
+    // its content. A child trying to *fill* that box therefore collapses, which left the
+    // suggester's pinned composer floating in the middle of the screen with white space beneath.
+    // The screen starts below the app header (the shell carries `pt-header`), so that is what
+    // comes off the viewport.
+    className={cn(
+      'absolute inset-0 z-50 flex flex-col bg-background',
+      !scroll && 'h-[calc(100dvh-var(--header-height))]',
+    )}
     data-testid="week-screen"
   >
     <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
@@ -56,8 +78,12 @@ export const WeekScreen: React.FC<WeekScreenProps> = ({ title, subtitle, onBack,
       </div>
     </div>
 
-    <div className="flex-1 overflow-y-auto pb-tab-bar">
-      <div className="mx-auto max-w-2xl">{children}</div>
-    </div>
+    {scroll ? (
+      <div className="flex-1 overflow-y-auto pb-tab-bar">
+        <div className="mx-auto max-w-2xl">{children}</div>
+      </div>
+    ) : (
+      <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">{children}</div>
+    )}
   </motion.div>
 )

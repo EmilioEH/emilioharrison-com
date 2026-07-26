@@ -59,18 +59,33 @@ export const GET: APIRoute = async (context: APIContext) => {
     }
     const familyId = userDoc.familyId as string
 
-    const [familyData, family] = await Promise.all([
+    const [familyData, family, weekPlans] = await Promise.all([
       db.getCollection(`families/${familyId}/recipeData`) as Promise<FamilyRecipeData[]>,
       db.getDocument('families', familyId),
+      db.getCollection(`families/${familyId}/weekPlans`).catch(() => []) as Promise<
+        Array<{ id: string; recipeIds?: string[] }>
+      >,
     ])
 
     const reviewedWeeks: string[] = Array.isArray(family?.reviewedWeeks) ? family.reviewedWeeks : []
     const answered = readReviewProgress(family)
 
-    const planned = familyData
+    // What was actually on each week's plan, from the append-only record. Weeks planned before
+    // that record existed aren't in it, so they're still derived from the recipe's current
+    // `assignedDate` — which only remembers the most recent week it was planned for.
+    const recorded = weekPlans.flatMap((doc) =>
+      (doc.recipeIds ?? []).map((recipeId) => ({ recipeId, weekStart: doc.id })),
+    )
+    const recordedWeeks = new Set(recorded.map((entry) => entry.weekStart))
+
+    const derived = familyData
       .filter((d) => d.weekPlan?.isPlanned && d.weekPlan.assignedDate)
       .map((d) => ({ recipeId: d.id, weekStart: weekStartOf(d.weekPlan!.assignedDate!) }))
-      .filter((entry) => !(answered[entry.weekStart] ?? []).includes(entry.recipeId))
+      .filter((entry) => !recordedWeeks.has(entry.weekStart))
+
+    const planned = [...recorded, ...derived].filter(
+      (entry) => !(answered[entry.weekStart] ?? []).includes(entry.recipeId),
+    )
 
     return json({ success: true, pending: weekAwaitingReview(planned, reviewedWeeks) })
   } catch (error) {
@@ -128,8 +143,8 @@ export const POST: APIRoute = async (context: APIContext) => {
     const cookedAt = new Date().toISOString()
     const path = `families/${familyId}/recipeData`
 
-    let recorded = 0
     const answeredIds: string[] = []
+    const cooked: Array<{ recipeId: string; outcome: Exclude<CookOutcome, 'skipped'> }> = []
 
     if (!dismiss) {
       for (const entry of outcomes) {
@@ -141,8 +156,15 @@ export const POST: APIRoute = async (context: APIContext) => {
         // same meal — including "didn't make it", which earns no cook and no rating but is still
         // a reply to the question.
         answeredIds.push(recipeId)
-        if (outcome === 'skipped') continue
+        if (outcome !== 'skipped') cooked.push({ recipeId, outcome })
+      }
+    }
 
+    // A five-meal week used to be a dozen sequential round trips with the button stuck on
+    // "Saving…". Each recipe's read-then-write still has to be ordered against itself, but the
+    // recipes are independent of each other, so they go together.
+    await Promise.all(
+      cooked.map(async ({ recipeId, outcome }) => {
         const existing = (await db.getDocument(path, recipeId)) as FamilyRecipeData | null
         const familyData: FamilyRecipeData = existing ?? {
           id: recipeId,
@@ -169,9 +191,24 @@ export const POST: APIRoute = async (context: APIContext) => {
           ],
           reviews: [...(familyData.reviews ?? []), review],
         })
-        recorded++
-      }
-    }
+
+        // `lastCooked` lives on the recipe itself and had never been written by anything, which
+        // is why RecipeDetail's "Last cooked" line never appeared. This is the only moment the app
+        // knows a meal was actually made, so it is the only place that can set it.
+        try {
+          await db.updateDocument('recipes', recipeId, {
+            lastCooked: cookedAt,
+            lastCookedBy: userName,
+          })
+        } catch (error) {
+          // A recipe the family can't write to shouldn't cost them the review itself. try/catch
+          // rather than `.catch()`, so a synchronous throw is contained too.
+          console.error('[week/review] could not stamp lastCooked:', error)
+        }
+      }),
+    )
+
+    const recorded = cooked.length
 
     // One write for both bits of week-level bookkeeping: which recipes have been answered, and
     // whether the week is closed outright.

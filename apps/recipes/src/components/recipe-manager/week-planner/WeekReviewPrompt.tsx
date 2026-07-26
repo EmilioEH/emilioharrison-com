@@ -5,6 +5,15 @@ import { Chip } from '../../ui/Chip'
 import type { CookOutcome } from '../../../lib/week-review'
 import type { Recipe } from '../../../lib/types'
 
+/**
+ * A picture of the meal, when there is one.
+ *
+ * The review asks about a week that has already happened, so recall is the whole job — and a
+ * photographed cookbook page is not a picture of the meal, so it is deliberately not used here.
+ */
+const thumbnailFor = (recipe: Recipe): string | null =>
+  recipe.thumbUrl || recipe.finishedImage || (recipe.images?.length ? recipe.images[0] : null)
+
 interface WeekReviewPromptProps {
   recipes: Recipe[]
   onSubmit: (
@@ -88,14 +97,19 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
       className="p-4"
       data-testid="week-review-prompt"
     >
-      <p className="mb-4 text-sm text-muted-foreground">
-        Answering makes the suggestions better. It only takes a tap each.
-      </p>
-
       <div className="flex flex-col gap-4">
         {recipes.map((recipe) => (
           <div key={recipe.id}>
-            <p className="mb-1.5 font-medium leading-snug text-foreground">{recipe.title}</p>
+            <div className="mb-2 flex items-center gap-3">
+              {thumbnailFor(recipe) && (
+                <img
+                  src={thumbnailFor(recipe)!}
+                  alt=""
+                  className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                />
+              )}
+              <p className="min-w-0 font-medium leading-snug text-foreground">{recipe.title}</p>
+            </div>
             <div
               className="flex flex-wrap gap-2"
               role="group"

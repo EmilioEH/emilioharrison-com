@@ -50,9 +50,12 @@ async function expectAllTappable(page: Page, selector: string) {
     if (!(await target.isVisible())) continue
     const box = await target.boundingBox()
     const label = (await target.textContent())?.trim() || `#${i}`
-    expect(box!.height, `"${label}" is only ${box!.height}px tall`).toBeGreaterThanOrEqual(
-      MIN_TOUCH_TARGET,
-    )
+    // Rounded: at deviceScaleFactor 2 the browser reports layout in 1/64ths, so an element that
+    // is exactly 44px comes back as 43.99997. That is a rendering artifact, not a small button.
+    expect(
+      Math.round(box!.height),
+      `"${label}" is only ${box!.height}px tall`,
+    ).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET)
   }
 }
 
@@ -71,6 +74,37 @@ test.describe('week planner touch targets', () => {
       route.fulfill({ json: { success: true, data: { reviews: [], ratings: [] } } }),
     )
     await page.route('**/api/recipes*', (route) => route.fulfill({ json: { recipes: all } }))
+    await page.route('**/api/week/suggest', (route) =>
+      route.fulfill({
+        json: {
+          success: true,
+          turn: {
+            say: 'What are you after?',
+            widgets: [
+              {
+                kind: 'chips',
+                id: 'proteins',
+                mode: 'many',
+                options: [
+                  { label: 'Chicken', value: 'Chicken', count: 1 },
+                  { label: 'Pork', value: 'Pork', count: 1 },
+                ],
+              },
+              { kind: 'chips', id: 'mood', mode: 'many', options: [{ label: 'comforting', value: 'comforting' }] },
+              { kind: 'counter', id: 'wanted', min: 1, max: 7, value: 4 },
+              { kind: 'actions', options: [{ label: 'Find me meals', intent: 'more' }] },
+            ],
+          },
+          constraints: {
+            wanted: 4,
+            mood: [],
+            facets: { proteins: [], dishTypes: [], cuisines: [], difficulties: [], maxMinutes: null },
+            keptIds: [],
+            rejectedIds: [],
+          },
+        },
+      }),
+    )
     await page.route('**/api/week/review*', async (route) => {
       if (route.request().method() !== 'GET') {
         return route.fulfill({ json: { success: true, recorded: 1, closed: true } })
@@ -99,15 +133,8 @@ test.describe('week planner touch targets', () => {
   test('every chip in the suggester clears 44px', async ({ page }) => {
     await page.getByTestId('open-meal-suggester').click()
     await expect(page.getByTestId('meal-suggester')).toBeVisible()
-
-    // Walk to the last step, where the facet chips live — the densest group on either screen.
-    await page
-      .getByRole('button', { name: '5', exact: true })
-      .first()
-      .click()
-    await page.getByRole('button', { name: 'comforting', exact: true }).click()
-    await page.getByRole('button', { name: 'Next', exact: true }).click()
-    await page.waitForTimeout(400)
+    // The prefetched turn arrives with counter, mood and facet chips — the densest group there is.
+    await expect(page.getByRole('button', { name: /comforting/ })).toBeVisible()
 
     await expectAllTappable(page, '[data-testid="meal-suggester"] button')
   })

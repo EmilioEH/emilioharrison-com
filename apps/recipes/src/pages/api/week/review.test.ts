@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { APIContext } from 'astro'
 
-const { getDocument, getCollection, setDocument } = vi.hoisted(() => ({
+const { getDocument, getCollection, setDocument, updateDocument } = vi.hoisted(() => ({
   getDocument: vi.fn(),
   getCollection: vi.fn(),
   setDocument: vi.fn(),
+  updateDocument: vi.fn(),
 }))
 vi.mock('../../../lib/firebase-server', () => ({
-  db: { getDocument, getCollection, setDocument },
+  db: { getDocument, getCollection, setDocument, updateDocument },
 }))
 
 const { getAuthUser } = vi.hoisted(() => ({ getAuthUser: vi.fn() }))
@@ -44,6 +45,7 @@ beforeEach(() => {
     return Promise.resolve(null)
   })
   setDocument.mockResolvedValue(undefined)
+  updateDocument.mockResolvedValue(undefined)
 })
 
 describe('POST /api/week/review', () => {
@@ -61,6 +63,28 @@ describe('POST /api/week/review', () => {
     expect(written.cookingHistory).toHaveLength(1)
     expect(written.cookingHistory[0].wouldMakeAgain).toBe(true)
     expect(written.reviews[0].rating).toBe(5)
+  })
+
+  it('stamps lastCooked on the recipe itself', async () => {
+    await POST(
+      contextWith({ weekStart: '2026-07-13', outcomes: [{ recipeId: 'r1', outcome: 'good' }] }),
+    )
+
+    expect(updateDocument).toHaveBeenCalledWith(
+      'recipes',
+      'r1',
+      expect.objectContaining({ lastCookedBy: 'Emilio' }),
+    )
+  })
+
+  it('still records the review when the lastCooked stamp fails', async () => {
+    updateDocument.mockRejectedValue(new Error('permission denied'))
+
+    const res = await POST(
+      contextWith({ weekStart: '2026-07-13', outcomes: [{ recipeId: 'r1', outcome: 'good' }] }),
+    )
+
+    expect(await res.json()).toMatchObject({ success: true, recorded: 1 })
   })
 
   it('records no cook for "didn\'t make it", but counts it as answered', async () => {
@@ -157,6 +181,25 @@ describe('GET /api/week/review', () => {
     { id: 'r1', weekPlan: { isPlanned: true, assignedDate: '2026-07-13' } },
     { id: 'r2', weekPlan: { isPlanned: true, assignedDate: '2026-07-13' } },
   ]
+
+  /** recipeData and weekPlans are both collections; answer each by path. */
+  const collections = (recipeData: unknown[], weekPlans: unknown[] = []) =>
+    getCollection.mockImplementation((path: string) =>
+      Promise.resolve(path.endsWith('weekPlans') ? weekPlans : recipeData),
+    )
+
+  it('prefers the permanent week record over the recipe\'s current assignedDate', async () => {
+    // r1 has since been re-planned into this week, so deriving from `assignedDate` would lose it.
+    collections(
+      [{ id: 'r1', weekPlan: { isPlanned: true, assignedDate: '2026-07-20' } }],
+      [{ id: '2026-07-13', recipeIds: ['r1', 'r2'] }],
+    )
+
+    const { pending } = await (await GET({ cookies: {} } as APIContext)).json()
+
+    expect(pending.weekStart).toBe('2026-07-13')
+    expect(pending.recipeIds.sort()).toEqual(['r1', 'r2'])
+  })
 
   it('offers a finished week that has not been answered', async () => {
     getCollection.mockResolvedValue(plannedLastWeek)
