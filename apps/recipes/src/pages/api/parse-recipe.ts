@@ -305,17 +305,18 @@ async function runPhase(
  * that phrasing was written against one two-column cookbook photo, and single-column cards,
  * three-column layouts and right-to-left scans all exist.
  */
-const INSTRUCTION_OCR_PROMPT = `Extract the cooking instructions from this image.
+const PAGE_OCR_PROMPT = `Transcribe this recipe image.
 
 Read the whole page in natural reading order. If the text is laid out in columns, finish each column before moving to the next — a recipe's method often starts in one column and continues in another, and stopping early loses half of it.
 
-Separate two different kinds of text:
+Separate three different kinds of text:
+- "ingredients": every ingredient line, one per element, exactly as printed. Include amounts and units. Do not combine or skip any.
 - "steps": ONLY actual cooking instructions, in cooking order, one complete paragraph per element. Do NOT combine paragraphs and do NOT skip any instruction.
 - "headnote": the introductory/descriptive prose about the dish (its origin, how it is served, shopping advice), if the page has any. This is NOT a cooking step.
 
-Ignore the ingredient list; it is transcribed separately.
+Transcribe what is printed. Do not reword, summarise, or add anything the page does not say.
 
-Return JSON: { "steps": string[], "headnote": string }. Use an empty string for "headnote" if there is none.`
+Return JSON: { "ingredients": string[], "steps": string[], "headnote": string }. Use an empty string for "headnote" if there is none.`
 
 /** True only for the photo-scan flow, where contentPart carries inline image bytes. */
 function isImageContent(contentPart: Record<string, unknown> | undefined): boolean {
@@ -323,13 +324,18 @@ function isImageContent(contentPart: Record<string, unknown> | undefined): boole
 }
 
 /**
- * Runs the two independent OCR passes (ingredients, instructions) against the photo — they read
- * the same image and don't depend on each other, so running them concurrently roughly halves
- * the wall time of the slowest part of this flow. Returns `null` only when ingredient OCR
- * (phase 1) fails outright; the caller returns a normal error response in that case rather than
- * ever opening a response stream with nothing to enqueue (see the POST handler for why that
- * matters). Instruction OCR (phase 2) failing is not fatal here — the caller still has usable
- * ingredients to structure.
+ * Transcribes the photo in a SINGLE model call, returning ingredients, steps and the headnote
+ * together.
+ *
+ * This used to be two calls that each sent the same image — one asking for ingredients, one for
+ * instructions. Image input dominates the cost of a vision request, so every photo import was
+ * billed for that image twice. One call reads the page once and returns all three, which roughly
+ * halves the cost and removes a whole request's worth of latency.
+ *
+ * The return shape is unchanged (`phase1` carrying ingredients, `phase2` carrying steps and
+ * headnote) so the streaming contract the client merges on — `_p: 1` then `_p: 2` — still holds.
+ * Returns `null` only when the transcription produced no ingredients at all; the caller turns that
+ * into a normal error response rather than opening a stream with nothing to enqueue.
  */
 export async function runImageOcrPhases(
   client: OpenAI,
@@ -339,11 +345,11 @@ export async function runImageOcrPhases(
   phase1: Record<string, unknown>
   phase2: Record<string, unknown> | null
 } | null> {
-  const runInstructionOcr = () =>
+  const readPage = () =>
     runPhase(
       client,
       '',
-      INSTRUCTION_OCR_PROMPT,
+      PAGE_OCR_PROMPT,
       contentPart,
       MODEL,
       OCR_MAX_TOKENS,
@@ -351,34 +357,24 @@ export async function runImageOcrPhases(
       externalSignal,
     )
 
-  const [phase1, firstPhase2] = await Promise.all([
-    runPhase(
-      client,
-      '',
-      `Extract ALL ingredient lines from this image. Return JSON with an "ingredients" array where each element is one ingredient line as a string. Include amounts and units. Do not combine or skip any ingredients.`,
-      contentPart,
-      MODEL,
-      OCR_MAX_TOKENS,
-      OCR_TIMEOUT_MS,
-      externalSignal,
-    ),
-    runInstructionOcr(),
-  ])
+  let page = await readPage()
 
-  if (!phase1) return null
-
-  // Instruction OCR gets a second chance. It previously ran exactly once, and a single miss left
-  // the user with an empty Instructions box plus a "couldn't read the instructions" warning —
-  // reported on a cookbook page whose instructions are provably legible (a vision model reads all
-  // nine paragraphs off it reliably). The failure is the model being inconsistent, not the photo
-  // being unreadable, which is the same pattern already handled in grocery-core and
-  // enhancement-core. Only retried when it produced nothing usable, so a normal import still
-  // costs a single call.
-  let phase2 = firstPhase2
-  if (!hasOcrSteps(phase2)) {
-    console.warn('[ParseRecipe] Instruction OCR produced no steps — retrying once')
-    phase2 = (await runInstructionOcr()) ?? phase2
+  // Retried only when the page produced no steps — the model being inconsistent rather than the
+  // photo being unreadable, which is the same pattern handled in grocery-core and
+  // enhancement-core. A normal import still costs a single call.
+  if (!hasOcrSteps(page)) {
+    console.warn('[ParseRecipe] Page transcription produced no steps — retrying once')
+    page = (await readPage()) ?? page
   }
+
+  const ingredients = Array.isArray(page?.ingredients) ? page.ingredients : []
+  if (!page || ingredients.length === 0) return null
+
+  // Split back into the two phase payloads the response stream and client already expect.
+  const phase1: Record<string, unknown> = { ingredients }
+  const phase2: Record<string, unknown> | null = hasOcrSteps(page)
+    ? { steps: page.steps, headnote: typeof page.headnote === 'string' ? page.headnote : '' }
+    : null
 
   return { phase1, phase2 }
 }
@@ -428,7 +424,7 @@ export function buildImageRecipeStream(
           ? phase1.ingredients.join('\n')
           : ''
         const stepList = phase2 && Array.isArray(phase2.steps) ? phase2.steps.join('\n') : ''
-        // The headnote is transcribed separately (see INSTRUCTION_OCR_PROMPT) so it can't be
+        // The headnote is transcribed under its own key (see PAGE_OCR_PROMPT) so it can not be
         // mistaken for a step — but it's still the best source for `description`, so hand it over
         // explicitly rather than letting the model invent one.
         const headnote = phase2 && typeof phase2.headnote === 'string' ? phase2.headnote.trim() : ''

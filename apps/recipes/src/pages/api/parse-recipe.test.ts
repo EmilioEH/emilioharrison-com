@@ -176,10 +176,16 @@ describe('buildTextRecipeStream — URL/text sources (single phase, no OCR)', ()
 })
 
 describe('runImageOcrPhases', () => {
-  it('returns both phases on success', async () => {
+  it('reads the page in a SINGLE call and returns both phases', async () => {
+    // The image used to be sent twice — once for ingredients, once for instructions. Image input
+    // dominates the cost of a vision request, so every import was billed for the photo twice.
+    // This asserts the merge: one request, all three pieces.
     const { client, calls } = fakeOpenAiClient([
-      JSON.stringify({ ingredients: ['1 cup flour'] }),
-      JSON.stringify({ steps: ['Mix everything.'] }),
+      JSON.stringify({
+        ingredients: ['1 cup flour'],
+        steps: ['Mix everything.'],
+        headnote: 'A family favourite.',
+      }),
     ])
 
     const result = await runImageOcrPhases(client, {
@@ -189,7 +195,21 @@ describe('runImageOcrPhases', () => {
     expect(result).not.toBeNull()
     expect(result?.phase1.ingredients).toEqual(['1 cup flour'])
     expect(result?.phase2?.steps).toEqual(['Mix everything.'])
-    expect(calls).toHaveLength(2)
+    expect(result?.phase2?.headnote).toBe('A family favourite.')
+    expect(calls).toHaveLength(1)
+  })
+
+  it('sends the image exactly once, not once per field', async () => {
+    const { client, calls } = fakeOpenAiClient([
+      JSON.stringify({ ingredients: ['salt'], steps: ['Season.'], headnote: '' }),
+    ])
+
+    await runImageOcrPhases(client, { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } })
+
+    const withImage = calls.filter((c) =>
+      JSON.stringify(c.messages).includes('image_url'),
+    )
+    expect(withImage).toHaveLength(1)
   })
 
   it('returns null when ingredient OCR (phase 1) fails, regardless of phase 2', async () => {
@@ -434,12 +454,15 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
 })
 
 describe('instruction-OCR retry (field report: empty Instructions on a legible photo)', () => {
-  it('retries instruction OCR once when the first attempt yields no steps', async () => {
-    // phase1 (ingredients) succeeds; phase2 returns nothing, then succeeds on retry.
+  it('retries the page read once when the first attempt yields no steps', async () => {
+    // Field report: a legible cookbook page came back with an empty Instructions box. The model
+    // is inconsistent here rather than the photo being unreadable, so it gets one more attempt.
     const { client, calls } = fakeOpenAiClient([
-      JSON.stringify({ ingredients: ['4 teaspoons kosher salt'] }),
-      JSON.stringify({ steps: [] }),
-      JSON.stringify({ steps: ['In a small bowl, stir together the salt and pepper.'] }),
+      JSON.stringify({ ingredients: ['4 teaspoons kosher salt'], steps: [] }),
+      JSON.stringify({
+        ingredients: ['4 teaspoons kosher salt'],
+        steps: ['In a small bowl, stir together the salt and pepper.'],
+      }),
     ])
 
     const phases = await runImageOcrPhases(client, {
@@ -448,8 +471,8 @@ describe('instruction-OCR retry (field report: empty Instructions on a legible p
 
     expect(phases).not.toBeNull()
     expect(phases!.phase2?.steps).toEqual(['In a small bowl, stir together the salt and pepper.'])
-    // ingredients + instructions + one instruction retry
-    expect(calls).toHaveLength(3)
+    // One read plus one retry — still half what the two-call version cost on a normal import.
+    expect(calls).toHaveLength(2)
   })
 
   it('does not retry instruction OCR when the first attempt already produced steps', async () => {
