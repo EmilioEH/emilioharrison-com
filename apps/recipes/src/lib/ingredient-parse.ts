@@ -15,7 +15,7 @@
  * verbatim; a missing quantity is recoverable, a wrong one is not.
  */
 
-import { normalizeUnit } from './units'
+import { normalizeUnit, convert } from './units'
 
 /** Single-character fractions as printed in cookbooks. */
 const VULGAR: Record<string, number> = {
@@ -198,7 +198,10 @@ function readUnit(text: string): { id: string; rest: string } | null {
   const words = text.trim().split(/\s+/)
   for (const take of [2, 1]) {
     if (words.length < take) continue
-    const candidate = words.slice(0, take).join(' ')
+    // Trailing punctuation has to come off before matching. "1/2 teaspoon, plus more to taste
+    // Table salt" left the unit as "teaspoon," — unmatched — so it stayed in the name and the
+    // ingredient ended up swallowed by the prep rule below.
+    const candidate = words.slice(0, take).join(' ').replace(/[,;:]+$/, '')
     if (take > 1 && /[()]/.test(candidate)) continue
     const normalized = normalizeUnit(candidate)
     if (!normalized.id) continue
@@ -208,7 +211,7 @@ function readUnit(text: string): { id: string; rest: string } | null {
     // count, leave the word in the name.
     const rest = SIZE_WORD.test(candidate)
       ? words.join(' ')
-      : words.slice(take).join(' ')
+      : words.slice(take).join(' ').replace(/^\s*,\s*/, '')
     return { id: normalized.id, rest }
   }
   return null
@@ -250,7 +253,7 @@ const BARE_QUALIFIER =
  * make every name start with the same three words.
  */
 const LEADING_QUALIFIER =
-  /^(to taste|as needed|as desired|optional|to serve|for (?:serving|garnish|garnishing|dusting|greasing|brushing|drizzling|frying|deep frying|topping|sprinkling|squeezing|the pan)(?:\s+and\s+\w+)*)\s+(?=\S)/i
+  /^(to taste|as needed|as desired|optional|to serve|(?:plus|and) (?:more|extra)(?: to taste| as needed| if needed| for \w+)?|for (?:serving|garnish|garnishing|dusting|greasing|brushing|drizzling|frying|deep frying|topping|sprinkling|squeezing|the pan)(?:\s+and\s+\w+)*)\s+(?=\S)/i
 
 /**
  * Pulls a leading qualifier off the line.
@@ -339,11 +342,16 @@ export function parseIngredientLine(line: string): ParsedIngredient {
     working = `${dualUnit[1]} ${working.slice(dualUnit[0].length)}`.trim()
   }
 
-  // "One 14.5-ounce can black beans" — the size sits between the count and the container.
+  // "One 14.5-ounce can black beans" — the size sits between the count and the container. The
+  // metric equivalent often sits between the two ("One 7 oz (200 g) can"), so that has to come
+  // off before checking whether a container unit really follows.
   const bareSize = BARE_PACKAGE_SIZE.exec(working)
-  if (bareSize && readUnit(working.slice(bareSize[0].length))) {
-    notes.push(bareSize[1].trim())
-    working = working.slice(bareSize[0].length).trim()
+  if (bareSize) {
+    const afterSize = working.slice(bareSize[0].length).replace(/^\([^)]*\)\s*/, '')
+    if (readUnit(afterSize)) {
+      notes.push(bareSize[1].trim())
+      working = afterSize.trim()
+    }
   }
 
   const unit = readUnit(working)
@@ -358,7 +366,15 @@ export function parseIngredientLine(line: string): ParsedIngredient {
 
   working = stripLeadingParenthetical(working, notes, preps)
 
+  if (unit) working = stripRestatedMeasure(working, quantity.value, unit.id, notes)
+
   working = stripParentheticals(working, notes, preps).replace(/^of\s+/i, '').trim()
+
+  // "1/2 teaspoon, plus more to taste Table salt" — the qualifier sits between the unit and the
+  // ingredient, so it has to be pulled off here too, not only at the start of the line.
+  const trailingQualifier = stripLeadingQualifier(working, preps)
+  if (trailingQualifier.rest) working = trailingQualifier.rest
+
   const { name, prep } = splitNameAndPrep(working)
   const allPrep = [prep, ...preps].filter(Boolean).join(', ')
 
@@ -370,6 +386,50 @@ export function parseIngredientLine(line: string): ParsedIngredient {
     ...(allPrep ? { prep: allPrep } : {}),
     ...(notes.length ? { note: notes.join('; ') } : {}),
   }
+}
+
+/**
+ * Removes a second measure that merely restates the first.
+ *
+ * Books that give both weight and volume print them back to back — "170g 6 ounces white
+ * chocolate", "5.6 oz 1¾ cups all-purpose flour" — and the second was ending up glued to the
+ * front of the ingredient name.
+ *
+ * The second measure is only removed when it cannot be an addition to the first:
+ *
+ * - **Different families** — nobody adds a volume to a weight, so "5.6 oz" then "1¾ cups" has to
+ *   be the same amount said twice.
+ * - **Same family, same size** — "170 g" and "6 ounces" agree to within a rounding tolerance.
+ *
+ * Everything else is left alone. "1 lb 2 oz spaghetti" is one pound *plus* two ounces, and
+ * quietly dropping the ounces would understate the recipe by an eighth.
+ */
+function stripRestatedMeasure(
+  text: string,
+  quantity: number,
+  unitId: string,
+  notes: string[],
+): string {
+  const second = readQuantity(text)
+  if (!second) return text
+
+  const secondUnit = readUnit(second.rest)
+  if (!secondUnit || !secondUnit.rest.trim()) return text
+
+  const family = normalizeUnit(unitId).family
+  const secondFamily = normalizeUnit(secondUnit.id).family
+  if (!family || !secondFamily) return text
+
+  let restates = family !== secondFamily
+  if (!restates && (family === 'volume' || family === 'weight')) {
+    const asFirst = convert(second.value, secondUnit.id, unitId)
+    // A 12% tolerance covers the rounding books do when printing both systems (113g for 4oz).
+    if (asFirst !== null && quantity > 0) restates = Math.abs(asFirst - quantity) / quantity < 0.12
+  }
+  if (!restates) return text
+
+  notes.push(text.slice(0, text.length - secondUnit.rest.length).trim())
+  return secondUnit.rest.trim()
 }
 
 /** Backspace and other control characters survive OCR and print as boxes. */
@@ -428,7 +488,15 @@ export function reconstructIngredientLine(stored: {
   amount?: string
   name?: string
   prep?: string
+  original?: string
 }): string {
+  // Once a record has been normalised, the printed line is stored verbatim — use it rather than
+  // reassembling from the split fields. That makes re-running the migration idempotent, and means
+  // a parser fix can be applied to already-migrated records instead of being stuck with whatever
+  // the first pass produced.
+  const original = String(stored.original ?? '').replace(/\s+/g, ' ').trim()
+  if (original) return original
+
   const amount = String(stored.amount ?? '').replace(/\s+/g, ' ').trim()
   const name = String(stored.name ?? '').replace(/\s+/g, ' ').trim()
 

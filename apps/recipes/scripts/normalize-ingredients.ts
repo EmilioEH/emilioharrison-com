@@ -43,6 +43,25 @@ function initFirestore() {
   return getFirestore()
 }
 
+const SIZE_WORDS = /^(small|medium|large|extra[- ]large|jumbo|baby|medium-large)$/i
+
+/**
+ * True when the parsed name is really a measurement, which means the split went wrong and the
+ * ingredient has been pushed somewhere else — "1/2 teaspoon, plus more to taste Table salt"
+ * leaving a name of "teaspoon" and the salt stranded in prep.
+ *
+ * Only volume, weight and size words count. Several count and imprecise units double as real
+ * ingredients — `cloves` is a spice, `sprinkles` go on a cake — and rejecting those would hold
+ * back perfectly good records.
+ */
+function nameIsOnlyAMeasure(name: string): boolean {
+  const text = name.trim()
+  if (!text) return false
+  if (SIZE_WORDS.test(text)) return true
+  const family = normalizeUnit(text).family
+  return family === 'volume' || family === 'weight'
+}
+
 /** Words that carry meaning from the page — excludes numbers, units and filler. */
 function contentWords(text: string): string[] {
   return text
@@ -121,12 +140,27 @@ async function main() {
         original: parsed.original,
       }
       // A prep note the record already carried is kept alongside anything the parse found, so a
-      // stored note is never dropped — unless it is already said elsewhere, which would render
-      // "diced red pepper, diced".
-      const carried = String(item.prep ?? '').trim()
-      const alreadySaid = `${after.name} ${after.prep ?? ''}`.toLowerCase()
-      if (carried && !alreadySaid.includes(carried.toLowerCase())) {
-        after.prep = [after.prep, carried].filter(Boolean).join(', ')
+      // stored note is never dropped — unless it is already said elsewhere.
+      //
+      // The comparison is by word, not by substring. On a re-run the stored prep is often a
+      // longer phrasing of what was just parsed ("plus more to taste kosher salt" against a name
+      // of "kosher salt" and a prep of "plus more to taste"), and a substring test misses that,
+      // producing "plus more to taste, plus more to taste kosher salt".
+      // Carried clause by clause, not as one string: "plus more to taste Table salt, divided"
+      // only contributes the "divided" — appending the whole thing would restate the ingredient
+      // and the qualifier that were already parsed out of the printed line.
+      const carriedClauses = String(item.prep ?? '')
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean)
+
+      for (const clause of carriedClauses) {
+        const said = contentWords(`${after.name} ${after.prep ?? ''}`)
+        const words = contentWords(clause)
+        const adds = words.length
+          ? words.some((w) => !said.includes(w))
+          : !`${after.name} ${after.prep ?? ''}`.toLowerCase().includes(clause.toLowerCase())
+        if (adds) after.prep = [after.prep, clause].filter(Boolean).join(', ')
       }
 
       if (parsed.quantity !== undefined) parsedQuantity++
@@ -140,6 +174,7 @@ async function main() {
       const lost = contentWords(wasShown).filter((w) => !contentWords(shown).includes(w))
       let why = ''
       if (!after.name.trim()) why = 'name would be empty'
+      else if (nameIsOnlyAMeasure(after.name)) why = `name is only a measure: "${after.name}"`
       else if (lost.length) why = `words dropped from display: ${lost.slice(0, 6).join(', ')}`
 
       if (why) {

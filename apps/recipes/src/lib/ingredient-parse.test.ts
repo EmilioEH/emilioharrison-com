@@ -83,6 +83,50 @@ describe('parseIngredientLine', () => {
     })
   })
 
+  it('files a restated measure as a note but keeps an additive one', () => {
+    // Books that print weight and volume put them back to back. The second only restates the
+    // first when it cannot be an addition to it — a different family, or the same size twice.
+    expect(parseIngredientLine('170g 6 ounces white chocolate')).toMatchObject({
+      quantity: 170,
+      unit: 'g',
+      name: 'white chocolate',
+      note: '6 ounces',
+    })
+    expect(parseIngredientLine('5.6 oz 1¾ cups all-purpose flour')).toMatchObject({
+      quantity: 5.6,
+      unit: 'oz',
+      name: 'all-purpose flour',
+    })
+    // "1 lb 2 oz" is a pound PLUS two ounces. Dropping the ounces would understate it by an
+    // eighth, so the second measure stays visible.
+    expect(parseIngredientLine('1 lb 2 oz Spaghetti').name).toContain('2 oz')
+  })
+
+  it('reads a package size that is followed by its metric equivalent', () => {
+    expect(parseIngredientLine('One 7 oz (200 g) can diced green chiles')).toMatchObject({
+      quantity: 1,
+      unit: 'can',
+      name: 'diced green chiles',
+    })
+  })
+
+  it('reads a unit that is followed by a comma', () => {
+    // "1/2 teaspoon, plus more to taste Table salt" — an unmatched "teaspoon," stayed in the name,
+    // and the greedy "plus more…" prep rule then swallowed the salt, leaving a row whose name was
+    // the word "teaspoon". Nine ingredients in the library have this shape.
+    expect(parseIngredientLine('1/2 teaspoon, plus more to taste Table salt')).toMatchObject({
+      quantity: 0.5,
+      unit: 'tsp',
+      name: 'Table salt',
+      prep: 'plus more to taste',
+    })
+    expect(parseIngredientLine('1 1/2 cups, plus more reserved pasta water')).toMatchObject({
+      quantity: 1.5,
+      unit: 'cup',
+      name: 'reserved pasta water',
+    })
+  })
+
   it('reads a US unit printed with its metric restatement', () => {
     // "½ cup/30 grams flour" — both name the same amount, so the second is a note. Left unhandled
     // this put "cup/30 grams" into the ingredient name and left the row with no unit at all.
@@ -205,6 +249,18 @@ describe('reconstructIngredientLine', () => {
         name: '4 (12-ounce) chops 4 (12-ounce) bone-in pork rib chops',
       }),
     ).toBe('4 (12-ounce) bone-in pork rib chops')
+  })
+
+  it('prefers the preserved printed line once one exists', () => {
+    // What makes re-running safe: a parser fix applies to the original text, not to whatever the
+    // previous run left in `amount` and `name`.
+    expect(
+      reconstructIngredientLine({
+        amount: '½ tsp',
+        name: 'teaspoon',
+        original: '1/2 teaspoon, plus more to taste Table salt',
+      }),
+    ).toBe('1/2 teaspoon, plus more to taste Table salt')
   })
 
   it('does not treat a genuinely repeated number as a duplicate', () => {
