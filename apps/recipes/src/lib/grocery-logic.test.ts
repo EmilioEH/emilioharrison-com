@@ -127,13 +127,49 @@ describe('grocery-logic', () => {
       expect(result[0].sources).toHaveLength(2)
     })
 
-    it('keeps ingredients with different units separate', () => {
-      const ingredients = [
-        item({ name: 'milk', purchaseUnit: 'quart' }),
-        item({ name: 'milk', purchaseUnit: 'cup' }),
-      ]
+    it('combines different units of the same family into one line', () => {
+      // Two recipes wanting 2 tbsp and ¼ cup of oil are asking for 6 tbsp of oil. Leaving those
+      // as two rows is a worse shopping list than the sum.
+      const merged = mergeShoppableIngredients([
+        item({ name: 'olive oil', purchaseAmount: 2, purchaseUnit: 'tbsp' }),
+        item({ name: 'olive oil', purchaseAmount: 0.25, purchaseUnit: 'cup' }),
+      ])
 
-      expect(mergeShoppableIngredients(ingredients)).toHaveLength(2)
+      expect(merged).toHaveLength(1)
+      expect(merged[0].purchaseAmount).toBeCloseTo(6, 1)
+      expect(merged[0].purchaseUnit).toBe('tbsp')
+    })
+
+    it('promotes the combined total to a unit worth reading', () => {
+      // 48 tsp is a cup; nobody shops in teaspoons at that scale.
+      const merged = mergeShoppableIngredients([
+        item({ name: 'milk', purchaseAmount: 24, purchaseUnit: 'tsp' }),
+        item({ name: 'milk', purchaseAmount: 24, purchaseUnit: 'tsp' }),
+      ])
+
+      expect(merged).toHaveLength(1)
+      expect(merged[0].purchaseUnit).toBe('cup')
+      expect(merged[0].purchaseAmount).toBeCloseTo(1, 1)
+    })
+
+    it('keeps units from different families separate', () => {
+      // A pound of cheese and a cup of cheese cannot be added without knowing its density, and
+      // guessing at that is exactly what this codebase is trying to stop doing.
+      const merged = mergeShoppableIngredients([
+        item({ name: 'cheddar', purchaseAmount: 1, purchaseUnit: 'lb' }),
+        item({ name: 'cheddar', purchaseAmount: 1, purchaseUnit: 'cup' }),
+      ])
+
+      expect(merged).toHaveLength(2)
+    })
+
+    it('does not add imprecise amounts to each other', () => {
+      const merged = mergeShoppableIngredients([
+        item({ name: 'salt', purchaseAmount: 0, purchaseUnit: 'to taste' }),
+        item({ name: 'salt', purchaseAmount: 1, purchaseUnit: 'tsp' }),
+      ])
+
+      expect(merged).toHaveLength(2)
     })
 
     it('parses sources that come back as JSON strings from Firestore', () => {

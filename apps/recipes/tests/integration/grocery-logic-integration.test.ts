@@ -34,7 +34,7 @@ describe('Integration: Grocery Logic', () => {
       ])
     })
 
-    it('should not merge if units differ', () => {
+    it('merges units of the same family, and only those', () => {
       const input: ShoppableIngredient[] = [
         {
           name: 'milk',
@@ -46,7 +46,14 @@ describe('Integration: Grocery Logic', () => {
         {
           name: 'milk',
           purchaseAmount: 1,
-          purchaseUnit: 'cup', // Different unit
+          purchaseUnit: 'cup', // Same family — a gallon and a cup of milk add up.
+          category: 'Dairy',
+          sources: [],
+        },
+        {
+          name: 'milk',
+          purchaseAmount: 1,
+          purchaseUnit: 'lb', // A different family — cannot be added without a density.
           category: 'Dairy',
           sources: [],
         },
@@ -54,6 +61,12 @@ describe('Integration: Grocery Logic', () => {
 
       const result = mergeShoppableIngredients(input)
       expect(result).toHaveLength(2)
+      // 1 gallon + 1 cup = 17 cups. It reads in cups rather than gallons because `bestDisplayUnit`
+      // only promotes into units recipes are actually written in — turning that into a
+      // purchasable quantity is the Smart list's AI pass, further down the pipeline.
+      const volume = result.find((r) => r.purchaseUnit !== 'lb')!
+      expect(volume.purchaseAmount).toBeCloseTo(17, 1)
+      expect(volume.purchaseUnit).toBe('cups')
     })
 
     it('should deduplicate sources from the same recipe', () => {
