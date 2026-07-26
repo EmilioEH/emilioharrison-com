@@ -20,6 +20,7 @@ import {
   categorizeShoppableIngredients,
 } from '../../../lib/grocery-logic'
 import { confirm } from '../../../lib/dialogStore'
+import { groceryUnitLabel } from '../../../lib/grocery-utils'
 import type { Recipe, ShoppableIngredient } from '../../../lib/types'
 import { AddItemInput } from './AddItemInput'
 import { GroceryItemEditSheet } from './GroceryItemEditSheet'
@@ -746,7 +747,7 @@ export const GroceryList: React.FC<GroceryListProps> = ({
                                       : ''}
                                   </span>
                                   <span className="text-sm font-medium opacity-80">
-                                    {item.purchaseUnit !== 'unit' ? item.purchaseUnit : ''}
+                                    {groceryUnitLabel(item.purchaseUnit, item.purchaseAmount)}
                                   </span>
                                   <span className="font-medium capitalize">{item.name}</span>
                                   {/* Manual Item Badge */}

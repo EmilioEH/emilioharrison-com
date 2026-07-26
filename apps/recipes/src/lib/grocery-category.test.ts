@@ -4,6 +4,7 @@ import {
   shoppingNameFromDisplayIngredient,
   guessCategoryFromName,
   buildRawShoppableIngredients,
+  groceryUnitLabel,
 } from './grocery-utils'
 import type { Recipe } from './types'
 
@@ -105,6 +106,37 @@ describe('guessCategoryFromName', () => {
     expect(guessCategoryFromName('yellow onion')).toBe('Produce')
     expect(guessCategoryFromName('garlic powder')).toBe('Spices')
     expect(guessCategoryFromName('garlic cloves')).toBe('Produce')
+  })
+})
+
+describe('groceryUnitLabel', () => {
+  // Every case here is a real row from the shopping list, which read "1 lbs Baby Red Potatoes",
+  // "1 heads Cauliflower" and "1 bunches Collard Greens". The purchasable unit comes from the AI
+  // pass, which always returns a plural regardless of how many you are buying.
+  it('makes the unit agree with the number beside it', () => {
+    expect(groceryUnitLabel('lbs', 1)).toBe('lb')
+    expect(groceryUnitLabel('heads', 1)).toBe('head')
+    expect(groceryUnitLabel('bunches', 1)).toBe('bunch')
+    expect(groceryUnitLabel('bags', 1)).toBe('bag')
+  })
+
+  it('keeps the plural when there is more than one', () => {
+    expect(groceryUnitLabel('bunches', 2)).toBe('bunches')
+    expect(groceryUnitLabel('cloves', 3)).toBe('cloves')
+  })
+
+  it('prints nothing for a bare count', () => {
+    // "1 whole Avocado" and "4 whole Corn Cobs" — "whole" is how a count gets written down, not
+    // something anyone says.
+    expect(groceryUnitLabel('whole', 1)).toBe('')
+    expect(groceryUnitLabel('whole', 4)).toBe('')
+    expect(groceryUnitLabel('unit', 1)).toBe('')
+  })
+
+  it('leaves an unrecognised unit alone', () => {
+    // "1 can of chipotles in adobo" is a real answer; mangling it would be worse than leaving it.
+    expect(groceryUnitLabel('can of chipotles in adobo', 1)).toBe('can of chipotles in adobo')
+    expect(groceryUnitLabel('', 1)).toBe('')
   })
 })
 
