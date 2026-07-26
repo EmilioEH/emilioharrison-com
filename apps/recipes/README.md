@@ -14,6 +14,7 @@ The app is intentionally scoped to five flows. Everything else has been cut to k
 3. **Add a new recipe** — manual entry, paste a URL, or scan a photo of a recipe card.
 4. **Add a recipe to a week** — one tap adds/removes a recipe from the currently active week. No day-of-week picker — a recipe is either in this week's plan or it isn't.
 5. **Generate a grocery list** — for everything in the active week, with a Standard (deterministic) and Smart (AI) list mode, manual add/edit, check-off, and share/copy as text.
+6. **Decide what to cook** — say how many meals you need and roughly what you feel like, get a few suggestions from your own library with a reason for each, keep the ones you want and ask for others (`MealSuggester.tsx`). The week you just finished is reviewed in four taps per recipe (`WeekReviewPrompt.tsx`), which is what feeds the suggestions over time.
 
 Family sharing (shared recipes, shared week plan, shared grocery list, invites) is a first-class part of all five flows, not a bolt-on.
 
@@ -202,6 +203,20 @@ npm run check:ci       # the full CI suite: lint:strict + format + parallel chec
 ```
 
 Run `npm run check:quick` (at minimum) before considering any change finished; run the fuller gates before a PR.
+
+## 🍽 Choosing meals for the week
+
+Two components at the top of the week plan, deliberately in that order.
+
+**`WeekReviewPrompt`** asks how the last finished week went — one row per recipe, four options: *Didn't make it · Meh · Good · Again*. This is the app's **only** writer of `cookingHistory`. Before it existed the field was initialised in four places and appended to in none, nothing anywhere set `lastCooked`, and rating meant navigating back to a recipe days later and volunteering a review — which is why four recipes out of 413 carried a rating after six months of weekly planning. The question now arrives in the context the cook is already in, on the cadence they already keep. `GET /api/week/review` decides which week is owed an answer (`lib/week-review.ts`); `POST` records it and marks the week answered on the family document so it is asked once.
+
+`skipped` deliberately records nothing. A meal that was planned and not made is real information, and inventing a cook would poison the suggestions this feeds.
+
+**`MealSuggester`** takes a meal count and a mood — free text, plus chips for when the cook can't name what they want — and returns a few recipes with a sentence of why each. Picking happens in batches, so every subsequent round is chosen against what has already been banked: take a stew and a pasta, ask for more, and it stops offering heavy dinners.
+
+**The whole library goes to the model.** The instinct is to pre-filter to a handful of candidates in code — right for structured criteria (see the USDA weight table), wrong here, because "something comforting" doesn't map to `protein` or `cuisine` and a metadata filter can drop the best answer before the model sees it. It only works because the library is small: 413 recipes with the facts that matter come to roughly 8,300 tokens, so it fits in one cheap call with no retrieval step.
+
+The model is given numbered lines and must answer with those numbers; anything out of range, duplicated, or already on the plan is discarded (`parseSuggestions`). A wrong answer is a poor suggestion from the cook's own library, never a dish they don't own. If the model is unavailable, `fallbackSuggestions` still answers from a deterministic ranking — a blank screen is a worse failure than an unexplained pick.
 
 ## 👨‍👩‍👧 Recipe Data & Family Sync
 

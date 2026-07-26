@@ -1,8 +1,11 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Plus, Clock, User, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-import { removeRecipeFromWeek, type PlannedRecipe } from '../../../lib/weekStore'
+import { removeRecipeFromWeek, addRecipeToWeek, type PlannedRecipe } from '../../../lib/weekStore'
+import type { CookOutcome } from '../../../lib/week-review'
+import { WeekReviewPrompt } from './WeekReviewPrompt'
+import { MealSuggester } from './MealSuggester'
 import type { Recipe } from '../../../lib/types'
 
 interface WeekPlanViewProps {
@@ -10,6 +13,14 @@ interface WeekPlanViewProps {
   allRecipes: Recipe[]
   onSelectRecipe: (recipe: Recipe) => void
   onAddRecipe?: () => void
+}
+
+const apiBase = () =>
+  import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`
+
+interface PendingReview {
+  weekStart: string
+  recipeIds: string[]
 }
 
 /**
@@ -264,6 +275,43 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
     await removeRecipeFromWeek(recipeId)
   }
 
+  // How last week went. Asked here because opening the planner is the only moment that recurs on
+  // the same cadence as cooking — see lib/week-review.ts.
+  const [pendingReview, setPendingReview] = useState<PendingReview | null>(null)
+  const [reviewDismissed, setReviewDismissed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${apiBase()}api/week/review`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data?.pending) setPendingReview(data.pending)
+      })
+      .catch(() => {
+        // A missing prompt is not worth surfacing an error for.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const submitReview = async (outcomes: Array<{ recipeId: string; outcome: CookOutcome }>) => {
+    if (!pendingReview) return
+    await fetch(`${apiBase()}api/week/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weekStart: pendingReview.weekStart, outcomes }),
+    })
+    triggerHaptic('light')
+    setPendingReview(null)
+  }
+
+  const reviewRecipes = pendingReview
+    ? pendingReview.recipeIds
+        .map((id) => allRecipes.find((r) => r.id === id))
+        .filter((r): r is Recipe => Boolean(r))
+    : []
+
   return (
     <motion.div
       variants={containerVariants}
@@ -271,6 +319,25 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
       animate="visible"
       className="flex flex-col gap-3 p-4 pb-24"
     >
+      {pendingReview && !reviewDismissed && reviewRecipes.length > 0 && (
+        <WeekReviewPrompt
+          weekStart={pendingReview.weekStart}
+          recipes={reviewRecipes}
+          onSubmit={submitReview}
+          onDismiss={() => setReviewDismissed(true)}
+        />
+      )}
+
+      <MealSuggester
+        allRecipes={allRecipes}
+        plannedIds={currentRecipes.map((r) => r.recipeId)}
+        onAdd={async (recipeId) => {
+          await addRecipeToWeek(recipeId)
+          triggerHaptic('light')
+        }}
+        onOpenRecipe={onSelectRecipe}
+      />
+
       {plannedCards.map(({ planned, recipe }) => (
         <motion.div key={planned.recipeId} variants={itemVariants}>
           <SwipeableRecipeCard
