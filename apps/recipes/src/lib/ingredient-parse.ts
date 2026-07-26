@@ -209,9 +209,12 @@ function readUnit(text: string): { id: string; rest: string } | null {
     // Size adjectives normalise to a bare count, but the page printed them and they describe the
     // specimen you are meant to buy — "1 medium onion" must not become "1 onion". Record the
     // count, leave the word in the name.
+    // A comma after the unit marks the start of a clause — "1 tube, cut into 24 slices" — so it
+    // is handed on rather than dropped, letting the prep clause be recognised downstream.
+    const separator = /[,;:]$/.test(words[take - 1] ?? '') ? ', ' : ''
     const rest = SIZE_WORD.test(candidate)
       ? words.join(' ')
-      : words.slice(take).join(' ').replace(/^\s*,\s*/, '')
+      : separator + words.slice(take).join(' ')
     return { id: normalized.id, rest }
   }
   return null
@@ -365,6 +368,7 @@ export function parseIngredientLine(line: string): ParsedIngredient {
   }
 
   working = stripLeadingParenthetical(working, notes, preps)
+  working = stripLeadingPrepClause(working, preps)
 
   if (unit) working = stripRestatedMeasure(working, quantity.value, unit.id, notes)
 
@@ -462,6 +466,37 @@ function stripLeadingParenthetical(text: string, notes: string[], preps: string[
   if (!match) return text
   fileParenthetical(match[1], notes, preps)
   return text.slice(match[0].length).trim()
+}
+
+/**
+ * A preparation clause printed between the measure and the ingredient.
+ *
+ * "1 cup (about 4 ounces), divided shredded mozzarella" — once the bracket is removed the line
+ * starts at its comma, with the prep sitting in front of the ingredient. Only applied when a
+ * comma actually led, so an ordinary "1½ cups chopped onion" keeps "chopped" in the name where
+ * the page put it.
+ */
+const LEADING_PREP_CLAUSE = new RegExp(
+  '^(' +
+    [
+      'divided', 'drained', 'rinsed', 'softened', 'melted', 'trimmed', 'peeled', 'halved',
+      'quartered', 'crumbled', 'packed', 'seeded', 'cored', 'thawed',
+      'cut into \\d+ [a-z-]+',
+      'cut into [a-z-]+ (?:pieces|cubes|slices|wedges|strips)',
+    ].join('|') +
+    ')\\s+(?=\\S)',
+  'i',
+)
+
+function stripLeadingPrepClause(text: string, preps: string[]): string {
+  const withoutComma = text.replace(/^\s*,\s*/, '')
+  if (withoutComma === text) return text
+
+  const match = LEADING_PREP_CLAUSE.exec(withoutComma)
+  if (!match) return withoutComma
+
+  preps.push(match[1].trim().toLowerCase())
+  return withoutComma.slice(match[0].length).trim()
 }
 
 /** Pulls every remaining parenthetical out of the name so the name is just the ingredient. */
