@@ -122,8 +122,9 @@ const Step: React.FC<{
  * chosen against what has already been banked: take a stew and a pasta, ask for more, and it
  * should stop offering heavy dinners.
  *
- * Closed until asked for. Most visits to the planner are not "decide the whole week from scratch",
- * and a permanently expanded form at the top of the plan is in the way the rest of the time.
+ * Rendered as its own screen, entered from a button on the week plan — a multi-step exchange needs
+ * the whole viewport on a phone, and it should not sit between the cook and their planned recipes
+ * on every visit.
  */
 export const MealSuggester: React.FC<MealSuggesterProps> = ({
   allRecipes,
@@ -131,7 +132,6 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
   onAdd,
   onOpenRecipe,
 }) => {
-  const [open, setOpen] = useState(false)
   const [step, setStep] = useState(0)
 
   const [wanted, setWanted] = useState(4)
@@ -213,20 +213,6 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
     await onAdd(recipeId)
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        data-testid="meal-suggester-open"
-        className="mx-4 mb-4 flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
-      >
-        <Sparkles className="h-4 w-4 text-primary" />
-        Help me pick this week
-      </button>
-    )
-  }
-
   const facetGroups = [
     { label: 'Protein', options: PROTEIN_OPTIONS, selected: proteins, set: setProteins },
     { label: 'Dish', options: DISH_TYPE_OPTIONS, selected: dishTypes, set: setDishTypes },
@@ -235,24 +221,7 @@ export const MealSuggester: React.FC<MealSuggesterProps> = ({
   ]
 
   return (
-    <section
-      className="mx-4 mb-4 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm"
-      data-testid="meal-suggester"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="font-display text-lg font-bold text-foreground">Help me pick</h3>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Close
-        </button>
-      </div>
-
+    <section className="flex flex-col gap-3 p-4" data-testid="meal-suggester">
       <Step
         title="How many meals?"
         summary={`${wanted} meals`}

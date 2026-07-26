@@ -165,27 +165,37 @@ test.describe('remaining findings', () => {
     await page.getByRole('button', { name: /This Week/i }).first().click()
     await page.waitForTimeout(900)
 
-    // Closed by default now — open it, then walk the steps so the collapsed answers are visible.
-    await expect(page.getByTestId('meal-suggester-open')).toBeVisible()
-    await page.getByTestId('meal-suggester-open').click()
-    await page.waitForTimeout(300)
+    // Both are entry points on the plan now, not embedded panels.
+    await expect(page.getByTestId('open-week-review')).toBeVisible()
+    await expect(page.getByTestId('open-meal-suggester')).toBeVisible()
+    await page.screenshot({ path: `${OUT}/11-week-plan-entries.png` })
+
+    // The review, full screen.
+    await page.getByTestId('open-week-review').click()
+    await page.waitForTimeout(500)
+    await expect(page.getByTestId('week-screen')).toBeVisible()
+    await expect(page.getByTestId('week-review-prompt')).toBeVisible()
+    await page.screenshot({ path: `${OUT}/12-review-screen.png` })
+    await page.getByRole('button', { name: 'Back to the week' }).click()
+    await page.waitForTimeout(400)
+
+    // The suggester, full screen, part-way through the steps.
+    await page.getByTestId('open-meal-suggester').click()
+    await page.waitForTimeout(500)
+    await expect(page.getByTestId('meal-suggester')).toBeVisible()
     await page.getByRole('button', { name: '5', exact: true }).first().click()
     await page.waitForTimeout(300)
     await page.getByRole('button', { name: 'comforting', exact: true }).click()
     await page.getByRole('button', { name: 'quick weeknights', exact: true }).click()
     await page.getByRole('button', { name: 'Next', exact: true }).click()
     await page.waitForTimeout(400)
+    await page.screenshot({ path: `${OUT}/13-suggester-screen.png` })
 
-    // The review prompt sits above the suggester; make sure it is in frame.
-    await page.evaluate(() => window.scrollTo(0, 0))
-    await page.waitForTimeout(300)
-    await expect(page.getByTestId('week-review-prompt')).toBeVisible()
-    await expect(page.getByTestId('meal-suggester')).toBeVisible()
-    await page.screenshot({ path: `${OUT}/11-week-suggester.png` })
-
-    // The open step, with the facet chips, sits below the fold on a phone.
-    await page.getByTestId('meal-suggester').scrollIntoViewIfNeeded()
-    await page.waitForTimeout(300)
-    await page.screenshot({ path: `${OUT}/12-suggester-facets.png` })
+    // The action sits below several chip groups on a phone — it has to be reachable, or the
+    // whole screen is a dead end.
+    const findMeals = page.getByRole('button', { name: /Find me meals/i })
+    await findMeals.scrollIntoViewIfNeeded()
+    await expect(findMeals).toBeVisible()
+    await page.screenshot({ path: `${OUT}/14-suggester-action.png` })
   })
 })

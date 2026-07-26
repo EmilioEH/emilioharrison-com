@@ -6,7 +6,6 @@ import type { CookOutcome } from '../../../lib/week-review'
 import type { Recipe } from '../../../lib/types'
 
 interface WeekReviewPromptProps {
-  weekStart: string
   recipes: Recipe[]
   onSubmit: (outcomes: Array<{ recipeId: string; outcome: CookOutcome }>) => Promise<void>
   onDismiss: () => void
@@ -20,14 +19,6 @@ const OPTIONS: Array<{ value: CookOutcome; label: string }> = [
   { value: 'again', label: 'Again' },
 ]
 
-function formatWeek(weekStart: string): string {
-  const start = new Date(`${weekStart}T00:00:00`)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 6)
-  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  return `${start.toLocaleDateString(undefined, opts)} – ${end.toLocaleDateString(undefined, opts)}`
-}
-
 /**
  * Asks how the last finished week went, at the moment the cook opens the planner.
  *
@@ -37,7 +28,6 @@ function formatWeek(weekStart: string): string {
  * already in, on the cadence they already keep, and clears a week in a handful of taps.
  */
 export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
-  weekStart,
   recipes,
   onSubmit,
   onDismiss,
@@ -64,15 +54,9 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-      className="mx-4 mb-4 rounded-xl border border-border bg-card p-4 shadow-sm"
+      className="p-4"
       data-testid="week-review-prompt"
     >
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <h3 className="font-display text-lg font-bold text-foreground">How did last week go?</h3>
-        <span className="shrink-0 text-xs font-medium text-muted-foreground">
-          {formatWeek(weekStart)}
-        </span>
-      </div>
       <p className="mb-4 text-sm text-muted-foreground">
         Answering makes the suggestions better. It only takes a tap each.
       </p>
