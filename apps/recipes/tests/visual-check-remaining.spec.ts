@@ -134,4 +134,49 @@ test.describe('remaining findings', () => {
     await page.waitForLoadState('networkidle')
     await page.screenshot({ path: `${OUT}/13-week.png` })
   })
+
+  test('week planner — meal suggester and review prompt', async ({ page }) => {
+    await page.route('**/api/week/review*', async (route) => {
+      if (route.request().method() !== 'GET') {
+        return route.fulfill({ json: { success: true, recorded: 1 } })
+      }
+      await route.fulfill({
+        json: {
+          success: true,
+          pending: { weekStart: '2026-07-13', recipeIds: ['scan-001', 'dish-001'] },
+        },
+      })
+    })
+
+    await page.route('**/api/week/suggest', (route) =>
+      route.fulfill({
+        json: {
+          success: true,
+          suggestions: [
+            { recipeId: 'scan-001', reason: "You haven't made this one yet, and it's quick." },
+            { recipeId: 'dish-001', reason: 'Lighter, to balance the beef you already picked.' },
+          ],
+        },
+      }),
+    )
+
+    await page.goto('/protected/recipes/')
+    await page.waitForLoadState('networkidle')
+    await page.getByRole('button', { name: /This Week/i }).first().click()
+    await page.waitForTimeout(900)
+
+    // Ask for suggestions so the cards are on screen for the screenshot.
+    const suggest = page.getByRole('button', { name: /Suggest meals/i })
+    if (await suggest.count()) {
+      await suggest.first().click()
+      await page.waitForTimeout(600)
+    }
+
+    // The review prompt sits above the suggester; make sure it is in frame.
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(300)
+    await expect(page.getByTestId('week-review-prompt')).toBeVisible()
+    await expect(page.getByTestId('meal-suggester')).toBeVisible()
+    await page.screenshot({ path: `${OUT}/11-week-suggester.png` })
+  })
 })
