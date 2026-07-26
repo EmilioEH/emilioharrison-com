@@ -26,6 +26,7 @@ import {
   addRecipeToWeek,
   removeRecipeFromWeek,
   isPlannedForActiveWeek,
+  $weekOverlayOpen,
 } from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { recipeActions } from '../../lib/recipeStore'
@@ -65,6 +66,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
   // `site_user` cookie value and `isAdmin` is a cheap cookie-derived best guess);
   // `useIdentityResolution` reconciles those placeholders with the Firestore-verified
   // `bootstrapUser` once it arrives, without ever flashing the wrong screen for a returning user.
+  const weekOverlayOpen = useStore($weekOverlayOpen)
   const { user: bootstrapUser } = useBootstrap()
   const { currentUser, isAdmin: computedIsAdmin } = useIdentityResolution({
     initialUser: user,
@@ -472,8 +474,8 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         </div>
       </RecipeManagerView>
 
-      {/* Primary Tab Bar — hidden on drilldown views */}
-      {(view === 'library' || view === 'week') && (
+      {/* Primary Tab Bar — hidden on drilldown views, and while a week full screen is up */}
+      {(view === 'library' || view === 'week') && !weekOverlayOpen && (
         <BottomTabBar
           activeTab={view === 'week' ? 'week' : 'library'}
           onTabChange={(tab) => setView(tab === 'week' ? 'week' : 'library')}
