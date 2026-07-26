@@ -85,10 +85,15 @@ test.describe('remaining findings', () => {
     const dishCard = page.getByTestId('recipe-card-dish-001')
     await expect(scanCard).toBeVisible()
 
-    // The scan-only recipe must fall through to the placeholder, not render an <img>.
+    // A photographed cookbook page shows no thumbnail at all — not an image, and not a
+    // placeholder either. Most of the library is imported that way, so a placeholder meant a
+    // column of identical chef-hat icons indenting every title for no information.
     expect(await scanCard.locator('img').count()).toBe(0)
-    // The one with a cook-added photo still renders an image.
+    expect(await scanCard.getByTestId('recipe-card-thumbnail').count()).toBe(0)
+
+    // The one with a cook-added photo still renders its image.
     expect(await dishCard.locator('img').count()).toBeGreaterThan(0)
+    expect(await dishCard.getByTestId('recipe-card-thumbnail').count()).toBe(1)
   })
 
   test('finding 23 — a cookie stored as "Main" is filterable as Dessert', async ({ page }) => {
