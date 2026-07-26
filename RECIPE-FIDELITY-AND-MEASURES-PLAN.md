@@ -1,6 +1,6 @@
 # Plan: Faithful Recipes and Standardized Measures
 
-Status: **Phase 1 in flight (PR #81). Phases 2-7 not started.**
+Status: **Phase 1 done (PR #81, merged). Phases 2-7 not started.**
 
 Written after Emilio's wife used the app and reported that recipes were "significantly altering
 the title" and that Smart View was "super weird and inaccurate". Investigating that turned into a
