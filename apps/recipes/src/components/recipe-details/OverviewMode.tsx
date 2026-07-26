@@ -25,7 +25,6 @@ import type {
   FamilyRecipeData,
   StructuredStep,
   Ingredient,
-  IngredientGroup,
 } from '../../lib/types'
 
 interface OverviewModeProps {
@@ -36,34 +35,6 @@ interface OverviewModeProps {
   onPersistStepIngredients?: (stepIngredients: Array<{ indices: number[] }>) => void | Promise<void>
 }
 
-/** Per-recipe storage key for the Original/Smart View choice. */
-function viewModeStorageKey(recipeId: string): string {
-  return `recipe-view-mode:${recipeId}`
-}
-
-/** The legacy single-key preference, written before the choice was scoped per recipe. Read once
- * as a migration so an existing selection isn't lost, then cleared so it can't keep overriding
- * every other recipe. */
-const LEGACY_VIEW_MODE_KEY = 'recipe-view-mode'
-
-function readStoredViewMode(recipeId: string): 'original' | 'enhanced' | null {
-  try {
-    const scoped = localStorage.getItem(viewModeStorageKey(recipeId))
-    if (scoped === 'original' || scoped === 'enhanced') return scoped
-
-    const legacy = localStorage.getItem(LEGACY_VIEW_MODE_KEY)
-    if (legacy === 'original' || legacy === 'enhanced') {
-      // Carry the old global choice onto this recipe once, then retire the shared key.
-      localStorage.setItem(viewModeStorageKey(recipeId), legacy)
-      localStorage.removeItem(LEGACY_VIEW_MODE_KEY)
-      return legacy
-    }
-  } catch {
-    // Storage unavailable — fall through to the default.
-  }
-  return null
-}
-
 export const OverviewMode: React.FC<OverviewModeProps> = ({
   recipe,
   isRefreshing = false,
@@ -71,44 +42,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   onRecipeRefresh,
   onPersistStepIngredients,
 }) => {
-  // Background Enhancement now runs server-side (see recipe-enhancement-job.ts) and persists
-  // its state directly on the recipe document, so this reflects it regardless of which
-  // session/tab/device triggered it — not just the one that happened to be open at the time.
-  const isEnhancing =
-    recipe.enhancementStatus === 'pending' || recipe.enhancementStatus === 'processing'
-
-  // Validate enhanced content exists
-  const hasEnhancedContent =
-    (recipe.structuredSteps?.length || 0) > 0 || (recipe.ingredientGroups?.length || 0) > 0
-
-  // View mode, remembered per recipe.
-  //
-  // This used to write to a single global `recipe-view-mode` key, so switching one recipe to
-  // "Original" — entirely reasonable for a scanned card you want to read as-is — silently made
-  // Original the default for every other recipe too, permanently overriding the
-  // enhanced-when-available behaviour below. Keyed by id, the choice sticks to the recipe it was
-  // made on and everything else still opens in Smart View when there is one.
-  const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(() => {
-    // Guard against SSR where localStorage is not available
-    if (typeof window === 'undefined') {
-      return hasEnhancedContent ? 'enhanced' : 'original'
-    }
-    const savedPreference = readStoredViewMode(recipe.id)
-    if (savedPreference) return savedPreference
-    // Default to enhanced if available
-    return hasEnhancedContent ? 'enhanced' : 'original'
-  })
-
-  // Save preference when user manually changes it
-  const handleViewModeChange = (mode: 'original' | 'enhanced') => {
-    setViewMode(mode)
-    try {
-      localStorage.setItem(viewModeStorageKey(recipe.id), mode)
-    } catch {
-      // Private mode / storage full — the choice just won't persist.
-    }
-  }
-
+  // Smart View was removed: recipes now always render their own transcribed steps and a flat
+  // ingredient list. The Kenji-style rewrite it displayed reworded instructions, invented
+  // specifics the source never stated, and merged steps together, so it was removed at the
+  // owner's request along with the background job that generated it.
   const [checkedIngredientsList, setCheckedIngredientsList] = useState<number[]>(() =>
     getCheckedIngredients(recipe.id),
   )
@@ -287,43 +224,17 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     items: Ingredient[]
     startIndex: number
   }> => {
-    const groups = recipe.ingredientGroups
     const ingredientsArray = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
-
-    // VIEW MODE LOGIC: If 'original', force flat list
-    if (viewMode === 'enhanced' && groups?.length) {
-      return groups.map((group: IngredientGroup) => ({
-        header: group.header,
-        items: ingredientsArray.slice(group.startIndex, group.endIndex + 1),
-        startIndex: group.startIndex,
-      }))
-    }
-    // Fallback: single ungrouped list (handle missing/malformed ingredients array)
     return [{ header: null, items: ingredientsArray, startIndex: 0 }]
-  }, [recipe.ingredientGroups, recipe.ingredients, viewMode])
+  }, [recipe.ingredients])
 
   // Memoized structured steps with fallback to plain text
   const displaySteps = useMemo((): StructuredStep[] => {
     // VIEW MODE LOGIC: If 'original' text requested or no structured steps
     // original steps are in recipe.steps
     const stepsArray = Array.isArray(recipe.steps) ? recipe.steps : []
-    const structuredStepsArray = Array.isArray(recipe.structuredSteps) ? recipe.structuredSteps : []
-
-    if (viewMode === 'original' && stepsArray.length > 0) {
-      return stepsArray.map((text: string) => ({ text, title: undefined, tip: undefined }))
-    }
-
-    if (structuredStepsArray.length > 0) {
-      return structuredStepsArray
-    }
-
-    // Fallback if enhanced mode requested but no data (shouldn't happen due to toggle disable logic)
-    if (stepsArray.length > 0) {
-      return stepsArray.map((text: string) => ({ text, title: undefined, tip: undefined }))
-    }
-
-    return []
-  }, [recipe.structuredSteps, recipe.steps, viewMode])
+    return stepsArray.map((text: string) => ({ text, title: undefined, tip: undefined }))
+  }, [recipe.steps])
 
   // Memoized step groups with fallback to flat list
   const displayStepGroups = useMemo((): Array<{
@@ -331,19 +242,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     items: StructuredStep[]
     startIndex: number
   }> => {
-    const groups = recipe.stepGroups
-
-    // VIEW MODE LOGIC: If 'original', force flat list
-    if (viewMode === 'enhanced' && groups?.length) {
-      return groups.map((group) => ({
-        header: group.header,
-        items: displaySteps.slice(group.startIndex, group.endIndex + 1),
-        startIndex: group.startIndex,
-      }))
-    }
-    // Fallback: single ungrouped list
     return [{ header: null, items: displaySteps, startIndex: 0 }]
-  }, [recipe.stepGroups, displaySteps, viewMode])
+  }, [displaySteps])
 
   const computedStepIngredients = useMemo(
     () =>
@@ -436,32 +336,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               )}
             </Inline>
 
-            <Inline justify="between" align="start">
-              <h1 className="mb-2 flex-1 font-display text-3xl font-bold leading-tight text-foreground">
-                {recipe.title}
-              </h1>
-
-              {/* VIEW MODE TOGGLE */}
-              {(hasEnhancedContent || isEnhancing) && (
-                <div className="ml-2 flex shrink-0 rounded-full border border-border bg-muted p-1">
-                  <button
-                    onClick={() => handleViewModeChange('original')}
-                    disabled={isEnhancing}
-                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'original' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'} ${isEnhancing ? 'cursor-not-allowed opacity-50' : ''}`}
-                  >
-                    Original
-                  </button>
-                  <button
-                    onClick={() => handleViewModeChange('enhanced')}
-                    disabled={isEnhancing || !hasEnhancedContent}
-                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-all ${viewMode === 'enhanced' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'} ${isEnhancing || !hasEnhancedContent ? 'cursor-not-allowed opacity-50' : ''}`}
-                  >
-                    <Sparkles className={`h-3 w-3 ${isEnhancing ? 'animate-pulse' : ''}`} />
-                    {isEnhancing ? 'Processing...' : 'Smart View'}
-                  </button>
-                </div>
-              )}
-            </Inline>
+            <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-foreground">
+              {recipe.title}
+            </h1>
 
             {recipe.sourceUrl &&
               (() => {

@@ -7,6 +7,7 @@ import {
   getSystemPrompts,
   TITLE_RULE,
   DESCRIPTION_VS_STEPS_RULE,
+  FAITHFUL_TRANSCRIPTION_RULES,
 } from '../../lib/services/ai-parser'
 import { createTimeoutSignal } from '../../lib/services/ai-timeout'
 import { withTransientRetry } from '../../lib/services/ai-retry'
@@ -435,7 +436,7 @@ export function buildImageRecipeStream(
         const phase3 = await runPhase(
           client,
           'You are a recipe parser. Structure the OCR text into a complete recipe JSON object.',
-          `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\n${headnote ? `The source page's introductory blurb (use this as the basis for "description", NOT as a cooking step):\n${headnote}\n\n` : ''}${DESCRIPTION_VS_STEPS_RULE}\n${TITLE_RULE}\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?}) — REQUIRED, one entry per ingredient line, never plain strings\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- steps (array of strings, one cooking step per element)\n- structuredSteps (array of {text, highlightedText, tip?})\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
+          `Structure this recipe from the OCR'd text below. Do not re-read the image.\n\nOCR'd ingredients:\n${ingredientList}\n\nOCR'd instructions:\n${stepList}\n\n${headnote ? `The source page's introductory blurb (use this as the basis for "description", NOT as a cooking step):\n${headnote}\n\n` : ''}${DESCRIPTION_VS_STEPS_RULE}\n${TITLE_RULE}\n${FAITHFUL_TRANSCRIPTION_RULES}\n\nReturn JSON with:\n- title (string)\n- description (string, optional)\n- servings (number)\n- prepTime (number, minutes)\n- cookTime (number, minutes)\n- ingredients (array of {name, amount, prep?}) — REQUIRED, one entry per ingredient line, never plain strings\n- structuredIngredients (array of {original, name, amount (number), unit, category})\n- steps (array of strings, one cooking step per element, transcribed as printed)\n- dietary (array of strings)\n- cuisine (string)\n- difficulty (string)\n- protein (string)\n- mealType (string)\n- dishType (string)\n- equipment (array of strings)\n- occasion (array of strings)`,
           undefined,
           MODEL,
           STRUCTURE_MAX_TOKENS,
