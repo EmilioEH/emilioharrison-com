@@ -160,7 +160,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           <p className="px-6 py-3 text-sm font-medium text-muted-foreground">
             Found {recipes.length} recipes
           </p>
-          <div className="flex flex-col gap-1 px-4 pb-8">
+          <div className="flex flex-col gap-2 px-4 pb-8">
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
@@ -198,7 +198,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           />
 
           {/* Flat Recipe List */}
-          <div className="flex flex-col gap-1 px-4 pb-8 pt-2">
+          <div className="flex flex-col gap-2 px-4 pb-8 pt-2">
             {filteredRecipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}

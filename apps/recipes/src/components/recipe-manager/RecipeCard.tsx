@@ -81,7 +81,12 @@ export const RecipeCard = memo(
         role="button"
         tabIndex={0}
         data-testid={`recipe-card-${recipe.id}`}
-        className="group relative flex w-full cursor-pointer gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all hover:border-border hover:bg-accent/50 hover:shadow-sm active:scale-[0.98] active:bg-accent/70"
+        // The border is visible at rest rather than only on hover. A card's own rows are ~44px
+        // apart because the add button carries a 44px touch target, and the list gap was 4px — so
+        // "Beef · American" sat closer to the next recipe's title than to its own. With most cards
+        // now text-only there is no thumbnail to anchor them either. A drawn edge is what says
+        // where one recipe stops.
+        className="group relative flex w-full cursor-pointer gap-3 rounded-xl border border-border bg-card p-2.5 text-left shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98] active:bg-accent/70"
         {...longPressHandlers}
         onContextMenu={(e) => {
           // Desktop right-click and the iOS callout menu land here; treat both as the gesture.
