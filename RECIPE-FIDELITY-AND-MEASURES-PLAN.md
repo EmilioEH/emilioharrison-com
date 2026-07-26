@@ -1,7 +1,6 @@
 # Plan: Faithful Recipes and Standardized Measures
 
-Status: **Phase 1 done (PR #81). Phase 3 done and applied to the live library (PRs #83–#90).
-Phases 2, 4-7 not started.**
+Status: **Phases 1, 3, 4, 5, 6 and 7 done (PRs #81, #83–#97). Phase 2 not started.**
 
 Phase 3 note: normalising the units turned out to require undoing a corruption this document
 didn't know about — on ~19% of ingredients the amount and the name had been concatenated by an
@@ -197,15 +196,19 @@ before it is trusted.** That review is one-time and roughly 600 lines after dedu
    Applies to the display `ingredients` only — `structuredIngredients`, which the grocery list
    reads, still holds 311 unit spellings and is out of step with the display data on 56 recipes.
    Rebuilding it from the same parser is the obvious next step and is not done.
-4. **Deduplicate ingredient names** — 1,484 raw names into ~600 real ingredients. This is the piece
-   with the actual thinking in it; everything downstream depends on it being right.
-5. **Build the weight table — in full, upfront, as a committed file.** See "Building the table"
-   below. Not lazily populated at runtime.
-6. **Show conversions in the recipe view.** Deterministic lookup. Silent when the ingredient isn't
-   in the table, is already weighed, or is counted — never a guessed number.
-7. **Grocery aggregation.** Combine within unit families (2 tbsp + ¼ cup oil = 6 tbsp), then the
-   existing AI pass converts to purchasable units. Verify the Smart list already does the garlic
-   case correctly before changing anything.
+4. **Deduplicate ingredient names** *(Done — PR #94.)* — collapsed to 1,352 entries, of which 665
+   are measured by volume at least once and therefore need a weight. The rest are always weighed
+   or always counted and need no conversion.
+5. **Build the weight table — in full, upfront, as a committed file.** *(Done — PR #97.)* 419
+   entries covering 2,674 of 3,856 volume-measured ingredient uses. Three of this document's
+   assumptions turned out to be wrong and are corrected under "Matching an ingredient" below.
+6. **Show conversions in the recipe view.** *(Done — PR #95.)* Deterministic lookup. Silent when
+   the ingredient isn't in the table, is already weighed, or is counted — never a guessed number.
+   Kosher salt is the case that proves it: USDA has no kosher salt record, so it shows nothing
+   rather than table salt's 292 g/cup.
+7. **Grocery aggregation.** *(Done — PR #96.)* Combines within unit families (2 tbsp + ¼ cup oil
+   = 6 tbsp); the existing AI pass still converts to purchasable units. Counts, imprecise amounts
+   and cross-family pairs are deliberately left alone.
 
 Phases 3 and 4 carry most of the value and need no AI at all. Phase 5 is where the API and the
 review step live.
@@ -236,6 +239,23 @@ volume-measured, the real table is well under 600 rows.
 Never guess at runtime.
 
 ### Matching an ingredient to the right USDA record
+
+> **Corrected after building it (PR #94/#97).** Three of the assumptions below did not survive
+> contact with the API:
+>
+> 1. **Stripping cooking modifiers (layer 2) makes matching worse, not better.** Searching
+>    "unsalted butter" as-is returns *Butter, stick, unsalted*; stripped to "butter" it returns
+>    *Clarified butter (ghee)*. Same for olive oil and granulated sugar. Search the full name.
+> 2. **Restricting to `SR Legacy`/`Foundation` (layer 1) is not one choice but two.** Only
+>    SR Legacy carries cup portions — Foundation gives all-purpose flour as 30g/RACC against
+>    SR Legacy's 125g/cup. Search both, take the weight from SR Legacy.
+> 3. **Layer 3 is not optional.** A scored keyword heuristic still matched "chicken broth" to
+>    *Chicken, canned, no broth*. The model choosing among real candidates fixed every case.
+>
+> A fourth problem this document didn't anticipate: USDA has **no kosher salt record at all**, so
+> every salt matched table salt at 292 g/cup — roughly double. The generator now drops any entry
+> whose name carries a density-changing variety word the matched record lacks.
+
 
 The API's data is sound; its search is not (see the probe above — 3 of 8 wrong). Layered
 mitigation, in order:
