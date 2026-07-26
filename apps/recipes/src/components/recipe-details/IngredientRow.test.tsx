@@ -58,9 +58,24 @@ describe('IngredientRow', () => {
     expect(screen.getByTestId('ingredient-unit').textContent).toBe(unit)
   })
 
-  it('handles non-numeric amounts', () => {
+  it('leaves the quantity blank for a non-numeric amount rather than showing a dash', () => {
+    // An em-dash in the number column is noise exactly where the eye lands when scanning.
     render(<IngredientRow ingredient={{ name: 'Salt', amount: 'to taste' }} onToggle={vi.fn()} />)
-    expect(screen.getByTestId('ingredient-amount').textContent).toBe('\u2014')
+    expect(screen.getByTestId('ingredient-amount').textContent).toBe('')
     expect(screen.getByTestId('ingredient-unit').textContent).toBe('to taste')
+  })
+
+  it('keeps prep visually secondary to the ingredient name', () => {
+    // "kosher salt, divided, plus more as needed" — the name is what you scan for; the prep
+    // must not compete with it.
+    render(
+      <IngredientRow
+        ingredient={{ name: 'kosher salt', amount: '2 teaspoons', prep: 'divided' }}
+        onToggle={vi.fn()}
+      />,
+    )
+    const name = screen.getByTestId('ingredient-name')
+    expect(name.className).toContain('font-semibold')
+    expect(screen.getByText(/divided/).className).toContain('text-muted-foreground')
   })
 })

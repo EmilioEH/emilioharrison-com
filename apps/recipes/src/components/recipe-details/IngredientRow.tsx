@@ -15,7 +15,7 @@ interface IngredientRowProps {
  *      "to taste" → { qty: "—", unit: "to taste" }
  */
 function parseAmount(raw: string): { qty: string; unit: string } {
-  if (!raw) return { qty: '—', unit: '' }
+  if (!raw) return { qty: '', unit: '' }
 
   // Match a leading quantity, longest form first so the alternatives don't truncate each other:
   // mixed number ("1 1/2"), fraction ("1/2"), decimal ("2.5"), then plain integer ("2").
@@ -28,8 +28,9 @@ function parseAmount(raw: string): { qty: string; unit: string } {
     return { qty: m[1].trim(), unit: m[2].trim() }
   }
 
-  // Non-numeric amounts ("to taste", "as needed", etc.)
-  return { qty: '—', unit: raw.trim() }
+  // Non-numeric amounts ("as needed", "from 1 large lemon"). No fake quantity — an em-dash in
+  // the number column is noise in exactly the place the eye lands first.
+  return { qty: '', unit: raw.trim() }
 }
 
 export const IngredientRow: React.FC<IngredientRowProps> = ({
@@ -55,40 +56,38 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       onClick={onToggle}
       aria-pressed={isChecked}
       className={cn(
-        'grid w-full grid-cols-[2.5rem_7rem_minmax(0,1fr)] items-start gap-x-3 border-b border-border/50 py-3 text-left font-body text-base text-foreground transition-colors last:border-0 active:bg-accent/60',
+        // Two columns, not three. A fixed, right-aligned measure column keeps the ingredient
+        // names on one hard left edge so the list can be scanned down in a single pass; ragged
+        // amounts like "3 small or 2 large" used to push every name to a different indent.
+        'grid w-full grid-cols-[5.5rem_minmax(0,1fr)] items-baseline gap-x-3 border-b border-border/50 py-3 text-left font-body text-base transition-colors last:border-0 active:bg-accent/60',
         isChecked && 'opacity-50',
       )}
       style={{ touchAction: 'manipulation' }}
       data-testid="ingredient-row"
     >
-      {/* No separate checkbox: the row has always been the tap target, but it drew a circle
-        * beside the text that read as a radio button — implying pick-one rather than check-off.
-        * Completion reads from the dimmed, struck-through row instead, matching how instruction
-        * steps now behave. */}
-
-      {/* Col 1: Quantity */}
+      {/* Measure — quantity and unit together, so they never disagree about column widths. */}
       <span
-        data-testid="ingredient-amount"
         className={cn(
-          'text-right text-sm font-normal tabular-nums text-muted-foreground',
+          'text-right text-sm leading-6 text-muted-foreground',
           isChecked && 'line-through',
         )}
       >
-        {qty}
+        <span data-testid="ingredient-amount" className="font-semibold tabular-nums text-foreground/70">
+          {qty}
+        </span>
+        {qty && unit ? ' ' : ''}
+        <span data-testid="ingredient-unit">{unit}</span>
       </span>
 
-      {/* Col 2: Unit / Measurement */}
-      <span
-        data-testid="ingredient-unit"
-        className={cn('text-sm font-normal text-muted-foreground', isChecked && 'line-through')}
-      >
-        {unit}
-      </span>
-
-      {/* Col 3: Ingredient name + prep */}
-      <span data-testid="ingredient-name" className={cn('min-w-0', isChecked && 'line-through')}>
-        <span className="font-normal text-foreground">{ingredient.name}</span>
-        {ingredient.prep && <span className="text-muted-foreground">, {ingredient.prep}</span>}
+      {/* The ingredient itself carries the weight; prep is secondary and must not compete with
+        * it while scanning a shopping list. */}
+      <span className={cn('min-w-0 leading-6', isChecked && 'line-through')}>
+        <span data-testid="ingredient-name" className="font-semibold text-foreground">
+          {ingredient.name}
+        </span>
+        {ingredient.prep && (
+          <span className="text-sm text-muted-foreground">{`, ${ingredient.prep}`}</span>
+        )}
       </span>
     </button>
   )
