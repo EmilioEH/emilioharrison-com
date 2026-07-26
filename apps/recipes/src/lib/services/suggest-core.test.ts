@@ -4,6 +4,7 @@ import {
   buildPrompt,
   parseSuggestions,
   fallbackSuggestions,
+  matchesFacets,
   type RecipeSignal,
   type SuggestInput,
 } from './suggest-core'
@@ -155,5 +156,61 @@ describe('fallbackSuggestions', () => {
   it('never offers something already chosen or already passed over', () => {
     const out = fallbackSuggestions({ ...input, keptIds: ['b'], rejectedIds: ['c'], wanted: 3 })
     expect(out.map((s) => s.recipeId)).toEqual(['a'])
+  })
+})
+
+describe('matchesFacets', () => {
+  const chicken = recipe('a', { protein: 'Chicken', dishType: 'Main', cuisine: 'Italian', prepTime: 5, cookTime: 20 })
+  const beefStew = recipe('b', { protein: 'Beef', dishType: 'Soup', cuisine: 'French', prepTime: 20, cookTime: 100 })
+
+  it('passes everything when nothing was narrowed', () => {
+    expect(matchesFacets(beefStew, undefined)).toBe(true)
+    expect(matchesFacets(beefStew, {})).toBe(true)
+  })
+
+  it('treats several choices in one facet as "any of"', () => {
+    expect(matchesFacets(chicken, { proteins: ['Chicken', 'Beef'] })).toBe(true)
+    expect(matchesFacets(beefStew, { proteins: ['Chicken', 'Beef'] })).toBe(true)
+    expect(matchesFacets(chicken, { proteins: ['Pork'] })).toBe(false)
+  })
+
+  it('requires every facet the cook set', () => {
+    expect(matchesFacets(chicken, { proteins: ['Chicken'], dishTypes: ['Main'] })).toBe(true)
+    expect(matchesFacets(chicken, { proteins: ['Chicken'], dishTypes: ['Soup'] })).toBe(false)
+  })
+
+  it('matches the stored vocabulary loosely', () => {
+    // 167 recipes say "Main" and 87 say "Main Course"; tapping Main must find both.
+    expect(matchesFacets(recipe('c', { dishType: 'Main Course' }), { dishTypes: ['Main'] })).toBe(true)
+  })
+
+  it('respects a time budget', () => {
+    expect(matchesFacets(chicken, { maxMinutes: 30 })).toBe(true)
+    expect(matchesFacets(beefStew, { maxMinutes: 30 })).toBe(false)
+  })
+
+  it('does not exclude a recipe that has no time recorded', () => {
+    // Absence of data is not the same as a slow recipe.
+    const untimed = recipe('d', { prepTime: 0, cookTime: 0 })
+    expect(matchesFacets(untimed, { maxMinutes: 30 })).toBe(true)
+  })
+})
+
+describe('fallbackSuggestions with facets', () => {
+  it('honours a hard narrowing even without the model', () => {
+    const out = fallbackSuggestions({
+      recipes: [
+        recipe('a', { protein: 'Chicken' }),
+        recipe('b', { protein: 'Beef' }),
+      ],
+      signals: {},
+      wanted: 5,
+      mood: '',
+      keptIds: [],
+      rejectedIds: [],
+      facets: { proteins: ['Beef'] },
+      today: TODAY,
+    })
+    expect(out.map((s) => s.recipeId)).toEqual(['b'])
   })
 })

@@ -16,8 +16,10 @@ import {
   buildPrompt,
   parseSuggestions,
   fallbackSuggestions,
+  matchesFacets,
   type RecipeSignal,
 } from '../../../lib/services/suggest-core'
+import type { RecipeFacets } from '../../../lib/recipe-facets'
 import type { Recipe, FamilyRecipeData } from '../../../lib/types'
 
 /** Comfortably inside the request budget — this is one small call over ~8k tokens. */
@@ -61,6 +63,15 @@ export const POST: APIRoute = async (context: APIContext) => {
     const rejectedIds: string[] = Array.isArray(body?.rejectedIds)
       ? body.rejectedIds.map(String)
       : []
+    const facets: RecipeFacets = {
+      proteins: Array.isArray(body?.facets?.proteins) ? body.facets.proteins.map(String) : [],
+      dishTypes: Array.isArray(body?.facets?.dishTypes) ? body.facets.dishTypes.map(String) : [],
+      cuisines: Array.isArray(body?.facets?.cuisines) ? body.facets.cuisines.map(String) : [],
+      difficulties: Array.isArray(body?.facets?.difficulties)
+        ? body.facets.difficulties.map(String)
+        : [],
+      maxMinutes: Number(body?.facets?.maxMinutes) || null,
+    }
 
     const userDoc = await db.getDocument('users', userId)
     const familyId = userDoc?.familyId as string | undefined
@@ -91,13 +102,15 @@ export const POST: APIRoute = async (context: APIContext) => {
       }
     }
 
+    // Facets are a hard filter — the cook tapped "Chicken", so a beef dish is wrong however good
+    // a suggestion it would be. Free text stays a steer for the model; this was explicit.
     const exclude = [...keptIds, ...rejectedIds]
-    const offerable = recipes.filter((r) => !exclude.includes(r.id))
+    const offerable = recipes.filter((r) => !exclude.includes(r.id) && matchesFacets(r, facets))
     if (!offerable.length) {
       return json({ success: true, suggestions: [], exhausted: true })
     }
 
-    const input = { recipes: offerable, signals, wanted, mood, keptIds, rejectedIds }
+    const input = { recipes: offerable, signals, wanted, mood, keptIds, rejectedIds, facets }
     const { menu, index } = buildMenu(offerable, signals)
     const keptTitles = keptIds
       .map((id) => recipes.find((r) => r.id === id)?.title)

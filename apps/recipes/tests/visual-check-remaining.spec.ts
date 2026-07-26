@@ -165,12 +165,16 @@ test.describe('remaining findings', () => {
     await page.getByRole('button', { name: /This Week/i }).first().click()
     await page.waitForTimeout(900)
 
-    // Ask for suggestions so the cards are on screen for the screenshot.
-    const suggest = page.getByRole('button', { name: /Suggest meals/i })
-    if (await suggest.count()) {
-      await suggest.first().click()
-      await page.waitForTimeout(600)
-    }
+    // Closed by default now — open it, then walk the steps so the collapsed answers are visible.
+    await expect(page.getByTestId('meal-suggester-open')).toBeVisible()
+    await page.getByTestId('meal-suggester-open').click()
+    await page.waitForTimeout(300)
+    await page.getByRole('button', { name: '5', exact: true }).first().click()
+    await page.waitForTimeout(300)
+    await page.getByRole('button', { name: 'comforting', exact: true }).click()
+    await page.getByRole('button', { name: 'quick weeknights', exact: true }).click()
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
+    await page.waitForTimeout(400)
 
     // The review prompt sits above the suggester; make sure it is in frame.
     await page.evaluate(() => window.scrollTo(0, 0))
@@ -178,5 +182,10 @@ test.describe('remaining findings', () => {
     await expect(page.getByTestId('week-review-prompt')).toBeVisible()
     await expect(page.getByTestId('meal-suggester')).toBeVisible()
     await page.screenshot({ path: `${OUT}/11-week-suggester.png` })
+
+    // The open step, with the facet chips, sits below the fold on a phone.
+    await page.getByTestId('meal-suggester').scrollIntoViewIfNeeded()
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: `${OUT}/12-suggester-facets.png` })
   })
 })
