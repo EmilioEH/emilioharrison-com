@@ -676,7 +676,6 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
             currentRecipes={currentRecipes}
             allRecipes={allRecipes}
             onSelectRecipe={onSelectRecipe}
-            onAddRecipe={() => onClose()}
             reviewWeek={reviewRecipes.length ? pendingReview?.weekStart : null}
             onOpenReview={() => setFullScreen('review')}
             onOpenSuggester={() => setFullScreen('suggest')}
