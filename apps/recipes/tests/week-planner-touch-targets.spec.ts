@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Page, type BrowserContext } from '@playwright/test'
 
 /**
  * The week's two full screens, measured against the 44px minimum touch target.
@@ -189,5 +189,86 @@ test.describe('week planner touch targets', () => {
 
     await page.getByRole('button', { name: 'Back to the week' }).click()
     await expect(libraryTab).toBeVisible()
+  })
+})
+
+/**
+ * What the plan offers, and in what order.
+ *
+ * The suggester is a way *in* — it belongs on an empty week, not stacked above meals the cook has
+ * already chosen. The review asks about a week that is over, so it sits at the bottom rather than
+ * above the week they actually opened the planner to see.
+ */
+test.describe('week plan layout', () => {
+  const planWith = (planned: unknown[]) => async (page: Page, context: BrowserContext) => {
+    await page.goto('about:blank')
+    await context.addCookies([
+      { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
+      { name: 'site_user', value: 'Emilio', domain: '127.0.0.1', path: '/' },
+    ])
+    await page.route('**/api/bootstrap*', (route) =>
+      route.fulfill({ json: { recipes: all, planned, family: null, user: 'Emilio' } }),
+    )
+    await page.route('**/api/recipes/*/family-data', (route) =>
+      route.fulfill({ json: { success: true, data: { reviews: [], ratings: [] } } }),
+    )
+    await page.route('**/api/recipes*', (route) => route.fulfill({ json: { recipes: all } }))
+    await page.route('**/api/week/suggest', (route) =>
+      route.fulfill({ json: { success: true, turn: { say: 'Hi', widgets: [] } } }),
+    )
+    await page.route('**/api/week/review*', (route) =>
+      route.fulfill({
+        json: { success: true, pending: { weekStart: '2026-07-13', recipeIds: ['r1'] } },
+      }),
+    )
+    await page.goto('/protected/recipes/')
+    await page.waitForLoadState('networkidle')
+    // Target the tab bar specifically. A bare `getByRole('button', {name: /This Week/i}).first()`
+    // also matches a library card's own "This Week" toggle as soon as anything is planned, which
+    // silently lands on the recipe detail page — where a suggester button is missing and a recipe
+    // title is present, so an unwary assertion passes for entirely the wrong reason.
+    await page.locator('.fixed.bottom-0').getByRole('button', { name: /This Week/i }).click()
+    // `.first()`, not `.or()`: on an empty week with a pending review both are present, and a
+    // locator resolving to two elements is a strict-mode violation rather than a wait.
+    await expect(
+      page
+        .locator('[data-testid="open-meal-suggester"], [data-testid="open-week-review"]')
+        .first(),
+    ).toBeVisible()
+  }
+
+  /** Monday of the current week, which is the only week `addRecipeToWeek` ever assigns to. */
+  const thisMonday = () => {
+    const d = new Date()
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+    return d.toISOString().slice(0, 10)
+  }
+
+  test('offers the suggester only while the week is empty', async ({ page, context }) => {
+    await planWith([])(page, context)
+    await expect(page.getByTestId('open-meal-suggester')).toBeVisible()
+  })
+
+  test('hides the suggester once a meal is scheduled', async ({ page, context }) => {
+    await planWith([
+      { id: 'r1', weekPlan: { isPlanned: true, assignedDate: thisMonday() }, reviews: [] },
+    ])(page, context)
+
+    await expect(page.getByText('Buzhenina, Roasted Garlic Pork')).toBeVisible()
+    await expect(page.getByTestId('open-meal-suggester')).toBeHidden()
+  })
+
+  test('puts the review below the week, not above it', async ({ page, context }) => {
+    await planWith([
+      { id: 'r1', weekPlan: { isPlanned: true, assignedDate: thisMonday() }, reviews: [] },
+    ])(page, context)
+
+    // The review card only appears once `GET /api/week/review` has answered, so wait for it
+    // rather than measuring whatever happens to be laid out yet.
+    await expect(page.getByTestId('open-week-review')).toBeVisible()
+
+    const review = await page.getByTestId('open-week-review').boundingBox()
+    const meal = await page.getByText('Buzhenina, Roasted Garlic Pork').boundingBox()
+    expect(review!.y).toBeGreaterThan(meal!.y)
   })
 })

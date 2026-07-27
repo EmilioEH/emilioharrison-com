@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Plus, Clock, User, Trash2, Sparkles, ChevronRight } from 'lucide-react'
+import { Clock, User, Trash2, Sparkles, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import { removeRecipeFromWeek, type PlannedRecipe } from '../../../lib/weekStore'
@@ -10,7 +10,6 @@ interface WeekPlanViewProps {
   currentRecipes: PlannedRecipe[]
   allRecipes: Recipe[]
   onSelectRecipe: (recipe: Recipe) => void
-  onAddRecipe?: () => void
   /** Set when a finished week is still owed an answer — surfaces the prompt to open the screen. */
   reviewWeek?: string | null
   onOpenReview?: () => void
@@ -258,7 +257,6 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
   currentRecipes,
   allRecipes,
   onSelectRecipe,
-  onAddRecipe,
   reviewWeek,
   onOpenReview,
   onOpenSuggester,
@@ -284,36 +282,21 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
       animate="visible"
       className="flex flex-col gap-3 p-4"
     >
-      {/* Ways in, not the things themselves. Both open a full screen — a multi-step exchange
-        * doesn't belong between the cook and the recipes they came to look at. */}
-      {reviewWeek && (
+      {/* Only offered for a week with nothing in it. Once the cook has started planning they
+        * have already decided what they're doing, and the suggester stops being a way in and
+        * starts being a row between them and the meals they came to look at. */}
+      {plannedCards.length === 0 && (
         <motion.button
           variants={itemVariants}
           type="button"
-          onClick={onOpenReview}
-          data-testid="open-week-review"
-          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
+          onClick={onOpenSuggester}
+          data-testid="open-meal-suggester"
+          className="flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
         >
-          <span className="min-w-0">
-            <span className="block font-medium text-foreground">How did last week go?</span>
-            <span className="block text-xs text-muted-foreground">
-              {formatWeekRange(reviewWeek)} · a tap each, and the suggestions get better
-            </span>
-          </span>
-          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <Sparkles className="h-4 w-4 text-primary" />
+          Help me pick this week
         </motion.button>
       )}
-
-      <motion.button
-        variants={itemVariants}
-        type="button"
-        onClick={onOpenSuggester}
-        data-testid="open-meal-suggester"
-        className="flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
-      >
-        <Sparkles className="h-4 w-4 text-primary" />
-        Help me pick this week
-      </motion.button>
 
       {plannedCards.map(({ planned, recipe }) => (
         <motion.div key={planned.recipeId} variants={itemVariants}>
@@ -327,20 +310,25 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
         </motion.div>
       ))}
 
-      {/* Add a recipe */}
-      <motion.div variants={itemVariants}>
-        <div className="overflow-hidden rounded-xl border border-dashed border-border bg-card/50">
-          <button
-            onClick={() => onAddRecipe?.()}
-            className="flex w-full items-center justify-center gap-2 p-6 text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
-          >
-            <Plus className="h-5 w-5" />
-            <span className="text-sm font-medium">
-              {plannedCards.length === 0 ? 'Add your first recipe' : 'Add a recipe'}
+      {/* Last, not first. It asks about a week that is over, so it has no business sitting above
+        * the week the cook actually opened the planner to look at. */}
+      {reviewWeek && (
+        <motion.button
+          variants={itemVariants}
+          type="button"
+          onClick={onOpenReview}
+          data-testid="open-week-review"
+          className="mt-1 flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]"
+        >
+          <span className="min-w-0">
+            <span className="block font-medium text-foreground">How did last week go?</span>
+            <span className="block text-xs text-muted-foreground">
+              {formatWeekRange(reviewWeek)} · a tap each, and the suggestions get better
             </span>
-          </button>
-        </div>
-      </motion.div>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+        </motion.button>
+      )}
     </motion.div>
   )
 }
