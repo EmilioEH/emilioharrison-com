@@ -139,6 +139,42 @@ test.describe('week planner touch targets', () => {
     await expectAllTappable(page, '[data-testid="meal-suggester"] button')
   })
 
+  test('the page never scrolls sideways while a screen slides in', async ({ page }) => {
+    // The screens arrive from `x: 100%`. Without a clipping ancestor that off-screen transform
+    // extends the document's scrollable width, and on a real iPhone the page scrolls sideways
+    // mid-transition — the view underneath ends up clipped on one edge with a horizontal
+    // scrollbar. Transforms alone look fine while this is broken, so measure the document.
+    const overflow = async () =>
+      page.evaluate(() => ({
+        doc: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        body: document.body.scrollWidth - document.body.clientWidth,
+      }))
+
+    await page.getByTestId('open-meal-suggester').click()
+    for (let i = 0; i < 8; i++) {
+      const { doc, body } = await overflow()
+      expect(doc, `document gained ${doc}px of horizontal scroll`).toBeLessThanOrEqual(1)
+      expect(body, `body gained ${body}px of horizontal scroll`).toBeLessThanOrEqual(1)
+      await page.waitForTimeout(40)
+    }
+
+    await expect(page.getByTestId('week-screen')).toBeVisible()
+    const settled = await overflow()
+    expect(settled.doc).toBeLessThanOrEqual(1)
+  })
+
+  test('the arriving screen is opaque, not a cross-fade', async ({ page }) => {
+    // Fading in from transparent left the plan legible straight through the incoming screen,
+    // with its text running through the chips.
+    await page.getByTestId('open-meal-suggester').click()
+    await page.waitForTimeout(60)
+
+    const opacity = await page
+      .getByTestId('week-screen')
+      .evaluate((el) => Number(getComputedStyle(el).opacity))
+    expect(opacity).toBe(1)
+  })
+
   test('the tab bar gets out of the way of a full screen', async ({ page }) => {
     // The bottom tab bar is `fixed z-50` and later in the DOM than the overlay's `absolute z-50`,
     // so it painted straight over a screen meant to have the viewport to itself — and one tap on

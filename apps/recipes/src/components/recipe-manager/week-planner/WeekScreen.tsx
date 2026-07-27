@@ -1,7 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
-import { cn } from '../../../lib/utils'
 
 interface WeekScreenProps {
   title: string
@@ -34,23 +33,15 @@ export const WeekScreen: React.FC<WeekScreenProps> = ({
   scroll = true,
 }) => (
   <motion.div
-    initial={{ x: '100%', opacity: 0 }}
-    animate={{ x: 0, opacity: 1 }}
-    exit={{ x: '100%', opacity: 0 }}
+    // Slide only. Fading in from transparent meant the plan underneath showed straight through
+    // the incoming screen for the whole transition — two full screens legible at once, with the
+    // plan's text running through the chips. A push transition doesn't cross-fade; the arriving
+    // screen is opaque from the first frame.
+    initial={{ x: '100%' }}
+    animate={{ x: 0 }}
+    exit={{ x: '100%' }}
     transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
-    // Above the workspace's own sticky header (z-40), which would otherwise paint over this
-    // screen's header and swallow taps on its back button.
-    //
-    // The explicit height matters when `scroll` is false. `inset-0` only yields a definite height
-    // if the containing block has one, and the shell's is `min-h-full` — a minimum, so it sizes to
-    // its content. A child trying to *fill* that box therefore collapses, which left the
-    // suggester's pinned composer floating in the middle of the screen with white space beneath.
-    // The screen starts below the app header (the shell carries `pt-header`), so that is what
-    // comes off the viewport.
-    className={cn(
-      'absolute inset-0 z-50 flex flex-col bg-background',
-      !scroll && 'h-[calc(100dvh-var(--header-height))]',
-    )}
+    className="pointer-events-auto absolute inset-0 flex h-full flex-col bg-background"
     data-testid="week-screen"
   >
     <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
@@ -64,7 +55,7 @@ export const WeekScreen: React.FC<WeekScreenProps> = ({
           <ChevronLeft className="h-5 w-5" />
         </button>
         {/* Tight leading and a hair of space, so the two lines read as one heading rather than
-          * as a title with an unrelated line floating under it. */}
+         * as a title with an unrelated line floating under it. */}
         <div className="min-w-0 leading-tight">
           <h2 className="truncate font-display text-lg font-bold leading-tight text-foreground">
             {title}

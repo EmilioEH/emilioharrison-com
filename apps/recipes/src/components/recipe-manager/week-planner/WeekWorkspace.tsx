@@ -609,45 +609,65 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
           )
         })()}
 
-      <AnimatePresence>
-        {fullScreen === 'review' && pendingReview && (
-          <WeekScreen
-            key="review"
-            title="How did last week go?"
-            subtitle={formatWeekRange(pendingReview.weekStart)}
-            onBack={() => setFullScreen(null)}
-          >
-            <WeekReviewPrompt
-              recipes={reviewRecipes}
-              onSubmit={submitWeekReview}
-              onDismiss={() => setFullScreen(null)}
-              onDismissWeek={dismissWeekForever}
-            />
-          </WeekScreen>
-        )}
+      {/*
+        The stage the full screens slide onto.
+        
+        `overflow-hidden` is the important part: the incoming screen starts at `x: 100%`, and
+        without a clipping ancestor that off-screen transform extends the *document's* scrollable
+        width. On a real iPhone the page then scrolls sideways mid-transition — the plan underneath
+        ends up clipped on the left, a horizontal scrollbar appears, and the cook is left looking at
+        a half-empty page scrolled off to one side.
 
-        {fullScreen === 'suggest' && (
-          <WeekScreen
-            key="suggest"
-            title="Help me pick"
-            subtitle="A few ideas from your own recipes"
-            onBack={() => setFullScreen(null)}
-            scroll={false}
-          >
-            <SuggesterConversation
-              allRecipes={allRecipes}
-              plannedIds={currentRecipes.map((r) => r.recipeId)}
-              // The boolean matters: the suggester removes the card and counts it as added
-              // before this resolves, so it needs to know when to put it back.
-              onAdd={(recipeId) => addRecipeToWeek(recipeId)}
-              onRemoveFromWeek={(recipeId) => removeRecipeFromWeek(recipeId)}
-              onOpenRecipe={onSelectRecipe}
-              onDone={() => setFullScreen(null)}
-              prefetched={prefetchedTurn}
-            />
-          </WeekScreen>
-        )}
-      </AnimatePresence>
+        It also carries the height. `inset-0` only yields a definite height if the containing block
+        has one, and the shell's is `min-h-full` — a minimum, so it sizes to its content. A child
+        trying to *fill* that box collapses, which is what left the suggester's pinned composer
+        floating mid-screen. The screens start below the app header (the shell carries `pt-header`),
+        so that is what comes off the viewport.
+
+        `pointer-events-none` so the empty stage never sits between the cook and the plan; the
+        screen itself takes them back.
+      */}
+      <div className="pointer-events-none absolute inset-0 z-50 h-[calc(100dvh-var(--header-height))] overflow-hidden">
+        <AnimatePresence>
+          {fullScreen === 'review' && pendingReview && (
+            <WeekScreen
+              key="review"
+              title="How did last week go?"
+              subtitle={formatWeekRange(pendingReview.weekStart)}
+              onBack={() => setFullScreen(null)}
+            >
+              <WeekReviewPrompt
+                recipes={reviewRecipes}
+                onSubmit={submitWeekReview}
+                onDismiss={() => setFullScreen(null)}
+                onDismissWeek={dismissWeekForever}
+              />
+            </WeekScreen>
+          )}
+
+          {fullScreen === 'suggest' && (
+            <WeekScreen
+              key="suggest"
+              title="Help me pick"
+              subtitle="A few ideas from your own recipes"
+              onBack={() => setFullScreen(null)}
+              scroll={false}
+            >
+              <SuggesterConversation
+                allRecipes={allRecipes}
+                plannedIds={currentRecipes.map((r) => r.recipeId)}
+                // The boolean matters: the suggester removes the card and counts it as added
+                // before this resolves, so it needs to know when to put it back.
+                onAdd={(recipeId) => addRecipeToWeek(recipeId)}
+                onRemoveFromWeek={(recipeId) => removeRecipeFromWeek(recipeId)}
+                onOpenRecipe={onSelectRecipe}
+                onDone={() => setFullScreen(null)}
+                prefetched={prefetchedTurn}
+              />
+            </WeekScreen>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Content area: scrolls everything inside */}
       <div className="flex-1 overflow-y-auto pb-tab-bar">
