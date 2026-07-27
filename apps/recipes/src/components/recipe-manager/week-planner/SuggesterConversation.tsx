@@ -62,6 +62,23 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   const scrollerRef = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
 
+  /**
+   * Rows that are already here when the screen opens must not animate.
+   *
+   * `WeekScreen` slides the whole thing in from the right. A row that also runs its own
+   * `y: 8 → 0` at the same moment is moving on a second axis while the container moves on the
+   * first, and the eye reads the pair as one diagonal drift. Measured: the screen travelled
+   * 338px horizontally while the first card drifted 6px vertically.
+   *
+   * So the screen is the thing that moves on entry, and rows animate only when they *arrive*
+   * later — which is when the motion means something.
+   */
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+  }, [])
+  const entrance = mounted.current ? { opacity: 0, y: 8 } : false
+
   /** Once a real suggestion has been made, typing is worth offering. Not before — there is
     * nothing concrete to react to yet, and "too much chicken" needs three chickens first. */
   const composerOpen = rows.some(
@@ -217,7 +234,7 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
               return (
                 <motion.p
                   key={`cook-${index}`}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={entrance}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
                   className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
@@ -232,7 +249,7 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
               return (
                 <motion.div
                   key={`added-${row.recipeId}`}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={entrance}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
                   className="flex items-center justify-between gap-3 text-sm text-muted-foreground"
@@ -255,6 +272,7 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
             return (
               <TurnRow
                 key={`turn-${index}`}
+                entrance={entrance}
                 turn={row.turn}
                 answered={row.answered}
                 byId={byId}
@@ -341,6 +359,8 @@ function withoutPick(row: Row, recipeId: string): Row {
 const TurnRow: React.FC<{
   turn: Turn
   answered?: string
+  /** `false` while the screen itself is animating in — see `entrance` in the parent. */
+  entrance: { opacity: number; y: number } | false
   byId: Map<string, Recipe>
   constraints: Constraints
   onAnswer: (said: string, next: Constraints) => void
@@ -348,9 +368,20 @@ const TurnRow: React.FC<{
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
   onDone?: () => void
-}> = ({ turn, answered, byId, constraints, onAnswer, onKeep, onDismiss, onOpenRecipe, onDone }) => (
+}> = ({
+  turn,
+  answered,
+  entrance,
+  byId,
+  constraints,
+  onAnswer,
+  onKeep,
+  onDismiss,
+  onOpenRecipe,
+  onDone,
+}) => (
   <motion.div
-    initial={{ opacity: 0, y: 8 }}
+    initial={entrance}
     animate={{ opacity: 1, y: 0 }}
     transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
     className="flex flex-col gap-3"
@@ -361,6 +392,7 @@ const TurnRow: React.FC<{
       <WidgetView
         key={`${widget.kind}-${i}`}
         widget={widget}
+        entrance={entrance}
         byId={byId}
         constraints={constraints}
         onAnswer={onAnswer}
@@ -377,6 +409,7 @@ const TurnRow: React.FC<{
 
 const WidgetView: React.FC<{
   widget: Widget
+  entrance: { opacity: number; y: number } | false
   byId: Map<string, Recipe>
   constraints: Constraints
   onAnswer: (said: string, next: Constraints) => void
@@ -384,7 +417,7 @@ const WidgetView: React.FC<{
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
   onDone?: () => void
-}> = ({ widget, byId, constraints, onAnswer, onKeep, onDismiss, onOpenRecipe, onDone }) => {
+}> = ({ widget, entrance, byId, constraints, onAnswer, onKeep, onDismiss, onOpenRecipe, onDone }) => {
   switch (widget.kind) {
     case 'counter':
       return (
@@ -437,7 +470,7 @@ const WidgetView: React.FC<{
             return (
               <motion.div
                 key={pick.recipeId}
-                initial={{ opacity: 0, y: 8 }}
+                initial={entrance}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: 'spring', bounce: 0, duration: 0.3 }}

@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
 import { Chip } from '../../ui/Chip'
 import type { CookOutcome } from '../../../lib/week-review'
@@ -90,13 +89,9 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
   }
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-      className="p-4"
-      data-testid="week-review-prompt"
-    >
+    // No entrance animation of its own: `WeekScreen` slides this in from the right, and a
+    // simultaneous vertical drift here turns that single movement into a diagonal one.
+    <section className="p-4" data-testid="week-review-prompt">
       <div className="flex flex-col gap-4">
         {recipes.map((recipe) => (
           <div key={recipe.id}>
@@ -164,6 +159,6 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
       >
         Don’t ask about this week
       </button>
-    </motion.section>
+    </section>
   )
 }

@@ -41,19 +41,24 @@ const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
   }
 }
 
+/**
+ * The plan's cards no longer stage their own entrance.
+ *
+ * `WeekWorkspace` already slides the whole view up from the bottom. Staggering the cards up by
+ * another 10px, starting 100ms into that slide, is a second animation layered on the first — it
+ * reads as the contents lagging behind the screen rather than as one movement. The same mistake
+ * in the horizontal direction is what made the suggester's entrance look diagonal.
+ *
+ * The variants are kept so items still fade in when the list *changes* after mount, which is when
+ * the motion carries information.
+ */
 const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1,
-    },
-  },
+  hidden: { opacity: 1 },
+  visible: { opacity: 1 },
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 1, y: 0 },
   visible: {
     opacity: 1,
     y: 0,
