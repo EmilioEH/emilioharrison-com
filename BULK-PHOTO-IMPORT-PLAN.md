@@ -189,9 +189,10 @@ The 177.5s run **exceeded `OCR_TIMEOUT_MS` (100s)** and would have failed in pro
 the third column: with reasoning on, one run invented 8 extra ingredients and merged the steps
 down to 4. With reasoning off the transcription was **byte-identical across all three runs**.
 
-**Reasoning is costing both speed and fidelity here.** Disabling it makes the pipeline roughly
-2–4× faster, removes the timeout failures entirely, and makes transcription deterministic —
-which is exactly what the fidelity work in `RECIPE-FIDELITY-AND-MEASURES-PLAN.md` is chasing.
+**Reasoning is costing speed.** Disabling it makes the pipeline roughly 2–4× faster and removes
+the timeout failures. The "and fidelity" half of this conclusion came from three runs of this one
+recipe and **did not survive the wider sweep — see finding 8**; transcription is not deterministic
+either way. Read finding 8 before quoting the transcription column above.
 
 **This repo already knows this lesson.** `CLAUDE.md` records it for the other provider: Gemini
 calls set `thinkingConfig: { thinkingBudget: 0 }` because "flash models' default dynamic thinking
@@ -208,7 +209,7 @@ Consequences:
 - Caveat on scope: this is one photo, three runs per arm. The signal is strong and consistent, but
   validate across a sample of the library before shipping — see phase 2.
 
-**8. Transcription accuracy is limited by image resolution — probably the most valuable finding here.**
+**8. Fraction misreads are real, but NOT caused by image resolution (hypothesis tested and rejected).**
 
 Finding 7's first pass suggested reasoning-off transcribed _more faithfully_, on the strength of
 three runs of one recipe. **A wider sweep across 8 library photos (2 runs per arm) does not
@@ -251,21 +252,50 @@ teaspoon is a real cooking error that lands silently in the library. Note that o
 photos were self-consistent even within a single arm — so this is not "one setting reads it
 correctly", it is "the glyph is a coin flip for both".
 
-The likely cause is not the model. The stored image is **768×1024** — `AiImporter.tsx` calls
-`processImage(originalFile, 1024, 0.7)`, overriding that helper's own 1920/0.8 defaults. A full
-cookbook page at 1024px on its long edge leaves a `¼` glyph a handful of pixels tall, and the
-errors are concentrated exactly there: small superscript/subscript fraction glyphs, never the
-ordinary words, which come through cleanly.
+**The resolution hypothesis was tested and NOT supported.** The obvious suspect was the pre-upload
+downscale: `AiImporter.tsx` calls `processImage(originalFile, 1024, 0.7)`, overriding that helper's
+own 1920/0.8 defaults, so a stored page is only 768×1024 and a `¼` glyph is a handful of pixels.
 
-Worth testing before building anything else in this plan, because it affects every import the app
-has ever done:
+Tested 2026-08-01 on a supplied photo of a different page (Chorizo/Black Bean Tacos, 864×1189),
+OCR'd 3× at native size and 3× after being put through the app's exact downscale (744×1024 @ q70),
+grading three known fractions — `1½ tsp kosher salt`, `1½ cups black beans`, `½ tsp of the salt`:
 
-- Upload one page at 1920/0.85 alongside the same page at 1024/0.7 and compare fraction accuracy.
-- If it helps, raise the ceiling **for the OCR copy specifically** — the display image and the
-  card thumbnail can stay small. Note the 9 MB payload guard in `useAiImporter.ts` and the 10 MB
-  cap in `/api/uploads`.
-- Note this is also a **latent data-quality problem in the existing library**, not just a
-  future-imports problem, which connects it to the re-import work.
+| variant                     | fractions correct |
+| --------------------------- | ----------------- |
+| native 864×1189             | 8/9               |
+| app-downscaled 744×1024 @70 | **9/9**           |
+
+The downscaled image did **as well or better**. The one miss was on the _native_ image, which read
+`½ teaspoon of the salt` as `1½ teaspoon`. (A first pass scored this 9/9 for both because the
+grading regex matched `1½` as a substring of the expected `½` — the corrected tally is above.)
+
+So the downscale is not the driver, and raising the image ceiling should **not** be prioritised on
+current evidence. What most likely separates the two pages is the photograph and the typography,
+not the pixel budget: the pork-chops page is a glossy spread shot at an angle with small, tightly
+kerned fractions in a narrow column; the tacos page is flatter, larger-set and evenly lit.
+
+Caveat that keeps this open rather than closed: the supplied photo was already compressed to
+864×1189 by the upload path, so the resolution contrast tested was only 1189 vs 1024 on the long
+edge. It does **not** rule out a benefit when a true ~4000px phone original is crushed to 1024. That
+needs an uncompressed original to test, which has to come off the phone directly.
+
+Practical read: fraction accuracy is **page-dependent and not fixable by a settings change**. If it
+matters (¼ vs ¾ teaspoon does), the useful lever is in the product, not the pipeline — e.g. flagging
+numerics for review on import rather than presenting them as certain. That fits the review-flow work
+this plan already proposes.
+
+Remaining ideas if it is picked up again:
+
+- Re-run the same A/B with a **genuinely uncompressed original** straight off the phone (~4000px),
+  which is the only untested case. If it helps, raise the ceiling **for the OCR copy specifically**
+  — the display image and card thumbnail can stay small. Note the 9 MB payload guard in
+  `useAiImporter.ts` and the 10 MB cap in `/api/uploads`.
+- Grade against pages that actually fail (glossy, angled, small-set fractions like the pork-chops
+  spread), not pages that already pass. The tacos page was correct in every configuration, so it
+  cannot distinguish between them.
+- Whatever the cause, misread fractions are a **latent data-quality problem in the existing
+  library**, not just a future-imports problem — which connects this to the re-import work
+  regardless of whether the resolution lever turns out to matter.
 
 **9. Cost is negligible.** Settled OpenRouter usage across the spike runs was **$0.005863** for
 roughly six parses — about **$0.001 per photo**, so a 15-photo batch costs **one to two cents**.
