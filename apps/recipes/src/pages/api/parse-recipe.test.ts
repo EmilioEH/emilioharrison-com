@@ -206,9 +206,7 @@ describe('runImageOcrPhases', () => {
 
     await runImageOcrPhases(client, { inlineData: { mimeType: 'image/jpeg', data: 'ZmFrZQ==' } })
 
-    const withImage = calls.filter((c) =>
-      JSON.stringify(c.messages).includes('image_url'),
-    )
+    const withImage = calls.filter((c) => JSON.stringify(c.messages).includes('image_url'))
     expect(withImage).toHaveLength(1)
   })
 
@@ -486,5 +484,62 @@ describe('instruction-OCR retry (field report: empty Instructions on a legible p
     await runImageOcrPhases(client, { inlineData: { mimeType: 'image/png', data: 'x' } })
 
     expect(calls).toHaveLength(2)
+  })
+})
+
+describe('reasoning is disabled on every OpenRouter call', () => {
+  // Regression guard for the 2026-08-01 import-latency investigation. The model's dynamic
+  // reasoning was adding tens of seconds of pre-output latency — enough that OCR runs exceeded
+  // OCR_TIMEOUT_MS and structuring runs exceeded STRUCTURE_TIMEOUT_MS, failing the import — and
+  // it also made transcription non-deterministic (one run invented ingredients and merged steps).
+  // The Gemini path has always disabled thinking via `thinkingBudget: 0`; this is the OpenRouter
+  // equivalent. If a future refactor drops it, imports get slow and unfaithful again, and the
+  // symptom (an intermittent timeout on dense pages) is expensive to re-diagnose.
+  const expectReasoningDisabled = (calls: Array<Record<string, unknown>>) => {
+    expect(calls.length).toBeGreaterThan(0)
+    for (const call of calls) {
+      expect(call.reasoning).toEqual({ enabled: false })
+    }
+  }
+
+  it('disables reasoning on the OCR call', async () => {
+    const { client, calls } = fakeOpenAiClient([
+      JSON.stringify({
+        ingredients: ['4 teaspoons kosher salt'],
+        steps: ['Preheat the oven to 350F.'],
+      }),
+    ])
+
+    await runImageOcrPhases(client, { inlineData: { mimeType: 'image/png', data: 'x' } })
+
+    expectReasoningDisabled(calls)
+  })
+
+  it('disables reasoning on the structuring call', async () => {
+    const { client, calls } = fakeOpenAiClient([
+      JSON.stringify({ title: 'Salted Something', ingredients: [], steps: [] }),
+    ])
+
+    await readStream(
+      buildImageRecipeStream(
+        client,
+        { ingredients: ['4 teaspoons kosher salt'] },
+        { steps: ['Preheat the oven to 350F.'], headnote: '' },
+      ),
+    )
+
+    expectReasoningDisabled(calls)
+  })
+
+  it('disables reasoning on the text/URL import path too', async () => {
+    const { client, calls } = fakeOpenAiClient([
+      JSON.stringify({ title: 'From A Link', ingredients: [], steps: [] }),
+    ])
+
+    await readStream(
+      buildTextRecipeStream(client, { text: 'Some pasted recipe text' }, 'Instructions'),
+    )
+
+    expectReasoningDisabled(calls)
   })
 })

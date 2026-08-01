@@ -242,6 +242,28 @@ async function runPhaseAttempt(
         response_format: { type: 'json_object' },
         max_tokens: maxTokens,
         stream: true,
+        // Disable the model's dynamic reasoning. This is the OpenRouter equivalent of the
+        // `thinkingConfig: { thinkingBudget: 0 }` the Gemini calls already set, and it was
+        // missing here — the reason photo imports were slow and intermittently failing.
+        //
+        // Measured on the same dense recipe page (26 ingredients), 2026-08-01:
+        //   OCR       177.5s / 47.4s / 49.2s  ->  25.4s / 28.4s / 27.5s
+        //   Structure  18.5s / 54.9s / 67.3s  ->  12.5s / 12.9s / 13.7s
+        // The 177.5s OCR run exceeded OCR_TIMEOUT_MS and the 67.3s structuring run exceeded
+        // STRUCTURE_TIMEOUT_MS, so both would have failed the import outright. Every response
+        // was valid JSON with finish_reason "stop" — the failures were always the clock, never
+        // truncation or malformed output.
+        //
+        // This is a LATENCY fix, not an accuracy fix. An initial reading suggested reasoning-off
+        // also transcribed more faithfully; a wider sweep across library photos did not support
+        // that, and it is not claimed here. Both settings misread small vulgar fractions on a
+        // 768x1024 page scan (¼ read as ¾, ½ as ¾) — see the resolution note in
+        // BULK-PHOTO-IMPORT-PLAN.md, which is a separate and probably more valuable fix.
+        //
+        // Not in the OpenAI SDK's types — it's an OpenRouter extension, passed through verbatim.
+        reasoning: { enabled: false },
+      } as OpenAI.Chat.ChatCompletionCreateParamsStreaming & {
+        reasoning: { enabled: boolean }
       },
       { signal },
     )
