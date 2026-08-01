@@ -13,13 +13,7 @@ vi.mock('../../../lib/firebase-server', () => ({
   db: { getDocument, runQuery, getCollection, createDocument, updateDocument },
 }))
 
-const { runEnhancementJob } = vi.hoisted(() => ({ runEnhancementJob: vi.fn() }))
-vi.mock('../../../lib/services/recipe-enhancement-job', () => ({ runEnhancementJob }))
-
-const { rateLimit } = vi.hoisted(() => ({ rateLimit: vi.fn() }))
-vi.mock('../../../lib/rate-limit', () => ({ rateLimit }))
-
-import { GET, POST, triggerBackgroundEnhancement, toListRecipe } from './index'
+import { GET, POST, toListRecipe } from './index'
 import { chunkArray, dedupeById } from '../../../lib/collection-utils'
 import { createSessionToken, SESSION_COOKIE_NAME } from '../../../lib/session'
 import type { Recipe } from '../../../lib/types'
@@ -254,8 +248,6 @@ describe('POST /api/recipes', () => {
     getDocument.mockResolvedValue(null)
     createDocument.mockResolvedValue({})
     updateDocument.mockResolvedValue({})
-    rateLimit.mockResolvedValue({ limited: false, remaining: 10 })
-    runEnhancementJob.mockResolvedValue({ success: true })
   })
 
   it('does not set enhancementStatus or trigger enhancement for a manually-created recipe', async () => {
@@ -266,10 +258,6 @@ describe('POST /api/recipes', () => {
 
     const created = createDocument.mock.calls[0][2]
     expect(created).not.toHaveProperty('enhancementStatus')
-
-    // Give any fire-and-forget microtasks a chance to run before asserting absence.
-    await new Promise((r) => setTimeout(r, 0))
-    expect(runEnhancementJob).not.toHaveBeenCalled()
   })
 
   it('never enhances an AI-parsed recipe (the feature was removed)', async () => {
@@ -283,9 +271,6 @@ describe('POST /api/recipes', () => {
 
     const created = createDocument.mock.calls[0][2]
     expect(created).not.toHaveProperty('enhancementStatus')
-
-    await new Promise((r) => setTimeout(r, 0))
-    expect(runEnhancementJob).not.toHaveBeenCalled()
   })
 
   it('does not qualify an AI-parsed recipe with no title', async () => {
@@ -303,83 +288,6 @@ describe('POST /api/recipes', () => {
     )
     const created = createDocument.mock.calls[0][2]
     expect(created.protein).toBe('Other')
-  })
-})
-
-describe('triggerBackgroundEnhancement', () => {
-  const recipe: Recipe = {
-    id: 'r1',
-    title: 'AI Recipe',
-    servings: 4,
-    prepTime: 10,
-    cookTime: 20,
-    ingredients: [{ name: 'salt', amount: '1 tsp' }],
-    steps: ['Do the thing'],
-    creationMethod: 'ai-parse',
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    updateDocument.mockResolvedValue({})
-    rateLimit.mockResolvedValue({ limited: false, remaining: 10 })
-    runEnhancementJob.mockResolvedValue({ success: true })
-  })
-
-  it('does nothing for a recipe that does not qualify (not ai-parse / no title)', async () => {
-    await triggerBackgroundEnhancement(
-      fakePostContext({}, 'user-1'),
-      { ...recipe, creationMethod: 'manual' },
-      'user-1',
-    )
-    expect(rateLimit).not.toHaveBeenCalled()
-    expect(runEnhancementJob).not.toHaveBeenCalled()
-  })
-
-  it('hands the job to ctx.waitUntil when a Workers context is available', async () => {
-    const waitUntil = vi.fn()
-    await triggerBackgroundEnhancement(
-      fakePostContext({}, 'user-1', { runtime: { ctx: { waitUntil } } }),
-      recipe,
-      'user-1',
-    )
-    expect(waitUntil).toHaveBeenCalledTimes(1)
-    expect(runEnhancementJob).toHaveBeenCalledWith(expect.anything(), recipe, 'http://localhost')
-  })
-
-  it('awaits the job directly when no Workers ctx is available (local dev fallback)', async () => {
-    await triggerBackgroundEnhancement(fakePostContext({}, 'user-1'), recipe, 'user-1')
-    expect(runEnhancementJob).toHaveBeenCalledWith(expect.anything(), recipe, 'http://localhost')
-  })
-
-  it('skips the job and records an error status when rate-limited', async () => {
-    rateLimit.mockResolvedValue({ limited: true, remaining: 0 })
-
-    await triggerBackgroundEnhancement(fakePostContext({}, 'user-1'), recipe, 'user-1')
-
-    expect(runEnhancementJob).not.toHaveBeenCalled()
-    expect(updateDocument).toHaveBeenCalledWith(
-      'recipes',
-      'r1',
-      expect.objectContaining({ enhancementStatus: 'error' }),
-    )
-  })
-
-  it('leaves the doc pending for the VM worker (no waitUntil, no in-request run) when the flag is on', async () => {
-    const waitUntil = vi.fn()
-    await triggerBackgroundEnhancement(
-      fakePostContext({}, 'user-1', {
-        runtime: { ctx: { waitUntil }, env: { BACKGROUND_WORKER_ENABLED: 'true' } },
-      }),
-      recipe,
-      'user-1',
-    )
-
-    // The create handler already wrote enhancementStatus: 'pending'; the worker claims it. This
-    // path must neither run the job in-request nor hand it to waitUntil.
-    expect(runEnhancementJob).not.toHaveBeenCalled()
-    expect(waitUntil).not.toHaveBeenCalled()
-    // Rate limiting still applies (it gates whether the doc is left pending vs. marked skipped).
-    expect(rateLimit).toHaveBeenCalled()
   })
 })
 

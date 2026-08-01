@@ -2,66 +2,9 @@ import type { APIRoute, APIContext } from 'astro'
 import { db } from '../../../lib/firebase-server'
 import { isRecipe } from '../../../lib/type-guards'
 import { getAuthUser } from '../../../lib/api-helpers'
-import { runEnhancementJob } from '../../../lib/services/recipe-enhancement-job'
 import { clampRecipeEnums } from '../../../lib/services/recipe-merge'
-import { rateLimit } from '../../../lib/rate-limit'
-import { isBackgroundWorkerEnabled } from '../../../lib/env'
 import { listAccessibleRecipes } from '../../../lib/recipe-access'
 import type { Recipe, RecipeListItem } from '../../../lib/types'
-
-const ENHANCE_RATE_LIMIT = 20
-const ENHANCE_RATE_WINDOW_SECONDS = 60 * 60
-
-/**
- * Kicks off background Enhancement for a freshly-created, AI-parsed recipe without blocking
- * the create response. Runs via `ctx.waitUntil` (Cloudflare Workers) so it survives the
- * client's tab/connection closing — previously this was triggered by a client-side
- * fire-and-forget `fetch` from `recipe-enhancer.ts`, which died if the user backgrounded the
- * app right after saving.
- */
-export async function triggerBackgroundEnhancement(
-  context: APIContext,
-  recipe: Recipe,
-  userId: string,
-) {
-  if (recipe.creationMethod !== 'ai-parse' || !recipe.title) return
-
-  const kv = context.locals?.runtime?.env?.SESSION
-  const { limited } = await rateLimit(
-    kv,
-    `enhance:${userId}`,
-    ENHANCE_RATE_LIMIT,
-    ENHANCE_RATE_WINDOW_SECONDS,
-  )
-
-  if (limited) {
-    await db
-      .updateDocument('recipes', recipe.id, {
-        enhancementStatus: 'error',
-        enhancementError: 'Skipped automatic enhancement — rate limit reached.',
-      })
-      .catch((e) => console.error('[Enhance] Failed to record rate-limit skip:', e))
-    return
-  }
-
-  // Cutover path: the recipe doc was already written with `enhancementStatus: 'pending'` in the
-  // create handler below — the state the VM worker's Firestore listener claims on. Leave it for
-  // the worker instead of running under Cloudflare's ~30s waitUntil ceiling (see
-  // BACKGROUND-JOBS-VM-PLAN.md). Nothing to run here.
-  if (isBackgroundWorkerEnabled(context)) return
-
-  const origin = new URL(context.request.url).origin
-  const job = runEnhancementJob(context.locals, recipe, origin)
-
-  const ctx = context.locals?.runtime?.ctx
-  if (ctx?.waitUntil) {
-    ctx.waitUntil(job)
-  } else {
-    // No Workers `ctx` available (e.g. local dev without the Cloudflare runtime proxy) —
-    // fall back to awaiting it directly rather than silently dropping the job.
-    await job
-  }
-}
 
 /**
  * Projects a full recipe document down to the fields the library list view actually renders,
