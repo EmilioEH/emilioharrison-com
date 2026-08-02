@@ -3,6 +3,7 @@ import {
   groupPhotos,
   recipeNumberAt,
   pageNumberAt,
+  photoLabelAt,
   removePhotoAt,
   type BulkPhoto,
 } from './grouping'
@@ -43,6 +44,24 @@ describe('recipeNumberAt / pageNumberAt', () => {
 
   it('numbers pages within a recipe', () => {
     expect(photos.map((_, i) => pageNumberAt(photos, i))).toEqual([1, 2, 1, 2, 3])
+  })
+})
+
+describe('photoLabelAt', () => {
+  it('names each photo the same way on its card and in the viewer', () => {
+    const photos = [photo('a'), photo('b', true), photo('c'), photo('d', true), photo('e', true)]
+
+    expect(photos.map((_, i) => photoLabelAt(photos, i))).toEqual([
+      'Recipe 1',
+      'Page 2 of recipe 1',
+      'Recipe 2',
+      'Page 2 of recipe 2',
+      'Page 3 of recipe 2',
+    ])
+  })
+
+  it('calls a joined first photo a recipe, matching how it is actually grouped', () => {
+    expect(photoLabelAt([photo('a', true)], 0)).toBe('Recipe 1')
   })
 })
 
