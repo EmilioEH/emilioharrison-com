@@ -109,14 +109,17 @@ parsePhotosToRecipe(client: OpenAI, photos: PhotoSource[], opts): Promise<Recipe
 ```
 
 with NDJSON streaming reduced to a thin wrapper inside the Cloudflare route. This mirrors exactly
-how `enhancement-core.ts` and `grocery-core.ts` are already shared with the worker, and it is the
-single most important part of this plan: **doing it any other way recreates the two-independent-
-photo-parsers problem that `IMPORT-PIPELINE-V2-PLAN.md` was written to end.**
+how `grocery-core.ts` is already shared with the worker, and it is the single most important part
+of this plan: **doing it any other way recreates the two-independent-photo-parsers problem that
+`IMPORT-PIPELINE-V2-PLAN.md` was written to end.** (`enhancement-core.ts` was the other example
+until it was deleted with the rest of the enhancement code — see the last section.)
 
-Multi-page grouping falls out naturally. The pipeline already runs ingredient OCR and instruction
-OCR as separate passes before a single structuring pass, so a spread becomes: OCR each photo,
-concatenate per-phase text in page order, structure once. The prompts need a line about
-continuation pages so the model doesn't treat page 2 as a whole recipe.
+Multi-page grouping falls out naturally, though not the way an older reading of this file suggests.
+The pipeline is **one OCR call per photo** — the page is transcribed in a single request returning
+ingredients, steps and headnote together, which are then split into the `_p:1`/`_p:2` payloads the
+NDJSON contract expects — followed by one text-only structuring pass. So a spread becomes: OCR each
+photo, concatenate the transcribed text in page order, structure once. The prompts need a line
+about continuation pages so the model doesn't treat page 2 as a whole recipe.
 
 ## Spike results — measured on the VM, 2026-08-01
 
