@@ -8,6 +8,9 @@ interface PhotoUploaderProps {
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
+// Picking several photos hands off to the bulk-import flow (see AiImporter). The camera input
+// stays single-shot: `capture` opens the camera app, which returns one photo at a time anyway.
+
 export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   imagePreview,
   onRemove,
@@ -34,6 +37,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
           <Upload className="text-foreground-variant h-8 w-8" />
         </div>
         <p className="text-foreground-variant text-sm font-medium">Add a photo of your dish</p>
+        <p className="text-xs text-muted-foreground">Pick several at once to import a stack</p>
 
         <div className="flex w-full gap-3">
           <div className="relative flex-1">
@@ -43,6 +47,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
             <input
               type="file"
               accept="image/*"
+              multiple
               className="absolute inset-0 cursor-pointer opacity-0"
               onChange={handleFileChange}
             />

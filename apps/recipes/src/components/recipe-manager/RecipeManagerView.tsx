@@ -27,6 +27,9 @@ const InviteView = React.lazy(() =>
 const FamilyManagementView = React.lazy(() =>
   import('./views/FamilyManagementView').then((m) => ({ default: m.FamilyManagementView })),
 )
+const ImportReviewView = React.lazy(() =>
+  import('./views/ImportReviewView').then((m) => ({ default: m.ImportReviewView })),
+)
 
 // Fallback while a lazy view's chunk loads. Each boundary passes the shape of the view that is
 // about to render, so navigation looks like content arriving rather than the app blanking out.
@@ -42,6 +45,9 @@ interface RecipeManagerViewProps {
   family: Family | null
 
   handleUpdateRecipe: (recipe: Recipe, mode: 'save' | 'edit' | 'silent' | 'hydrate') => void
+  handleSaveRecipe: (
+    recipe: Partial<Recipe>,
+  ) => Promise<{ success: boolean; savedId?: string } | void>
   handleDeleteRecipe: (id: string) => void
   handleAddToWeek: (id: string) => void
   refreshRecipes: (force?: boolean) => void
@@ -61,6 +67,7 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
   family,
 
   handleUpdateRecipe,
+  handleSaveRecipe,
   handleDeleteRecipe,
   handleAddToWeek,
   refreshRecipes,
@@ -167,6 +174,16 @@ export const RecipeManagerView: React.FC<RecipeManagerViewProps> = ({
       <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
         <Suspense fallback={<ViewSkeleton variant="form" />}>
           <InviteView onClose={() => setView('library')} />
+        </Suspense>
+      </LazyViewErrorBoundary>
+    )
+  }
+
+  if (view === 'import-review') {
+    return (
+      <LazyViewErrorBoundary key={retryKey} onRetry={retryView}>
+        <Suspense fallback={<ViewSkeleton variant="list" />}>
+          <ImportReviewView onClose={() => setView('library')} onSaveRecipe={handleSaveRecipe} />
         </Suspense>
       </LazyViewErrorBoundary>
     )

@@ -1,9 +1,13 @@
 import React, { useState } from 'react'
-import { Loader2, ChefHat, ShieldAlert, ArrowLeft } from 'lucide-react'
+import { Loader2, ChefHat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAiImporter } from '../../../lib/hooks/useAiImporter'
 import { SourceToggle, type InputMode } from './SourceToggle'
 import { PhotoUploader } from './PhotoUploader'
+import { BulkPhotoImporter } from './BulkPhotoImporter'
+import { BatchQueuedPanel } from './BatchQueuedPanel'
+import { BlockedSiteFallback } from './BlockedSiteFallback'
+import { useBulkPhotoUpload } from '../../../lib/hooks/useBulkPhotoUpload'
 import { Stack } from '@/components/ui/layout'
 import { AiProgressBar } from '@/components/ui/AiProgressBar'
 import { uploadImage } from './api'
@@ -16,9 +20,11 @@ interface AiImporterProps {
     recipe: Recipe,
     candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>,
   ) => void
+  /** Called once a background batch has been queued, so the surrounding screen can close. */
+  onBatchQueued?: (total: number) => void
 }
 
-export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
+export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed, onBatchQueued }) => {
   const [mode, setMode] = useState<InputMode>('photo')
   const {
     url,
@@ -41,9 +47,23 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
   } = useAiImporter({ onRecipeParsed, mode })
 
   const [internalIsUploading, setInternalIsUploading] = useState(false)
+  const [queuedCount, setQueuedCount] = useState(0)
+  const {
+    photos: bulkPhotos,
+    setPhotos: setBulkPhotos,
+    uploading: bulkUploading,
+    startBulkUpload,
+  } = useBulkPhotoUpload(setErrorMsg)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return
+
+    // More than one photo is a different job: it can't be done while the user waits, so it goes
+    // to the background queue instead of the in-request parse below.
+    if (e.target.files.length > 1) {
+      await startBulkUpload(Array.from(e.target.files))
+      return
+    }
 
     const originalFile = e.target.files[0]
     setInternalIsUploading(true)
@@ -90,6 +110,26 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
     }
   }
 
+  // A queued batch is the end of this screen's job: the work now happens on the server and the
+  // user is explicitly free to leave.
+  if (queuedCount > 0) {
+    return <BatchQueuedPanel total={queuedCount} onDone={() => onBatchQueued?.(queuedCount)} />
+  }
+
+  if (bulkPhotos) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-md">
+        <BulkPhotoImporter
+          photos={bulkPhotos}
+          uploading={bulkUploading}
+          onChange={setBulkPhotos}
+          onBack={() => setBulkPhotos(null)}
+          onQueued={setQueuedCount}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-md">
       {/* ... (SourceToggle and Inputs remain the same) */}
@@ -108,54 +148,11 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             />
           </>
         ) : isBlocked ? (
-          /* Blocked site fallback - paste text manually */
-          <Stack spacing="md" className="animate-in fade-in slide-in-from-top-2">
-            <div className="rounded-lg bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-400">
-              <div className="flex gap-3">
-                <ShieldAlert className="h-5 w-5 shrink-0" />
-                <div className="space-y-2">
-                  <p className="font-semibold">This site blocks automated access</p>
-                  <p className="text-amber-600 dark:text-amber-500">
-                    No worries! You can copy the recipe text from the website and paste it below.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
-              <p className="mb-3 text-sm font-medium text-foreground">How to copy the recipe:</p>
-              <ol className="list-inside list-decimal space-y-1 text-sm text-muted-foreground">
-                <li>Open the recipe page in your browser</li>
-                <li>Select the ingredients and instructions text</li>
-                <li>Copy (Ctrl+C or Cmd+C) and paste below</li>
-              </ol>
-            </div>
-
-            <div>
-              <label
-                htmlFor="pasted-text"
-                className="mb-1 block text-xs font-bold uppercase text-muted-foreground"
-              >
-                Paste Recipe Text
-              </label>
-              <textarea
-                id="pasted-text"
-                className="min-h-[200px] w-full rounded-lg border border-border bg-background p-3 text-base placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary md:text-sm"
-                placeholder="Paste the recipe ingredients and instructions here..."
-                value={pastedText}
-                onChange={(e) => setPastedText(e.target.value)}
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={clearBlockedState}
-              className="flex items-center gap-1 self-start text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Try a different URL
-            </button>
-          </Stack>
+          <BlockedSiteFallback
+            pastedText={pastedText}
+            setPastedText={setPastedText}
+            onTryAnotherUrl={clearBlockedState}
+          />
         ) : (
           <Stack spacing="sm">
             <label
@@ -202,10 +199,10 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
             <ChefHat />
           )}
           {/* Deliberately not a status message. The progress banner below is the single source of
-            * truth for what the import is doing; this button used to hardcode "Reading your
-            * recipe..." for the entire run, so mid-import the screen said "Reading your
-            * recipe..." and "Structuring instructions... (66%)" at the same time — two labels
-            * disagreeing, one of them permanently stale. */}
+           * truth for what the import is doing; this button used to hardcode "Reading your
+           * recipe..." for the entire run, so mid-import the screen said "Reading your
+           * recipe..." and "Structuring instructions... (66%)" at the same time — two labels
+           * disagreeing, one of them permanently stale. */}
           {internalIsUploading
             ? 'Uploading Photo...'
             : status === 'processing'
@@ -214,26 +211,33 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed }) => {
         </Button>
       </Stack>
 
-      {/* Inline progress banner - non-blocking */}
       {(status === 'processing' || internalIsUploading) && (
         <div className="mt-4">
-          <AiProgressBar
-            progress={
-              internalIsUploading
-                ? '30%'
-                : progressMessage?.includes('%')
-                  ? progressMessage.match(/\d+/)?.[0] + '%'
-                  : '10%'
-            }
-            message={
-              internalIsUploading
-                ? 'Uploading Photo...'
-                : progressMessage || 'Reading your recipe...'
-            }
-            isAnimating={true}
-          />
+          <ImportProgressBanner uploading={internalIsUploading} message={progressMessage} />
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Inline, non-blocking progress for a single in-request import. Deliberately the only place that
+ * says what the import is doing — the action button used to carry a second, permanently stale
+ * label alongside it, so mid-import the screen contradicted itself.
+ */
+const ImportProgressBanner: React.FC<{ uploading: boolean; message?: string }> = ({
+  uploading,
+  message,
+}) => {
+  if (uploading) {
+    return <AiProgressBar progress="30%" message="Uploading Photo..." isAnimating={true} />
+  }
+  const percent = message?.includes('%') ? `${message.match(/\d+/)?.[0]}%` : '10%'
+  return (
+    <AiProgressBar
+      progress={percent}
+      message={message || 'Reading your recipe...'}
+      isAnimating={true}
+    />
   )
 }

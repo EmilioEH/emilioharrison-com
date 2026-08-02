@@ -15,6 +15,7 @@ import { useFirebaseAuthSync } from '../../lib/useFirebaseAuthSync'
 
 import { useRecipeActions } from './hooks/useRecipeActions'
 import { useRouter } from './hooks/useRouter'
+import { useImports } from '../../lib/hooks/useImports'
 import { useRecipeHandlers } from './hooks/useRecipeHandlers'
 import { useRecipeContext } from './hooks/useRecipeContext'
 import { useFamilySync } from './hooks/useFamilySync'
@@ -353,6 +354,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
   }, [loading, recipes])
 
   // Actions & Handlers (Refactored to Hook)
+  // Outstanding bulk photo imports. Drives the badge on Add, and the way through to the review
+  // list. Polls only while something is actually being read (see useImports).
+  const { summary: importSummary, refresh: refreshImports } = useImports(!!user)
+
   const { handleSaveRecipe, handleDeleteRecipe, handleUpdateRecipe } = useRecipeHandlers({
     setRecipes,
     saveRecipe,
@@ -375,6 +380,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         user={user ?? undefined}
         isAdmin={!!computedIsAdmin}
         handleUpdateRecipe={handleUpdateRecipe}
+        handleSaveRecipe={handleSaveRecipe}
         handleDeleteRecipe={handleDeleteRecipe}
         handleAddToWeek={handleAddToWeek}
         refreshRecipes={refreshRecipes}
@@ -383,7 +389,12 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         family={family}
       >
         {/* Full-width Header Shell */}
-        {!isSearchMode && <RecipeHeader onAddRecipe={() => setView('edit')} />}
+        {!isSearchMode && (
+          <RecipeHeader
+            onAddRecipe={() => setView('edit')}
+            importsAwaitingReview={importSummary.needsReview}
+          />
+        )}
 
         <div
           data-search-mode={isSearchMode ? 'true' : undefined}
@@ -490,6 +501,24 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         title={selectedRecipe?.id ? 'Edit Recipe' : 'New Recipe'}
       >
         <Suspense fallback={<ViewSkeleton variant="form" />}>
+          {/* The badge marks the Add button; this is the way through from it. Shown first so a
+              user who came back for their imports doesn't have to hunt for them. */}
+          {!selectedRecipe?.id && importSummary.needsReview > 0 && (
+            <button
+              type="button"
+              onClick={() => setView('import-review')}
+              className="mb-4 flex w-full cursor-pointer items-center gap-3 rounded-xl border border-primary/20 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                {importSummary.needsReview}
+              </span>
+              <span className="text-sm font-medium text-foreground">
+                {importSummary.needsReview === 1
+                  ? 'An imported recipe is ready to check'
+                  : 'Imported recipes are ready to check'}
+              </span>
+            </button>
+          )}
           <RecipeEditor
             recipe={selectedRecipe || {}}
             onSave={handleSaveRecipe}
@@ -497,6 +526,10 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
             onDelete={handleDeleteRecipe}
             isEmbedded={true}
             onView={(id) => setRoute({ activeRecipeId: id, view: 'detail' })}
+            onBatchQueued={() => {
+              setView('library')
+              void refreshImports()
+            }}
           />
         </Suspense>
       </ResponsiveModal>

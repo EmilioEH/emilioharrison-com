@@ -11,7 +11,7 @@ The app is intentionally scoped to five flows. Everything else has been cut to k
 
 1. **Browse recipes** — a searchable, filterable, groupable library (`RecipeLibrary.tsx`), shared across your family.
 2. **View a recipe** — full ingredients/instructions, star rating & reviews, personal notes, share as text or PDF, and a manual "Refresh AI Data" action.
-3. **Add a new recipe** — manual entry, paste a URL, or scan a photo of a recipe card.
+3. **Add a new recipe** — manual entry, paste a URL, scan a photo of a recipe card, or pick a stack of photos and have them read in the background (see "Bulk photo import").
 4. **Add a recipe to a week** — one tap adds/removes a recipe from the currently active week. No day-of-week picker — a recipe is either in this week's plan or it isn't.
 5. **Generate a grocery list** — for everything in the active week, with a Standard (deterministic) and Smart (AI) list mode, manual add/edit, check-off, and share/copy as text.
 6. **Decide what to cook** — a conversation that asks one thing at a time, offers options it has counted against your actual library, and lets you say what's wrong in words once it has shown you something (`SuggesterConversation.tsx`). The week you just finished is reviewed in four taps per recipe (`WeekReviewPrompt.tsx`), which is what feeds the suggestions over time.
@@ -20,7 +20,7 @@ Family sharing (shared recipes, shared week plan, shared grocery list, invites) 
 
 ### What's deliberately NOT here
 
-Cooking mode (step-by-step/timers), favorites, recipe version history, day-level meal scheduling, in-app feedback collection, push notifications & reminders, onboarding tutorials, bulk import/edit/select, H-E-B pricing integration, AI cost estimation, recurring grocery items, "reverse-engineer a dish from a photo" import, and admin user-impersonation/family-admin tooling. If you're looking for one of these in the code and can't find it, it was removed on purpose — see git history around the `cooking-app-scope-plan` branch for the rationale.
+Cooking mode (step-by-step/timers), favorites, recipe version history, day-level meal scheduling, in-app feedback collection, push notifications & reminders, onboarding tutorials, bulk *edit*/select (bulk photo *import* now exists — see below), H-E-B pricing integration, AI cost estimation, recurring grocery items, "reverse-engineer a dish from a photo" import, and admin user-impersonation/family-admin tooling. If you're looking for one of these in the code and can't find it, it was removed on purpose — see git history around the `cooking-app-scope-plan` branch for the rationale.
 
 ## 🛠 Tech Stack
 
@@ -37,7 +37,7 @@ Cooking mode (step-by-step/timers), favorites, recipe version history, day-level
 
 ### 1. Custom SPA Router (not Astro routing)
 
-Astro does the initial SSR load, but the app itself is a client-rendered SPA managed by `RecipeManager.tsx` and the `useRouter` hook (`ViewMode = 'library' | 'detail' | 'edit' | 'week' | 'family-settings' | 'admin-dashboard' | 'invite'`).
+Astro does the initial SSR load, but the app itself is a client-rendered SPA managed by `RecipeManager.tsx` and the `useRouter` hook (`ViewMode = 'library' | 'detail' | 'edit' | 'week' | 'family-settings' | 'admin-dashboard' | 'invite' | 'import-review'`).
 
 - **Do NOT** add new `src/pages/*.astro` files for app features. `src/pages/[...path].astro` is a catch-all that always renders the SPA entry point, so deep links still work.
 - **Instead**, add a new `ViewMode` and render a conditional component from `RecipeManager.tsx`/`RecipeManagerView.tsx`.
@@ -52,6 +52,29 @@ Astro does the initial SSR load, but the app itself is a client-rendered SPA man
   - `style='enhanced'`: a background **Total Reparse** from the original `sourceUrl`/`sourceImage` (not a text-to-text touch-up) that restructures the recipe into "Kenji-style" scientific step grouping, descriptive paragraphs, and standardized units — this is the "Smart View" toggle on the recipe overview.
   - Both styles must keep working independently — never force enhancement on initial import.
 - Both providers are asked for structured JSON output (`responseMimeType`/`response_format: json_object`); `ai-parser.ts`'s `tryRepairJson` handles malformed model output from either.
+
+### 2b. Bulk photo import
+
+Pick several photos at once and get one recipe per photo, read in the background while the app is
+closed. See `BULK-PHOTO-IMPORT-PLAN.md`.
+
+- **Why it isn't done in the browser**: phone browsers suspend JS and cancel in-flight `fetch`
+  calls when the user switches apps, and fifteen photos takes minutes. The work runs on the VM
+  worker (`services/recipe-worker/`), which reads the uploaded photos straight out of Firebase
+  Storage.
+- **The split is by count**: one photo still takes the existing in-request `/api/parse-recipe`
+  path unchanged; two or more go to the queue.
+- **Grouping is manual**: a photo can be marked as the continuation page of the one above it. Not
+  model-inferred — a wrong auto-grouping silently welds two recipes together and stays invisible
+  until someone cooks from it.
+- **Results are held on the job, not in `recipes`**: a recipe is created only when the user
+  reviews and accepts a card, which is what keeps unreviewed transcription out of the library.
+- **Endpoints**: `POST /api/imports` (enqueue, rate-limited to 6 batches/hour),
+  `GET /api/imports` (outstanding jobs + badge counts), `POST /api/imports/[jobId]`
+  (accept/discard/retry). Limits and the offline-detection threshold live in
+  `lib/services/import-batches.ts`.
+- **Reads are polled, not subscribed** — `firestore.rules` denies client reads on everything
+  except `grocery_lists`.
 
 ### 3. Storage Proxy
 

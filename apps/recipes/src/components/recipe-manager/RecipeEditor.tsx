@@ -20,6 +20,15 @@ interface RecipeEditorProps {
   candidateImages?: Array<{ url: string; alt?: string; isDefault?: boolean }>
   onImageSelect?: (url: string) => void
   onView?: (id: string) => void
+  /**
+   * Whether to offer the AI importer above the form. Defaults to "only for a brand-new recipe",
+   * which used to be inferred from `recipe.id` alone — but a photo-import card being reviewed is
+   * also id-less, and there the importer would render *inside* the review form and offer to
+   * import a recipe into the recipe being reviewed.
+   */
+  showImporter?: boolean
+  /** A bulk photo batch was queued from inside the importer — the surrounding screen closes. */
+  onBatchQueued?: (total: number) => void
 }
 
 /**
@@ -66,6 +75,8 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
   candidateImages = [],
   onImageSelect,
   onView,
+  showImporter,
+  onBatchQueued,
 }) => {
   const [formData, setFormData] = useState<Partial<Recipe>>(recipe)
   const [internalCandidateImages, setInternalCandidateImages] = useState<
@@ -247,7 +258,9 @@ export const RecipeEditor: React.FC<RecipeEditorProps> = ({
         </Inline>
       )}
 
-      {!recipe.id && <AiImporter onRecipeParsed={handleRecipeParsed} />}
+      {showImporter !== false && !recipe.id && (
+        <AiImporter onRecipeParsed={handleRecipeParsed} onBatchQueued={onBatchQueued} />
+      )}
 
       <Stack spacing="md">
         <label className="block">
