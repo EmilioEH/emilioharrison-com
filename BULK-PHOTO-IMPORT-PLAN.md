@@ -1,9 +1,9 @@
 # Plan: Bulk photo import — many photos, one recipe each, in the background
 
-Status: **IN PROGRESS — the server side is built and verified; nothing is reachable from the app
-yet.** Phases 0–3 are done (see "Phases"): the parse pipeline is shared, reasoning is off, and the
-VM worker parses `import_jobs` end-to-end. Phases 4–6 — the Cloudflare enqueue endpoint and the
-two client pieces — are still proposal, so no user can currently create a batch.
+Status: **SHIPPED 2026-08-02.** All six phases are done and live: pick several photos, they are
+read on the VM worker while the app is closed, and a badge on the Add button brings you back to a
+review list. What follows is the plan as it was written plus a record of what each phase actually
+did — including where the build departed from the proposal.
 
 Written 2026-08-01 from a design conversation with Emilio. Decisions taken during that
 conversation are recorded below as decided; everything else is proposal. The risks the first draft
@@ -359,6 +359,8 @@ the flakiness above means real usage is roughly 1.3× the photo count.
   worker that never claims. Background enhancement pausing was tolerable; imports silently never
   happening is not. Needs a visible "queued — import service offline" state, driven by a worker
   heartbeat doc or a staleness threshold on `createdAt`.
+  **Built** as the staleness threshold (`PENDING_STALE_MS`, 3 minutes, in `import-batches.ts`) —
+  no heartbeat doc was needed, since a job that no one has claimed is itself the signal.
 
 ## Client work
 
@@ -450,9 +452,40 @@ the flakiness above means real usage is roughly 1.3× the photo count.
    never claims. That needs a heartbeat doc or a staleness threshold on `createdAt`, and it is
    most naturally built with the client work that has to display it.
 
-4. **Cloudflare enqueue endpoint** + batch rate limit.
-5. **Client: selection, grouping, submit.**
-6. **Client: badge + review flow.**
+4. ~~**Cloudflare enqueue endpoint** + batch rate limit~~ — **done 2026-08-02.**
+   `POST /api/imports` writes the batch and its jobs and returns `202`; `GET /api/imports` returns
+   the caller's outstanding jobs plus the counts the badge needs; `POST /api/imports/{jobId}`
+   records accept/discard/retry. Limit: **6 batches/hour** per user, deliberately generous — at
+   ~$0.001 a photo the ceiling is about nine cents an hour, and the limit exists to stop a bug
+   looping, not to ration use.
+
+   Two things worth knowing:
+   - **Photo keys are authorization, not just formatting.** `/api/uploads` mints keys as
+     `{userId}-{timestamp}-{uuid}.{ext}`, so the enqueue endpoint requires every submitted key to
+     start with the caller's own id. Without that check a caller could queue a job that makes the
+     worker read someone else's photo out of Storage.
+   - **Reads are polled, not subscribed.** `firestore.rules` denies client reads on everything
+     except `grocery_lists`, and the app is otherwise API-first. The client refetches on mount, on
+     tab focus, and every 8s while something is actually in progress.
+
+5. ~~**Client: selection, grouping, submit**~~ — **done 2026-08-02.** The gallery input takes
+   `multiple`; picking **one** photo still runs the existing in-request parse untouched, picking
+   more switches to the batch flow. Photos upload three at a time and appear as they land.
+
+   Grouping is one tap: each photo is its own recipe, and **Same recipe** marks a photo as the
+   continuation of the one above it. Chosen over a select-then-group gesture because the spread
+   case is always adjacent pages, and because a mis-grouping is invisible until you cook from it.
+
+6. ~~**Client: badge + review flow**~~ — **done 2026-08-02.** A count on the Add button, which
+   still adds — the way through is a banner at the top of the New Recipe sheet, so the badge never
+   costs the user the action they actually came for. The review screen lists every card with its
+   photo: finished ones open the existing `RecipeEditor` and save through the same path as any
+   other new recipe, failed ones say why and offer another go, and a queue nothing has picked up
+   for three minutes says the import service looks offline.
+
+   The `RecipeEditor.tsx` gotcha this plan predicted was real: it decided whether to show the
+   importer from `recipe.id`, and a parsed-but-unaccepted card has no id, so the importer rendered
+   _inside_ the review form. It now takes an explicit `showImporter` prop.
 
 Phase 2 is newly promoted: the flakiness spike turned "nice to have" into "the feature does not
 work acceptably without it".

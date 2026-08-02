@@ -330,3 +330,45 @@ export interface ServiceAccount {
   client_x509_cert_url?: string
   universe_domain?: string
 }
+
+/**
+ * Bulk photo import (see BULK-PHOTO-IMPORT-PLAN.md). Two collections, deliberately outside
+ * `recipes`: a photographed page becomes a recipe only once the user has reviewed and accepted
+ * it, which is what keeps unreviewed transcription out of the library.
+ */
+export type ImportBatchStatus = 'pending' | 'processing' | 'complete' | 'partial' | 'failed'
+export type ImportJobStatus = 'pending' | 'processing' | 'complete' | 'error'
+export type ImportReviewState = 'unreviewed' | 'accepted' | 'discarded'
+
+export interface ImportBatch {
+  id: string
+  createdBy: string
+  createdAt: string
+  updatedAt?: string
+  status: ImportBatchStatus
+  /** How many jobs (i.e. recipes) the batch holds — not how many photos. */
+  total: number
+  completed: number
+  failed: number
+  reviewedCount: number
+}
+
+export interface ImportJob {
+  id: string
+  batchId: string
+  createdBy: string
+  createdAt: string
+  updatedAt?: string
+  /** Storage keys from `POST /api/uploads`; more than one only for a grouped multi-page spread,
+   * in page order. */
+  photoKeys: string[]
+  status: ImportJobStatus
+  /** The parse result, held here until accepted. Not a `Recipe` — no id/createdBy/timestamps. */
+  parsedRecipe: Partial<Recipe> | null
+  /** The page's instructions didn't transcribe, but its ingredients did. */
+  partialFailure?: 'instructions'
+  error?: string
+  reviewState: ImportReviewState
+  /** Set when the user accepts the card and the recipe is created. */
+  savedRecipeId?: string
+}

@@ -9,6 +9,7 @@ export type ViewMode =
   | 'family-settings'
   | 'admin-dashboard'
   | 'invite'
+  | 'import-review'
 
 export interface RouteState {
   view: ViewMode

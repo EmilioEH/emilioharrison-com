@@ -1,4 +1,12 @@
-export async function uploadImage(file: File, baseUrl: string): Promise<string | null> {
+/**
+ * Uploads a photo and returns both halves of the answer: the storage `key` (what the bulk-import
+ * queue hands to the worker, which reads the object directly) and the `url` the app displays.
+ * The single-photo path only ever needed the URL, so it uses the wrapper below.
+ */
+export async function uploadPhoto(
+  file: File,
+  baseUrl: string,
+): Promise<{ key: string; url: string } | null> {
   try {
     const formData = new FormData()
     formData.append('file', file)
@@ -10,13 +18,18 @@ export async function uploadImage(file: File, baseUrl: string): Promise<string |
 
     if (res.ok) {
       const { key } = await res.json()
-      return `${baseUrl}api/uploads/${key}`
+      return { key, url: `${baseUrl}api/uploads/${key}` }
     }
     return null
   } catch (err) {
     console.error('Upload error', err)
     throw new Error('Network error while uploading image.')
   }
+}
+
+export async function uploadImage(file: File, baseUrl: string): Promise<string | null> {
+  const uploaded = await uploadPhoto(file, baseUrl)
+  return uploaded?.url ?? null
 }
 
 /** Maps a stream-reading failure (unsalvageable — see the `merged.title` check above) to a
