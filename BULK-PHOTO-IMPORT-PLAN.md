@@ -109,14 +109,17 @@ parsePhotosToRecipe(client: OpenAI, photos: PhotoSource[], opts): Promise<Recipe
 ```
 
 with NDJSON streaming reduced to a thin wrapper inside the Cloudflare route. This mirrors exactly
-how `enhancement-core.ts` and `grocery-core.ts` are already shared with the worker, and it is the
-single most important part of this plan: **doing it any other way recreates the two-independent-
-photo-parsers problem that `IMPORT-PIPELINE-V2-PLAN.md` was written to end.**
+how `grocery-core.ts` is already shared with the worker, and it is the single most important part
+of this plan: **doing it any other way recreates the two-independent-photo-parsers problem that
+`IMPORT-PIPELINE-V2-PLAN.md` was written to end.** (`enhancement-core.ts` was the other example
+until it was deleted with the rest of the enhancement code — see the last section.)
 
-Multi-page grouping falls out naturally. The pipeline already runs ingredient OCR and instruction
-OCR as separate passes before a single structuring pass, so a spread becomes: OCR each photo,
-concatenate per-phase text in page order, structure once. The prompts need a line about
-continuation pages so the model doesn't treat page 2 as a whole recipe.
+Multi-page grouping falls out naturally, though not the way an older reading of this file suggests.
+The pipeline is **one OCR call per photo** — the page is transcribed in a single request returning
+ingredients, steps and headnote together, which are then split into the `_p:1`/`_p:2` payloads the
+NDJSON contract expects — followed by one text-only structuring pass. So a spread becomes: OCR each
+photo, concatenate the transcribed text in page order, structure once. The prompts need a line
+about continuation pages so the model doesn't treat page 2 as a whole recipe.
 
 ## Spike results — measured on the VM, 2026-08-01
 
@@ -374,6 +377,19 @@ the flakiness above means real usage is roughly 1.3× the photo count.
 1. **Extract `parse-photo-core.ts`.** No behaviour change; the Cloudflare route uses it. Ship and
    verify single-photo import is untouched. Nothing else starts until this is stable. Smaller than
    originally scoped — spike 2 showed the functions already run unmodified in Node.
+
+   Starting facts for whoever picks this up, all verified 2026-08-01:
+   - `runImageOcrPhases`, `buildImageRecipeStream` and `buildTextRecipeStream` are already exported
+     from `parse-recipe.ts`, and all three route through `runPhase`/`runPhaseAttempt`.
+   - `createOpenRouterClient` (`api-helpers.ts:93-95`) already falls back to
+     `process.env.OPENROUTER_API_KEY`, so it works in plain Node with no change.
+   - OCR is **one** model call now (page → ingredients + steps + headnote, then split into the
+     `_p:1`/`_p:2` payloads the NDJSON contract expects), not the two the older docs describe.
+   - `runPhaseAttempt` sets `reasoning: { enabled: false }` and there are tests asserting it on all
+     three paths — carry it through the extraction or imports get slow and start timing out again.
+   - `buildTextRecipeStream(client, contentPart, prompt, style?, signal?)` — the third argument is
+     required; omitting it type-errors but still passes vitest.
+
 2. **Disable reasoning on the OpenRouter calls, then retry + import-specific timeout.**
    **This should ship first and separately — it is a fix to today's photo import, not bulk-import
    groundwork.** Add `reasoning: { enabled: false }` to the OCR and structuring calls, matching
@@ -398,12 +414,19 @@ work acceptably without it".
 - Bulk URL import.
 - Changing the single-photo path's UX. It stays as-is.
 
-## Related dead code
+## Related dead code — DONE, do not re-plan this
 
-Background enhancement was removed in `b623b8f`, but `triggerBackgroundEnhancement`,
-`ENHANCE_RATE_LIMIT`, the worker's enhancement listener, `claimEnhancement`/`completeEnhancement`/
-`failEnhancement`, and `recipe-enhancement-job.ts` all remain, with tests green around them.
-Nothing writes `enhancementStatus: 'pending'`, so that queue can never fire.
+The leftovers of background enhancement were removed in **#114** (app side) and **#115** (worker
+side) on 2026-08-01, ahead of this feature rather than during phase 3.
 
-Not part of this feature, but the worker's listener and store are being edited in phase 3 — a
-sensible moment to delete it, as a separate change either side of that work.
+Gone: `api/recipes/[id]/enhance.ts`, `recipe-enhancement-job.ts`, `triggerBackgroundEnhancement`,
+`ENHANCE_RATE_LIMIT`, `tests/dual-process.spec.ts`, `enhancement-core.ts`, the worker's enhancement
+listener, `claimEnhancement`/`completeEnhancement`/`failEnhancement`, `reapStuckEnhancements`, and
+`runEnhancementForDoc`. The running worker was restarted and came up clean on the new code.
+
+Still present **on purpose**: `enhancementStatus`/`enhancementError` on the `Recipe` type and
+`RecipeDetail`'s status poll. Existing Firestore documents still carry those values; dropping the
+field removes our ability to read stored data, not the data.
+
+Phase 3 therefore edits a worker whose store and listener are already down to grocery only —
+`WorkerStore` has three methods left, and the reaper sweeps one queue.
