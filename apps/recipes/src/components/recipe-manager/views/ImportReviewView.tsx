@@ -17,6 +17,7 @@ import { ViewSkeleton } from '@/components/ui/ViewSkeleton'
 import { RecipeEditor } from '../RecipeEditor'
 import { useImports } from '../../../lib/hooks/useImports'
 import { photoUrl, reviewImportJob } from '../../../lib/services/imports-api'
+import { describeTimeRemaining } from '../../../lib/services/import-batches'
 import { confirm } from '../../../lib/dialogStore'
 import type { ImportJob, Recipe } from '../../../lib/types'
 
@@ -97,6 +98,16 @@ export const ImportReviewView: React.FC<ImportReviewViewProps> = ({ onClose, onS
                 </p>
               </div>
             </div>
+          )}
+
+          {summary.inProgress > 0 && !summary.serviceOffline && (
+            <Inline spacing="sm" className="rounded-xl border border-border bg-muted/30 p-4">
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Reading {summary.inProgress} more — {describeTimeRemaining(summary.inProgress)} to
+                go. You can leave this open or close the app.
+              </span>
+            </Inline>
           )}
 
           {error && (

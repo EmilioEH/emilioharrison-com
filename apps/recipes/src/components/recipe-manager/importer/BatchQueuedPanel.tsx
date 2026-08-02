@@ -2,6 +2,7 @@ import React from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Stack } from '@/components/ui/layout'
+import { describeTimeRemaining } from '../../../lib/services/import-batches'
 
 interface BatchQueuedPanelProps {
   total: number
@@ -23,8 +24,8 @@ export const BatchQueuedPanel: React.FC<BatchQueuedPanelProps> = ({ total, onDon
         {total} {total === 1 ? 'recipe is' : 'recipes are'} being read
       </h3>
       <p className="text-sm text-muted-foreground">
-        This takes a few minutes. Close the app if you like — the Add button will show a badge when
-        they are ready to check.
+        Should take {describeTimeRemaining(total)}. Close the app if you like — the Add button will
+        show a badge when they are ready to check.
       </p>
       <Button className="w-full" size="lg" onClick={onDone}>
         Done

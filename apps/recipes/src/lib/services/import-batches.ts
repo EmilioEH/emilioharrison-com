@@ -83,6 +83,39 @@ export function validatePhotoGroups(input: unknown, userId: string): ValidatedGr
   return { ok: true, groups }
 }
 
+/**
+ * How long one photo takes to read, end to end, measured rather than guessed: 23.3s and ~23s on
+ * two separate live runs against real pages (a third, the 108s outlier, was before reasoning was
+ * disabled — see BULK-PHOTO-IMPORT-PLAN.md finding 7). Rounded up a little, because an estimate
+ * that runs over is worse than one that comes in early.
+ */
+const SECONDS_PER_RECIPE = 30
+
+/** Matches the worker's import concurrency (WORKER_IMPORT_CONCURRENCY). If that is retuned, this
+ * has to move with it or the estimate silently drifts. */
+const WORKER_CONCURRENCY = 3
+
+/**
+ * Roughly how much longer `remaining` recipes will take, in seconds. Recipes are read a few at a
+ * time, so ten recipes is not ten times one recipe.
+ */
+export function estimateSecondsRemaining(remaining: number): number {
+  if (remaining <= 0) return 0
+  return Math.ceil(remaining / WORKER_CONCURRENCY) * SECONDS_PER_RECIPE
+}
+
+/**
+ * The estimate as a phrase, deliberately coarse. A ticking countdown invites the user to sit and
+ * watch it, which is the exact opposite of the point — the whole feature exists so they can put
+ * the phone down.
+ */
+export function describeTimeRemaining(remaining: number): string {
+  const seconds = estimateSecondsRemaining(remaining)
+  if (seconds === 0) return ''
+  if (seconds <= 60) return 'about a minute'
+  return `about ${Math.round(seconds / 60)} minutes`
+}
+
 export interface ImportSummary {
   /** Finished, parsed, and still waiting for the user — this is the badge. */
   needsReview: number
