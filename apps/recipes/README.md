@@ -46,7 +46,7 @@ Astro does the initial SSR load, but the app itself is a client-rendered SPA man
 
 ### 2. AI Integration — two providers, split by task
 
-- **OpenRouter** (`createOpenRouterClient` in `src/lib/api-helpers.ts`, `OPENROUTER_API_KEY`): used **only** for the photo-scan import flow (`pages/api/parse-recipe.ts`), a three-phase OCR pipeline (ingredients → instructions → structuring) that all runs on a single model, `qwen/qwen3.5-9b`.
+- **OpenRouter** (`createOpenRouterClient` in `src/lib/api-helpers.ts`, `OPENROUTER_API_KEY`): used **only** for the photo/URL/text import flow — one transcription call per photo (ingredients + steps + headnote together) followed by a text-only structuring call, both on a single model, `qwen/qwen3.5-flash-02-23`, with `reasoning: { enabled: false }` on every call (the OpenRouter counterpart of Gemini's `thinkingBudget: 0`; without it, dense pages blow the OCR/structuring timeouts). The pipeline itself lives in `src/lib/services/parse-photo-core.ts` — free of Cloudflare/Astro imports, exactly like `grocery-core.ts`, so the self-hosted VM worker can run it for bulk photo import (see `BULK-PHOTO-IMPORT-PLAN.md`). `pages/api/parse-recipe.ts` is only the NDJSON streaming wrapper around it; put new pipeline behaviour in the core, never in the route.
 - **Gemini** (`initGeminiClient` in `src/lib/api-helpers.ts`, `@google/genai`, `GEMINI_API_KEY`, model `gemini-2.5-flash`): used for everything else — `executeAiParse()` in `src/lib/services/ai-parser.ts` (background enhancement + manual "Refresh AI Data"), grocery list generation. Pinned to `@google/genai@1.34.0` — a later version breaks the Cloudflare Workers runtime; verify Workers compatibility before bumping.
   - `style='strict'`: the initial import — fast transcription so the user can save right away.
   - `style='enhanced'`: a background **Total Reparse** from the original `sourceUrl`/`sourceImage` (not a text-to-text touch-up) that restructures the recipe into "Kenji-style" scientific step grouping, descriptive paragraphs, and standardized units — this is the "Smart View" toggle on the recipe overview.
@@ -162,10 +162,10 @@ src/
 │       ├── week/             # planned
 │       ├── uploads.ts        # server-side Storage proxy
 │       ├── bootstrap.ts      # consolidated boot-time data (see PERFORMANCE-PLAN.md)
-│       ├── parse-recipe.ts   # OpenRouter photo-scan OCR pipeline
+│       ├── parse-recipe.ts   # NDJSON wrapper around services/parse-photo-core.ts
 │       └── generate-grocery-list.ts  # Gemini grocery list generation
 ├── lib/
-│   ├── services/              # ai-parser, extract-images, grocery-service, recipe-enhancement-job, recipe-merge, ai-timeout, grocery-progress
+│   ├── services/              # ai-parser, parse-photo-core, extract-images, grocery-service, grocery-core, recipe-merge, ai-timeout, grocery-progress
 │   ├── recipeStore.ts / weekStore.ts / familyStore.ts / authStore.ts
 │   ├── firebase-client.ts / firebase-server.ts / firebase-rest.ts
 │   ├── grocery-logic.ts / grocery-utils.ts
