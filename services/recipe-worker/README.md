@@ -1,31 +1,42 @@
 # Chefboard background AI worker
 
-A small, self-hosted Node service that runs Chefboard's two slow AI jobs —
-**recipe enhancement** and **grocery-list generation** — off the Cloudflare
+A small, self-hosted Node service that runs Chefboard's slow AI jobs —
+**grocery-list generation** and **bulk photo import** — off the Cloudflare
 request path.
 
 ## Why this exists
 
-Cloudflare Pages kills `ctx.waitUntil` background work ~30 seconds after the
-response is sent, silently and without running `catch` blocks. Both AI jobs can
-legitimately take longer than that on a dense recipe, which left docs stranded
-in `processing` forever. This worker is a normal long-lived Node process with no
-such ceiling: it watches Firestore for queued jobs, claims each one, runs the
-**same compute cores** the Cloudflare code uses (`apps/recipes/src/lib/services/
-enhancement-core.ts` and `grocery-core.ts`), and writes the result back.
+Two separate reasons, both about time.
 
-See `BACKGROUND-JOBS-VM-PLAN.md` at the repo root for the full four-phase
-migration plan and rollback steps. **This service (Phase 2) does not touch the
-Cloudflare app** — deploying it changes nothing in production until the Phase 3
-cutover flips the endpoints to enqueue `pending` docs instead of running the
-work inline.
+**Grocery generation**: Cloudflare Pages kills `ctx.waitUntil` background work
+~30 seconds after the response is sent, silently and without running `catch`
+blocks. Generation can legitimately take longer than that, which left docs
+stranded in `processing` forever.
+
+**Photo import**: phone browsers suspend JavaScript and cancel in-flight
+`fetch` calls when the user switches apps or the screen locks, and a fifteen-photo
+batch takes minutes. Emilio's ask was explicitly "start it, go do something else
+on my phone, come back to a review flow" — which rules out doing the work in the
+browser at any batch size, regardless of Cloudflare.
+
+This worker is a normal long-lived Node process with no such ceiling: it watches
+Firestore for queued jobs, claims each one, runs the **same compute cores** the
+Cloudflare code uses (`apps/recipes/src/lib/services/grocery-core.ts` and
+`parse-photo-core.ts`), and writes the result back.
+
+See `BACKGROUND-JOBS-VM-PLAN.md` at the repo root for the original migration
+plan, and `BULK-PHOTO-IMPORT-PLAN.md` for the photo-import feature.
 
 ## How it works
 
-- **Two Firestore listeners** (`src/index.ts`): `recipes` where
-  `enhancementStatus == 'pending'`, and `grocery_lists` where
-  `status == 'pending'`. `onSnapshot` replays the current backlog on startup, so
-  a restart picks up anything queued while the worker was down.
+- **Two Firestore listeners** (`src/index.ts`): `grocery_lists` and
+  `import_jobs`, both where `status == 'pending'`. `onSnapshot` replays the
+  current backlog on startup, so a restart picks up anything queued while the
+  worker was down.
+- **Concurrency gate on imports** (`src/concurrency.ts`): grocery lists arrive
+  one at a time, but a photo batch arrives all at once. Import jobs go through a
+  limiter (default 3) so a fifteen-photo batch can't put fifteen parse pipelines
+  on a 4-vCPU box. Three in parallel were measured clean against OpenRouter.
 - **Transactional claim** (`src/firestore-store.ts`): each job is claimed in a
   `runTransaction` that flips the doc to `processing` and stamps a
   `*ClaimedAt` timestamp, returning the payload only if it was still `pending`.
@@ -55,10 +66,14 @@ doing nothing.
 
 | Var | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `FIREBASE_SERVICE_ACCOUNT` | yes | — | The service-account JSON (one line), same credential the Cloudflare REST client uses. |
-| `GEMINI_API_KEY` | yes | — | Gemini key for enhancement + grocery calls. |
-| `WORKER_ORIGIN` | no | `https://emilioharrison.com` | Absolute origin used to resolve relative `sourceImage` paths during enhancement. |
-| `WORKER_JOB_TIMEOUT_MS` | no | `120000` | Per-job Gemini budget. Generous — no waitUntil ceiling here. |
+| `FIREBASE_SERVICE_ACCOUNT` | yes | — | The service-account JSON (one line), same credential the Cloudflare REST client uses. Also what reads uploaded photos out of Storage. |
+| `GEMINI_API_KEY` | yes | — | Gemini key for grocery calls. |
+| `OPENROUTER_API_KEY` | yes | — | OpenRouter key for photo-import parsing. A deliberate deviation from `BACKGROUND-JOBS-VM-PLAN.md` ("that stays on Cloudflare") — photo import is the one job that needs it. |
+| `WORKER_STORAGE_BUCKET` | no | `{project_id}.firebasestorage.app` | Bucket holding uploaded photos. Derived from the service account unless set. |
+| `WORKER_ORIGIN` | no | `https://emilioharrison.com` | Absolute origin used to resolve relative `sourceImage` paths. |
+| `WORKER_JOB_TIMEOUT_MS` | no | `120000` | Per-job Gemini budget for grocery. Generous — no waitUntil ceiling here. |
+| `WORKER_IMPORT_JOB_TIMEOUT_MS` | no | `300000` | Whole-job budget for one photo import, retry included. Separate because 120s is genuinely too tight: one measured parse took 108.1s. Keep it well under the reaper deadline. |
+| `WORKER_IMPORT_CONCURRENCY` | no | `3` | How many import jobs run at once. |
 | `WORKER_REAPER_DEADLINE_MS` | no | `600000` | A doc in `processing` longer than this is treated as abandoned. |
 | `WORKER_REAPER_INTERVAL_MS` | no | `60000` | How often the reaper sweeps. |
 
@@ -161,6 +176,25 @@ npm run test        # vitest (jobs + reaper, in-memory fakes — no network)
 npm run lint
 ```
 
-`jobs.ts` and `reaper.ts` are pure and fully covered by fakes; `firestore-store.ts`
-and `index.ts` are the thin firebase-admin/onSnapshot adapters exercised in
-staging against a real project.
+`jobs.ts`, `reaper.ts` and `concurrency.ts` are pure and fully covered by fakes;
+`firestore-store.ts`, `photos.ts` and `index.ts` are the thin
+firebase-admin/onSnapshot adapters exercised against a real project.
+
+### Photo import: what it touches
+
+| Collection | Written by | Contents |
+| --- | --- | --- |
+| `import_batches/{id}` | Cloudflare enqueue, then this worker | `total`/`completed`/`failed` counters and a `status` of `processing` → `complete` (nothing failed), `partial` (some did) or `failed` (none succeeded). These counters drive the badge. |
+| `import_jobs/{id}` | Cloudflare enqueue, then this worker | `photoKeys` in, `parsedRecipe` out. Several keys only for a manually grouped multi-page spread. |
+
+The parsed recipe is stored **on the job**, never in `recipes` — a recipe is
+created only when the user reviews and accepts it. That is what keeps unreviewed
+transcription out of the library, which matters more now that background
+enhancement is gone and nothing else cleans up after a bad read.
+
+Each job gets one retry: per-job failure is normal rather than exceptional here
+(the spike behind this feature watched structuring fail on 2 of 3 attempts for
+one dense page), and at roughly $0.001 a photo a second attempt is far cheaper
+than making someone re-photograph a page. Both attempts share the one job
+budget, so a job can never outlive the reaper's abandonment deadline and keep
+running after the reaper has already failed it.

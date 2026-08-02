@@ -1,10 +1,15 @@
 # Plan: Bulk photo import — many photos, one recipe each, in the background
 
-Status: **DRAFT — de-risked, not started.** Written 2026-08-01 from a design conversation with
-Emilio. Decisions taken during that conversation are recorded below as decided; everything else is
-proposal. The risks the first draft listed as "verify before building" were then **actually
-measured on the VM** — see "Spike results" — which killed one assumption, confirmed two, and
-surfaced a new blocker (structuring flakiness) that reordered the phases.
+Status: **IN PROGRESS — the server side is built and verified; nothing is reachable from the app
+yet.** Phases 0–3 are done (see "Phases"): the parse pipeline is shared, reasoning is off, and the
+VM worker parses `import_jobs` end-to-end. Phases 4–6 — the Cloudflare enqueue endpoint and the
+two client pieces — are still proposal, so no user can currently create a batch.
+
+Written 2026-08-01 from a design conversation with Emilio. Decisions taken during that
+conversation are recorded below as decided; everything else is proposal. The risks the first draft
+listed as "verify before building" were then **actually measured on the VM** — see "Spike
+results" — which killed one assumption, confirmed two, and surfaced a new blocker (structuring
+flakiness) that reordered the phases.
 
 ## The requirement, and the one constraint that shapes everything
 
@@ -407,16 +412,44 @@ the flakiness above means real usage is roughly 1.3× the photo count.
      required; omitting it type-errors but still passes vitest.
 
 2. **Disable reasoning on the OpenRouter calls, then retry + import-specific timeout.**
-   The reasoning half **shipped separately in #112** ahead of the extraction, as this said it
-   should; per-job retry and the import-specific timeout are still outstanding and belong with
-   phase 3. Original wording follows. Add `reasoning: { enabled: false }` to the OCR and structuring calls, matching
+   **Done.** The reasoning half shipped separately in #112 ahead of the extraction, as this said
+   it should; per-job retry and the import-specific timeout landed with phase 3 (a whole-job
+   budget of 300s and one automatic retry per job). Original wording follows. Add `reasoning: { enabled: false }` to the OCR and structuring calls, matching
    what the Gemini path already does with `thinkingBudget: 0`. Validate across a sample of real
    library photos (not just the empanadas page) comparing transcription against the printed page,
    since finding 7's evidence is three runs on one recipe. Expect: ~2–4× faster imports, the
    timeout failures gone, and more faithful transcription. Then add per-job retry and the
    import-specific timeout as the safety net.
-3. **Worker import job** — `openai` dep, types, store methods, runner, config, concurrency cap of
-   3, reaper coverage.
+3. ~~**Worker import job**~~ — **done 2026-08-02.** `openai` dep, types, store methods, runner,
+   config, concurrency cap, reaper coverage. The worker now listens on `import_jobs`, claims each
+   pending doc transactionally, reads its photos out of Firebase Storage with the service account
+   it already held, runs `parsePhotosToRecipe`, and writes the result to the job doc.
+
+   Verified end-to-end against the real bucket and the real key, not just against fakes:
+   a real uploaded page parsed in **23.3s** (13 ingredients, 8 steps, plausible title), the job
+   landed `complete`/`unreviewed` with its claim stamp cleared, and the batch moved to
+   `complete 1/0`. The failure path was run too — a missing photo key fails the job in 0.8s with
+   "Photo is no longer in storage (…)" and moves the batch to `failed 0/1`, rather than blaming
+   the model for a storage problem.
+
+   Decisions made while building it:
+   - **One job budget covering both attempts** (`WORKER_IMPORT_JOB_TIMEOUT_MS`, default 300s),
+     not one per attempt. Two 5-minute attempts could outlive the reaper's 10-minute deadline,
+     and a job the reaper has already failed must not still be running.
+   - **`partialFailure` is lifted off the recipe** onto the job doc, so it can't ride along into
+     the saved recipe when the card is accepted.
+   - **Batch counters move inside the job's transaction.** Three jobs finishing at once (the
+     concurrency cap) would otherwise race on a read-modify-write of the batch, and the badge
+     would disagree with the jobs it counts. The reaper goes through the same finisher, so an
+     abandoned job can't leave its batch stuck at `processing` forever.
+   - **An empty `photoKeys` fails at claim time** rather than being carried through the pipeline
+     to reach the same conclusion more slowly.
+
+   Not done here, and still owed: the **"import service offline"** state. Jobs sit `pending`
+   forever if the worker is down — the reaper only rescues stuck _claims_, not a worker that
+   never claims. That needs a heartbeat doc or a staleness threshold on `createdAt`, and it is
+   most naturally built with the client work that has to display it.
+
 4. **Cloudflare enqueue endpoint** + batch rate limit.
 5. **Client: selection, grouping, submit.**
 6. **Client: badge + review flow.**
