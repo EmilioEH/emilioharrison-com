@@ -374,11 +374,27 @@ the flakiness above means real usage is roughly 1.3× the photo count.
 
 0. ~~Spikes~~ — **done 2026-08-01**, results above. Storage access, Node compatibility, timings,
    concurrency, cost and the flakiness rate are all now measured rather than assumed.
-1. **Extract `parse-photo-core.ts`.** No behaviour change; the Cloudflare route uses it. Ship and
-   verify single-photo import is untouched. Nothing else starts until this is stable. Smaller than
-   originally scoped — spike 2 showed the functions already run unmodified in Node.
+1. ~~**Extract `parse-photo-core.ts`**~~ — **done 2026-08-01.** `src/lib/services/parse-photo-core.ts`
+   now holds every model call, prompt and validation step; `api/parse-recipe.ts` is auth, rate
+   limiting and the NDJSON wrapper. No behaviour change on the single-photo path — the prompt a
+   lone photo gets is byte-identical, and the streamed `_p: 1/2/3` + `_t` contract is unchanged.
 
-   Starting facts for whoever picks this up, all verified 2026-08-01:
+   What it exports: `transcribePhotos(client, photos[])` (one call per page, concatenated in page
+   order — a lone photo skips the continuation-page wording entirely), `structureRecipeFromOcr`,
+   `structureRecipeFromText`, and `parsePhotosToRecipe(client, photos)` for callers with no stream
+   to feed — that last one is what phase 3's worker job calls. It throws `PhotoParseError` with a
+   `stage` of `transcribe` or `structure` rather than returning half a recipe.
+
+   Two deviations from what this section originally proposed:
+   - The signature is `parsePhotosToRecipe(...): Promise<ParsedRecipeFields>`, not `Promise<Recipe>`.
+     What comes back is the model's fields after normalization — no id, no createdBy, no timestamps
+     — so calling it a `Recipe` would have been a lie the worker then had to work around.
+   - Multi-page grouping landed here rather than waiting for phase 5, because it is three lines
+     inside the transcription loop and the alternative is a second entry point later. The client
+     still can't send a group; nothing calls it with more than one photo yet.
+
+   Starting facts from before the extraction, all verified 2026-08-01 (`runImageOcrPhases` and
+   `buildImageRecipeStream` are the names the pre-extraction code used):
    - `runImageOcrPhases`, `buildImageRecipeStream` and `buildTextRecipeStream` are already exported
      from `parse-recipe.ts`, and all three route through `runPhase`/`runPhaseAttempt`.
    - `createOpenRouterClient` (`api-helpers.ts:93-95`) already falls back to
@@ -391,8 +407,9 @@ the flakiness above means real usage is roughly 1.3× the photo count.
      required; omitting it type-errors but still passes vitest.
 
 2. **Disable reasoning on the OpenRouter calls, then retry + import-specific timeout.**
-   **This should ship first and separately — it is a fix to today's photo import, not bulk-import
-   groundwork.** Add `reasoning: { enabled: false }` to the OCR and structuring calls, matching
+   The reasoning half **shipped separately in #112** ahead of the extraction, as this said it
+   should; per-job retry and the import-specific timeout are still outstanding and belong with
+   phase 3. Original wording follows. Add `reasoning: { enabled: false }` to the OCR and structuring calls, matching
    what the Gemini path already does with `thinkingBudget: 0`. Validate across a sample of real
    library photos (not just the empanadas page) comparing transcription against the printed page,
    since finding 7's evidence is three runs on one recipe. Expect: ~2–4× faster imports, the
