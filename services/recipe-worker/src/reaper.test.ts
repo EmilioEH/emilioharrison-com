@@ -22,14 +22,40 @@ describe('isStale', () => {
 })
 
 describe('sweepStuckJobs', () => {
+  it('sweeps both queues', async () => {
+    const store = {
+      reapStuckGrocery: vi.fn(async () => 1),
+      reapStuckImports: vi.fn(async () => 2),
+    } as unknown as WorkerStore
+
+    await sweepStuckJobs(store, 600_000, 1234)
+
+    expect(store.reapStuckGrocery).toHaveBeenCalledWith(600_000, 1234)
+    expect(store.reapStuckImports).toHaveBeenCalledWith(600_000, 1234)
+  })
+
   it('does not throw when the reaper query fails', async () => {
     const store = {
       reapStuckGrocery: vi.fn(async () => {
         throw new Error('firestore blip')
       }),
+      reapStuckImports: vi.fn(async () => 0),
     } as unknown as WorkerStore
 
     await expect(sweepStuckJobs(store, 600_000, Date.now())).resolves.toBeUndefined()
     expect(store.reapStuckGrocery).toHaveBeenCalledWith(600_000, expect.any(Number))
+  })
+
+  it('still sweeps imports when the grocery sweep throws — one queue must not strand the other', async () => {
+    const store = {
+      reapStuckGrocery: vi.fn(async () => {
+        throw new Error('firestore blip')
+      }),
+      reapStuckImports: vi.fn(async () => 1),
+    } as unknown as WorkerStore
+
+    await sweepStuckJobs(store, 600_000, Date.now())
+
+    expect(store.reapStuckImports).toHaveBeenCalled()
   })
 })

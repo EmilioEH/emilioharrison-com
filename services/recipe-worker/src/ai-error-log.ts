@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto'
  * ai-retry.ts) was previously visible only in journald, never in the queryable log.
  */
 
-export type AiFeature = 'enhancement' | 'grocery'
+export type AiFeature = 'photo-import' | 'enhancement' | 'grocery'
 
 /**
  * Records an AI-pipeline failure. Fire-and-forget and guaranteed never to throw — an observability
