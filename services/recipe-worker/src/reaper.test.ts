@@ -22,15 +22,14 @@ describe('isStale', () => {
 })
 
 describe('sweepStuckJobs', () => {
-  it('invokes both reaper queries and does not throw when one fails', async () => {
+  it('does not throw when the reaper query fails', async () => {
     const store = {
-      reapStuckEnhancements: vi.fn(async () => 2),
       reapStuckGrocery: vi.fn(async () => {
         throw new Error('firestore blip')
       }),
     } as unknown as WorkerStore
 
     await expect(sweepStuckJobs(store, 600_000, Date.now())).resolves.toBeUndefined()
-    expect(store.reapStuckEnhancements).toHaveBeenCalledWith(600_000, expect.any(Number))
+    expect(store.reapStuckGrocery).toHaveBeenCalledWith(600_000, expect.any(Number))
   })
 })
