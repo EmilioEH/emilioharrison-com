@@ -38,6 +38,15 @@ export function pageNumberAt(photos: BulkPhoto[], index: number): number {
   return page
 }
 
+/** What to call the photo at `index` — the same wording on its card and in the full-size viewer,
+ * so paging through the photos never renames what you are looking at. */
+export function photoLabelAt(photos: BulkPhoto[], index: number): string {
+  const recipeNumber = recipeNumberAt(photos, index)
+  return photos[index].joinedWithPrevious && index > 0
+    ? `Page ${pageNumberAt(photos, index)} of recipe ${recipeNumber}`
+    : `Recipe ${recipeNumber}`
+}
+
 /** Removing a photo must not leave the next one joined to whatever slid up into its place. */
 export function removePhotoAt(photos: BulkPhoto[], index: number): BulkPhoto[] {
   const next = photos.filter((_, i) => i !== index)

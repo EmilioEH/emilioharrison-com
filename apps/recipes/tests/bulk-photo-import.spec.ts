@@ -59,6 +59,37 @@ test.describe('Bulk photo import', () => {
     expect(submitted[0].groups[0]).toHaveLength(2)
   })
 
+  test('opens a photo full size and groups from there', async ({ page }) => {
+    // Deciding whether a photo is a second page or a new recipe means reading it, so the
+    // arranging screen has to let you see the photo and act on it without leaving.
+    await page.route('**/api/imports', async (route) => {
+      await route.fulfill({ json: { jobs: [], summary: { needsReview: 0, inProgress: 0 } } })
+    })
+
+    await page.goto('/')
+    await page.getByRole('button', { name: /Add Recipe/ }).click()
+    await page
+      .locator('input[type="file"]')
+      .first()
+      .setInputFiles([photo('page1.jpg'), photo('page2.jpg'), photo('other.jpg')])
+
+    await page.getByRole('button', { name: /See recipe 1 full size/ }).click()
+    await expect(page.getByText('Photo 1 of 3')).toBeVisible()
+    // Nothing precedes the first photo, so there is nothing to join it to.
+    await expect(page.getByRole('button', { name: /Same recipe as the photo before/ })).toHaveCount(
+      0,
+    )
+
+    await page.getByRole('button', { name: 'Next photo' }).click()
+    await expect(page.getByText('Photo 2 of 3')).toBeVisible()
+
+    await page.getByRole('button', { name: /Same recipe as the photo before/ }).click()
+    await page.getByRole('button', { name: 'Close image viewer' }).click()
+
+    // The grouping made in the viewer is the real one: three photos, two recipes.
+    await expect(page.getByRole('button', { name: /Import 2 recipes/ })).toBeVisible()
+  })
+
   test('a single photo still imports in-request, unchanged', async ({ page }) => {
     let batchCalls = 0
     await page.route('**/api/imports', async (route) => {

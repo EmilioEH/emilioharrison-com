@@ -67,6 +67,14 @@ closed. See `BULK-PHOTO-IMPORT-PLAN.md`.
 - **Grouping is manual**: a photo can be marked as the continuation page of the one above it. Not
   model-inferred — a wrong auto-grouping silently welds two recipes together and stays invisible
   until someone cooks from it.
+- **The arranging screen has to make that decision possible**: telling a second page from a new
+  recipe means reading the photo, so each card carries a portrait, top-anchored thumbnail (a
+  centred square crop discards the title, which is the identifying part) and opens the shared
+  `ui/ImageViewer` full size on tap. The viewer pages through the whole stack — arrows, arrow
+  keys, and a one-finger swipe that is only active at fit scale, where it isn't already a pan —
+  and carries the "Same recipe" toggle in its footer, so the grouping is decided while looking at
+  the page rather than from memory afterwards. Card and viewer share one label via `photoLabelAt`
+  in `importer/grouping.ts`.
 - **Results are held on the job, not in `recipes`**: a recipe is created only when the user
   reviews and accepts a card, which is what keeps unreviewed transcription out of the library.
 - **Endpoints**: `POST /api/imports` (enqueue, rate-limited to 6 batches/hour),

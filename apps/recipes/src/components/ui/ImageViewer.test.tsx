@@ -17,9 +17,28 @@ function getImage() {
 
 /** Pinches from `fromGap` to `toGap` pixels apart, horizontally centred, then lifts. */
 function pinch(target: Element, fromGap: number, toGap: number) {
-  fireEvent.touchStart(target, touches([{ x: 0, y: 0 }, { x: fromGap, y: 0 }]))
-  fireEvent.touchMove(target, touches([{ x: 0, y: 0 }, { x: toGap, y: 0 }]))
+  fireEvent.touchStart(
+    target,
+    touches([
+      { x: 0, y: 0 },
+      { x: fromGap, y: 0 },
+    ]),
+  )
+  fireEvent.touchMove(
+    target,
+    touches([
+      { x: 0, y: 0 },
+      { x: toGap, y: 0 },
+    ]),
+  )
   fireEvent.touchEnd(target, touches([]))
+}
+
+/** Drags one finger from `from` to `to` and lifts, as a swipe between photos does. */
+function swipe(target: Element, from: { x: number; y: number }, to: { x: number; y: number }) {
+  fireEvent.touchStart(target, touches([from]))
+  fireEvent.touchMove(target, touches([to]))
+  fireEvent.touchEnd(target, { changedTouches: [{ clientX: to.x, clientY: to.y }] })
 }
 
 describe('ImageViewer pinch-zoom', () => {
@@ -88,5 +107,87 @@ describe('ImageViewer pinch-zoom', () => {
     pinch(surface, 300, 280)
 
     expect(getImage().style.transform).toContain('translate(40px, 25px)')
+  })
+})
+
+describe('ImageViewer paging', () => {
+  const setup = (props: Partial<React.ComponentProps<typeof ImageViewer>> = {}) => {
+    const onPrev = vi.fn()
+    const onNext = vi.fn()
+    const onClose = vi.fn()
+    render(
+      <ImageViewer
+        isOpen
+        imageUrl="https://example.com/recipe.jpg"
+        alt="Recipe photo"
+        onClose={onClose}
+        onPrev={onPrev}
+        onNext={onNext}
+        {...props}
+      />,
+    )
+    const surface = document.querySelector('.touch-none') as HTMLElement
+    return { surface, onPrev, onNext, onClose }
+  }
+
+  it('shows only the arrows it was given a handler for', () => {
+    const { onNext } = setup({ onPrev: undefined })
+
+    expect(screen.queryByLabelText('Previous photo')).toBeNull()
+    fireEvent.click(screen.getByLabelText('Next photo'))
+    expect(onNext).toHaveBeenCalled()
+  })
+
+  it('does not close the viewer when an arrow is tapped', () => {
+    // The arrow sits on the backdrop, whose whole job is to close on click.
+    const { onClose } = setup()
+
+    fireEvent.click(screen.getByLabelText('Next photo'))
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('pages back and forward on a horizontal swipe', () => {
+    const { surface, onPrev, onNext } = setup()
+
+    swipe(surface, { x: 200, y: 100 }, { x: 40, y: 110 })
+    expect(onNext).toHaveBeenCalledTimes(1)
+
+    swipe(surface, { x: 40, y: 100 }, { x: 200, y: 110 })
+    expect(onPrev).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores a short drag and a vertical one', () => {
+    const { surface, onPrev, onNext } = setup()
+
+    swipe(surface, { x: 100, y: 100 }, { x: 120, y: 100 }) // too short to be intentional
+    swipe(surface, { x: 100, y: 40 }, { x: 130, y: 260 }) // mostly vertical
+
+    expect(onNext).not.toHaveBeenCalled()
+    expect(onPrev).not.toHaveBeenCalled()
+  })
+
+  it('pans instead of paging once the photo is zoomed in', () => {
+    const { surface, onNext } = setup()
+
+    pinch(surface, 100, 300)
+    swipe(surface, { x: 200, y: 100 }, { x: 40, y: 100 })
+
+    expect(onNext).not.toHaveBeenCalled()
+  })
+
+  it('does not close the viewer on the click that follows a swipe', () => {
+    // Touch devices fire a click after the gesture; without swallowing it, every swipe would
+    // land on the backdrop and dismiss the viewer the user was paging through.
+    const { surface, onClose } = setup()
+
+    swipe(surface, { x: 200, y: 100 }, { x: 40, y: 100 })
+    fireEvent.click(surface)
+
+    expect(onClose).not.toHaveBeenCalled()
+
+    // A plain tap after that still closes.
+    fireEvent.click(surface)
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 })
