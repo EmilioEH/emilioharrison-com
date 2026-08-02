@@ -2,13 +2,13 @@
  * Shared "is this worth retrying" policy for AI provider calls (OpenRouter, Gemini).
  *
  * Before this module existed, the same error-text heuristic and timeout gate were reinvented
- * per call site: enhancement-core.ts had its own `isTransientAiError`/retry wrapper, while photo
+ * per call site: background enhancement had its own `isTransientAiError`/retry wrapper, while photo
  * OCR (parse-recipe.ts), the URL/JSON-LD/Reddit/text import path, and grocery generation had none
  * at all — despite the exact same "the call never really got going" failure mode showing up in
  * production on all of them.
  *
  * NOTE: must stay free of Cloudflare/Astro-only imports — this is reachable from
- * enhancement-core.ts and grocery-core.ts, which the self-hosted VM worker imports and runs in
+ * grocery-core.ts, which the self-hosted VM worker imports and runs in
  * plain Node.
  */
 

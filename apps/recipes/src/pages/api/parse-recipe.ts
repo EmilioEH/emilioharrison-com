@@ -395,7 +395,7 @@ export async function runImageOcrPhases(
 
   // Retried only when the page produced no steps — the model being inconsistent rather than the
   // photo being unreadable, which is the same pattern handled in grocery-core and
-  // enhancement-core. A normal import still costs a single call.
+  // grocery-core. A normal import still costs a single call.
   if (!hasOcrSteps(page)) {
     console.warn('[ParseRecipe] Page transcription produced no steps — retrying once')
     page = (await readPage()) ?? page

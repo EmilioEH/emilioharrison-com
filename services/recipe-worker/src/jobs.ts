@@ -1,59 +1,9 @@
-import type {
-  GoogleGenAI,
-  WorkerStore,
-  ComputeEnhanced,
-  ComputeGrocery,
-  JobOutcome,
-} from './types'
+import type { GoogleGenAI, WorkerStore, ComputeGrocery, JobOutcome } from './types'
 import type { LogAiError } from './ai-error-log'
 
 /**
- * Runs one background Enhancement job end-to-end for a recipe id: claim it, run the shared
- * compute core, and persist the result — or a loud `error` status — back to Firestore. Never
- * throws (the listener loop must survive one bad job), and returns the outcome for logging.
- *
- * Mirrors the Cloudflare orchestrator (recipe-enhancement-job.ts), but with no waitUntil budget:
- * the injected `jobTimeoutMs` is generous because a real Node process has no ~30s ceiling.
- */
-export async function runEnhancementForDoc(
-  deps: {
-    store: WorkerStore
-    gemini: GoogleGenAI
-    origin: string
-    jobTimeoutMs: number
-    computeEnhanced: ComputeEnhanced
-    logAiError: LogAiError
-  },
-  recipeId: string,
-): Promise<JobOutcome> {
-  const recipe = await deps.store.claimEnhancement(recipeId).catch((e) => {
-    console.error(`[worker] claimEnhancement(${recipeId}) failed:`, e)
-    return null
-  })
-  if (!recipe) return 'skipped'
-
-  try {
-    const updated = await deps.computeEnhanced(deps.gemini, recipe, deps.origin, {
-      timeoutMs: deps.jobTimeoutMs,
-    })
-    await deps.store.completeEnhancement(recipeId, updated)
-    console.log(`[worker] enhancement complete: ${recipeId}`)
-    return 'done'
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to enhance recipe'
-    console.error(`[worker] enhancement failed: ${recipeId} — ${message}`)
-    deps.logAiError('enhancement', error, { context: { recipeId } })
-    await deps.store
-      .failEnhancement(recipeId, message)
-      .catch((e) => console.error(`[worker] failEnhancement(${recipeId}) write failed:`, e))
-    return 'failed'
-  }
-}
-
-/**
- * Runs one grocery-generation job end-to-end for a `grocery_lists` doc id. Same shape as the
- * enhancement job; progress updates stream to Firestore via the store so the client's existing
- * subscription shows granular status.
+ * Runs one grocery-generation job end-to-end for a `grocery_lists` doc id. Progress updates
+ * stream to Firestore via the store so the client's existing subscription shows granular status.
  */
 export async function runGroceryForDoc(
   deps: {

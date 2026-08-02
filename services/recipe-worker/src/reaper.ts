@@ -25,10 +25,9 @@ export async function sweepStuckJobs(
   now: number = Date.now(),
 ): Promise<void> {
   try {
-    const enhanced = await store.reapStuckEnhancements(deadlineMs, now)
     const grocery = await store.reapStuckGrocery(deadlineMs, now)
-    if (enhanced > 0 || grocery > 0) {
-      console.warn(`[worker] reaper flipped ${enhanced} enhancement + ${grocery} grocery stuck job(s) to error`)
+    if (grocery > 0) {
+      console.warn(`[worker] reaper flipped ${grocery} stuck grocery job(s) to error`)
     }
   } catch (e) {
     console.error('[worker] reaper sweep failed:', e)
