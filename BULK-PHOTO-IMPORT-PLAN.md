@@ -490,6 +490,16 @@ the flakiness above means real usage is roughly 1.3× the photo count.
 Phase 2 is newly promoted: the flakiness spike turned "nice to have" into "the feature does not
 work acceptably without it".
 
+## Added after shipping
+
+**Time estimate (2026-08-02).** Asked for during the first live test. `describeTimeRemaining` in
+`import-batches.ts` derives it from two measured numbers — ~23s per photo end to end, three at a
+time — rounded up to 30s per photo so the estimate comes in early rather than late. Shown on the
+"being read" panel and again on the review screen while work is outstanding. Deliberately coarse
+("about 3 minutes", never a ticking countdown): a countdown invites the user to sit and watch it,
+which is the opposite of the point. **If `WORKER_IMPORT_CONCURRENCY` is retuned, the constant in
+`import-batches.ts` has to move with it** or the estimate silently drifts.
+
 ## Explicitly out of scope
 
 - Model-inferred photo grouping (decided against).

@@ -8,6 +8,8 @@ import {
   MAX_BATCH_PHOTOS,
   MAX_GROUP_PHOTOS,
   PENDING_STALE_MS,
+  estimateSecondsRemaining,
+  describeTimeRemaining,
 } from './import-batches'
 import type { ImportJob } from '../types'
 
@@ -156,5 +158,29 @@ describe('needsReview / sortJobsForReview', () => {
     const newer = job({ id: 'new', createdAt: '2026-08-02T10:00:00.000Z' })
 
     expect(sortJobsForReview([older, newer]).map((j) => j.id)).toEqual(['new', 'old'])
+  })
+})
+
+describe('time estimates', () => {
+  it('is one round of work for anything up to the worker concurrency', () => {
+    // Three at a time, so one, two or three recipes all take one pass.
+    expect(estimateSecondsRemaining(1)).toBe(30)
+    expect(estimateSecondsRemaining(3)).toBe(30)
+  })
+
+  it('scales by rounds, not by recipe', () => {
+    expect(estimateSecondsRemaining(4)).toBe(60)
+    expect(estimateSecondsRemaining(15)).toBe(150)
+  })
+
+  it('is nothing when there is nothing left', () => {
+    expect(estimateSecondsRemaining(0)).toBe(0)
+    expect(describeTimeRemaining(0)).toBe('')
+  })
+
+  it('describes the wait coarsely — a countdown would invite watching it', () => {
+    expect(describeTimeRemaining(1)).toBe('about a minute')
+    expect(describeTimeRemaining(3)).toBe('about a minute')
+    expect(describeTimeRemaining(15)).toBe('about 3 minutes')
   })
 })

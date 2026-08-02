@@ -52,6 +52,8 @@ test.describe('Bulk photo import', () => {
     await page.getByRole('button', { name: /Import 2 recipes/ }).click()
 
     await expect(page.getByText(/are being read/)).toBeVisible()
+    // Measured, not decorative: three at a time at ~30s each.
+    await expect(page.getByText(/Should take about a minute/)).toBeVisible()
     expect(submitted).toHaveLength(1)
     expect(submitted[0].groups).toHaveLength(2)
     expect(submitted[0].groups[0]).toHaveLength(2)
