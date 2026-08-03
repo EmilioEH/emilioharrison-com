@@ -114,13 +114,60 @@ test.describe('Meal Planner Feature', () => {
     await expect(page.locator('[role="dialog"]')).toBeHidden()
   })
 
-  test('tapping Add to Week again removes it from the week', async ({ page }) => {
+  test('the add button reflects the state, and tapping it again removes the recipe', async ({
+    page,
+  }) => {
     const card = page.locator('[data-testid="recipe-card-1"]')
 
-    await card.getByLabel('Add to Week').click()
-    await expect(card.getByText('This week')).toBeVisible()
+    // Before: the button offers to add.
+    await expect(card.getByLabel('Add to week')).toBeVisible()
 
-    await card.getByLabel('Add to Week').click()
+    await card.getByLabel('Add to week').click()
+
+    // After: the badge appears *and* the button itself now says the recipe is in the week —
+    // the tap has a visible result without going to look at the plan.
+    await expect(card.getByText('This week')).toBeVisible()
+    await expect(card.getByLabel('Remove from week')).toBeVisible()
+
+    await card.getByLabel('Remove from week').click()
+    await expect(card.getByText('This week')).toBeHidden()
+    await expect(card.getByLabel('Add to week')).toBeVisible()
+  })
+
+  test('adding to next week shows the "Next week" badge and the tab agrees', async ({ page }) => {
+    // Switch the planner to next week from the library itself — the chip is the only place in
+    // the library that says which week the `+` adds to, and the only way to change it.
+    await page.getByTestId('planning-week-chip').click()
+    await page.getByRole('button', { name: /Next Week/i }).click()
+
+    await expect(page.getByTestId('planning-week-chip')).toContainText('Next week')
+
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await card.getByLabel('Add to week').click()
+
+    // The badge names the week it went to. It used to be filtered out entirely for any week
+    // other than the current one, so this add produced no visible response at all.
+    await expect(card.getByText('Next week')).toBeVisible()
+    await expect(card.getByLabel('Remove from week')).toBeVisible()
+
+    // ...and the bottom tab stops claiming "This Week" while pointing at next week.
+    await expect(page.getByRole('button', { name: 'Next Week', exact: true })).toBeVisible()
+  })
+
+  test('a failed add puts the button back', async ({ page }) => {
+    // The optimistic flip has to be undone when the server refuses, or the card lies.
+    await page.route(/api\/recipes\/[^/]+\/week-plan/, async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({ status: 500, json: { error: 'nope' } })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await card.getByLabel('Add to week').click()
+
+    await expect(card.getByLabel('Add to week')).toBeVisible()
     await expect(card.getByText('This week')).toBeHidden()
   })
 

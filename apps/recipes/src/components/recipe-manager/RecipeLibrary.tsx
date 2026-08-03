@@ -8,10 +8,12 @@ import {
   allPlannedRecipes,
   getPlannedWeeksForRecipe,
   removeRecipeFromWeek,
+  weekState,
 } from '../../lib/weekStore'
 import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 import { RecipeCard } from './RecipeCard'
 import { CategoryPillBar } from './CategoryPillBar'
+import { PlanningWeekChip } from './PlanningWeekChip'
 
 // Animation Variants - only stagger first few items for perceived performance
 const containerVariants = {
@@ -42,6 +44,9 @@ interface RecipeLibraryProps {
   currentWeekStart?: string // current week context for management
   onShare?: (recipe: Recipe) => void
   isContainedScroll?: boolean // When true, use contained scroll sticky positioning
+  /** Opens the week picker. The library's `+` adds to whichever week is active, so the library
+   * has to be able to say which that is — and change it. */
+  onOpenCalendar?: () => void
 }
 
 declare global {
@@ -61,6 +66,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   currentWeekStart: _currentWeekStart,
   onShare,
   isContainedScroll = false,
+  onOpenCalendar,
 }) => {
   // Category filter state
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
@@ -68,6 +74,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   const [managementRecipeId, setManagementRecipeId] = useState<string | null>(null)
   // Subscribe to all planned recipes to trigger re-renders when plans change
   useStore(allPlannedRecipes)
+  const { activeWeekStart } = useStore(weekState)
 
   // Use custom hook for complex grouping logic
   const { groupedRecipes, getGroupTitle } = useRecipeGrouping(recipes, sort)
@@ -157,9 +164,14 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
           className="flex flex-col"
         >
           {/* Search Results Counter */}
-          <p className="px-6 py-3 text-sm font-medium text-muted-foreground">
-            Found {recipes.length} recipes
-          </p>
+          <div className="flex items-center justify-between gap-2 px-4 py-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Found {recipes.length} recipes
+            </p>
+            {onOpenCalendar && (
+              <PlanningWeekChip activeWeekStart={activeWeekStart} onOpenPicker={onOpenCalendar} />
+            )}
+          </div>
           <div className="flex flex-col gap-2 px-4 pb-8">
             {recipes.map((recipe) => (
               <RecipeCard
@@ -169,7 +181,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
-                plannedWeeks={getPlannedWeeksForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
+                // Every planned week, not just the current one. Filtering to `isCurrentWeek`
+                // threw the badge away for exactly the case where feedback matters most: adding
+                // to next week produced no visible response at all.
+                plannedWeeks={getPlannedWeeksForRecipe(recipe.id)}
+                activeWeekStart={activeWeekStart}
               />
             ))}
           </div>
@@ -195,6 +211,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
               isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : 'top-content-top'
             }
             isContainedScroll={isContainedScroll}
+            leading={
+              onOpenCalendar ? (
+                <PlanningWeekChip activeWeekStart={activeWeekStart} onOpenPicker={onOpenCalendar} />
+              ) : undefined
+            }
           />
 
           {/* Flat Recipe List */}
@@ -207,7 +228,11 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 onToggleThisWeek={onToggleThisWeek}
                 allowManagement={allowManagement}
                 onManage={(id) => setManagementRecipeId(id)}
-                plannedWeeks={getPlannedWeeksForRecipe(recipe.id).filter((p) => p.isCurrentWeek)}
+                // Every planned week, not just the current one. Filtering to `isCurrentWeek`
+                // threw the badge away for exactly the case where feedback matters most: adding
+                // to next week produced no visible response at all.
+                plannedWeeks={getPlannedWeeksForRecipe(recipe.id)}
+                activeWeekStart={activeWeekStart}
               />
             ))}
           </div>

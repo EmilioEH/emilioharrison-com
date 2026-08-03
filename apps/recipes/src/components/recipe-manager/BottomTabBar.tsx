@@ -7,14 +7,22 @@ export type PrimaryTab = 'library' | 'week'
 interface BottomTabBarProps {
   activeTab: PrimaryTab
   onTabChange: (tab: PrimaryTab) => void
+  /** What the week tab is actually pointing at — "This week", "Next week", "Aug 18". The label
+   * used to be the hard-coded string "This Week", which was simply wrong whenever the cook had
+   * switched the planner to another week, and left them with nothing on screen saying so. */
+  weekLabel?: string
 }
 
-const tabs = [
-  { id: 'library' as PrimaryTab, label: 'Library', icon: Utensils },
-  { id: 'week' as PrimaryTab, label: 'This Week', icon: CalendarDays },
-]
+export const BottomTabBar: React.FC<BottomTabBarProps> = ({
+  activeTab,
+  onTabChange,
+  weekLabel = 'This Week',
+}) => {
+  const tabs = [
+    { id: 'library' as PrimaryTab, label: 'Library', icon: Utensils },
+    { id: 'week' as PrimaryTab, label: weekLabel, icon: CalendarDays },
+  ]
 
-export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm">
       <div className="mx-auto flex max-w-2xl">

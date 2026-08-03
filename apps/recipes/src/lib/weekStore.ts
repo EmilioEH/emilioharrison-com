@@ -2,6 +2,7 @@ import { atom, computed } from 'nanostores'
 import { persistentMap } from '@nanostores/persistent'
 import { startOfWeek, addWeeks, format, parseISO } from 'date-fns'
 import { $recipeFamilyData, familyActions } from './familyStore'
+import type { WeekPlanData } from './types'
 
 // --- Types ---
 
@@ -125,6 +126,33 @@ const getBaseUrl = () => {
 }
 
 /**
+ * Write a recipe's week-plan state into the store straight away and hand back the undo.
+ *
+ * The store is the only thing the UI reads, so this is what makes a tap feel instant. The undo
+ * restores the exact entry that was there — including "there was no entry at all" — rather than
+ * guessing at an inverse, so a failed request leaves the store precisely as it started.
+ */
+function optimisticallySetPlan(recipeId: string, weekPlan: WeekPlanData): () => void {
+  const before = $recipeFamilyData.get()[recipeId]
+
+  familyActions.setRecipeFamilyData(recipeId, {
+    // A recipe with no family data yet still needs the other fields to satisfy the shape; they
+    // are replaced wholesale by the server's response the moment it arrives.
+    ...{ id: recipeId, notes: [], ratings: [], cookingHistory: [] },
+    ...before,
+    weekPlan: { ...before?.weekPlan, ...weekPlan },
+  })
+
+  return () => {
+    if (before) {
+      familyActions.setRecipeFamilyData(recipeId, before)
+    } else {
+      familyActions.clearRecipeFamilyData(recipeId)
+    }
+  }
+}
+
+/**
  * Add a recipe to the CURRENTLY ACTIVE week. There is no day-level assignment —
  * `assignedDate` is always the week's start (Monday), which keeps the existing
  * `currentWeekRecipes`/grocery pipeline (both keyed off the date's week) unchanged.
@@ -134,7 +162,14 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
   const activeStart = weekState.get().activeWeekStart
   const dateStr = activeStart
 
-  // Call API
+  // Show it as planned immediately, and put it back if the server disagrees.
+  //
+  // This used to wait for the round trip before anything moved, so tapping `+` did nothing
+  // visible for as long as the request took — which on a phone is long enough to tap again, or
+  // to conclude it didn't work. Every consumer reads the same store, so the card, the library
+  // badge and the week count all flip together.
+  const rollback = optimisticallySetPlan(recipeId, { isPlanned: true, assignedDate: dateStr })
+
   try {
     const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
       method: 'POST',
@@ -156,6 +191,7 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
           `Server Error (${res.status}): ${text.substring(0, 100)}`,
         )
       }
+      rollback()
       return false
     }
 
@@ -169,6 +205,7 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
       return true
     } else {
       console.warn('[WeekStore] API success but no data?', data)
+      rollback()
       return false
     }
   } catch (error) {
@@ -176,29 +213,39 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
     if (error instanceof Error) {
       console.error('Error message:', error.message)
     }
+    rollback()
     return false
   }
 }
 
 /**
- * Remove a recipe from the week plan
+ * Remove a recipe from the week plan. Optimistic in the same way as adding: the card and the
+ * week count change on the tap, and go back if the server refuses.
  */
-export const removeRecipeFromWeek = async (recipeId: string) => {
+export const removeRecipeFromWeek = async (recipeId: string): Promise<boolean> => {
+  const rollback = optimisticallySetPlan(recipeId, { isPlanned: false })
+
   try {
     const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
       method: 'DELETE',
     })
 
-    if (res.ok) {
-      // Fetch fresh data or manually update store
-      const resData = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/family-data`)
-      const data = await resData.json()
-      if (data.success && data.data) {
-        familyActions.setRecipeFamilyData(recipeId, data.data)
-      }
+    if (!res.ok) {
+      rollback()
+      return false
     }
+
+    // Fetch fresh data or manually update store
+    const resData = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/family-data`)
+    const data = await resData.json()
+    if (data.success && data.data) {
+      familyActions.setRecipeFamilyData(recipeId, data.data)
+    }
+    return true
   } catch (error) {
     console.error('Failed to remove recipe from week:', error)
+    rollback()
+    return false
   }
 }
 

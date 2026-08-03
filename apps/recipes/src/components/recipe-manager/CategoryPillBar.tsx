@@ -13,6 +13,9 @@ interface CategoryPillBarProps {
   onSelectionChange: (selected: Set<string>) => void
   stickyTop?: string
   isContainedScroll?: boolean
+  /** Pinned to the left of the scrolling pills, outside the scroll container — for a control
+   * that must stay reachable however far the pills have been scrolled. */
+  leading?: React.ReactNode
 }
 
 export const CategoryPillBar: React.FC<CategoryPillBarProps> = ({
@@ -21,6 +24,7 @@ export const CategoryPillBar: React.FC<CategoryPillBarProps> = ({
   onSelectionChange,
   stickyTop = 'top-content-top',
   isContainedScroll = false,
+  leading,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showLeftFade, setShowLeftFade] = useState(false)
@@ -74,7 +78,9 @@ export const CategoryPillBar: React.FC<CategoryPillBarProps> = ({
         isContainedScroll ? 'top-[calc(56px+var(--safe-area-top))]' : ''
       } border-b border-border bg-background/95 backdrop-blur-sm`}
     >
-      <div className="relative">
+      <div className="relative flex items-center">
+        {leading && <div className="shrink-0 py-3 pl-4">{leading}</div>}
+
         {/* Left Fade */}
         {showLeftFade && (
           <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-background/95 to-transparent" />
@@ -88,7 +94,7 @@ export const CategoryPillBar: React.FC<CategoryPillBarProps> = ({
         {/* Scrollable Pill Container */}
         <div
           ref={scrollRef}
-          className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-3"
+          className="scrollbar-hide flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 py-3"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {/* "All" Pill */}
