@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
-import { Clock, Users, Flame, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { Clock, Flame, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { RecipeReviews } from './RecipeReviews'
 import { IngredientRow } from './IngredientRow'
+import { useStore } from '@nanostores/react'
 import { MetadataCard } from './MetadataCard'
+import { ServingsStepper } from './ServingsStepper'
+import { scaleRecipe } from '../../lib/servings-scale'
+import { setWeekServings } from '../../lib/weekStore'
+import { $recipeFamilyData } from '../../lib/familyStore'
 import { InstructionCard } from './InstructionCard'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -20,12 +25,7 @@ import {
   hasUsefulStepIngredientMappings,
   areStepIngredientMappingsEqual,
 } from '../../lib/step-ingredient-mapping'
-import type {
-  Recipe,
-  FamilyRecipeData,
-  StructuredStep,
-  Ingredient,
-} from '../../lib/types'
+import type { Recipe, FamilyRecipeData, StructuredStep, Ingredient } from '../../lib/types'
 
 interface OverviewModeProps {
   recipe: Recipe
@@ -55,6 +55,25 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
   const [ingredientsOpen, setIngredientsOpen] = useState(true)
+
+  /**
+   * The recipe as it is being cooked this week.
+   *
+   * The count lives on the family's plan entry, so it is shared and survives a reload — and the
+   * stored recipe is never rewritten, because a number chosen for one week must not change the
+   * recipe for everyone forever. Everything below reads `shownRecipe`, so the ingredient list, the
+   * checklist count and the header all agree.
+   */
+  const familyPlanData = useStore($recipeFamilyData)
+  const weekPlan = familyPlanData[recipe.id]?.weekPlan
+  const isPlanned = Boolean(weekPlan?.isPlanned)
+
+  // A recipe that isn't on the plan has no plan entry to store a count on, and adding it to the
+  // week just because someone wanted to read the amounts for six would be a surprise. So the
+  // choice is kept locally until the recipe is actually planned.
+  const [localServings, setLocalServings] = useState<number | undefined>(undefined)
+  const servings = isPlanned ? weekPlan?.servings : localServings
+  const shownRecipe = useMemo(() => scaleRecipe(recipe, servings), [recipe, servings])
 
   const handleToggleIngredient = useCallback(
     (index: number) => {
@@ -100,13 +119,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   useEffect(() => {
     loadFamilyData()
   }, [recipe.id])
-
-  // Calculate average rating from family
-  const averageRating = familyData?.reviews?.length
-    ? familyData.reviews.reduce((sum, r) => sum + r.rating, 0) / familyData.reviews.length
-    : familyData?.ratings?.length
-      ? familyData.ratings.reduce((sum, r) => sum + r.rating, 0) / familyData.ratings.length
-      : recipe.rating || 0
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -224,9 +236,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     items: Ingredient[]
     startIndex: number
   }> => {
-    const ingredientsArray = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+    const ingredientsArray = Array.isArray(shownRecipe.ingredients) ? shownRecipe.ingredients : []
     return [{ header: null, items: ingredientsArray, startIndex: 0 }]
-  }, [recipe.ingredients])
+  }, [shownRecipe.ingredients])
 
   // Memoized structured steps with fallback to plain text
   const displaySteps = useMemo((): StructuredStep[] => {
@@ -248,11 +260,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const computedStepIngredients = useMemo(
     () =>
       computeStepIngredientMappings(
-        Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+        Array.isArray(shownRecipe.ingredients) ? shownRecipe.ingredients : [],
         Array.isArray(recipe.steps) ? recipe.steps : [],
         Array.isArray(recipe.structuredSteps) ? recipe.structuredSteps : [],
       ),
-    [recipe.ingredients, recipe.steps, recipe.structuredSteps],
+    [shownRecipe.ingredients, recipe.steps, recipe.structuredSteps],
   )
 
   const stepCount = Array.isArray(recipe.steps) ? recipe.steps.length : 0
@@ -341,12 +353,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </h1>
 
             {/* A page that prints a name over a description of the dish — "GREEK SPINACH AND FETA
-              * PIE" above "Spanakopita" — stores the second line as `subtitle`. It was being
-              * transcribed and then never shown, because nothing rendered this field.
-              *
-              * Skipped when the title already contains it. Most stored subtitles restate the
-              * title ("Skillet Shrimp Scampi with Orzo and Tomatoes" storing "with Orzo and
-              * Tomatoes"), and printing the same words twice reads as a bug. */}
+             * PIE" above "Spanakopita" — stores the second line as `subtitle`. It was being
+             * transcribed and then never shown, because nothing rendered this field.
+             *
+             * Skipped when the title already contains it. Most stored subtitles restate the
+             * title ("Skillet Shrimp Scampi with Orzo and Tomatoes" storing "with Orzo and
+             * Tomatoes"), and printing the same words twice reads as a bug. */}
             {(() => {
               const subtitle = String(recipe.subtitle ?? '').trim()
               if (!subtitle) return null
@@ -416,7 +428,14 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 />
               </div>
               <div className="flex-1">
-                <MetadataCard icon={Users} label="SERVES" value={recipe.servings} />
+                <ServingsStepper
+                  recipeServings={recipe.servings}
+                  weekServings={servings}
+                  onChange={(next) => {
+                    setLocalServings(next)
+                    if (isPlanned) void setWeekServings(recipe.id, next)
+                  }}
+                />
               </div>
               <div className="flex-1">
                 <MetadataCard icon={Flame} label="LEVEL" value={recipe.difficulty || 'Easy'} />
@@ -433,8 +452,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           )}
 
           {/* Recipe Reviews */}
+          {/* The average is gone: `RecipeReviews` shows the household's verdict instead. Averaging
+           * mixed two scales that used the same numbers for different things, and the
+           * three-point scale that replaces them cannot be averaged at all. */}
           <RecipeReviews
-            averageRating={averageRating}
             totalRatings={
               familyData?.reviews?.length || familyData?.ratings?.length || (recipe.rating ? 1 : 0)
             }
@@ -460,11 +481,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 Ingredients
                 {checkedIngredientsList.length > 0 ? (
                   <span className="font-body text-sm font-normal text-primary">
-                    {checkedIngredientsList.length}/{recipe.ingredients?.length || 0} ready
+                    {checkedIngredientsList.length}/{shownRecipe.ingredients?.length || 0} ready
                   </span>
                 ) : (
                   <span className="text-foreground-variant font-body text-sm font-normal">
-                    ({recipe.ingredients?.length || 0})
+                    ({shownRecipe.ingredients?.length || 0})
                   </span>
                 )}
               </Inline>
@@ -549,8 +570,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                       )}
                       {group.items.map((step, idx) => {
                         const globalIdx = group.startIndex + idx
-                        const ingredientsArray = Array.isArray(recipe.ingredients)
-                          ? recipe.ingredients
+                        const ingredientsArray = Array.isArray(shownRecipe.ingredients)
+                          ? shownRecipe.ingredients
                           : []
                         const targetIndices = effectiveStepIngredients?.[globalIdx]?.indices
                         const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []

@@ -12,14 +12,51 @@
 
 import { format, parseISO, startOfWeek } from 'date-fns'
 
-/** What happened to a recipe that was on the plan. */
-export type CookOutcome = 'skipped' | 'meh' | 'good' | 'again'
+/**
+ * What happened to a recipe that was on the plan.
+ *
+ * These are the same four slots as before under names that say what they mean — the week review
+ * and the recipe page now ask the identical question, so they have to share one vocabulary.
+ * `skipped` is what marks a meal as dealt with so the prompt stops asking about it; removing it
+ * would leave un-cooked meals pending forever, with "Don't ask about this week" (which discards
+ * the whole week) as the only escape.
+ */
+export type CookOutcome = 'skipped' | 'disliked' | 'ok' | 'loved'
 
-/** The 1-5 rating an outcome is worth, for the review record. `skipped` earns none. */
-export const OUTCOME_RATING: Record<Exclude<CookOutcome, 'skipped'>, number> = {
-  meh: 2,
-  good: 4,
-  again: 5,
+/** The three a cook can give a recipe they actually made — the recipe page offers exactly these. */
+export const VERDICTS = ['disliked', 'ok', 'loved'] as const
+export type Verdict = (typeof VERDICTS)[number]
+
+export const isVerdict = (value: unknown): value is Verdict =>
+  typeof value === 'string' && (VERDICTS as readonly string[]).includes(value)
+
+/**
+ * The 1-5 rating a verdict is still written as, alongside the verdict itself.
+ *
+ * Kept for one release so a rollback has something to read; the scale it belongs to no longer
+ * exists on screen. See `VERDICT_FOR_RATING` for the other direction.
+ */
+export const OUTCOME_RATING: Record<Verdict, number> = {
+  disliked: 2,
+  ok: 4,
+  loved: 5,
+}
+
+/**
+ * How a stored 1-5 rating reads back as a verdict.
+ *
+ * Audited against the live data before it was written (`scripts/REVIEW-AUDIT-2026-08-02.md`):
+ * every value actually present maps the same way whether it came from the week review's four taps
+ * or the recipe page's five stars, so the two entry points — which are indistinguishable on the
+ * record, both having written `source: 'quick'` — do not need to be told apart.
+ *
+ * `loved` is reserved for the top mark of both scales. Reading a 4 as "loved" would invent
+ * enthusiasm neither surface recorded: "Good" is not "make it again".
+ */
+export function verdictForRating(rating: number): Verdict {
+  if (rating >= 5) return 'loved'
+  if (rating >= 3) return 'ok'
+  return 'disliked'
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
@@ -95,9 +132,9 @@ export function preferenceWeight(
 ): number {
   let weight = 0
   for (const outcome of outcomes) {
-    if (outcome === 'again') weight += 2
-    else if (outcome === 'good') weight += 1
-    else if (outcome === 'meh') weight -= 2
+    if (outcome === 'loved') weight += 2
+    else if (outcome === 'ok') weight += 1
+    else if (outcome === 'disliked') weight -= 2
   }
 
   // Even a favourite shouldn't come back every week — that stops being a recommendation and

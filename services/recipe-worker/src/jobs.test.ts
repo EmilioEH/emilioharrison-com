@@ -21,7 +21,10 @@ function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
 /** Minimal in-memory WorkerStore stub; each method is a spy so tests assert the call sequence. */
 function fakeStore(overrides: Partial<WorkerStore> = {}): WorkerStore {
   return {
-    claimGrocery: vi.fn(async () => [makeRecipe()]),
+    claimGrocery: vi.fn(async () => ({
+      recipes: [makeRecipe()],
+      sourceRecipeIds: ['r1'],
+    })),
     writeGroceryProgress: vi.fn(async () => {}),
     completeGrocery: vi.fn(async () => {}),
     failGrocery: vi.fn(async () => {}),
@@ -94,7 +97,11 @@ describe('runGroceryForDoc', () => {
       25,
       'Selecting fresh produce...',
     )
-    expect(store.completeGrocery).toHaveBeenCalledWith('fam_2026-07-20', [{ name: 'limes' }])
+    expect(store.completeGrocery).toHaveBeenCalledWith(
+      'fam_2026-07-20',
+      [{ name: 'limes' }],
+      ['r1'],
+    )
     expect(fakeLogAiError).not.toHaveBeenCalled()
   })
 

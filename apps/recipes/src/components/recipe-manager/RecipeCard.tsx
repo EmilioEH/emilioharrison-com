@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { Star, MoreVertical, Plus } from 'lucide-react'
+import { MoreVertical, Plus, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
@@ -8,6 +8,8 @@ import type { Recipe } from '../../lib/types'
 import { getPlannedWeeksForRecipe } from '../../lib/weekStore'
 import { getRecipeCardImage } from '../../lib/recipe-card-image'
 import { useLongPress } from '../../lib/hooks/useLongPress'
+import { triggerHaptic } from '../../lib/haptics'
+import { VerdictMark } from '../recipe-details/verdicts'
 
 // Helper to normalize titles to Title Case
 const toTitleCase = (str: string): string => {
@@ -45,6 +47,13 @@ interface RecipeCardProps {
   allowManagement?: boolean
   skipAnimation?: boolean
   plannedWeeks: ReturnType<typeof getPlannedWeeksForRecipe>
+  /** The household's verdict, when there is one worth showing. Computed by the library from the
+   * family's reviews so the card stays a pure render. */
+  verdict?: 'loved' | 'disliked' | 'mixed' | null
+  /** The week the add button adds to — the one currently being planned, which is not always
+   * this week. Without it the button can only say "planned somewhere", which is not the
+   * question the cook is asking when they tap it. */
+  activeWeekStart?: string
 }
 
 export const RecipeCard = memo(
@@ -56,6 +65,8 @@ export const RecipeCard = memo(
     allowManagement = false,
     skipAnimation = false,
     plannedWeeks,
+    activeWeekStart,
+    verdict,
   }: RecipeCardProps) => {
     const cardImage = getRecipeCardImage(recipe)
 
@@ -67,6 +78,9 @@ export const RecipeCard = memo(
     )
 
     const isPlanned = plannedWeeks.length > 0
+    const isPlannedForWeek = activeWeekStart
+      ? plannedWeeks.some((p) => p.weekStart === activeWeekStart)
+      : isPlanned
 
     const titleMatches = recipe.matches?.filter((m) => m.key === 'title')
     const ingredientMatches = recipe.matches?.filter(
@@ -107,12 +121,12 @@ export const RecipeCard = memo(
         }}
       >
         {/* Square thumbnail, only when there is a real dish photo to show.
-          *
-          * Most of this library is imported by photographing cookbook pages, so `getRecipeCardImage`
-          * returns nothing for the majority of recipes. Those used to get a chef-hat placeholder,
-          * which meant most of the list was a column of identical icons — decoration that pushed
-          * every title to the same indent without telling the reader anything. The card now
-          * collapses to its text, and a thumbnail means "there is a photo of the finished dish". */}
+         *
+         * Most of this library is imported by photographing cookbook pages, so `getRecipeCardImage`
+         * returns nothing for the majority of recipes. Those used to get a chef-hat placeholder,
+         * which meant most of the list was a column of identical icons — decoration that pushed
+         * every title to the same indent without telling the reader anything. The card now
+         * collapses to its text, and a thumbnail means "there is a photo of the finished dish". */}
         {cardImage && (
           <div
             data-testid="recipe-card-thumbnail"
@@ -139,10 +153,20 @@ export const RecipeCard = memo(
             <h4 className="line-clamp-2 flex-1 font-display text-lg font-bold leading-tight text-foreground">
               <HighlightedText text={toTitleCase(recipe.title)} matches={titleMatches} />
             </h4>
-            {(recipe.rating ?? 0) > 0 && (
-              <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
-                <Star className="h-3 w-3 fill-foreground" />{' '}
-                <span data-testid="recipe-rating">{recipe.rating}</span>
+            {/* The household's verdict, and only when it changes a decision.
+             *
+             * Most of a 413-recipe library is unrated or unremarkable, so a mark on every card
+             * would be the same mistake as the chef-hat placeholder that was removed from these
+             * cards: space spent saying nothing. Nothing appears for "it was okay" or unrated.
+             * The numeric star this replaces averaged a scale that no longer exists — and mixed
+             * two entry points that meant different things by the same number. */}
+            {verdict && (
+              <div
+                data-testid={`recipe-verdict-${recipe.id}`}
+                className="flex shrink-0 items-center gap-0.5 rounded-full bg-secondary/50 px-1.5 py-1"
+                title={verdict === 'mixed' ? 'Loved by some, not by others' : undefined}
+              >
+                <VerdictMark verdict={verdict} className="h-3.5 w-3.5" />
               </div>
             )}
           </div>
@@ -221,17 +245,28 @@ export const RecipeCard = memo(
                 </Badge>
               ))}
 
-              {/* Add to Week button - 44px touch target */}
+              {/* Add to / remove from the week being planned — 44px touch target.
+               *
+               * The button says which way it goes. It used to be a plus whether or not the recipe
+               * was already planned, so tapping it produced no visible change at all and the
+               * only way to tell it had worked was to go and look at the week. */}
               {!allowManagement && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
+                    triggerHaptic('light')
                     onToggleThisWeek(recipe.id)
                   }}
-                  aria-label="Add to Week"
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus:outline-none active:scale-95"
+                  aria-label={isPlannedForWeek ? 'Remove from week' : 'Add to week'}
+                  aria-pressed={isPlannedForWeek}
+                  data-testid={`add-to-week-${recipe.id}`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-full transition-all focus:outline-none active:scale-95 ${
+                    isPlannedForWeek
+                      ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  }`}
                 >
-                  <Plus className="h-4 w-4" />
+                  {isPlannedForWeek ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </button>
               )}
             </div>

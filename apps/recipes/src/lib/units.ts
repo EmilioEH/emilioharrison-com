@@ -40,11 +40,43 @@ export interface CanonicalUnit {
 export const CANONICAL_UNITS: CanonicalUnit[] = [
   { id: 'tsp', family: 'volume', label: 'tsp', base: 4.92892, system: 'us', promote: true },
   { id: 'tbsp', family: 'volume', label: 'tbsp', base: 14.7868, system: 'us', promote: true },
-  { id: 'cup', family: 'volume', label: 'cup', base: 236.588, system: 'us', promote: true, plural: 'cups' },
+  {
+    id: 'cup',
+    family: 'volume',
+    label: 'cup',
+    base: 236.588,
+    system: 'us',
+    promote: true,
+    plural: 'cups',
+  },
   { id: 'floz', family: 'volume', label: 'fl oz', base: 29.5735, system: 'us', promote: false },
-  { id: 'pint', family: 'volume', label: 'pint', base: 473.176, system: 'us', promote: false, plural: 'pints' },
-  { id: 'quart', family: 'volume', label: 'quart', base: 946.353, system: 'us', promote: false, plural: 'quarts' },
-  { id: 'gallon', family: 'volume', label: 'gallon', base: 3785.41, system: 'us', promote: false, plural: 'gallons' },
+  {
+    id: 'pint',
+    family: 'volume',
+    label: 'pint',
+    base: 473.176,
+    system: 'us',
+    promote: false,
+    plural: 'pints',
+  },
+  {
+    id: 'quart',
+    family: 'volume',
+    label: 'quart',
+    base: 946.353,
+    system: 'us',
+    promote: false,
+    plural: 'quarts',
+  },
+  {
+    id: 'gallon',
+    family: 'volume',
+    label: 'gallon',
+    base: 3785.41,
+    system: 'us',
+    promote: false,
+    plural: 'gallons',
+  },
   { id: 'ml', family: 'volume', label: 'ml', base: 1, system: 'metric', promote: true },
   { id: 'l', family: 'volume', label: 'l', base: 1000, system: 'metric', promote: true },
 
@@ -93,20 +125,47 @@ const BY_ID = new Map(CANONICAL_UNITS.map((u) => [u.id, u]))
 
 /** Every spelling seen in the library, mapped to its canonical unit. */
 const ALIASES: Record<string, string> = {
-  teaspoon: 'tsp', teaspoons: 'tsp', tsps: 'tsp', t: 'tsp',
-  tablespoon: 'tbsp', tablespoons: 'tbsp', tbsps: 'tbsp', tbs: 'tbsp', T: 'tbsp',
-  cups: 'cup', c: 'cup',
-  'fl oz': 'floz', 'fluid ounce': 'floz', 'fluid ounces': 'floz', floz: 'floz',
-  pints: 'pint', pt: 'pint',
-  quarts: 'quart', qt: 'quart',
-  gallons: 'gallon', gal: 'gallon',
-  milliliter: 'ml', milliliters: 'ml', millilitre: 'ml', mls: 'ml',
-  liter: 'l', liters: 'l', litre: 'l', litres: 'l',
+  teaspoon: 'tsp',
+  teaspoons: 'tsp',
+  tsps: 'tsp',
+  t: 'tsp',
+  tablespoon: 'tbsp',
+  tablespoons: 'tbsp',
+  tbsps: 'tbsp',
+  tbs: 'tbsp',
+  T: 'tbsp',
+  cups: 'cup',
+  c: 'cup',
+  'fl oz': 'floz',
+  'fluid ounce': 'floz',
+  'fluid ounces': 'floz',
+  floz: 'floz',
+  pints: 'pint',
+  pt: 'pint',
+  quarts: 'quart',
+  qt: 'quart',
+  gallons: 'gallon',
+  gal: 'gallon',
+  milliliter: 'ml',
+  milliliters: 'ml',
+  millilitre: 'ml',
+  mls: 'ml',
+  liter: 'l',
+  liters: 'l',
+  litre: 'l',
+  litres: 'l',
 
-  gram: 'g', grams: 'g', gr: 'g',
-  kilogram: 'kg', kilograms: 'kg', kilo: 'kg',
-  ounce: 'oz', ounces: 'oz',
-  pound: 'lb', pounds: 'lb', lbs: 'lb',
+  gram: 'g',
+  grams: 'g',
+  gr: 'g',
+  kilogram: 'kg',
+  kilograms: 'kg',
+  kilo: 'kg',
+  ounce: 'oz',
+  ounces: 'oz',
+  pound: 'lb',
+  pounds: 'lb',
+  lbs: 'lb',
 
   cloves: 'clove',
   bunches: 'bunch',
@@ -115,8 +174,12 @@ const ALIASES: Record<string, string> = {
   stalks: 'stalk',
   slices: 'slice',
   cans: 'can',
-  packages: 'package', packet: 'package', packets: 'package', pkg: 'package',
-  pack: 'package', packs: 'package',
+  packages: 'package',
+  packet: 'package',
+  packets: 'package',
+  pkg: 'package',
+  pack: 'package',
+  packs: 'package',
   sticks: 'stick',
   jars: 'jar',
   boxes: 'box',
@@ -126,13 +189,25 @@ const ALIASES: Record<string, string> = {
   tubes: 'tube',
   loaves: 'loaf',
   ears: 'ear',
-  fillets: 'fillet', filet: 'fillet', filets: 'fillet',
+  fillets: 'fillet',
+  filet: 'fillet',
+  filets: 'fillet',
   leaves: 'leaf',
 
   // Bare counts and size words: the quantity is a count, the size is a description, not a unit.
-  piece: 'piece', pieces: 'piece', whole: 'piece', unit: 'piece', units: 'piece',
-  count: 'piece', item: 'piece', items: 'piece', each: 'piece',
-  small: 'piece', medium: 'piece', large: 'piece', 'medium-large': 'piece',
+  piece: 'piece',
+  pieces: 'piece',
+  whole: 'piece',
+  unit: 'piece',
+  units: 'piece',
+  count: 'piece',
+  item: 'piece',
+  items: 'piece',
+  each: 'piece',
+  small: 'piece',
+  medium: 'piece',
+  large: 'piece',
+  'medium-large': 'piece',
 
   pinches: 'pinch',
   dashes: 'dash',
@@ -142,7 +217,8 @@ const ALIASES: Record<string, string> = {
   gratings: 'grating',
   spoonfuls: 'spoonful',
   'to taste': 'to_taste',
-  'as needed': 'as_needed', 'as desired': 'as_needed',
+  'as needed': 'as_needed',
+  'as desired': 'as_needed',
 }
 
 /**
@@ -252,4 +328,35 @@ export function bestDisplayUnit(amount: number, unitId: string): { amount: numbe
     if (value >= 1) return { amount: value, unit: candidate.id }
   }
   return { amount, unit: unitId }
+}
+
+/** Renders a quantity the way a cookbook prints it: 0.5 → ½, 1.5 → 1½. */
+const FRACTION_GLYPHS: Array<[number, string]> = [
+  [0.125, '⅛'],
+  [0.25, '¼'],
+  [1 / 3, '⅓'],
+  [0.375, '⅜'],
+  [0.5, '½'],
+  [0.625, '⅝'],
+  [2 / 3, '⅔'],
+  [0.75, '¾'],
+  [0.875, '⅞'],
+]
+
+/**
+ * A number as a cook would write it.
+ *
+ * Lives here rather than in the one component that first needed it, because scaling a recipe for
+ * a different number of people has to write the same glyphs into the ingredient's `amount` that
+ * the row beside it prints — two copies of this would eventually disagree about ⅔.
+ */
+export function formatQuantity(value: number): string {
+  if (!Number.isFinite(value)) return ''
+  const whole = Math.floor(value)
+  const fraction = value - whole
+  if (fraction < 0.001) return String(whole)
+  for (const [size, glyph] of FRACTION_GLYPHS) {
+    if (Math.abs(fraction - size) < 0.02) return whole ? `${whole}${glyph}` : glyph
+  }
+  return String(Math.round(value * 100) / 100)
 }

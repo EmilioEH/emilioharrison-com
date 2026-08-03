@@ -58,9 +58,9 @@ describe('weekAwaitingReview', () => {
 
 describe('preferenceWeight', () => {
   it('rewards what the cook wants again and penalises what they did not', () => {
-    expect(preferenceWeight(['again'], null, TODAY)).toBeGreaterThan(0)
-    expect(preferenceWeight(['good'], null, TODAY)).toBeGreaterThan(0)
-    expect(preferenceWeight(['meh'], null, TODAY)).toBeLessThan(0)
+    expect(preferenceWeight(['loved'], null, TODAY)).toBeGreaterThan(0)
+    expect(preferenceWeight(['ok'], null, TODAY)).toBeGreaterThan(0)
+    expect(preferenceWeight(['disliked'], null, TODAY)).toBeLessThan(0)
   })
 
   it('ignores a week that was planned but never cooked', () => {
@@ -69,13 +69,13 @@ describe('preferenceWeight', () => {
 
   it('holds back something cooked in the last few weeks, even a favourite', () => {
     // A recipe you love should not be offered every single week.
-    const recent = preferenceWeight(['again'], '2026-07-13', TODAY)
-    const longAgo = preferenceWeight(['again'], '2026-01-05', TODAY)
+    const recent = preferenceWeight(['loved'], '2026-07-13', TODAY)
+    const longAgo = preferenceWeight(['loved'], '2026-01-05', TODAY)
     expect(recent).toBeLessThan(longAgo)
     expect(recent).toBeLessThan(0)
   })
 
   it('lets a favourite come back once enough time has passed', () => {
-    expect(preferenceWeight(['again', 'good'], '2026-02-02', TODAY)).toBeGreaterThan(0)
+    expect(preferenceWeight(['loved', 'ok'], '2026-02-02', TODAY)).toBeGreaterThan(0)
   })
 })

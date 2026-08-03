@@ -6,6 +6,7 @@ import type {
   FetchPhotos,
   ParsePhotos,
   JobOutcome,
+  ShoppableIngredient,
 } from './types'
 import type { LogAiError } from './ai-error-log'
 
@@ -23,21 +24,27 @@ export async function runGroceryForDoc(
   },
   listId: string,
 ): Promise<JobOutcome> {
-  const recipes = await deps.store.claimGrocery(listId).catch((e) => {
+  const job = await deps.store.claimGrocery(listId).catch((e) => {
     console.error(`[worker] claimGrocery(${listId}) failed:`, e)
     return null
   })
-  if (!recipes) return 'skipped'
+  if (!job) return 'skipped'
 
   try {
-    const ingredients = await deps.computeGrocery(deps.gemini, recipes, {
+    const ingredients = await deps.computeGrocery(deps.gemini, job.recipes, {
       timeoutMs: deps.jobTimeoutMs,
       onProgress: (update) =>
         deps.store
           .writeGroceryProgress(listId, update.progress, update.message)
           .catch((e) => console.warn(`[worker] grocery progress write failed (${listId}):`, e)),
     })
-    await deps.store.completeGrocery(listId, ingredients)
+    // The core returns `unknown[]` — the model's output, shaped by the response schema but not
+    // validated element-wise. The store treats it as ingredients, exactly as it did before.
+    await deps.store.completeGrocery(
+      listId,
+      ingredients as ShoppableIngredient[],
+      job.sourceRecipeIds,
+    )
     console.log(`[worker] grocery complete: ${listId} (${ingredients.length} items)`)
     return 'done'
   } catch (error) {

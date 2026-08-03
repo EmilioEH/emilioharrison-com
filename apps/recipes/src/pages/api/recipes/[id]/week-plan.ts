@@ -5,7 +5,6 @@ import { db } from '../../../../lib/firebase-server'
 import type { WeekPlanData, FamilyRecipeData } from '../../../../lib/types'
 import { setRequestContext } from '../../../../lib/request-context'
 
-
 /**
  * Record that this recipe was on a given week's plan, permanently.
  *
@@ -64,8 +63,30 @@ export const POST: APIRoute = async (context: APIContext) => {
     console.log('[WeekPlan] POST started for recipe:', recipeId, 'user:', userId)
 
     const body = await request.json()
-    const { isPlanned, assignedDate } = body
-    console.log('[WeekPlan] Request body:', { isPlanned, assignedDate })
+    const { isPlanned, assignedDate, servings } = body
+    console.log('[WeekPlan] Request body:', { isPlanned, assignedDate, servings })
+
+    // A serving count for this week only. Three cases, and they must stay distinct: a number sets
+    // it, an explicit `null` clears it back to the recipe's own count, and the key being absent
+    // means "not what this request is about" — the existing count is carried over below, so
+    // re-planning a recipe doesn't silently reset a choice the cook made. Nonsense is rejected
+    // rather than clamped, so a bad client can't quietly make a whole week's shopping wrong.
+    let weekServings: number | undefined
+    const clearServings = servings === null
+    if (servings !== undefined && servings !== null) {
+      if (
+        typeof servings !== 'number' ||
+        !Number.isFinite(servings) ||
+        servings < 1 ||
+        servings > 100
+      ) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'servings must be a number between 1 and 100' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+      weekServings = Math.round(servings)
+    }
 
     if (typeof isPlanned !== 'boolean') {
       return new Response(
@@ -109,6 +130,11 @@ export const POST: APIRoute = async (context: APIContext) => {
     const newWeekPlan: WeekPlanData = {
       isPlanned,
       assignedDate: assignedDate || undefined,
+      // Carried over when the caller doesn't mention it, so re-planning (or the optimistic
+      // re-POST that follows an add) doesn't silently reset a count the cook chose.
+      servings: clearServings
+        ? undefined
+        : (weekServings ?? (familyData?.weekPlan as WeekPlanData | undefined)?.servings),
       addedBy: isPlanned ? userId : undefined,
       addedByName: isPlanned ? userDoc.displayName || 'User' : undefined,
       addedAt: isPlanned ? new Date().toISOString() : undefined,

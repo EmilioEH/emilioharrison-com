@@ -178,6 +178,13 @@ export interface GroceryList {
   status: 'pending' | 'processing' | 'complete' | 'error'
   createdAt: string
   updatedAt: string
+  // Sorted, de-duplicated ids of the recipes this list was generated for — the list's "signature".
+  // The client compares it against the week's current recipes to decide whether a regeneration is
+  // actually needed. Before this existed the only test was "is there a document?", which cannot
+  // distinguish an absent list from one that hasn't loaded yet, and never noticed a *removed*
+  // recipe at all. Absent on lists written before this field existed; treat that as "unknown
+  // signature", which forces exactly one regeneration and then settles.
+  sourceRecipeIds?: string[]
   // Written incrementally by the server while generating (see generate-grocery-list.ts) so the
   // client's existing Firestore subscription can show granular progress from any tab/device.
   progress?: number
@@ -186,6 +193,11 @@ export interface GroceryList {
   // the request's recipes, persisted on the `pending` doc so the async worker — which never sees
   // the original request — can generate from them. The worker deletes this field on completion.
   inputRecipes?: Recipe[]
+  // The signature the worker should stamp on the finished list, carried the same way and for the
+  // same reason as `inputRecipes`. It is the set the *client* asked for, which is what the client
+  // compares against — the worker only sees the accessible subset, and stamping that instead
+  // would leave the two permanently disagreeing. Deleted on completion.
+  inputRecipeIds?: string[]
 }
 
 /** A single recipe's contribution to a grocery item */
@@ -255,11 +267,18 @@ export interface Review {
   recipeId: string
   userId: string
   userName: string
-  rating: number // 1-5 (required)
+  // The verdict is the real answer. `rating` is still written alongside it for one release so a
+  // rollback has something to read — the 1-5 scale it belongs to is gone from every screen, and
+  // could never be averaged honestly anyway: the week review's "Good" and the recipe page's
+  // fourth star both stored a 4 and meant different things.
+  outcome?: 'disliked' | 'ok' | 'loved'
+  rating: number // 1-5, derived from `outcome` (see OUTCOME_RATING). Deprecated.
   comment?: string // optional review text
   photoUrl?: string // optional photo URL
   difficulty?: 1 | 2 | 3 // optional difficulty (1=Easy, 2=Medium, 3=Hard)
-  source: 'cooking' | 'quick' | 'edit' // where the review came from
+  // Where the review came from. 'quick' is the legacy tag both surfaces wrote, which is exactly
+  // why they could not be told apart afterwards; new writes use 'detail' or 'week-review'.
+  source: 'cooking' | 'quick' | 'edit' | 'detail' | 'week-review'
   createdAt: string // ISO timestamp
   updatedAt?: string // ISO timestamp (set when edited)
   editHistory?: Array<{
@@ -296,6 +315,17 @@ interface CookingHistoryEntry {
 export interface WeekPlanData {
   isPlanned: boolean
   assignedDate?: string // YYYY-MM-DD
+  /**
+   * How many this recipe is being cooked for *this week*. Absent means the recipe's own
+   * `servings`.
+   *
+   * Stored on the family's plan entry rather than on the recipe, because cooking for six this
+   * week must not change the recipe for everyone forever. It also keeps the grocery contract
+   * intact: the client still sends only recipe ids, and the server reads the count off the plan
+   * itself — a contract that exists because a previous version trusted client-side recipe data
+   * and silently produced empty grocery lists.
+   */
+  servings?: number
   mealTime?: string // HH:mm format (e.g., "18:00" for 6pm)
   mealType?: 'breakfast' | 'lunch' | 'dinner' // Optional meal type classification
   addedBy?: string // userId

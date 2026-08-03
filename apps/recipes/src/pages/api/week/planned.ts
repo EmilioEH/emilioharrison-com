@@ -38,9 +38,12 @@ export const GET: APIRoute = async (context: APIContext) => {
     // 2. Get all family recipe data
     const allFamilyData = await db.getCollection(`families/${userDoc.familyId}/recipeData`)
 
-    // 3. Filter to only planned recipes
+    // 3. Planned recipes, plus anything the family has reviewed — the library card's
+    // loved/disliked mark needs a verdict for recipes that are not on any plan. Kept in step with
+    // the same filter in api/bootstrap.ts, which is the path that actually runs on load.
     const plannedData = allFamilyData.filter(
-      (data: FamilyRecipeData) => data.weekPlan?.isPlanned === true,
+      (data: FamilyRecipeData) =>
+        data.weekPlan?.isPlanned === true || (data.reviews?.length ?? 0) > 0,
     )
 
     return new Response(

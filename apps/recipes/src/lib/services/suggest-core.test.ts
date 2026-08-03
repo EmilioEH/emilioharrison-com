@@ -46,11 +46,11 @@ describe('buildMenu', () => {
   it('tells the model what the family has and has not made', () => {
     const { menu } = buildMenu(
       [recipe('a'), recipe('b')],
-      { a: signal({ lastCookedWeek: '2026-02-02', outcomes: ['again'] }) },
+      { a: signal({ lastCookedWeek: '2026-02-02', outcomes: ['loved'] }) },
       TODAY,
     )
     expect(menu).toContain('last made 2026-02')
-    expect(menu).toContain('they said again')
+    expect(menu).toContain('they loved it')
     expect(menu).toContain('never made')
   })
 
@@ -113,7 +113,7 @@ describe('parseSuggestions', () => {
 
   it('drops repeats and anything already on the plan', () => {
     const out = parseSuggestions(
-      '{"picks":[{"n":0,"why":"one"},{"n":0,"why":"again"},{"n":1,"why":"two"}]}',
+      '{"picks":[{"n":0,"why":"one"},{"n":0,"why":"loved"},{"n":1,"why":"two"}]}',
       index,
       ['b'],
     )
@@ -130,8 +130,8 @@ describe('fallbackSuggestions', () => {
   const input: SuggestInput = {
     recipes: [recipe('a'), recipe('b'), recipe('c')],
     signals: {
-      a: signal({ lastCookedWeek: '2026-07-13', outcomes: ['again'] }), // just cooked
-      b: signal({ lastCookedWeek: '2026-01-05', outcomes: ['again'] }), // liked, long ago
+      a: signal({ lastCookedWeek: '2026-07-13', outcomes: ['loved'] }), // just cooked
+      b: signal({ lastCookedWeek: '2026-01-05', outcomes: ['loved'] }), // liked, long ago
     },
     wanted: 2,
     mood: '',
@@ -160,8 +160,20 @@ describe('fallbackSuggestions', () => {
 })
 
 describe('matchesFacets', () => {
-  const chicken = recipe('a', { protein: 'Chicken', dishType: 'Main', cuisine: 'Italian', prepTime: 5, cookTime: 20 })
-  const beefStew = recipe('b', { protein: 'Beef', dishType: 'Soup', cuisine: 'French', prepTime: 20, cookTime: 100 })
+  const chicken = recipe('a', {
+    protein: 'Chicken',
+    dishType: 'Main',
+    cuisine: 'Italian',
+    prepTime: 5,
+    cookTime: 20,
+  })
+  const beefStew = recipe('b', {
+    protein: 'Beef',
+    dishType: 'Soup',
+    cuisine: 'French',
+    prepTime: 20,
+    cookTime: 100,
+  })
 
   it('passes everything when nothing was narrowed', () => {
     expect(matchesFacets(beefStew, undefined)).toBe(true)
@@ -181,7 +193,9 @@ describe('matchesFacets', () => {
 
   it('matches the stored vocabulary loosely', () => {
     // 167 recipes say "Main" and 87 say "Main Course"; tapping Main must find both.
-    expect(matchesFacets(recipe('c', { dishType: 'Main Course' }), { dishTypes: ['Main'] })).toBe(true)
+    expect(matchesFacets(recipe('c', { dishType: 'Main Course' }), { dishTypes: ['Main'] })).toBe(
+      true,
+    )
   })
 
   it('respects a time budget', () => {
@@ -199,10 +213,7 @@ describe('matchesFacets', () => {
 describe('fallbackSuggestions with facets', () => {
   it('honours a hard narrowing even without the model', () => {
     const out = fallbackSuggestions({
-      recipes: [
-        recipe('a', { protein: 'Chicken' }),
-        recipe('b', { protein: 'Beef' }),
-      ],
+      recipes: [recipe('a', { protein: 'Chicken' }), recipe('b', { protein: 'Beef' })],
       signals: {},
       wanted: 5,
       mood: '',

@@ -3,6 +3,7 @@ import { bucket, db } from '@/lib/firebase-server'
 import type { Review } from '@/lib/types'
 import { loadAccessibleRecipe } from '@/lib/recipe-access'
 import { setRequestContext } from '@/lib/request-context'
+import { isVerdict, verdictForRating, OUTCOME_RATING } from '@/lib/week-review'
 
 /**
  * POST /api/recipes/:id/reviews
@@ -41,13 +42,21 @@ export const POST: APIRoute = async (context: APIContext) => {
 
     // Parse request body
     const body = await request.json()
-    const { rating, comment, photoBase64, difficulty, source } = body
+    const { outcome, rating, comment, photoBase64, difficulty, source } = body
 
-    // Validate rating
-    if (!rating || rating < 1 || rating > 5) {
-      return new Response(JSON.stringify({ error: 'Rating must be between 1 and 5' }), {
-        status: 400,
-      })
+    // The verdict is the answer now. A client that still sends only a 1-5 rating (an older tab,
+    // or a rollback) is read through the audited mapping rather than rejected.
+    const verdict = isVerdict(outcome)
+      ? outcome
+      : typeof rating === 'number' && rating >= 1 && rating <= 5
+        ? verdictForRating(rating)
+        : null
+
+    if (!verdict) {
+      return new Response(
+        JSON.stringify({ error: 'outcome must be one of: disliked, ok, loved' }),
+        { status: 400 },
+      )
     }
 
     // Upload photo if provided
@@ -85,11 +94,13 @@ export const POST: APIRoute = async (context: APIContext) => {
       recipeId,
       userId,
       userName,
-      rating,
+      outcome: verdict,
+      // Still written for one release so a rollback has something to read (see Review.rating).
+      rating: OUTCOME_RATING[verdict],
       comment,
       photoUrl,
       difficulty,
-      source: source || 'quick',
+      source: source || 'detail',
       createdAt: new Date().toISOString(),
     }
 

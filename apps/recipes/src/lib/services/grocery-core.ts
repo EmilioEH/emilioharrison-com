@@ -27,6 +27,11 @@ Convert ALL recipe ingredients into STORE-PURCHASABLE units. Think about what yo
 
 **INPUT FORMAT:**
 Each ingredient line has [RECIPE_ID:xxx] [RECIPE_TITLE:xxx] tags for source tracking.
+Some lines also carry [CATEGORY:xxx] — the category already stored for that ingredient. Use it
+rather than guessing; it is only absent when nothing is on file.
+A line with no number ("to taste", "a pinch") is written that way in the recipe. Do not invent an
+amount for it — either omit it if it is on the OMIT list below, or give the smallest sensible
+purchasable unit.
 
 **MANDATORY CONVERSION RULES - ALWAYS APPLY THESE:**
 

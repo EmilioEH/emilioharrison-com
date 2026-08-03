@@ -1,17 +1,40 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeUnit, splitUnitNote, canCombine, convert, bestDisplayUnit } from './units'
+import {
+  normalizeUnit,
+  splitUnitNote,
+  canCombine,
+  convert,
+  bestDisplayUnit,
+  formatQuantity,
+} from './units'
 
 describe('normalizeUnit', () => {
   // Every spelling below is a real value stored in the library today.
   it.each([
-    ['cup', 'cup'], ['cups', 'cup'], ['Cup', 'cup'],
-    ['tsp', 'tsp'], ['teaspoon', 'tsp'], ['teaspoons', 'tsp'],
-    ['tbsp', 'tbsp'], ['Tbsp', 'tbsp'], ['tablespoon', 'tbsp'], ['tablespoons', 'tbsp'],
-    ['g', 'g'], ['gram', 'g'], ['grams', 'g'],
-    ['oz', 'oz'], ['ounce', 'oz'], ['ounces', 'oz'],
-    ['lb', 'lb'], ['pound', 'lb'], ['pounds', 'lb'],
-    ['ml', 'ml'], ['mL', 'ml'], ['milliliter', 'ml'],
-    ['clove', 'clove'], ['cloves', 'clove'],
+    ['cup', 'cup'],
+    ['cups', 'cup'],
+    ['Cup', 'cup'],
+    ['tsp', 'tsp'],
+    ['teaspoon', 'tsp'],
+    ['teaspoons', 'tsp'],
+    ['tbsp', 'tbsp'],
+    ['Tbsp', 'tbsp'],
+    ['tablespoon', 'tbsp'],
+    ['tablespoons', 'tbsp'],
+    ['g', 'g'],
+    ['gram', 'g'],
+    ['grams', 'g'],
+    ['oz', 'oz'],
+    ['ounce', 'oz'],
+    ['ounces', 'oz'],
+    ['lb', 'lb'],
+    ['pound', 'lb'],
+    ['pounds', 'lb'],
+    ['ml', 'ml'],
+    ['mL', 'ml'],
+    ['milliliter', 'ml'],
+    ['clove', 'clove'],
+    ['cloves', 'clove'],
   ])('maps %s to %s', (input, expected) => {
     expect(normalizeUnit(input).id).toBe(expected)
   })
@@ -141,5 +164,27 @@ describe('bestDisplayUnit', () => {
   it('does not scale counts or imprecise units', () => {
     expect(bestDisplayUnit(6, 'clove').unit).toBe('clove')
     expect(bestDisplayUnit(1, 'pinch').unit).toBe('pinch')
+  })
+})
+
+describe('formatQuantity', () => {
+  it('writes kitchen fractions the way a cook does', () => {
+    expect(formatQuantity(0.5)).toBe('½')
+    expect(formatQuantity(1.5)).toBe('1½')
+    expect(formatQuantity(0.25)).toBe('¼')
+    expect(formatQuantity(2.75)).toBe('2¾')
+    expect(formatQuantity(1 / 3)).toBe('⅓')
+  })
+
+  it('leaves whole numbers whole', () => {
+    expect(formatQuantity(3)).toBe('3')
+  })
+
+  it('falls back to decimals for anything that is not a kitchen fraction', () => {
+    expect(formatQuantity(1.1)).toBe('1.1')
+  })
+
+  it('returns nothing for a number that is not one', () => {
+    expect(formatQuantity(NaN)).toBe('')
   })
 })

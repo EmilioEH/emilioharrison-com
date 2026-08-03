@@ -18,6 +18,14 @@
  * between is dropped whole. This is the difference between feeling smart and feeling stupid: an
  * ungrounded model happily offers "Thai" to a library that has none. It is the same discipline
  * `parseSuggestions` already applied to picks, extended to the UI.
+ *
+ * **Taps for narrowing, words only after suggestions exist.** Before anything has been offered
+ * there is nothing concrete to react to — "too much chicken" needs three chickens first — so the
+ * composer stays shut and narrowing happens through grounded chips.
+ *
+ * The `pantry` widget is the one deliberate exception, and it is on the opening turn. What is in
+ * someone's fridge is a fact only they know: no set of chips can cover half a bag of spinach, and
+ * unlike a mood it is exact enough for code to filter on. It is offered, never required.
  */
 
 import {
@@ -29,6 +37,7 @@ import {
   matchesFacets,
   type RecipeFacets,
 } from '../recipe-facets'
+import { applyPantry } from './pantry-match'
 import type { Recipe } from '../types'
 
 /** The facet lists a `chips` widget may steer, and the vocabulary each is allowed to offer. */
@@ -42,6 +51,7 @@ export const FACET_VOCABULARY = {
 export type FacetKey = keyof typeof FACET_VOCABULARY
 
 /** Widget ids the client renders specially. `mood` is a steer, not a filter, so it isn't counted. */
+export const PANTRY_WIDGET_ID = 'pantry'
 export const MOOD_WIDGET_ID = 'mood'
 export const TIME_WIDGET_ID = 'time'
 
@@ -55,6 +65,15 @@ export type Widget =
   | { kind: 'counter'; id: string; min: number; max: number; value: number }
   | { kind: 'recipes'; picks: Array<{ recipeId: string; why: string }> }
   | { kind: 'text'; id: string; placeholder: string }
+  /**
+   * "What have you got in?" — chips of the library's commonest ingredients, plus free text.
+   *
+   * A deliberate exception to "taps for narrowing, words only after suggestions exist" (see the
+   * module note above): this is the one place typing genuinely comes first, because what is in
+   * someone's fridge is a fact only they know and no list of chips can cover it. It is offered,
+   * never required — the cook can go straight to "Find me meals".
+   */
+  | { kind: 'pantry'; id: string; options: Array<{ label: string; value: string }> }
   | { kind: 'actions'; options: Array<{ label: string; intent: 'more' | 'done' | 'restart' }> }
 
 export interface Turn {
@@ -82,6 +101,15 @@ export interface Constraints {
   wanted: number
   mood: string[]
   facets: RecipeFacets
+  /**
+   * Ingredients the cook says they already have.
+   *
+   * Not a facet: facets are a fixed vocabulary the model may steer, and this is free-form and
+   * cook-owned. It narrows in code (see `pantry-match.ts`) rather than being handed to the model,
+   * because "does this recipe use spinach" is a matter of fact and the model would only be
+   * re-deriving what the ingredient lists already say.
+   */
+  pantry: string[]
   keptIds: string[]
   rejectedIds: string[]
 }
@@ -100,6 +128,7 @@ export const emptyConstraints = (): Constraints => ({
   wanted: 4,
   mood: [],
   facets: { proteins: [], dishTypes: [], cuisines: [], difficulties: [], maxMinutes: null },
+  pantry: [],
   keptIds: [],
   rejectedIds: [],
 })
@@ -130,6 +159,12 @@ export function sanitizeConstraints(raw: unknown): Constraints {
       difficulties: keepKnown(asStrings(facets.difficulties), 'difficulties'),
       maxMinutes: Number.isFinite(maxMinutes) && maxMinutes > 0 ? maxMinutes : null,
     },
+    // Free text, so capped and trimmed like the mood list beside it. Twelve is well past what
+    // anyone types and far short of anything that could bloat a request.
+    pantry: asStrings(input.pantry)
+      .map((entry) => entry.trim().slice(0, 40))
+      .filter(Boolean)
+      .slice(0, 12),
     keptIds: asStrings(input.keptIds),
     rejectedIds: asStrings(input.rejectedIds),
   }
@@ -195,7 +230,12 @@ export function applyPatch(
 /** Recipes still on offer: within the constraints, and not already kept or turned down. */
 export function offerableUnder(recipes: Recipe[], constraints: Constraints): Recipe[] {
   const excluded = new Set([...constraints.keptIds, ...constraints.rejectedIds])
-  return recipes.filter((r) => !excluded.has(r.id) && matchesFacets(r, constraints.facets))
+  const eligible = recipes.filter(
+    (r) => !excluded.has(r.id) && matchesFacets(r, constraints.facets),
+  )
+  // The pantry narrows last, and only while enough survives to choose from — below the floor it
+  // marks matches instead of removing anything, so it can never on its own empty the menu.
+  return applyPantry(eligible, constraints.pantry).recipes
 }
 
 /** How many recipes would survive if the cook also picked `value` for `key`. */
@@ -407,8 +447,44 @@ export function degradedTurn(picks: Array<{ recipeId: string; why: string }>): T
   }
 }
 
-/** The opening question, rendered without a model call so the screen never opens on a spinner. */
-export function openingTurn(alreadyPlanned: number): Turn {
+/**
+ * Put the pantry question on whichever turn opens the conversation.
+ *
+ * `openingTurn` below is only reached when the prefetch hasn't landed; the usual first turn comes
+ * from the model, which knows nothing about this widget. So the widget is attached to the opening
+ * turn wherever it came from — inserted *before* the actions, since "Find me meals" is the end of
+ * the screen and nothing should sit under it.
+ *
+ * A no-op once suggestions exist, or if the turn already carries one.
+ */
+export function withPantryWidget(
+  turn: Turn,
+  options: Array<{ label: string; value: string }>,
+): Turn {
+  if (!options.length) return turn
+  if (turn.widgets.some((w) => w.kind === 'pantry' || w.kind === 'recipes')) return turn
+
+  const widget: Widget = { kind: 'pantry', id: PANTRY_WIDGET_ID, options }
+  const actionsAt = turn.widgets.findIndex((w) => w.kind === 'actions')
+  const widgets =
+    actionsAt === -1
+      ? [...turn.widgets, widget]
+      : [...turn.widgets.slice(0, actionsAt), widget, ...turn.widgets.slice(actionsAt)]
+
+  return { ...turn, widgets }
+}
+
+/**
+ * The opening question, rendered without a model call so the screen never opens on a spinner.
+ *
+ * `pantryOptions` come from the caller because they are derived from the real library
+ * (`commonPantryOptions`), which this module has no reason to hold. No options means no widget —
+ * an empty library has nothing to offer and shouldn't pretend otherwise.
+ */
+export function openingTurn(
+  alreadyPlanned: number,
+  pantryOptions: Array<{ label: string; value: string }> = [],
+): Turn {
   const say = alreadyPlanned
     ? `You have ${alreadyPlanned} planned already. How many more meals do you need?`
     : 'How many meals do you need this week?'
@@ -427,11 +503,16 @@ export function openingTurn(alreadyPlanned: number): Turn {
           'comforting',
           'light and fresh',
           'feeding people',
-          'use up what we have',
+          // "use up what we have" used to sit here and do nothing — a mood the model could read
+          // but that named no actual ingredient. The pantry widget below is that idea done
+          // properly, so the decoration is gone rather than left to imply a feature.
           'not much effort',
           'worth the effort',
         ].map((m) => ({ label: m, value: m })),
       },
+      ...(pantryOptions.length
+        ? [{ kind: 'pantry' as const, id: PANTRY_WIDGET_ID, options: pantryOptions }]
+        : []),
       { kind: 'actions', options: [{ label: 'Find me meals', intent: 'more' }] },
     ],
   }

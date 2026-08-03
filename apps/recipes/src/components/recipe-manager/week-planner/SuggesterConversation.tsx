@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Plus, X, Check, Send } from 'lucide-react'
 import { Chip } from '../../ui/Chip'
 import { ConstraintBar } from './ConstraintBar'
+import { PantryPicker } from './PantryPicker'
+import { commonPantryOptions } from '../../../lib/services/pantry-match'
 import { apiBase } from '../../../lib/routes'
 import {
   emptyConstraints,
   openingTurn,
+  withPantryWidget,
   MIN_WANTED,
   MAX_WANTED,
   type Constraints,
@@ -50,6 +53,9 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
     ...emptyConstraints(),
     keptIds: [...plannedIds],
   }))
+  // Drawn from the library the cook actually owns, so every chip offered is one that matches
+  // something — the same grounding rule the facet chips follow.
+  const pantryOptions = React.useMemo(() => commonPantryOptions(allRecipes), [allRecipes])
   const [rows, setRows] = useState<Row[]>(() => [
     { kind: 'app', turn: prefetched ?? openingTurn(plannedIds.length) },
   ])
@@ -80,7 +86,9 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   const entrance = mounted.current ? { opacity: 0, y: 8 } : false
 
   /** Once a real suggestion has been made, typing is worth offering. Not before — there is
-    * nothing concrete to react to yet, and "too much chicken" needs three chickens first. */
+   * nothing concrete to react to yet, and "too much chicken" needs three chickens first. The
+   * pantry step's own text box is the documented exception (see `suggest-turns.ts`): it asks for
+   * a fact rather than a reaction, so there is nothing it needs to have seen first. */
   const composerOpen = rows.some(
     (row) => row.kind === 'app' && row.turn.widgets.some((w) => w.kind === 'recipes'),
   )
@@ -173,20 +181,30 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   /** Record the cook's answer against the turn that asked, then ask the next question. */
   const answer = (rowIndex: number, said: string, next: Constraints) => {
     setRows((prev) =>
-      prev.map((row, i) => (i === rowIndex && row.kind === 'app' ? { ...row, answered: said } : row)),
+      prev.map((row, i) =>
+        i === rowIndex && row.kind === 'app' ? { ...row, answered: said } : row,
+      ),
     )
     setConstraints(next)
     void ask(said, next)
   }
 
+  /**
+   * Record a constraint without asking for a new turn.
+   *
+   * Naming what's in the fridge is a statement of fact, not a steer the model needs to react to —
+   * and there are usually several. Sending a round trip per ingredient would cost a model call
+   * each, push the picker up the screen as answers piled in, and produce a reply to "I have
+   * spinach" that nobody asked for. The constraint bar gives the feedback instead, and the cook
+   * presses "Find me meals" when they've finished.
+   */
+  const noteConstraint = (_said: string, next: Constraints) => setConstraints(next)
+
   const keep = async (recipeId: string) => {
     const recipe = byId.get(recipeId)
     const next = { ...constraints, keptIds: [...constraints.keptIds, recipeId] }
     setConstraints(next)
-    setRows((prev) => [
-      ...prev,
-      { kind: 'added', recipeId, title: recipe?.title ?? 'That one' },
-    ])
+    setRows((prev) => [...prev, { kind: 'added', recipeId, title: recipe?.title ?? 'That one' }])
 
     const added = await onAdd(recipeId)
     if (added === false) {
@@ -273,11 +291,17 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
               <TurnRow
                 key={`turn-${index}`}
                 entrance={entrance}
-                turn={row.turn}
+                // The pantry question is attached to the opening turn at render time, not baked
+                // into the initial state: the chips come from the library, which may still be
+                // loading when this mounts, and a widget computed once from an empty list would
+                // never appear at all. It also has to reach the *prefetched* turn, which comes
+                // from the model and knows nothing about it.
+                turn={index === 0 ? withPantryWidget(row.turn, pantryOptions) : row.turn}
                 answered={row.answered}
                 byId={byId}
                 constraints={constraints}
                 onAnswer={(said, next) => answer(index, said, next)}
+                onNote={noteConstraint}
                 onKeep={keep}
                 onDismiss={dismiss}
                 onOpenRecipe={onOpenRecipe}
@@ -287,7 +311,11 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
           })}
 
           {loading && (
-            <p className="text-sm text-muted-foreground" role="status" data-testid="suggester-thinking">
+            <p
+              className="text-sm text-muted-foreground"
+              role="status"
+              data-testid="suggester-thinking"
+            >
               Looking through your recipes…
             </p>
           )}
@@ -364,6 +392,8 @@ const TurnRow: React.FC<{
   byId: Map<string, Recipe>
   constraints: Constraints
   onAnswer: (said: string, next: Constraints) => void
+  /** Record a constraint without asking the model for a new turn. */
+  onNote: (said: string, next: Constraints) => void
   onKeep: (recipeId: string) => void
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
@@ -375,6 +405,7 @@ const TurnRow: React.FC<{
   byId,
   constraints,
   onAnswer,
+  onNote,
   onKeep,
   onDismiss,
   onOpenRecipe,
@@ -396,6 +427,7 @@ const TurnRow: React.FC<{
         byId={byId}
         constraints={constraints}
         onAnswer={onAnswer}
+        onNote={onNote}
         onKeep={onKeep}
         onDismiss={onDismiss}
         onOpenRecipe={onOpenRecipe}
@@ -413,24 +445,39 @@ const WidgetView: React.FC<{
   byId: Map<string, Recipe>
   constraints: Constraints
   onAnswer: (said: string, next: Constraints) => void
+  /** Record a constraint without asking the model for a new turn. */
+  onNote: (said: string, next: Constraints) => void
   onKeep: (recipeId: string) => void
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
   onDone?: () => void
-}> = ({ widget, entrance, byId, constraints, onAnswer, onKeep, onDismiss, onOpenRecipe, onDone }) => {
+}> = ({
+  widget,
+  entrance,
+  byId,
+  constraints,
+  onAnswer,
+  onNote,
+  onKeep,
+  onDismiss,
+  onOpenRecipe,
+  onDone,
+}) => {
   switch (widget.kind) {
     case 'counter':
       return (
         <div className="flex flex-wrap gap-2">
-          {Array.from({ length: MAX_WANTED - MIN_WANTED + 1 }, (_, i) => MIN_WANTED + i).map((n) => (
-            <Chip
-              key={n}
-              label={String(n)}
-              active={constraints.wanted === n}
-              onClick={() => onAnswer(`${n} meals.`, { ...constraints, wanted: n })}
-              className="w-11 px-0"
-            />
-          ))}
+          {Array.from({ length: MAX_WANTED - MIN_WANTED + 1 }, (_, i) => MIN_WANTED + i).map(
+            (n) => (
+              <Chip
+                key={n}
+                label={String(n)}
+                active={constraints.wanted === n}
+                onClick={() => onAnswer(`${n} meals.`, { ...constraints, wanted: n })}
+                className="w-11 px-0"
+              />
+            ),
+          )}
         </div>
       )
 
@@ -459,6 +506,9 @@ const WidgetView: React.FC<{
           ))}
         </div>
       )
+
+    case 'pantry':
+      return <PantryPicker options={widget.options} constraints={constraints} onChange={onNote} />
 
     case 'recipes':
       return (

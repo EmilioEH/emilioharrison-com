@@ -1,8 +1,8 @@
 import type { GoogleGenAI } from '@google/genai'
 import type OpenAI from 'openai'
-import type { Recipe } from '../../../apps/recipes/src/lib/types'
+import type { Recipe, ShoppableIngredient } from '../../../apps/recipes/src/lib/types'
 
-export type { Recipe }
+export type { Recipe, ShoppableIngredient }
 export type { GoogleGenAI }
 export type { OpenAI }
 
@@ -17,12 +17,19 @@ export type { OpenAI }
  */
 export interface WorkerStore {
   // --- Grocery (`grocery_lists` docs; queue field: `status`) ---
-  /** Returns the input recipes stored on the pending doc (`inputRecipes`), or null if not
-   * claimable. The Cloudflare cutover writes `inputRecipes` onto the pending doc since the async
-   * worker — unlike the original request — doesn't otherwise have them. */
-  claimGrocery(listId: string): Promise<Recipe[] | null>
+  /** Returns the payload stored on the pending doc, or null if not claimable. The Cloudflare
+   * cutover writes `inputRecipes`/`inputRecipeIds` onto the pending doc since the async worker —
+   * unlike the original request — doesn't otherwise have them. */
+  claimGrocery(listId: string): Promise<GroceryJobPayload | null>
   writeGroceryProgress(listId: string, progress: number, message: string): Promise<void>
-  completeGrocery(listId: string, ingredients: unknown[]): Promise<void>
+  /** `sourceRecipeIds` is the finished list's signature. The implementation folds the cook's
+   * ticked-off, deleted and hand-added items back onto the generated result rather than
+   * overwriting them. */
+  completeGrocery(
+    listId: string,
+    ingredients: ShoppableIngredient[],
+    sourceRecipeIds: string[],
+  ): Promise<void>
   failGrocery(listId: string, message: string): Promise<void>
 
   // --- Photo import (`import_jobs` docs; queue field: `status`) ---
@@ -37,6 +44,13 @@ export interface WorkerStore {
   // --- Reaper: flip docs stuck in `processing` past the deadline to `error`. Returns count. ---
   reapStuckGrocery(deadlineMs: number, now: number): Promise<number>
   reapStuckImports(deadlineMs: number, now: number): Promise<number>
+}
+
+/** What a pending `grocery_lists` doc carries into the worker. */
+export interface GroceryJobPayload {
+  recipes: Recipe[]
+  /** The set the client asked for — stamped onto the finished list as its signature. */
+  sourceRecipeIds: string[]
 }
 
 /**

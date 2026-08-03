@@ -25,11 +25,12 @@ import {
   currentWeekRecipes,
   addRecipeToWeek,
   removeRecipeFromWeek,
-  $groceryNeedsRegen,
+  weekServingsFor,
   $weekOverlayOpen,
 } from '../../../lib/weekStore'
-import { $currentFamily } from '../../../lib/familyStore'
+import { $currentFamily, $familyInitialized, $recipeFamilyData } from '../../../lib/familyStore'
 import { buildRawShoppableIngredients } from '../../../lib/grocery-utils'
+import { scaleRecipe } from '../../../lib/servings-scale'
 import { useFullRecipes } from '../../../lib/hooks/useFullRecipes'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
@@ -51,6 +52,7 @@ import { useAuth } from '../../../lib/authStore'
 import { useFirestoreDocument } from '../../../lib/firestoreHooks'
 import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
 import { isGroceryGenerationStuck } from './grocery-stuck-detection'
+import { useAutoGroceryGeneration } from './useAutoGroceryGeneration'
 
 import type { User } from 'firebase/auth'
 
@@ -201,7 +203,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     : []
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
-  const groceryNeedsRegen = useStore($groceryNeedsRegen)
+  const familyPlanData = useStore($recipeFamilyData)
   const [viewMode, setViewMode] = useState<'raw' | 'ai'>('raw')
   const { user: authUser } = useAuth()
 
@@ -229,6 +231,17 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return allRecipes.filter((r) => plannedRecipeIds.includes(r.id))
   }, [currentRecipes, allRecipes])
 
+  // What has to be bought, which is the recipes *and* how many people each is being cooked for.
+  // A servings change is a different shopping requirement, so it belongs in the signature that
+  // decides whether the stored list is still current.
+  const groceryScope = useMemo(
+    () => groceryRecipes.map((r) => ({ id: r.id, servings: weekServingsFor(r.id) })),
+    // `familyPlanData` is not read directly — it is what makes `weekServingsFor` re-evaluate
+    // when someone changes a count, here or on another device.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groceryRecipes, familyPlanData],
+  )
+
   // `allRecipes` comes from the list endpoint, which projects away `structuredIngredients` (see
   // toListRecipe). The grocery list needs them, so fetch the full documents for just this week's
   // recipes — a handful, not the whole library.
@@ -245,21 +258,32 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   // Raw view's ingredients — same ShoppableIngredient shape Smart uses, rendered through the
   // same <GroceryList> with mergeIngredients={false} so it looks and behaves identically, just
   // without combining the same ingredient across recipes.
+  // Scaled to this week's servings the same way the Smart list is (which does it server-side, in
+  // generate-grocery-list.ts), so the two views never disagree about how much to buy.
   const rawIngredients = useMemo(
-    () => buildRawShoppableIngredients(groceryRecipesForList),
-    [groceryRecipesForList],
+    () =>
+      buildRawShoppableIngredients(
+        groceryRecipesForList.map((r) => scaleRecipe(r, weekServingsFor(r.id))),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groceryRecipesForList, familyPlanData],
   )
 
   // AI-based grocery background ops
   const { operations } = useStore(aiOperationStore)
   const currentFamily = useStore($currentFamily)
+  const familyInitialized = useStore($familyInitialized)
   const scopeId = currentFamily?.id ?? user?.uid ?? null
   const listId = scopeId ? `${scopeId}_${activeWeekStart}` : null
 
-  // Subscribe to Firestore document for this week's list
+  // Subscribe to Firestore document for this week's list.
+  //
+  // `resolved` is what makes the auto-generate below safe: it is true only once a snapshot has
+  // actually arrived for *this* listId, so `aiGroceryList === null` means "there is no list"
+  // rather than "nobody has looked yet".
   const {
     data: aiGroceryList,
-    loading: aiLoading,
+    resolved: aiResolved,
     error: firestoreError,
   } = useFirestoreDocument<GroceryListType>(listId ? `grocery_lists/${listId}` : null)
 
@@ -318,38 +342,23 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     !isStuck &&
     !hasLocalError
 
-  // Auto-trigger when opening grocery tab if no list exists and not processing,
-  // or when a new recipe was added to the current week (groceryNeedsRegen flag).
-  useEffect(() => {
-    if (activeTab === 'grocery' && user && groceryRecipes.length > 0 && !aiLoading) {
-      // Allow generation even with firestoreError — the error is often caused by
-      // the document not existing yet (family scope). Once generation creates the
-      // document, the subscription will resolve on its own.
-      const weekNeedsRegen = groceryNeedsRegen === activeWeekStart
-      const needsGeneration = (!aiGroceryList || weekNeedsRegen) && !isProcessing && !isStuck
-
-      if (needsGeneration) {
-        // Clear the regen flag before triggering so we don't loop
-        if (weekNeedsRegen) {
-          $groceryNeedsRegen.set(null)
-        }
-        triggerGroceryGeneration(activeWeekStart, groceryRecipes, scopeId!)
-      }
-    }
-  }, [
-    activeTab,
-    user,
-    groceryRecipes,
-    aiGroceryList,
-    isProcessing,
-    activeWeekStart,
-    aiLoading,
-    isStuck,
-    firestoreError,
+  // Generate the Smart list — but only when this week's recipes have actually changed. The rule,
+  // and why each guard exists, lives in the hook.
+  useAutoGroceryGeneration({
+    active: activeTab === 'grocery',
+    signedIn: Boolean(user),
+    familyReady: familyInitialized,
     scopeId,
-    currentFamily?.id,
-    groceryNeedsRegen,
-  ])
+    listId,
+    weekStart: activeWeekStart,
+    recipes: groceryRecipes,
+    scope: groceryScope,
+    list: aiGroceryList,
+    resolved: aiResolved,
+    readError: Boolean(firestoreError),
+    processing: isProcessing,
+    stuck: isStuck,
+  })
 
   // Auto-switch to AI view when smart list becomes ready
   const [userToggledRaw, setUserToggledRaw] = useState(false)

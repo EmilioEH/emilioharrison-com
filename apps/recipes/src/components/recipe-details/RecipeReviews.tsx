@@ -1,14 +1,18 @@
 import React, { useState, useMemo, useRef } from 'react'
-import { Star, ChevronDown, ChevronUp, Camera, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Camera, X } from 'lucide-react'
 import { useStore } from '@nanostores/react'
 import { Inline, Stack } from '../ui/layout'
 import { Button } from '../ui/button'
+import { Chip } from '../ui/Chip'
 import { cn } from '../../lib/utils'
 import { $currentUserId } from '../../lib/familyStore'
 import type { FamilyRecipeData, Review } from '../../lib/types'
+import type { Verdict } from '../../lib/week-review'
+import { householdVerdict, verdictOf } from '../../lib/household-verdict'
+import { VerdictIcon, VerdictMark } from './verdicts'
+import { VERDICT_META, VERDICT_ORDER, verdictSummaryText } from '../../lib/verdict-display'
 
 interface RecipeReviewsProps {
-  averageRating: number
   totalRatings: number
   lastCooked?: string
   lastCookedBy?: string
@@ -19,7 +23,6 @@ interface RecipeReviewsProps {
 }
 
 export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
-  averageRating,
   totalRatings,
   lastCooked,
   lastCookedBy,
@@ -29,10 +32,10 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
   onRecipeRefresh,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [hoverRating, setHoverRating] = useState<number>(0)
 
-  // NEW: Review form state
-  const [reviewRating, setReviewRating] = useState<number>(0)
+  // The answer is a verdict. There is no hover state to keep any more — that only existed to
+  // preview how many of five stars a pointer was over, on a scale that no longer exists.
+  const [reviewVerdict, setReviewVerdict] = useState<Verdict | null>(null)
   const [reviewComment, setReviewComment] = useState('')
   const [reviewPhoto, setReviewPhoto] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,6 +75,9 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
 
   const displayReviews = isExpanded ? reviews : []
 
+  // Counts and names live here, on the recipe page — never on a library card.
+  const verdict = householdVerdict(reviews)
+
   // Check if current user has already reviewed
   const currentUserReview = reviews.find((r) => currentUserId && r.userId === currentUserId)
 
@@ -89,7 +95,7 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
 
   // Cancel review
   const handleCancelReview = () => {
-    setReviewRating(0)
+    setReviewVerdict(null)
     setReviewComment('')
     setReviewPhoto(null)
     setEditingReviewId(null)
@@ -97,7 +103,7 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
 
   // Edit review
   const handleEditReview = (review: Review) => {
-    setReviewRating(review.rating)
+    setReviewVerdict(verdictOf(review))
     setReviewComment(review.comment || '')
     setReviewPhoto(review.photoUrl || null)
     setEditingReviewId(review.id)
@@ -137,7 +143,7 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
 
   // Submit review (Create or Update)
   const handleSubmitReview = async () => {
-    if (!recipeId || reviewRating === 0) return
+    if (!recipeId || !reviewVerdict) return
 
     setIsSubmitting(true)
     try {
@@ -155,10 +161,12 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          rating: reviewRating,
+          outcome: reviewVerdict,
           comment: reviewComment || undefined,
           photoBase64: reviewPhoto || undefined,
-          source: 'quick',
+          // Tagged at the point of writing. Both surfaces used to post 'quick', which is exactly
+          // why a stored answer could not be traced back to the question that produced it.
+          source: 'detail',
         }),
       })
 
@@ -185,7 +193,7 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
   if (totalRatings === 0 && !familyData) return null
 
   // Progressive disclosure: show comment field after rating selected
-  const showCommentField = reviewRating > 0
+  const showCommentField = reviewVerdict !== null
 
   return (
     <div className="mb-6 border-b border-border pb-6">
@@ -195,9 +203,18 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
       >
         <Inline spacing="sm" align="center" justify="between">
           <Inline spacing="sm" align="center">
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-bold text-foreground">{averageRating.toFixed(1)}</span>
+            <div className="flex items-center gap-1.5">
+              {/* The household's verdict, not an average. "4.3 ★" mixed two scales that meant
+               * different things by the same number, and a three-point scale cannot be
+               * averaged honestly anyway. */}
+              {verdict ? (
+                <>
+                  <VerdictMark verdict={verdict} />
+                  <span className="font-bold text-foreground">{verdictSummaryText(verdict)}</span>
+                </>
+              ) : (
+                <span className="font-bold text-muted-foreground">Not rated yet</span>
+              )}
               <span className="text-xs text-muted-foreground">
                 ({totalRatings} {totalRatings === 1 ? 'review' : 'reviews'})
               </span>
@@ -227,33 +244,25 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
           <Stack spacing="md">
             <p className="text-sm font-medium text-foreground">Leave a review</p>
 
-            {/* Star Rating */}
-            <Inline spacing="sm">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  aria-label={`Rate ${star} stars`}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setReviewRating(star)
-                  }}
-                  className="transition-transform hover:scale-110 active:scale-95"
+            {/* The same three verdicts, in the same words, that the week review asks in — the
+             * two screens used to ask the same question in incomparable ways. */}
+            <div className="flex flex-wrap gap-2">
+              {VERDICT_ORDER.map((option) => (
+                <Chip
+                  key={option}
+                  label={
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
+                      <VerdictIcon verdict={option} className="h-4 w-4" />
+                      <span aria-hidden="true">{VERDICT_META[option].label}</span>
+                    </span>
+                  }
+                  active={reviewVerdict === option}
                   disabled={isSubmitting}
-                >
-                  <Star
-                    className={cn(
-                      'h-6 w-6 transition-colors',
-                      star <= (hoverRating || reviewRating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'fill-border text-border',
-                    )}
-                  />
-                </button>
+                  onClick={() => setReviewVerdict(option)}
+                  className="px-3"
+                />
               ))}
-            </Inline>
+            </div>
 
             {/* Comment Field - Progressive Disclosure */}
             {showCommentField && (
@@ -322,7 +331,7 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
                     <Button
                       size="sm"
                       onClick={handleSubmitReview}
-                      disabled={reviewRating === 0 || isSubmitting}
+                      disabled={!reviewVerdict || isSubmitting}
                       className="flex-1"
                     >
                       {isSubmitting
@@ -337,7 +346,7 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
             )}
 
             {!showCommentField && (
-              <p className="text-xs text-muted-foreground">Tap a star to start your review</p>
+              <p className="text-xs text-muted-foreground">Pick one to start your review</p>
             )}
           </Stack>
         </div>
@@ -379,19 +388,13 @@ export const RecipeReviews: React.FC<RecipeReviewsProps> = ({
                         </div>
                       </Inline>
 
-                      {/* Stars */}
-                      <Inline spacing="xs">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={cn(
-                              'h-4 w-4',
-                              star <= review.rating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'fill-border text-border',
-                            )}
-                          />
-                        ))}
+                      {/* This person's verdict. Reviews written before the verdict field
+                       * existed are read through their stored rating. */}
+                      <Inline spacing="xs" align="center">
+                        <VerdictIcon verdict={verdictOf(review)} className="h-4 w-4" />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {VERDICT_META[verdictOf(review)].short}
+                        </span>
                       </Inline>
                     </Inline>
 

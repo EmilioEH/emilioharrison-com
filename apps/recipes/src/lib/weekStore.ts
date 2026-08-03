@@ -2,6 +2,7 @@ import { atom, computed } from 'nanostores'
 import { persistentMap } from '@nanostores/persistent'
 import { startOfWeek, addWeeks, format, parseISO } from 'date-fns'
 import { $recipeFamilyData, familyActions } from './familyStore'
+import type { WeekPlanData } from './types'
 
 // --- Types ---
 
@@ -23,13 +24,6 @@ type WeekState = Record<string, string> & {
 export const weekState = persistentMap<WeekState>('weekState', {
   activeWeekStart: format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
 })
-
-/**
- * Signals that the grocery list for the stored week start needs regeneration.
- * Set to a week start string (e.g. "2026-05-25") when a recipe is added to that week.
- * Cleared by WeekWorkspace after triggering regeneration.
- */
-export const $groceryNeedsRegen = atom<string | null>(null)
 
 /**
  * True while one of the week's full screens (the review, the suggester) is open.
@@ -132,6 +126,33 @@ const getBaseUrl = () => {
 }
 
 /**
+ * Write a recipe's week-plan state into the store straight away and hand back the undo.
+ *
+ * The store is the only thing the UI reads, so this is what makes a tap feel instant. The undo
+ * restores the exact entry that was there — including "there was no entry at all" — rather than
+ * guessing at an inverse, so a failed request leaves the store precisely as it started.
+ */
+function optimisticallySetPlan(recipeId: string, weekPlan: WeekPlanData): () => void {
+  const before = $recipeFamilyData.get()[recipeId]
+
+  familyActions.setRecipeFamilyData(recipeId, {
+    // A recipe with no family data yet still needs the other fields to satisfy the shape; they
+    // are replaced wholesale by the server's response the moment it arrives.
+    ...{ id: recipeId, notes: [], ratings: [], cookingHistory: [] },
+    ...before,
+    weekPlan: { ...before?.weekPlan, ...weekPlan },
+  })
+
+  return () => {
+    if (before) {
+      familyActions.setRecipeFamilyData(recipeId, before)
+    } else {
+      familyActions.clearRecipeFamilyData(recipeId)
+    }
+  }
+}
+
+/**
  * Add a recipe to the CURRENTLY ACTIVE week. There is no day-level assignment —
  * `assignedDate` is always the week's start (Monday), which keeps the existing
  * `currentWeekRecipes`/grocery pipeline (both keyed off the date's week) unchanged.
@@ -141,7 +162,14 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
   const activeStart = weekState.get().activeWeekStart
   const dateStr = activeStart
 
-  // Call API
+  // Show it as planned immediately, and put it back if the server disagrees.
+  //
+  // This used to wait for the round trip before anything moved, so tapping `+` did nothing
+  // visible for as long as the request took — which on a phone is long enough to tap again, or
+  // to conclude it didn't work. Every consumer reads the same store, so the card, the library
+  // badge and the week count all flip together.
+  const rollback = optimisticallySetPlan(recipeId, { isPlanned: true, assignedDate: dateStr })
+
   try {
     const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
       method: 'POST',
@@ -163,6 +191,7 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
           `Server Error (${res.status}): ${text.substring(0, 100)}`,
         )
       }
+      rollback()
       return false
     }
 
@@ -170,12 +199,13 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
 
     if (data.success && data.data) {
       familyActions.setRecipeFamilyData(recipeId, data.data)
-      // Signal that the grocery list for this week needs regeneration,
-      // since a new recipe was added and the cached list is now stale.
-      $groceryNeedsRegen.set(activeStart)
+      // Nothing to flag: the grocery list records the recipes it was built from, so the week view
+      // works out on its own that this week has changed. The old in-memory flag set here only
+      // ever caught *additions*, and was gone after a reload.
       return true
     } else {
       console.warn('[WeekStore] API success but no data?', data)
+      rollback()
       return false
     }
   } catch (error) {
@@ -183,29 +213,98 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
     if (error instanceof Error) {
       console.error('Error message:', error.message)
     }
+    rollback()
     return false
   }
 }
 
 /**
- * Remove a recipe from the week plan
+ * Cook this recipe for a different number of people, this week.
+ *
+ * Written to the family's plan entry, never to the recipe — cooking for six this week must not
+ * change the recipe for everyone forever. Passing `undefined` goes back to the recipe's own count.
+ *
+ * **Only for a recipe already on the plan.** The count is a property of the plan entry, so
+ * writing one for an unplanned recipe would have to create that entry — and adding a recipe to
+ * the week as a side effect of reading its ingredients at a different scale is not something
+ * anyone asked for. Returns `false` without touching anything; the caller keeps the choice
+ * locally instead.
+ *
+ * Optimistic like the other two, so the stepper moves on the tap. The grocery list notices on its
+ * own: the count is part of the week's signature, so changing it makes the stored list stale.
  */
-export const removeRecipeFromWeek = async (recipeId: string) => {
+export const setWeekServings = async (
+  recipeId: string,
+  servings: number | undefined,
+): Promise<boolean> => {
+  const current = $recipeFamilyData.get()[recipeId]?.weekPlan
+  if (!current?.isPlanned) return false
+
+  const rollback = optimisticallySetPlan(recipeId, {
+    isPlanned: true,
+    assignedDate: current.assignedDate ?? weekState.get().activeWeekStart,
+    servings,
+  })
+
+  try {
+    const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        isPlanned: true,
+        assignedDate: current.assignedDate ?? weekState.get().activeWeekStart,
+        // `null` is how "back to the recipe's own count" is said on the wire; `undefined` would
+        // simply be dropped by JSON.stringify and read as "don't change it".
+        servings: servings ?? null,
+      }),
+    })
+
+    const data = await res.json().catch(() => null)
+    if (!res.ok || !data?.success || !data.data) {
+      rollback()
+      return false
+    }
+    familyActions.setRecipeFamilyData(recipeId, data.data)
+    return true
+  } catch (error) {
+    console.error('Failed to set servings for the week:', error)
+    rollback()
+    return false
+  }
+}
+
+/** What this recipe is being cooked for this week, if the cook has said. */
+export const weekServingsFor = (recipeId: string): number | undefined =>
+  $recipeFamilyData.get()[recipeId]?.weekPlan?.servings
+
+/**
+ * Remove a recipe from the week plan. Optimistic in the same way as adding: the card and the
+ * week count change on the tap, and go back if the server refuses.
+ */
+export const removeRecipeFromWeek = async (recipeId: string): Promise<boolean> => {
+  const rollback = optimisticallySetPlan(recipeId, { isPlanned: false })
+
   try {
     const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
       method: 'DELETE',
     })
 
-    if (res.ok) {
-      // Fetch fresh data or manually update store
-      const resData = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/family-data`)
-      const data = await resData.json()
-      if (data.success && data.data) {
-        familyActions.setRecipeFamilyData(recipeId, data.data)
-      }
+    if (!res.ok) {
+      rollback()
+      return false
     }
+
+    // Fetch fresh data or manually update store
+    const resData = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/family-data`)
+    const data = await resData.json()
+    if (data.success && data.data) {
+      familyActions.setRecipeFamilyData(recipeId, data.data)
+    }
+    return true
   } catch (error) {
     console.error('Failed to remove recipe from week:', error)
+    rollback()
+    return false
   }
 }
 

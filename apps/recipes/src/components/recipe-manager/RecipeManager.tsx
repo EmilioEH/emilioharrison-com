@@ -28,6 +28,7 @@ import {
   removeRecipeFromWeek,
   isPlannedForActiveWeek,
   $weekOverlayOpen,
+  weekState,
 } from '../../lib/weekStore'
 import { familyActions, $currentFamily } from '../../lib/familyStore'
 import { recipeActions } from '../../lib/recipeStore'
@@ -40,6 +41,7 @@ import { ShareRecipeDialog } from './dialogs/ShareRecipeDialog'
 
 import { CalendarPicker } from './week-planner/CalendarPicker'
 import { BottomTabBar } from './BottomTabBar'
+import { weekTabLabel } from '../../lib/week-labels'
 
 import { ResponsiveModal } from '../ui/ResponsiveModal'
 
@@ -68,6 +70,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
   // `useIdentityResolution` reconciles those placeholders with the Firestore-verified
   // `bootstrapUser` once it arrives, without ever flashing the wrong screen for a returning user.
   const weekOverlayOpen = useStore($weekOverlayOpen)
+  const { activeWeekStart } = useStore(weekState)
   const { user: bootstrapUser } = useBootstrap()
   const { currentUser, isAdmin: computedIsAdmin } = useIdentityResolution({
     initialUser: user,
@@ -457,6 +460,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
                     scrollContainer={scrollContainer}
                     onShare={handleShareRecipe}
                     isContainedScroll={useContainedScroll}
+                    onOpenCalendar={() => setIsCalendarOpen(true)}
                   />
                 </div>
               </div>
@@ -490,6 +494,7 @@ const RecipeManager: React.FC<RecipeManagerProps> = ({ user, isAdmin }) => {
         <BottomTabBar
           activeTab={view === 'week' ? 'week' : 'library'}
           onTabChange={(tab) => setView(tab === 'week' ? 'week' : 'library')}
+          weekLabel={weekTabLabel(activeWeekStart)}
         />
       )}
 

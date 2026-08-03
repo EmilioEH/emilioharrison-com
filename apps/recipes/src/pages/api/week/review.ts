@@ -10,7 +10,7 @@ import {
 } from '../../../lib/week-review'
 import type { FamilyRecipeData, Review } from '../../../lib/types'
 
-const VALID: CookOutcome[] = ['skipped', 'meh', 'good', 'again']
+const VALID: CookOutcome[] = ['skipped', 'disliked', 'ok', 'loved']
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -178,8 +178,12 @@ export const POST: APIRoute = async (context: APIContext) => {
           recipeId,
           userId,
           userName,
+          outcome,
+          // Still written for one release so a rollback has something to read (see Review.rating).
           rating: OUTCOME_RATING[outcome],
-          source: 'quick',
+          // Tagged at the point of writing, which is what finally makes the two rating surfaces
+          // distinguishable — both used to post 'quick'.
+          source: 'week-review',
           createdAt: cookedAt,
         }
 
@@ -187,7 +191,7 @@ export const POST: APIRoute = async (context: APIContext) => {
           ...familyData,
           cookingHistory: [
             ...(familyData.cookingHistory ?? []),
-            { userId, userName, cookedAt, wouldMakeAgain: outcome === 'again' },
+            { userId, userName, cookedAt, wouldMakeAgain: outcome === 'loved' },
           ],
           reviews: [...(familyData.reviews ?? []), review],
         })

@@ -45,6 +45,15 @@ export const ConstraintBar: React.FC<ConstraintBarProps> = ({ constraints, onRem
     })
   }
 
+  // What the cook says they have is a constraint like any other, and comes off the same way —
+  // otherwise a filtered menu has an invisible cause.
+  for (const item of constraints.pantry) {
+    chips.push({
+      label: `have ${item}`,
+      remove: () => ({ ...constraints, pantry: constraints.pantry.filter((p) => p !== item) }),
+    })
+  }
+
   for (const mood of constraints.mood) {
     chips.push({
       label: mood,

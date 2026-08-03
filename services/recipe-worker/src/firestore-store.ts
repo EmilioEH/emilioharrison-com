@@ -2,7 +2,8 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app'
 import { getFirestore, type Firestore, FieldValue } from 'firebase-admin/firestore'
 import { isStale } from './reaper'
 import type { WorkerConfig } from './config'
-import type { Recipe, WorkerStore } from './types'
+import { mergeGroceryIngredients } from '../../../apps/recipes/src/lib/grocery-signature'
+import type { Recipe, ShoppableIngredient, WorkerStore } from './types'
 
 /**
  * Initialises firebase-admin from the service-account JSON and returns the Firestore handle
@@ -115,6 +116,7 @@ export function createFirestoreStore(db: Firestore): WorkerStore {
         const data = snap.data() as {
           status?: string
           inputRecipes?: Recipe[]
+          inputRecipeIds?: string[]
         }
         if (data.status !== 'pending') return null
         tx.update(ref, {
@@ -124,7 +126,10 @@ export function createFirestoreStore(db: Firestore): WorkerStore {
           groceryClaimedAt: nowIso(),
           updatedAt: nowIso(),
         })
-        return Array.isArray(data.inputRecipes) ? data.inputRecipes : []
+        return {
+          recipes: Array.isArray(data.inputRecipes) ? data.inputRecipes : [],
+          sourceRecipeIds: Array.isArray(data.inputRecipeIds) ? data.inputRecipeIds : [],
+        }
       })
     },
 
@@ -132,16 +137,26 @@ export function createFirestoreStore(db: Firestore): WorkerStore {
       await groceryLists.doc(listId).update({ progress, message, updatedAt: nowIso() })
     },
 
-    async completeGrocery(listId, ingredients) {
-      await groceryLists.doc(listId).update({
-        ingredients,
-        status: 'complete',
-        progress: 100,
-        message: 'Done!',
-        updatedAt: nowIso(),
-        // The input recipe payload was only needed to run the job — don't leave it on the doc.
-        inputRecipes: FieldValue.delete(),
-        groceryClaimedAt: FieldValue.delete(),
+    async completeGrocery(listId, ingredients, sourceRecipeIds) {
+      const ref = groceryLists.doc(listId)
+      // Transactional so the merge reads the list as it is *now*, not as it was when the job was
+      // claimed: generation takes a minute or two, and the cook ticking an item off or adding one
+      // during that window writes to this same document. A plain overwrite discarded all of it.
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref)
+        const previous = (snap.data()?.ingredients ?? []) as ShoppableIngredient[]
+        tx.update(ref, {
+          ingredients: mergeGroceryIngredients(previous, ingredients),
+          sourceRecipeIds,
+          status: 'complete',
+          progress: 100,
+          message: 'Done!',
+          updatedAt: nowIso(),
+          // The input payload was only needed to run the job — don't leave it on the doc.
+          inputRecipes: FieldValue.delete(),
+          inputRecipeIds: FieldValue.delete(),
+          groceryClaimedAt: FieldValue.delete(),
+        })
       })
     },
 

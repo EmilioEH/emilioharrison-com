@@ -22,7 +22,7 @@ test.describe('Meal Planner Feature', () => {
         prepTime: 10,
         cookTime: 20,
         servings: 4,
-        ingredients: [{ name: 'Chicken', amount: '1lb' }],
+        ingredients: [{ name: 'Chicken', amount: '2 lb', quantity: 2, unit: 'lb' }],
         steps: [],
       },
       {
@@ -56,7 +56,10 @@ test.describe('Meal Planner Feature', () => {
     // Tracked in `weekPlans` so the /family-data GET below (which removeRecipeFromWeek
     // re-fetches after a DELETE) reflects the same state, instead of the broad
     // `/api/recipes` mock below serving it the recipe list by mistake.
-    const weekPlans: Record<string, { isPlanned: boolean; assignedDate?: string }> = {}
+    const weekPlans: Record<
+      string,
+      { isPlanned: boolean; assignedDate?: string; servings?: number }
+    > = {}
     await page.route(/api\/recipes\/[^/]+\/week-plan/, async (route) => {
       const method = route.request().method()
       const recipeId = route
@@ -65,7 +68,14 @@ test.describe('Meal Planner Feature', () => {
         .match(/recipes\/([^/]+)\/week-plan/)?.[1] as string
       if (method === 'POST') {
         const body = route.request().postDataJSON()
-        weekPlans[recipeId] = { isPlanned: true, assignedDate: body.assignedDate }
+        weekPlans[recipeId] = {
+          isPlanned: true,
+          assignedDate: body.assignedDate,
+          // `null` clears the count; an absent key leaves whatever was there. Mirrors the real
+          // endpoint, which is what makes the servings test meaningful.
+          servings:
+            body.servings === null ? undefined : (body.servings ?? weekPlans[recipeId]?.servings),
+        }
         await route.fulfill({
           json: {
             success: true,
@@ -114,14 +124,116 @@ test.describe('Meal Planner Feature', () => {
     await expect(page.locator('[role="dialog"]')).toBeHidden()
   })
 
-  test('tapping Add to Week again removes it from the week', async ({ page }) => {
+  test('the add button reflects the state, and tapping it again removes the recipe', async ({
+    page,
+  }) => {
     const card = page.locator('[data-testid="recipe-card-1"]')
 
-    await card.getByLabel('Add to Week').click()
-    await expect(card.getByText('This week')).toBeVisible()
+    // Before: the button offers to add.
+    await expect(card.getByLabel('Add to week')).toBeVisible()
 
-    await card.getByLabel('Add to Week').click()
+    await card.getByLabel('Add to week').click()
+
+    // After: the badge appears *and* the button itself now says the recipe is in the week —
+    // the tap has a visible result without going to look at the plan.
+    await expect(card.getByText('This week')).toBeVisible()
+    await expect(card.getByLabel('Remove from week')).toBeVisible()
+
+    await card.getByLabel('Remove from week').click()
     await expect(card.getByText('This week')).toBeHidden()
+    await expect(card.getByLabel('Add to week')).toBeVisible()
+  })
+
+  test('adding to next week shows the "Next week" badge and the tab agrees', async ({ page }) => {
+    // Switch the planner to next week from the library itself — the chip is the only place in
+    // the library that says which week the `+` adds to, and the only way to change it.
+    await page.getByTestId('planning-week-chip').click()
+    await page.getByRole('button', { name: /Next Week/i }).click()
+
+    await expect(page.getByTestId('planning-week-chip')).toContainText('Next week')
+
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await card.getByLabel('Add to week').click()
+
+    // The badge names the week it went to. It used to be filtered out entirely for any week
+    // other than the current one, so this add produced no visible response at all.
+    await expect(card.getByText('Next week')).toBeVisible()
+    await expect(card.getByLabel('Remove from week')).toBeVisible()
+
+    // ...and the bottom tab stops claiming "This Week" while pointing at next week.
+    await expect(page.getByRole('button', { name: 'Next Week', exact: true })).toBeVisible()
+  })
+
+  test('a failed add puts the button back', async ({ page }) => {
+    // The optimistic flip has to be undone when the server refuses, or the card lies.
+    await page.route(/api\/recipes\/[^/]+\/week-plan/, async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({ status: 500, json: { error: 'nope' } })
+      } else {
+        await route.fulfill({ json: { success: true } })
+      }
+    })
+
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await card.getByLabel('Add to week').click()
+
+    await expect(card.getByLabel('Add to week')).toBeVisible()
+    await expect(card.getByText('This week')).toBeHidden()
+  })
+
+  test('cooking for more people rescales the amounts on screen', async ({ page }) => {
+    // Not on the plan: the choice is the cook's to look at, and must not add anything to the week.
+    await page.locator('[data-testid="recipe-card-1"]').click()
+    await expect(page.getByTestId('servings-value')).toHaveText('4')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('2')
+
+    // Two taps: 4 -> 6 people, so 2 lb of chicken becomes 3 lb.
+    await page.getByLabel('Cook for one more').click()
+    await page.getByLabel('Cook for one more').click()
+
+    await expect(page.getByTestId('servings-value')).toHaveText('6')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('3')
+
+    // The recipe itself is untouched — the count belongs to this week's plan, and the way back
+    // to it stays on screen.
+    await page.getByLabel(/back to the recipe's 4 servings/i).click()
+    await expect(page.getByTestId('servings-value')).toHaveText('4')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('2')
+  })
+
+  test('a planned recipe remembers what it is being cooked for', async ({ page }) => {
+    // Once the recipe is on the plan there is somewhere to put the count, so it is shared and
+    // survives leaving the screen — that is what lets the grocery list buy for six.
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await card.getByLabel('Add to week').click()
+    await expect(card.getByLabel('Remove from week')).toBeVisible()
+
+    await card.click()
+    await page.getByLabel('Cook for one more').click()
+    await page.getByLabel('Cook for one more').click()
+    await expect(page.getByTestId('servings-value')).toHaveText('6')
+
+    // Leave and come back.
+    await page.getByRole('button', { name: /back/i }).first().click()
+    await page.locator('[data-testid="recipe-card-1"]').click()
+
+    await expect(page.getByTestId('servings-value')).toHaveText('6')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('3')
+  })
+
+  test('changing servings on an unplanned recipe does not add it to the week', async ({ page }) => {
+    // Reading the amounts for six is not a request to cook it this week.
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await expect(card.getByLabel('Add to week')).toBeVisible()
+
+    await card.click()
+    await page.getByLabel('Cook for one more').click()
+    await expect(page.getByTestId('servings-value')).toHaveText('5')
+
+    await page.getByRole('button', { name: /back/i }).first().click()
+    await expect(
+      page.locator('[data-testid="recipe-card-1"]').getByLabel('Add to week'),
+    ).toBeVisible()
   })
 
   test('week view shows a flat list of planned recipes, newest first, no day grouping', async ({
