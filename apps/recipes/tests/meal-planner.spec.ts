@@ -182,6 +182,7 @@ test.describe('Meal Planner Feature', () => {
   })
 
   test('cooking for more people rescales the amounts on screen', async ({ page }) => {
+    // Not on the plan: the choice is the cook's to look at, and must not add anything to the week.
     await page.locator('[data-testid="recipe-card-1"]').click()
     await expect(page.getByTestId('servings-value')).toHaveText('4')
     await expect(page.getByTestId('ingredient-amount').first()).toHaveText('2')
@@ -198,6 +199,41 @@ test.describe('Meal Planner Feature', () => {
     await page.getByLabel(/back to the recipe's 4 servings/i).click()
     await expect(page.getByTestId('servings-value')).toHaveText('4')
     await expect(page.getByTestId('ingredient-amount').first()).toHaveText('2')
+  })
+
+  test('a planned recipe remembers what it is being cooked for', async ({ page }) => {
+    // Once the recipe is on the plan there is somewhere to put the count, so it is shared and
+    // survives leaving the screen — that is what lets the grocery list buy for six.
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await card.getByLabel('Add to week').click()
+    await expect(card.getByLabel('Remove from week')).toBeVisible()
+
+    await card.click()
+    await page.getByLabel('Cook for one more').click()
+    await page.getByLabel('Cook for one more').click()
+    await expect(page.getByTestId('servings-value')).toHaveText('6')
+
+    // Leave and come back.
+    await page.getByRole('button', { name: /back/i }).first().click()
+    await page.locator('[data-testid="recipe-card-1"]').click()
+
+    await expect(page.getByTestId('servings-value')).toHaveText('6')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('3')
+  })
+
+  test('changing servings on an unplanned recipe does not add it to the week', async ({ page }) => {
+    // Reading the amounts for six is not a request to cook it this week.
+    const card = page.locator('[data-testid="recipe-card-1"]')
+    await expect(card.getByLabel('Add to week')).toBeVisible()
+
+    await card.click()
+    await page.getByLabel('Cook for one more').click()
+    await expect(page.getByTestId('servings-value')).toHaveText('5')
+
+    await page.getByRole('button', { name: /back/i }).first().click()
+    await expect(
+      page.locator('[data-testid="recipe-card-1"]').getByLabel('Add to week'),
+    ).toBeVisible()
   })
 
   test('week view shows a flat list of planned recipes, newest first, no day grouping', async ({

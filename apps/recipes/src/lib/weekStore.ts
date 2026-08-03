@@ -224,6 +224,12 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
  * Written to the family's plan entry, never to the recipe — cooking for six this week must not
  * change the recipe for everyone forever. Passing `undefined` goes back to the recipe's own count.
  *
+ * **Only for a recipe already on the plan.** The count is a property of the plan entry, so
+ * writing one for an unplanned recipe would have to create that entry — and adding a recipe to
+ * the week as a side effect of reading its ingredients at a different scale is not something
+ * anyone asked for. Returns `false` without touching anything; the caller keeps the choice
+ * locally instead.
+ *
  * Optimistic like the other two, so the stepper moves on the tap. The grocery list notices on its
  * own: the count is part of the week's signature, so changing it makes the stored list stale.
  */
@@ -232,9 +238,11 @@ export const setWeekServings = async (
   servings: number | undefined,
 ): Promise<boolean> => {
   const current = $recipeFamilyData.get()[recipeId]?.weekPlan
+  if (!current?.isPlanned) return false
+
   const rollback = optimisticallySetPlan(recipeId, {
-    isPlanned: current?.isPlanned ?? true,
-    assignedDate: current?.assignedDate ?? weekState.get().activeWeekStart,
+    isPlanned: true,
+    assignedDate: current.assignedDate ?? weekState.get().activeWeekStart,
     servings,
   })
 
@@ -243,8 +251,8 @@ export const setWeekServings = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        isPlanned: current?.isPlanned ?? true,
-        assignedDate: current?.assignedDate ?? weekState.get().activeWeekStart,
+        isPlanned: true,
+        assignedDate: current.assignedDate ?? weekState.get().activeWeekStart,
         // `null` is how "back to the recipe's own count" is said on the wire; `undefined` would
         // simply be dropped by JSON.stringify and read as "don't change it".
         servings: servings ?? null,

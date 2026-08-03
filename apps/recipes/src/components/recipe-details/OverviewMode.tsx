@@ -65,8 +65,15 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
    * checklist count and the header all agree.
    */
   const familyPlanData = useStore($recipeFamilyData)
-  const weekServings = familyPlanData[recipe.id]?.weekPlan?.servings
-  const shownRecipe = useMemo(() => scaleRecipe(recipe, weekServings), [recipe, weekServings])
+  const weekPlan = familyPlanData[recipe.id]?.weekPlan
+  const isPlanned = Boolean(weekPlan?.isPlanned)
+
+  // A recipe that isn't on the plan has no plan entry to store a count on, and adding it to the
+  // week just because someone wanted to read the amounts for six would be a surprise. So the
+  // choice is kept locally until the recipe is actually planned.
+  const [localServings, setLocalServings] = useState<number | undefined>(undefined)
+  const servings = isPlanned ? weekPlan?.servings : localServings
+  const shownRecipe = useMemo(() => scaleRecipe(recipe, servings), [recipe, servings])
 
   const handleToggleIngredient = useCallback(
     (index: number) => {
@@ -423,8 +430,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
               <div className="flex-1">
                 <ServingsStepper
                   recipeServings={recipe.servings}
-                  weekServings={weekServings}
-                  onChange={(next) => setWeekServings(recipe.id, next)}
+                  weekServings={servings}
+                  onChange={(next) => {
+                    setLocalServings(next)
+                    if (isPlanned) void setWeekServings(recipe.id, next)
+                  }}
                 />
               </div>
               <div className="flex-1">
