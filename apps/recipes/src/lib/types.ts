@@ -315,6 +315,17 @@ interface CookingHistoryEntry {
 export interface WeekPlanData {
   isPlanned: boolean
   assignedDate?: string // YYYY-MM-DD
+  /**
+   * How many this recipe is being cooked for *this week*. Absent means the recipe's own
+   * `servings`.
+   *
+   * Stored on the family's plan entry rather than on the recipe, because cooking for six this
+   * week must not change the recipe for everyone forever. It also keeps the grocery contract
+   * intact: the client still sends only recipe ids, and the server reads the count off the plan
+   * itself — a contract that exists because a previous version trusted client-side recipe data
+   * and silently produced empty grocery lists.
+   */
+  servings?: number
   mealTime?: string // HH:mm format (e.g., "18:00" for 6pm)
   mealType?: 'breakfast' | 'lunch' | 'dinner' // Optional meal type classification
   addedBy?: string // userId

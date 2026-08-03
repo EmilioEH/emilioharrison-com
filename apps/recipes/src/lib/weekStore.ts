@@ -219,6 +219,57 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
 }
 
 /**
+ * Cook this recipe for a different number of people, this week.
+ *
+ * Written to the family's plan entry, never to the recipe — cooking for six this week must not
+ * change the recipe for everyone forever. Passing `undefined` goes back to the recipe's own count.
+ *
+ * Optimistic like the other two, so the stepper moves on the tap. The grocery list notices on its
+ * own: the count is part of the week's signature, so changing it makes the stored list stale.
+ */
+export const setWeekServings = async (
+  recipeId: string,
+  servings: number | undefined,
+): Promise<boolean> => {
+  const current = $recipeFamilyData.get()[recipeId]?.weekPlan
+  const rollback = optimisticallySetPlan(recipeId, {
+    isPlanned: current?.isPlanned ?? true,
+    assignedDate: current?.assignedDate ?? weekState.get().activeWeekStart,
+    servings,
+  })
+
+  try {
+    const res = await fetch(`${getBaseUrl()}api/recipes/${recipeId}/week-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        isPlanned: current?.isPlanned ?? true,
+        assignedDate: current?.assignedDate ?? weekState.get().activeWeekStart,
+        // `null` is how "back to the recipe's own count" is said on the wire; `undefined` would
+        // simply be dropped by JSON.stringify and read as "don't change it".
+        servings: servings ?? null,
+      }),
+    })
+
+    const data = await res.json().catch(() => null)
+    if (!res.ok || !data?.success || !data.data) {
+      rollback()
+      return false
+    }
+    familyActions.setRecipeFamilyData(recipeId, data.data)
+    return true
+  } catch (error) {
+    console.error('Failed to set servings for the week:', error)
+    rollback()
+    return false
+  }
+}
+
+/** What this recipe is being cooked for this week, if the cook has said. */
+export const weekServingsFor = (recipeId: string): number | undefined =>
+  $recipeFamilyData.get()[recipeId]?.weekPlan?.servings
+
+/**
  * Remove a recipe from the week plan. Optimistic in the same way as adding: the card and the
  * week count change on the tap, and go back if the server refuses.
  */

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { needsGroceryRegeneration } from '../../../lib/grocery-signature'
+import { needsGroceryRegeneration, type GroceryScopeEntry } from '../../../lib/grocery-signature'
 import { triggerGroceryGeneration } from '../../../lib/services/grocery-service'
 import type { GroceryList, Recipe } from '../../../lib/types'
 
@@ -13,6 +13,9 @@ interface AutoGroceryArgs {
   listId: string | null
   weekStart: string
   recipes: Pick<Recipe, 'id'>[]
+  /** The same recipes plus the servings chosen for each — what the signature compares. A recipe
+   * cooked for six is a different shopping requirement from the same recipe cooked for four. */
+  scope: GroceryScopeEntry[]
   /** The subscribed document, and whether a snapshot has actually arrived for `listId`. */
   list: GroceryList | null
   resolved: boolean
@@ -43,6 +46,7 @@ export function useAutoGroceryGeneration({
   listId,
   weekStart,
   recipes,
+  scope,
   list,
   resolved,
   readError,
@@ -69,8 +73,7 @@ export function useAutoGroceryGeneration({
       return
     }
 
-    const currentRecipeIds = recipes.map((r) => r.id)
-    if (needsGroceryRegeneration({ resolved, list, currentRecipeIds })) {
+    if (needsGroceryRegeneration({ resolved, list, currentRecipeIds: scope })) {
       triggerGroceryGeneration(weekStart, recipes, scopeId)
     }
   }, [
@@ -81,6 +84,7 @@ export function useAutoGroceryGeneration({
     listId,
     weekStart,
     recipes,
+    scope,
     list,
     resolved,
     readError,

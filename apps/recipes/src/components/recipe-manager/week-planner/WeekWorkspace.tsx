@@ -25,10 +25,12 @@ import {
   currentWeekRecipes,
   addRecipeToWeek,
   removeRecipeFromWeek,
+  weekServingsFor,
   $weekOverlayOpen,
 } from '../../../lib/weekStore'
-import { $currentFamily, $familyInitialized } from '../../../lib/familyStore'
+import { $currentFamily, $familyInitialized, $recipeFamilyData } from '../../../lib/familyStore'
 import { buildRawShoppableIngredients } from '../../../lib/grocery-utils'
+import { scaleRecipe } from '../../../lib/servings-scale'
 import { useFullRecipes } from '../../../lib/hooks/useFullRecipes'
 import { Button } from '../../ui/button'
 import { Stack, Inline } from '../../ui/layout'
@@ -201,6 +203,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     : []
   const { activeWeekStart } = useStore(weekState)
   const currentRecipes = useStore(currentWeekRecipes)
+  const familyPlanData = useStore($recipeFamilyData)
   const [viewMode, setViewMode] = useState<'raw' | 'ai'>('raw')
   const { user: authUser } = useAuth()
 
@@ -228,6 +231,17 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return allRecipes.filter((r) => plannedRecipeIds.includes(r.id))
   }, [currentRecipes, allRecipes])
 
+  // What has to be bought, which is the recipes *and* how many people each is being cooked for.
+  // A servings change is a different shopping requirement, so it belongs in the signature that
+  // decides whether the stored list is still current.
+  const groceryScope = useMemo(
+    () => groceryRecipes.map((r) => ({ id: r.id, servings: weekServingsFor(r.id) })),
+    // `familyPlanData` is not read directly — it is what makes `weekServingsFor` re-evaluate
+    // when someone changes a count, here or on another device.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groceryRecipes, familyPlanData],
+  )
+
   // `allRecipes` comes from the list endpoint, which projects away `structuredIngredients` (see
   // toListRecipe). The grocery list needs them, so fetch the full documents for just this week's
   // recipes — a handful, not the whole library.
@@ -244,9 +258,15 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
   // Raw view's ingredients — same ShoppableIngredient shape Smart uses, rendered through the
   // same <GroceryList> with mergeIngredients={false} so it looks and behaves identically, just
   // without combining the same ingredient across recipes.
+  // Scaled to this week's servings the same way the Smart list is (which does it server-side, in
+  // generate-grocery-list.ts), so the two views never disagree about how much to buy.
   const rawIngredients = useMemo(
-    () => buildRawShoppableIngredients(groceryRecipesForList),
-    [groceryRecipesForList],
+    () =>
+      buildRawShoppableIngredients(
+        groceryRecipesForList.map((r) => scaleRecipe(r, weekServingsFor(r.id))),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groceryRecipesForList, familyPlanData],
   )
 
   // AI-based grocery background ops
@@ -332,6 +352,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     listId,
     weekStart: activeWeekStart,
     recipes: groceryRecipes,
+    scope: groceryScope,
     list: aiGroceryList,
     resolved: aiResolved,
     readError: Boolean(firestoreError),

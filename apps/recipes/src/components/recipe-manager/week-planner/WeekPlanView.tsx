@@ -283,8 +283,8 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
       className="flex flex-col gap-3 p-4"
     >
       {/* Only offered for a week with nothing in it. Once the cook has started planning they
-        * have already decided what they're doing, and the suggester stops being a way in and
-        * starts being a row between them and the meals they came to look at. */}
+       * have already decided what they're doing, and the suggester stops being a way in and
+       * starts being a row between them and the meals they came to look at. */}
       {plannedCards.length === 0 && (
         <motion.button
           variants={itemVariants}
@@ -311,7 +311,7 @@ export const WeekPlanView: React.FC<WeekPlanViewProps> = ({
       ))}
 
       {/* Last, not first. It asks about a week that is over, so it has no business sitting above
-        * the week the cook actually opened the planner to look at. */}
+       * the week the cook actually opened the planner to look at. */}
       {reviewWeek && (
         <motion.button
           variants={itemVariants}

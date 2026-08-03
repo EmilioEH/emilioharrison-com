@@ -6,14 +6,32 @@ import type { GroceryList, ShoppableIngredient } from './types'
  * all three agree on what "this list is out of date" and "this item was the cook's" mean.
  */
 
+/** One recipe's contribution to a week's shopping, as the signature sees it. */
+export interface GroceryScopeEntry {
+  id: string
+  /** The count chosen for this week, when the cook has changed it. */
+  servings?: number
+}
+
 /**
- * The signature of a set of recipes: sorted and de-duplicated, so it depends only on *which*
- * recipes are in the week, never on the order they were added or a duplicate entry.
+ * The signature of a week's shopping scope: sorted and de-duplicated, so it depends only on
+ * *what* has to be bought — never on the order recipes were added or a duplicate entry.
+ *
+ * A recipe cooked for a different number of people is a different shopping requirement, so the
+ * count is part of the entry (`id@6`). A recipe at its own written servings is just `id`, which
+ * keeps signatures written before servings existed comparing equal instead of triggering a
+ * regeneration for every list in the world.
  */
-export function groceryListSignature(recipeIds: readonly string[]): string[] {
-  return Array.from(
-    new Set(recipeIds.filter((id) => typeof id === 'string' && id.length > 0)),
-  ).sort()
+export function groceryListSignature(entries: readonly (string | GroceryScopeEntry)[]): string[] {
+  const tokens = entries
+    .map((entry) => (typeof entry === 'string' ? { id: entry } : entry))
+    .filter((entry) => typeof entry?.id === 'string' && entry.id.length > 0)
+    .map((entry) =>
+      typeof entry.servings === 'number' && Number.isFinite(entry.servings)
+        ? `${entry.id}@${entry.servings}`
+        : entry.id,
+    )
+  return Array.from(new Set(tokens)).sort()
 }
 
 /**
@@ -25,7 +43,7 @@ export function groceryListSignature(recipeIds: readonly string[]): string[] {
  */
 export function signaturesMatch(
   stored: readonly string[] | undefined,
-  current: readonly string[],
+  current: readonly (string | GroceryScopeEntry)[],
 ): boolean | undefined {
   if (!Array.isArray(stored)) return undefined
   const a = groceryListSignature(stored)
@@ -44,7 +62,7 @@ export function signaturesMatch(
 export function needsGroceryRegeneration(args: {
   resolved: boolean
   list: Pick<GroceryList, 'sourceRecipeIds'> | null
-  currentRecipeIds: readonly string[]
+  currentRecipeIds: readonly (string | GroceryScopeEntry)[]
 }): boolean {
   const { resolved, list, currentRecipeIds } = args
   if (!resolved) return false

@@ -9,12 +9,13 @@ import {
 } from '../../lib/api-helpers'
 import { computeGroceryList } from '../../lib/services/grocery-core'
 import { groceryListSignature, mergeGroceryIngredients } from '../../lib/grocery-signature'
+import { scaleRecipe } from '../../lib/servings-scale'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
 import { db } from '../../lib/firebase-server'
 import { isBackgroundWorkerEnabled } from '../../lib/env'
 import { getAllowedCreatorIds, isRecipeAccessible } from '../../lib/recipe-access'
-import type { GroceryList, Recipe, ShoppableIngredient } from '../../lib/types'
+import type { GroceryList, Recipe, ShoppableIngredient, FamilyRecipeData } from '../../lib/types'
 
 // HARD PLATFORM CONSTRAINT: this job runs under `ctx.waitUntil`, and Cloudflare Workers cancels
 // waitUntil work ~30 seconds after the response is sent — silently, without running catch/finally.
@@ -94,6 +95,45 @@ async function runGroceryGenerationJob(
   }
 }
 
+/**
+ * Each recipe as it will actually be cooked this week.
+ *
+ * The count lives on the family's plan entry (`weekPlan.servings`), so this is one read per recipe
+ * against the collection the endpoint is already authorised for. A recipe with no chosen count —
+ * which is nearly all of them — comes back untouched, and `servingsById` only carries the ones
+ * that were changed, so the week's signature is unaffected until someone actually picks a number.
+ *
+ * Failing to read the plan is not worth failing the list over: the recipes go through as written,
+ * which is what the app did before servings existed.
+ */
+async function scaleRecipesToWeekPlan(
+  recipes: Recipe[],
+  familyId: string | undefined,
+): Promise<{ recipes: Recipe[]; servingsById: Record<string, number | undefined> }> {
+  if (!familyId) return { recipes, servingsById: {} }
+
+  const servingsById: Record<string, number | undefined> = {}
+  const scaled = await Promise.all(
+    recipes.map(async (recipe) => {
+      try {
+        const plan = await db.getDocument<FamilyRecipeData>(
+          `families/${familyId}/recipeData`,
+          recipe.id,
+        )
+        const wanted = plan?.weekPlan?.servings
+        if (typeof wanted !== 'number') return recipe
+        servingsById[recipe.id] = wanted
+        return scaleRecipe(recipe, wanted)
+      } catch (error) {
+        console.warn('[Grocery] Could not read week servings for', recipe.id, error)
+        return recipe
+      }
+    }),
+  )
+
+  return { recipes: scaled, servingsById }
+}
+
 export const POST: APIRoute = async (context: APIContext) => {
   const { request, locals, cookies } = context
 
@@ -137,6 +177,15 @@ export const POST: APIRoute = async (context: APIContext) => {
     })
   }
 
+  // How many people each recipe is being cooked for this week, read off the family's plan rather
+  // than sent by the client. That is the same rule as the recipes themselves: the client says
+  // *which*, the server reads *what* — the contract that exists because a previous version
+  // trusted client-side recipe data and silently produced empty grocery lists.
+  //
+  // A recipe with no chosen count is left exactly as written, so this is a no-op for every list
+  // where nobody has touched the servings.
+  const scoped = await scaleRecipesToWeekPlan(recipes, scope.familyId)
+
   const kv = locals?.runtime?.env?.SESSION
   const { limited } = await rateLimit(
     kv,
@@ -157,7 +206,9 @@ export const POST: APIRoute = async (context: APIContext) => {
   // The signature is taken from what the client asked for, not from what survived the access
   // filter above — the client compares against this same set, so anything else guarantees a
   // permanent mismatch and a list that regenerates on every open.
-  const sourceRecipeIds = groceryListSignature(recipeIds as string[])
+  const sourceRecipeIds = groceryListSignature(
+    (recipeIds as string[]).map((id) => ({ id, servings: scoped.servingsById[id] })),
+  )
 
   // Does a list already exist for this week? If so its status/progress get *updated*, leaving the
   // previous ingredients (and the cook's ticks, deletions and hand-added items) on screen and
@@ -179,7 +230,7 @@ export const POST: APIRoute = async (context: APIContext) => {
           progress: 0,
           message: 'Waiting for worker...',
           updatedAt: now,
-          inputRecipes: recipes,
+          inputRecipes: scoped.recipes,
           inputRecipeIds: sourceRecipeIds,
         })
       } else {
@@ -194,7 +245,7 @@ export const POST: APIRoute = async (context: APIContext) => {
           message: 'Waiting for worker...',
           createdAt: now,
           updatedAt: now,
-          inputRecipes: recipes,
+          inputRecipes: scoped.recipes,
           inputRecipeIds: sourceRecipeIds,
         } satisfies GroceryList)
       }
@@ -248,7 +299,7 @@ export const POST: APIRoute = async (context: APIContext) => {
     return serverErrorResponse('Failed to start generation')
   }
 
-  const job = runGroceryGenerationJob(client, recipes, listId, sourceRecipeIds)
+  const job = runGroceryGenerationJob(client, scoped.recipes, listId, sourceRecipeIds)
   const ctx = locals?.runtime?.ctx
   if (ctx?.waitUntil) {
     ctx.waitUntil(job)

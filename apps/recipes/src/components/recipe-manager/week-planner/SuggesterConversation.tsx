@@ -80,7 +80,7 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   const entrance = mounted.current ? { opacity: 0, y: 8 } : false
 
   /** Once a real suggestion has been made, typing is worth offering. Not before — there is
-    * nothing concrete to react to yet, and "too much chicken" needs three chickens first. */
+   * nothing concrete to react to yet, and "too much chicken" needs three chickens first. */
   const composerOpen = rows.some(
     (row) => row.kind === 'app' && row.turn.widgets.some((w) => w.kind === 'recipes'),
   )
@@ -173,7 +173,9 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   /** Record the cook's answer against the turn that asked, then ask the next question. */
   const answer = (rowIndex: number, said: string, next: Constraints) => {
     setRows((prev) =>
-      prev.map((row, i) => (i === rowIndex && row.kind === 'app' ? { ...row, answered: said } : row)),
+      prev.map((row, i) =>
+        i === rowIndex && row.kind === 'app' ? { ...row, answered: said } : row,
+      ),
     )
     setConstraints(next)
     void ask(said, next)
@@ -183,10 +185,7 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
     const recipe = byId.get(recipeId)
     const next = { ...constraints, keptIds: [...constraints.keptIds, recipeId] }
     setConstraints(next)
-    setRows((prev) => [
-      ...prev,
-      { kind: 'added', recipeId, title: recipe?.title ?? 'That one' },
-    ])
+    setRows((prev) => [...prev, { kind: 'added', recipeId, title: recipe?.title ?? 'That one' }])
 
     const added = await onAdd(recipeId)
     if (added === false) {
@@ -287,7 +286,11 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
           })}
 
           {loading && (
-            <p className="text-sm text-muted-foreground" role="status" data-testid="suggester-thinking">
+            <p
+              className="text-sm text-muted-foreground"
+              role="status"
+              data-testid="suggester-thinking"
+            >
               Looking through your recipes…
             </p>
           )}
@@ -417,20 +420,32 @@ const WidgetView: React.FC<{
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
   onDone?: () => void
-}> = ({ widget, entrance, byId, constraints, onAnswer, onKeep, onDismiss, onOpenRecipe, onDone }) => {
+}> = ({
+  widget,
+  entrance,
+  byId,
+  constraints,
+  onAnswer,
+  onKeep,
+  onDismiss,
+  onOpenRecipe,
+  onDone,
+}) => {
   switch (widget.kind) {
     case 'counter':
       return (
         <div className="flex flex-wrap gap-2">
-          {Array.from({ length: MAX_WANTED - MIN_WANTED + 1 }, (_, i) => MIN_WANTED + i).map((n) => (
-            <Chip
-              key={n}
-              label={String(n)}
-              active={constraints.wanted === n}
-              onClick={() => onAnswer(`${n} meals.`, { ...constraints, wanted: n })}
-              className="w-11 px-0"
-            />
-          ))}
+          {Array.from({ length: MAX_WANTED - MIN_WANTED + 1 }, (_, i) => MIN_WANTED + i).map(
+            (n) => (
+              <Chip
+                key={n}
+                label={String(n)}
+                active={constraints.wanted === n}
+                onClick={() => onAnswer(`${n} meals.`, { ...constraints, wanted: n })}
+                className="w-11 px-0"
+              />
+            ),
+          )}
         </div>
       )
 

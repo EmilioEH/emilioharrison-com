@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
-import { Clock, Users, Flame, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { Clock, Flame, ChevronRight, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { RecipeReviews } from './RecipeReviews'
 import { IngredientRow } from './IngredientRow'
+import { useStore } from '@nanostores/react'
 import { MetadataCard } from './MetadataCard'
+import { ServingsStepper } from './ServingsStepper'
+import { scaleRecipe } from '../../lib/servings-scale'
+import { setWeekServings } from '../../lib/weekStore'
+import { $recipeFamilyData } from '../../lib/familyStore'
 import { InstructionCard } from './InstructionCard'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -50,6 +55,18 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [activeViewerImage, setActiveViewerImage] = useState<string | null>(null)
   const [ingredientsOpen, setIngredientsOpen] = useState(true)
+
+  /**
+   * The recipe as it is being cooked this week.
+   *
+   * The count lives on the family's plan entry, so it is shared and survives a reload — and the
+   * stored recipe is never rewritten, because a number chosen for one week must not change the
+   * recipe for everyone forever. Everything below reads `shownRecipe`, so the ingredient list, the
+   * checklist count and the header all agree.
+   */
+  const familyPlanData = useStore($recipeFamilyData)
+  const weekServings = familyPlanData[recipe.id]?.weekPlan?.servings
+  const shownRecipe = useMemo(() => scaleRecipe(recipe, weekServings), [recipe, weekServings])
 
   const handleToggleIngredient = useCallback(
     (index: number) => {
@@ -212,9 +229,9 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
     items: Ingredient[]
     startIndex: number
   }> => {
-    const ingredientsArray = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+    const ingredientsArray = Array.isArray(shownRecipe.ingredients) ? shownRecipe.ingredients : []
     return [{ header: null, items: ingredientsArray, startIndex: 0 }]
-  }, [recipe.ingredients])
+  }, [shownRecipe.ingredients])
 
   // Memoized structured steps with fallback to plain text
   const displaySteps = useMemo((): StructuredStep[] => {
@@ -236,11 +253,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   const computedStepIngredients = useMemo(
     () =>
       computeStepIngredientMappings(
-        Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+        Array.isArray(shownRecipe.ingredients) ? shownRecipe.ingredients : [],
         Array.isArray(recipe.steps) ? recipe.steps : [],
         Array.isArray(recipe.structuredSteps) ? recipe.structuredSteps : [],
       ),
-    [recipe.ingredients, recipe.steps, recipe.structuredSteps],
+    [shownRecipe.ingredients, recipe.steps, recipe.structuredSteps],
   )
 
   const stepCount = Array.isArray(recipe.steps) ? recipe.steps.length : 0
@@ -404,7 +421,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 />
               </div>
               <div className="flex-1">
-                <MetadataCard icon={Users} label="SERVES" value={recipe.servings} />
+                <ServingsStepper
+                  recipeServings={recipe.servings}
+                  weekServings={weekServings}
+                  onChange={(next) => setWeekServings(recipe.id, next)}
+                />
               </div>
               <div className="flex-1">
                 <MetadataCard icon={Flame} label="LEVEL" value={recipe.difficulty || 'Easy'} />
@@ -450,11 +471,11 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                 Ingredients
                 {checkedIngredientsList.length > 0 ? (
                   <span className="font-body text-sm font-normal text-primary">
-                    {checkedIngredientsList.length}/{recipe.ingredients?.length || 0} ready
+                    {checkedIngredientsList.length}/{shownRecipe.ingredients?.length || 0} ready
                   </span>
                 ) : (
                   <span className="text-foreground-variant font-body text-sm font-normal">
-                    ({recipe.ingredients?.length || 0})
+                    ({shownRecipe.ingredients?.length || 0})
                   </span>
                 )}
               </Inline>
@@ -539,8 +560,8 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
                       )}
                       {group.items.map((step, idx) => {
                         const globalIdx = group.startIndex + idx
-                        const ingredientsArray = Array.isArray(recipe.ingredients)
-                          ? recipe.ingredients
+                        const ingredientsArray = Array.isArray(shownRecipe.ingredients)
+                          ? shownRecipe.ingredients
                           : []
                         const targetIndices = effectiveStepIngredients?.[globalIdx]?.indices
                         const targetIndicesArray = Array.isArray(targetIndices) ? targetIndices : []

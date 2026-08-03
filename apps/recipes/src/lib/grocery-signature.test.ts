@@ -25,6 +25,37 @@ describe('groceryListSignature', () => {
   })
 })
 
+describe('groceryListSignature with servings', () => {
+  it('leaves a recipe at its own servings as a bare id', () => {
+    // So lists signed before servings existed keep comparing equal, instead of every list in the
+    // world regenerating once on deploy.
+    expect(groceryListSignature([{ id: 'a' }, { id: 'b', servings: undefined }])).toEqual([
+      'a',
+      'b',
+    ])
+  })
+
+  it('makes a chosen count part of the entry', () => {
+    expect(groceryListSignature([{ id: 'a', servings: 6 }])).toEqual(['a@6'])
+  })
+
+  it('treats the same recipe at two counts as two requirements', () => {
+    expect(signaturesMatch(['a'], [{ id: 'a', servings: 6 }])).toBe(false)
+    expect(signaturesMatch(['a@6'], [{ id: 'a', servings: 8 }])).toBe(false)
+    expect(signaturesMatch(['a@6'], [{ id: 'a', servings: 6 }])).toBe(true)
+  })
+
+  it('regenerates the list when only the servings changed', () => {
+    expect(
+      needsGroceryRegeneration({
+        resolved: true,
+        list: { sourceRecipeIds: ['a', 'b'] },
+        currentRecipeIds: [{ id: 'a', servings: 6 }, { id: 'b' }],
+      }),
+    ).toBe(true)
+  })
+})
+
 describe('signaturesMatch', () => {
   it('treats the same set in a different order as unchanged', () => {
     expect(signaturesMatch(['b', 'a'], ['a', 'b'])).toBe(true)

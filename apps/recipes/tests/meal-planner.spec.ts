@@ -22,7 +22,7 @@ test.describe('Meal Planner Feature', () => {
         prepTime: 10,
         cookTime: 20,
         servings: 4,
-        ingredients: [{ name: 'Chicken', amount: '1lb' }],
+        ingredients: [{ name: 'Chicken', amount: '2 lb', quantity: 2, unit: 'lb' }],
         steps: [],
       },
       {
@@ -56,7 +56,10 @@ test.describe('Meal Planner Feature', () => {
     // Tracked in `weekPlans` so the /family-data GET below (which removeRecipeFromWeek
     // re-fetches after a DELETE) reflects the same state, instead of the broad
     // `/api/recipes` mock below serving it the recipe list by mistake.
-    const weekPlans: Record<string, { isPlanned: boolean; assignedDate?: string }> = {}
+    const weekPlans: Record<
+      string,
+      { isPlanned: boolean; assignedDate?: string; servings?: number }
+    > = {}
     await page.route(/api\/recipes\/[^/]+\/week-plan/, async (route) => {
       const method = route.request().method()
       const recipeId = route
@@ -65,7 +68,14 @@ test.describe('Meal Planner Feature', () => {
         .match(/recipes\/([^/]+)\/week-plan/)?.[1] as string
       if (method === 'POST') {
         const body = route.request().postDataJSON()
-        weekPlans[recipeId] = { isPlanned: true, assignedDate: body.assignedDate }
+        weekPlans[recipeId] = {
+          isPlanned: true,
+          assignedDate: body.assignedDate,
+          // `null` clears the count; an absent key leaves whatever was there. Mirrors the real
+          // endpoint, which is what makes the servings test meaningful.
+          servings:
+            body.servings === null ? undefined : (body.servings ?? weekPlans[recipeId]?.servings),
+        }
         await route.fulfill({
           json: {
             success: true,
@@ -169,6 +179,25 @@ test.describe('Meal Planner Feature', () => {
 
     await expect(card.getByLabel('Add to week')).toBeVisible()
     await expect(card.getByText('This week')).toBeHidden()
+  })
+
+  test('cooking for more people rescales the amounts on screen', async ({ page }) => {
+    await page.locator('[data-testid="recipe-card-1"]').click()
+    await expect(page.getByTestId('servings-value')).toHaveText('4')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('2')
+
+    // Two taps: 4 -> 6 people, so 2 lb of chicken becomes 3 lb.
+    await page.getByLabel('Cook for one more').click()
+    await page.getByLabel('Cook for one more').click()
+
+    await expect(page.getByTestId('servings-value')).toHaveText('6')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('3')
+
+    // The recipe itself is untouched — the count belongs to this week's plan, and the way back
+    // to it stays on screen.
+    await page.getByLabel(/back to the recipe's 4 servings/i).click()
+    await expect(page.getByTestId('servings-value')).toHaveText('4')
+    await expect(page.getByTestId('ingredient-amount').first()).toHaveText('2')
   })
 
   test('week view shows a flat list of planned recipes, newest first, no day grouping', async ({
