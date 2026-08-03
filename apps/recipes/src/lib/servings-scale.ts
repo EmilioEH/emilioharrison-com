@@ -1,3 +1,4 @@
+import { formatQuantity } from './units'
 import type { Ingredient, Recipe } from './types'
 
 /**
@@ -98,29 +99,4 @@ export function scaleRecipe(recipe: Recipe, wanted: number | null | undefined): 
     servings: wanted as number,
     ingredients: scaleIngredients(recipe.ingredients, factor),
   }
-}
-
-/** "1½", "0.75", "2" — a quantity as a cook would write it. */
-export function formatQuantity(value: number): string {
-  if (!Number.isFinite(value)) return ''
-  if (Number.isInteger(value)) return String(value)
-
-  const whole = Math.floor(value)
-  const fraction = value - whole
-  const VULGAR: Array<[number, string]> = [
-    [0.125, '⅛'],
-    [0.25, '¼'],
-    [0.333, '⅓'],
-    [0.375, '⅜'],
-    [0.5, '½'],
-    [0.625, '⅝'],
-    [0.666, '⅔'],
-    [0.75, '¾'],
-    [0.875, '⅞'],
-  ]
-  for (const [amount, glyph] of VULGAR) {
-    if (Math.abs(fraction - amount) < 0.01) return whole > 0 ? `${whole}${glyph}` : glyph
-  }
-  // Not a kitchen fraction: two decimals, trailing zeros dropped.
-  return String(Math.round(value * 100) / 100)
 }

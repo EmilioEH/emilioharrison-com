@@ -1,6 +1,6 @@
-import { getStorage } from "firebase-admin/storage";
-import { sniffImageType } from "../../../apps/recipes/src/lib/image-sniff";
-import type { FetchPhotos, PhotoSource } from "./types";
+import { getStorage } from 'firebase-admin/storage'
+import { sniffImageType } from '../../../apps/recipes/src/lib/image-sniff'
+import type { FetchPhotos, PhotoSource } from './types'
 
 /**
  * Reads uploaded photos straight out of Firebase Storage with the service account the worker
@@ -13,27 +13,27 @@ import type { FetchPhotos, PhotoSource } from "./types";
  */
 export function createPhotoFetcher(bucketName: string): FetchPhotos {
   return async function fetchPhotos(keys: string[]): Promise<PhotoSource[]> {
-    const bucket = getStorage().bucket(bucketName);
-    const photos: PhotoSource[] = [];
+    const bucket = getStorage().bucket(bucketName)
+    const photos: PhotoSource[] = []
 
     for (const key of keys) {
-      const file = bucket.file(key);
-      const [exists] = await file.exists();
+      const file = bucket.file(key)
+      const [exists] = await file.exists()
       if (!exists) {
         // A deliberately specific message: this one is not worth retrying, and the user's card
         // should say the photo is gone rather than "the AI couldn't read it".
-        throw new Error(`Photo is no longer in storage (${key})`);
+        throw new Error(`Photo is no longer in storage (${key})`)
       }
 
-      const [buffer] = await file.download();
+      const [buffer] = await file.download()
       photos.push({
         mimeType: detectMimeType(buffer),
-        data: buffer.toString("base64"),
-      });
+        data: buffer.toString('base64'),
+      })
     }
 
-    return photos;
-  };
+    return photos
+  }
 }
 
 /**
@@ -42,6 +42,6 @@ export function createPhotoFetcher(bucketName: string): FetchPhotos {
  * label on a real image costs a model call, while refusing the job costs the user their photo.
  */
 function detectMimeType(buffer: Buffer): string {
-  const sniffed = sniffImageType(new Uint8Array(buffer.subarray(0, 16)));
-  return sniffed?.mime ?? "image/jpeg";
+  const sniffed = sniffImageType(new Uint8Array(buffer.subarray(0, 16)))
+  return sniffed?.mime ?? 'image/jpeg'
 }

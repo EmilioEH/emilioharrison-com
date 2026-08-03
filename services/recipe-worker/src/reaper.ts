@@ -1,4 +1,4 @@
-import type { WorkerStore } from "./types";
+import type { WorkerStore } from './types'
 
 /**
  * Whether a doc claimed at `claimedAtIso` has been `processing` long enough to be considered
@@ -13,10 +13,10 @@ export function isStale(
   now: number,
   deadlineMs: number,
 ): boolean {
-  if (!claimedAtIso) return true;
-  const claimedAt = new Date(claimedAtIso).getTime();
-  if (!Number.isFinite(claimedAt)) return true;
-  return now - claimedAt > deadlineMs;
+  if (!claimedAtIso) return true
+  const claimedAt = new Date(claimedAtIso).getTime()
+  if (!Number.isFinite(claimedAt)) return true
+  return now - claimedAt > deadlineMs
 }
 
 /**
@@ -30,24 +30,20 @@ export async function sweepStuckJobs(
   now: number = Date.now(),
 ): Promise<void> {
   try {
-    const grocery = await store.reapStuckGrocery(deadlineMs, now);
+    const grocery = await store.reapStuckGrocery(deadlineMs, now)
     if (grocery > 0) {
-      console.warn(
-        `[worker] reaper flipped ${grocery} stuck grocery job(s) to error`,
-      );
+      console.warn(`[worker] reaper flipped ${grocery} stuck grocery job(s) to error`)
     }
   } catch (e) {
-    console.error("[worker] reaper grocery sweep failed:", e);
+    console.error('[worker] reaper grocery sweep failed:', e)
   }
 
   try {
-    const imports = await store.reapStuckImports(deadlineMs, now);
+    const imports = await store.reapStuckImports(deadlineMs, now)
     if (imports > 0) {
-      console.warn(
-        `[worker] reaper flipped ${imports} stuck import job(s) to error`,
-      );
+      console.warn(`[worker] reaper flipped ${imports} stuck import job(s) to error`)
     }
   } catch (e) {
-    console.error("[worker] reaper import sweep failed:", e);
+    console.error('[worker] reaper import sweep failed:', e)
   }
 }

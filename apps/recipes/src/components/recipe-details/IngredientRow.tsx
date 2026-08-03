@@ -1,6 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
-import { unitLabel } from '../../lib/units'
+import { unitLabel, formatQuantity } from '../../lib/units'
 import { gramsForIngredient } from '../../lib/ingredient-weights'
 import type { Ingredient } from '../../lib/types'
 
@@ -8,29 +8,6 @@ interface IngredientRowProps {
   ingredient: Ingredient
   isChecked?: boolean
   onToggle?: () => void
-}
-
-/** Renders a quantity the way a cookbook prints it: 0.5 → ½, 1.5 → 1½. */
-const FRACTION_GLYPHS: Array<[number, string]> = [
-  [0.125, '⅛'],
-  [0.25, '¼'],
-  [1 / 3, '⅓'],
-  [0.375, '⅜'],
-  [0.5, '½'],
-  [0.625, '⅝'],
-  [2 / 3, '⅔'],
-  [0.75, '¾'],
-  [0.875, '⅞'],
-]
-
-function formatQuantity(value: number): string {
-  const whole = Math.floor(value)
-  const fraction = value - whole
-  if (fraction < 0.001) return String(whole)
-  for (const [size, glyph] of FRACTION_GLYPHS) {
-    if (Math.abs(fraction - size) < 0.02) return whole ? `${whole}${glyph}` : glyph
-  }
-  return String(Math.round(value * 100) / 100)
 }
 
 /**

@@ -9,39 +9,38 @@
  * Kept pure and separate so it can be tested without Firestore or a network.
  */
 export function createLimiter(maxConcurrent: number) {
-  if (maxConcurrent < 1)
-    throw new Error(`[concurrency] maxConcurrent must be >= 1`);
+  if (maxConcurrent < 1) throw new Error(`[concurrency] maxConcurrent must be >= 1`)
 
-  let active = 0;
-  const waiting: Array<() => void> = [];
+  let active = 0
+  const waiting: Array<() => void> = []
 
   // The finished job hands its slot straight to the next waiter rather than decrementing and
   // letting it re-acquire: a waiter only resumes on a later microtask, and a `run()` arriving in
   // between would see a free slot and take it too, putting maxConcurrent + 1 jobs in flight.
   const release = () => {
-    const next = waiting.shift();
-    if (next) next();
-    else active--;
-  };
+    const next = waiting.shift()
+    if (next) next()
+    else active--
+  }
 
   return {
     /** Runs `task` once a slot is free. Rejects exactly as `task` does; the slot is freed either
      * way, so one throwing job can never wedge the queue. */
     async run<T>(task: () => Promise<T>): Promise<T> {
       if (active >= maxConcurrent) {
-        await new Promise<void>((resolve) => waiting.push(resolve));
+        await new Promise<void>((resolve) => waiting.push(resolve))
       } else {
-        active++;
+        active++
       }
       try {
-        return await task();
+        return await task()
       } finally {
-        release();
+        release()
       }
     },
     /** For logging: how many are running and how many are queued behind them. */
     stats() {
-      return { active, queued: waiting.length };
+      return { active, queued: waiting.length }
     },
-  };
+  }
 }

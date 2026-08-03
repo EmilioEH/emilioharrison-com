@@ -48,7 +48,7 @@ describe('IngredientRow', () => {
 
   it.each([
     ['2 tbsp', '2', 'tbsp'],
-    ['2.5 tsp', '2.5', 'tsp'], // decimals were split as "2" + ".5 tsp"
+    ['2.5 tsp', '2.5', 'tsp'],   // decimals were split as "2" + ".5 tsp"
     ['1 1/4 cups', '1 1/4', 'cups'],
     ['1/4 tsp', '1/4', 'tsp'],
     ['1 lb', '1', 'lb'],

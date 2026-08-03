@@ -52,7 +52,7 @@ export function pantryMatchCount(recipe: Recipe, keys: ReadonlySet<string>): num
   return used.size
 }
 
-export interface PantryScope {
+interface PantryScope {
   /** The recipes to offer. Either the matches, or the whole library when too few matched. */
   recipes: Recipe[]
   /** How many of the cook's ingredients each recipe uses — 0 is omitted. */

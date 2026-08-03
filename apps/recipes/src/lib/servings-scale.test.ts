@@ -5,7 +5,6 @@ import {
   scaleIngredient,
   scaleIngredients,
   scaleRecipe,
-  formatQuantity,
 } from './servings-scale'
 import type { Ingredient, Recipe } from './types'
 
@@ -118,22 +117,5 @@ describe('scaleRecipe', () => {
   it('returns the same recipe when no change is called for', () => {
     expect(scaleRecipe(recipe, 4)).toBe(recipe)
     expect(scaleRecipe(recipe, undefined)).toBe(recipe)
-  })
-})
-
-describe('formatQuantity', () => {
-  it('writes kitchen fractions the way a cook does', () => {
-    expect(formatQuantity(0.5)).toBe('½')
-    expect(formatQuantity(1.5)).toBe('1½')
-    expect(formatQuantity(0.25)).toBe('¼')
-    expect(formatQuantity(2.75)).toBe('2¾')
-  })
-
-  it('leaves whole numbers whole', () => {
-    expect(formatQuantity(3)).toBe('3')
-  })
-
-  it('falls back to decimals for anything that is not a kitchen fraction', () => {
-    expect(formatQuantity(1.1)).toBe('1.1')
   })
 })

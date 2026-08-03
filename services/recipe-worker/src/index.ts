@@ -1,14 +1,14 @@
-import { GoogleGenAI } from "@google/genai";
-import OpenAI from "openai";
-import { computeGroceryList } from "../../../apps/recipes/src/lib/services/grocery-core";
-import { parsePhotosToRecipe } from "../../../apps/recipes/src/lib/services/parse-photo-core";
-import { loadConfig } from "./config";
-import { initFirestore, createFirestoreStore } from "./firestore-store";
-import { createAiErrorLogger } from "./ai-error-log";
-import { createPhotoFetcher } from "./photos";
-import { createLimiter } from "./concurrency";
-import { runGroceryForDoc, runImportForDoc } from "./jobs";
-import { sweepStuckJobs } from "./reaper";
+import { GoogleGenAI } from '@google/genai'
+import OpenAI from 'openai'
+import { computeGroceryList } from '../../../apps/recipes/src/lib/services/grocery-core'
+import { parsePhotosToRecipe } from '../../../apps/recipes/src/lib/services/parse-photo-core'
+import { loadConfig } from './config'
+import { initFirestore, createFirestoreStore } from './firestore-store'
+import { createAiErrorLogger } from './ai-error-log'
+import { createPhotoFetcher } from './photos'
+import { createLimiter } from './concurrency'
+import { runGroceryForDoc, runImportForDoc } from './jobs'
+import { sweepStuckJobs } from './reaper'
 
 /**
  * Entry point for the self-hosted Chefboard background worker (see BACKGROUND-JOBS-VM-PLAN.md).
@@ -27,21 +27,21 @@ import { sweepStuckJobs } from "./reaper";
  * queue that fed it stopped existing — see the commit that deleted the remains.
  */
 function main() {
-  const config = loadConfig();
-  const db = initFirestore(config);
-  const store = createFirestoreStore(db);
-  const logAiError = createAiErrorLogger(db);
-  const gemini = new GoogleGenAI({ apiKey: config.geminiApiKey });
+  const config = loadConfig()
+  const db = initFirestore(config)
+  const store = createFirestoreStore(db)
+  const logAiError = createAiErrorLogger(db)
+  const gemini = new GoogleGenAI({ apiKey: config.geminiApiKey })
   const openai = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
+    baseURL: 'https://openrouter.ai/api/v1',
     apiKey: config.openRouterApiKey,
-  });
+  })
 
   console.log(
     `[worker] starting — origin=${config.origin} jobTimeout=${config.jobTimeoutMs}ms ` +
       `importTimeout=${config.importJobTimeoutMs}ms importConcurrency=${config.importConcurrency} ` +
       `bucket=${config.storageBucket} reaper=${config.reaperDeadlineMs}ms/${config.reaperIntervalMs}ms`,
-  );
+  )
 
   const groceryDeps = {
     store,
@@ -49,24 +49,24 @@ function main() {
     jobTimeoutMs: config.jobTimeoutMs,
     computeGrocery: computeGroceryList,
     logAiError,
-  };
+  }
 
   // Grocery queue: `grocery_lists` docs with status == 'pending'. onSnapshot fires once with the
   // current backlog (as 'added') on startup, then incrementally — so a worker restart picks up
   // anything queued while it was down. The transactional claim makes duplicate fires (or a second
   // worker) harmless.
   const unsubGrocery = db
-    .collection("grocery_lists")
-    .where("status", "==", "pending")
+    .collection('grocery_lists')
+    .where('status', '==', 'pending')
     .onSnapshot(
       (snap) => {
         for (const change of snap.docChanges()) {
-          if (change.type === "removed") continue;
-          void runGroceryForDoc(groceryDeps, change.doc.id);
+          if (change.type === 'removed') continue
+          void runGroceryForDoc(groceryDeps, change.doc.id)
         }
       },
-      (err) => console.error("[worker] grocery listener error:", err),
-    );
+      (err) => console.error('[worker] grocery listener error:', err),
+    )
 
   const importDeps = {
     store,
@@ -75,48 +75,45 @@ function main() {
     parsePhotos: parsePhotosToRecipe,
     importJobTimeoutMs: config.importJobTimeoutMs,
     logAiError,
-  };
-  const importLimiter = createLimiter(config.importConcurrency);
+  }
+  const importLimiter = createLimiter(config.importConcurrency)
 
   // Import queue: `import_jobs` docs with status == 'pending'. A batch of fifteen arrives at once,
   // so unlike grocery these are put through a concurrency gate rather than fired off unbounded —
   // fifteen simultaneous parse pipelines would swamp a 4-vCPU box.
   const unsubImports = db
-    .collection("import_jobs")
-    .where("status", "==", "pending")
+    .collection('import_jobs')
+    .where('status', '==', 'pending')
     .onSnapshot(
       (snap) => {
         for (const change of snap.docChanges()) {
-          if (change.type === "removed") continue;
-          const jobId = change.doc.id;
-          void importLimiter.run(() => runImportForDoc(importDeps, jobId));
+          if (change.type === 'removed') continue
+          const jobId = change.doc.id
+          void importLimiter.run(() => runImportForDoc(importDeps, jobId))
         }
-        const { active, queued } = importLimiter.stats();
-        if (queued > 0)
-          console.log(
-            `[worker] import queue: ${active} running, ${queued} waiting`,
-          );
+        const { active, queued } = importLimiter.stats()
+        if (queued > 0) console.log(`[worker] import queue: ${active} running, ${queued} waiting`)
       },
-      (err) => console.error("[worker] import listener error:", err),
-    );
+      (err) => console.error('[worker] import listener error:', err),
+    )
 
   const reaperTimer = setInterval(
     () => void sweepStuckJobs(store, config.reaperDeadlineMs),
     config.reaperIntervalMs,
-  );
+  )
 
   const shutdown = (signal: string) => {
-    console.log(`[worker] ${signal} received — shutting down`);
-    clearInterval(reaperTimer);
-    unsubGrocery();
-    unsubImports();
+    console.log(`[worker] ${signal} received — shutting down`)
+    clearInterval(reaperTimer)
+    unsubGrocery()
+    unsubImports()
     // Give any in-flight Firestore writes a moment, then exit so systemd can restart cleanly.
-    setTimeout(() => process.exit(0), 500);
-  };
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
+    setTimeout(() => process.exit(0), 500)
+  }
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
 
-  console.log("[worker] listeners attached; waiting for jobs.");
+  console.log('[worker] listeners attached; waiting for jobs.')
 }
 
-main();
+main()
