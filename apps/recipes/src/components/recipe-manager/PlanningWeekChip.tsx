@@ -36,9 +36,14 @@ export const PlanningWeekChip: React.FC<PlanningWeekChipProps> = ({
           : 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20'
       }`}
     >
-      <CalendarDays className="h-3.5 w-3.5" />
-      <span>Adding to: {weekLabel(activeWeekStart)}</span>
-      <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+      <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+      {/* The prefix only appears when the week is not the obvious one. Planning this week needs
+       * no explanation and the category pills beside it need the room; planning any other week
+       * is the case a cook can be surprised by, and there the words earn their width. */}
+      <span className="whitespace-nowrap">
+        {isThisWeek ? 'This week' : `Adding to: ${weekLabel(activeWeekStart)}`}
+      </span>
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" />
     </motion.button>
   )
 }
