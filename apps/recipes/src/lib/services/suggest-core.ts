@@ -17,6 +17,7 @@
  */
 
 import type { Recipe } from '../types'
+import { pantryMenuMarker } from './pantry-match'
 import type { CookOutcome } from '../week-review'
 
 /** How each verdict reads inside a menu line. */
@@ -66,6 +67,8 @@ export function buildMenu(
   recipes: Recipe[],
   signals: Record<string, RecipeSignal>,
   today: Date = new Date(),
+  /** How many of the cook's own ingredients each recipe uses, when they said what they have. */
+  pantryMatches: Record<string, number> = {},
 ): { menu: string; index: string[] } {
   const index: string[] = []
   const lines: string[] = []
@@ -94,6 +97,8 @@ export function buildMenu(
         recipe.difficulty ?? '',
         `${history}${liked}`,
         weight ? `weight ${weight > 0 ? '+' : ''}${weight}` : '',
+        // ~4 tokens, and only on the lines that have a match. Code counts; the model reads.
+        pantryMenuMarker(pantryMatches[recipe.id]),
       ]
         .filter((part) => part !== '')
         .join('|'),
@@ -125,11 +130,16 @@ export function buildConversationPreamble(menu: string): string {
     'anything.',
     '',
     'Their recipes, one per line:',
-    'number|title|protein|cuisine|total time|difficulty|history|weight',
+    'number|title|protein|cuisine|total time|difficulty|history|weight|pantry',
     '',
     'The weight is how much to favour a recipe. A positive weight means they liked it and it has',
     'been a while. A negative weight means they cooked it very recently or did not enjoy it —',
     'avoid those unless the request clearly calls for one.',
+    '',
+    '"uses N of yours" means the recipe uses N of the ingredients they told you they already have.',
+    'Prefer those, and say so in the reason — "you already have the chicken" is the kind of thing',
+    'worth pointing out. A recipe without the marker is not disqualified: they are going shopping',
+    'anyway.',
     '',
     menu,
   ].join('\n')
@@ -154,11 +164,16 @@ export function buildPrompt(input: SuggestInput, menu: string, keptTitles: strin
       : '',
     '',
     'Their recipes, one per line:',
-    'number|title|protein|cuisine|total time|difficulty|history|weight',
+    'number|title|protein|cuisine|total time|difficulty|history|weight|pantry',
     '',
     'The weight is how much to favour a recipe. A positive weight means they liked it and it has',
     'been a while. A negative weight means they cooked it very recently or did not enjoy it —',
     'avoid those unless the request clearly calls for one.',
+    '',
+    '"uses N of yours" means the recipe uses N of the ingredients they told you they already have.',
+    'Prefer those, and say so in the reason — "you already have the chicken" is the kind of thing',
+    'worth pointing out. A recipe without the marker is not disqualified: they are going shopping',
+    'anyway.',
     '',
     menu,
     '',

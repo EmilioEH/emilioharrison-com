@@ -19,6 +19,7 @@ import {
   type CookOutcome,
 } from '../../../lib/week-review'
 import { describeFacets } from '../../../lib/recipe-facets'
+import { applyPantry } from '../../../lib/services/pantry-match'
 import {
   buildMenu,
   buildConversationPreamble,
@@ -183,7 +184,10 @@ export const POST: APIRoute = async (context: APIContext) => {
       .map((id) => recipes.find((r) => r.id === id)?.title)
       .filter((t): t is string => Boolean(t))
 
-    const { menu, index } = buildMenu(offerable, signals)
+    // The same matching `offerableUnder` used to narrow (or decline to narrow) the menu, so the
+    // markers on the lines always agree with the list they are on.
+    const pantryMatches = applyPantry(offerable, constraints.pantry).matchesById
+    const { menu, index } = buildMenu(offerable, signals, new Date(), pantryMatches)
     const preamble = buildConversationPreamble(menu)
     const tail = buildTurnPrompt({
       conversation,

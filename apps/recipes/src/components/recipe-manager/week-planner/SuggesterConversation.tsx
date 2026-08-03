@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Plus, X, Check, Send } from 'lucide-react'
 import { Chip } from '../../ui/Chip'
 import { ConstraintBar } from './ConstraintBar'
+import { PantryPicker } from './PantryPicker'
+import { commonPantryOptions } from '../../../lib/services/pantry-match'
 import { apiBase } from '../../../lib/routes'
 import {
   emptyConstraints,
   openingTurn,
+  withPantryWidget,
   MIN_WANTED,
   MAX_WANTED,
   type Constraints,
@@ -50,8 +53,19 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
     ...emptyConstraints(),
     keptIds: [...plannedIds],
   }))
+  // Drawn from the library the cook actually owns, so every chip offered is one that matches
+  // something — the same grounding rule the facet chips follow.
+  const pantryOptions = React.useMemo(() => commonPantryOptions(allRecipes), [allRecipes])
   const [rows, setRows] = useState<Row[]>(() => [
-    { kind: 'app', turn: prefetched ?? openingTurn(plannedIds.length) },
+    {
+      kind: 'app',
+      // The first turn is usually the prefetched one from the model, which knows nothing about
+      // the pantry widget — so it is attached here rather than only in the local fallback.
+      turn: withPantryWidget(
+        prefetched ?? openingTurn(plannedIds.length, pantryOptions),
+        pantryOptions,
+      ),
+    },
   ])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +94,9 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   const entrance = mounted.current ? { opacity: 0, y: 8 } : false
 
   /** Once a real suggestion has been made, typing is worth offering. Not before — there is
-   * nothing concrete to react to yet, and "too much chicken" needs three chickens first. */
+   * nothing concrete to react to yet, and "too much chicken" needs three chickens first. The
+   * pantry step's own text box is the documented exception (see `suggest-turns.ts`): it asks for
+   * a fact rather than a reaction, so there is nothing it needs to have seen first. */
   const composerOpen = rows.some(
     (row) => row.kind === 'app' && row.turn.widgets.some((w) => w.kind === 'recipes'),
   )
@@ -474,6 +490,9 @@ const WidgetView: React.FC<{
           ))}
         </div>
       )
+
+    case 'pantry':
+      return <PantryPicker options={widget.options} constraints={constraints} onChange={onAnswer} />
 
     case 'recipes':
       return (
