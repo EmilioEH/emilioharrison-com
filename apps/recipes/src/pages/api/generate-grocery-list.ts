@@ -8,12 +8,13 @@ import {
   badRequestResponse,
 } from '../../lib/api-helpers'
 import { computeGroceryList } from '../../lib/services/grocery-core'
+import { groceryListSignature, mergeGroceryIngredients } from '../../lib/grocery-signature'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
 import { db } from '../../lib/firebase-server'
 import { isBackgroundWorkerEnabled } from '../../lib/env'
 import { getAllowedCreatorIds, isRecipeAccessible } from '../../lib/recipe-access'
-import type { GroceryList, Recipe } from '../../lib/types'
+import type { GroceryList, Recipe, ShoppableIngredient } from '../../lib/types'
 
 // HARD PLATFORM CONSTRAINT: this job runs under `ctx.waitUntil`, and Cloudflare Workers cancels
 // waitUntil work ~30 seconds after the response is sent — silently, without running catch/finally.
@@ -37,9 +38,14 @@ const GROCERY_RATE_WINDOW_SECONDS = 60 * 60
  * only ever watches its Firestore subscription on `grocery_lists/{listId}`, so it doesn't matter
  * that the original request may be gone by the time this finishes.
  */
-async function runGroceryGenerationJob(gemini: GoogleGenAI, recipes: Recipe[], listId: string) {
+async function runGroceryGenerationJob(
+  gemini: GoogleGenAI,
+  recipes: Recipe[],
+  listId: string,
+  sourceRecipeIds: string[],
+) {
   try {
-    const ingredients = await computeGroceryList(gemini, recipes, {
+    const generated = await computeGroceryList(gemini, recipes, {
       timeoutMs: GEMINI_TIMEOUT_MS,
       onProgress: async (update) => {
         try {
@@ -54,8 +60,20 @@ async function runGroceryGenerationJob(gemini: GoogleGenAI, recipes: Recipe[], l
       },
     })
 
+    // Re-read rather than trusting a snapshot taken before the AI call: the cook may well have
+    // ticked things off or added an item while this was running, and those edits go straight to
+    // this same document via api/grocery/items.ts.
+    const existing = await db.getDocument<GroceryList>('grocery_lists', listId)
+    // `generated` is typed `unknown[]` by the core — the model's output, shaped by the response
+    // schema but not validated element-wise. It is written to the doc as ingredients either way.
+    const ingredients = mergeGroceryIngredients(
+      existing?.ingredients,
+      generated as ShoppableIngredient[],
+    )
+
     await db.updateDocument('grocery_lists', listId, {
       ingredients,
+      sourceRecipeIds,
       status: 'complete',
       progress: 100,
       message: 'Done!',
@@ -136,6 +154,18 @@ export const POST: APIRoute = async (context: APIContext) => {
   const listId = `${scope.scopeId}_${weekStartDate}`
   const now = new Date().toISOString()
 
+  // The signature is taken from what the client asked for, not from what survived the access
+  // filter above — the client compares against this same set, so anything else guarantees a
+  // permanent mismatch and a list that regenerates on every open.
+  const sourceRecipeIds = groceryListSignature(recipeIds as string[])
+
+  // Does a list already exist for this week? If so its status/progress get *updated*, leaving the
+  // previous ingredients (and the cook's ticks, deletions and hand-added items) on screen and
+  // intact while the new one is generated. The old code wrote a fresh document with
+  // `ingredients: []` here, which threw all of that away before the AI had even been called —
+  // and if generation then failed, it was gone for nothing.
+  const existing = await db.getDocument<GroceryList>('grocery_lists', listId)
+
   // Cutover path: hand the job to the self-hosted VM worker instead of running it under
   // Cloudflare's ~30s waitUntil ceiling (see BACKGROUND-JOBS-VM-PLAN.md). Write the doc as
   // `pending` — the state the worker's Firestore listener claims on — and stash the request's
@@ -143,19 +173,31 @@ export const POST: APIRoute = async (context: APIContext) => {
   // from them. No Gemini call happens here in this path.
   if (isBackgroundWorkerEnabled(context)) {
     try {
-      await db.setDocument('grocery_lists', listId, {
-        id: listId,
-        userId: scope.userId,
-        ...(scope.familyId ? { familyId: scope.familyId } : {}),
-        weekStartDate,
-        ingredients: [],
-        status: 'pending',
-        progress: 0,
-        message: 'Waiting for worker...',
-        createdAt: now,
-        updatedAt: now,
-        inputRecipes: recipes,
-      } satisfies GroceryList)
+      if (existing) {
+        await db.updateDocument('grocery_lists', listId, {
+          status: 'pending',
+          progress: 0,
+          message: 'Waiting for worker...',
+          updatedAt: now,
+          inputRecipes: recipes,
+          inputRecipeIds: sourceRecipeIds,
+        })
+      } else {
+        await db.setDocument('grocery_lists', listId, {
+          id: listId,
+          userId: scope.userId,
+          ...(scope.familyId ? { familyId: scope.familyId } : {}),
+          weekStartDate,
+          ingredients: [],
+          status: 'pending',
+          progress: 0,
+          message: 'Waiting for worker...',
+          createdAt: now,
+          updatedAt: now,
+          inputRecipes: recipes,
+          inputRecipeIds: sourceRecipeIds,
+        } satisfies GroceryList)
+      }
     } catch (error) {
       console.error('[Grocery] Failed to enqueue list document:', error)
       return serverErrorResponse('Failed to start generation')
@@ -178,25 +220,35 @@ export const POST: APIRoute = async (context: APIContext) => {
   try {
     // Initialize the doc as 'processing' immediately — before the AI call — so the client's
     // existing Firestore subscription reflects generation starting even if this request's
-    // connection is later dropped.
-    await db.setDocument('grocery_lists', listId, {
-      id: listId,
-      userId: scope.userId,
-      ...(scope.familyId ? { familyId: scope.familyId } : {}),
-      weekStartDate,
-      ingredients: [],
-      status: 'processing',
-      progress: 0,
-      message: 'Analyzing recipes...',
-      createdAt: now,
-      updatedAt: now,
-    } satisfies GroceryList)
+    // connection is later dropped. On an existing list this is an *update*: the previous
+    // ingredients stay on screen and survive a failed generation.
+    if (existing) {
+      await db.updateDocument('grocery_lists', listId, {
+        status: 'processing',
+        progress: 0,
+        message: 'Analyzing recipes...',
+        updatedAt: now,
+      })
+    } else {
+      await db.setDocument('grocery_lists', listId, {
+        id: listId,
+        userId: scope.userId,
+        ...(scope.familyId ? { familyId: scope.familyId } : {}),
+        weekStartDate,
+        ingredients: [],
+        status: 'processing',
+        progress: 0,
+        message: 'Analyzing recipes...',
+        createdAt: now,
+        updatedAt: now,
+      } satisfies GroceryList)
+    }
   } catch (error) {
     console.error('[Grocery] Failed to initialize list document:', error)
     return serverErrorResponse('Failed to start generation')
   }
 
-  const job = runGroceryGenerationJob(client, recipes, listId)
+  const job = runGroceryGenerationJob(client, recipes, listId, sourceRecipeIds)
   const ctx = locals?.runtime?.ctx
   if (ctx?.waitUntil) {
     ctx.waitUntil(job)

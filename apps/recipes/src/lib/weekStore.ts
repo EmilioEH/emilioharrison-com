@@ -25,13 +25,6 @@ export const weekState = persistentMap<WeekState>('weekState', {
 })
 
 /**
- * Signals that the grocery list for the stored week start needs regeneration.
- * Set to a week start string (e.g. "2026-05-25") when a recipe is added to that week.
- * Cleared by WeekWorkspace after triggering regeneration.
- */
-export const $groceryNeedsRegen = atom<string | null>(null)
-
-/**
  * True while one of the week's full screens (the review, the suggester) is open.
  *
  * It lives here rather than inside `WeekWorkspace` because the bottom tab bar is a sibling of the
@@ -170,9 +163,9 @@ export const addRecipeToWeek = async (recipeId: string): Promise<boolean> => {
 
     if (data.success && data.data) {
       familyActions.setRecipeFamilyData(recipeId, data.data)
-      // Signal that the grocery list for this week needs regeneration,
-      // since a new recipe was added and the cached list is now stale.
-      $groceryNeedsRegen.set(activeStart)
+      // Nothing to flag: the grocery list records the recipes it was built from, so the week view
+      // works out on its own that this week has changed. The old in-memory flag set here only
+      // ever caught *additions*, and was gone after a reload.
       return true
     } else {
       console.warn('[WeekStore] API success but no data?', data)

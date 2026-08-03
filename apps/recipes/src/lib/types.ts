@@ -178,6 +178,13 @@ export interface GroceryList {
   status: 'pending' | 'processing' | 'complete' | 'error'
   createdAt: string
   updatedAt: string
+  // Sorted, de-duplicated ids of the recipes this list was generated for — the list's "signature".
+  // The client compares it against the week's current recipes to decide whether a regeneration is
+  // actually needed. Before this existed the only test was "is there a document?", which cannot
+  // distinguish an absent list from one that hasn't loaded yet, and never noticed a *removed*
+  // recipe at all. Absent on lists written before this field existed; treat that as "unknown
+  // signature", which forces exactly one regeneration and then settles.
+  sourceRecipeIds?: string[]
   // Written incrementally by the server while generating (see generate-grocery-list.ts) so the
   // client's existing Firestore subscription can show granular progress from any tab/device.
   progress?: number
@@ -186,6 +193,11 @@ export interface GroceryList {
   // the request's recipes, persisted on the `pending` doc so the async worker — which never sees
   // the original request — can generate from them. The worker deletes this field on completion.
   inputRecipes?: Recipe[]
+  // The signature the worker should stamp on the finished list, carried the same way and for the
+  // same reason as `inputRecipes`. It is the set the *client* asked for, which is what the client
+  // compares against — the worker only sees the accessible subset, and stamping that instead
+  // would leave the two permanently disagreeing. Deleted on completion.
+  inputRecipeIds?: string[]
 }
 
 /** A single recipe's contribution to a grocery item */

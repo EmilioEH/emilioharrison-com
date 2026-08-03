@@ -1,5 +1,5 @@
-import type { Firestore } from 'firebase-admin/firestore'
-import { randomUUID } from 'node:crypto'
+import type { Firestore } from "firebase-admin/firestore";
+import { randomUUID } from "node:crypto";
 
 /**
  * firebase-admin equivalent of apps/recipes/src/lib/services/ai-error-log.ts (Cloudflare's REST
@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto'
  * ai-retry.ts) was previously visible only in journald, never in the queryable log.
  */
 
-export type AiFeature = 'photo-import' | 'enhancement' | 'grocery'
+export type AiFeature = "photo-import" | "enhancement" | "grocery";
 
 /**
  * Records an AI-pipeline failure. Fire-and-forget and guaranteed never to throw — an observability
@@ -24,7 +24,7 @@ export function createAiErrorLogger(db: Firestore) {
     extra: { userId?: string; context?: Record<string, string> } = {},
   ): void {
     try {
-      const id = randomUUID()
+      const id = randomUUID();
       const entry = {
         id,
         feature,
@@ -32,18 +32,24 @@ export function createAiErrorLogger(db: Firestore) {
         ...(extra.context ? { context: extra.context } : {}),
         ...(extra.userId ? { userId: extra.userId } : {}),
         createdAt: new Date().toISOString(),
-      }
+      };
 
-      db.collection('error_logs')
+      db.collection("error_logs")
         .doc(id)
         .set(entry)
         .catch((writeError) => {
-          console.error('[AiErrorLog] Failed to persist error log:', writeError)
-        })
+          console.error(
+            "[AiErrorLog] Failed to persist error log:",
+            writeError,
+          );
+        });
     } catch (unexpected) {
-      console.error('[AiErrorLog] Failed to build error log entry:', unexpected)
+      console.error(
+        "[AiErrorLog] Failed to build error log entry:",
+        unexpected,
+      );
     }
-  }
+  };
 }
 
-export type LogAiError = ReturnType<typeof createAiErrorLogger>
+export type LogAiError = ReturnType<typeof createAiErrorLogger>;
