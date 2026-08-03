@@ -15,7 +15,10 @@ async function openSuggester(page: Page) {
 }
 
 test.describe('pantry step', () => {
+  let sent: Array<{ pantry?: string[] }> = []
+
   test.beforeEach(async ({ page, context }) => {
+    sent = []
     await context.addCookies([
       { name: 'site_auth', value: 'true', domain: '127.0.0.1', path: '/' },
       { name: 'site_user', value: 'testuser', domain: '127.0.0.1', path: '/' },
@@ -59,9 +62,11 @@ test.describe('pantry step', () => {
     })
 
     // The suggester's own endpoint: echo the constraints back so the test can assert what the
-    // client actually sent, without depending on a model.
+    // client actually sent, without depending on a model. Every request body is recorded so a
+    // test can check both *what* was sent and *how many times*.
     await page.route(/api\/week\/suggest/, async (route) => {
       const body = route.request().postDataJSON()
+      sent.push(body?.constraints ?? {})
       await route.fulfill({
         json: {
           success: true,
@@ -138,5 +143,30 @@ test.describe('pantry step', () => {
     // properly, and the decoration should not outlive it.
     await openSuggester(page)
     await expect(page.getByRole('button', { name: /use up what we have/i })).toHaveCount(0)
+  })
+
+  test('naming ingredients costs no model calls, and they travel with the request', async ({
+    page,
+  }) => {
+    // A pantry entry is a statement of fact, not a steer the model has to react to — and there
+    // are usually several. One round trip per ingredient would spend a call each and shuffle the
+    // picker up the screen as replies piled in.
+    await openSuggester(page)
+    const before = sent.length
+
+    await page
+      .getByTestId('pantry-picker')
+      .getByRole('button', { name: /spinach/i })
+      .click()
+    await page.getByLabel(/add an ingredient you already have/i).fill('leftover rice')
+    await page.getByLabel(/add this ingredient/i).click()
+    await expect(page.getByTestId('constraint-bar')).toContainText('have leftover rice')
+
+    expect(sent.length).toBe(before)
+
+    // ...and both arrive when the cook actually asks for meals.
+    await page.getByRole('button', { name: /find me meals/i }).click()
+    await expect.poll(() => sent.length).toBeGreaterThan(before)
+    expect(sent[sent.length - 1].pantry).toEqual(['spinach', 'leftover rice'])
   })
 })

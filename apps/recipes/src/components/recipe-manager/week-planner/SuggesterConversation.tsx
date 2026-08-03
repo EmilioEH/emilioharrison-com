@@ -57,15 +57,7 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
   // something — the same grounding rule the facet chips follow.
   const pantryOptions = React.useMemo(() => commonPantryOptions(allRecipes), [allRecipes])
   const [rows, setRows] = useState<Row[]>(() => [
-    {
-      kind: 'app',
-      // The first turn is usually the prefetched one from the model, which knows nothing about
-      // the pantry widget — so it is attached here rather than only in the local fallback.
-      turn: withPantryWidget(
-        prefetched ?? openingTurn(plannedIds.length, pantryOptions),
-        pantryOptions,
-      ),
-    },
+    { kind: 'app', turn: prefetched ?? openingTurn(plannedIds.length) },
   ])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -197,6 +189,17 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
     void ask(said, next)
   }
 
+  /**
+   * Record a constraint without asking for a new turn.
+   *
+   * Naming what's in the fridge is a statement of fact, not a steer the model needs to react to —
+   * and there are usually several. Sending a round trip per ingredient would cost a model call
+   * each, push the picker up the screen as answers piled in, and produce a reply to "I have
+   * spinach" that nobody asked for. The constraint bar gives the feedback instead, and the cook
+   * presses "Find me meals" when they've finished.
+   */
+  const noteConstraint = (_said: string, next: Constraints) => setConstraints(next)
+
   const keep = async (recipeId: string) => {
     const recipe = byId.get(recipeId)
     const next = { ...constraints, keptIds: [...constraints.keptIds, recipeId] }
@@ -288,11 +291,17 @@ export const SuggesterConversation: React.FC<SuggesterConversationProps> = ({
               <TurnRow
                 key={`turn-${index}`}
                 entrance={entrance}
-                turn={row.turn}
+                // The pantry question is attached to the opening turn at render time, not baked
+                // into the initial state: the chips come from the library, which may still be
+                // loading when this mounts, and a widget computed once from an empty list would
+                // never appear at all. It also has to reach the *prefetched* turn, which comes
+                // from the model and knows nothing about it.
+                turn={index === 0 ? withPantryWidget(row.turn, pantryOptions) : row.turn}
                 answered={row.answered}
                 byId={byId}
                 constraints={constraints}
                 onAnswer={(said, next) => answer(index, said, next)}
+                onNote={noteConstraint}
                 onKeep={keep}
                 onDismiss={dismiss}
                 onOpenRecipe={onOpenRecipe}
@@ -383,6 +392,8 @@ const TurnRow: React.FC<{
   byId: Map<string, Recipe>
   constraints: Constraints
   onAnswer: (said: string, next: Constraints) => void
+  /** Record a constraint without asking the model for a new turn. */
+  onNote: (said: string, next: Constraints) => void
   onKeep: (recipeId: string) => void
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
@@ -394,6 +405,7 @@ const TurnRow: React.FC<{
   byId,
   constraints,
   onAnswer,
+  onNote,
   onKeep,
   onDismiss,
   onOpenRecipe,
@@ -415,6 +427,7 @@ const TurnRow: React.FC<{
         byId={byId}
         constraints={constraints}
         onAnswer={onAnswer}
+        onNote={onNote}
         onKeep={onKeep}
         onDismiss={onDismiss}
         onOpenRecipe={onOpenRecipe}
@@ -432,6 +445,8 @@ const WidgetView: React.FC<{
   byId: Map<string, Recipe>
   constraints: Constraints
   onAnswer: (said: string, next: Constraints) => void
+  /** Record a constraint without asking the model for a new turn. */
+  onNote: (said: string, next: Constraints) => void
   onKeep: (recipeId: string) => void
   onDismiss: (recipeId: string) => void
   onOpenRecipe?: (recipe: Recipe) => void
@@ -442,6 +457,7 @@ const WidgetView: React.FC<{
   byId,
   constraints,
   onAnswer,
+  onNote,
   onKeep,
   onDismiss,
   onOpenRecipe,
@@ -492,7 +508,7 @@ const WidgetView: React.FC<{
       )
 
     case 'pantry':
-      return <PantryPicker options={widget.options} constraints={constraints} onChange={onAnswer} />
+      return <PantryPicker options={widget.options} constraints={constraints} onChange={onNote} />
 
     case 'recipes':
       return (
