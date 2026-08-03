@@ -63,7 +63,10 @@ export function shoppingNameFromDisplayIngredient(rawName: string, amount: strin
     if (stripped.length >= 3) name = stripped
   }
 
-  name = name.replace(PREP_PARENTHETICAL, ' ').replace(/\s{2,}/g, ' ').trim()
+  name = name
+    .replace(PREP_PARENTHETICAL, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
   name = name.replace(/[,;:\s]+$/, '').replace(/^[,;:\s]+/, '')
 
   return name.toLowerCase() || String(rawName).trim().toLowerCase()
@@ -136,7 +139,7 @@ export function guessCategoryFromName(name: string): string {
  * whatever happened to sit at that offset. Keying on `ingredientKey` also means "garlic cloves"
  * finds the category stored for "garlic".
  */
-function storedCategoryLookup(recipe: Recipe): (name: string) => string | undefined {
+export function storedCategoryLookup(recipe: Recipe): (name: string) => string | undefined {
   const byKey = new Map<string, string>()
   for (const structured of recipe.structuredIngredients ?? []) {
     const key = ingredientKey(structured.name)
@@ -147,10 +150,32 @@ function storedCategoryLookup(recipe: Recipe): (name: string) => string | undefi
 }
 
 /**
+ * The short shopping name stored for an ingredient, looked up the same way as the category.
+ *
+ * The display name is the recipe's own wording, prep and all — "Yukon Gold potatoes, unpeeled,
+ * halved lengthwise, and cut crosswise into ½-inch-thick slices". That is right on the recipe page
+ * and wrong on a shopping list, where none of it changes what you put in the trolley. The
+ * structured name is the one field where the AI's rewriting is an asset rather than the drift it
+ * is everywhere else, so it is used for this and nothing else.
+ *
+ * Absent (or unmatched, since the two lists have drifted apart on 56 recipes) means the display
+ * name stands.
+ */
+export function storedShoppingNameLookup(recipe: Recipe): (name: string) => string | undefined {
+  const byKey = new Map<string, string>()
+  for (const structured of recipe.structuredIngredients ?? []) {
+    const key = ingredientKey(structured.name)
+    const name = String(structured.name ?? '').trim()
+    if (key && name && !byKey.has(key)) byKey.set(key, name)
+  }
+  return (name: string) => byKey.get(ingredientKey(name))
+}
+
+/**
  * True once an ingredient has been through the normalisation migration, i.e. it carries a real
  * number and a canonical unit rather than a free-text amount. See lib/ingredient-parse.ts.
  */
-function isNormalised(ingredient: Ingredient): boolean {
+export function isNormalised(ingredient: Ingredient): boolean {
   return typeof ingredient.quantity === 'number' || Boolean(ingredient.unit)
 }
 

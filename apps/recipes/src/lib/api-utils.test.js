@@ -145,5 +145,88 @@ describe('api-utils', () => {
       expect(prompt).toContain('Good Recipe')
       expect(prompt).toContain('salt')
     })
+
+    describe('normalised amounts (Phase 4)', () => {
+      const normalised = {
+        id: 'r1',
+        title: 'Roast',
+        ingredients: [
+          {
+            name: 'Yukon Gold potatoes, unpeeled, halved lengthwise',
+            amount: '1 pound',
+            quantity: 1,
+            unit: 'lb',
+          },
+          { name: 'salt', amount: 'to taste' },
+        ],
+        structuredIngredients: [
+          {
+            original: '1 pound potatoes',
+            name: 'Yukon Gold potatoes',
+            amount: 1,
+            unit: 'pound',
+            category: 'Produce',
+          },
+          { original: 'salt to taste', name: 'salt', amount: 0, unit: '', category: 'Spices' },
+        ],
+      }
+
+      it('sends the numeric quantity and canonical unit, not the free-text amount', () => {
+        // The whole point: you cannot multiply "a splash", so servings can only scale once the
+        // amount reaching the model is a real number.
+        const prompt = formatRecipesForPrompt([normalised])
+        expect(prompt).toContain('- 1 lb Yukon Gold potatoes')
+        expect(prompt).not.toContain('1 pound Yukon Gold')
+      })
+
+      it('carries the stored category so the model does not guess at what is on file', () => {
+        const prompt = formatRecipesForPrompt([normalised])
+        expect(prompt).toContain('[CATEGORY:Produce]')
+        expect(prompt).toContain('[CATEGORY:Spices]')
+      })
+
+      it('uses the short shopping name rather than the recipe wording', () => {
+        // "Yukon Gold potatoes, unpeeled, halved lengthwise" is right on the recipe page and
+        // pure noise on a shopping list.
+        const prompt = formatRecipesForPrompt([normalised])
+        expect(prompt).not.toContain('unpeeled, halved lengthwise')
+      })
+
+      it('leaves an ingredient with no number in its own words', () => {
+        const prompt = formatRecipesForPrompt([normalised])
+        expect(prompt).toContain('to taste salt')
+      })
+
+      it('still keeps the source tags', () => {
+        const prompt = formatRecipesForPrompt([normalised])
+        expect(prompt).toContain('[RECIPE_ID:r1]')
+        expect(prompt).toContain('[RECIPE_TITLE:Roast]')
+      })
+
+      it('falls back to structuredIngredients when nothing has been normalised', () => {
+        const legacy = {
+          id: 'r2',
+          title: 'Old',
+          ingredients: [{ name: 'flour', amount: '2 cups' }],
+          structuredIngredients: [
+            {
+              original: '2 cups flour',
+              name: 'flour',
+              amount: 2,
+              unit: 'cups',
+              category: 'Pantry',
+            },
+          ],
+        }
+        const prompt = formatRecipesForPrompt([legacy])
+        expect(prompt).toContain('- 2 cups flour [CATEGORY:Pantry]')
+      })
+
+      it('falls back to raw text when there is nothing structured at all', () => {
+        const bare = { id: 'r3', title: 'Bare', ingredients: [{ name: 'eggs', amount: '3' }] }
+        const prompt = formatRecipesForPrompt([bare])
+        expect(prompt).toContain('- 3 eggs [RECIPE_ID:r3]')
+      })
+    })
   })
 })
