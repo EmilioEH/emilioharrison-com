@@ -12,7 +12,12 @@ import { createTimeoutSignal } from '../../../lib/services/ai-timeout'
 import { GEMINI_TEXT_MODEL } from '../../../lib/services/ai-model-config'
 import { rateLimit } from '../../../lib/rate-limit'
 import { listAccessibleRecipes } from '../../../lib/recipe-access'
-import { weekStartOf, type CookOutcome } from '../../../lib/week-review'
+import {
+  weekStartOf,
+  verdictForRating,
+  isVerdict,
+  type CookOutcome,
+} from '../../../lib/week-review'
 import { describeFacets } from '../../../lib/recipe-facets'
 import {
   buildMenu,
@@ -41,13 +46,6 @@ const SUGGEST_TIMEOUT_MS = 25_000
  */
 const SUGGEST_RATE_LIMIT = 200
 const SUGGEST_RATE_WINDOW_SECONDS = 60 * 60
-
-/** How a stored quick-review rating reads back as an outcome. Mirrors `OUTCOME_RATING`. */
-function outcomeForRating(rating: number): CookOutcome {
-  if (rating <= 2) return 'meh'
-  if (rating >= 5) return 'again'
-  return 'good'
-}
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -145,15 +143,19 @@ export const POST: APIRoute = async (context: APIContext) => {
       )) as FamilyRecipeData[]
       for (const data of familyData) {
         const cooks = data.cookingHistory ?? []
-        // A cook records what happened; the rating records how it went. Reading both would count
-        // a "meh" twice — once as an ordinary cook, once as a dislike — so the rating wins where
-        // there is one, and a cook with no rating is treated as unremarkable.
-        const quickRatings = (data.reviews ?? [])
-          .filter((r) => r.source === 'quick')
-          .map((r) => r.rating)
-        const outcomes: CookOutcome[] = quickRatings.length
-          ? quickRatings.map(outcomeForRating)
-          : cooks.map((c) => (c.wouldMakeAgain ? 'again' : 'good'))
+        // A cook records what happened; the review records how it went. Reading both would count
+        // a dislike twice — once as an ordinary cook, once as a dislike — so the review wins where
+        // there is one, and a cook with no review is treated as unremarkable.
+        //
+        // Reviews carry the verdict directly now. `verdictForRating` is only for reviews written
+        // before that field existed, which the migration stamps but which a rollback (or an
+        // in-flight client) can still produce.
+        const verdicts = (data.reviews ?? []).map((r) =>
+          isVerdict(r.outcome) ? r.outcome : verdictForRating(r.rating),
+        )
+        const outcomes: CookOutcome[] = verdicts.length
+          ? verdicts
+          : cooks.map((c) => (c.wouldMakeAgain ? 'loved' : 'ok'))
 
         const lastCook = cooks[cooks.length - 1]?.cookedAt
         signals[data.id] = {

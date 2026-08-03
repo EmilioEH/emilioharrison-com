@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { Star, MoreVertical, Plus, Check } from 'lucide-react'
+import { MoreVertical, Plus, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HighlightedText } from '../ui/HighlightedText'
@@ -9,6 +9,7 @@ import { getPlannedWeeksForRecipe } from '../../lib/weekStore'
 import { getRecipeCardImage } from '../../lib/recipe-card-image'
 import { useLongPress } from '../../lib/hooks/useLongPress'
 import { triggerHaptic } from '../../lib/haptics'
+import { VerdictMark } from '../recipe-details/verdicts'
 
 // Helper to normalize titles to Title Case
 const toTitleCase = (str: string): string => {
@@ -46,6 +47,9 @@ interface RecipeCardProps {
   allowManagement?: boolean
   skipAnimation?: boolean
   plannedWeeks: ReturnType<typeof getPlannedWeeksForRecipe>
+  /** The household's verdict, when there is one worth showing. Computed by the library from the
+   * family's reviews so the card stays a pure render. */
+  verdict?: 'loved' | 'disliked' | 'mixed' | null
   /** The week the add button adds to — the one currently being planned, which is not always
    * this week. Without it the button can only say "planned somewhere", which is not the
    * question the cook is asking when they tap it. */
@@ -62,6 +66,7 @@ export const RecipeCard = memo(
     skipAnimation = false,
     plannedWeeks,
     activeWeekStart,
+    verdict,
   }: RecipeCardProps) => {
     const cardImage = getRecipeCardImage(recipe)
 
@@ -148,10 +153,20 @@ export const RecipeCard = memo(
             <h4 className="line-clamp-2 flex-1 font-display text-lg font-bold leading-tight text-foreground">
               <HighlightedText text={toTitleCase(recipe.title)} matches={titleMatches} />
             </h4>
-            {(recipe.rating ?? 0) > 0 && (
-              <div className="flex shrink-0 items-center gap-1 rounded-full bg-secondary/50 px-1.5 py-0.5 text-[10px] font-bold text-foreground">
-                <Star className="h-3 w-3 fill-foreground" />{' '}
-                <span data-testid="recipe-rating">{recipe.rating}</span>
+            {/* The household's verdict, and only when it changes a decision.
+             *
+             * Most of a 413-recipe library is unrated or unremarkable, so a mark on every card
+             * would be the same mistake as the chef-hat placeholder that was removed from these
+             * cards: space spent saying nothing. Nothing appears for "it was okay" or unrated.
+             * The numeric star this replaces averaged a scale that no longer exists — and mixed
+             * two entry points that meant different things by the same number. */}
+            {verdict && (
+              <div
+                data-testid={`recipe-verdict-${recipe.id}`}
+                className="flex shrink-0 items-center gap-0.5 rounded-full bg-secondary/50 px-1.5 py-1"
+                title={verdict === 'mixed' ? 'Loved by some, not by others' : undefined}
+              >
+                <VerdictMark verdict={verdict} className="h-3.5 w-3.5" />
               </div>
             )}
           </div>

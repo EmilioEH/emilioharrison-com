@@ -53,7 +53,7 @@ describe('POST /api/week/review', () => {
     const res = await POST(
       contextWith({
         weekStart: '2026-07-13',
-        outcomes: [{ recipeId: 'r1', outcome: 'again' }],
+        outcomes: [{ recipeId: 'r1', outcome: 'loved' }],
       }),
     )
 
@@ -67,7 +67,7 @@ describe('POST /api/week/review', () => {
 
   it('stamps lastCooked on the recipe itself', async () => {
     await POST(
-      contextWith({ weekStart: '2026-07-13', outcomes: [{ recipeId: 'r1', outcome: 'good' }] }),
+      contextWith({ weekStart: '2026-07-13', outcomes: [{ recipeId: 'r1', outcome: 'ok' }] }),
     )
 
     expect(updateDocument).toHaveBeenCalledWith(
@@ -81,7 +81,7 @@ describe('POST /api/week/review', () => {
     updateDocument.mockRejectedValue(new Error('permission denied'))
 
     const res = await POST(
-      contextWith({ weekStart: '2026-07-13', outcomes: [{ recipeId: 'r1', outcome: 'good' }] }),
+      contextWith({ weekStart: '2026-07-13', outcomes: [{ recipeId: 'r1', outcome: 'ok' }] }),
     )
 
     expect(await res.json()).toMatchObject({ success: true, recorded: 1 })
@@ -104,7 +104,7 @@ describe('POST /api/week/review', () => {
     const res = await POST(
       contextWith({
         weekStart: '2026-07-13',
-        outcomes: [{ recipeId: 'r1', outcome: 'good' }],
+        outcomes: [{ recipeId: 'r1', outcome: 'ok' }],
         partial: true,
       }),
     )
@@ -120,8 +120,8 @@ describe('POST /api/week/review', () => {
       contextWith({
         weekStart: '2026-07-13',
         outcomes: [
-          { recipeId: 'r1', outcome: 'good' },
-          { recipeId: 'r2', outcome: 'meh' },
+          { recipeId: 'r1', outcome: 'ok' },
+          { recipeId: 'r2', outcome: 'disliked' },
         ],
       }),
     )
@@ -139,7 +139,7 @@ describe('POST /api/week/review', () => {
     await POST(
       contextWith({
         weekStart: '2026-07-13',
-        outcomes: [{ recipeId: 'r2', outcome: 'good' }],
+        outcomes: [{ recipeId: 'r2', outcome: 'ok' }],
         partial: true,
       }),
     )
@@ -151,7 +151,7 @@ describe('POST /api/week/review', () => {
     const res = await POST(
       contextWith({
         weekStart: '2026-07-13',
-        outcomes: [{ recipeId: 'r1', outcome: 'again' }],
+        outcomes: [{ recipeId: 'r1', outcome: 'loved' }],
         dismiss: true,
       }),
     )
@@ -188,7 +188,7 @@ describe('GET /api/week/review', () => {
       Promise.resolve(path.endsWith('weekPlans') ? weekPlans : recipeData),
     )
 
-  it('prefers the permanent week record over the recipe\'s current assignedDate', async () => {
+  it("prefers the permanent week record over the recipe's current assignedDate", async () => {
     // r1 has since been re-planned into this week, so deriving from `assignedDate` would lose it.
     collections(
       [{ id: 'r1', weekPlan: { isPlanned: true, assignedDate: '2026-07-20' } }],

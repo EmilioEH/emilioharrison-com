@@ -77,7 +77,13 @@ export const GET: APIRoute = async (context: APIContext) => {
     recipes.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
 
     // --- Assemble planned (mirrors GET /api/week/planned) ---
-    const planned = plannedDataAll.filter((data) => data.weekPlan?.isPlanned === true)
+    // Also carries anything the family has reviewed, planned or not: the library card's
+    // loved/disliked mark needs a verdict for a recipe that is nowhere near this week's plan.
+    // The whole reviewed set is a couple of dozen documents against a 413-recipe library, so this
+    // is cheaper than a second round trip and far cheaper than sending every recipeData doc.
+    const planned = plannedDataAll.filter(
+      (data) => data.weekPlan?.isPlanned === true || (data.reviews?.length ?? 0) > 0,
+    )
 
     // --- Assemble family (mirrors GET /api/families/current) ---
     const pendingInvites = (allInvites as unknown as PendingInvite[]).filter(

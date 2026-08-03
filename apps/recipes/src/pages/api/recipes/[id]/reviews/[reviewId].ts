@@ -1,6 +1,7 @@
 import type { APIRoute, APIContext } from 'astro'
 import { bucket, db } from '@/lib/firebase-server'
 import type { Review } from '@/lib/types'
+import { isVerdict, verdictForRating, OUTCOME_RATING, type Verdict } from '@/lib/week-review'
 import { getAuthUser, unauthorizedResponse } from '@/lib/api-helpers'
 import { loadAccessibleRecipe } from '@/lib/recipe-access'
 import { setRequestContext } from '@/lib/request-context'
@@ -91,7 +92,28 @@ export const PUT: APIRoute = async (context: APIContext) => {
 
     // Parse request body
     const body = await request.json()
-    const { rating, comment, photoBase64 } = body
+    const { outcome, rating, comment, photoBase64 } = body
+
+    // An edit may change the verdict or only the words. A bare 1-5 rating from an older client is
+    // read through the audited mapping; anything else that isn't a verdict is rejected rather
+    // than silently ignored.
+    let verdict: Verdict | undefined
+    if (outcome !== undefined) {
+      if (!isVerdict(outcome)) {
+        return new Response(
+          JSON.stringify({ error: 'outcome must be one of: disliked, ok, loved' }),
+          { status: 400 },
+        )
+      }
+      verdict = outcome
+    } else if (rating !== undefined) {
+      if (typeof rating !== 'number' || rating < 1 || rating > 5) {
+        return new Response(JSON.stringify({ error: 'Rating must be between 1 and 5' }), {
+          status: 400,
+        })
+      }
+      verdict = verdictForRating(rating)
+    }
 
     // Get existing family data
     const familyDataPath = `families/${familyId}/recipeData`
@@ -143,7 +165,9 @@ export const PUT: APIRoute = async (context: APIContext) => {
     // Update review
     const updatedReview: Review = {
       ...existingReview,
-      rating: rating ?? existingReview.rating,
+      outcome: verdict ?? existingReview.outcome,
+      // Kept in step with the verdict for one release (see Review.rating).
+      rating: verdict ? OUTCOME_RATING[verdict] : existingReview.rating,
       comment: comment !== undefined ? comment : existingReview.comment,
       photoUrl,
       updatedAt: new Date().toISOString(),

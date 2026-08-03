@@ -14,6 +14,8 @@ import { RecipeManagementSheet } from './week-planner/RecipeManagementSheet'
 import { RecipeCard } from './RecipeCard'
 import { CategoryPillBar } from './CategoryPillBar'
 import { PlanningWeekChip } from './PlanningWeekChip'
+import { $recipeFamilyData } from '../../lib/familyStore'
+import { cardVerdict } from '../../lib/household-verdict'
 
 // Animation Variants - only stagger first few items for perceived performance
 const containerVariants = {
@@ -75,6 +77,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
   // Subscribe to all planned recipes to trigger re-renders when plans change
   useStore(allPlannedRecipes)
   const { activeWeekStart } = useStore(weekState)
+  const familyData = useStore($recipeFamilyData)
 
   // Use custom hook for complex grouping logic
   const { groupedRecipes, getGroupTitle } = useRecipeGrouping(recipes, sort)
@@ -186,6 +189,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 // to next week produced no visible response at all.
                 plannedWeeks={getPlannedWeeksForRecipe(recipe.id)}
                 activeWeekStart={activeWeekStart}
+                verdict={cardVerdict(familyData[recipe.id]?.reviews)}
               />
             ))}
           </div>
@@ -233,6 +237,7 @@ export const RecipeLibrary: React.FC<RecipeLibraryProps> = ({
                 // to next week produced no visible response at all.
                 plannedWeeks={getPlannedWeeksForRecipe(recipe.id)}
                 activeWeekStart={activeWeekStart}
+                verdict={cardVerdict(familyData[recipe.id]?.reviews)}
               />
             ))}
           </div>

@@ -20,12 +20,7 @@ import {
   hasUsefulStepIngredientMappings,
   areStepIngredientMappingsEqual,
 } from '../../lib/step-ingredient-mapping'
-import type {
-  Recipe,
-  FamilyRecipeData,
-  StructuredStep,
-  Ingredient,
-} from '../../lib/types'
+import type { Recipe, FamilyRecipeData, StructuredStep, Ingredient } from '../../lib/types'
 
 interface OverviewModeProps {
   recipe: Recipe
@@ -100,13 +95,6 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
   useEffect(() => {
     loadFamilyData()
   }, [recipe.id])
-
-  // Calculate average rating from family
-  const averageRating = familyData?.reviews?.length
-    ? familyData.reviews.reduce((sum, r) => sum + r.rating, 0) / familyData.reviews.length
-    : familyData?.ratings?.length
-      ? familyData.ratings.reduce((sum, r) => sum + r.rating, 0) / familyData.ratings.length
-      : recipe.rating || 0
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -341,12 +329,12 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
             </h1>
 
             {/* A page that prints a name over a description of the dish — "GREEK SPINACH AND FETA
-              * PIE" above "Spanakopita" — stores the second line as `subtitle`. It was being
-              * transcribed and then never shown, because nothing rendered this field.
-              *
-              * Skipped when the title already contains it. Most stored subtitles restate the
-              * title ("Skillet Shrimp Scampi with Orzo and Tomatoes" storing "with Orzo and
-              * Tomatoes"), and printing the same words twice reads as a bug. */}
+             * PIE" above "Spanakopita" — stores the second line as `subtitle`. It was being
+             * transcribed and then never shown, because nothing rendered this field.
+             *
+             * Skipped when the title already contains it. Most stored subtitles restate the
+             * title ("Skillet Shrimp Scampi with Orzo and Tomatoes" storing "with Orzo and
+             * Tomatoes"), and printing the same words twice reads as a bug. */}
             {(() => {
               const subtitle = String(recipe.subtitle ?? '').trim()
               if (!subtitle) return null
@@ -433,8 +421,10 @@ export const OverviewMode: React.FC<OverviewModeProps> = ({
           )}
 
           {/* Recipe Reviews */}
+          {/* The average is gone: `RecipeReviews` shows the household's verdict instead. Averaging
+           * mixed two scales that used the same numbers for different things, and the
+           * three-point scale that replaces them cannot be averaged at all. */}
           <RecipeReviews
-            averageRating={averageRating}
             totalRatings={
               familyData?.reviews?.length || familyData?.ratings?.length || (recipe.rating ? 1 : 0)
             }

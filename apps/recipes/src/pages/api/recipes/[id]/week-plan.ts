@@ -5,7 +5,6 @@ import { db } from '../../../../lib/firebase-server'
 import type { WeekPlanData, FamilyRecipeData } from '../../../../lib/types'
 import { setRequestContext } from '../../../../lib/request-context'
 
-
 /**
  * Record that this recipe was on a given week's plan, permanently.
  *

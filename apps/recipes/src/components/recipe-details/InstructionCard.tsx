@@ -124,9 +124,7 @@ export const InstructionCard: React.FC<InstructionCardProps> = ({
           type="button"
           onClick={onToggle}
           aria-pressed={isChecked}
-          aria-label={
-            isChecked ? `Step ${stepNumber}, done` : `Step ${stepNumber}, mark as done`
-          }
+          aria-label={isChecked ? `Step ${stepNumber}, done` : `Step ${stepNumber}, mark as done`}
           data-testid="instruction-step-toggle"
           className="w-full cursor-pointer rounded-lg py-3 text-left transition-colors active:bg-accent/60"
           style={{ touchAction: 'manipulation' }}

@@ -18,6 +18,13 @@
 
 import type { Recipe } from '../types'
 import type { CookOutcome } from '../week-review'
+
+/** How each verdict reads inside a menu line. */
+const VERDICT_PHRASE: Record<Exclude<CookOutcome, 'skipped'>, string> = {
+  loved: 'they loved it',
+  ok: 'they thought it was okay',
+  disliked: "they didn't like it",
+}
 import { preferenceWeight } from '../week-review'
 import { describeFacets, matchesFacets, type RecipeFacets } from '../recipe-facets'
 
@@ -66,18 +73,16 @@ export function buildMenu(
   for (const recipe of recipes) {
     const signal = signals[recipe.id]
     const minutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)
-    const weight = signal
-      ? preferenceWeight(signal.outcomes, signal.lastCookedWeek, today)
-      : 0
+    const weight = signal ? preferenceWeight(signal.outcomes, signal.lastCookedWeek, today) : 0
 
     let history = 'never made'
     if (signal?.lastCookedWeek) history = `last made ${signal.lastCookedWeek.slice(0, 7)}`
     else if (signal?.timesPlanned) history = 'planned before'
 
-    const verdict = signal?.outcomes.filter((o) => o !== 'skipped') ?? []
-    const liked = verdict.length
-      ? `, they said ${verdict[verdict.length - 1]}`
-      : ''
+    // The most recent verdict, in words rather than the stored token — the model reads this line
+    // as prose, and "they said ok" is not a sentence anyone writes.
+    const verdicts = signal?.outcomes.filter((o) => o !== 'skipped') ?? []
+    const liked = verdicts.length ? `, ${VERDICT_PHRASE[verdicts[verdicts.length - 1]]}` : ''
 
     lines.push(
       [
@@ -141,7 +146,9 @@ export function buildPrompt(input: SuggestInput, menu: string, keptTitles: strin
     '',
     `They need ${wanted} more meal${wanted === 1 ? '' : 's'}.`,
     mood.trim() ? `They said: "${mood.trim()}"` : 'They did not say what they feel like.',
-    narrowed ? `They also asked specifically for: ${narrowed}. The list below is already limited to those, so choose freely within it.` : '',
+    narrowed
+      ? `They also asked specifically for: ${narrowed}. The list below is already limited to those, so choose freely within it.`
+      : '',
     keptIds.length
       ? `Already chosen this week: ${keptTitles.join('; ')}. Pick things that vary from these — different proteins and effort levels, so the week is not all the same.`
       : '',
@@ -226,7 +233,9 @@ export function fallbackSuggestions(input: SuggestInput): Suggestion[] {
     .slice(0, wanted)
     .map(({ recipe }) => ({
       recipeId: recipe.id,
-      reason: signals[recipe.id]?.lastCookedWeek ? 'You liked this one before.' : "You haven't made this yet.",
+      reason: signals[recipe.id]?.lastCookedWeek
+        ? 'You liked this one before.'
+        : "You haven't made this yet.",
     }))
 }
 

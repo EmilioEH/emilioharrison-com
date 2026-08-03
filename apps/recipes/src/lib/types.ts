@@ -267,11 +267,18 @@ export interface Review {
   recipeId: string
   userId: string
   userName: string
-  rating: number // 1-5 (required)
+  // The verdict is the real answer. `rating` is still written alongside it for one release so a
+  // rollback has something to read — the 1-5 scale it belongs to is gone from every screen, and
+  // could never be averaged honestly anyway: the week review's "Good" and the recipe page's
+  // fourth star both stored a 4 and meant different things.
+  outcome?: 'disliked' | 'ok' | 'loved'
+  rating: number // 1-5, derived from `outcome` (see OUTCOME_RATING). Deprecated.
   comment?: string // optional review text
   photoUrl?: string // optional photo URL
   difficulty?: 1 | 2 | 3 // optional difficulty (1=Easy, 2=Medium, 3=Hard)
-  source: 'cooking' | 'quick' | 'edit' // where the review came from
+  // Where the review came from. 'quick' is the legacy tag both surfaces wrote, which is exactly
+  // why they could not be told apart afterwards; new writes use 'detail' or 'week-review'.
+  source: 'cooking' | 'quick' | 'edit' | 'detail' | 'week-review'
   createdAt: string // ISO timestamp
   updatedAt?: string // ISO timestamp (set when edited)
   editHistory?: Array<{

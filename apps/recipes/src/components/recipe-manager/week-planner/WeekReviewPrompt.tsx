@@ -3,6 +3,8 @@ import { Check } from 'lucide-react'
 import { Chip } from '../../ui/Chip'
 import type { CookOutcome } from '../../../lib/week-review'
 import type { Recipe } from '../../../lib/types'
+import { VerdictIcon } from '../../recipe-details/verdicts'
+import { VERDICT_META } from '../../../lib/verdict-display'
 
 /**
  * A picture of the meal, when there is one.
@@ -25,13 +27,12 @@ interface WeekReviewPromptProps {
   onDismissWeek: () => Promise<void>
 }
 
-/** Four taps, not five stars. The suggester only needs to know whether you'd have it again. */
-const OPTIONS: Array<{ value: CookOutcome; label: string }> = [
-  { value: 'skipped', label: "Didn't make it" },
-  { value: 'meh', label: 'Meh' },
-  { value: 'good', label: 'Good' },
-  { value: 'again', label: 'Again' },
-]
+/**
+ * Four taps, not five stars — the same three verdicts the recipe page offers, plus "didn't make
+ * it", which only makes sense here. The words and icons come from the shared vocabulary so the
+ * two surfaces cannot ask the same question differently again.
+ */
+const OPTIONS: CookOutcome[] = ['skipped', 'disliked', 'ok', 'loved']
 
 /**
  * Asks how the last finished week went, at the moment the cook opens the planner.
@@ -112,10 +113,15 @@ export const WeekReviewPrompt: React.FC<WeekReviewPromptProps> = ({
             >
               {OPTIONS.map((option) => (
                 <Chip
-                  key={option.value}
-                  label={option.label}
-                  active={answers[recipe.id] === option.value}
-                  onClick={() => setAnswers((prev) => ({ ...prev, [recipe.id]: option.value }))}
+                  key={option}
+                  label={
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
+                      <VerdictIcon verdict={option} className="h-4 w-4" />
+                      <span aria-hidden="true">{VERDICT_META[option].label}</span>
+                    </span>
+                  }
+                  active={answers[recipe.id] === option}
+                  onClick={() => setAnswers((prev) => ({ ...prev, [recipe.id]: option }))}
                 />
               ))}
             </div>

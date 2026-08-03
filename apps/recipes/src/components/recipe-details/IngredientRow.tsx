@@ -12,8 +12,15 @@ interface IngredientRowProps {
 
 /** Renders a quantity the way a cookbook prints it: 0.5 → ½, 1.5 → 1½. */
 const FRACTION_GLYPHS: Array<[number, string]> = [
-  [0.125, '⅛'], [0.25, '¼'], [1 / 3, '⅓'], [0.375, '⅜'], [0.5, '½'],
-  [0.625, '⅝'], [2 / 3, '⅔'], [0.75, '¾'], [0.875, '⅞'],
+  [0.125, '⅛'],
+  [0.25, '¼'],
+  [1 / 3, '⅓'],
+  [0.375, '⅜'],
+  [0.5, '½'],
+  [0.625, '⅝'],
+  [2 / 3, '⅔'],
+  [0.75, '¾'],
+  [0.875, '⅞'],
 ]
 
 function formatQuantity(value: number): string {
@@ -113,7 +120,10 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
           isChecked && 'line-through',
         )}
       >
-        <span data-testid="ingredient-amount" className="font-semibold tabular-nums text-foreground/70">
+        <span
+          data-testid="ingredient-amount"
+          className="font-semibold tabular-nums text-foreground/70"
+        >
           {qty}
         </span>
         {qty && unit ? ' ' : ''}
@@ -121,13 +131,13 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       </span>
 
       {/* The ingredient itself carries the weight; prep is secondary and must not compete with
-        * it while scanning a shopping list. */}
+       * it while scanning a shopping list. */}
       <span className={cn('min-w-0 leading-6', isChecked && 'line-through')}>
         <span data-testid="ingredient-name" className="font-semibold text-foreground">
           {ingredient.name}
         </span>
         {/* The weight for a volume measurement, looked up in a fixed table — deterministic, and
-          * absent whenever the ingredient isn't in it. Never a guessed number. */}
+         * absent whenever the ingredient isn't in it. Never a guessed number. */}
         {grams !== null && (
           <span data-testid="ingredient-grams" className="ml-1.5 text-sm text-muted-foreground">
             {grams} g
