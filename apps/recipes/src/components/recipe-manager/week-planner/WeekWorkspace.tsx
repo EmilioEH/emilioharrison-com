@@ -52,6 +52,7 @@ import { useAuth } from '../../../lib/authStore'
 import { useFirestoreDocument } from '../../../lib/firestoreHooks'
 import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
 import { isGroceryGenerationStuck } from './grocery-stuck-detection'
+import { describeAiError } from '../../../lib/ai-error-message'
 import { useAutoGroceryGeneration } from './useAutoGroceryGeneration'
 
 import type { User } from 'firebase/auth'
@@ -329,9 +330,17 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     return false
   }, [operations, listId, aiGroceryList, isStuck])
 
-  const hasLocalError = useMemo(() => {
-    return operations.some((op) => op.id === `grocery-${listId}` && op.status === 'error')
-  }, [operations, listId])
+  const localErrorOp = useMemo(
+    () => operations.find((op) => op.id === `grocery-${listId}` && op.status === 'error'),
+    [operations, listId],
+  )
+  const hasLocalError = Boolean(localErrorOp)
+
+  // Why it failed: the request's own error (refused before the AI ran — signed out, rate limited,
+  // no API key, offline) takes precedence over the reason the server wrote onto the list doc.
+  const generationErrorReason = describeAiError(
+    localErrorOp?.error ?? (aiGroceryList?.status === 'error' ? aiGroceryList.message : undefined),
+  )
 
   const hasError = aiGroceryList?.status === 'error' || isStuck || hasLocalError || !!firestoreError
 
@@ -705,12 +714,13 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
                           ? 'Generation Timed Out'
                           : 'Failed to generate Smart List'}
                     </p>
-                    <p className="text-xs opacity-90">
+                    <p className="break-words text-xs opacity-90">
                       {firestoreError
                         ? `Database error: ${firestoreError.message || 'Could not connect'}. Please refresh the page.`
                         : isStuck
                           ? 'The request took too long. Please try again.'
-                          : 'The AI service encountered an error. Please try again.'}
+                          : (generationErrorReason ??
+                            'The AI service encountered an error. Please try again.')}
                     </p>
                   </Stack>
                   <Button
