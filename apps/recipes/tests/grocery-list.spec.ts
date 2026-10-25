@@ -484,12 +484,9 @@ test.describe('Grocery List', () => {
     await page.reload()
     await openGroceryTab(page)
 
-    // 4. Expect Error Banner
-    // "Failed to generate Smart List" or check for alert icon
+    // 4. Expect Error Banner, naming the reason the server gave rather than a generic message
     await expect(page.getByText('Failed to generate Smart List')).toBeVisible()
-    await expect(
-      page.getByText('The AI service encountered an error. Please try again.'),
-    ).toBeVisible()
+    await expect(page.getByText('AI Service Down')).toBeVisible()
 
     // 5. Expect Retry Button
     const retryBtn = page.getByRole('button', { name: 'Retry' })
