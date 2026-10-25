@@ -78,8 +78,23 @@ const STRUCTURE_BAND_END = 95
 function reportStructuringProgress(fraction: unknown, onProgress?: (msg: string) => void): void {
   if (typeof fraction !== 'number' || !onProgress) return
   const clamped = Math.min(Math.max(fraction, 0), 1)
-  const percent = Math.round(STRUCTURE_BAND_START + clamped * (STRUCTURE_BAND_END - STRUCTURE_BAND_START))
+  const percent = Math.round(
+    STRUCTURE_BAND_START + clamped * (STRUCTURE_BAND_END - STRUCTURE_BAND_START),
+  )
   onProgress(`Structuring the recipe... (${percent}%)`)
+}
+
+/**
+ * The server's own account of why an import failed after its response had started — sent as a
+ * final `_error` line (see `failStream` in parse-recipe.ts), because a stream that has already
+ * returned 200 has no status code left to carry it. Never salvaged: the server is saying outright
+ * that what came before it isn't a recipe.
+ */
+class ImportReportedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ImportReportedError'
+  }
 }
 
 /** Parses one NDJSON line and merges it onto `merged` in place. Malformed/partial lines (e.g. a
@@ -92,22 +107,27 @@ function mergeNdjsonLine(
 ): void {
   const trimmed = line.trim()
   if (!trimmed) return
+  let phaseData: Record<string, unknown>
   try {
-    const phaseData = JSON.parse(trimmed)
-
-    // A progress-only line. It must return before the merge below: `Object.assign` folds in every
-    // key it is given, so letting `_t` through would write a stray field onto the recipe itself.
-    if ('_t' in phaseData) {
-      reportStructuringProgress(phaseData._t, onProgress)
-      return
-    }
-
-    reportPhaseProgress(phaseData._p, onProgress)
-    delete phaseData._p
-    Object.assign(merged, phaseData)
+    phaseData = JSON.parse(trimmed)
   } catch {
     // Skip partial/unparseable lines — see doc comment above.
+    return
   }
+  if (!phaseData || typeof phaseData !== 'object') return
+
+  if (typeof phaseData._error === 'string') throw new ImportReportedError(phaseData._error)
+
+  // A progress-only line. It must return before the merge below: `Object.assign` folds in every
+  // key it is given, so letting `_t` through would write a stray field onto the recipe itself.
+  if ('_t' in phaseData) {
+    reportStructuringProgress(phaseData._t, onProgress)
+    return
+  }
+
+  reportPhaseProgress(phaseData._p, onProgress)
+  delete phaseData._p
+  Object.assign(merged, phaseData)
 }
 
 /**
@@ -221,6 +241,7 @@ async function parseFromStream(
     // Preserve cancellation semantics — let the caller's AbortError check in
     // handleParseError see the real error, rather than wrapping it below.
     if (err instanceof Error && err.name === 'AbortError') throw err
+    if (err instanceof ImportReportedError) throw err
 
     console.warn('Stream error — attempting to salvage partial response', err)
 

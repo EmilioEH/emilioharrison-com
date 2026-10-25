@@ -1,11 +1,10 @@
 /**
- * Turns the raw reason a Smart List generation failed into something the error banner can show.
+ * Turns the raw reason an AI feature failed into something an error message can show.
  *
- * The banner used to say "The AI service encountered an error" no matter what happened, so a
- * signed-out session, the hourly rate limit, a dead API key and a Gemini quota error all looked
- * identical from the phone — and diagnosing any of them meant reading server logs. The reason was
- * always available (the request's error body, or the `message` the server writes onto the
- * `grocery_lists` doc when generation fails); it just wasn't displayed.
+ * The Smart List banner and the recipe importer both used to say "something went wrong" no matter
+ * what happened, so a signed-out session, a rate limit, a dead API key and a provider out of credit
+ * all looked identical from the phone — and diagnosing any of them meant reading server logs. The
+ * reason was almost always available; it just wasn't displayed.
  *
  * A few reasons are translated into plain language because the raw text says nothing useful to the
  * person holding the phone. Everything else is shown as-is, trimmed, since an unfamiliar provider
@@ -14,7 +13,11 @@
 
 const MAX_LENGTH = 240
 
-export function describeGroceryError(raw: string | undefined | null): string | null {
+/**
+ * For the browser: the message to show for a failed request, or null when there is no reason.
+ * Knows the failures that only the client sees — its own session refused, the connection dropped.
+ */
+export function describeAiError(raw: string | undefined | null): string | null {
   const text = raw?.trim()
   if (!text) return null
 
@@ -26,9 +29,19 @@ export function describeGroceryError(raw: string | undefined | null): string | n
     return "Couldn't reach the server. Check your connection and try again."
   }
 
-  // Provider SDK errors embed the provider's JSON body after a status line, e.g.
-  // `got status: 429 Too Many Requests. {"error":{"message":"You exceeded your quota…"}}` —
-  // the inner message is the readable part.
+  return readableErrorReason(text)
+}
+
+/**
+ * The readable part of an error message, trimmed to a length that fits an error box. Safe on the
+ * server too: it only reshapes the text, it never assumes who is reading it.
+ *
+ * Provider SDK errors embed the provider's JSON body after a status line, e.g.
+ * `got status: 429 Too Many Requests. {"error":{"message":"You exceeded your quota…"}}` — the
+ * inner message is the part worth reading.
+ */
+export function readableErrorReason(raw: string): string {
+  const text = raw.trim()
   const jsonStart = text.indexOf('{')
   if (jsonStart !== -1) {
     try {
@@ -39,7 +52,6 @@ export function describeGroceryError(raw: string | undefined | null): string | n
       // Not JSON after all — fall through and show the text as written.
     }
   }
-
   return truncate(text)
 }
 

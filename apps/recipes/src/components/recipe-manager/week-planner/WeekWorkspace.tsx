@@ -52,7 +52,7 @@ import { useAuth } from '../../../lib/authStore'
 import { useFirestoreDocument } from '../../../lib/firestoreHooks'
 import type { Recipe, GroceryList as GroceryListType } from '../../../lib/types'
 import { isGroceryGenerationStuck } from './grocery-stuck-detection'
-import { describeGroceryError } from '../../../lib/grocery-error-message'
+import { describeAiError } from '../../../lib/ai-error-message'
 import { useAutoGroceryGeneration } from './useAutoGroceryGeneration'
 
 import type { User } from 'firebase/auth'
@@ -338,7 +338,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
 
   // Why it failed: the request's own error (refused before the AI ran — signed out, rate limited,
   // no API key, offline) takes precedence over the reason the server wrote onto the list doc.
-  const generationErrorReason = describeGroceryError(
+  const generationErrorReason = describeAiError(
     localErrorOp?.error ?? (aiGroceryList?.status === 'error' ? aiGroceryList.message : undefined),
   )
 

@@ -3,6 +3,7 @@ import type { Recipe } from '../types'
 import { parseRecipe } from '../../components/recipe-manager/importer/api'
 import type { InputMode } from '../../components/recipe-manager/importer/SourceToggle'
 import { alert } from '../dialogStore'
+import { describeAiError } from '../ai-error-message'
 
 type Status = 'idle' | 'processing' | 'error'
 
@@ -134,7 +135,11 @@ export function useAiImporter({ onRecipeParsed, mode }: UseAiImporterProps) {
       return
     }
 
-    setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
+    // describeAiError puts the failures only the browser sees (sign-in refused, connection
+    // dropped) in plain words and passes the server's own reason through.
+    setErrorMsg(
+      (err instanceof Error ? describeAiError(err.message) : null) ?? 'Something went wrong',
+    )
     setStatus('error')
   }
 

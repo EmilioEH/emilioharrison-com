@@ -176,7 +176,7 @@ export const AiImporter: React.FC<AiImporterProps> = ({ onRecipeParsed, onBatchQ
         )}
 
         {errorMsg && (
-          <div className="shake border-md-sys-color-error bg-md-sys-color-error-container text-md-sys-color-on-error-container rounded-sm border p-4 text-sm font-medium animate-in">
+          <div className="shake border-md-sys-color-error bg-md-sys-color-error-container text-md-sys-color-on-error-container break-words rounded-sm border p-4 text-sm font-medium animate-in">
             {errorMsg}
           </div>
         )}

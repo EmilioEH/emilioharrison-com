@@ -15,6 +15,7 @@ import {
 } from '../../lib/services/parse-photo-core'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
+import { readableErrorReason } from '../../lib/ai-error-message'
 
 // This route is the Cloudflare/NDJSON wrapper only. Every model call, prompt and validation step
 // lives in lib/services/parse-photo-core.ts, which is free of Cloudflare/Astro imports so the
@@ -52,10 +53,62 @@ function getSafeErrorMessage(error: unknown): string {
   if (msg.includes('No input provided')) {
     return msg
   }
+  if (msg.includes(STRUCTURE_FAILED_MESSAGE)) {
+    return msg
+  }
   if (msg.includes(OCR_FAILED_MESSAGE)) {
     return "We couldn't read this photo — it may need better lighting, or the AI is taking too long on a dense recipe card. Please try again."
   }
+  // The OpenAI SDK prefixes the provider's HTTP status. These two mean the app's OpenRouter account
+  // itself is the problem, which no amount of retrying by the person importing will fix.
+  if (/^401\b/.test(msg)) {
+    return "The recipe reader (OpenRouter) rejected the app's API key, so imports won't work until it's fixed."
+  }
+  if (/^402\b/.test(msg)) {
+    return "The recipe reader (OpenRouter) account is out of credit, so imports won't work until it's topped up."
+  }
+  if (msg.includes('timed out')) {
+    return 'The recipe reader took too long to answer. Please try again.'
+  }
+  // Anything unrecognised is shown as written rather than hidden behind a generic message — an
+  // unfamiliar reason is exactly what needs to be read back when something new breaks.
+  if (msg.trim()) {
+    return `Something went wrong while processing your recipe: ${readableErrorReason(msg)}`
+  }
   return 'Something went wrong while processing your recipe. Please try again.'
+}
+
+/**
+ * Ends an import stream that failed after the response had already started.
+ *
+ * Once the 200 and its headers are sent there is no status code left to carry the failure, and
+ * erroring the stream reaches the browser as a bare network error — the reason was lost, and so was
+ * the error log entry, since the route's own catch never sees a failure inside the stream. So the
+ * reason goes down the wire as a final `_error` line (the importer turns it into a thrown error) and
+ * is logged here. A client-side cancel is not a failure: that still just errors the stream.
+ */
+function failStream(
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder,
+  error: unknown,
+  onFailure?: (error: unknown) => void,
+  signal?: AbortSignal,
+): void {
+  // A cancelled import can surface as an AbortError or, once the core has swallowed it, as a plain
+  // "no result" — the request's own signal is what tells the two apart from a real failure.
+  if ((error instanceof Error && error.name === 'AbortError') || signal?.aborted) {
+    controller.error(error)
+    return
+  }
+  onFailure?.(error)
+  try {
+    controller.enqueue(
+      encoder.encode(JSON.stringify({ _error: getSafeErrorMessage(error) }) + '\n'),
+    )
+    controller.close()
+  } catch {
+    // The client has already gone away; there is no one left to tell.
+  }
 }
 
 export const POST: APIRoute = async (context: APIContext) => {
@@ -143,11 +196,24 @@ export const POST: APIRoute = async (context: APIContext) => {
         )
       }
 
-      const stream = buildImageRecipeStream(client, phases.phase1, phases.phase2, request.signal)
+      const stream = buildImageRecipeStream(
+        client,
+        phases.phase1,
+        phases.phase2,
+        request.signal,
+        (error) => logAiError('photo-import', error, { userId, context: { phase: 'structure' } }),
+      )
       return new Response(stream, { status: 200, headers: responseHeaders })
     }
 
-    const stream = buildTextRecipeStream(client, contentPart, prompt, body.style, request.signal)
+    const stream = buildTextRecipeStream(
+      client,
+      contentPart,
+      prompt,
+      body.style,
+      request.signal,
+      (error) => logAiError('url-import', error, { userId }),
+    )
     return new Response(stream, { status: 200, headers: responseHeaders })
   } catch (error) {
     console.error('API Error:', error)
@@ -169,6 +235,7 @@ export function buildImageRecipeStream(
   phase1: Record<string, unknown>,
   phase2: Record<string, unknown> | null,
   externalSignal?: AbortSignal,
+  onFailure?: (error: unknown) => void,
 ): ReadableStream {
   const encoder = new TextEncoder()
   const phases: OcrPhases = { phase1, phase2 }
@@ -217,14 +284,20 @@ export function buildImageRecipeStream(
           // a complete recipe (see recipe-corruption postmortem). Fail loudly instead. Unlike
           // transcription failing, phase 1(+2) have already been enqueued above, so this error is
           // unambiguous to the client — it already has real content, then a clear failure.
-          controller.error(new Error(STRUCTURE_FAILED_MESSAGE))
+          failStream(
+            controller,
+            encoder,
+            new Error(STRUCTURE_FAILED_MESSAGE),
+            onFailure,
+            externalSignal,
+          )
           return
         }
 
         controller.enqueue(encoder.encode(JSON.stringify({ _p: 3, ...structured }) + '\n'))
         controller.close()
       } catch (err) {
-        controller.error(err)
+        failStream(controller, encoder, err, onFailure, externalSignal)
       }
     },
   })
@@ -240,6 +313,7 @@ export function buildTextRecipeStream(
   prompt: string,
   style: 'strict' | 'enhanced' = 'strict',
   externalSignal?: AbortSignal,
+  onFailure?: (error: unknown) => void,
 ): ReadableStream {
   const encoder = new TextEncoder()
 
@@ -255,14 +329,20 @@ export function buildTextRecipeStream(
         )
 
         if (!structured) {
-          controller.error(new Error('Failed to parse recipe from content'))
+          failStream(
+            controller,
+            encoder,
+            new Error('Failed to parse recipe from content'),
+            onFailure,
+            externalSignal,
+          )
           return
         }
 
         controller.enqueue(encoder.encode(JSON.stringify({ _p: 3, ...structured }) + '\n'))
         controller.close()
       } catch (err) {
-        controller.error(err)
+        failStream(controller, encoder, err, onFailure, externalSignal)
       }
     },
   })

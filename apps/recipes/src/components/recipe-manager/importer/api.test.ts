@@ -63,6 +63,30 @@ describe('parseRecipe — stream salvage (regression: hollow-recipe corruption b
     expect((result.data as Record<string, unknown>).partialFailure).toBe('instructions')
   })
 
+  it('throws the reason the server sent on its final line, rather than a generic error', async () => {
+    const chunks = [
+      JSON.stringify({ _p: 1, ingredients: ['1 cup flour'] }) + '\n',
+      JSON.stringify({ _error: 'The recipe reader (OpenRouter) account is out of credit.' }) + '\n',
+    ]
+    global.fetch = vi.fn().mockResolvedValue(makeStreamResponse(chunks))
+
+    await expect(
+      parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/'),
+    ).rejects.toThrow('The recipe reader (OpenRouter) account is out of credit.')
+  })
+
+  it('never salvages a recipe the server has said failed, even with a title already merged', async () => {
+    const chunks = [
+      JSON.stringify({ _p: 1, title: 'From the card', ingredients: ['1 cup flour'] }) + '\n',
+      JSON.stringify({ _error: 'Failed to structure the recipe from this photo.' }) + '\n',
+    ]
+    global.fetch = vi.fn().mockResolvedValue(makeStreamResponse(chunks))
+
+    await expect(
+      parseRecipe({ image: 'data:image/jpeg;base64,ZmFrZQ==' }, '/base/'),
+    ).rejects.toThrow('Failed to structure the recipe from this photo.')
+  })
+
   it('preserves AbortError semantics instead of wrapping cancellation into a generic error', async () => {
     const abortError = Object.assign(new Error('The operation was aborted'), {
       name: 'AbortError',

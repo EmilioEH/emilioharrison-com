@@ -37,12 +37,25 @@ describe('buildTextRecipeStream — URL/text sources (single phase, no OCR)', ()
     expect(sentText).toContain('example.com')
   })
 
-  it('errors the stream when the model returns nothing usable', async () => {
+  it('ends with a reason line, and reports the failure, when the model returns nothing usable', async () => {
     const { client } = fakeOpenAiClient(['not valid json and not repairable {{{'])
+    const onFailure = vi.fn()
 
-    const stream = buildTextRecipeStream(client, { text: 'some content' }, 'Instructions')
-    const reader = stream.getReader()
-    await expect(reader.read()).rejects.toThrow()
+    const stream = buildTextRecipeStream(
+      client,
+      { text: 'some content' },
+      'Instructions',
+      'strict',
+      undefined,
+      onFailure,
+    )
+    const lines = await readNdjsonLines(stream)
+
+    // The response has already started, so the reason travels as a final line rather than an
+    // errored stream — which the browser would only see as a bare network error.
+    expect(lines).toHaveLength(1)
+    expect(lines[0]._error).toMatch(/Failed to parse recipe from content/)
+    expect(onFailure).toHaveBeenCalledTimes(1)
   })
 
   it('retries once on a transient transport failure and still returns a result', async () => {
@@ -159,17 +172,47 @@ describe('buildImageRecipeStream — given already-resolved OCR phases', () => {
     expect(lines.find((l) => l._p === 3)?.partialFailure).toBe('instructions')
   })
 
-  it('errors the stream (does not silently close) when the final structuring phase fails', async () => {
+  it('ends with a reason line (never a silent close) when the final structuring phase fails', async () => {
     const { client } = fakeOpenAiClient(['not valid json and not repairable {{{'])
+    const onFailure = vi.fn()
 
     const stream = buildImageRecipeStream(
       client,
       { ingredients: ['1 cup flour'] },
       { steps: ['Mix everything.'] },
+      undefined,
+      onFailure,
+    )
+    // Progress-only `_t` lines are interleaved with the phases; they carry no recipe content.
+    const lines = (await readNdjsonLines(stream)).filter((l) => !('_t' in l))
+
+    // Phases 1 and 2 stream fine; the failed phase 3 is reported, not silently dropped.
+    expect(lines.map((l) => l._p)).toEqual([1, 2, undefined])
+    expect(lines[2]._error).toMatch(/Failed to structure the recipe/)
+    expect(lines.some((l) => l._p === 3)).toBe(false)
+    expect(onFailure).toHaveBeenCalledTimes(1)
+  })
+
+  it('still errors the stream on a client cancel, without reporting it as a failure', async () => {
+    const create = vi.fn(async () => {
+      throw Object.assign(new Error('The user aborted a request.'), { name: 'AbortError' })
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client = { chat: { completions: { create } } } as any
+    const controller = new AbortController()
+    controller.abort()
+    const onFailure = vi.fn()
+
+    const stream = buildImageRecipeStream(
+      client,
+      { ingredients: ['1 cup flour'] },
+      null,
+      controller.signal,
+      onFailure,
     )
 
-    // Phases 1 and 2 stream fine before the failed phase 3 errors the stream.
     await expect(readStream(stream)).rejects.toThrow()
+    expect(onFailure).not.toHaveBeenCalled()
   })
 
   // Field report (photo import): ingredients rendered as four literal "undefined" lines, and
