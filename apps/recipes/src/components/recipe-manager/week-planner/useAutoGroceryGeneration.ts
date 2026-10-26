@@ -23,6 +23,9 @@ interface AutoGroceryArgs {
   /** Generation already under way, or timed out — don't start a second one on top. */
   processing: boolean
   stuck: boolean
+  /** A request for this list already failed this session. Generating again is then the Retry
+   * button's job: re-firing on every render would hammer an endpoint that is refusing. */
+  failed: boolean
 }
 
 /**
@@ -52,6 +55,7 @@ export function useAutoGroceryGeneration({
   readError,
   processing,
   stuck,
+  failed,
 }: AutoGroceryArgs) {
   // A read error is the one place a guess is still warranted, so it is capped at one per list per
   // session. A family list that does not exist yet fails the security rules' existence-dependent
@@ -63,7 +67,7 @@ export function useAutoGroceryGeneration({
 
   useEffect(() => {
     if (!active || !signedIn || !familyReady || !scopeId) return
-    if (processing || stuck || recipes.length === 0) return
+    if (processing || stuck || failed || recipes.length === 0) return
 
     if (readError) {
       if (listId && !forcedAfterReadError.current.has(listId)) {
@@ -90,5 +94,6 @@ export function useAutoGroceryGeneration({
     readError,
     processing,
     stuck,
+    failed,
   ])
 }

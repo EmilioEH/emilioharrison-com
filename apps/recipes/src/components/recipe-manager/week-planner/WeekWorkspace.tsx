@@ -367,6 +367,7 @@ export const WeekWorkspace: React.FC<WeekWorkspaceProps> = ({
     readError: Boolean(firestoreError),
     processing: isProcessing,
     stuck: isStuck,
+    failed: hasLocalError,
   })
 
   // Auto-switch to AI view when smart list becomes ready

@@ -29,10 +29,12 @@ export async function triggerGroceryGeneration(
   const listId = `${scopeId}_${weekStartDate}`
   const opId = `grocery-${listId}`
 
-  // Prevent duplicate operations if already running
+  // Prevent duplicate operations if one is already running. Only a *running* one: a failed attempt
+  // stays in the store (status 'error') so the banner can show its reason, and treating that as
+  // "already exists" made the banner's Retry button silently do nothing until the page reloaded.
   const existing = aiOperationStore.get().operations.find((op) => op.id === opId)
-  if (existing) {
-    console.log('[Grocery] Skipping generation - operation already exists:', opId)
+  if (existing?.status === 'processing') {
+    console.log('[Grocery] Skipping generation - operation already running:', opId)
     return
   }
 
