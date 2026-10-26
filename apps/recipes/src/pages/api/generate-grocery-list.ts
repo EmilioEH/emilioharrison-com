@@ -12,6 +12,7 @@ import { groceryListSignature, mergeGroceryIngredients } from '../../lib/grocery
 import { scaleRecipe } from '../../lib/servings-scale'
 import { rateLimit } from '../../lib/rate-limit'
 import { logAiError } from '../../lib/services/ai-error-log'
+import { readableErrorReason } from '../../lib/ai-error-message'
 import { db } from '../../lib/firebase-server'
 import { isBackgroundWorkerEnabled } from '../../lib/env'
 import { getAllowedCreatorIds, isRecipeAccessible } from '../../lib/recipe-access'
@@ -27,6 +28,21 @@ import type { GroceryList, Recipe, ShoppableIngredient, FamilyRecipeData } from 
 const GEMINI_TIMEOUT_MS = 25_000
 const GROCERY_RATE_LIMIT = 15
 const GROCERY_RATE_WINDOW_SECONDS = 60 * 60
+
+/**
+ * The response for a list document that couldn't be written before generation started.
+ *
+ * This used to say only "Failed to start generation", and the underlying Firestore error went to
+ * `console.error` — which Cloudflare doesn't keep — so a failing write left nothing to diagnose it
+ * by. The reason now travels in the response (the Smart List banner shows it) and is logged.
+ */
+function startFailedResponse(error: unknown, phase: 'enqueue' | 'initialize', listId: string) {
+  logAiError('grocery', error, { context: { listId, phase } })
+  const reason = error instanceof Error ? readableErrorReason(error.message) : ''
+  return serverErrorResponse(
+    reason ? `Failed to start generation: ${reason}` : 'Failed to start generation',
+  )
+}
 
 /**
  * Cloudflare orchestrator: runs the shared grocery generation core and persists progress + the
@@ -251,7 +267,7 @@ export const POST: APIRoute = async (context: APIContext) => {
       }
     } catch (error) {
       console.error('[Grocery] Failed to enqueue list document:', error)
-      return serverErrorResponse('Failed to start generation')
+      return startFailedResponse(error, 'enqueue', listId)
     }
 
     return new Response(JSON.stringify({ success: true, listId, status: 'pending' }), {
@@ -296,7 +312,7 @@ export const POST: APIRoute = async (context: APIContext) => {
     }
   } catch (error) {
     console.error('[Grocery] Failed to initialize list document:', error)
-    return serverErrorResponse('Failed to start generation')
+    return startFailedResponse(error, 'initialize', listId)
   }
 
   const job = runGroceryGenerationJob(client, scoped.recipes, listId, sourceRecipeIds)

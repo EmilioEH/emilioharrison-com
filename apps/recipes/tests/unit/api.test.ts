@@ -249,7 +249,8 @@ describe('API Tests', () => {
       // The endpoint now re-fetches each recipe server-side by id rather than trusting the
       // client-supplied payload — so the fake `getDocument` needs to actually return them.
       getDocument.mockImplementation((collection: string, id: string) => {
-        if (collection === 'recipes') return Promise.resolve(recipes.find((r) => r.id === id) ?? null)
+        if (collection === 'recipes')
+          return Promise.resolve(recipes.find((r) => r.id === id) ?? null)
         return Promise.resolve(null) // no family for users/families lookups
       })
 
@@ -291,6 +292,33 @@ describe('API Tests', () => {
       expect(persisted.ingredients[0].name).toBe('Test Ingredient')
       expect(persisted.ingredients[0].purchaseAmount).toBe(2)
       expect(persisted.ingredients[0].sources).toHaveLength(2)
+    })
+
+    it('says why, rather than only "Failed to start generation", when the list cannot be written', async () => {
+      getDocument.mockImplementation((collection: string, id: string) =>
+        Promise.resolve(
+          collection === 'recipes'
+            ? { id, title: 'Chili', ingredients: [{ name: 'corn', amount: '1 cup' }], steps: [] }
+            : null,
+        ),
+      )
+      setDocument.mockRejectedValue(
+        new Error(
+          'Firestore SET failed: {"error":{"code":429,"message":"Quota exceeded.","status":"RESOURCE_EXHAUSTED"}}',
+        ),
+      )
+
+      const response = await generateGroceryList({
+        request: new Request('http://localhost/api/generate-grocery-list', {
+          method: 'POST',
+          body: JSON.stringify({ recipeIds: ['r1'], weekStartDate: '2024-01-01' }),
+        }),
+        locals: { runtime: { env: { GEMINI_API_KEY: 'mock-key' } } },
+        cookies: fakeCookies(),
+      } as unknown as Parameters<typeof generateGroceryList>[0])
+
+      expect(response.status).toBe(500)
+      expect((await response.json()).error).toBe('Failed to start generation: Quota exceeded.')
     })
   })
 })
